@@ -30,6 +30,7 @@ import grails.transaction.Transactional
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
+import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.*
 import org.quartz.impl.matchers.KeyMatcher
 import org.springframework.beans.factory.InitializingBean
@@ -371,8 +372,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def queryFromServerUUID = fromServerUUID
         def queryProject = projectFilter
         ScheduledExecution.withTransaction {
-            ScheduledExecution.withCriteria {
-                eq('scheduled', true)
+            def c = ScheduledExecution.createCriteria()
+            c.list {
+                or {
+                    eq('scheduled', true)
+                    executions(CriteriaSpecification.LEFT_JOIN) {
+                        eq('status', ExecutionService.EXECUTION_SCHEDULED)
+                    }
+                }
                 if (!selectAll) {
                     if (queryFromServerUUID) {
                         eq('serverNodeUUID', queryFromServerUUID)
@@ -380,21 +387,24 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         isNull('serverNodeUUID')
                     }
                 } else {
-                    ne('serverNodeUUID', toServerUUID)
+                    or {
+                        isNull('serverNodeUUID')
+                        ne('serverNodeUUID', toServerUUID)
+                    }
                 }
                 if (queryProject) {
                     eq('project', queryProject)
                 }
-                if(jobid){
-                    eq('uuid',jobid)
+                if (jobid){
+                    eq('uuid', jobid)
                 }
             }.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
-                claimed[se.extid] = [success: claimScheduledJob(
-                        se,
-                        toServerUUID,
-                        queryFromServerUUID
-                ), job                      : se, previous: orig]
+                claimed[se.extid] = [
+                    success: claimScheduledJob(se, toServerUUID, queryFromServerUUID), 
+                    job: se, 
+                    previous: orig
+                ]
             }
         }
         claimed
@@ -410,6 +420,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def groupname = se.generateJobGroupName()
 
             quartzScheduler.deleteJob(new JobKey(jobname,groupname))
+            log.info("Unscheduled job: ${se.id}")
+        }
+
+        def results = Execution.isScheduledAdHoc()
+        if (serverUUID) {
+            results = results.withServerUUID(serverUUID)
+        }
+        results.list().each { Execution e ->
+            ScheduledExecution se = e.scheduledExecution
+            def identity = getJobIdent(se, e)
+            quartzScheduler.deleteJob(new JobKey(identity.jobname, identity.groupname))
             log.info("Unscheduled job: ${se.id}")
         }
     }
@@ -453,25 +474,71 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param serverUUID
      * @return
      */
-    def rescheduleJobs(String serverUUID=null) {
-        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUID(true, serverUUID) : ScheduledExecution.findAllByScheduled(true)
-        schedJobs.each { ScheduledExecution se ->
+    def rescheduleJobs(String serverUUID = null) {
+        Date now = new Date()
+        def results = ScheduledExecution.isScheduled()
+        if (serverUUID) {
+            results = results.withServerUUID(serverUUID)
+        }
+
+        // Reschedule jobs on fixed schedules
+        results.list().each { ScheduledExecution se ->
             try {
                 scheduleJob(se, null, null)
                 log.info("rescheduled job: ${se.id}")
             } catch (Exception e) {
-                log.debug("Job not rescheduled: ${se.id}: ${e.message}",e)
-                log.error("Job not rescheduled: ${se.id}: ${e.message}")
+                log.error("Job not rescheduled: ${se.id}: ${e.message}", e)
+                log.error(e)
+            }
+        }
+
+        // Reschedule any executions which were scheduled ad hoc
+        results = Execution.isScheduledAdHoc()
+        if (serverUUID) {
+            results = results.withServerUUID(serverUUID)
+        }
+
+        results.list().each { Execution e ->
+            boolean ok = true
+            ScheduledExecution se = e.scheduledExecution
+
+            if (se.options.find { it.secureInput } != null) {
+                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: cannot reschedule automatically as it has secure input options")
+                ok = false
+            } else if (e.dateStarted == null) {
+                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: no start time is set: ${e}")
+                ok = false
+            } else if (e.dateStarted.before(now)) {
+                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: the ad hoc schedule time has past")
+                ok = false
+            }
+
+            if (ok) {
+                log.info("Rescheduling ad hoc execution of: ${se.jobName} [${se.id}]: ${e.dateStarted}")
+                AuthContext authContext = frameworkService.getAuthContextForUserAndRoles(se.user, se.userRoles)
+                try {
+                    scheduleAdHocJob(se, se.user, authContext, e, null, null, 0, e.dateStarted)
+                } catch (Exception ex) {
+                    log.error("Ad hoc job not rescheduled: ${se.jobName}: ${ex.message}", ex)
+                    ok = false
+                }
+            }
+            if (!ok) {
+                // Need to update the status so that the execution is cleaned up
+                log.error("Ad hoc scheduled execution flagged for clean up")
+                e.status = false
+                e.save(flush: true)
             }
         }
     }
+
     /**
      * Claim scheduling of jobs from the given fromServerUUID, and return a map identifying successfully claimed jobs
      * @param fromServerUUID server UUID to claim scheduling of jobs from
      * @return map of job ID to [success:boolean, job:ScheduledExecution] indicating reclaim was successful or not.
      */
-    def reclaimAndScheduleJobs(String fromServerUUID, boolean all=false, String project=null, String id=null){
-        def claimed=claimScheduledJobs(frameworkService.getServerUUID(), fromServerUUID, all, project, id)
+    def reclaimAndScheduleJobs(String fromServerUUID, boolean all=false, String project=null, String id=null) {
+        def claimed = claimScheduledJobs(frameworkService.getServerUUID(), fromServerUUID, all, project, id)
         rescheduleJobs(frameworkService.getServerUUID())
         claimed
     }
@@ -766,7 +833,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def Date scheduleAdHocJob(ScheduledExecution se, String user, AuthContext authContext,
                              Execution e, Map secureOpts = null, Map secureOptsExposed = null,
                               int retryAttempt = 0, Date startTime) {
-        if (!executionService.executionsAreActive){
+        if (!executionService.executionsAreActive) {
             log.warn("Attempt to schedule job ${se}, but executions are disabled.")
             return null
         }

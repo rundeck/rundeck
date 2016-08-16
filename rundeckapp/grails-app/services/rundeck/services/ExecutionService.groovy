@@ -322,8 +322,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                 //running status filter.
                 if (query.runningFilter) {
-                    if ('scheduled' == query.runningFilter) {
-                        eq('status', 'scheduled')
+                    if (EXECUTION_SCHEDULED == query.runningFilter) {
+                        eq('status', EXECUTION_SCHEDULED)
                     } else if ('running' == query.runningFilter) {
                         isNull('dateCompleted')
                     } else {
@@ -632,29 +632,39 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Set the result status to FAIL for any Executions that are not complete
+     * Set the result status to FAIL for any Executions that are not complete,
+     * excludes executions which are still scheduled and haven't started.
+     *
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
-    def cleanupRunningJobsAsync(String serverUUID=null) {
-        def executionIds = Execution.withCriteria{
+    def cleanupRunningJobsAsync(String serverUUID = null) {
+        def executionIds = Execution.withCriteria {
+            ne('status', EXECUTION_SCHEDULED)
             isNull('dateCompleted')
             if (serverUUID == null) {
                 isNull('serverNodeUUID')
             } else {
                 eq('serverNodeUUID', serverUUID)
             }
-            projections{
+            projections {
                 property('id')
             }
         }
-        callAsync{
+        callAsync {
             def found = executionIds.collect { Execution.get(it) }
             cleanupRunningJobs(found)
         }
     }
 
-    private List<Execution> findRunningExecutions(String serverUUID=null){
+    /**
+     * Find currently running executions. Excludes executions which are scheduled
+     * to run but have not started yet.
+     *
+     * @param   serverUUID  if not null, only match executions assigned to the given server UUID
+     */
+    private List<Execution> findRunningExecutions(String serverUUID = null) {
         return Execution.withCriteria{
+            ne('status', EXECUTION_SCHEDULED)
             isNull('dateCompleted')
             if (serverUUID == null) {
                 isNull('serverNodeUUID')
@@ -3077,7 +3087,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (state == EXECUTION_RUNNING) {
                 isNull('dateCompleted')
             } else if (state == EXECUTION_SCHEDULED) {
-                eq('status', 'scheduled')
+                eq('status', EXECUTION_SCHEDULED)
             } else if (state == EXECUTION_ABORTED) {
                 isNotNull('dateCompleted')
                 eq('cancelled', true)

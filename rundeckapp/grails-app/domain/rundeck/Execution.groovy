@@ -125,6 +125,20 @@ class Execution extends ExecutionContext {
         retry( type: 'text')
     }
 
+    static namedQueries = {
+        isScheduledAdHoc {
+            eq 'status', ExecutionService.EXECUTION_SCHEDULED
+        }
+        withServerUUID { uuid ->
+            and {
+                isNotNull 'scheduledExecution'
+                scheduledExecution {
+                    eq 'serverNodeUUID', uuid
+                }
+            }
+        }
+	}
+
 
     public String toString() {
         return "Workflow execution: ${workflow}"
