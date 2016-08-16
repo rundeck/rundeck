@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck.services
 
 import com.dtolabs.rundeck.app.internal.logging.LogFlusher
@@ -1517,7 +1533,44 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         return execution
     }
+    /**
+     * Expand date format strings in the string, in the form
+     * ${DATE:FORMAT} or ${DATE[+-]#:FORMAT}
+     * @param input
+     * @return string with dates expanded, or original
+     */
+    def expandDateStrings(String input, Date dateStarted){
+        if(input =~ /\$\{DATE((?:[-+]\d+)?:.*?)\}/) {
+            def newstr = input
 
+            try {
+                newstr = input.replaceAll(/\$\{DATE((?:[-+]\d+)?:.*?)\}/) { all, tstamp ->
+                    if (tstamp.lastIndexOf(":") == -1) {
+                        return all
+                    }
+                    final operator = tstamp.substring(0, tstamp.lastIndexOf(":"))
+                    final fdate = tstamp.substring(tstamp.lastIndexOf(":") + 1)
+                    def formatter = new SimpleDateFormat(fdate)
+                    if (operator == '') {
+                        formatter.format(dateStarted)
+                    } else {
+                        final number = operator as int
+                        final newDate = dateStarted + number
+                        formatter.format(newDate)
+                    }
+                }
+
+            } catch (IllegalArgumentException e) {
+                log.warn(e)
+            } catch (NumberFormatException e) {
+                log.warn(e)
+            }
+
+
+            return newstr
+        }
+        return input
+    }
     /**
      * creates an execution with the parameters, and evaluates dynamic buildstamp
      */
@@ -1530,31 +1583,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def Execution execution = createExecution(props)
         execution.dateStarted = new Date()
 
-        if(execution.argString =~ /\$\{DATE(.*)\}/){
-
-            def newstr = execution.argString
-            try {
-                newstr = execution.argString.replaceAll(/\$\{DATE(.*?)\}/, { all, tstamp ->
-                    if(tstamp.lastIndexOf(":") == -1){
-                        return all
-                    }
-                    final operator = tstamp.substring(0, tstamp.lastIndexOf(":"))
-                    final fdate = tstamp.substring(tstamp.lastIndexOf(":")+1)
-                    if(operator == ''){
-                        new SimpleDateFormat(fdate).format(execution.dateStarted)
-                    }else{
-                        final number = operator as int
-                        final newDate = execution.dateStarted +number
-                        new SimpleDateFormat(fdate).format(newDate)
-                    }
-                })
-            } catch (IllegalArgumentException e) {
-                log.warn(e)
-            } catch (NumberFormatException e){
-                log.warn(e)
-            }
-
-
+        def newstr = expandDateStrings(execution.argString, execution.dateStarted)
+        if(newstr!=execution.argString){
             execution.argString=newstr
         }
 
@@ -1731,33 +1761,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         Execution execution = createExecution(props)
         execution.dateStarted = new Date()
 
-        if (execution.argString =~ /\$\{DATE(.*)\}/) {
+		def newstr = expandDateStrings(execution.argString, execution.dateStarted)
 
-            def newstr = execution.argString
-            try {
-                newstr = execution.argString.replaceAll(/\$\{DATE(.*?)\}/, { all, tstamp ->
-                    if(tstamp.lastIndexOf(":") == -1){
-                        return all
-                    }
-                    final operator = tstamp.substring(0, tstamp.lastIndexOf(":"))
-                    final fdate = tstamp.substring(tstamp.lastIndexOf(":")+1)
-                    if(operator == ''){
-                        new SimpleDateFormat(fdate).format(execution.dateStarted)
-                    }else{
-                        final number = operator as int
-                        final newDate = execution.dateStarted +number
-                        new SimpleDateFormat(fdate).format(newDate)
-                    }
-                })
-            } catch (IllegalArgumentException e) {
-                log.warn(e)
-            } catch (NumberFormatException e){
-                log.warn(e)
-            }
-
-
-            execution.argString = newstr
+        if(newstr!=execution.argString){
+            execution.argString=newstr
         }
+
         execution.scheduledExecution=se
         if (workflow && !workflow.save(flush:true)) {
             execution.workflow.errors.allErrors.each { log.error(it.toString()) }
@@ -1955,16 +1964,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                 if (opt.required && !optparams[opt.name]) {
 
-
-                    if(opt.defaultStoragePath && !canReadStoragePassword(
-                            authContext,
-                            opt.defaultStoragePath,
-                            false
-                    )){
-                        invalidOpt opt,lookupMessage("domain.Option.validation.required.storageDefault",[opt.name,opt.defaultStoragePath].toArray())
-                        return
-                    }else if(!opt.defaultStoragePath){
+                    if (!opt.defaultStoragePath) {
                         invalidOpt opt,lookupMessage("domain.Option.validation.required",[opt.name].toArray())
+                        return
+                    }
+                    try {
+                        def canread = canReadStoragePassword(
+                                authContext,
+                                opt.defaultStoragePath,
+                                true
+                        )
+
+                        if (!canread) {
+                            invalidOpt opt, lookupMessage(
+                                    "domain.Option.validation.required.storageDefault",
+                                    [opt.name, opt.defaultStoragePath].toArray()
+                            )
+                            return
+                        }
+                    } catch (ExecutionServiceException e1) {
+
+                        invalidOpt opt, lookupMessage(
+                                "domain.Option.validation.required.storageDefault.reason",
+                                [opt.name, opt.defaultStoragePath, e1.cause.message].toArray()
+
+                        )
                         return
                     }
                 }

@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package rundeck
 
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
@@ -487,6 +503,18 @@ class UtilityTagLib{
                 help:[
                         pattern:/\{\{help\/docs\}\}/,
                         linkText: helpLinkUrl()
+                ],
+                app:[
+                        pattern:/\{\{app\/(version|title|ident)?\}\}/,
+                        textValue:{
+                            if(it[1]=='title'){
+                                appTitle()
+                            }else if(it[1]=='version'){
+                                grailsApplication.metadata['app.version']
+                            }else if(it[1]=='ident'){
+                                grailsApplication.metadata['build.ident']
+                            }
+                        }
                 ]
         ]
         linkopts.each{k,opts->
@@ -496,10 +524,11 @@ class UtilityTagLib{
                     lparams.id=it[2]
                     def text = opts.textValue?opts.textValue(it[2]):it[1]
                     return g.link(lparams,text)
+                }else if(opts.textValue){
+                    return opts.textValue(it)?:it[0]
                 }else if(opts.linkText){
                     return opts.linkText
                 }else{
-
                     return it[0]
                 }
             }

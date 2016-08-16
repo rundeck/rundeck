@@ -1,3 +1,19 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.dtolabs.rundeck.core.cli.acl;
 
 import com.dtolabs.rundeck.core.Constants;
@@ -1477,11 +1493,16 @@ public class AclTool extends BaseTool {
                     }
 
                     AuthRequest request = new AuthRequest();
+                    boolean isAppContext = env.equals(
+                            EnvironmentalContext.URI_BASE +
+                            "application:rundeck"
+                    ) || env.equals(
+                            //backwards compatibility for old audit logs
+                            "http://dtolabs.com/rundeck/auth/env/" +
+                            "application:rundeck"
+                    );
                     request.environment =
-                            env.equals(
-                                    EnvironmentalContext.URI_BASE +
-                                    "application:rundeck"
-                            ) ?
+                            isAppContext ?
                             Framework.RUNDECK_APP_ENV :
                             FrameworkProject.authorizationEnvironment(env.substring(env.lastIndexOf(":") + 1));
                     request.actions = new HashSet<>(Arrays.asList(action));
