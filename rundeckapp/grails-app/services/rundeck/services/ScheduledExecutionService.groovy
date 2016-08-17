@@ -721,8 +721,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.warn("Attempt to schedule job ${se}, but executions are disabled.")
             return null
         }
-        println(se.scheduleOwnerClaimed)
-        println(se.serverNodeUUID)
         if (!se.shouldScheduleExecution()) {
             log.warn("Attempt to schedule job ${se}, but job execution is disabled.")
             return null;
