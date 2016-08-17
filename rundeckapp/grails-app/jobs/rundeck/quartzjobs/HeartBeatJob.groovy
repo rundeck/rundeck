@@ -13,7 +13,7 @@ class HeartBeatJob {
     def MessagingService messagingService
     def FrameworkService frameworkService
     def ScheduledExecutionService scheduledExecutionService
-    public static final long REPEAT_INTERVAL_MS = 10000
+    public static final long REPEAT_INTERVAL_MS = 300000
 
 
     def grailsApplication
