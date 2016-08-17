@@ -9,6 +9,7 @@ import org.quartz.Trigger
 import org.quartz.core.QuartzScheduler
 import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.ScheduledExecutionService
@@ -312,6 +313,78 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
         results[jobUuid].success
         se.serverNodeUUID == TEST_UUID2
     }
+
+    def "job with secure input options should be cleaned up"() {
+        given:
+        def project                     = 'testProject'
+        service.executionServiceBean    = Mock(ExecutionService)
+        service.quartzScheduler         = Mock(Scheduler)
+        service.frameworkService = Stub(FrameworkService) {
+            existsFrameworkProject(project) >> true
+            isClusterModeEnabled() >> true
+            getServerUUID() >> TEST_UUID2
+            getRundeckBase() >> ''
+        }
+
+        String jobUuid  = UUID.randomUUID().toString()
+        def workflow = new Workflow(commands: []).save(failOnError: true)
+        def se = new ScheduledExecution(
+                jobName: 'byzantium',
+                groupPath: 'test/group',
+                uuid: jobUuid,
+                serverNodeUUID: TEST_UUID1,
+                project: project,
+                workflow: workflow,
+                scheduled: false,
+				user: 'yoda',
+                userRoleList: 'jedi,master',
+				options: [new Option(name: 'foo', defaultValue: 'bar', enforced: false,
+							secureInput: true, secureExposed: true, required: true)]
+        ).save(failOnError: true)
+
+        def startTime   = new Date()
+        startTime       = startTime.plus(2)
+
+        def e = new Execution(
+                scheduledExecution: se,
+                argString: '-test args',
+                user: 'testuser',
+                project: project,
+                loglevel: 'WARN',
+                doNodedispatch: false,
+                status: 'scheduled',
+                dateStarted: startTime
+        ).save(failOnError: true)
+
+        se.executions = [e]
+        se.save(flush: true, failOnError: true)
+
+
+        when:
+        def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project)
+        ScheduledExecution.withSession { session ->
+            session.flush()
+            [se, e]*.refresh()
+        }
+
+
+        then:
+		1 * service.executionServiceBean.cleanupRunningJobs(_ as List) >> {
+			arguments ->
+            List<Execution> receivedExecutions = arguments[0]
+            assert receivedExecutions.size() == 1
+			assert receivedExecutions.get(0).id == e.id
+            assert receivedExecutions.get(0).status == 'scheduled'
+            assert receivedExecutions.get(0).dateStarted.getTime() == startTime.getTime()
+		}
+        // Should not have been scheduled as the job has secure input options
+        0 * service.quartzScheduler.scheduleJob(_ as JobDetail, _ as SimpleTrigger)
+
+        jobUuid in results
+        results[jobUuid].job.jobName == 'byzantium'
+        results[jobUuid].success
+        se.serverNodeUUID == TEST_UUID2
+	}
 
     void testClaimScheduledJobsUnassigned() {
         def (ScheduledExecution job1, String serverUUID2, ScheduledExecution job2, ScheduledExecution job3,

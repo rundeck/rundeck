@@ -498,23 +498,29 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             results = results.withServerUUID(serverUUID)
         }
 
+        List<Execution> cleanupExecutions   = []
+
         results.list().each { Execution e ->
             boolean ok = true
             ScheduledExecution se = e.scheduledExecution
 
             if (se.options.find { it.secureInput } != null) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: cannot reschedule automatically as it has secure input options")
+                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                    "cannot reschedule automatically as it has secure input options")
                 ok = false
             } else if (e.dateStarted == null) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: no start time is set: ${e}")
+                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                    "no start time is set: ${e}")
                 ok = false
             } else if (e.dateStarted.before(now)) {
-                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: the ad hoc schedule time has past")
+                log.error("Ad hoc execution not rescheduled: ${se.jobName} [${e.id}]: " +
+                    "the ad hoc schedule time has past")
                 ok = false
             }
 
             if (ok) {
-                log.info("Rescheduling ad hoc execution of: ${se.jobName} [${se.id}]: ${e.dateStarted}")
+                log.info("Rescheduling ad hoc execution of: " +
+                    "${se.jobName} [${se.id}]: ${e.dateStarted}")
                 AuthContext authContext = frameworkService.getAuthContextForUserAndRoles(se.user, se.userRoles)
                 try {
                     scheduleAdHocJob(se, se.user, authContext, e, null, null, 0, e.dateStarted)
@@ -524,11 +530,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
             if (!ok) {
-                // Need to update the status so that the execution is cleaned up
-                log.error("Ad hoc scheduled execution flagged for clean up")
-                e.status = false
-                e.save(flush: true)
+                // Mark this execution to be cleaned up (killed)
+                cleanupExecutions.add(e)
             }
+        }
+
+        if (!cleanupExecutions.isEmpty()) {
+            log.error("${cleanupExecutions.size()} ad hoc scheduled executions " +
+                "could not be rescheduled and will be killed")
+            executionService.cleanupRunningJobs(cleanupExecutions)
         }
     }
 
