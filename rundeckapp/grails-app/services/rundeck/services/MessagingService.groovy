@@ -20,7 +20,6 @@ class MessagingService {
     }
 
     Messaging generateJobMessage(ScheduledExecution se){
-        println(se.id)
         Messaging msg = Messaging.findOrCreateByScheduledExecutionIdAndMessageType(se.id,Messaging.MessageType.JOBOWNERSHIP)
         msg.serverNodeUUID = se.serverNodeUUID
         msg.lastStatus = new Date()

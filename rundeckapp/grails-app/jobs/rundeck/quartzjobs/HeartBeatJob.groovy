@@ -28,7 +28,6 @@ class HeartBeatJob {
             List<Messaging> msgs = messagingService.getJobMessages(frameworkService.serverUUID)
             msgs.each {it->
                 ScheduledExecution se = ScheduledExecution.findById(it.scheduledExecutionId)
-                println(se)
                 if(!se.scheduleOwnerClaimed){
                     def oldSched = scheduledExecution.scheduled
                     def oldJobName = scheduledExecution.generateJobScheduledName()
