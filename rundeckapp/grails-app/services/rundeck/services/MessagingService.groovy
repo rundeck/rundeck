@@ -3,6 +3,7 @@ package rundeck.services
 import rundeck.Messaging
 import groovy.time.TimeCategory
 import rundeck.ScheduledExecution
+import rundeck.quartzjobs.HeartBeatJob
 
 
 class MessagingService {
@@ -34,11 +35,9 @@ class MessagingService {
 
     List<String> getActiveNodes(String nodeuuid){
         Date now = new Date()
-
         use(TimeCategory){
-            now = now - 30.seconds
+            now = now - ((int)(2*HeartBeatJob.REPEAT_INTERVAL_SEC)).seconds
         }
-
         List<String> retList = []
         retList.add(0,nodeuuid) //we add this node as first and default option
         Messaging.findAllByMessageType(Messaging.MessageType.NODE).each{ it ->
