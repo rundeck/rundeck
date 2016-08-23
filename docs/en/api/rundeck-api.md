@@ -57,6 +57,9 @@ Changes introduced by API Version number:
 
 **Version 18**:
 
+* New Endpoints.
+    - [`GET /api/18/job/[ID]/info`][/api/V/job/[ID]/info] - Get metadata about a Job: Project name and scheduling info.
+
 **Version 17**:
 
 * New Endpoints.
@@ -2285,6 +2288,18 @@ The list of succeeded/failed will contain objects of this form:
   "message": "(success or failure message)"
 }
 ~~~~~~
+
+### Get Job Metdata
+
+Get metadata about a job.
+
+**Request:**
+
+    GET /api/18/job/[ID]/info
+
+**Response:**
+
+An Item List of `jobs` with a single `job`.  See [Listing Jobs](#listing-jobs).
 
 ## Executions
 

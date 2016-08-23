@@ -17,6 +17,8 @@
 package rundeck.filters
 
 import com.codahale.metrics.MetricRegistry
+import grails.converters.JSON
+import grails.converters.XML
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.util.WebUtils
@@ -161,6 +163,10 @@ public class ApiRequestFilters {
                 }
                 request.api_version = VersionMap[params.api_version]
                 request['ApiRequestFilters.request.parameters.project']=params.project?:request.project?:''
+                if (request.api_version >= V18) {
+                    XML.use('v' + request.api_version)
+                    JSON.use('v' + request.api_version)
+                }
                 return true
             }
             after = {

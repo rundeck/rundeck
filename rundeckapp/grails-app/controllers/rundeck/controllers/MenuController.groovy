@@ -17,6 +17,8 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
+import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
 import com.dtolabs.rundeck.app.support.BaseQuery
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
@@ -1746,6 +1748,72 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def results = jobsFragment(query)
 
         respondApiJobsList(results.nextScheduled)
+    }
+
+    /**
+     * API: get job info: /api/18/job/{id}/info
+     */
+    def apiJobDetail() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V18)) {
+            return
+        }
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
+
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scheduledExecution.project
+        )
+        if (!frameworkService.authorizeProjectJobAll(
+                authContext,
+                scheduledExecution,
+                [AuthConstants.ACTION_READ],
+                scheduledExecution.project
+        )) {
+            return apiService.renderErrorXml(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_FORBIDDEN,
+                            code  : 'api.error.item.unauthorized',
+                            args  : ['Read', 'Job ID', params.id]
+                    ]
+            )
+        }
+        if (!(response.format in ['all', 'xml', 'json'])) {
+            return apiService.renderErrorXml(
+                    response,
+                    [
+                            status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
+                            code  : 'api.error.item.unsupported-format',
+                            args  : [response.format]
+                    ]
+            )
+        }
+        def extra = [:]
+        def clusterModeEnabled = frameworkService.isClusterModeEnabled()
+        def serverNodeUUID = frameworkService.serverUUID
+        if (clusterModeEnabled && scheduledExecution.scheduled) {
+            extra.serverNodeUUID = scheduledExecution.serverNodeUUID
+            extra.serverOwner = scheduledExecution.serverNodeUUID == serverNodeUUID
+        }
+        respond(
+
+                JobInfo.from(
+                        scheduledExecution,
+                        apiService.apiHrefForJob(scheduledExecution),
+                        apiService.guiHrefForJob(scheduledExecution),
+                        extra
+                ),
+
+                [formats: ['xml', 'json']]
+        )
     }
 
     private void respondApiJobsList(List<ScheduledExecution> results) {
