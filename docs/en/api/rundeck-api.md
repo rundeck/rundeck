@@ -57,10 +57,6 @@ Changes introduced by API Version number:
 
 **Version 18**:
 
-* Updated Endpoints:
-    - [`/api/18/job/[ID]/run`][/api/V/job/[ID]/run] 
-        - new `runAtTime` parameter to run once at a certain time.
-
 **Version 17**:
 
 * New Endpoints.
