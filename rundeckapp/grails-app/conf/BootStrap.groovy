@@ -18,6 +18,7 @@ import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheck
 import com.codahale.metrics.health.HealthCheckRegistry
 import com.dtolabs.launcher.Setup
+import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -55,6 +56,7 @@ class BootStrap {
     def scmService
     HealthCheckRegistry healthCheckRegistry
     def dataSource
+    ApiMarshallerRegistrar apiMarshallerRegistrar
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -71,6 +73,7 @@ class BootStrap {
              grailsApplication.mainContext.profilerLog.appenderNames = ["loggingAppender", 'miniProfilerAppender']
          }
          long bstart=System.currentTimeMillis()
+         apiMarshallerRegistrar.registerApiMarshallers()
          //version info
          servletContext.setAttribute("version.build",VersionConstants.BUILD)
          servletContext.setAttribute("version.date",VersionConstants.DATE)
