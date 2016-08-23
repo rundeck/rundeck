@@ -2289,9 +2289,9 @@ The list of succeeded/failed will contain objects of this form:
 }
 ~~~~~~
 
-### Get Job Metdata
+### Get Job Metadata
 
-Get metadata about a job.
+Get metadata about a specific job.
 
 **Request:**
 
@@ -2299,7 +2299,37 @@ Get metadata about a job.
 
 **Response:**
 
-An Item List of `jobs` with a single `job`.  See [Listing Jobs](#listing-jobs).
+`Content-Type: application/xml`: A single `job` element in the same format as [Listing Jobs](#listing-jobs):
+
+~~~~~~~~~~ {.xml}
+<job id="ID" href="[API url]" permalink="[GUI URL]" scheduled="true/false" scheduleEnabled="true/false"
+   enabled="true/false"
+   >
+    <name>Job Name</name>
+    <group>Job Name</group>
+    <project>Project Name</project>
+    <description>...</description>
+</job>
+~~~~~~~~~~~~
+
+`Content-Type: application/json`
+
+A single object:
+
+~~~~~~~~~~ {.json}
+{
+    "id": "[UUID]",
+    "name": "[name]",
+    "group": "[group]",
+    "project": "[project]",
+    "description": "...",
+    "href": "[API url]",
+    "permalink": "[GUI url]",
+    "scheduled": true/false,
+    "scheduleEnabled": true/false,
+    "enabled": true/false
+}
+~~~~~~~~~~~~
 
 ## Executions
 
@@ -5361,6 +5391,10 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `POST` [Disable Executions for a Job](#disable-executions-for-a-job)
 
+[/api/V/job/[ID]/info][]
+
+* `GET` [Get Job Metadata](#get-job-metadata)
+
 [/api/V/job/[ID]/run][]
 
 * `POST` [Running a Job](#running-a-job)
@@ -5645,6 +5679,8 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [POST /api/V/job/[ID]/executions]:#running-a-job
 [DELETE /api/V/job/[ID]/executions]:#delete-all-executions-for-a-job
 
+[/api/V/job/[ID]/info]:#get-job-metadata
+[GET /api/V/job/[ID]/info]:#get-job-metadata
 
 [/api/V/job/[ID]/schedule/enable]:#enable-scheduling-for-a-job
 
