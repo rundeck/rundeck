@@ -1819,6 +1819,33 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     private void respondApiJobsList(List<ScheduledExecution> results) {
         def clusterModeEnabled = frameworkService.isClusterModeEnabled()
         def serverNodeUUID = frameworkService.serverUUID
+
+        if (request.api_version >= ApiRequestFilters.V18) {
+            //new response format mechanism
+            //no <result> tag
+            def data = new JobInfoList(
+                    results.collect { ScheduledExecution se ->
+                        Map data = [:]
+                        if (clusterModeEnabled) {
+                            data = [
+                                    serverNodeUUID: se.serverNodeUUID,
+                                    serverOwner   : se.serverNodeUUID == serverNodeUUID
+                            ]
+                        }
+                        JobInfo.from(
+                                se,
+                                apiService.apiHrefForJob(se),
+                                apiService.guiHrefForJob(se),
+                                data
+                        )
+                    }
+            )
+            respond(
+                    data,
+                    [formats: ['xml', 'json']]
+            )
+            return
+        }
         withFormat {
             def xmlresponse= {
                 return apiService.renderSuccessXml(request, response) {
