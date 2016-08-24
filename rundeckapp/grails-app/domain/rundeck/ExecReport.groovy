@@ -26,6 +26,8 @@ class ExecReport extends BaseReport{
     Boolean adhocExecution
     String adhocScript
     String abortedByUser
+    String succeededNodeList
+    String failedNodeList
 
     static mapping = {
         adhocScript type: 'text'
@@ -39,6 +41,9 @@ class ExecReport extends BaseReport{
         jcJobId(nullable:true,blank:true)
         adhocScript(nullable:true,blank:true)
         abortedByUser(nullable:true,blank:true)
+        succeededNodeList(nullable:true,blank:true)
+        failedNodeList(nullable:true,blank:true)
+
     }
 
     public static final ArrayList<String> exportProps = BaseReport.exportProps +[
@@ -46,7 +51,9 @@ class ExecReport extends BaseReport{
             'jcJobId',
             'adhocExecution',
             'adhocScript',
-            'abortedByUser'
+            'abortedByUser',
+            'succeededNodeList',
+            'failedNodeList'
     ]
     def Map toMap(){
         def map = this.properties.subMap(exportProps)
@@ -70,6 +77,8 @@ class ExecReport extends BaseReport{
     static ExecReport fromExec(Execution exec){
         def failedCount = exec.failedNodeList ?exec.failedNodeList.split(',').size():0
         def successCount=exec.succeededNodeList? exec.succeededNodeList.split(',').size():0;
+        def failedList = exec.failedNodeList ?exec.failedNodeList:''
+        def succeededList=exec.succeededNodeList? exec.succeededNodeList:'';
         def totalCount = failedCount+successCount;
         def adhocScript = null
         if(
@@ -101,12 +110,23 @@ class ExecReport extends BaseReport{
                 message: (issuccess ? 'Job completed successfully' : iscancelled ? ('Job killed by: ' + (exec.abortedby ?: exec.user)) : 'Job failed'),
                 dateStarted: exec.dateStarted,
                 dateCompleted: exec.dateCompleted,
-                actionType: status
+                actionType: status,
+                failedNodeList: failedList,
+                succeededNodeList: succeededList
         ])
     }
     static ExecReport fromMap(Map map) {
         def report = new ExecReport()
         buildFromMap(report, map.subMap( exportProps))
         report
+    }
+
+    String getNodeList(){
+        def ret
+        if(this.succeededNodeList){
+            ret = this.failedNodeList?this.succeededNodeList+',': this.succeededNodeList
+        }
+        ret = this.failedNodeList?ret+ this.failedNodeList:ret
+        ret
     }
 }

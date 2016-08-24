@@ -58,6 +58,7 @@ class ExecQuery extends ReportQuery{
         startbeforeFilter(nullable: true)
         excludeJobListFilter(nullable: true)
         statFilter(nullable:true,inList:["succeed","fail",'cancel'])
+        execnodeFilter(nullable: true)
         sortBy(nullable:true,inList:[
             "jobFilter",
             "jobIdFilter",

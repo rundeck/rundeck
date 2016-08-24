@@ -50,6 +50,11 @@
                  placeholder="${g.message(code: 'jobquery.title.titleFilter')}"/>
 </div>
 <div class="form-group">
+    <label for="execnodeFilter" class="sr-only"><g:message code="jobquery.title.nodeFilter"/></label>
+    <g:textField name="execnodeFilter" value="${query.execnodeFilter}" class="form-control input-sm"
+                 placeholder="${g.message(code: 'jobquery.title.nodeFilter')}"/>
+</div>
+<div class="form-group">
     <label for="statFilter" class="sr-only"><g:message code="jobquery.title.statFilter"/></label>
     <g:select name="statFilter" from="${['succeed', 'fail', 'cancel']}" value="${query.statFilter}"
               noSelection="['': 'Any']" valueMessagePrefix="status.label" class="form-control input-sm"/>
