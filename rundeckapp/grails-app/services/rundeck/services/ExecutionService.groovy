@@ -768,7 +768,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     public logExecution(uri,project,user,issuccess,statusString,execId,Date startDate=null, jobExecId=null, jobName=null,
                         jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
-                        abortedby=null){
+                        abortedby=null, succeededNodeList=null, failedNodeList=null){
 
         def reportMap=[:]
         def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
@@ -793,6 +793,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             reportMap.reportId='adhoc'
             reportMap.adhocExecution = true
+        }
+
+        if(succeededNodeList){
+            reportMap.succeededNodeList = succeededNodeList
+        }
+        if(failedNodeList){
+            reportMap.failedNodeList = failedNodeList
         }
         reportMap.ctxProject=project
 
@@ -2287,7 +2294,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         props.timedOut,
                         execution.willRetry,
                         node,
-                        execution.abortedby
+                        execution.abortedby,
+                        execution.succeededNodeList,
+                        execution.failedNodeList
                 )
                 logExecutionLog4j(execution, "finish", execution.user)
 
