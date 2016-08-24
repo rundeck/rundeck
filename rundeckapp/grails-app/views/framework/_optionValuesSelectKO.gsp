@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%@ page import="java.util.regex.Pattern" %>
 <%--
  Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
@@ -27,20 +43,22 @@
     <%-- Print out the input box for random input --%>
     <div data-bind="if: hasTextfield">
         <div data-bind="css: {'col-sm-8': hasExtended(), 'col-sm-12': !hasExtended() }">
-            <div data-bind="if: secureInput()">
+            <div data-bind="if: secureInput()" class="input-group">
                 <g:passwordField name="-"
                                  data-bind="value: value, attr: {name: fieldName, id: fieldId}"
                                  class="optionvaluesfield  form-control"
                                  value=""
                                  autocomplete="new-password"
                                  size="40"/>
-                <div data-bind="if: defaultStoragePath">
-                    <span class="input-group-addon has_tooltip"
-                          data-placement="left"
+                <!-- ko if: defaultStoragePath -->
+                    <span class=" has_tooltip input-group-addon"
+                        data-bind="bootstrapTooltip: true"
+                          data-placement="bottom"
+                          data-container="body"
                           title="${message(code: "form.option.defaultStoragePath.present.description")}">
                         <g:icon name="lock"/>
                     </span>
-                </div>
+                <!-- /ko -->
             </div>
 
             <div data-bind="if: !secureInput()">
