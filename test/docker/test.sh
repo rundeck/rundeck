@@ -1,8 +1,8 @@
 #!/bin/bash
 
 export DOCKER_COMPOSE_SPEC=docker-compose-multinode-test.yml
-export RUNDECK_VERSION=2.6.9
-export LAUNCHER_URL=http://dl.bintray.com/rundeck/rundeck-maven/rundeck-launcher-${RUNDECK_VERSION}.jar
+export RUNDECK_VERSION=${RUNDECK_VERSION:-2.6.9}
+export LAUNCHER_URL=${LAUNCHER_URL:-http://dl.bintray.com/rundeck/rundeck-maven/rundeck-launcher-${RUNDECK_VERSION}.jar}
 
 if [ -f rundeck-launcher.jar ] ; then
 	#LAUNCHER_URL=file:/home/rundeck/rundeck-launcher.jar
