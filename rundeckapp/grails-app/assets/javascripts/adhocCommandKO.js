@@ -29,6 +29,7 @@ function AdhocLink(data,nodefilter) {
     self.succeeded=ko.observable(null);
 
     var statusMap={
+        'scheduled':'running',
         'running':'running',
         'succeed':'succeed',
         'succeeded':'succeed',

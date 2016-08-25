@@ -25,13 +25,17 @@ ${enc(attr:execState)}"
 </span>
 </span>
 
+<g:set var="didNotStart" value="${execution?.dateStarted?.getTime() > execution?.dateCompleted?.getTime() ? true : false}"/>
+
 <span data-bind="visible: completed()" style="${wdgt.styleVisible(if: execution.dateCompleted)}">
-    <g:message code="after" />
-    <span data-bind="text: execDurationHumanized(), attr: {title: execDurationSimple() } " class="text-info">
-    <g:if test="${execution.dateCompleted}">
-        <g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}"/>
+    <g:if test="${!didNotStart}">
+        <g:message code="after" />
+        <span data-bind="text: execDurationHumanized(), attr: {title: execDurationSimple() } " class="text-info">
+            <g:if test="${execution.dateCompleted}">
+                <g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}"/>
+            </g:if>
+        </span>
     </g:if>
-</span>
     <span class="timerel">
         <g:message code="at" />
         <span data-bind="text: formatTimeAtDate(endTime()), attr: {title: endTime() }">
@@ -40,12 +44,21 @@ ${enc(attr:execState)}"
             </g:if>
         </span>
     </span>
-
 </span>
 
-<g:message code="started" />
+<g:if test="${execution.status == 'scheduled' || didNotStart}">
+    <g:message code="scheduled" />
+</g:if>
+<g:else>
+    <g:message code="started" />
+</g:else>
 <span class="timerel">
-    <g:message code="at" />
+    <g:if test="${execution.status == 'scheduled' || didNotStart}">
+        <g:message code="for" />
+    </g:if>
+    <g:else>
+        <g:message code="at" />
+    </g:else>
     <span data-bind="text: formatTimeAtDate(startTime()), attr: {title: startTime() }">
         <g:if test="${execution.dateStarted}">
             <g:relativeDate atDate="${execution.dateStarted}"/>
@@ -54,7 +67,7 @@ ${enc(attr:execState)}"
 </span>
 <g:message code="by" />
 <g:username user="${execution.user}"/>
-<span data-bind="if: completed() || jobAverageDuration() <= 0 ">
+<span data-bind="if: execDurationSimple() != '' && (completed() || jobAverageDuration() <= 0)">
     <span class="text-muted">
         <i class="glyphicon glyphicon-time"></i>
         %{--<g:message code="elapsed.time.prompt" />--}%
