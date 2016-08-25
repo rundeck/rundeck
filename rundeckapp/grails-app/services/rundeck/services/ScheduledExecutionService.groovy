@@ -58,6 +58,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def FrameworkService frameworkService
     def NotificationService notificationService
+    def MessagingService messagingService
     //private field to set lazy bean dependency
     private ExecutionService executionServiceBean
     def executorService
@@ -720,9 +721,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.warn("Attempt to schedule job ${se}, but executions are disabled.")
             return null
         }
-
         if (!se.shouldScheduleExecution()) {
             log.warn("Attempt to schedule job ${se}, but job execution is disabled.")
+            return null;
+        }
+        if(se.serverNodeUUID != frameworkService.serverUUID){
+            log.warn("Attempt to schedule job ${se}, but the selected server Node UUID not match.")
             return null;
         }
 
@@ -1421,6 +1425,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!scheduledExecution) {
             return [success: false]
         }
+        //updated by
+        scheduledExecution.updatedBy = changeinfo.user
 
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
             return [success: false, scheduledExecution: scheduledExecution, message: "Update Job ${scheduledExecution.extid}", unauthorized: true]
@@ -1492,9 +1498,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
         if (frameworkService.isClusterModeEnabled()) {
-            scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
-        } else {
+            if(!scheduledExecution.serverNodeUUID){
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }
+            if(frameworkService.serverUUID == scheduledExecution.serverNodeUUID){
+                scheduledExecution.scheduleOwnerClaimed = true
+            }else{
+                scheduledExecution.scheduleOwnerClaimed = false
+                messagingService.generateJobMessage(scheduledExecution)
+            }
+        }else{
             scheduledExecution.serverNodeUUID = null
+            scheduledExecution.scheduleOwnerClaimed = null
         }
 
         def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
@@ -2102,9 +2117,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
         if (frameworkService.isClusterModeEnabled()) {
-            scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
-        } else {
+            if(!scheduledExecution.serverNodeUUID){
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }
+            if(frameworkService.serverUUID == scheduledExecution.serverNodeUUID){
+                scheduledExecution.scheduleOwnerClaimed = true
+            }else{
+                scheduledExecution.scheduleOwnerClaimed = false
+                messagingService.generateJobMessage(scheduledExecution)
+            }
+        }else{
             scheduledExecution.serverNodeUUID = null
+            scheduledExecution.scheduleOwnerClaimed = null
         }
 
         def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
@@ -2305,6 +2329,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         def result = _dovalidate(map, authContext)
         def scheduledExecution = result.scheduledExecution
+        if(changeinfo.change == 'create') {
+            scheduledExecution.createdBy = changeinfo.user
+        }
+        scheduledExecution.updatedBy = changeinfo.user
         failed = result.failed
         //try to save workflow
         if(failed){
@@ -2475,9 +2503,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
         if (frameworkService.isClusterModeEnabled()) {
-            scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
+            if(!scheduledExecution.serverNodeUUID){
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }
+            //scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
+            if(frameworkService.serverUUID == scheduledExecution.serverNodeUUID){
+                scheduledExecution.scheduleOwnerClaimed = true
+            }else{
+                scheduledExecution.scheduleOwnerClaimed = false
+                messagingService.generateJobMessage(scheduledExecution)
+            }
         }else{
             scheduledExecution.serverNodeUUID = null
+            scheduledExecution.scheduleOwnerClaimed = null
         }
 
         if (scheduledExecution.project && !frameworkService.existsFrameworkProject(scheduledExecution.project)) {

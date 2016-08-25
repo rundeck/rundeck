@@ -53,6 +53,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             isClusterModeEnabled()>>enabled
             getServerUUID()>>TEST_UUID1
         }
+        service.messagingService = Mock(MessagingService)
         TEST_UUID1
     }
     def "blank email notification"() {
@@ -849,6 +850,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             executionsAreActive()>>false
         }
         service.quartzScheduler = Mock(Scheduler)
+        service.messagingService = Mock(MessagingService)
         uuid
     }
 
@@ -1632,5 +1634,50 @@ class ScheduledExecutionServiceSpec extends Specification {
                         nodeIncludeName: 'test',
                         nodeExclude: 'testo',
                         nodeExcludeTags: 'dev']
+    }
+
+    def "update job with another serverNodeUUID"(){
+        given:
+        def uuid= UUID.randomUUID().toString()
+        setupDoUpdate(enabled)
+        def se = new ScheduledExecution(createJobParams(serverNodeUUID: uuid)).save()
+
+        when:
+        def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
+
+
+        then:
+        results.success
+        results.scheduledExecution.serverNodeUUID == (enabled?uuid:null)
+        !results.scheduledExecution.scheduleOwnerClaimed
+
+        where:
+        inparams                               | enabled
+        [jobName: 'newName']                   | true
+        [jobName: 'newName']                   | false
+        [jobName: 'newName', scheduled: false] | true
+        [jobName: 'newName', scheduled: false] | false
+    }
+
+    def "update job with same serverNodeUUID"(){
+        given:
+        def uuid= setupDoUpdate(enabled)
+        def se = new ScheduledExecution(createJobParams(serverNodeUUID: uuid)).save()
+
+        when:
+        def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
+
+
+        then:
+        results.success
+        results.scheduledExecution.serverNodeUUID == (enabled?uuid:null)
+        results.scheduledExecution.scheduleOwnerClaimed == (enabled?true:null)
+
+        where:
+        inparams                               | enabled
+        [jobName: 'newName']                   | true
+        [jobName: 'newName']                   | false
+        [jobName: 'newName', scheduled: false] | true
+        [jobName: 'newName', scheduled: false] | false
     }
 }

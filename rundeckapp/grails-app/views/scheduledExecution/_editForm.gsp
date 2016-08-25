@@ -50,7 +50,7 @@
         </div>
     </div>
 
-        <g:render template="edit" model="[scheduledExecution:scheduledExecution, crontab:crontab, command:command,authorized:authorized]"/>
+        <g:render template="edit" model="[scheduledExecution:scheduledExecution, crontab:crontab, command:command,authorized:authorized, activeNodes: activeNodes, clusterMode: clusterMode]"/>
 
         <div class="panel-footer">
             <div class="row">

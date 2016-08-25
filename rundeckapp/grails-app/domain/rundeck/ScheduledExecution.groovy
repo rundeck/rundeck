@@ -64,6 +64,11 @@ class ScheduledExecution extends ExecutionContext {
     Boolean scheduleEnabled = true
     Boolean executionEnabled = true
 
+    String createdBy
+    String updatedBy
+
+    Boolean scheduleOwnerClaimed = false
+
     static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
                          'crontabString']
@@ -136,6 +141,9 @@ class ScheduledExecution extends ExecutionContext {
         logOutputThreshold(maxSize: 256, blank:true, nullable: true)
         logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['halt','truncate'])
         logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true)
+        createdBy(nullable: true)
+        updatedBy(nullable: true)
+        scheduleOwnerClaimed(nullable: true)
     }
 
     static mapping = {

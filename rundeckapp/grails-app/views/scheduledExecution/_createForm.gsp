@@ -43,7 +43,7 @@
             </div>
         </div>
 
-        <g:render template="edit" model="['scheduledExecution':scheduledExecution, 'crontab':crontab,authorized:authorized]"/>
+        <g:render template="edit" model="['scheduledExecution':scheduledExecution, 'crontab':crontab,authorized:authorized, activeNodes: activeNodes, clusterMode: clusterMode]"/>
 
         <div class="panel-footer">
             <g:javascript>
