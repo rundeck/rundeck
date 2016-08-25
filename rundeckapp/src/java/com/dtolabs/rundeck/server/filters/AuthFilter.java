@@ -75,7 +75,7 @@ public class AuthFilter implements Filter {
             return;
         }
         HttpServletRequest httpRequest = (HttpServletRequest) request;
-        ServletRequest requestModified;
+        HttpServletRequest requestModified;
         if (userNameHeader != null) {
             final String forwardedUser = httpRequest.getHeader(userNameHeader);
 
@@ -100,8 +100,7 @@ public class AuthFilter implements Filter {
                         }
                     };
         } else {
-            requestModified =
-                    new HttpServletRequestWrapper((HttpServletRequest) request);
+            requestModified = httpRequest;
         }
         if (rolesAttribute != null && rolesHeader != null) {
             // Get the roles sent by the proxy and add them onto the request as an attribute for
