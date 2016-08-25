@@ -55,6 +55,12 @@ View the [Index](#index) listing API paths.
 
 Changes introduced by API Version number:
 
+**Version 18**:
+
+* Updated Endpoints:
+    - [`/api/18/job/[ID]/run`][/api/V/job/[ID]/run] 
+        - new `runAtTime` parameter to run once at a certain time.
+
 **Version 17**:
 
 * New Endpoints.
@@ -1762,6 +1768,11 @@ Optional parameters:
 * `asUser` : specifies a username identifying the user who ran the job. Requires `runAs` permission.
 * Node filter parameters as described under [Using Node Filters](#using-node-filters)
 * `filter` can be a node filter string.
+* `runAtTime`: Specify a time to run the job (**API v18** or later).
+
+`runAtTime`
+:    This is a ISO-8601 date and time stamp with timezone, with optional milliseconds.,
+        e.g. `2016-11-23T12:20:55-0800` or `2016-11-23T12:20:55.123-0800`
 
 (**API v14**) If the request has `Content-Type: application/json`, then the parameters will be ignored,
 and this format is expected in the content:
@@ -1771,7 +1782,8 @@ and this format is expected in the content:
     "argString":"...",
     "loglevel":"...",
     "asUser":"...",
-    "filter":"..."
+    "filter":"...",
+    "runAtTime":"..."
 }
 ~~~~~
 
