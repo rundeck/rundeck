@@ -32,6 +32,7 @@ import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
 
 import javax.servlet.ServletContext
+import java.net.URL
 import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 
@@ -93,15 +94,28 @@ class BootStrap {
              FilterConfig filter2 = handler2.filterConfig
              filter1.name <=> filter2.name
          }*/
+         
+         def configLocation = servletContext.getInitParameter('rdeck.config.location')
+         if(configLocation){
+             def newconf = new ConfigObject(new URL("file://${configLocation}"))
+             grailsApplication.config.merge(newconf)
+             log.info("imported ${configLocation}")
+         }
 
          def String rdeckBase
          if(!grailsApplication.config.rdeck.base){
              //look for system property
              rdeckBase=System.getProperty('rdeck.base')
+             if(!rdeckBase){
+                 rdeckBase=servletContext.getInitParameter('rdeck.base')
+             }
              log.info("using rdeck.base system property: ${rdeckBase}");
-             def newconf= new ConfigObject()
-             newconf.rdeck.base = rdeckBase
-             grailsApplication.config.merge(newconf)
+             // if no rdeck.config.location was given, load it from default path
+             if(!configLocation) {
+                 def newconf= new ConfigObject()
+                 newconf.rdeck.base = rdeckBase
+                 grailsApplication.config.merge(newconf)
+             }
          }else{
              rdeckBase=grailsApplication.config.rdeck.base
              log.info("using rdeck.base config property: ${rdeckBase}");
