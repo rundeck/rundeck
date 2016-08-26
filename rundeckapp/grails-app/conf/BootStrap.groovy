@@ -32,6 +32,7 @@ import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.context.support.WebApplicationContextUtils
 
 import javax.servlet.ServletContext
+import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 
 class BootStrap {
@@ -347,6 +348,13 @@ class BootStrap {
              log.info("Rundeck is in PASSIVE MODE: No executions can be run.")
          }
 
+         if (!Charset.defaultCharset().equals(Charset.forName("UTF-8"))) {
+             log.warn("The JVM default encoding is not UTF-8: "
+                              + Charset.defaultCharset().displayName()
+                              + ", you may not see output as expected for multibyte locales. " +
+                              "Specify -Dfile.encoding=UTF-8 in the JVM options."
+             )
+         }
          //configure System.out and System.err so that remote command execution will write to a specific print stream
          if(Environment.getCurrent() != Environment.TEST){
 
