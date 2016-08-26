@@ -1,0 +1,57 @@
+version: '2'
+
+services:
+  rundeck1:
+    hostname: rundeck1
+    build:
+      context: dockers/rundeck/
+      args:
+        LAUNCHER_URL: ${LAUNCHER_URL}
+    links:
+      - hostnode
+#    entrypoint: bash /home/rundeck/run.sh
+    environment:
+      - RUNDECK_NODE=rundeck1
+      - REMOTE_NODE=hostnode
+      - RUNDECK_URL=http://rundeck1:4440/
+      - LAUNCHER_URL=${LAUNCHER_URL}
+    volumes:
+      - logs:/home/rundeck/logs:rw
+      - resources:/home/rundeck/resources:rw
+    networks:
+      localnet:
+        ipv4_address: 192.168.234.11
+    ports:
+      - "2222:22"
+      - "4440:4440"
+
+  hostnode:
+    hostname: hostnode
+    build: 
+      context: dockers/hostnode/
+      args:
+        RUNDECK_NODE: hostnode
+    environment:
+      - RUNDECK_NODE=hostnode
+    volumes:
+      - resources:/home/rundeck/resources:rw
+    networks:
+      localnet:
+        ipv4_address: 192.168.234.2
+    ports:
+      - "2223:22"
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 192.168.234.0/24
+        gateway: 192.168.234.1
+
+volumes:
+  logs:
+  resources:
+
+
