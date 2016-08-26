@@ -3236,17 +3236,19 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         def jobid = params.id
-        def jobAsUser, jobArgString, jobLoglevel, jobFilter
+        def jobAsUser, jobArgString, jobLoglevel, jobFilter, jobRunAtTime
         if (request.format == 'json') {
             def data= request.JSON
             jobAsUser = data?.asUser
             jobArgString = data?.argString
             jobLoglevel = data?.loglevel
             jobFilter = data?.filter
+            jobRunAtTime = data?.runAtTime
         } else {
             jobAsUser=params.asUser
             jobArgString=params.argString
             jobLoglevel=params.loglevel
+            jobRunAtTime = params.runAtTime
         }
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
@@ -3302,13 +3304,13 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         def result
-        if (request.api_version > ApiRequestFilters.V17 && params.runAtTime) {
-            inputOpts["runAtTime"] = params.runAtTime
+        if (request.api_version > ApiRequestFilters.V17 && jobRunAtTime) {
+            inputOpts["runAtTime"] = jobRunAtTime
             result = executionService.scheduleAdHocJob(scheduledExecution,
                         authContext, username, inputOpts)
         }
 
-        if (request.api_version <= ApiRequestFilters.V17 || !params.runAtTime) {
+        if (request.api_version <= ApiRequestFilters.V17 || !jobRunAtTime) {
             result = executionService.executeJob(scheduledExecution,
                         authContext, username, inputOpts)
         }
