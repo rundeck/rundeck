@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
+import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
@@ -369,5 +370,11 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         }
 
         list
+    }
+
+    @Override
+    PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException {
+        //TODO: check groovy plugins
+        rundeckServerServiceProviderLoader.getResourceLoader(service,provider)
     }
 }

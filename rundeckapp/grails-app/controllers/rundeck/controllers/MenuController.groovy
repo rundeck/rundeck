@@ -58,6 +58,7 @@ import rundeck.services.NotificationService
 import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
+import rundeck.services.UiPluginService
 import rundeck.services.UserService
 import rundeck.services.framework.RundeckProjectConfigurable
 
@@ -75,6 +76,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     PluginService pluginService
+    UiPluginService uiPluginService
     def configurationService
     ScmService scmService
     def quartzScheduler
@@ -231,7 +233,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def clearJobsFilter = { ScheduledExecutionQuery query ->
         return redirect(action: 'jobs', params: [project: params.project])
     }
-    def jobs = {ScheduledExecutionQuery query ->
+    def jobs (ScheduledExecutionQuery query ){
         
         def User u = userService.findOrCreateUser(session.user)
         if(params.size()<1 && !params.filterName && u ){
@@ -253,7 +255,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         withFormat{
             html {
-                results
+
+                def plugins = uiPluginService.pluginsForPage("menu/jobs")
+
+                results + [uiPlugins: plugins]
             }
             yaml{
                 final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)
@@ -269,8 +274,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
     }
-    
-    def jobsFragment = {ScheduledExecutionQuery query ->
+
+    def jobsFragment(ScheduledExecutionQuery query) {
         long start=System.currentTimeMillis()
         UserAndRolesAuthContext authContext
         def usedFilter=null

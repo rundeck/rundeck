@@ -36,6 +36,8 @@ public class PluginMeta {
     private String date;
     private String version;
     private String rundeckPluginVersion;
+    private List<String> resourcesList;
+    private String resourcesDir;
     private List<Map<String, Object>> providers;
     private List<ProviderDef> pluginDefs;
 
@@ -107,5 +109,21 @@ public class PluginMeta {
 
     public void setRundeckPluginVersion(final String rundeckPluginVersion) {
         this.rundeckPluginVersion = rundeckPluginVersion;
+    }
+
+    public List<String> getResourcesList() {
+        return resourcesList;
+    }
+
+    public void setResourcesList(List<String> resourcesList) {
+        this.resourcesList = resourcesList;
+    }
+
+    public String getResourcesDir() {
+        return resourcesDir;
+    }
+
+    public void setResourcesDir(String resourcesDir) {
+        this.resourcesDir = resourcesDir;
     }
 }

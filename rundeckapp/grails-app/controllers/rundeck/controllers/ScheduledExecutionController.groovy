@@ -26,8 +26,10 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
@@ -99,6 +101,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def ApiService apiService
     def UserService userService
     def ScmService scmService
+    def UiPluginService uiPluginService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -1865,6 +1868,19 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
+        def uiPluginProfiles = [:]
+//        nodeStepTypes.each{ Description desc->
+//            uiPluginProfiles[ServiceNameConstants.WorkflowNodeStep+":"+desc.name] =
+//            uiPluginService.getProfileFor(ServiceNameConstants.WorkflowNodeStep,
+//                                          desc.name
+//            )
+//        }
+        stepTypes.each {
+            def profile = uiPluginService.getProfileFor(ServiceNameConstants.WorkflowStep, it.name)
+            uiPluginProfiles[ServiceNameConstants.WorkflowStep+":"+it.name]=profile
+        }
+
+        System.err.println("profiles: $uiPluginProfiles")
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
                 notificationPlugins: notificationService.listNotificationPlugins(),
@@ -1872,7 +1888,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
-                stepDescriptions:stepTypes]
+                stepDescriptions:stepTypes,
+                 uiPluginProfiles:uiPluginProfiles]
     }
 
 

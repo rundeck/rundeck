@@ -41,21 +41,25 @@ import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import static com.dtolabs.rundeck.core.plugins.JarPluginProviderLoader.RESOURCES_DIR_DEFAULT;
+
 /**
  * ScriptPluginProviderLoader can load a provider instance for a service from a script plugin zip file.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
+class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable, PluginResourceLoader {
 
     private static final Logger log = Logger.getLogger(ScriptPluginProviderLoader.class.getName());
     public static final String VERSION_1_0 = "1.0";
     public static final String VERSION_1_1 = "1.1";
+    public static final String VERSION_1_2 = "1.2";
     public static final List<String> SUPPORTED_PLUGIN_VERSIONS;
     static {
         SUPPORTED_PLUGIN_VERSIONS = Collections.unmodifiableList(Arrays.asList(
                 VERSION_1_0,
-                VERSION_1_1
+                VERSION_1_1,
+                VERSION_1_2
         ));
     }
     private final File file;
@@ -69,14 +73,57 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
      */
     private PluginMeta metadata;
     /**
+     * Metadata from the plugin.yaml file
+     */
+    private PluginResourceLoader resourceLoader;
+    /**
      * cache of ident to scriptplugin def mapping
      */
     private Map<ProviderIdent, ScriptPluginProvider> pluginProviderDefs =
         new HashMap<ProviderIdent, ScriptPluginProvider>();
+    private List<String> pluginResourcesList;
 
     public ScriptPluginProviderLoader(final File file, final File cachedir) {
         this.file = file;
         this.cachedir = cachedir;
+    }
+
+    private PluginResourceLoader getResourceLoader() throws PluginException {
+        if (null == resourceLoader) {
+            synchronized (this) {
+                if (null == resourceLoader) {
+                    try {
+                        ZipResourceLoader loader = new ZipResourceLoader(
+                                new File(cachedir, "resources"),
+                                file,
+                                getPluginResourcesList(),
+                                getResourcesBasePath()
+                        );
+                        loader.extractResources();
+                        this.resourceLoader = loader;
+                    } catch (IOException e) {
+                        throw new PluginException("Unable to expand plugin libs: " + e.getMessage(), e);
+                    }
+                }
+            }
+        }
+        return resourceLoader;
+    }
+
+    @Override
+    public List<String> listResources() throws PluginException, IOException {
+        if (supportsResources(getPluginMeta())) {
+            return getResourceLoader().listResources();
+        }
+        return null;
+    }
+
+    @Override
+    public InputStream openResourceStreamFor(final String name) throws PluginException, IOException {
+        if (supportsResources(getPluginMeta())) {
+            return getResourceLoader().openResourceStreamFor(name);
+        }
+        return null;
     }
 
     /**
@@ -509,5 +556,28 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
             return false;
         }
         return true;
+    }
+
+    /**
+     * Return true if the plugin version supports resources
+     *
+     * @param pluginMeta
+     *
+     * @return
+     */
+    public static boolean supportsResources(final PluginMeta pluginMeta) {
+        if (VERSION_1_2.equals(pluginMeta.getRundeckPluginVersion())) {
+            return true;
+        }
+        return false;
+    }
+
+    public List<String> getPluginResourcesList() throws IOException {
+        return getPluginMeta().getResourcesList();
+    }
+
+    public String getResourcesBasePath() throws IOException {
+        String resourcesDir = getPluginMeta().getResourcesDir();
+        return null != resourcesDir ? resourcesDir : RESOURCES_DIR_DEFAULT;
     }
 }

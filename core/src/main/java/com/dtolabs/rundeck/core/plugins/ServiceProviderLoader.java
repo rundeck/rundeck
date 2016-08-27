@@ -47,6 +47,8 @@ public interface ServiceProviderLoader {
     public <T> T loadProvider(PluggableService<T> service, String providerName) throws
         ProviderLoaderException;
 
+    public PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException;
+
     /**
      * @return the available providers
      */

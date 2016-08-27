@@ -23,10 +23,7 @@
  */
 package com.dtolabs.rundeck.core.plugins;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -54,12 +51,18 @@ import com.dtolabs.rundeck.core.utils.cache.FileCache;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
+class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable, PluginResourceLoader {
+    public static final String RESOURCES_DIR_DEFAULT = "resources";
     private static Logger log = Logger.getLogger(JarPluginProviderLoader.class.getName());
     public static final String RUNDECK_PLUGIN_ARCHIVE = "Rundeck-Plugin-Archive";
     public static final String RUNDECK_PLUGIN_CLASSNAMES = "Rundeck-Plugin-Classnames";
+    public static final String RUNDECK_PLUGIN_RESOURCES = "Rundeck-Plugin-Resources";
+    public static final String RUNDECK_PLUGIN_RESOURCES_DIR = "Rundeck-Plugin-Resources-Dir";
     public static final String RUNDECK_PLUGIN_LIBS = "Rundeck-Plugin-Libs";
     public static final String JAR_PLUGIN_VERSION = "1.1";
+    public static final String JAR_PLUGIN_VERSION_1_2 = "1.2";
+    public static final VersionCompare SUPPORTS_RESOURCES_PLUGIN_VERSION = VersionCompare.forString(
+            JAR_PLUGIN_VERSION_1_2);
     public static final VersionCompare LOWEST_JAR_PLUGIN_VERSION = VersionCompare.forString(JAR_PLUGIN_VERSION);
     public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
     public static final String RUNDECK_PLUGIN_FILE_VERSION = "Rundeck-Plugin-File-Version";
@@ -92,6 +95,26 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         this.pluginJarCacheDirectory = pluginJarCacheDirectory;
         this.cachedir = cachedir;
         this.loadLibsFirst = loadLibsFirst;
+    }
+
+    private boolean supportsResources(final String pluginVersion) {
+        return VersionCompare.forString(pluginVersion).atLeast(SUPPORTS_RESOURCES_PLUGIN_VERSION);
+    }
+
+    @Override
+    public List<String> listResources() throws PluginException, IOException {
+        if (supportsResources(getPluginVersion())) {
+            return getCachedJar().resourcesLoader.listResources();
+        }
+        return null;
+    }
+
+    @Override
+    public InputStream openResourceStreamFor(final String path) throws PluginException, IOException {
+        if (supportsResources(getPluginVersion())) {
+            return getCachedJar().resourcesLoader.openResourceStreamFor(path);
+        }
+        return null;
     }
 
     /**
@@ -160,6 +183,40 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             return null;
         }
         return value.split(",");
+    }
+
+    private String getResourcesBasePath() {
+        final Attributes attributes = getMainAttributes();
+        if (null != attributes) {
+            final String dir = attributes.getValue(RUNDECK_PLUGIN_RESOURCES_DIR);
+            if (null != dir) {
+                //list resources in the dir of the jar
+                return dir;
+            }
+        }
+        return RESOURCES_DIR_DEFAULT;
+    }
+
+
+    private List<String> getPluginResourcesList() {
+        final Attributes attributes = getMainAttributes();
+        if (null != attributes) {
+            final String value = attributes.getValue(RUNDECK_PLUGIN_RESOURCES);
+            if (null != value) {
+                return Arrays.asList(value.split(" *, *"));
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the version of the plugin, not the file version
+     *
+     * @return
+     */
+    private String getPluginVersion() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_VERSION);
     }
 
     /**
@@ -351,7 +408,22 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
                     } catch (IOException e) {
                         throw new PluginException("Unable to expand plugin libs: " + e.getMessage(), e);
                     }
-                    this.cachedJar = new CachedJar(dir, cachedJar, extlibs);
+                    ZipResourceLoader loader = null;
+                    if (supportsResources(getPluginVersion())) {
+
+                        loader = new ZipResourceLoader(
+                                new File(dir, "resources"),
+                                cachedJar,
+                                getPluginResourcesList(),
+                                getResourcesBasePath()
+                        );
+                        try {
+                            loader.extractResources();
+                        } catch (IOException e) {
+                            throw new PluginException("Unable to expand plugin libs: " + e.getMessage(), e);
+                        }
+                    }
+                    this.cachedJar = new CachedJar(dir, cachedJar, extlibs, loader);
                 }
             }
         }
@@ -655,6 +727,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
         private File cachedJar;
         private Collection<File> depLibs;
         private URLClassLoader classLoader;
+        private PluginResourceLoader resourcesLoader;
 
         public File getDir() {
             return dir;
@@ -664,10 +737,18 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable {
             return cachedJar;
         }
 
-        public CachedJar(File dir, File cachedJar, Collection<File> depLibs) throws PluginException {
+        public CachedJar(
+                File dir,
+                File cachedJar,
+                Collection<File> depLibs,
+                PluginResourceLoader resourcesLoader
+        )
+                throws PluginException
+        {
             this.dir = dir;
             this.cachedJar = cachedJar;
             this.depLibs = depLibs;
+            this.resourcesLoader = resourcesLoader;
         }
 
         public Collection<File> getDepLibs() {
