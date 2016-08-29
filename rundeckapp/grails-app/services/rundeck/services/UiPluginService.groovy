@@ -11,14 +11,21 @@ class UiPluginService {
     def PluginRegistry rundeckPluginRegistry
     def PluginService pluginService
     def UIPluginProviderService uiPluginProviderService
-    Map loadingCache = [:]
+    Map<String, Map<String, UIPlugin>> loadingCache = [:]
+    List<String> loadedPlugins = []
 
-    def pluginsForPage(String path) {
-        if (loadingCache[path] != null) {
+    Map<String, UIPlugin> pluginsForPage(String path) {
+        def reload = false
+        def plugins = pluginService.listPlugins(UIPlugin, uiPluginProviderService)
+        if (plugins.values()*.name.sort() != loadedPlugins) {
+            loadedPlugins = plugins.values()*.name.sort()
+            reload = true
+        }
+        if (!reload && loadingCache[path] != null) {
             return loadingCache[path]
         }
+
         def loaded = [:]
-        def plugins = pluginService.listPlugins(UIPlugin, uiPluginProviderService)
         plugins.each { String name, DescribedPlugin<UIPlugin> plugin ->
             UIPlugin inst = pluginService.getPlugin(plugin.name, uiPluginProviderService)
             if (inst.doesApply(path)) {
