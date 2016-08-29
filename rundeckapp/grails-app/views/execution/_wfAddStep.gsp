@@ -77,7 +77,7 @@
                                         controller: 'plugin',
                                         action: 'pluginIcon',
                                         params: [service: 'WorkflowNodeStep', name: typedesc.name]
-                                )}" width="24px" height="24px"/>
+                                )}" width="16px" height="16px"/>
                             </g:if>
                             <g:else>
                                 <i class="rdicon icon-small plugin"></i>
@@ -116,7 +116,7 @@
                                         controller: 'plugin',
                                         action: 'pluginIcon',
                                         params: [service: 'WorkflowStep', name: typedesc.name]
-                                )}" width="24px" height="24px"/>
+                                )}" width="16px" height="16px"/>
                             </g:if>
                             <g:else>
                                 <i class="rdicon icon-small plugin"></i>

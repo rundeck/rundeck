@@ -1,12 +1,10 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.plugins.PluginException
-import com.dtolabs.rundeck.core.plugins.ProviderIdent
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.PluginRegistry
 import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
-import grails.transaction.Transactional
 
 class UiPluginService {
     static boolean transactional = false
@@ -19,27 +17,40 @@ class UiPluginService {
         if (loadingCache[path] != null) {
             return loadingCache[path]
         }
-        def loaded = []
+        def loaded = [:]
         def plugins = pluginService.listPlugins(UIPlugin, uiPluginProviderService)
         plugins.each { String name, DescribedPlugin<UIPlugin> plugin ->
             UIPlugin inst = pluginService.getPlugin(plugin.name, uiPluginProviderService)
             if (inst.doesApply(path)) {
-                loaded << inst
+                loaded[plugin.name]= inst
             }
         }
         loadingCache[path] = loaded
+        loaded
     }
 
-    Map providerProfiles = [:]
+    final Map providerProfiles = [:]
 
     def getProfileFor(String service, String name) {
-        def profile = [:]
-        def reslist = resourcesForPlugin(service, name)
-        if (reslist?.contains("$service:$name:icon.png".toString())) {
-            profile['icon'] = "$service:$name:icon.png"
-        } else if (reslist?.contains('icon.png')) {
-            profile['icon'] = "icon.png"
+        def profile = providerProfiles[service + ':' + name]
+        if (null == profile) {
+            synchronized (providerProfiles) {
+                if (null == profile) {
+                    profile = [:]
+                    def reslist = resourcesForPlugin(service, name)
+                    if (reslist) {
+                        def testlist = ['png', 'gif'].inject([]) { list, ext ->
+                            list + ["${service}.${name}.icon.", 'icon.'].collect { prefix ->
+                                prefix + ext
+                            }
+                        }
+                        profile['icon'] = testlist.find { reslist?.contains(it.toString()) }
+                    }
+                    providerProfiles[service + ':' + name] = profile
+                }
+            }
         }
+
         profile
     }
 

@@ -1869,18 +1869,15 @@ class ScheduledExecutionController  extends ControllerBase{
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
         def uiPluginProfiles = [:]
-//        nodeStepTypes.each{ Description desc->
-//            uiPluginProfiles[ServiceNameConstants.WorkflowNodeStep+":"+desc.name] =
-//            uiPluginService.getProfileFor(ServiceNameConstants.WorkflowNodeStep,
-//                                          desc.name
-//            )
-//        }
+        nodeStepTypes.each{ Description desc->
+            def profile = uiPluginService.getProfileFor(ServiceNameConstants.WorkflowNodeStep, desc.name)
+            uiPluginProfiles[ServiceNameConstants.WorkflowNodeStep+":"+desc.name]=profile
+        }
         stepTypes.each {
             def profile = uiPluginService.getProfileFor(ServiceNameConstants.WorkflowStep, it.name)
             uiPluginProfiles[ServiceNameConstants.WorkflowStep+":"+it.name]=profile
         }
 
-        System.err.println("profiles: $uiPluginProfiles")
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
         return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
                 notificationPlugins: notificationService.listNotificationPlugins(),
