@@ -257,8 +257,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             html {
 
                 def plugins = uiPluginService.pluginsForPage("menu/jobs")
+                def uiplugins=[:]
+                plugins.each{name,inst->
+                    uiplugins[name]=[
+                            scripts:inst.scriptResourcesForPath("menu/jobs"),
+                            styles:inst.styleResourcesForPath("menu/jobs"),
+                    ]
+                }
 
-                results + [uiPlugins: plugins]
+                results + [uiplugins:uiplugins]
             }
             yaml{
                 final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)

@@ -19,10 +19,34 @@ package com.dtolabs.rundeck.plugins.rundeck;
 import java.util.List;
 
 /**
- * Created by greg on 8/26/16.
+ *
  */
 public interface UIPlugin {
+    /**
+     * @param path
+     *
+     * @return true if this plugin applies at the path
+     */
     boolean doesApply(String path);
 
+    /**
+     *
+     * @param path
+     * @return list of resources available at the path
+     */
     List<String> resourcesForPath(String path);
+
+    /**
+     * @param path
+     *
+     * @return list of javascript resources to load at the path
+     */
+    List<String> scriptResourcesForPath(String path);
+
+    /**
+     * @param path
+     *
+     * @return list of css stylesheets to load at the path
+     */
+    List<String> styleResourcesForPath(String path);
 }

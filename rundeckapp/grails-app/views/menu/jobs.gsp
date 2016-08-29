@@ -550,6 +550,35 @@
             width:100%;
         }
     </style>
+    <g:embedJSON id="pageData" data="${[path: 'menu/jobs', project: params.project ?: request.project]}"/>
+    <g:if test="${uiplugins}">
+        <asset:javascript src="global/uiplugins.js"/>
+        <g:jsonToken id="uiplugin_tokens"  url="${request.forwardURI}"/>
+    </g:if>
+    <g:each in="${uiplugins?.keySet()}" var="pluginname">
+        <!-- BEGIN UI plugin scripts for ${pluginname} -->
+        <g:each in="${uiplugins[pluginname].scripts}" var="scriptPath">
+            <script src="${createLink(
+                    controller: 'plugin',
+                    action: 'pluginFile',
+                    params: [service: 'UI', name: pluginname, path: scriptPath]
+            )}" type="text/javascript"></script>
+        </g:each>
+        <!-- END UI Plugin scripts for ${pluginname} -->
+    </g:each>
+
+    <g:each in="${uiplugins?.keySet()}" var="pluginname">
+        <!-- BEGIN UI plugin css for ${pluginname} -->
+        <g:each in="${uiplugins[pluginname].styles}" var="scriptPath">
+            <link rel="stylesheet" href="${createLink(
+                    controller: 'plugin',
+                    action: 'pluginFile',
+                    params: [service: 'UI', name: pluginname, path: scriptPath]
+            )}"/>
+        </g:each>
+        <!-- END UI Plugin css for ${pluginname} -->
+    </g:each>
+
 </head>
 <body>
 
@@ -598,7 +627,6 @@
 </div>
 </div>
 </div>
-
 
 <div class="row row-space" id="activity_section">
     <div class="col-sm-12 ">
