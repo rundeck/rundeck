@@ -106,9 +106,18 @@
     <div class="panel panel-default">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion${enc(attr:ukey)}" href="#${enc(attr:ukeyx)}" title="${pluginName}">
-                        <i class="glyphicon glyphicon-chevron-down"></i>
-                    <i class="rdicon icon-small plugin"></i>
+                    <a class="accordion-toggle link-bare collapsed" data-toggle="collapse" data-parent="#accordion${enc(attr:ukey)}" href="#${enc(attr:ukeyx)}" title="${pluginName}">
+                        <i class="auto-caret text-muted"></i>
+                    <g:if test="${uiPluginProfiles?.get(serviceName+":"+pluginName)?.icon}">
+                        <img src="${createLink(
+                                controller: 'plugin',
+                                action: 'pluginIcon',
+                                params: [service: serviceName, name: pluginName]
+                        )}" width="16px" height="16px"/>
+                    </g:if>
+                    <g:else>
+                        <i class="rdicon icon-small plugin"></i>
+                    </g:else>
                     <g:enc>${pluginTitle?:pluginName}</g:enc></a>
 
                     <g:if test="${pluginDesc}">
