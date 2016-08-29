@@ -136,7 +136,7 @@
 
                 <div class="jobscontent head">
     <g:if test="${!params.compact}">
-        <div class=" pull-right" >
+        <div class=" pull-right" id="jobpageactionbuttons">
 
             <g:if test="${scmExportEnabled && scmExportStatus || scmImportEnabled  && scmImportStatus}">
             %{--SCM synch status--}%

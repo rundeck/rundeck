@@ -60,7 +60,7 @@
                         <g:else>
                             %{--normal view--}%
                         <tr class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
-                            <td class="jobname">
+                            <td class="jobname" data-job-id="${scheduledExecution.extid}">
                                 <span class="jobbulkeditfield" style="display: none" data-bind="visible: enabled">
                                 <input type="checkbox"
                                        name="ids"
