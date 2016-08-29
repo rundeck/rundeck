@@ -70,8 +70,8 @@
     <div class="panel panel-default">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#${ukey}" title="${serviceName}">
-                        <i class="glyphicon glyphicon-chevron-down"></i>
+                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion" href="#${ukey}" title="${serviceName}">
+                        <i class="auto-caret text-muted"></i>
     <g:message code="framework.service.${serviceName}.label.plural" default="${serviceName}"/></a>
 
                     <g:if test="${pluginDescList.size()>0}">
