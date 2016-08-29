@@ -45,7 +45,11 @@
                         %{-- select job view --}%
                         <g:if test="${jobsjscallback}">
                             <tr class=" expandComponentHolder expanded" id="jobrow_${scheduledExecution.id}">
-                               <td class="jobname" style="overflow:hidden; text-overflow: ellipsis; white-space: nowrap; overflow-x: hidden">
+                               <td class="jobname"
+                                   data-job-id="${scheduledExecution.extid}"
+                                   data-job-name="${scheduledExecution.jobName}"
+                                   data-job-group="${scheduledExecution.groupPath}"
+                                   style="overflow:hidden; text-overflow: ellipsis; white-space: nowrap; overflow-x: hidden">
                                        <g:set var="jstext" value="jobChosen('${enc(js: scheduledExecution.jobName)}','${enc(js: scheduledExecution.groupPath)}')"/>
                                        <span class="textbtn textbtn-success" title="Choose this job" onclick="${enc(attr:jstext)}">
                                            <i class="glyphicon glyphicon-book"></i>
@@ -60,7 +64,11 @@
                         <g:else>
                             %{--normal view--}%
                         <tr class="sectionhead expandComponentHolder ${paginateParams?.idlist==scheduledExecution.id.toString()?'expanded':''}" id="jobrow_${scheduledExecution.id}">
-                            <td class="jobname" data-job-id="${scheduledExecution.extid}">
+                            <td class="jobname"
+                                data-job-id="${scheduledExecution.extid}"
+                                data-job-name="${scheduledExecution.jobName}"
+                                data-job-group="${scheduledExecution.groupPath}"
+                            >
                                 <span class="jobbulkeditfield" style="display: none" data-bind="visible: enabled">
                                 <input type="checkbox"
                                        name="ids"
