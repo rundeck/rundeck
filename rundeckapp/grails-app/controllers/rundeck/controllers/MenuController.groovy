@@ -1223,6 +1223,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
+
+        def uiPluginProfiles = [:]
+        pluginDescs.each { svc, list ->
+            list.each { desc ->
+                uiPluginProfiles[svc + ":" + desc.name] = uiPluginService.getProfileFor(svc, desc.name)
+            }
+        }
+
         def defaultScopes=[
                 (framework.getNodeStepExecutorService().name) : PropertyScope.InstanceOnly,
                 (framework.getStepExecutionService().name) : PropertyScope.InstanceOnly,
@@ -1268,7 +1276,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 serviceDefaultScopes: defaultScopes,
                 bundledPlugins      : bundledPlugins,
                 specialConfiguration: specialConfiguration,
-                specialScoping      : specialScoping
+                specialScoping      : specialScoping,
+                uiPluginProfiles    : uiPluginProfiles
         ]
     }
 
