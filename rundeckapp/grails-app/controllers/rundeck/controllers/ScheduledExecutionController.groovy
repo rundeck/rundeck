@@ -101,7 +101,6 @@ class ScheduledExecutionController  extends ControllerBase{
     def ApiService apiService
     def UserService userService
     def ScmService scmService
-    def UiPluginService uiPluginService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }

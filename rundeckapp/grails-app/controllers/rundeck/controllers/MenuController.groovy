@@ -76,7 +76,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     PluginService pluginService
-    UiPluginService uiPluginService
+
     def configurationService
     ScmService scmService
     def quartzScheduler
@@ -255,17 +255,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         withFormat{
             html {
-
-                def plugins = uiPluginService.pluginsForPage("menu/jobs")
-                def uiplugins=[:]
-                plugins.each{name,inst->
-                    uiplugins[name]=[
-                            scripts:inst.scriptResourcesForPath("menu/jobs"),
-                            styles:inst.styleResourcesForPath("menu/jobs"),
-                    ]
-                }
-
-                results + [uiplugins:uiplugins]
+                results
             }
             yaml{
                 final def encoded = JobsYAMLCodec.encode(results.nextScheduled as List)

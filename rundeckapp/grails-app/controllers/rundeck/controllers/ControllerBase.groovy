@@ -22,6 +22,7 @@ import org.codehaus.groovy.grails.web.metaclass.ValidResponseHandler
 import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
 import org.codehaus.groovy.grails.web.servlet.mvc.TokenResponseHandler
 import org.springframework.web.context.request.RequestContextHolder
+import rundeck.services.UiPluginService
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -34,7 +35,41 @@ import java.util.zip.GZIPOutputStream
  */
 class ControllerBase {
     def grailsApplication
+    UiPluginService uiPluginService
 
+    protected def loadUiPlugins(path) {
+        def uiplugins = [:]
+        if ((path in [
+                'menu/jobs',
+                'menu/home',
+                'menu/executionMode',
+                'menu/admin',
+                "menu/logStorage",
+                "menu/securityConfig",
+                "menu/systemInfo",
+                "menu/metrics",
+                "menu/plugins",
+                "menu/welcome",
+                "scheduledExecution/show",
+                "scheduledExecution/edit",
+                "scheduledExecution/delete",
+                "scheduledExecution/create",
+                "execution/show",
+        ])) {
+
+            uiPluginService.pluginsForPage(path).each { name, inst ->
+                uiplugins[name] = [
+                        scripts: inst.scriptResourcesForPath(path),
+                        styles : inst.styleResourcesForPath(path),
+                ]
+            }
+        }
+        uiplugins
+    }
+
+    def afterInterceptor = { model ->
+        model.uiplugins = loadUiPlugins(controllerName + "/" + actionName)
+    }
     protected def withHmacToken(Closure valid){
         GrailsWebRequest request= (GrailsWebRequest) RequestContextHolder.currentRequestAttributes()
         TokenResponseHandler handler
