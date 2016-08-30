@@ -203,7 +203,7 @@ beans={
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 
-    uiPluginProviderService(UIPluginProviderService) {
+    uiPluginProviderService(UIPluginProviderService,rundeckFramework) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 

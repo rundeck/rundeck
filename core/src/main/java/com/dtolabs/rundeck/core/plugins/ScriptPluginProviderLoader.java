@@ -94,10 +94,10 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
                 if (null == resourceLoader) {
                     try {
                         ZipResourceLoader loader = new ZipResourceLoader(
-                                new File(cachedir, "resources"),
+                                new File(getFileCacheDir(), "resources"),
                                 file,
                                 getPluginResourcesList(),
-                                getResourcesBasePath()
+                                getFileBasename() + "/" + getResourcesBasePath()
                         );
                         loader.extractResources();
                         this.resourceLoader = loader;
@@ -208,21 +208,25 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
                 throw new ProviderLoaderException(e, ident.getService(), ident.getProviderName());
             }
             fileExpandedDir = dir;
-            final File script = new File(fileExpandedDir, pluginDef.getScriptFile());
-            //set executable bit for script-file of the provider
-            try {
-                ScriptfileUtils.setExecutePermissions(script);
-            } catch (IOException e) {
-                log.warn("Unable to set executable bit for script file: " + script + ": " + e.getMessage());
+            if (pluginDef.getPluginType().equals("script")) {
+
+                final File script = new File(fileExpandedDir, pluginDef.getScriptFile());
+                //set executable bit for script-file of the provider
+                try {
+                    ScriptfileUtils.setExecutePermissions(script);
+                } catch (IOException e) {
+                    log.warn("Unable to set executable bit for script file: " + script + ": " + e.getMessage());
+                }
             }
             debug("expanded plugin dir! " + fileExpandedDir);
         } else {
             debug("expanded plugin dir: " + fileExpandedDir);
         }
-
-        final File script = new File(fileExpandedDir, pluginDef.getScriptFile());
-        if (!script.exists() || !script.isFile()) {
-            throw new PluginException("Script file was not found: " + script.getAbsolutePath());
+        if (pluginDef.getPluginType().equals("script")) {
+            final File script = new File(fileExpandedDir, pluginDef.getScriptFile());
+            if (!script.exists() || !script.isFile()) {
+                throw new PluginException("Script file was not found: " + script.getAbsolutePath());
+            }
         }
         return new ScriptPluginProviderImpl(pluginMeta, pluginDef, file, fileExpandedDir);
     }
@@ -301,18 +305,12 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
         boolean topfound = false;
         boolean found = false;
         boolean dirfound = false;
+        boolean resfound = false;
         ZipEntry nextEntry = zipinput.getNextEntry();
+        Set<String> paths = new HashSet<>();
         while (null != nextEntry) {
-            if (!topfound && nextEntry.getName().startsWith(basename + "/")) {
-                topfound = true;
-            }
-            if (!dirfound && (nextEntry.getName().startsWith(basename + "/contents/")
-                              || nextEntry.isDirectory() && nextEntry.getName().equals(
-                basename + "/contents"))) {
+            paths.add(nextEntry.getName());
 
-//                debug("Found contents dir: " + nextEntry.getName());
-                dirfound = true;
-            }
             if (!found && !nextEntry.isDirectory() && nextEntry.getName().equals(basename + "/plugin.yaml")) {
 //                debug("Found metadata: " + nextEntry.getName());
                 try {
@@ -322,21 +320,36 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
                     log.error("Error parsing metadata file plugin.yaml: " + e.getMessage(), e);
                 }
             }
-            if (dirfound && found) {
-                break;
-            }
             nextEntry = zipinput.getNextEntry();
-        }
-        if (!topfound) {
-            log.error("Plugin not loaded: Found no " + basename + "/ dir within file: " + jar.getAbsolutePath());
         }
         if (!found) {
             log.error("Plugin not loaded: Found no " + basename + "/plugin.yaml within: " + jar.getAbsolutePath());
         }
-        if (!dirfound) {
-            log.error("Plugin not loaded: Found no " + basename + "/contents dir within: " + jar.getAbsolutePath());
+        String resdir = getResourcesBasePath(metadata);
+
+        for (String path : paths) {
+            if (!topfound && path.startsWith(basename + "/")) {
+                topfound = true;
+            }
+            if (!dirfound && (path.startsWith(basename + "/contents/") || path.equals(basename + "/contents"))) {
+                dirfound = true;
+            }
+            if (!resfound && (path.startsWith(basename + "/" + resdir + "/") || path.equals(basename + "/" + resdir))) {
+                resfound = true;
+            }
         }
-        if (found && dirfound) {
+        if (!topfound) {
+            log.error("Plugin not loaded: Found no " + basename + "/ dir within file: " + jar.getAbsolutePath());
+        }
+        if (!dirfound && !resfound) {
+            log.error("Plugin not loaded: Found no " +
+                      basename +
+                      "/contents or " +
+                      basename +
+                      "/" + resdir + " dir within: " +
+                      jar.getAbsolutePath());
+        }
+        if (found && (dirfound || resfound)) {
             return metadata;
         }
         return null;
@@ -454,6 +467,8 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
         }
         if ("script".equals(pluginDef.getPluginType())) {
             validateScriptProviderDef(pluginDef);
+        } else if ("ui".equals(pluginDef.getPluginType())) {
+            validateUIProviderDef(pluginDef);
         } else {
             throw new PluginException("plugin missing has invalid plugin-type: " + pluginDef.getPluginType());
         }
@@ -486,6 +501,22 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
                 "Service '" + pluginDef.getService() + "' specified for script plugin '" + pluginDef.getName()
                 + "' is not valid: unsupported");
         }*/
+    }
+
+    /**
+     * Validate script provider def
+     */
+    private static void validateUIProviderDef(final ProviderDef pluginDef) throws PluginException {
+        if (null == pluginDef.getName() || "".equals(pluginDef.getName())) {
+            throw new PluginException("UI plugin missing name");
+        }
+        if (null == pluginDef.getService() || "".equals(pluginDef.getService())) {
+            throw new PluginException("UI plugin missing service");
+        }
+        if (null == pluginDef.getPluginData() || null == pluginDef.getPluginData().get("ui")) {
+            throw new PluginException("UI plugin missing ui: definition");
+        }
+
     }
 
     private static void debug(final String msg) {
@@ -577,7 +608,11 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
     }
 
     public String getResourcesBasePath() throws IOException {
-        String resourcesDir = getPluginMeta().getResourcesDir();
+        return getResourcesBasePath(getPluginMeta());
+    }
+
+    public static String getResourcesBasePath(PluginMeta metadata) throws IOException {
+        String resourcesDir = metadata.getResourcesDir();
         return null != resourcesDir ? resourcesDir : RESOURCES_DIR_DEFAULT;
     }
 }
