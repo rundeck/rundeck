@@ -22,36 +22,62 @@ function RundeckPage(data) {
     var self = this;
     self.project = ko.observable(data.project);
     self.path = ko.observable(data.path);
-    self.pageLoad = [];
     self.onPageLoad = function () {
 
     };
+    function supports_html5_storage() {
+        try {
+            return 'localStorage' in window && window['localStorage'] !== null;
+        } catch (e) {
+            return false;
+        }
+    }
     self.persistUserSetting = function (key, val) {
-        return jQuery.ajax({
-            url: _genUrl(appLinks.userAddFilterPref, {filterpref: key + "=" + val}),
-            method: 'POST',
-            beforeSend: _ajaxSendTokens.curry('uiplugin_tokens'),
-            success: function () {
-                console.log("saved successful for project " );
-            },
-            error: function () {
-                console.log("save failed for project " );
-            }
-        }).success(_ajaxReceiveTokens.curry('uiplugin_tokens'));
+        if (supports_html5_storage()) {
+            localStorage[key] = val;
+        }
+        // return jQuery.ajax({
+        //     url: _genUrl(appLinks.userAddFilterPref, {filterpref: key + "=" + val}),
+        //     method: 'POST',
+        //     beforeSend: _ajaxSendTokens.curry('uiplugin_tokens'),
+        //     success: function () {
+        //         console.log("saved successful for project " );
+        //     },
+        //     error: function () {
+        //         console.log("save failed for project " );
+        //     }
+        // }).success(_ajaxReceiveTokens.curry('uiplugin_tokens'));
+    };
+    self.removeUserSetting = function (key) {
+        if (supports_html5_storage()) {
+            localStorage.removeItem(key);
+        }
     };
     self.loadUserSetting=function (key) {
-        return jQuery.ajax({
-            url: _genUrl(appLinks.userLoadUserPrefAll, key && {key: key } || {}),
-            method: 'GET',
-            success: function (data) {
-                console.log("load data pref  " + data);
-            },
-            error: function () {
-                console.log("load failed for user pref ");
-            }
-        })
+        if (supports_html5_storage()) {
+            return localStorage[key];
+        }
+        // return jQuery.ajax({
+        //     url: _genUrl(appLinks.userLoadUserPrefAll, key && {key: key } || {}),
+        //     method: 'GET',
+        //     success: function (data) {
+        //         console.log("load data pref  " + data);
+        //     },
+        //     error: function () {
+        //         console.log("load failed for user pref ");
+        //     }
+        // })
+    };
+    /**
+     * Called last at end of page load
+     */
+    self.onPageLoad = function () {
+        jQuery(document).trigger(
+            jQuery.Event('load.rundeck.page', {
+                relatedTarget: self
+            }));
     }
 }
 jQuery(function () {
-    window.rundeckPage = new RundeckPage(loadJsonData('pageData'));
+    window.rundeckPage = new RundeckPage(loadJsonData('uipluginData'));
 });

@@ -69,6 +69,7 @@ class ControllerBase {
 
     def afterInterceptor = { model ->
         model.uiplugins = loadUiPlugins(controllerName + "/" + actionName)
+        model.uipluginsPath = controllerName + "/" + actionName
     }
     protected def withHmacToken(Closure valid){
         GrailsWebRequest request= (GrailsWebRequest) RequestContextHolder.currentRequestAttributes()
