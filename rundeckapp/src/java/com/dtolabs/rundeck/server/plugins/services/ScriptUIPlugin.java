@@ -45,14 +45,11 @@ public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements U
     }
 
     private void loadResourcesFromMap(Map uimap) {
+        validateUimap(uimap);
         //pages,styles,scripts, each a string or list of strings
         List<String> pages = asStringList(uimap.get("pages"));
         List<String> styles = asStringList(uimap.get("styles"));
         List<String> scripts = asStringList(uimap.get("scripts"));
-        if (null == pages) {
-            throw new IllegalArgumentException(
-                    "in provider metadata: 'ui: pages:' not found, or not a String or String list");
-        }
         for (String page : pages) {
             if (styles != null) {
                 for (String resource : styles) {
@@ -76,6 +73,11 @@ public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements U
         dataSet.get(page).add(resource);
     }
 
+    /**
+     * @param pages either a string or collection of strings
+     *
+     * @return list of strings, or null if pages was not a string or list, or was a list and contained no strings
+     */
     private static List<String> asStringList(final Object pages) {
         if (pages instanceof String) {
             return Collections.singletonList((String) pages);
@@ -86,6 +88,9 @@ public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements U
                     strings.add((String) o);
                 }
             }
+            if (strings.size() < 1) {
+                return null;
+            }
             return strings;
         }
         return null;
@@ -93,6 +98,7 @@ public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements U
 
     private void loadProviderDefs(final ScriptPluginProvider provider) {
         Map<String, Object> metadata = provider.getMetadata();
+        validateMetadata(metadata);
         Object ui = metadata.get("ui");
         if (ui instanceof Map) {
             Map uimap = (Map) ui;
@@ -103,8 +109,6 @@ public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements U
                     loadResourcesFromMap((Map) o);
                 }
             }
-        } else {
-            throw new IllegalArgumentException("in provider metadata: 'ui:' was not a Map or a List");
         }
 
     }
@@ -116,27 +120,37 @@ public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements U
             throw new PluginException(e);
         }
         Map<String, Object> metadata = plugin.getMetadata();
+        validateMetadata(metadata);
+    }
+
+    private static void validateMetadata(final Map<String, Object> metadata) {
         Object ui = metadata.get("ui");
         if (ui instanceof Map) {
-            Map uimap = (Map) ui;
-            List<String> pages = asStringList(uimap.get("pages"));
-            if (pages == null) {
-                throw new IllegalArgumentException(
-                        "in provider metadata: 'ui: pages:' not found, or not a String or String list");
-            }
+            validateUimap((Map) ui);
         } else if (ui instanceof Collection) {
             for (Object o : ((Collection) ui)) {
                 if (o instanceof Map) {
                     Map uimap = (Map) o;
-                    List<String> pages = asStringList(uimap.get("pages"));
-                    if (pages == null) {
-                        throw new IllegalArgumentException(
-                                "in provider metadata: 'ui: - pages:' not found, or not a String or String list");
-                    }
+                    validateUimap((Map) o);
                 }
             }
         } else {
             throw new IllegalArgumentException("in provider metadata: 'ui:' was not a Map or a List");
+        }
+    }
+
+    private static void validateUimap(final Map uimap) {
+        List<String> pages = asStringList(uimap.get("pages"));
+        if (pages == null) {
+            throw new IllegalArgumentException(
+                    "in provider metadata: 'ui: pages:' not found, or not a String or String list");
+        }
+        List<String> styles = asStringList(uimap.get("styles"));
+        List<String> scripts = asStringList(uimap.get("scripts"));
+        if (null == styles && null == scripts) {
+            throw new IllegalArgumentException(
+                    "in provider metadata: 'ui: pages:' either 'scripts' or 'styles' was expected to be a String or " +
+                    "String list");
         }
     }
 
