@@ -34,29 +34,38 @@ import java.util.zip.GZIPOutputStream
  * @since 2014-03-12
  */
 class ControllerBase {
+    public static final ArrayList<String> UIPLUGIN_PAGES = [
+            'menu/jobs',
+            'menu/home',
+            'menu/executionMode',
+            'menu/admin',
+            "menu/logStorage",
+            "menu/securityConfig",
+            "menu/systemInfo",
+            "menu/systemConfig",
+            "menu/metrics",
+            "menu/plugins",
+            "menu/welcome",
+            "menu/storage",
+            "scheduledExecution/show",
+            "scheduledExecution/edit",
+            "scheduledExecution/delete",
+            "scheduledExecution/create",
+            "execution/show",
+            "framework/nodes",
+            "framework/adhoc",
+            "framework/createProject",
+            "framework/editProject",
+            "framework/editProjectConfig",
+            "scm/index",
+            "reports/index",
+    ]
     def grailsApplication
     UiPluginService uiPluginService
 
     protected def loadUiPlugins(path) {
         def uiplugins = [:]
-        if ((path in [
-                'menu/jobs',
-                'menu/home',
-                'menu/executionMode',
-                'menu/admin',
-                "menu/logStorage",
-                "menu/securityConfig",
-                "menu/systemInfo",
-                "menu/metrics",
-                "menu/plugins",
-                "menu/welcome",
-                "scheduledExecution/show",
-                "scheduledExecution/edit",
-                "scheduledExecution/delete",
-                "scheduledExecution/create",
-                "execution/show",
-        ])) {
-
+        if ((path in UIPLUGIN_PAGES)) {
             uiPluginService.pluginsForPage(path).each { name, inst ->
                 uiplugins[name] = [
                         scripts: inst.scriptResourcesForPath(path),
