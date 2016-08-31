@@ -1215,9 +1215,18 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
 
         def uiPluginProfiles = [:]
+        def loadedFileNameMap=[:]
         pluginDescs.each { svc, list ->
             list.each { desc ->
-                uiPluginProfiles[svc + ":" + desc.name] = uiPluginService.getProfileFor(svc, desc.name)
+                def provIdent = svc + ":" + desc.name
+                uiPluginProfiles[provIdent] = uiPluginService.getProfileFor(svc, desc.name)
+                def filename = uiPluginProfiles[provIdent].metadata?.filename
+                if(filename){
+                    if(!loadedFileNameMap[filename]){
+                        loadedFileNameMap[filename]=[]
+                    }
+                    loadedFileNameMap[filename]<< provIdent
+                }
             }
         }
 
@@ -1233,6 +1242,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 (framework.getResourceModelSourceService().name): framework.getResourceModelSourceService().getBundledProviderNames(),
                 (storagePluginProviderService.name): storagePluginProviderService.getBundledProviderNames()+['db'],
         ]
+        //list included plugins
+        def embeddedList = frameworkService.listEmbeddedPlugins(grailsApplication)
+        def embeddedFilenames=[]
+        if(embeddedList.success && embeddedList.pluginList){
+            embeddedFilenames=embeddedList.pluginList*.fileName
+        }
         def specialConfiguration=[
                 (storagePluginProviderService.name):[
                         description: message(code:"plugin.storage.provider.special.description"),
@@ -1265,6 +1280,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 descriptions        : pluginDescs,
                 serviceDefaultScopes: defaultScopes,
                 bundledPlugins      : bundledPlugins,
+                embeddedFilenames   : embeddedFilenames,
                 specialConfiguration: specialConfiguration,
                 specialScoping      : specialScoping,
                 uiPluginProfiles    : uiPluginProfiles

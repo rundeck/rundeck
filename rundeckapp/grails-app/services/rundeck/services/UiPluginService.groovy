@@ -53,6 +53,7 @@ class UiPluginService {
                         }
                         profile['icon'] = testlist.find { reslist?.contains(it.toString()) }
                     }
+                    profile['metadata'] = metadataForPlugin(service, name)
                     providerProfiles[service + ':' + name] = profile
                 }
             }
@@ -71,6 +72,9 @@ class UiPluginService {
         rundeckPluginRegistry.getResourceLoader(service, name)?.listResources()
     }
 
+    def metadataForPlugin(String service, String name) {
+        rundeckPluginRegistry.getPluginMetadata(service, name)
+    }
     /**
      * open input stream for the resource
      * @param service

@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.server.plugins
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import com.dtolabs.rundeck.core.plugins.ProviderIdent
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
@@ -158,6 +159,21 @@ public interface PluginRegistry {
      */
     public <T> Map<String, DescribedPlugin<T>> listPluginDescriptors(Class groovyPluginType, PluggableProviderService<T> service) ;
 
-
+    /**
+     * Return plugin resource loader
+     * @param service
+     * @param provider
+     * @return
+     * @throws ProviderLoaderException
+     */
     public PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException;
+
+    /**
+     * Return plugin metadata
+     * @param service
+     * @param provider
+     * @return
+     * @throws ProviderLoaderException
+     */
+    public PluginMetadata getPluginMetadata(String service, String provider) throws ProviderLoaderException;
 }

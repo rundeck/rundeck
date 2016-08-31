@@ -49,6 +49,8 @@ public interface ServiceProviderLoader {
 
     public PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException;
 
+    public PluginMetadata getPluginMetadata(String service, String provider) throws ProviderLoaderException;
+
     /**
      * @return the available providers
      */

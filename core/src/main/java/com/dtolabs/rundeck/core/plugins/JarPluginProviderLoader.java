@@ -28,6 +28,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.text.DateFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicLong;
@@ -51,7 +52,7 @@ import com.dtolabs.rundeck.core.utils.cache.FileCache;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable, PluginResourceLoader {
+class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable, PluginResourceLoader, PluginMetadata {
     public static final String RESOURCES_DIR_DEFAULT = "resources";
     private static Logger log = Logger.getLogger(JarPluginProviderLoader.class.getName());
     public static final String RUNDECK_PLUGIN_ARCHIVE = "Rundeck-Plugin-Archive";
@@ -66,6 +67,9 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable, P
     public static final VersionCompare LOWEST_JAR_PLUGIN_VERSION = VersionCompare.forString(JAR_PLUGIN_VERSION);
     public static final String RUNDECK_PLUGIN_VERSION = "Rundeck-Plugin-Version";
     public static final String RUNDECK_PLUGIN_FILE_VERSION = "Rundeck-Plugin-File-Version";
+    public static final String RUNDECK_PLUGIN_AUTHOR = "Rundeck-Plugin-Author";
+    public static final String RUNDECK_PLUGIN_URL = "Rundeck-Plugin-URL";
+    public static final String RUNDECK_PLUGIN_DATE = "Rundeck-Plugin-Date";
     public static final String RUNDECK_PLUGIN_LIBS_LOAD_FIRST = "Rundeck-Plugin-Libs-Load-First";
     public static final String CACHED_JAR_TIMESTAMP_FORMAT = "yyyyMMddHHmmssSSS";
     private final File pluginJar;
@@ -214,7 +218,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable, P
      *
      * @return
      */
-    private String getPluginVersion() {
+    public String getPluginVersion() {
         Attributes mainAttributes = getMainAttributes();
         return mainAttributes.getValue(RUNDECK_PLUGIN_VERSION);
     }
@@ -389,11 +393,13 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable, P
     }
 
     private CachedJar cachedJar;
+    private Date loadedDate = null;
 
     private synchronized JarPluginProviderLoader.CachedJar getCachedJar() throws PluginException {
         if (null == cachedJar) {
             synchronized (this) {
                 if (null == cachedJar) {
+                    this.loadedDate = new Date();
                     String itemIdent = generateCachedJarIdentity();
                     String jarName = generateCachedJarName(itemIdent);
                     File dir = generateCachedJarDir(itemIdent);
@@ -790,5 +796,52 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable, P
                 throw new PluginException("Error creating classloader for " + cachedJar, e);
             }
         }
+    }
+
+    @Override
+    public String getFilename() {
+        return pluginJar.getName();
+    }
+
+    @Override
+    public File getFile() {
+        return pluginJar;
+    }
+
+    @Override
+    public String getPluginAuthor() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_AUTHOR);
+    }
+
+    @Override
+    public String getPluginFileVersion() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_FILE_VERSION);
+    }
+
+    @Override
+    public String getPluginUrl() {
+        Attributes mainAttributes = getMainAttributes();
+        return mainAttributes.getValue(RUNDECK_PLUGIN_URL);
+    }
+
+    @Override
+    public Date getPluginDate() {
+        Attributes mainAttributes = getMainAttributes();
+        String value = mainAttributes.getValue(RUNDECK_PLUGIN_DATE);
+        if (null != value) {
+            try {
+                return new SimpleDateFormat().parse(value);
+            } catch (ParseException e) {
+
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Date getDateLoaded() {
+        return loadedDate;
     }
 }

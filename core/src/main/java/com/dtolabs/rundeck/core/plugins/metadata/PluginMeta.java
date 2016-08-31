@@ -36,6 +36,7 @@ public class PluginMeta {
     private String date;
     private String version;
     private String rundeckPluginVersion;
+    private String url;
     private List<String> resourcesList;
     private String resourcesDir;
     private List<Map<String, Object>> providers;
@@ -125,5 +126,13 @@ public class PluginMeta {
 
     public void setResourcesDir(String resourcesDir) {
         this.resourcesDir = resourcesDir;
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 }

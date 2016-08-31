@@ -37,6 +37,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -48,7 +50,7 @@ import static com.dtolabs.rundeck.core.plugins.JarPluginProviderLoader.RESOURCES
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable, PluginResourceLoader {
+class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable, PluginResourceLoader, PluginMetadata {
 
     private static final Logger log = Logger.getLogger(ScriptPluginProviderLoader.class.getName());
     public static final String VERSION_1_0 = "1.0";
@@ -173,6 +175,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
         return null;
     }
 
+    private Date dateLoaded = null;
 
     /**
      * Get the plugin metadata, loading from the file if necessary
@@ -186,6 +189,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
             return metadata;
         }
         metadata = loadMeta(file);
+        dateLoaded = new Date();
         return metadata;
     }
 
@@ -614,5 +618,73 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
     public static String getResourcesBasePath(PluginMeta metadata) throws IOException {
         String resourcesDir = metadata.getResourcesDir();
         return null != resourcesDir ? resourcesDir : RESOURCES_DIR_DEFAULT;
+    }
+
+    @Override
+    public String getFilename() {
+        return file.getName();
+    }
+
+    @Override
+    public File getFile() {
+        return file;
+    }
+
+    @Override
+    public String getPluginAuthor() {
+        try {
+            return getPluginMeta().getAuthor();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public String getPluginFileVersion() {
+        try {
+            return getPluginMeta().getVersion();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public String getPluginVersion() {
+        try {
+            return getPluginMeta().getRundeckPluginVersion();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public String getPluginUrl() {
+        try {
+            return getPluginMeta().getUrl();
+        } catch (IOException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public Date getPluginDate() {
+        try {
+            String date = getPluginMeta().getDate();
+            return new SimpleDateFormat().parse(date);
+        } catch (IOException e) {
+
+        } catch (ParseException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public Date getDateLoaded() {
+        return dateLoaded;
     }
 }
