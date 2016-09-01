@@ -36,29 +36,19 @@ class UiPluginService {
         loaded
     }
 
-    final Map providerProfiles = [:]
 
     def getProfileFor(String service, String name) {
-        def profile = providerProfiles[service + ':' + name]
-        if (null == profile) {
-            synchronized (providerProfiles) {
-                if (null == profile) {
-                    profile = [:]
-                    def reslist = resourcesForPlugin(service, name)
-                    if (reslist) {
-                        def testlist = ['png', 'gif'].inject([]) { list, ext ->
-                            list + ["${service}.${name}.icon.", 'icon.'].collect { prefix ->
-                                prefix + ext
-                            }
-                        }
-                        profile['icon'] = testlist.find { reslist?.contains(it.toString()) }
-                    }
-                    profile['metadata'] = metadataForPlugin(service, name)
-                    providerProfiles[service + ':' + name] = profile
+        def profile = [:]
+        def reslist = resourcesForPlugin(service, name)
+        if (reslist) {
+            def testlist = ['png', 'gif'].inject([]) { list, ext ->
+                list + ["${service}.${name}.icon.", 'icon.'].collect { prefix ->
+                    prefix + ext
                 }
             }
+            profile['icon'] = testlist.find { reslist?.contains(it.toString()) }
         }
-
+        profile['metadata'] = metadataForPlugin(service, name)
         profile
     }
 
