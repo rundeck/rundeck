@@ -69,6 +69,11 @@ class JobInfo {
     @XmlAttribute
     Boolean serverOwner
 
+    @ApiVersion(18)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    Long averageDuration
+
 //    Map blah=[
 //            z:'x'
 //    ]
@@ -91,7 +96,7 @@ class JobInfo {
                      scheduled      : se.scheduled,
                      scheduleEnabled: se.scheduleEnabled,
                      enabled        : se.executionEnabled
-                    ] + extra?.subMap('serverNodeUUID', 'serverOwner')
+                    ] + extra?.subMap('serverNodeUUID', 'serverOwner','averageDuration')
         )
     }
 }

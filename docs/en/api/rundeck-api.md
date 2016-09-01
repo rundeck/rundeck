@@ -2302,7 +2302,7 @@ Get metadata about a specific job.
 
 ~~~~~~~~~~ {.xml}
 <job id="ID" href="[API url]" permalink="[GUI URL]" scheduled="true/false" scheduleEnabled="true/false"
-   enabled="true/false"
+   enabled="true/false" averageDuration="[ms]"
    >
     <name>Job Name</name>
     <group>Job Name</group>
@@ -2326,7 +2326,8 @@ A single object:
     "permalink": "[GUI url]",
     "scheduled": true/false,
     "scheduleEnabled": true/false,
-    "enabled": true/false
+    "enabled": true/false,
+    "averageDuration": long (milliseconds)
 }
 ~~~~~~~~~~~~
 

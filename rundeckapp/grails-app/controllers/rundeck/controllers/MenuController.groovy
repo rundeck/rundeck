@@ -86,6 +86,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     static allowedMethods = [
             deleteJobfilter:'POST',
             storeJobfilter:'POST',
+            apiJobDetail:'GET',
             apiResumeIncompleteLogstorage:'POST',
             cleanupIncompleteLogStorageAjax:'POST',
             resumeIncompleteLogStorageAjax: 'POST',
@@ -1802,6 +1803,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (clusterModeEnabled && scheduledExecution.scheduled) {
             extra.serverNodeUUID = scheduledExecution.serverNodeUUID
             extra.serverOwner = scheduledExecution.serverNodeUUID == serverNodeUUID
+        }
+        if (scheduledExecution.totalTime >= 0 && scheduledExecution.execCount > 0) {
+            def long avg = Math.floor(scheduledExecution.totalTime / scheduledExecution.execCount)
+            extra.averageDuration = avg
         }
         respond(
 
