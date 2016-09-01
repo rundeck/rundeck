@@ -30,8 +30,8 @@ import org.codehaus.groovy.runtime.InvokerHelper
 class StreamingLogWriterPluginBuilder extends ScriptPluginBuilder implements PluginBuilder<StreamingLogWriterPlugin>{
     static Logger logger = Logger.getLogger(StreamingLogWriterPluginBuilder)
     Map<String, Closure> handlers = [:]
-    StreamingLogWriterPluginBuilder(String name) {
-        super(name)
+    StreamingLogWriterPluginBuilder(Class clazz,String name) {
+        super(clazz,name)
     }
 
     @Override

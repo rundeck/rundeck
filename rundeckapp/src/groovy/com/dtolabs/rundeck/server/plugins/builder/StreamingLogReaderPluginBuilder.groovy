@@ -31,8 +31,8 @@ class StreamingLogReaderPluginBuilder extends ScriptPluginBuilder implements Plu
     static Logger logger = Logger.getLogger(StreamingLogReaderPluginBuilder)
     Map<String, Closure> handlers = [:]
 
-    StreamingLogReaderPluginBuilder(String name) {
-        super(name)
+    StreamingLogReaderPluginBuilder(Class clazz,String name) {
+        super(clazz,name)
     }
 
     @Override

@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
+import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.apache.log4j.Logger
@@ -50,6 +51,9 @@ import org.springframework.context.ApplicationContextAware
  */
 class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
     public static Logger log = Logger.getLogger(RundeckPluginRegistry.class.name)
+    /**
+     * Registry of spring bean plugin providers, "providername"->"beanname"
+     */
     HashMap pluginRegistryMap
     def ApplicationContext applicationContext
     /**
@@ -381,6 +385,23 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
 
     @Override
     PluginMetadata getPluginMetadata(final String service, final String provider) throws ProviderLoaderException {
+        if (pluginRegistryMap[provider]) {
+            Class groovyPluginType = ServiceTypes.TYPES[service]
+            String beanName=pluginRegistryMap[provider]
+            try {
+                def bean = findBean(beanName)
+                if (bean instanceof PluginBuilder) {
+                    if (bean.pluginClass == groovyPluginType) {
+                        if (bean instanceof PluginMetadata) {
+                            def metadata = bean as PluginMetadata
+                            return metadata
+                        }
+                    }
+                }
+            } catch (NoSuchBeanDefinitionException e) {
+                log.error("No such bean: ${beanName}")
+            }
+        }
         rundeckServerServiceProviderLoader.getPluginMetadata service, provider
     }
 }

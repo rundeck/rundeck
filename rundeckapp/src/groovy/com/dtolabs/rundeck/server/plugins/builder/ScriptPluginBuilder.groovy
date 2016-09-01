@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.server.plugins.builder
 
+import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
@@ -26,6 +27,8 @@ import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.apache.log4j.Logger
 
 import java.lang.reflect.Constructor
+import java.text.ParseException
+import java.text.SimpleDateFormat
 
 /**
  * Builder for rundeck plugin DSL support
@@ -33,24 +36,26 @@ import java.lang.reflect.Constructor
  * Date: 4/16/13
  * Time: 3:55 PM
  */
-abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder{
+abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, PluginMetadata {
     static Logger logger = Logger.getLogger(ScriptPluginBuilder)
-    private Map pluginAttributes=[:]
+    private Map pluginAttributes = [:]
     /**
      * internal builder for the plugin Description
      */
     def DescriptionBuilder descriptionBuilder
+
+    private Class pluginClass
     /**
      * Registry of valid Rundeck plugin classes and associated groovy DSL builders
      */
-    private static Map<Class,Class<? extends ScriptPluginBuilder>> clazzBuilderRegistry=[
-            (NotificationPlugin):ScriptNotificationPluginBuilder,
-            (StreamingLogWriterPlugin):StreamingLogWriterPluginBuilder,
-            (StreamingLogReaderPlugin):StreamingLogReaderPluginBuilder,
+    private static Map<Class, Class<? extends ScriptPluginBuilder>> clazzBuilderRegistry = [
+            (NotificationPlugin)        : ScriptNotificationPluginBuilder,
+            (StreamingLogWriterPlugin)  : StreamingLogWriterPluginBuilder,
+            (StreamingLogReaderPlugin)  : StreamingLogReaderPluginBuilder,
             (ExecutionFileStoragePlugin): ExecutionFileStoragePluginBuilder,
     ]
-    private static Map<Class,String> disabledPluginClasses=[
-            (LogFileStoragePlugin):"The LogFileStoragePlugin interface is no longer supported, use a plugin that" +
+    private static Map<Class, String> disabledPluginClasses = [
+            (LogFileStoragePlugin): "The LogFileStoragePlugin interface is no longer supported, use a plugin that" +
                     " implements ExecutionFileStoragePlugin"
     ]
     /**
@@ -59,15 +64,15 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder{
      * @param name
      * @return
      */
-    public static ScriptPluginBuilder forPluginClass(Class clazz, String name){
+    public static ScriptPluginBuilder forPluginClass(Class clazz, String name) {
         Class subClazz = clazzBuilderRegistry[clazz]
-        if(subClazz){
-            def Constructor constructor = subClazz.getDeclaredConstructor(String)
-            return constructor.newInstance(name)
-        }else if(disabledPluginClasses[clazz]){
-            logger.error("Plugin '${name}' not loaded: "+disabledPluginClasses[clazz])
+        if (subClazz) {
+            def Constructor constructor = subClazz.getDeclaredConstructor(Class,String)
+            return constructor.newInstance(clazz,name)
+        } else if (disabledPluginClasses[clazz]) {
+            logger.error("Plugin '${name}' not loaded: " + disabledPluginClasses[clazz])
             return null
-        }else{
+        } else {
             throw new IllegalArgumentException("Unsupported plugin type: ${clazz.name}")
         }
     }
@@ -75,38 +80,93 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder{
      * Create a builder for a plugin with the specified plugin/provider name.
      * @param name the name of the plugin/provider
      */
-    ScriptPluginBuilder(String name) {
-        descriptionBuilder=DescriptionBuilder.builder()
+    ScriptPluginBuilder(Class clazz,String name) {
+        descriptionBuilder = DescriptionBuilder.builder()
         descriptionBuilder.name(name)
+        this.pluginClass=clazz
+        this.filename = name + '.groovy'
     }
+    private String filename
 
+    Class getPluginClass() {
+        return pluginClass
+    }
     /**
      * allow title, description properties to be set within the DSL
      * @param property
      * @param newValue
      */
-//    @Override
     def propertyMissing(String property, Object newValue) {
-        if(property in ['title','description'] && newValue instanceof String){
-            pluginAttributes[property]=newValue
-            if(property=='title'){
-                descriptionBuilder.title((String)newValue)
-            }else{
+        if (property in ['title', 'description', 'version', 'url', 'author', 'date'] && newValue instanceof String) {
+            pluginAttributes[property] = newValue
+            if (property == 'title') {
+                descriptionBuilder.title((String) newValue)
+            } else if (property == 'description') {
                 descriptionBuilder.description((String) newValue)
             }
-        }else{
+        } else {
             super.setProperty(property, newValue)
         }
     }
 
+    @Override
+    String getFilename() {
+        filename
+    }
+
+    @Override
+    File getFile() {
+        return null
+    }
+
+    @Override
+    String getPluginAuthor() {
+        return pluginAttributes['author']
+    }
+
+    @Override
+    String getPluginFileVersion() {
+        return pluginAttributes['version']
+    }
+
+    @Override
+    String getPluginVersion() {
+        return null
+    }
+
+    @Override
+    String getPluginUrl() {
+        return pluginAttributes['url']
+    }
+
+    @Override
+    Date getPluginDate() {
+        def val = pluginAttributes['date']
+        if (val instanceof Date) {
+            return val
+        } else if (val instanceof String) {
+            try {
+                (new SimpleDateFormat().parse(val))
+            } catch (ParseException e) {
+            }
+        }
+        return null
+    }
+
+    private Date dateLoaded = new Date()
+
+    @Override
+    Date getDateLoaded() {
+        return dateLoaded
+    }
     /**
      * Configuration dsl declaration, uses the ScriptPluginConfigBuilder class
      * @param clos
      */
-    void configuration(Closure clos){
+    void configuration(Closure clos) {
         def builder = new ScriptPluginConfigBuilder(descriptionBuilder)
         clos.delegate = builder
-        clos.resolveStrategy=Closure.DELEGATE_ONLY
+        clos.resolveStrategy = Closure.DELEGATE_ONLY
         clos.call(builder)
     }
 

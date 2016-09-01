@@ -31,8 +31,8 @@ class ExecutionFileStoragePluginBuilder extends ScriptPluginBuilder implements P
     static Logger logger = Logger.getLogger(StreamingLogWriterPluginBuilder)
     Map<String, Closure> handlers = [:]
 
-    ExecutionFileStoragePluginBuilder(String name) {
-        super(name)
+    ExecutionFileStoragePluginBuilder(Class clazz,String name) {
+        super(clazz,name)
     }
 
     @Override
