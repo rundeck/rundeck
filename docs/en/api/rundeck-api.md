@@ -57,9 +57,8 @@ Changes introduced by API Version number:
 
 **Version 18**:
 
-* Updated Endpoints:
-    - [`/api/18/job/[ID]/run`][/api/V/job/[ID]/run] 
-        - new `runAtTime` parameter to run once at a certain time.
+* New Endpoints.
+    - [`GET /api/18/job/[ID]/info`][/api/V/job/[ID]/info] - Get metadata about a Job: Project name and scheduling info.
 
 **Version 17**:
 
@@ -221,7 +220,6 @@ In this version, all new and updated endpoints support XML or JSON request and r
 - For API clients that expect to see the `<result>` element, a request header of `X-Rundeck-API-XML-Response-Wrapper: true` will restore it.
 - For endpoint requests for API version 10 and earlier, the `<result>` element will be sent as it has been (described in [Response Format][])
 
-[Response Format]: #response-format
 
 **Version 11**:
 
@@ -1818,7 +1816,7 @@ If you specify `format=xml`, then the output will be in [job-xml](../man5/job-xm
 
 If you specify `format=yaml`, then the output will be in [job-yaml](../man5/job-yaml.html) format.
 
-If an error occurs, then the output will be in XML format, using the common `result` element described in the [Response Format](#response-format) section.
+If an error occurs, then the output will be in XML format, using the common `result` element described in the [Response Format][] section.
 
 ### Importing Jobs ###
 
@@ -1929,7 +1927,7 @@ If you specify `format=xml`, then the output will be in [job-xml](../man5/job-xm
 
 If you specify `format=yaml`, then the output will be in [job-yaml](../man5/job-yaml.html) format.
 
-If an error occurs, then the output will be in XML format, using the common `result` element described in the [Response Format](#response-format) section.
+If an error occurs, then the output will be in XML format, using the common `result` element described in the [Response Format][] section.
 
 ### Deleting a Job Definition ###
 
@@ -1975,7 +1973,7 @@ Note: you can combine `ids` with `idlist`
 
 `application/xml` response:
 
-The common `result` element described in the [Response Format](#response-format) section, indicating success or failure and any messages.
+The common `result` element described in the [Response Format][] section, indicating success or failure and any messages.
 
 If successful, then the `result` will contain a `deleteJobs` element with two sections of results, `succeeded` and `failed`:
 
@@ -2289,6 +2287,49 @@ The list of succeeded/failed will contain objects of this form:
   "message": "(success or failure message)"
 }
 ~~~~~~
+
+### Get Job Metadata
+
+Get metadata about a specific job.
+
+**Request:**
+
+    GET /api/18/job/[ID]/info
+
+**Response:**
+
+`Content-Type: application/xml`: A single `job` element in the same format as [Listing Jobs](#listing-jobs):
+
+~~~~~~~~~~ {.xml}
+<job id="ID" href="[API url]" permalink="[GUI URL]" scheduled="true/false" scheduleEnabled="true/false"
+   enabled="true/false" averageDuration="[ms]"
+   >
+    <name>Job Name</name>
+    <group>Job Name</group>
+    <project>Project Name</project>
+    <description>...</description>
+</job>
+~~~~~~~~~~~~
+
+`Content-Type: application/json`
+
+A single object:
+
+~~~~~~~~~~ {.json}
+{
+    "id": "[UUID]",
+    "name": "[name]",
+    "group": "[group]",
+    "project": "[project]",
+    "description": "...",
+    "href": "[API url]",
+    "permalink": "[GUI url]",
+    "scheduled": true/false,
+    "scheduleEnabled": true/false,
+    "enabled": true/false,
+    "averageDuration": long (milliseconds)
+}
+~~~~~~~~~~~~
 
 ## Executions
 
@@ -3184,7 +3225,7 @@ E.g.:
 The result will contain a set of data values reflecting the execution's status, as well as the status and read location in the output file.
 
 * In JSON, there will be an object containing these entries.
-* In XML, within the standard [Response Format](#response-format) `result` there will be an `output` element, containing these sub-elements, each with a text value.
+* In XML, within the standard [Response Format][] `result` there will be an `output` element, containing these sub-elements, each with a text value.
 
 Entries:
 
@@ -4104,7 +4145,7 @@ Resource Model definition in [resource-xml](../man5/resource-xml.html) or [resou
 
 **Since API version 3**: You can also POST data using a content type supported by a Resource Format Parser plugin.  This requires using API version `3`.
 
-POST Result: A success or failure API response. (See [Response Format](#response-format)).
+POST Result: A success or failure API response. (See [Response Format][]).
 
 Example POST request:
 
@@ -5350,6 +5391,10 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `POST` [Disable Executions for a Job](#disable-executions-for-a-job)
 
+[/api/V/job/[ID]/info][]
+
+* `GET` [Get Job Metadata](#get-job-metadata)
+
 [/api/V/job/[ID]/run][]
 
 * `POST` [Running a Job](#running-a-job)
@@ -5587,6 +5632,8 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 * `DELETE` [Delete a token](#delete-a-token)
 
 
+[Response Format]:#xml-response-format
+
 
 [/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugins]:#list-scm-plugins
 [/api/V/project/[PROJECT]/scm/[INTEGRATION]/plugin/[TYPE]/input]:#get-scm-plugin-input-fields
@@ -5634,6 +5681,8 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [POST /api/V/job/[ID]/executions]:#running-a-job
 [DELETE /api/V/job/[ID]/executions]:#delete-all-executions-for-a-job
 
+[/api/V/job/[ID]/info]:#get-job-metadata
+[GET /api/V/job/[ID]/info]:#get-job-metadata
 
 [/api/V/job/[ID]/schedule/enable]:#enable-scheduling-for-a-job
 

@@ -45,6 +45,8 @@ class UrlMappings {
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete', PUT: 'apiJobUpdateSingle', POST: 'apiJobCreateSingle']
         }
+        "/api/$api_version/job/$id/info"(controller: 'menu', action: 'apiJobDetail')
+
 
         "/api/$api_version/job/$id/execution/enable"(controller: 'scheduledExecution') {
             action = [POST: 'apiFlipExecutionEnabled']

@@ -45,7 +45,6 @@ API_CURRENT_VERSION=18
 
 API_VERSION=${API_VERSION:-$API_CURRENT_VERSION}
 
-
 # curl opts to use a cookie jar, and follow redirects, showing only errors
 if [ -n "$RDAUTH" ] ; then 
     AUTHHEADER="X-RunDeck-Auth-Token: $RDAUTH"
