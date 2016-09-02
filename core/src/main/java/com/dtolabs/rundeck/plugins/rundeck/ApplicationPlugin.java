@@ -14,15 +14,21 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.services;
+package com.dtolabs.rundeck.plugins.rundeck;
+
+import java.util.List;
+import java.util.Map;
 
 /**
- * PluginBuilder can produce an instance of a plugin.
- * User: greg
- * Date: 4/16/13
- * Time: 4:48 PM
+ * Generic plugin which can provide other plugin types, and behaviors
  */
-public interface PluginBuilder<T> {
-    public T buildPlugin();
-    public Class<T> getPluginClass();
+public interface ApplicationPlugin {
+
+//    boolean hasPluginProviders(String serviceName);
+//
+//    List<Object> getProvidersFor(String serviceName);
+//
+    boolean supportsCallback(String name);
+
+    Object performCallback(String name, Map data);
 }

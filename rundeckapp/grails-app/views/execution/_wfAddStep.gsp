@@ -72,7 +72,16 @@
 
                         <a  class="list-group-item textbtn  add_node_step_type" data-node-step-type="${enc(attr:typedesc.name)}"
                             href="#">
-                            <i class="rdicon icon-small plugin"></i>
+                            <g:if test="${uiPluginProfiles?.get('WorkflowNodeStep:'+typedesc.name)?.icon}">
+                                <img src="${createLink(
+                                        controller: 'plugin',
+                                        action: 'pluginIcon',
+                                        params: [service: 'WorkflowNodeStep', name: typedesc.name]
+                                )}" width="16px" height="16px"/>
+                            </g:if>
+                            <g:else>
+                                <i class="rdicon icon-small plugin"></i>
+                            </g:else>
                             <g:enc>${typedesc.title}</g:enc>
                             <span class="text-info">-
                             <g:render template="/scheduledExecution/description"
@@ -102,7 +111,16 @@
                     </div>
                     <g:each in="${stepDescriptions.sort{a,b->a.name<=>b.name}}" var="typedesc">
                         <a class="list-group-item textbtn  add_step_type" data-step-type="${enc(attr:typedesc.name)}" href="#">
-                            <i class="rdicon icon-small plugin"></i>
+                            <g:if test="${uiPluginProfiles?.get('WorkflowStep:'+typedesc.name)?.icon}">
+                                <img src="${createLink(
+                                        controller: 'plugin',
+                                        action: 'pluginIcon',
+                                        params: [service: 'WorkflowStep', name: typedesc.name]
+                                )}" width="16px" height="16px"/>
+                            </g:if>
+                            <g:else>
+                                <i class="rdicon icon-small plugin"></i>
+                            </g:else>
                             <g:enc>${typedesc.title}</g:enc>
                             <span class="text-info">-
                                 <g:render template="/scheduledExecution/description"

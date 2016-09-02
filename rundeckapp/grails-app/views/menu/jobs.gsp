@@ -599,7 +599,6 @@
 </div>
 </div>
 
-
 <div class="row row-space" id="activity_section">
     <div class="col-sm-12 ">
         <h4 class="text-muted "><g:message code="page.section.Activity.for.jobs" /></h4>

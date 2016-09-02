@@ -135,6 +135,25 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         }
     }
 
+    @Override
+    public PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException {
+        ProviderLoader loaderForIdent = getCache().getLoaderForIdent(new ProviderIdent(service, provider));
+        if (null != loaderForIdent && loaderForIdent instanceof PluginResourceLoader) {
+            return (PluginResourceLoader) loaderForIdent;
+        }
+        return null;
+    }
+
+    @Override
+    public PluginMetadata getPluginMetadata(final String service, final String provider)
+            throws ProviderLoaderException
+    {
+        ProviderLoader loaderForIdent = getCache().getLoaderForIdent(new ProviderIdent(service, provider));
+        if (null != loaderForIdent && loaderForIdent instanceof PluginMetadata) {
+            return (PluginMetadata) loaderForIdent;
+        }
+        return null;
+    }
 
     public File getExtdir() {
         return extdir;

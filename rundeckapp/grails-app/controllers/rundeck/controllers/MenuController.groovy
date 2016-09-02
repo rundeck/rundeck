@@ -58,6 +58,7 @@ import rundeck.services.NotificationService
 import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
+import rundeck.services.UiPluginService
 import rundeck.services.UserService
 import rundeck.services.framework.RundeckProjectConfigurable
 
@@ -75,6 +76,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     PluginService pluginService
+
     def configurationService
     ScmService scmService
     def quartzScheduler
@@ -231,7 +233,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def clearJobsFilter = { ScheduledExecutionQuery query ->
         return redirect(action: 'jobs', params: [project: params.project])
     }
-    def jobs = {ScheduledExecutionQuery query ->
+    def jobs (ScheduledExecutionQuery query ){
         
         def User u = userService.findOrCreateUser(session.user)
         if(params.size()<1 && !params.filterName && u ){
@@ -269,8 +271,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
     }
-    
-    def jobsFragment = {ScheduledExecutionQuery query ->
+
+    def jobsFragment(ScheduledExecutionQuery query) {
         long start=System.currentTimeMillis()
         UserAndRolesAuthContext authContext
         def usedFilter=null
@@ -1211,6 +1213,23 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
+
+        def uiPluginProfiles = [:]
+        def loadedFileNameMap=[:]
+        pluginDescs.each { svc, list ->
+            list.each { desc ->
+                def provIdent = svc + ":" + desc.name
+                uiPluginProfiles[provIdent] = uiPluginService.getProfileFor(svc, desc.name)
+                def filename = uiPluginProfiles[provIdent].metadata?.filename
+                if(filename){
+                    if(!loadedFileNameMap[filename]){
+                        loadedFileNameMap[filename]=[]
+                    }
+                    loadedFileNameMap[filename]<< provIdent
+                }
+            }
+        }
+
         def defaultScopes=[
                 (framework.getNodeStepExecutorService().name) : PropertyScope.InstanceOnly,
                 (framework.getStepExecutionService().name) : PropertyScope.InstanceOnly,
@@ -1223,6 +1242,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 (framework.getResourceModelSourceService().name): framework.getResourceModelSourceService().getBundledProviderNames(),
                 (storagePluginProviderService.name): storagePluginProviderService.getBundledProviderNames()+['db'],
         ]
+        //list included plugins
+        def embeddedList = frameworkService.listEmbeddedPlugins(grailsApplication)
+        def embeddedFilenames=[]
+        if(embeddedList.success && embeddedList.pluginList){
+            embeddedFilenames=embeddedList.pluginList*.fileName
+        }
         def specialConfiguration=[
                 (storagePluginProviderService.name):[
                         description: message(code:"plugin.storage.provider.special.description"),
@@ -1255,8 +1280,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 descriptions        : pluginDescs,
                 serviceDefaultScopes: defaultScopes,
                 bundledPlugins      : bundledPlugins,
+                embeddedFilenames   : embeddedFilenames,
                 specialConfiguration: specialConfiguration,
-                specialScoping      : specialScoping
+                specialScoping      : specialScoping,
+                uiPluginProfiles    : uiPluginProfiles
         ]
     }
 

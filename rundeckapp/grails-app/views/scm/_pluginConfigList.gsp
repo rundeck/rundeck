@@ -148,6 +148,7 @@
 
                     <g:render template="/framework/renderPluginConfig"
                               model="${[
+                                      serviceName:integration=='export'?'ScmExport':'ScmImport',
                                       values     : isConfigured ? pluginConfig.config : [:],
                                       description: plugins[pluginName].description,
                                       hideTitle  : true

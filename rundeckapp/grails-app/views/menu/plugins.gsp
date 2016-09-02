@@ -70,8 +70,8 @@
     <div class="panel panel-default">
             <div class="panel-heading">
                 <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion" href="#${ukey}" title="${serviceName}">
-                        <i class="glyphicon glyphicon-chevron-down"></i>
+                    <a class="accordion-toggle collapsed" data-toggle="collapse" data-parent="#accordion" href="#${ukey}" title="${serviceName}">
+                        <i class="auto-caret text-muted"></i>
     <g:message code="framework.service.${serviceName}.label.plural" default="${serviceName}"/></a>
 
                     <g:if test="${pluginDescList.size()>0}">
@@ -105,10 +105,24 @@
                 <g:set var="ukeyx" value="${g.rkey()}"/>
     <div class="panel panel-default">
             <div class="panel-heading">
-                <h4 class="panel-title">
-                    <a class="accordion-toggle" data-toggle="collapse" data-parent="#accordion${enc(attr:ukey)}" href="#${enc(attr:ukeyx)}" title="${pluginName}">
-                        <i class="glyphicon glyphicon-chevron-down"></i>
-                    <i class="rdicon icon-small plugin"></i>
+                <div class=" panel-title row">
+                    <div class="col-sm-8">
+
+                        <a class="accordion-toggle link-bare collapsed" data-toggle="collapse"
+                           data-parent="#accordion${enc(attr: ukey)}" href="#${enc(attr: ukeyx)}" title="${pluginName}">
+                        <i class="auto-caret text-muted"></i>
+                            <g:set var="pluginFileMetadata"
+                                   value="${uiPluginProfiles?.get(serviceName + ":" + pluginName)?.metadata}"/>
+                    <g:if test="${uiPluginProfiles?.get(serviceName+":"+pluginName)?.icon}">
+                        <img src="${createLink(
+                                controller: 'plugin',
+                                action: 'pluginIcon',
+                                params: [service: serviceName, name: pluginName]
+                        )}" width="16px" height="16px"/>
+                    </g:if>
+                    <g:else>
+                        <i class="rdicon icon-small plugin"></i>
+                    </g:else>
                     <g:enc>${pluginTitle?:pluginName}</g:enc></a>
 
                     <g:if test="${pluginDesc}">
@@ -116,13 +130,67 @@
                                   model="[description: pluginDesc, textCss: 'text-muted',
                                           mode: 'hidden', rkey: g.rkey()]"/>
                     </g:if>
-                    <g:if test="${bundledPlugins&& bundledPlugins[serviceName] && bundledPlugins[serviceName].contains(pluginName)}">
-                        <span class="label label-default pull-right">bundled</span>
-                    </g:if>
-                    <g:else>
-                        <span class="label label-info pull-right">plugin</span>
-                    </g:else>
-                </h4>
+                    </div>
+
+                    <g:set var="source" value="${
+                        pluginFileMetadata?.filename && embeddedFilenames &&
+                                embeddedFilenames.contains(pluginFileMetadata?.filename) ?
+                                'embed' :
+
+                                bundledPlugins && bundledPlugins[serviceName] &&
+                                        bundledPlugins[serviceName].contains(pluginName) ?
+                                        'builtin' :
+                                        'file'
+                    }"/>
+
+                    <g:set var="metaInfo" value="${
+                        (pluginFileMetadata?.pluginDate ? '\n Date: ' + pluginFileMetadata?.pluginDate : '') +
+                                'Source: ' + (
+                                source == 'embed' ? 'This plugin file was included with Rundeck.' :
+                                        source == 'builtin' ? 'This provider is built in to Rundeck.' :
+                                                'This plugin was installed with a file.'
+                        )
+                    }"/>
+                    <g:set var="linkInfo" value="${
+                        (pluginFileMetadata?.pluginUrl ? "Website: " + pluginFileMetadata?.pluginUrl : '') +
+                                (pluginFileMetadata?.pluginAuthor ? '\nAuthor: ' + pluginFileMetadata?.pluginAuthor :
+                                        '')
+                    }"/>
+                    <div class="col-sm-4 text-right">
+                        <g:if test="${pluginFileMetadata?.pluginUrl}">
+                            <a class="textbtn small textbtn-info has_tooltip "
+                               title="${enc(attr: linkInfo)}"
+                               href="${g.enc(attr: pluginFileMetadata?.pluginUrl)}">
+                                ${pluginFileMetadata?.pluginAuthor ?: 'site'}
+                            </a> &nbsp;
+                        </g:if>
+                        <g:elseif test="${pluginFileMetadata?.pluginAuthor}">
+                            <span class="text-muted small has_tooltip"
+                                  title="Author">
+                                ${pluginFileMetadata?.pluginAuthor}
+                            </span>
+                        </g:elseif>
+
+                        <span class=" ${source == 'file' ? 'label label-info' : 'text-muted small'} has_tooltip "
+                              data-container="body"
+                              title="${metaInfo}">${pluginFileMetadata?.pluginFileVersion ?: ''}
+
+                        <g:if test="${source == 'embed'}">
+                            <g:icon name="file"/>
+                        </g:if>
+                        <g:elseif test="${source == 'builtin'}">
+
+                            <g:icon name="briefcase"/>
+                        </g:elseif>
+                        <g:else>
+
+                            <g:icon name="file"/>
+                        </g:else>
+                        </span>
+
+                    </div>
+
+                </div>
             </div>
 
             <div id="${enc(attr:ukeyx)}" class="panel-collapse collapse">

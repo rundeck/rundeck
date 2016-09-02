@@ -231,6 +231,9 @@ class UrlMappings {
         "/storage/download/keys/$resourcePath**"(controller: 'storage', action: 'keyStorageDownload')
         "/job/show/$id"(controller: 'scheduledExecution',action: 'show')
         "/execution/show/$id"(controller: 'execution',action: 'show')
+        "/plugin/icon/$service/$name"(controller: 'plugin', action: 'pluginIcon')
+        "/plugin/file/$service/$name/$path**"(controller: 'plugin', action: 'pluginFile')
+
         "404"(view: '/404')
         "500"(view: '/error')
     }

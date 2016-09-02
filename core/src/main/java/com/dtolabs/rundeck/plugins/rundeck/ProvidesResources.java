@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.services;
+package com.dtolabs.rundeck.plugins.rundeck;
+
+import java.io.OutputStream;
 
 /**
- * PluginBuilder can produce an instance of a plugin.
- * User: greg
- * Date: 4/16/13
- * Time: 4:48 PM
+ * Created by greg on 8/26/16.
  */
-public interface PluginBuilder<T> {
-    public T buildPlugin();
-    public Class<T> getPluginClass();
+public interface ProvidesResources {
+    static interface PluginResource {
+        String getName();
+
+        String getMimeType();
+
+        String getGroup();
+    }
+
+    void provideResource(String name, OutputStream outputStream);
+
 }
