@@ -140,6 +140,10 @@ function Option(data) {
             }
             return false;
         };
+        if(self.selectedMultiValues().length<1 && self.defaultMultiValues().length>0){
+            //automatically select the default values
+            self.selectedMultiValues(self.defaultMultiValues());
+        }
         if (!self.enforced() && self.selectedMultiValues()) {
             //add any selectedMultiValues that are not in values list
 
