@@ -16,7 +16,7 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-
+<%@ page import="rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <g:form controller="scheduledExecution" method="post" action="runJobNow" useToken="true"
         params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
 <div class="panel panel-default panel-tab-content panel-modal-content">
@@ -28,15 +28,38 @@
         </div>
     </div>
 </g:if>
+    <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
+<script lang="text/javascript">
+    var nodeSummary = new NodeSummary({baseUrl: appLinks.frameworkNodes});
+
+    function setFilter(id,value){
+        $('filterradio').checked=true;
+        var tmp = '';
+        nodeSummary.filters().forEach(function (item, index) {
+            if(value == item.name()) {
+                $(id).writeAttribute('value', item.filter());
+            }
+        });
+
+    }
+
+    function pageinit() {
+        nodeSummary.reload();
+    }
+    jQuery(pageinit);
+</script>
 <div class="list-group list-group-tab-content">
 <div class="list-group-item">
 <div class="row">
 <div class="${hideHead?'col-sm-9':'col-sm-12'}">
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
+    <g:if test="${scheduledExecution.nodeFilterEditable}">
     <div class="form-group" style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
     <div class="col-sm-2 control-label text-form-label">
         Nodes
     </div>
+
+
     <div class="col-sm-10">
         <g:if test="${nodesetvariables && !failedNodes}">
             %{--show node filters--}%
@@ -55,7 +78,8 @@
                 <g:message code="scheduledExecution.nodeset.empty.warning"/>
             </div>
         </g:elseif>
-        <g:elseif test="${nodes}">
+
+
             <g:set var="selectedNodes"
                    value="${failedNodes? failedNodes.split(',').findAll{it}:selectedNodes!=null? selectedNodes.split(',').findAll{it}:null}"/>
             <div class="container">
@@ -68,7 +92,7 @@
                         ${selectedNodes!=null?'checked':''}
                            id="doReplaceFilters"/>
                     Change the Target Nodes
-                (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)</label>
+                </label>
                 </div>
 
             </div>
@@ -79,16 +103,26 @@
                   .*\D(\d+)
                   (\d+)\D.*
                 --%>
+                <g:if test="${!nodesetvariables && nodes}">
                 <g:if test="${namegroups}">
+                    <label for="cherrypickradio">
                     <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes !=null)}">
-                        Select:
+                        <input id="cherrypickradio"
+                               type="radio"
+                               name="extra.nodeoverride"
+                                checked="checked"
+                                value="cherrypick"
+                               />
+                        Select: (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)
                         <span class="textbtn textbtn-default textbtn-on-hover selectall">All</span>
                         <span class="textbtn textbtn-default textbtn-on-hover selectnone">None</span>
                         <g:if test="${tagsummary}">
                             <g:render template="/framework/tagsummary"
                                       model="${[tagsummary:tagsummary,action:[classnames:'tag active textbtn obs_tag_group',onclick:'']]}"/>
                         </g:if>
+
                     </div>
+                    </label>
                     <g:each in="${namegroups.keySet().sort()}" var="group">
                         <div class="panel panel-default">
                       <div class="panel-heading">
@@ -139,6 +173,7 @@
                             </div>
                         </div>
                     </g:each>
+
                 </g:if>
                 <g:else>
                     <g:each var="node" in="${nodes}" status="index">
@@ -158,6 +193,37 @@
                         </div>
                     </g:each>
                 </g:else>
+                </g:if>
+                <div class="subfields nodeFilterFields ">
+                    %{-- filter text --}%
+                    <div class="">
+                        <g:set var="filtvalue" value="${nodefilter}"/>
+                        <label for="filterradio">
+                    <input id="filterradio"
+                           type="radio"
+                           name="extra.nodeoverride"
+                           value="filter"
+                    />
+                        <spans>
+                    <g:if test="${!nodesetvariables && nodes}"><g:message code="or"/> </g:if>
+                            <g:message code="job.run.override.node"/>: </span>
+                    <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
+                        <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
+                    </g:if>
+
+                    <g:if test="${filterset}">
+                        <g:render template="/common/selectFilter" model="[noSelection:'-Saved Filters-',filterset:filterset,filterName:filterName,prefName:'txtNodeFilter']"/>
+                        <!--<span class="info note">Filter:</span>-->
+                    </g:if>
+                        <input type='text' name="extra.nodefilter" class="schedJobNodeFilter form-control" id="txtNodeFilter"
+                               placeholder="${queryFieldPlaceholderText?:g.message(code:'enter.a.node.filter')}"
+                               value="${nodefilter}" id="execnodefilter" onclick="$('filterradio').checked=true;"/>
+                </label>
+                        %{-- filter text --}%
+                    </div>
+
+
+                </div>
             </div>
             <g:javascript>
                 var updateSelectCount = function (evt) {
@@ -269,10 +335,10 @@
                     Event.fire($('nodeSelect'), 'nodeset:change');
                 </g:javascript>
             </g:if>
-        </g:elseif>
-    </div>
-    </div>
 
+    </div>
+    </div>
+    </g:if>
     <div class="error note" id="formerror" style="display:none">
 
     </div>

@@ -133,6 +133,7 @@ class ScheduledExecution extends ExecutionContext {
         nodesSelectedByDefault(nullable: true)
         scheduleEnabled(nullable: true)
         executionEnabled(nullable: true)
+        nodeFilterEditable(nullable: true)
         logOutputThreshold(maxSize: 256, blank:true, nullable: true)
         logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['halt','truncate'])
         logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true)
