@@ -1582,6 +1582,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return [success: false]
         }
 
+        scheduledExecution.nodeFilterEditable = (params.nodeFilterEditable && 'false' != params.nodeFilterEditable)
+
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
             return [success: false, scheduledExecution: scheduledExecution, message: "Update Job ${scheduledExecution.extid}", unauthorized: true]
         }

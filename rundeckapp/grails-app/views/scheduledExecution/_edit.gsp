@@ -172,7 +172,7 @@ function getCurSEID(){
             );
             ko.applyBindings(nodeFilter,jQuery('#nodegroupitem')[0]);
             registerNodeFilters(nodeFilter, '#nodegroupitem');
-
+            nodeSummary.reload();
             jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 handleNodeFilterLink(this);
@@ -687,6 +687,27 @@ function getCurSEID(){
 
     <div id="nodeDispatchFields" class="subfields ">
 
+        <div class="form-group">
+            <div class="${labelColSize} control-label text-form-label">
+                <g:message code="scheduledExecution.property.nodefiltereditable.label"/>
+            </div>
+
+            <div class="${fieldColSize}">
+                <label class="radio-inline">
+                    <g:radio value="false" name="nodeFilterEditable"
+                             checked="${!scheduledExecution.nodeFilterEditable}"
+                             id="editableFalse"/>
+                    <g:message code="no"/>
+                </label>
+
+                <label class="radio-inline">
+                    <g:radio name="nodeFilterEditable" value="true"
+                             checked="${scheduledExecution.nodeFilterEditable}"
+                             id="editableTrue"/>
+                    <g:message code="yes"/>
+                </label>
+            </div>
+        </div>
 
         <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeThreadcount', 'has-error')}">
             <label for="schedJobnodeThreadcount" class="${labelColClass}">
