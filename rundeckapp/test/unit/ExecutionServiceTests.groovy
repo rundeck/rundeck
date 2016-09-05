@@ -285,7 +285,7 @@ class ExecutionServiceTests  {
 
     }
 
-    void testCreateExecutionOverrideNodefilter(){
+    void testCreateExecutionOverrideNodefilter(){   
 
         ScheduledExecution se = new ScheduledExecution(
             jobName: 'blue',
@@ -1784,5 +1784,37 @@ class ExecutionServiceTests  {
                       'group':'some/where'
                      ], newCtxt.dataContext['job'])
 
+    }
+
+    void testCreateExecutionOverrideNodeCustomfilter(){   
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            doNodedispatch: true,
+            filter: ".*",
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.save()
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[('_replaceNodeFilters'):"true",nodeoverride: 'filter',nodefilter:'tags: linux'])
+
+        assertNotNull(e2)
+        assertEquals('tags: linux', e2.filter)
+        assertEquals('-a b -c d', e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals('user1', e2.user)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
     }
 }
