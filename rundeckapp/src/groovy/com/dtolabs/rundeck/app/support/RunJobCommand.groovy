@@ -26,16 +26,6 @@ import grails.validation.Validateable
 @Validateable
 class RunJobCommand {
     String id
-//    ExtraCommand extra = new ExtraCommand()
-    static constraints = {
-//        extra(nullable: true, validator: { cmd, obj ->
-//            // manually trigger the inner command validation
-//            if (!cmd.validate()) {
-////                obj.errors.addAllErrors(cmd.errors)
-//                return 'invalid.extra.message'
-//            }
-//        })
-    }
 
     @Override
     public String toString() {
@@ -47,17 +37,20 @@ class RunJobCommand {
 
 @Validateable
 class ExtraCommand {
-    Boolean debug=false
+    Boolean debug = false
     String loglevel
+    String runAtTime
+
     static constraints={
         loglevel(nullable: true,inList: ['DEBUG','NORMAL','INFO'])
+        runAtTime(nullable: true)
     }
 
     @Override
     public String toString() {
-        return "ExtraCommand{" +
-                "debug=" + debug +
-                ", loglevel='" + loglevel + '\'' +
+        return "ExtraCommand{" + "debug=" + debug +
+                ", loglevel='" + loglevel + "'" +
+                ", runAtTime='" + runAtTime + "'" +
                 '}';
     }
 }

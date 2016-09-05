@@ -25,7 +25,16 @@
     <div class="row">
     <div class="col-sm-12">
         <g:if test="${showPluginIcon}">
-            <i class="rdicon icon-small plugin"></i>
+            <g:if test="${uiPluginProfiles?.get(serviceName+":"+description.name)?.icon}">
+                <img src="${createLink(
+                        controller: 'plugin',
+                        action: 'pluginIcon',
+                        params: [service: serviceName, name: description.name]
+                )}" width="16px" height="16px"/>
+            </g:if>
+            <g:else>
+                <i class="rdicon icon-small plugin"></i>
+            </g:else>
         </g:if>
         <g:if test="${showNodeIcon}">
             <i class="rdicon icon-small node"></i>

@@ -180,6 +180,12 @@ class ApiService {
     def renderSuccessXmlUnwrapped(Closure recall){
         return renderXml(recall)
     }
+    /**
+     * TODO: remove "result" wrapper from API responses after Rundeck 2.6
+     * @param recall
+     * @return
+     * @deprecated
+     */
     def renderSuccessXml(Closure recall){
         return renderSuccessXmlUnwrapped {
             result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {

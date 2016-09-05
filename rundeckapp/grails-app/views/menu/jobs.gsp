@@ -31,7 +31,7 @@
         <asset:javascript src="menu/job-remote-optionsTest.js"/>
     </g:if>
     <g:embedJSON id="pageParams" data="${[project:params.project?:request.project]}"/>
-    <g:jsMessages code="Node,Node.plural,job.starting.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
+    <g:jsMessages code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <script type="text/javascript">
         /** knockout binding for activity */
@@ -68,39 +68,39 @@
                 params={id:id};
             }
             jQuery('#execDivContent').load(_genUrl(appLinks.scheduledExecutionExecuteFragment, params),function(response,status,xhr){
-                if (status=='success') {
+                if (status == "success") {
                     loadedFormSuccess(!!id,id);
-                } else{
+                } else {
                     requestError("executeFragment for [" + id + "]",xhr);
                 }
             });
         }
-        function execSubmit(elem){
-            var params=Form.serialize(elem);
+        function execSubmit(elem, target) {
+            var params = Form.serialize(elem);
             new Ajax.Request(
-                appLinks.scheduledExecutionRunJobInline, {
+                target, {
                 parameters: params,
-                evalScripts:true,
+                evalScripts: true,
                 onComplete: function(trans) {
-                    var result={};
-                    if(trans.responseJSON){
-                        result=trans.responseJSON;
+                    var result = {};
+                    if (trans.responseJSON) {
+                        result = trans.responseJSON;
                     }
-                    if(result.id){
+                    if (result.id) {
                         if (result.follow && result.href) {
                             document.location = result.href;
-                        }else{
-                            if(!pageActivity.selected()){
+                        } else {
+                            if (!pageActivity.selected()) {
                                 pageActivity.activateNowRunningTab();
                             }
                             unloadExec();
                         }
-                    }else if(result.error==='invalid'){
-                        //reload form for validation
+                    } else if (result.error === 'invalid') {
+                        // reload form for validation
                         loadExec(null,params+"&dovalidate=true");
-                    }else{
+                    } else {
                         unloadExec();
-                        showError(result.message?result.message:result.error?result.error:"Failed request");
+                        showError(result.message ? result.message : result.error ? result.error : "Failed request");
                     }
                 },
                 onFailure: requestError.curry("runJobInline")
@@ -118,11 +118,28 @@
             if ($('execFormRunButton')) {
                 Event.observe($('execFormRunButton'),'click', function(evt) {
                     Event.stop(evt);
-                    execSubmit('execDivContent');
+                    execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
                     $('formbuttons').loading(message('job.starting.execution'));
                     return false;
                 },false);
             }
+            jQuery('#showScheduler').on('shown.bs.popover', function() {
+                if ($('scheduleAjaxButton')) {
+                    Event.observe($('scheduleAjaxButton'), 'click', function(evt) {
+                        Event.stop(evt);
+                        if (isValidDate()) {
+                            toggleAlert(true);
+		                    execSubmit('execDivContent',
+                                appLinks.scheduledExecutionScheduleJobInline);
+		                    $('formbuttons').loading(message('job.scheduling.execution'));
+                        } else {
+                            toggleAlert(false);
+                        }
+                        return false;
+                    }, false);
+                }
+            });
+
             //setup option handling
             //setup option edit
             var joboptiondata = loadJsonData('jobOptionData');
@@ -581,7 +598,6 @@
 </div>
 </div>
 </div>
-
 
 <div class="row row-space" id="activity_section">
     <div class="col-sm-12 ">

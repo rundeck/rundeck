@@ -75,6 +75,7 @@ public class BaseScriptPluginTest {
     public void testCreateScriptArgsEmptyProvider() throws IOException {
         final Map<String, Object> data = new HashMap<String, Object>();
         data.put("script-file", "myfile.sh");
+        data.put("plugin-type", "script");
         File archiveFile = File.createTempFile("test", "zip");
         archiveFile.deleteOnExit();
         File basedir = File.createTempFile("test", "dir");
@@ -93,6 +94,7 @@ public class BaseScriptPluginTest {
     public void testCreateScriptArgsListEmptyProvider() throws IOException {
         final Map<String, Object> data = new HashMap<String, Object>();
         data.put("script-file", "myfile.sh");
+        data.put("plugin-type", "script");
         File archiveFile = File.createTempFile("test", "zip");
         archiveFile.deleteOnExit();
         File basedir = File.createTempFile("test", "dir");

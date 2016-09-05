@@ -247,7 +247,7 @@
                     <g:if test="${desc}">
 
                         <g:render template="/framework/renderPluginConfig"
-                                  model="${[values: nodeexecconfig.config, description: desc]}"/>
+                                  model="${[serviceName:'NodeExecutor',values: nodeexecconfig.config, description: desc]}"/>
                     </g:if>
                     <g:else>
                         <span
@@ -274,7 +274,7 @@
                     <g:if test="${desc}">
 
                         <g:render template="/framework/renderPluginConfig"
-                                  model="${[values: fcopyconfig.config, description: desc]}"/>
+                                  model="${[serviceName:'FileCopier',values: fcopyconfig.config, description: desc]}"/>
                     </g:if>
                     <g:else>
                         <span

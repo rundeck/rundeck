@@ -67,6 +67,17 @@ class ExecutionServiceTests {
                 workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]).save(),
         )
         assert null != se3.save()
+        ScheduledExecution fse1 = new ScheduledExecution(
+                uuid: 'test3',
+                jobName: 'purple',
+                project: 'Future',
+                groupPath: 'future',
+                description: 'a job',
+                argString: '-a b -c d',
+                crontabString: '01 13 1 1 1 2099',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]).save(),
+        )
+        assert null != fse1.save()
 
         Execution e1 = new Execution(
                 scheduledExecution: se1,
@@ -102,8 +113,22 @@ class ExecutionServiceTests {
 
         )
         assert null != e3.save()
+        Calendar cal = Calendar.getInstance();
+        cal.add(Calendar.MINUTE, 120)
+        Date futureDate = cal.getTime()
+        Execution schExec1 = new Execution(
+                scheduledExecution: fse1,
+                project: "Future",
+                status: "scheduled",
+                dateStarted: futureDate,
+                dateCompleted: null,
+                user: 'luke',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test3 buddy', argString: '-delay 12 -monkey cheese -particle'])]).save()
 
-        [e1, e2, e3]
+        )
+        assert null != schExec1.save()
+
+        [e1, e2, e3, schExec1]
     }
 
     /**
@@ -413,6 +438,17 @@ class ExecutionServiceTests {
         def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Test", excludeJobFilter: "blue green and red color"), 0, 20)
 
         assert 2 == result.total
+    }
+    /**
+     * Query for scheduled executions
+     */
+    public void testApiExecutionsGetScheduled() {
+        def svc = new ExecutionService()
+
+        def execs = createTestExecs()
+        def result = svc.queryExecutions(new ExecutionQuery(projFilter: "Future", statusFilter: "scheduled"), 0, 20)
+
+        assert 1 == result.total
     }
 
 }

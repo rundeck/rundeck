@@ -67,30 +67,40 @@ class ExecutionTest {
     }
     void testExecutionState() {
         Execution se = createBasicExecution()
-        se.dateCompleted=null
+
+        Date now = new Date()
+        Calendar cal = Calendar.getInstance()
+        cal.setTime(now)
+        cal.add(Calendar.HOUR, 2)
+        Date future = cal.getTime()
+
+        se.dateStarted = future
+        assertEquals(ExecutionService.EXECUTION_SCHEDULED,se.executionState)
+        se.dateStarted = null
+        se.dateCompleted = null
         assertEquals(ExecutionService.EXECUTION_RUNNING,se.executionState)
-        se.dateCompleted=new Date()
-        se.status='true'
+        se.dateCompleted  = now
+        se.status = 'true'
         assertEquals(ExecutionService.EXECUTION_SUCCEEDED,se.executionState)
-        se.status='succeeded'
+        se.status = 'succeeded'
         assertEquals(ExecutionService.EXECUTION_SUCCEEDED,se.executionState)
-        se.status='failed'
+        se.status = 'failed'
         assertEquals(ExecutionService.EXECUTION_FAILED,se.executionState)
-        se.status='false'
+        se.status = 'false'
         assertEquals(ExecutionService.EXECUTION_FAILED,se.executionState)
-        se.cancelled=true
+        se.cancelled = true
         assertEquals(ExecutionService.EXECUTION_ABORTED,se.executionState)
-        se.cancelled=false
-        se.willRetry=true
+        se.cancelled = false
+        se.willRetry = true
         assertEquals(ExecutionService.EXECUTION_FAILED_WITH_RETRY,se.executionState)
-        se.cancelled=false
-        se.willRetry=false
-        se.timedOut=true
+        se.cancelled = false
+        se.willRetry = false
+        se.timedOut = true
         assertEquals(ExecutionService.EXECUTION_TIMEDOUT,se.executionState)
-        se.timedOut=false
-        se.status="custom"
+        se.timedOut = false
+        se.status = "custom"
         assertEquals(ExecutionService.EXECUTION_STATE_OTHER,se.executionState)
-        se.status="any string"
+        se.status = "any string"
         assertEquals(ExecutionService.EXECUTION_STATE_OTHER,se.executionState)
     }
     void testStatusSucceededTrue() {

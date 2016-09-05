@@ -98,7 +98,7 @@ if [ ! -f $DIR/test_archive.zip ] ; then
     errorMsg "ERROR: output file does not exist"
     exit 2
 fi
-file $DIR/test_archive.zip | egrep -q 'archive data'
+file $DIR/test_archive.zip | egrep -q 'Jar file data|archive data'
 if [ $? != 0 ] ; then
     file $DIR/test_archive.zip 1>&2
     errorMsg "Expected 'archive data' file contents"

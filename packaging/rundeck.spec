@@ -146,7 +146,7 @@ getent group rundeck >/dev/null || groupadd rundeck
 getent passwd rundeck >/dev/null || useradd -d /var/lib/rundeck -m -g rundeck rundeck
 
 %files config
-%defattr(0644, rundeck, rundeck, 0775)
+%defattr(0640, rundeck, rundeck, 0750)
 # Client Configuration
 %config(noreplace) /etc/rundeck/framework.properties
 %config(noreplace) /etc/rundeck/admin.aclpolicy
