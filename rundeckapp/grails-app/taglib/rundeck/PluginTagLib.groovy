@@ -31,6 +31,7 @@ class PluginTagLib {
                     template: "/framework/renderPluginConfig",
                     model: [
                             type: step.type,
+                            serviceName:step.nodeStep?'WorkflowNodeStep':'WorkflowStep',
                             values: step?.configuration,
                             description: description
                     ] + attrs.subMap(['showPluginIcon','showNodeIcon','prefix', 'includeFormFields'])

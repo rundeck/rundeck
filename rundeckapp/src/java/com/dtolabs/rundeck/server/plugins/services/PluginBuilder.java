@@ -24,4 +24,5 @@ package com.dtolabs.rundeck.server.plugins.services;
  */
 public interface PluginBuilder<T> {
     public T buildPlugin();
+    public Class<T> getPluginClass();
 }

@@ -206,7 +206,11 @@
                             </g:if>
 
                             <g:if test="${!pluginDescription?.properties}">
-                                <span class="text-muted">No configuration properties for <g:enc>${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</g:enc></span>
+                                <span class="text-muted">
+                                    <g:message code="notification.plugin.configuration.noproperties.message"
+                                               args="${pluginDescription['title'] ?:
+                                                       pluginDescription['name'] ?: pluginName}"/>
+                                </span>
                             </g:if>
                         </div>
                     </g:if>

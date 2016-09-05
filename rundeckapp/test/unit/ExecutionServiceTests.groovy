@@ -1411,8 +1411,30 @@ class ExecutionServiceTests  {
         exec2.refresh()
         assertNotNull(exec2.dateCompleted)
         assertEquals("false", exec2.status)
-
     }
+
+    void testCleanupRunningJobsLeavesScheduled() {
+        def testService = setupCleanupService()
+        def uuid = UUID.randomUUID().toString()
+
+        def wf1 = new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]).save()
+        Execution exec1 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
+                dateStarted: new Date().plus(1),
+                dateCompleted: null,
+                workflow: wf1,
+				status: 'scheduled'
+        )
+        assertNotNull(exec1.save())
+
+        assertNull(exec1.dateCompleted)
+        assertEquals(ExecutionService.EXECUTION_SCHEDULED, exec1.status)
+
+        testService.cleanupRunningJobs(uuid)
+        exec1.refresh()
+        assertNull(exec1.dateCompleted)
+        assertEquals(ExecutionService.EXECUTION_SCHEDULED, exec1.status)
+    }
+
     /**
      * null node filter
      */

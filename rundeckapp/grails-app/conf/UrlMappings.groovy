@@ -45,6 +45,8 @@ class UrlMappings {
         "/api/$api_version/job/$id"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExport', DELETE: 'apiJobDelete', PUT: 'apiJobUpdateSingle', POST: 'apiJobCreateSingle']
         }
+        "/api/$api_version/job/$id/info"(controller: 'menu', action: 'apiJobDetail')
+
 
         "/api/$api_version/job/$id/execution/enable"(controller: 'scheduledExecution') {
             action = [POST: 'apiFlipExecutionEnabled']
@@ -231,6 +233,9 @@ class UrlMappings {
         "/storage/download/keys/$resourcePath**"(controller: 'storage', action: 'keyStorageDownload')
         "/job/show/$id"(controller: 'scheduledExecution',action: 'show')
         "/execution/show/$id"(controller: 'execution',action: 'show')
+        "/plugin/icon/$service/$name"(controller: 'plugin', action: 'pluginIcon')
+        "/plugin/file/$service/$name/$path**"(controller: 'plugin', action: 'pluginFile')
+
         "404"(view: '/404')
         "500"(view: '/error')
     }

@@ -21,7 +21,7 @@
     <g:expander key="orchestratorplugin${orchestrator.type}">${desc.title.encodeAsHTML()} </g:expander>
     <span class="" id="orchestratorplugin${orchestrator.type}" style="display:none;" title="">
         <g:render template="/framework/renderPluginConfig"
-                  model="${[values: orchestrator.configuration, description: desc, hideTitle: true]}"/>
+                  model="${[serviceName:'Orchestrator',values: orchestrator.configuration, description: desc, hideTitle: true]}"/>
     </span>
 </g:if>
 <g:elseif test="${!orchestratorPlugins?.getDescription(orchestrator.type)}">

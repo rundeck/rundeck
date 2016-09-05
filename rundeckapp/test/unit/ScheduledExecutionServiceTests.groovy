@@ -306,67 +306,6 @@ public class ScheduledExecutionServiceTests {
 
         assertEquals(serverUUID, job1.serverNodeUUID)
     }
-    void testClaimScheduledJobsUnassigned() {
-        def (ScheduledExecution job1, String serverUUID2, ScheduledExecution job2, ScheduledExecution job3,
-         String serverUUID) = setupTestClaimScheduledJobs()
-        ScheduledExecutionService testService = new ScheduledExecutionService()
-
-        assertEquals(null, job1.serverNodeUUID)
-        assertEquals(serverUUID2, job2.serverNodeUUID)
-        assertEquals(null, job3.serverNodeUUID)
-
-        def resultMap = testService.claimScheduledJobs(serverUUID)
-
-        assertTrue(resultMap[job1.extid].success)
-        assertEquals(null, resultMap[job2.extid])
-        assertEquals(null, resultMap[job3.extid])
-        ScheduledExecution.withSession {session->
-            session.flush()
-
-            job1 = ScheduledExecution.get(job1.id)
-            job1.refresh()
-            job2 = ScheduledExecution.get(job2.id)
-            job2.refresh()
-            job3 = ScheduledExecution.get(job3.id)
-            job3.refresh()
-        }
-
-
-        assertEquals(serverUUID, job1.serverNodeUUID)
-        assertEquals(serverUUID2, job2.serverNodeUUID)
-        assertEquals(null, job3.serverNodeUUID)
-
-    }
-
-    void testClaimScheduledJobsFromServerUUID() {
-        def (ScheduledExecution job1, String serverUUID2, ScheduledExecution job2, ScheduledExecution job3,
-         String serverUUID) = setupTestClaimScheduledJobs()
-        ScheduledExecutionService testService = new ScheduledExecutionService()
-        assertEquals(null, job1.serverNodeUUID)
-        assertEquals(serverUUID2, job2.serverNodeUUID)
-        assertEquals(null, job3.serverNodeUUID)
-
-        def resultMap = testService.claimScheduledJobs(serverUUID, serverUUID2)
-
-        ScheduledExecution.withSession { session ->
-            session.flush()
-
-            job1 = ScheduledExecution.get(job1.id)
-            job1.refresh()
-            job2 = ScheduledExecution.get(job2.id)
-            job2.refresh()
-            job3 = ScheduledExecution.get(job3.id)
-            job3.refresh()
-        }
-
-        assertEquals(null, job1.serverNodeUUID)
-        assertEquals(serverUUID, job2.serverNodeUUID)
-        assertEquals(null, job3.serverNodeUUID)
-
-        assertEquals(null, resultMap[job1.extid])
-        assertTrue(resultMap[job2.extid].success)
-        assertEquals(null, resultMap[job3.extid])
-    }
 
     private List setupTestClaimScheduledJobs() {
 

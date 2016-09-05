@@ -167,6 +167,23 @@ class ScheduledExecution extends ExecutionContext {
         retry(type: 'text')
     }
 
+    static namedQueries = {
+		isScheduled {
+			eq 'scheduled', true
+		}
+		withServerUUID { uuid ->
+			eq 'serverNodeUUID', uuid
+		}
+		withoutServerUUID { uuid ->
+			ne 'serverNodeUUID', uuid
+		}
+		withAdHocScheduledExecutions {
+			executions {
+				eq 'status', 'scheduled'
+			}
+		}
+    }
+
 
     public static final daysofweeklist = ['SUN','MON','TUE','WED','THU','FRI','SAT'];
     public static final monthsofyearlist = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];

@@ -91,9 +91,9 @@ grails.project.dependency.resolution = {
 
     plugins {
         test    ':code-coverage:2.0.3-3'
-        compile (':less-asset-pipeline:2.0.8')
+        compile (':less-asset-pipeline:2.7.2')
         compile ':twitter-bootstrap:3.3.2.1'
-        compile (':asset-pipeline:2.0.8')
+        compile (':asset-pipeline:2.7.2')
         compile ':cache:1.1.8'
         compile ":platform-core:1.0.0"
         runtime (':hibernate4:4.3.6.1')

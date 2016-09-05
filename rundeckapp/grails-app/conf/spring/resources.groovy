@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
@@ -199,6 +200,10 @@ beans={
     }
 
     scmImportPluginProviderService(ScmImportPluginProviderService) {
+        rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+    }
+
+    uiPluginProviderService(UIPluginProviderService,rundeckFramework) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
     }
 

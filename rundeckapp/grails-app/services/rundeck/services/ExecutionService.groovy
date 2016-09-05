@@ -58,18 +58,21 @@ import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
 
+import javax.annotation.PreDestroy
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import javax.servlet.http.HttpSession
 import java.nio.charset.Charset
+import java.text.DateFormat
 import java.text.MessageFormat
+import java.text.ParseException
 import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 /**
  * Coordinates Command executions via Ant Project objects
  */
-class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor{
+class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor {
     static Logger executionStatusLogger = Logger.getLogger("org.rundeck.execution.status")
     static transactional = true
     def FrameworkService frameworkService
@@ -94,6 +97,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def grailsApplication
     def configurationService
     def grailsEvents
+
+    static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS =
+        new ThreadLocal<DateFormat>() {
+            @Override
+            protected DateFormat initialValue() {
+				return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX")
+			}
+		}
+    static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT =
+        new ThreadLocal<DateFormat>() {
+			@Override
+			protected DateFormat initialValue() {
+				return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX")
+			}
+		}
 
     boolean getExecutionsAreActive(){
         configurationService.executionModeActive
@@ -302,17 +320,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
 
-                 //running status filter.
-                 if(query.runningFilter){
-                     if('running'==query.runningFilter){
-                        isNull("dateCompleted")
-                     }else {
-                         and{
-                            eq('status',"completed"==query.runningFilter?'true':'false')
-                            eq('cancelled',"killed"==query.runningFilter?'true':'false')
+                //running status filter.
+                if (query.runningFilter) {
+                    if (EXECUTION_SCHEDULED == query.runningFilter) {
+                        eq('status', EXECUTION_SCHEDULED)
+                    } else if ('running' == query.runningFilter) {
+                        isNull('dateCompleted')
+                    } else {
+                        and {
+                            eq('status', 'completed' == query.runningFilter ? 'true' : 'false')
+                            eq('cancelled', 'killed' == query.runningFilter ? 'true' : 'false')
                             isNotNull('dateCompleted')
-                         }
-                     }
+                        }
+                    }
                  }
                  def schedfilts=[:]
                  schedFilterKeys.each {
@@ -612,29 +632,39 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     }
 
     /**
-     * Set the result status to FAIL for any Executions that are not complete
+     * Set the result status to FAIL for any Executions that are not complete,
+     * excludes executions which are still scheduled and haven't started.
+     *
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
-    def cleanupRunningJobsAsync(String serverUUID=null) {
-        def executionIds = Execution.withCriteria{
+    def cleanupRunningJobsAsync(String serverUUID = null) {
+        def executionIds = Execution.withCriteria {
+            ne('status', EXECUTION_SCHEDULED)
             isNull('dateCompleted')
             if (serverUUID == null) {
                 isNull('serverNodeUUID')
             } else {
                 eq('serverNodeUUID', serverUUID)
             }
-            projections{
+            projections {
                 property('id')
             }
         }
-        callAsync{
+        callAsync {
             def found = executionIds.collect { Execution.get(it) }
             cleanupRunningJobs(found)
         }
     }
 
-    private List<Execution> findRunningExecutions(String serverUUID=null){
+    /**
+     * Find currently running executions. Excludes executions which are scheduled
+     * to run but have not started yet.
+     *
+     * @param   serverUUID  if not null, only match executions assigned to the given server UUID
+     */
+    private List<Execution> findRunningExecutions(String serverUUID = null) {
         return Execution.withCriteria{
+            ne('status', EXECUTION_SCHEDULED)
             isNull('dateCompleted')
             if (serverUUID == null) {
                 isNull('serverNodeUUID')
@@ -1067,6 +1097,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String EXECUTION_TIMEDOUT = "timedout"
     public static String EXECUTION_FAILED_WITH_RETRY = "failed-with-retry"
     public static String EXECUTION_STATE_OTHER = "other"
+    public static String EXECUTION_SCHEDULED = "scheduled"
 
     public static String ABORT_PENDING = "pending"
     public static String ABORT_ABORTED = "aborted"
@@ -1288,8 +1319,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return builder.build()
     }
 
-    def abortExecution(ScheduledExecution se, Execution e, String user, AuthContext authContext,String killAsUser=null
-    ){
+    def abortExecution(ScheduledExecution se, Execution e, String user, AuthContext authContext, String killAsUser = null) {
+
         metricService.markMeter(this.class.name,'executionAbortMeter')
         def eid=e.id
         def dateCompleted = e.dateCompleted
@@ -1300,27 +1331,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def jobstate
         def failedreason
         def userIdent=killAsUser?:user
-        if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_KILL])){
-            jobstate = getExecutionState(e)
-            abortstate= ABORT_FAILED
-            failedreason="unauthorized"
-            statusStr= jobstate
-        }else if(killAsUser && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILLAS])) {
+        if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_KILL])) {
             jobstate = getExecutionState(e)
             abortstate = ABORT_FAILED
             failedreason = "unauthorized"
             statusStr = jobstate
-        }else if (scheduledExecutionService.existsJob(ident.jobname, ident.groupname)){
-            boolean success=false
-            int repeat=3;
-            while(!success && repeat>0){
-                try{
+        } else if (killAsUser && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILLAS])) {
+            jobstate = getExecutionState(e)
+            abortstate = ABORT_FAILED
+            failedreason = "unauthorized"
+            statusStr = jobstate
+        } else if (scheduledExecutionService.existsJob(ident.jobname, ident.groupname)) {
+            boolean success = false
+            int repeat = 3;
+            while (!success && repeat > 0) {
+                try {
                     Execution.withNewSession {
                         Execution e2 = Execution.get(eid)
                         if (!e2.abortedby) {
                             e2.abortedby = userIdent
                             e2.save(flush: true)
-                            success=true
+                            success = true
                         }
                     }
                 } catch (org.springframework.dao.OptimisticLockingFailureException ex) {
@@ -1328,39 +1359,40 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 } catch (StaleObjectStateException ex) {
                     log.error("Could not abort ${eid}, the execution was modified")
                 }
-                if(!success){
+                if (!success){
                     Thread.sleep(200)
                     repeat--
                 }
             }
 
-            def didcancel=false
-            if(success){
-                didcancel=scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
+            def didCancel = false
+            if (success) {
+                didCancel = scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
             }
-            abortstate=didcancel?ABORT_PENDING:ABORT_FAILED
-            failedreason=didcancel?'':'Unable to interrupt the running job'
-            jobstate=EXECUTION_RUNNING
-        }else if(null==dateCompleted){
+            abortstate = didCancel ? ABORT_PENDING : ABORT_FAILED
+            failedreason = didCancel ? '' : 'Unable to interrupt the running job'
+            jobstate = EXECUTION_RUNNING
+        } else if (null == dateCompleted) {
+            scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
             saveExecutionState(
-                se?se.id:null,
+                se ? se.id : null,
                 eid,
                     [
-                    status:String.valueOf(false),
-                    dateCompleted:new Date(),
-                    cancelled:true,
+                    status: String.valueOf(false),
+                    dateCompleted: new Date(),
+                    cancelled: true,
                     abortedby: userIdent
                     ],
                     null,
                     null
                 )
-            abortstate=ABORT_ABORTED
-            jobstate=EXECUTION_ABORTED
-        }else{
-            jobstate= getExecutionState(e)
-            statusStr='previously '+jobstate
-            abortstate=ABORT_FAILED
-            failedreason =  'Job is not running'
+            abortstate = ABORT_ABORTED
+            jobstate = EXECUTION_ABORTED
+        } else {
+            jobstate = getExecutionState(e)
+            statusStr = 'previously ' + jobstate
+            abortstate = ABORT_FAILED
+            failedreason = 'Job is not running'
         }
         return [abortstate:abortstate,jobstate:jobstate,statusStr:statusStr, failedreason: failedreason]
     }
@@ -1680,6 +1712,114 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return [success: false, error: exc.code ?: 'failed', message: msg, options: input.option]
         }
     }
+
+    /**
+     * Run a job at a later time.
+     *
+     * The runAtTime parameter must be specified as an ISO 8601 compliant timestamp.
+     *
+     * @param scheduledExecution
+     * @param framework
+     * @param authContext
+     * @param subject
+     * @param user
+     * @param input, map of input overrides, allowed keys: nodeIncludeName: Collection/String, loglevel: String, argString: String, optparams: Map,   option.*: String, option: Map, _replaceNodeFilters:true/false, filter: String, runAtTime: String
+     * @return
+     */
+    public Map scheduleAdHocJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext, String user, Map input) {
+        def secureOpts = selectSecureOptionInput(scheduledExecution, input)
+        def secureOptsExposed = selectSecureOptionInput(scheduledExecution, input, true)
+
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+                scheduledExecution.project)) {
+            return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
+        }
+
+        if (!getExecutionsAreActive()) {
+            return [success: false, failed: true, error: 'disabled',
+                    message: lookupMessage('disabled.execution.run', null)]
+        }
+
+        if (!scheduledExecution.hasExecutionEnabled()) {
+            return [success: false, failed: true, error: 'disabled',
+                    message: lookupMessage('scheduleExecution.execution.disabled', null)]
+        }
+
+        try {
+
+            Map allowedOptions = input.subMap(['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter',
+                                               'retryAttempt','nodeoverride','nodefilter']).findAll { it.value != null }
+            allowedOptions.putAll(input.findAll {
+                        it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
+                        it.key.startsWith('nodeExclude')
+                }.findAll { it.value != null })
+
+            if (!input.runAtTime) {
+                return [success: false, failed: true, error: 'failed',
+                        message: 'A date and time is required to schedule a job',
+                        options: input.option]
+            }
+
+            // Try and parse schedule time
+
+            Date now        = java.util.Calendar.getInstance().getTime()
+            Date startTime
+            try {
+                if (input.runAtTime.length() == 25 || input.runAtTime.length() == 24) {
+                    startTime   = ISO_8601_DATE_FORMAT.get().parse(input.runAtTime)
+                } else if (input.runAtTime.length() == 29 || input.runAtTime.length() == 28) {
+                    startTime	= ISO_8601_DATE_FORMAT_WITH_MS.get().parse(input.runAtTime)
+                } else {
+                    return [success: false, failed: true, error: 'failed',
+                            message: 'Invalid date/time format, not the expected length',
+                            options: input.option]
+                }
+            } catch (ParseException | IllegalArgumentException e) {
+                return [success: false, failed: true, error: 'failed',
+                        message: 'Invalid date/time format, only ISO 8601 is supported',
+                        options: input.option]
+            }
+
+            if (startTime.before(now)) {
+                return [success: false, failed: true, error: 'failed',
+                        message: 'A job cannot be scheduled for a time in the past',
+                        options: input.option]
+            }
+
+            def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions)
+            // Update execution
+            e.dateStarted       = startTime
+            e.status            = "scheduled"
+            e.save()
+
+            def nextRun = scheduledExecutionService.scheduleAdHocJob(
+                    scheduledExecution,
+                    user,
+                    authContext,
+                    e,
+                    secureOpts,
+                    secureOptsExposed,
+                    e.retryAttempt,
+                    startTime
+            )
+            if (nextRun != null) {
+                return [success: true, id: e.id, executionId: e.id,
+                        name: scheduledExecution.jobName, execution: e,
+                        nextRun: nextRun, message: 'scheduled successfully']
+            } else {
+                return [success: false, error: 'failed', message: 'unable to schedule job', options: input.option]
+            }
+        } catch (IllegalArgumentException iae) {
+            return [success: false, error: 'invalid', message: 'cannot schedule job in the past', options: input.option]
+        } catch (ExecutionServiceValidationException exc) {
+            return [success: false, error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
+        } catch (ExecutionServiceException exc) {
+            def msg = exc.getMessage()
+            log.error("Unable to create execution",exc)
+            return [success: false, error: exc.code ?: 'failed', message: msg, options: input.option]
+        }
+    }
+
     /**
      * Create execution
      * @param se job
@@ -2960,6 +3100,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
             if (state == EXECUTION_RUNNING) {
                 isNull('dateCompleted')
+            } else if (state == EXECUTION_SCHEDULED) {
+                eq('status', EXECUTION_SCHEDULED)
             } else if (state == EXECUTION_ABORTED) {
                 isNotNull('dateCompleted')
                 eq('cancelled', true)
@@ -3048,5 +3190,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         JobExecutionItem jitem = (JobExecutionItem) executionItem
         //don't override node filters, to allow option inputs to be used in the filters
         return runJobRefExecutionItem(executionContext, jitem, createFailure, createSuccess)
+    }
+
+    /**
+     * Tidy up ThreadLocal instances on shutdown.
+     */
+    @PreDestroy
+    public void onShutdownCleanUp() {
+        ISO_8601_DATE_FORMAT_WITH_MS.remove()
+        ISO_8601_DATE_FORMAT.remove()
     }
 }

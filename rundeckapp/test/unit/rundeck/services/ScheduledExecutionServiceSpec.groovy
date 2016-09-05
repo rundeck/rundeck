@@ -23,6 +23,7 @@ import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
 import org.quartz.Scheduler
 import org.quartz.core.QuartzScheduler
+import rundeck.Execution
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.Notification
@@ -40,7 +41,8 @@ import spock.lang.Unroll
  * Created by greg on 6/24/15.
  */
 @TestFor(ScheduledExecutionService)
-@Mock([Workflow, ScheduledExecution, CommandExec, Notification, Option,PluginStep,JobExec,WorkflowStep])
+@Mock([Workflow, ScheduledExecution, CommandExec, Notification, Option, PluginStep, JobExec,
+        WorkflowStep, Execution])
 class ScheduledExecutionServiceSpec extends Specification {
 
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
@@ -134,79 +136,6 @@ class ScheduledExecutionServiceSpec extends Specification {
         ] + overrides
     }
 
-    def "claim all scheduled jobs"() {
-        given:
-        def targetserverUUID = UUID.randomUUID().toString()
-        def serverUUID1 = UUID.randomUUID().toString()
-        def serverUUID2 = UUID.randomUUID().toString()
-        ScheduledExecution job1 = new ScheduledExecution(
-                createJobParams(jobName: 'blue1', project: 'AProject', serverNodeUUID: null)
-        ).save()
-        ScheduledExecution job2 = new ScheduledExecution(
-                createJobParams(jobName: 'blue2', project: 'AProject2', serverNodeUUID: serverUUID1)
-        ).save()
-        ScheduledExecution job3 = new ScheduledExecution(
-                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: serverUUID2)
-        ).save()
-        ScheduledExecution job3x = new ScheduledExecution(
-                createJobParams(jobName: 'blue3', project: 'AProject2', serverNodeUUID: targetserverUUID)
-        ).save()
-        ScheduledExecution job4 = new ScheduledExecution(
-                createJobParams(jobName: 'blue4', project: 'AProject2', scheduled: false)
-        ).save()
-        def jobs = [job1, job2, job3, job3x, job4]
-        when:
-        def resultMap = service.claimScheduledJobs(targetserverUUID, null, true)
-
-        ScheduledExecution.withSession { session ->
-            session.flush()
-            jobs*.refresh()
-        }
-        then:
-
-        [job1, job2, job3, job3x] == jobs.findAll { it.serverNodeUUID == targetserverUUID }
-        [job1, job2, job3]*.extid == resultMap.keySet() as List
-    }
-
-    def "claim all scheduled jobs in a project"(
-            String targetProject,
-            String targetServerUUID,
-            String serverUUID1,
-            List<Map> dataList,
-            List<String> resultList
-    )
-    {
-        setup:
-        def jobs = dataList.collect {
-            new ScheduledExecution(createJobParams(it)).save()
-        }
-
-        when:
-        def resultMap = service.claimScheduledJobs(targetServerUUID, null, true, targetProject)
-
-        ScheduledExecution.withSession { session ->
-            session.flush()
-            jobs*.refresh()
-        }
-        then:
-
-        resultList == resultMap.keySet() as List
-
-        where:
-        targetProject | targetServerUUID |
-                serverUUID1 |
-                dataList |
-                resultList
-        'AProject'    | TEST_UUID1       |
-                TEST_UUID2  |
-                [[uuid: 'job3', project: 'AProject', serverNodeUUID: TEST_UUID1], [uuid: 'job1', serverNodeUUID: TEST_UUID2], [project: 'AProject2', uuid: 'job2']] |
-                ['job1']
-        'AProject2'   | TEST_UUID1       |
-                TEST_UUID2  |
-                [[uuid: 'job3', project: 'AProject2', serverNodeUUID: TEST_UUID1], [uuid: 'job1', serverNodeUUID: TEST_UUID2], [project: 'AProject2', uuid: 'job2']] |
-                ['job2']
-    }
-
     @Unroll
     def "should scheduleJob"() {
         given:
@@ -234,6 +163,80 @@ class ScheduledExecutionServiceSpec extends Specification {
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
         1 * service.quartzScheduler.scheduleJob(_, _) >> scheduleDate
         result == scheduleDate
+
+        where:
+        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled
+        true                | true            | true             | true        | true
+    }
+
+    @Unroll
+    def "should not scheduleAdHocJob if no date/time"() {
+        given:
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler) {
+            getListenerManager() >> Mock(ListenerManager)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckBase() >> ''
+        }
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: hasSchedule,
+                        scheduleEnabled: scheduleEnabled,
+                        executionEnabled: executionEnabled,
+                        userRoleList: 'a,b'
+                )
+        ).save()
+
+        when:
+        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], 0, null)
+
+        then:
+        1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
+        IllegalArgumentException iae = thrown()
+        iae.getMessage() == "Scheduled date and time must be present"
+
+        where:
+        executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled
+        true                | true            | true             | true        | true
+    }
+
+    @Unroll
+    def "should not scheduleAdHocJob with time in past"() {
+        given:
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler) {
+            getListenerManager() >> Mock(ListenerManager)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckBase() >> ''
+        }
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: hasSchedule,
+                        scheduleEnabled: scheduleEnabled,
+                        executionEnabled: executionEnabled,
+                        userRoleList: 'a,b',
+                        crontabString: "42 2 1 1 1 2 1999",
+                        year: "1999",
+                        month: "1",
+                        dayOfMonth: "1",
+                        hour: "1",
+                        minute: "2",
+                        seconds: "42"
+                )
+        ).save()
+
+        Date startTime = new Date()
+        startTime.set(year: 1999, month: 1, dayOfMonth: 1, hourOfDay: 1, minute: 2, seconds: 42)
+
+        when:
+        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], 0, startTime)
+
+        then:
+        1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
+        IllegalArgumentException iae = thrown()
+        iae.getMessage() == "Cannot schedule a job in the past"
 
         where:
         executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled

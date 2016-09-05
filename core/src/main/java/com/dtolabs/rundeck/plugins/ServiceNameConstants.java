@@ -58,4 +58,5 @@ public class ServiceNameConstants {
     public static final String Orchestrator = "Orchestrator";
     public static final String ScmExport = "ScmExport";
     public static final String ScmImport = "ScmImport";
+    public static final String UI = "UI";
 }

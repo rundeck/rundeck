@@ -18,6 +18,7 @@ import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheck
 import com.codahale.metrics.health.HealthCheckRegistry
 import com.dtolabs.launcher.Setup
+import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -32,6 +33,7 @@ import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.context.support.WebApplicationContextUtils
 
 import javax.servlet.ServletContext
+import java.nio.charset.Charset
 import java.text.SimpleDateFormat
 
 class BootStrap {
@@ -54,6 +56,7 @@ class BootStrap {
     def scmService
     HealthCheckRegistry healthCheckRegistry
     def dataSource
+    ApiMarshallerRegistrar apiMarshallerRegistrar
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -70,6 +73,7 @@ class BootStrap {
              grailsApplication.mainContext.profilerLog.appenderNames = ["loggingAppender", 'miniProfilerAppender']
          }
          long bstart=System.currentTimeMillis()
+         apiMarshallerRegistrar.registerApiMarshallers()
          //version info
          servletContext.setAttribute("version.build",VersionConstants.BUILD)
          servletContext.setAttribute("version.date",VersionConstants.DATE)
@@ -347,6 +351,13 @@ class BootStrap {
              log.info("Rundeck is in PASSIVE MODE: No executions can be run.")
          }
 
+         if (!Charset.defaultCharset().equals(Charset.forName("UTF-8"))) {
+             log.warn("The JVM default encoding is not UTF-8: "
+                              + Charset.defaultCharset().displayName()
+                              + ", you may not see output as expected for multibyte locales. " +
+                              "Specify -Dfile.encoding=UTF-8 in the JVM options."
+             )
+         }
          //configure System.out and System.err so that remote command execution will write to a specific print stream
          if(Environment.getCurrent() != Environment.TEST){
 

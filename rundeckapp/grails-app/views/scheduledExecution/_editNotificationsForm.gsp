@@ -34,21 +34,21 @@
        value="${'true' == params[ScheduledExecutionController.NOTIFY_ONSTART_URL] || null == params[ScheduledExecutionController.NOTIFY_ONSTART_URL] && defStartUrl}"/>
 <div class="form-group">
     <div class="col-sm-2 control-label text-form-label">
-        Send Notification?
+        <g:message code="scheduledExecution.property.notified.label.text" />
     </div>
     <div class="col-sm-10">
         <label class="radio-inline">
             <g:radio value="false" name="notified"
                      checked="${!(notifications || params.notified=='true')}"
                      id="notifiedFalse"/>
-            No
+            <g:message code="no" />
         </label>
 
         <label class="radio-inline">
             <g:radio name="notified" value="true"
                      checked="${notifications || params.notified == 'true'}"
                      id="notifiedTrue"/>
-            Yes
+            <g:message code="yes" />
         </label>
 
         <g:javascript>

@@ -37,7 +37,7 @@
                 </td>
                 <td style="width:12px;" class="eventicon">
                 <g:set var="gicon"
-                       value="${execution.status == 'true' ? 'ok-circle' : null == execution.dateCompleted ? 'play-circle' : execution.cancelled ? 'minus-sign' : 'warning-sign'}"/>
+                       value="${execution.dateStarted != null && timeNow < execution.dateStarted.getTime() && execution.status == 'scheduled' ? 'time' : execution.status == 'true' ? 'ok-circle' : null == execution.dateCompleted ? 'play-circle' : execution.cancelled ? 'minus-sign' : 'warning-sign'}"/>
 
                 <i class="glyphicon glyphicon-${gicon} exec-status ${!execution.dateCompleted?'running':execution.status == 'true' ? 'succeed' : execution.cancelled ? 'warn' : 'fail'}">
                 </i>
@@ -70,7 +70,8 @@
                 </g:else>
 
                 <g:if test="${!small}">
-                    <td class="dateStarted date " title="started: ${enc(attr:execution.dateStarted)}">
+                    <g:set var="startedText" value="${execution.status == 'scheduled' ? message(code: 'scheduled') : message(code: 'started')}" />
+                    <td class="dateStarted date " title="${startedText}: ${enc(attr:execution.dateStarted)}">
                         <span class="timelabel">at:</span>
                         <span class="timeabs"><g:relativeDate atDate="${execution.dateStarted}"/></span>
                         <em>by</em>
@@ -103,7 +104,7 @@
                         </span>
                     </g:if>
                     <g:else>
-                        <g:if test="${scheduledExecution && scheduledExecution.execCount>0 && scheduledExecution.totalTime > 0 && execution.dateStarted}">
+                        <g:if test="${scheduledExecution && scheduledExecution.execCount>0 && scheduledExecution.totalTime > 0 && execution.dateStarted && timeNow >= execution.dateStarted.getTime()}">
                             <g:set var="avgTime" value="${(Long)(scheduledExecution.totalTime/scheduledExecution.execCount)}"/>
                             <g:set var="completePercent" value="${(int)Math.floor((double)(100 * (timeNow - execution.dateStarted.getTime())/(avgTime)))}"/>
                             <g:set var="estEndTime" value="${(long)(execution.dateStarted.getTime() + (long)avgTime)}"/>
@@ -123,11 +124,21 @@
                                 showpercent:true,showOverrun:true,remaining:' ('+completeRemaining+')',width:120]}"/>
                         </g:if>
                         <g:else>
-                            <g:render template="/common/progressBar" model="${[
-                                    indefinite:true,title:'Running',innerContent:'Running',width:120,
-                                    progressClass: 'rd-progress-exec progress-striped active indefinite',
-                                    progressBarClass: 'progress-bar-info',
-                            ]}"/>
+                            <g:if test="${timeNow < execution.dateStarted.getTime()}">
+                                <g:set var="waitDuration" value="${g.timeDuration(start:new Date(timeNow),end:execution.dateStarted)}"/>
+                                <g:render template="/common/progressBar" model="${[
+                                        indefinite: true, title: 'Starting in: ' + waitDuration, width: 120,
+                                        progressClass: 'rd-progress-exec progress-striped active indefinite',
+                                        progressBarClass: 'progress-bar-info', remaining: 'Starting in: ' + waitDuration,
+                                ]}"/>
+                            </g:if>
+                            <g:else>
+                                <g:render template="/common/progressBar" model="${[
+                                        indefinite:true,title:'Running',innerContent:'Running',width:120,
+                                        progressClass: 'rd-progress-exec progress-striped active indefinite',
+                                        progressBarClass: 'progress-bar-info',
+                                ]}"/>
+                            </g:else>
                         </g:else>
                     </g:else>
                 </td>

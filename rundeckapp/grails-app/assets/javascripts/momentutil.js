@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-//= require moment-min
+//= require moment.min
 
  var MomentUtil =(function(){
      var self=  {

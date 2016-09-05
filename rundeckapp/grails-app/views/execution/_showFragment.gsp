@@ -35,7 +35,12 @@
                         <g:message code="execution.identity" args="[execution.id]"/>
                     </g:link>
                 </span>
-            <g:if test="${null != execution.dateCompleted}">
+            <g:if test="${execution.status == 'scheduled' && execution.dateCompleted == null}">
+                <span class="succeed">
+                    Scheduled
+                </span>
+            </g:if>
+            <g:elseif test="${null != execution.dateCompleted}">
 
                 <span class="${execution.status == 'true' ? 'succeed' : 'fail'}">
                     <g:if test="${execution.status == 'true'}">
@@ -48,7 +53,7 @@
                         Failed
                     </g:else>
                 </span>
-            </g:if>
+            </g:elseif>
             <g:else>
                 <span id="runstatus">
                     <span class="nowrunning">

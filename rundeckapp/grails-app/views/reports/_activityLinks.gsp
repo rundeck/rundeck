@@ -105,7 +105,7 @@
             </td>
             <td class="eventicon autoclickable" data-bind="attr: { 'title': status() } ">
                 <i class="exec-status icon"
-                   data-bind="css: { 'succeed': status()=='succeed' || status()=='succeeded', 'fail': status()=='fail' || status()=='failed', 'aborted': status()=='cancel' || status()=='aborted', 'running': status()=='running', 'timedout': status()=='timedout', 'failedretry': status()=='retry', 'other': isCustomStatus() }"></i>
+                   data-bind="css: { 'scheduled': status()=='scheduled', 'succeed': status()=='succeed' || status()=='succeeded', 'fail': status()=='fail' || status()=='failed', 'aborted': status()=='cancel' || status()=='aborted', 'running': status()=='running', 'timedout': status()=='timedout', 'failedretry': status()=='retry', 'other': isCustomStatus() }"></i>
             </td>
             <td class="eventtitle autoclickable" data-bind="css: { job: isJob(), adhoc: isAdhoc() }">
                 <a href="#" data-bind="text: '#'+executionId(), attr: { href: executionHref() }" class="_defaultAction"></a>
@@ -146,7 +146,19 @@
                         <span class="duration" data-bind="text: durationHumanize()"></span>
                     </span>
                 </span>
-                <span data-bind="if: !dateCompleted()">
+                <span data-bind="if: !dateCompleted() && status() == 'scheduled'">
+                    <g:render template="/common/progressBar" model="[indefinite: true,
+                            progressClass: 'rd-progress-exec progress-striped active indefinite progress-embed',
+                            progressBarClass: 'progress-bar-info',
+                            containerId: 'progressContainer2',
+                            showpercent: false,
+                            progressId: 'progressBar',
+                            innerContent: '',
+                            bind: 'timeNow()',
+                            bindText: '\'Scheduled; starting \' + timeToStart()',
+                    ]"/>
+                </span>
+                <span data-bind="if: !dateCompleted() && jobPercentageFixed() >= 0 && status() != 'scheduled'">
                     <div data-bind="if: isAdhoc() || jobAverageDuration()==0">
                     <g:render template="/common/progressBar" model="${[
                             indefinite: true, title: 'Running', innerContent: 'Running', width: 120,
