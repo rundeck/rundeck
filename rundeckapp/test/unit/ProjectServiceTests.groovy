@@ -590,6 +590,7 @@ class ProjectServiceTests  {
   <abortedByUser />
   <succeededNodeList />
   <failedNodeList />
+  <filterApplied />
 </report>'''
     public void  testExportReport() {
 

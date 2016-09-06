@@ -768,7 +768,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     public logExecution(uri,project,user,issuccess,statusString,execId,Date startDate=null, jobExecId=null, jobName=null,
                         jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
-                        abortedby=null, succeededNodeList=null, failedNodeList=null){
+                        abortedby=null, succeededNodeList=null, failedNodeList=null, filter=null){
 
         def reportMap=[:]
         def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
@@ -800,6 +800,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         if(failedNodeList){
             reportMap.failedNodeList = failedNodeList
+        }
+        if(filter){
+            reportMap.filterApplied = filter
         }
         reportMap.ctxProject=project
 
@@ -2301,7 +2304,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         node,
                         execution.abortedby,
                         execution.succeededNodeList,
-                        execution.failedNodeList
+                        execution.failedNodeList,
+                        execution.filter
                 )
                 logExecutionLog4j(execution, "finish", execution.user)
 
