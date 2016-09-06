@@ -329,6 +329,7 @@ class ReportService  {
                 or {
                     ilike("failedNodeList", '%' + query.execnodeFilter + '%')
                     ilike("succeededNodeList", '%' + query.execnodeFilter + '%')
+                    ilike("filterApplied", '%' + query.execnodeFilter + '%')
                 }
             }
         }

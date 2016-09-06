@@ -28,6 +28,7 @@ class ExecReport extends BaseReport{
     String abortedByUser
     String succeededNodeList
     String failedNodeList
+    String filterApplied
 
     static mapping = {
         adhocScript type: 'text'
@@ -43,6 +44,7 @@ class ExecReport extends BaseReport{
         abortedByUser(nullable:true,blank:true)
         succeededNodeList(nullable:true,blank:true)
         failedNodeList(nullable:true,blank:true)
+        filterApplied(nullable:true,blank:true)
 
     }
 
@@ -53,7 +55,8 @@ class ExecReport extends BaseReport{
             'adhocScript',
             'abortedByUser',
             'succeededNodeList',
-            'failedNodeList'
+            'failedNodeList',
+            'filterApplied'
     ]
     def Map toMap(){
         def map = this.properties.subMap(exportProps)
@@ -112,7 +115,8 @@ class ExecReport extends BaseReport{
                 dateCompleted: exec.dateCompleted,
                 actionType: status,
                 failedNodeList: failedList,
-                succeededNodeList: succeededList
+                succeededNodeList: succeededList,
+                filterApplied: exec.filter
         ])
     }
     static ExecReport fromMap(Map map) {
