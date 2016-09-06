@@ -195,6 +195,7 @@ class ScheduledExecution extends ExecutionContext {
 
         map.scheduleEnabled = hasScheduleEnabled()
         map.executionEnabled = hasExecutionEnabled()
+        map.nodeFilterEditable = hasNodeFilterEditable()
 
         if(groupPath){
             map.group=groupPath
@@ -294,10 +295,11 @@ class ScheduledExecution extends ExecutionContext {
         if(data.orchestrator){
             se.orchestrator=Orchestrator.fromMap(data.orchestrator);
         }
-
+        
         se.scheduleEnabled = data['scheduleEnabled'] == null || data['scheduleEnabled']
         se.executionEnabled = data['executionEnabled'] == null || data['executionEnabled']
-
+        se.nodeFilterEditable = data['nodeFilterEditable'] == null || data['nodeFilterEditable']
+        
         se.loglevel=data.loglevel?data.loglevel:'INFO'
 
         if(data.loglimit){
@@ -527,6 +529,10 @@ class ScheduledExecution extends ExecutionContext {
 
     def boolean hasExecutionEnabled() {
         return (null == executionEnabled || executionEnabled)
+    }
+
+    def boolean hasNodeFilterEditable() {
+        return (null == nodeFilterEditable || nodeFilterEditable)
     }
 
     def String generateJobScheduledName(){

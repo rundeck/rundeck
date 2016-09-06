@@ -122,6 +122,7 @@ class JobsXMLCodec {
 
         map.scheduleEnabled = XmlParserUtil.stringToBool(map.scheduleEnabled, true)
         map.executionEnabled = XmlParserUtil.stringToBool(map.executionEnabled, true)
+        map.nodeFilterEditable = XmlParserUtil.stringToBool(map.nodeFilterEditable, true)
 
         //perform structure conversions for expected input for populating ScheduledExecution
 

@@ -211,7 +211,7 @@
                     <g:if test="${!nodesetvariables && nodes}"><g:message code="or"/> </g:if>
                             <g:message code="job.run.override.node"/>: </span>
                     <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
-                        <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
+                        <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters.findAll{it.project == project}}"/>
                     </g:if>
 
                     <g:if test="${filterset}">
