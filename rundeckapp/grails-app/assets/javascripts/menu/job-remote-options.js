@@ -130,12 +130,14 @@ function RemoteOptionController(data) {
 
         // reload iff: all of its required dependencies have a value
         var missing = [];
-        for (var j = 0; j < self.dependencies[name].length; j++) {
-            var dependencyName = self.dependencies[name][j];
-            var option = self.options[dependencyName];
-            if (!option.value() && option.required()) {
-                skip = true;
-                missing.push(dependencyName);
+        if(self.dependencies[name]) {
+            for (var j = 0; j < self.dependencies[name].length; j++) {
+                var dependencyName = self.dependencies[name][j];
+                var option = self.options[dependencyName];
+                if (!option.value() && option.required()) {
+                    skip = true;
+                    missing.push(dependencyName);
+                }
             }
         }
         if (!skip) {
