@@ -180,7 +180,7 @@
                 <a class="textbtn textbtn-warning "
                    data-toggle="collapse"
                    href="#"
-                   data-bind="attr: {href: '#rerr_'+option.name() }">
+                   data-bind="attr: {href: '#rerr_'+option.uid() }">
                    <span data-bind="text: remoteError().message"></span>
                     <i class="auto-caret"></i>
                 </a>
@@ -189,7 +189,7 @@
                 <span class="text-warning" data-bind="text: remoteError().message"></span>
             </div>
 
-            <div class="alert alert-warning collapse collapse-expandable" data-bind="attr: {id: 'rerr_'+option.name() }">
+            <div class="alert alert-warning collapse collapse-expandable" data-bind="attr: {id: 'rerr_'+option.uid() }">
                 <span data-bind="if: remoteError().exception">
                     <div>Exception: <span data-bind="text: remoteError().exception"></span></div>
                 </span>
