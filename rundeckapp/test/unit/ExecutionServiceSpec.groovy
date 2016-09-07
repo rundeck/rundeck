@@ -382,7 +382,10 @@ class ExecutionServiceSpec extends Specification {
             boolean issuccess,
             boolean iscancelled,
             boolean istimedout,
-            boolean willretry
+            boolean willretry,
+            String succeededList,
+            String failedList,
+            String filter
     ) {
         given:
         def params = [:]
@@ -407,7 +410,10 @@ class ExecutionServiceSpec extends Specification {
                 istimedout,
                 willretry,
                 '1/1/1',
-                null
+                null,
+                succeededList, 
+                failedList, 
+                filter
         )
 
         then:
@@ -423,18 +429,21 @@ class ExecutionServiceSpec extends Specification {
         params.message == "Job status ${statusString}"
         params.dateStarted != null
         params.dateCompleted != null
+        params.succeededNodeList == succeededList
+        params.failedNodeList == failedList
+        params.filterApplied == filter
 
         where:
-        statusString        | resultStatus | issuccess | iscancelled | istimedout | willretry
-        'succeeded'         | 'succeed'    | true      | false       | false      | false
-        'true'              | 'succeed'    | true      | false       | false      | false
-        'custom'            | 'other'      | false     | false       | false      | false
-        'other status'      | 'other'      | false     | false       | false      | false
-        'false'             | 'fail'       | false     | false       | false      | false
-        'failed'            | 'fail'       | false     | false       | false      | false
-        'aborted'           | 'cancel'     | false     | true        | false      | false
-        'timedout'          | 'timeout'    | false     | false       | true       | false
-        'failed-with-retry' | 'retry'      | false     | false       | false      | true
+        statusString        | resultStatus | issuccess | iscancelled | istimedout | willretry | succeededList | failedList | filter
+        'succeeded'         | 'succeed'    | true      | false       | false      | false     | 'nodea'       | null       | 'tags: linux'
+        'true'              | 'succeed'    | true      | false       | false      | false     | 'nodea'       | 'nodeb'    | 'tags: linux'
+        'custom'            | 'other'      | false     | false       | false      | false     | 'nodea'       | 'nodeb'    | '.*'
+        'other status'      | 'other'      | false     | false       | false      | false     | null          | null       | null
+        'false'             | 'fail'       | false     | false       | false      | false     | null          | null       | null
+        'failed'            | 'fail'       | false     | false       | false      | false     | null          | null       | null
+        'aborted'           | 'cancel'     | false     | true        | false      | false     | null          | null       | null
+        'timedout'          | 'timeout'    | false     | false       | true       | false     | null          | null       | null
+        'failed-with-retry' | 'retry'      | false     | false       | false      | true      | null          | null       | null
     }
 
     def "createJobReferenceContext secure opts blank values"() {
