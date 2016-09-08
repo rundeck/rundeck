@@ -62,6 +62,8 @@ Changes introduced by API Version number:
 * Updated Endpoints:       
     - [`/api/18/job/[ID]/run`][/api/V/job/[ID]/run]       
        - new `runAtTime` parameter to run once at a certain time.      
+* Updated response for Executions
+    - Executions results include custom status strings, see [Listing Running Executions](#listing-running-executions).
 
 **Version 17**:
 
@@ -2401,6 +2403,7 @@ Each `execution` of the form:
 <execution id="[ID]" href="[url]" permalink="[url]" status="[status]" project="[project]">
     <user>[user]</user>
     <date-started unixtime="[unixtime]">[datetime]</date-started>
+    <customStatus>[string]</customStatus>
 
     <!-- optional job context if the execution is associated with a job -->
     <job id="jobID" averageDuration="[milliseconds]" href="[API url]" permalink="[GUI url]">
@@ -2465,6 +2468,7 @@ It contains a `paging` entry with paging information, and a `executions` array:
       "href": "[API url]",
       "permalink": "[GUI url]",
       "status": "[status]",
+      "customStatus": "[string]",
       "project": "test",
       "user": "[user]",
       "serverUUID":"[UUID]",
@@ -2508,6 +2512,9 @@ The `[status]` value indicates the execution status.  It is one of:
 * `succeeded`: execution completed successfully
 * `failed`: execution completed with failure
 * `aborted`: execution was aborted
+* `other`: execution had a custom exit status string
+
+If `status` is `other`, then, `customStatus` will contain the exit status.
 
 The `[url]` value for the `href` is a URL the Rundeck API for the execution.
 The `[url]` value for the `permalink` is a URL to the Rundeck server page to view the execution output.

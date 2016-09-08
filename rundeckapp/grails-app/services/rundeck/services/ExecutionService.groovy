@@ -148,6 +148,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if(apiv14){
                     data.permalink=apiService.guiHrefForExecution(e)
                 }
+            if(e.customStatusString){
+                data.customStatus=e.customStatusString
+            }
                 if(e.retryExecution) {
                     data.retryExecution = [
                             id    : e.retryExecution.id,
@@ -171,6 +174,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         status: getExecutionState(e),
                         summary: summarizeJob(e.scheduledExecution, e)
                 ]
+            if(e.customStatusString){
+                data.customStatus=e.customStatusString
+            }
                 if(e.retryExecution){
                     data.retryExecution=[
                             id:e.retryExecution.id,
