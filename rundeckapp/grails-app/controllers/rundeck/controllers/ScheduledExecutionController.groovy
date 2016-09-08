@@ -58,6 +58,7 @@ import rundeck.filters.ApiRequestFilters
 import rundeck.services.*
 
 import javax.servlet.http.HttpServletResponse
+import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 class ScheduledExecutionController  extends ControllerBase{
@@ -258,16 +259,15 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    private def jobDetailData() {
-        Framework framework = frameworkService.getRundeckFramework()
+    private def jobDetailData(keys = []) {
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
-        //list executions using query params and pagination params
 
-        def executions=Execution.findAllByScheduledExecution(scheduledExecution,[offset: params.offset?params.offset:0, max: params.max?params.max:10, sort:'dateStarted', order:'desc'])
-
-        def total = Execution.countByScheduledExecution(scheduledExecution)
+        def total = -1
+        if (keys.contains('total') || !keys) {
+            total = Execution.countByScheduledExecution(scheduledExecution)
+        }
 
         def remoteClusterNodeUUID = null
         if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()
@@ -275,15 +275,31 @@ class ScheduledExecutionController  extends ControllerBase{
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
 
-        [scheduledExecution:scheduledExecution, crontab:crontab, params:params,
-            executions:executions,
-            total:total,
-            nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-            remoteClusterNodeUUID: remoteClusterNodeUUID,
-            max: params.max?params.max:10,
-            notificationPlugins: notificationService.listNotificationPlugins(),
-            orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
-            offset:params.offset?params.offset:0]
+        def notificationPlugins = null
+        if (keys.contains('notificationPlugins') || !keys) {
+            notificationPlugins = notificationService.listNotificationPlugins()
+        }
+        def orchestratorPlugins = null
+        if (keys.contains('orchestratorPlugins') || !keys) {
+            orchestratorPlugins = orchestratorPluginService.listOrchestratorPlugins()
+        }
+        def nextExecution = null
+        if (keys.contains('nextExecution') || !keys) {
+            nextExecution = scheduledExecution.scheduled ? scheduledExecutionService.nextExecutionTime(
+                    scheduledExecution
+            ) : null
+        }
+        [scheduledExecution   : scheduledExecution,
+         crontab              : crontab,
+         params               : params,
+         total                : total,
+         nextExecution        : nextExecution,
+         remoteClusterNodeUUID: remoteClusterNodeUUID,
+         max                  : params.max ? params.max : 10,
+         notificationPlugins  : notificationPlugins,
+         orchestratorPlugins  : orchestratorPlugins,
+         offset               : params.offset ? params.offset : 0
+        ]
     }
     def detailFragment () {
         log.debug("ScheduledExecutionController: detailFragment : params: " + params)
@@ -312,11 +328,20 @@ class ScheduledExecutionController  extends ControllerBase{
                 [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ,'Job',params.id)){
             return
         }
-        def model=jobDetailData()
+        def model = jobDetailData(['total', 'nextExecution', 'max', 'scheduledExecution'])
         def se = model.scheduledExecution
+
+        if (model.nextExecution) {
+
+            final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+            format.setTimeZone(TimeZone.getTimeZone("GMT"));
+            model.nextExecutionW3CTime = format.format(model.nextExecution)
+        }
+
         render(contentType: 'application/json') {
             total = model.total
             nextExecution = model.nextExecution
+            nextExecutionW3CTime = model.nextExecutionW3CTime
             max = model.max
             job(
                     id: se.extid,
