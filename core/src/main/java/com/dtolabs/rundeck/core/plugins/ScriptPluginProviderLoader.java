@@ -326,10 +326,10 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
             }
             nextEntry = zipinput.getNextEntry();
         }
-        if (!found) {
+        if (!found || metadata == null) {
             log.error("Plugin not loaded: Found no " + basename + "/plugin.yaml within: " + jar.getAbsolutePath());
         }
-        String resdir = getResourcesBasePath(metadata);
+        String resdir = null != metadata ? getResourcesBasePath(metadata) : null;
 
         for (String path : paths) {
             if (!topfound && path.startsWith(basename + "/")) {
@@ -338,7 +338,9 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
             if (!dirfound && (path.startsWith(basename + "/contents/") || path.equals(basename + "/contents"))) {
                 dirfound = true;
             }
-            if (!resfound && (path.startsWith(basename + "/" + resdir + "/") || path.equals(basename + "/" + resdir))) {
+            if (!resfound
+                && resdir != null
+                && (path.startsWith(basename + "/" + resdir + "/") || path.equals(basename + "/" + resdir))) {
                 resfound = true;
             }
         }
