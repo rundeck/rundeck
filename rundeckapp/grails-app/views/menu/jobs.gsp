@@ -522,7 +522,7 @@
                 ko.applyBindings(pageActivity, document.getElementById('activity_section'));
                 setupActivityLinks('activity_section', pageActivity);
             }
-            jQuery('.act_execute_job').on('click',function(evt){
+            jQuery(document).on('click','.act_execute_job',function(evt){
                 evt.preventDefault();
                loadExec(jQuery(this).data('jobId'));
             });
