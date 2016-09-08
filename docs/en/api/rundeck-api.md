@@ -59,6 +59,9 @@ Changes introduced by API Version number:
 
 * New Endpoints.
     - [`GET /api/18/job/[ID]/info`][/api/V/job/[ID]/info] - Get metadata about a Job: Project name and scheduling info.
+* Updated Endpoints:       
+    - [`/api/18/job/[ID]/run`][/api/V/job/[ID]/run]       
+       - new `runAtTime` parameter to run once at a certain time.      
 
 **Version 17**:
 
