@@ -62,8 +62,10 @@ Changes introduced by API Version number:
 * Updated Endpoints:       
     - [`/api/18/job/[ID]/run`][/api/V/job/[ID]/run]       
        - new `runAtTime` parameter to run once at a certain time.      
-* Updated response for Executions
-    - Executions results include custom status strings, see [Listing Running Executions](#listing-running-executions).
+* Updated responses for Executions
+    - Executions results include custom status strings.
+    - Documented `timedout`,`failed-with-retry`, and `scheduled` status values.
+    - See [Listing Running Executions](#listing-running-executions)
 
 **Version 17**:
 
@@ -2512,6 +2514,9 @@ The `[status]` value indicates the execution status.  It is one of:
 * `succeeded`: execution completed successfully
 * `failed`: execution completed with failure
 * `aborted`: execution was aborted
+* `timedout`: execution timed out
+* `failed-with-retry`: execution failed and will retry
+* `scheduled`: execution is scheduled to run in the future
 * `other`: execution had a custom exit status string
 
 If `status` is `other`, then, `customStatus` will contain the exit status.
