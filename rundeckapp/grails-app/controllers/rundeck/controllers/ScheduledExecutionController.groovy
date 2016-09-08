@@ -3711,13 +3711,29 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * API: /api/job/{id}/executions , version 1
      */
-    def apiJobExecutions (){
+    def apiJobExecutions() {
         if (!apiService.requireApi(request, response)) {
             return
         }
         if (!apiService.requireParameters(params, response, ['id'])) {
             return
         }
+        return apiJobExecutionsResult(true)
+    }
+    /**
+     * API: /api/job/{id}/executions , version 1
+     */
+    def jobExecutionsAjax() {
+        if ('true' != request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'jobs', controller: 'menu', params: params)
+        }
+        return apiJobExecutionsResult(false)
+    }
+
+    /**
+     * API: /api/job/{id}/executions , version 1
+     */
+    private def apiJobExecutionsResult(boolean apiRequest) {
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
@@ -3742,7 +3758,7 @@ class ScheduledExecutionController  extends ControllerBase{
             )
         }
 
-        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+        if (apiRequest && request.api_version < ApiRequestFilters.V14 && !(response.format in ['all', 'xml'])) {
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',
