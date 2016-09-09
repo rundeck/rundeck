@@ -1569,7 +1569,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (!scheduledExecution) {
             return [success: false]
         }
-
+        scheduledExecution.updatedBy = changeinfo.user
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
             return [success: false, scheduledExecution: scheduledExecution, message: "Update Job ${scheduledExecution.extid}", unauthorized: true]
         }
@@ -2453,6 +2453,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         def result = _dovalidate(map, authContext)
         def scheduledExecution = result.scheduledExecution
+        if(changeinfo.change == 'create') {
+            scheduledExecution.createdBy = changeinfo.user
+        }
+        scheduledExecution.updatedBy = changeinfo.user
         failed = result.failed
         //try to save workflow
         if(failed){

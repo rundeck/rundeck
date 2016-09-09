@@ -1636,4 +1636,26 @@ class ScheduledExecutionServiceSpec extends Specification {
                         nodeExclude: 'testo',
                         nodeExcludeTags: 'dev']
     }
+
+    def "modify job test author and lastUpdatedBy"(){
+        given:
+        setupDoUpdate()
+        def  uuid=UUID.randomUUID().toString()
+        def se = new ScheduledExecution(
+                createJobParams() + [project: 'BProject', description: 'new desc', uuid: uuid]
+        )
+        def changeinfo = [success: true, scheduledExecution: se, change: option, user: editor]
+
+        when:
+        def result = service._dosave(se, mockAuth(), changeinfo)
+
+        then:
+        result.scheduledExecution.updatedBy == editor
+        result.scheduledExecution.createdBy == author
+
+        where:
+        option      | author    | editor
+        'update'    | null      | 'admin'
+        'create'    | 'admin'   | 'admin'
+    }
 }
