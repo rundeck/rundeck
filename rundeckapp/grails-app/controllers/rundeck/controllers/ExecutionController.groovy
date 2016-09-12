@@ -648,7 +648,7 @@ class ExecutionController extends ControllerBase{
                 return
             }
             def message = msgbuf.message
-            def msghtml=message
+            def msghtml=message.encodeAsHTML()
             if (message.contains('\033[')) {
                 try {
                     msghtml = message.decodeAnsiColor()
@@ -659,7 +659,7 @@ class ExecutionController extends ControllerBase{
             def css="log_line" + (csslevel?" level_${msgbuf.loglevel.toString().toLowerCase()}":'')
 
             response.outputStream << "<div class=\"$css\" >"
-            response.outputStream << msghtml.encodeAsHTML()
+            response.outputStream << msghtml
             response.outputStream << '</div>'
 
             response.outputStream<<lineSep
