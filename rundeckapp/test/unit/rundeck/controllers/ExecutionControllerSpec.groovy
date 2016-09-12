@@ -16,12 +16,29 @@
 
 package rundeck.controllers
 
+import asset.pipeline.grails.AssetMethodTagLib
+import asset.pipeline.grails.AssetProcessorService
+import com.dtolabs.rundeck.app.internal.logging.DefaultLogEvent
 import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.logging.LogEvent
+import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.rundeck.core.logging.LogUtil
+import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
+import grails.test.mixin.web.GroovyPageUnitTestMixin
+import rundeck.Execution
+import rundeck.codecs.AnsiColorCodec
+import rundeck.codecs.HTMLElementCodec
+import rundeck.codecs.URIComponentCodec
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
+import rundeck.services.LoggingService
+import rundeck.services.logging.ExecutionLogReader
+import rundeck.services.logging.ExecutionLogState
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -31,7 +48,13 @@ import javax.servlet.http.HttpServletResponse
  * Created by greg on 1/6/16.
  */
 @TestFor(ExecutionController)
+@Mock([Execution])
+@TestMixin(GroovyPageUnitTestMixin)
 class ExecutionControllerSpec extends Specification {
+    def setup() {
+        mockCodec(AnsiColorCodec)
+        mockCodec(HTMLElementCodec)
+    }
     def "api execution query no project"() {
         setup:
         def query = new ExecutionQuery()
@@ -160,5 +183,105 @@ class ExecutionControllerSpec extends Specification {
 
         1 * controller.executionService.queryExecutions(query, 0, 20) >> [result: [], total: 1]
         1 * controller.frameworkService.filterAuthorizedProjectExecutionsAll(_, [], [AuthConstants.ACTION_READ]) >> []
+    }
+
+    class TestReader implements StreamingLogReader {
+        List<LogEvent> logs;
+        int index = -1;
+
+        @Override
+        void openStream(Long offset) throws IOException {
+            index = offset;
+        }
+
+        @Override
+        long getTotalSize() {
+            return logs.size()
+        }
+
+        @Override
+        Date getLastModified() {
+            return null
+        }
+
+        @Override
+        void close() throws IOException {
+            index = -1
+        }
+
+        @Override
+        boolean isComplete() {
+            return index > logs.size()
+        }
+
+        @Override
+        long getOffset() {
+            return index
+        }
+
+        @Override
+        boolean hasNext() {
+            return index < logs.size()
+        }
+
+        @Override
+        LogEvent next() {
+            return logs[index++]
+        }
+
+        @Override
+        void remove() {
+
+        }
+    }
+
+    def "render output escapes html"() {
+        given:
+        def assetTaglib = mockTagLib(AssetMethodTagLib)
+        assetTaglib.assetProcessorService = Mock(AssetProcessorService) {
+            assetBaseUrl(*_) >> ''
+            getAssetPath(*_) >> ''
+        }
+
+        Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+        controller.loggingService = Mock(LoggingService)
+        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        reader.reader = new TestReader(logs:
+                                               [
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: new Date(),
+                                                               message: message,
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                               ]
+        )
+        when:
+        params.id = e1.id.toString()
+        controller.renderOutput()
+        def ostring = response.contentAsString
+        then:
+        1 * controller.loggingService.getLogReader(e1) >> reader
+        ostring.contains(output)
+
+
+        where:
+        message                                            | output
+        'a simple message'                                 | 'a simple message'
+        'a simple <script>alert("hi");</script> message'           | 'a simple &lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; message'
+        'ansi sequence \033[31mred\033[0m now normal'      |
+                'ansi sequence <span class="ansi-fg-red">red</span><span class="ansi-mode-normal"> now normal</span>'
+        '<script>alert("hi");</script> \033[31mred\033[0m' |
+                '&lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; <span class="ansi-fg-red">red</span><span ' +
+                'class="ansi-mode-normal"></span>'
     }
 }
