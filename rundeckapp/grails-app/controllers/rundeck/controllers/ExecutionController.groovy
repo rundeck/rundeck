@@ -659,7 +659,7 @@ class ExecutionController extends ControllerBase{
             def css="log_line" + (csslevel?" level_${msgbuf.loglevel.toString().toLowerCase()}":'')
 
             response.outputStream << "<div class=\"$css\" >"
-            response.outputStream << msghtml
+            response.outputStream << msghtml.encodeAsHTML()
             response.outputStream << '</div>'
 
             response.outputStream<<lineSep
