@@ -1518,6 +1518,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 return [success: false, scheduledExecution: scheduledExecution,
                         errorCode: 'api.error.job.toggleSchedule.notScheduled' ]
             }
+            scheduledExecution.serverNodeUUID = frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null
             scheduledExecution.properties.scheduleEnabled = params.scheduleEnabled
         }
 
