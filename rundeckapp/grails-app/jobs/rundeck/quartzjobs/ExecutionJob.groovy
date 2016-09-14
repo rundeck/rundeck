@@ -283,7 +283,7 @@ class ExecutionJob implements InterruptableJob {
                     return initMap
                 }else{
                     //verify run on this node but scheduled disabled
-                    if(!initMap.scheduledExecution.scheduleEnabled){
+                    if(!initMap.scheduledExecution.shouldScheduleExecution() ){
                         initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} schedule has been disabled, removing schedule on this server (${serverUUID})."
                         context.getScheduler().deleteJob(context.jobDetail.key)
                         return initMap
