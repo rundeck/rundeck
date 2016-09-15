@@ -1533,6 +1533,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         errorCode   : 'api.error.item.unauthorized',
                         unauthorized: true]
             }
+            scheduledExecution.serverNodeUUID = frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null
             scheduledExecution.properties.executionEnabled = params.executionEnabled
         }
 

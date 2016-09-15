@@ -191,9 +191,9 @@ class ExecutionJobSpec extends Specification {
                                 [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                         )]
                 ),
-                scheduled: false,
-                executionEnabled: true,
-                scheduleEnabled: false
+                scheduled: isScheduled,
+                executionEnabled: isExecEnabled,
+                scheduleEnabled: isScheduleEnabled
         )
         se.save(flush:true)
         def datamap = new JobDataMap(
@@ -224,6 +224,12 @@ class ExecutionJobSpec extends Specification {
 
         then:
         1 * quartzScheduler.deleteJob(ajobKey)
+
+        where:
+        isScheduled | isExecEnabled | isScheduleEnabled
+        false       | true          | true
+        true        | false         | true
+        true        | true          | false
 
 
     }
