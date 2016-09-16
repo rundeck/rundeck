@@ -162,6 +162,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return results
     }
     def nowrunningAjax = {QueueQuery query->
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'index', controller: 'reports', params: params)
+        }
         def results = nowrunning(query)
         //structure dataset for client-side event status processing
         def running= results.nowrunning.collect {
