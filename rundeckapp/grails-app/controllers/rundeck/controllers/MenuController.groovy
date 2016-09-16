@@ -176,6 +176,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 data['executionString']=map.workflow.commands[0].exec
             }else{
                 data['jobName']=it.scheduledExecution.jobName
+                data['jobGroup']=it.scheduledExecution.groupPath
+                data['jobId']=it.scheduledExecution.extid
+                data['jobPermalink']= createLink(
+                        controller: 'scheduledExecution',
+                        action: 'show',
+                        absolute: true,
+                        id: it.scheduledExecution.extid,
+                        params:[project:it.scheduledExecution.project]
+                )
                 if (it.scheduledExecution && it.scheduledExecution.totalTime >= 0 && it.scheduledExecution.execCount > 0) {
                     data['jobAverageDuration']= Math.floor(it.scheduledExecution.totalTime / it.scheduledExecution.execCount)
                 }
