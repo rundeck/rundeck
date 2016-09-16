@@ -31,9 +31,9 @@ import java.util.*;
  */
 public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements UIPlugin {
     List<String> paths;
-    Map<String, List<String>> pathResources = new HashMap<>();
-    Map<String, List<String>> pathScripts = new HashMap<>();
-    Map<String, List<String>> pathStyles = new HashMap<>();
+    Map<String, List<String>> pathResources = new LinkedHashMap<>();
+    Map<String, List<String>> pathScripts = new LinkedHashMap<>();
+    Map<String, List<String>> pathStyles = new LinkedHashMap<>();
 
     public ScriptUIPlugin(
             final ScriptPluginProvider provider,
