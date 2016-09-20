@@ -1008,7 +1008,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         [rundeckFramework: frameworkService.rundeckFramework]
     }
-    def securityConfig(){
+
+    def securityConfig() {
+        return redirect(action: 'acls', params: params)
+    }
+
+    def acls() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
@@ -1022,8 +1027,27 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         Map<File,Validation> validation=list.collectEntries{
             [it,authorizationService.validateYamlPolicy(it)]
         }
+        def projectlist = []
+        if (params.project
+                && frameworkService.authorizeApplicationResourceAny(
+                authContext,
+                frameworkService.authResourceForProject(params.project),
+                [AuthConstants.ACTION_ADMIN]
+        )
+        ) {
+            def project = frameworkService.getFrameworkProject(params.project)
+            projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
+                it.replaceAll(/^acls\//, '')
+            }
+        }
 
-        [rundeckFramework: frameworkService.rundeckFramework,fwkConfigDir:fwkConfigDir, aclFileList: list, validations: validation]
+        [
+                rundeckFramework: frameworkService.rundeckFramework,
+                fwkConfigDir    : fwkConfigDir,
+                aclFileList     : list,
+                validations     : validation,
+                projectlist     : projectlist
+        ]
     }
 
     def systemInfo (){

@@ -63,8 +63,8 @@
             </g:link>
         </li>
         <li class="${selected == 'securityConfig' ? 'active' : ''}">
-            <g:link controller="menu" action="securityConfig" params="[project: params.project ?: request.project]">
-                <g:message code="gui.menu.Security" default="Security"/>
+            <g:link controller="menu" action="acls" params="[project: params.project ?: request.project]">
+                <g:message code="gui.menu.AccessControl" />
             </g:link>
         </li>
         <li class="${selected == 'sysinfo' ? 'active' : ''}">
