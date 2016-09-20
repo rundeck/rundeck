@@ -311,24 +311,28 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 }
             }
         } else {
-            if (job.scmImportMetadata && job.scmImportMetadata.commitId && commit) {
+            if (job.scmImportMetadata && job.scmImportMetadata.commitId &&
+                    commit &&
+                    (!job.scmImportMetadata.url || job.scmImportMetadata.url == config.url)) {
                 //determine change between tracked commit ID and head commit, if available
                 //i.e. detect if path was deleted
                 def oldCommit = GitUtil.getCommit repo, job.scmImportMetadata.commitId
-                def changes = GitUtil.listChanges(git, oldCommit.tree.name, commit.tree.name)
-                def pathChanges = changes.findAll { it.oldPath == path || it.newPath == path }
-                log.debug("Found changes for ${path}: " + pathChanges.collect { entry ->
-                    "${entry.changeType} ${entry.oldPath}->${entry.newPath}"
-                }.join("\n")
-                )
-                def found = pathChanges.find { it.oldPath == path }
-                if (found && found.changeType == DiffEntry.ChangeType.DELETE) {
-                    return ImportSynchState.DELETE_NEEDED
-                } else if (found && found.changeType == DiffEntry.ChangeType.MODIFY) {
-                    return ImportSynchState.IMPORT_NEEDED
-                } else if (found && found.changeType == DiffEntry.ChangeType.RENAME) {
-                    log.error("Rename detected from ${found.oldPath} to ${found.newPath}")
-                    return ImportSynchState.IMPORT_NEEDED
+                if (oldCommit) {
+                    def changes = GitUtil.listChanges(git, oldCommit.tree.name, commit.tree.name)
+                    def pathChanges = changes.findAll { it.oldPath == path || it.newPath == path }
+                    log.debug("Found changes for ${path}: " + pathChanges.collect { entry ->
+                        "${entry.changeType} ${entry.oldPath}->${entry.newPath}"
+                    }.join("\n")
+                    )
+                    def found = pathChanges.find { it.oldPath == path }
+                    if (found && found.changeType == DiffEntry.ChangeType.DELETE) {
+                        return ImportSynchState.DELETE_NEEDED
+                    } else if (found && found.changeType == DiffEntry.ChangeType.MODIFY) {
+                        return ImportSynchState.IMPORT_NEEDED
+                    } else if (found && found.changeType == DiffEntry.ChangeType.RENAME) {
+                        log.error("Rename detected from ${found.oldPath} to ${found.newPath}")
+                        return ImportSynchState.IMPORT_NEEDED
+                    }
                 }
             }
             //different commit was imported previously, or job has been modified
