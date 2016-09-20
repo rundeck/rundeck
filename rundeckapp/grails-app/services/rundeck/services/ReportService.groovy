@@ -326,11 +326,17 @@ class ReportService  {
             }
 
             if(query.execnodeFilter){
-                or {
-                    ilike("failedNodeList", '%' + query.execnodeFilter + '%')
-                    ilike("succeededNodeList", '%' + query.execnodeFilter + '%')
+                if(query.execnodeFilter.startsWith('name:')){
+                    def node = (query.execnodeFilter.split("name:")[1]).stripIndent()
+                    or {
+                        ilike("failedNodeList", '%' + node + '%')
+                        ilike("succeededNodeList", '%' + node + '%')
+                    }
+
+                }else{
                     ilike("filterApplied", '%' + query.execnodeFilter + '%')
                 }
+
             }
         }
     }

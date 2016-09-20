@@ -50,9 +50,9 @@
                  placeholder="${g.message(code: 'jobquery.title.titleFilter')}"/>
 </div>
 <div class="form-group">
-    <label for="execnodeFilter" class="sr-only"><g:message code="jobquery.title.nodeFilter"/></label>
+    <label for="execnodeFilter" class="sr-only"><g:message code="jobquery.title.filter"/></label>
     <g:textField name="execnodeFilter" value="${query.execnodeFilter}" class="form-control input-sm"
-                 placeholder="${g.message(code: 'jobquery.title.nodeFilter')}"/>
+                 placeholder="${g.message(code: 'jobquery.title.filter')}"/>
 </div>
 <div class="form-group">
     <label for="statFilter" class="sr-only"><g:message code="jobquery.title.statFilter"/></label>
