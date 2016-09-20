@@ -58,6 +58,7 @@ class ReportQuery extends BaseQuery{
     String reportIdFilter
     String tagsFilter
     String abortedByFilter
+    String execnodeFilter
 
     public void configureFilter(){
         if(recentFilter){

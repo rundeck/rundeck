@@ -764,7 +764,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
     public logExecution(uri,project,user,issuccess,statusString,execId,Date startDate=null, jobExecId=null, jobName=null,
                         jobSummary=null,iscancelled=false,istimedout=false,willretry=false, nodesummary=null,
-                        abortedby=null){
+                        abortedby=null, succeededNodeList=null, failedNodeList=null, filter=null){
 
         def reportMap=[:]
         def internalLog = org.apache.log4j.Logger.getLogger("ExecutionService")
@@ -789,6 +789,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else{
             reportMap.reportId='adhoc'
             reportMap.adhocExecution = true
+        }
+
+        if(succeededNodeList){
+            reportMap.succeededNodeList = succeededNodeList
+        }
+        if(failedNodeList){
+            reportMap.failedNodeList = failedNodeList
+        }
+        if(filter){
+            reportMap.filterApplied = filter
         }
         reportMap.ctxProject=project
 
@@ -1689,7 +1699,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         input.retryAttempt = attempt
         try {
 
-            Map allowedOptions = input.subMap(['loglevel', 'argString', 'option','_replaceNodeFilters', 'filter', 'retryAttempt']).findAll { it.value != null }
+            Map allowedOptions = input.subMap(['loglevel', 'argString', 'option','_replaceNodeFilters', 'filter', 'retryAttempt','nodeoverride','nodefilter']).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions,attempt>0,prevId)
             def timeout = 0
@@ -1747,7 +1757,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         try {
 
             Map allowedOptions = input.subMap(['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter',
-                                               'retryAttempt']).findAll { it.value != null }
+                                               'retryAttempt','nodeoverride','nodefilter']).findAll { it.value != null }
             allowedOptions.putAll(input.findAll {
                         it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
                         it.key.startsWith('nodeExclude')
@@ -1861,13 +1871,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             props.user = runAsUser
         }
         if (input && 'true' == input['_replaceNodeFilters']) {
-            //remove all existing node filters to replace with input filters
-            props = props.findAll {!(it.key =~ /^(filter|node(Include|Exclude).*)$/)}
+            if('filter' == input.nodeoverride){
+                input.filter = input.nodefilter
+                input.doNodedispatch = true
+            }else{
+                //remove all existing node filters to replace with input filters
+                props = props.findAll {!(it.key =~ /^(filter|node(Include|Exclude).*)$/)}
 
-            def filterprops = input.findAll { it.key =~ /^(filter|node(Include|Exclude).*)$/ }
-            def nset = filtersAsNodeSet(filterprops)
-            input.filter = NodeSet.generateFilter(nset)
-            input.doNodedispatch=true
+                def filterprops = input.findAll { it.key =~ /^(filter|node(Include|Exclude).*)$/ }
+                def nset = filtersAsNodeSet(filterprops)
+                input.filter = NodeSet.generateFilter(nset)
+                input.doNodedispatch=true
+            }
         }
         if (input) {
             props.putAll(input.subMap(['argString','filter','loglevel','retryAttempt','doNodedispatch']).findAll{it.value!=null})
@@ -2310,7 +2325,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         props.timedOut,
                         execution.willRetry,
                         node,
-                        execution.abortedby
+                        execution.abortedby,
+                        execution.succeededNodeList,
+                        execution.failedNodeList,
+                        execution.filter
                 )
                 logExecutionLog4j(execution, "finish", execution.user)
 

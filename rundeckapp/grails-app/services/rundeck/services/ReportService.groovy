@@ -324,6 +324,20 @@ class ReportService  {
                 isNull("jcJobId")
                 isNull("jcExecId")
             }
+
+            if(query.execnodeFilter){
+                if(query.execnodeFilter.startsWith('name:')){
+                    def node = (query.execnodeFilter.split("name:")[1]).stripIndent()
+                    or {
+                        ilike("failedNodeList", '%' + node + '%')
+                        ilike("succeededNodeList", '%' + node + '%')
+                    }
+
+                }else{
+                    ilike("filterApplied", '%' + query.execnodeFilter + '%')
+                }
+
+            }
         }
     }
     def getExecutionReports(ExecQuery query, boolean isJobs) {

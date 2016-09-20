@@ -57,6 +57,7 @@ class ReportFilter {
     String statFilter
     String reportIdFilter
     String tagsFilter
+    String execnodeFilter
 
     static belongsTo = [user:User]
     static constraints={
@@ -80,6 +81,7 @@ class ReportFilter {
         startbeforeFilter(nullable:true)
         endafterFilter(nullable:true)
         endbeforeFilter(nullable:true)
+        execnodeFilter(nullable: true)
     }
     public void fillProperties(){
         ['type','title','tags','reportId','obj','message','maprefUri','cmd','user','stat','recent'].each{
