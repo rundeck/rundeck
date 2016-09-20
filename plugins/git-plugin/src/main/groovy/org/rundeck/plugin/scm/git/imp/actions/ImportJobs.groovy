@@ -75,6 +75,7 @@ class ImportJobs extends BaseAction implements GitImportAction {
 
             def commit = GitUtil.lastCommitForPath plugin.repo, plugin.git, path
             def meta = GitUtil.metaForCommit(commit)
+            meta.url = plugin.config.url
 
             def importResult = importer.importFromStream(
                     plugin.config.format,
