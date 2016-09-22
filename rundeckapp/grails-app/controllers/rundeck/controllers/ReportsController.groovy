@@ -260,7 +260,7 @@ class ReportsController extends ControllerBase{
         results.params=params
         return results
     }
-    def eventsAjax={ ExecQuery query ->
+    def eventsAjax(ExecQuery query){
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
 
