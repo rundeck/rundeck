@@ -35,6 +35,8 @@ public class ScheduledExecutionQuery extends BaseQuery{
     String loglevelFilter
     String idlist
     Boolean scheduledFilter
+    Boolean scheduleEnabledFilter
+    Boolean executionEnabledFilter
     String serverNodeUUIDFilter
 
     /**
@@ -57,7 +59,9 @@ public class ScheduledExecutionQuery extends BaseQuery{
      * Boolean filters
      */
     public final static  BOOL_FILTERS=[
-            'scheduled':'scheduled'
+            'scheduled':'scheduled',
+            'executionEnabled':'executionEnabled',
+            'scheduleEnabled':'scheduleEnabled',
             ]
     /**
      * all filters
