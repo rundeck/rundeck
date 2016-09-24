@@ -90,6 +90,8 @@ public class ScheduledExecutionQuery extends BaseQuery{
         loglevelFilter(nullable: true)
         idlist(nullable: true)
         scheduledFilter(nullable: true)
+        scheduleEnabledFilter(nullable: true)
+        executionEnabledFilter(nullable: true)
         serverNodeUUIDFilter(size: 36..36, blank: true, nullable: true, validator: { val, obj ->
             if (null == val) return true;
             try { return null != UUID.fromString(val) } catch (IllegalArgumentException e) {
