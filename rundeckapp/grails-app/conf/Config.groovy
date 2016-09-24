@@ -83,6 +83,20 @@ environments {
 grails.json.legacy.builder = false
 grails.mail.default.from="rundeck-server@localhost"
 
+grails.databinding.dateFormats = [
+        //default grails patterns
+        "yyyy-MM-dd HH:mm:ss.S",
+        "yyyy-MM-dd'T'hh:mm:ss'Z'",
+
+        // ISO8601 patterns
+        "yyyy-MM-dd'T'HH:mm:ssX",
+        "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+        "yyyy-MM-dd'T'HH:mm:ssXX",
+        "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+        "yyyy-MM-dd'T'HH:mm:ssXXX",
+        "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+]
+
 // log4j configuration
 log4j={
     // Example of changing the log pattern for the default console

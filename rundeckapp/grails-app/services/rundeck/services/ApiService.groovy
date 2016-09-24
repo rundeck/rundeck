@@ -180,6 +180,12 @@ class ApiService {
     def renderSuccessXmlUnwrapped(Closure recall){
         return renderXml(recall)
     }
+    /**
+     * TODO: remove "result" wrapper from API responses after Rundeck 2.6
+     * @param recall
+     * @return
+     * @deprecated
+     */
     def renderSuccessXml(Closure recall){
         return renderSuccessXmlUnwrapped {
             result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
@@ -716,6 +722,10 @@ class ApiService {
                     if (null != e.dateCompleted) {
                         delegate.'date-ended'(unixtime: e.dateCompleted.time, w3cDateValue(e.dateCompleted))
                     }
+
+                    if(e.customStatusString){
+                        customStatus(e.customStatusString)
+                    }
                     if (e.cancelled) {
                         abortedby(e.abortedby ? e.abortedby : e.user)
                     }
@@ -796,6 +806,9 @@ class ApiService {
                         status: status,
                         project: e.project
                 ]
+            if(execdata.customStatus){
+                execMap['customStatus']=execdata.customStatus
+            }
                 /** elements   */
                 execMap.user=(e.user)
                 execMap.'date-started'=[unixtime: e.dateStarted.time, date: w3cDateValue(e.dateStarted)]

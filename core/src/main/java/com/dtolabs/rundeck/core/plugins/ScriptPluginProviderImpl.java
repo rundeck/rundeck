@@ -46,7 +46,11 @@ class ScriptPluginProviderImpl implements ScriptPluginProvider {
         this.plugindef = plugindef;
         this.archiveFile = archiveFile;
         this.contentsBasedir=basedir;
-        scriptFile = new File(basedir, plugindef.getScriptFile());
+        if (plugindef.getPluginType().equals("script")) {
+            scriptFile = new File(basedir, plugindef.getScriptFile());
+        } else {
+            scriptFile = null;
+        }
     }
 
     public String getName() {

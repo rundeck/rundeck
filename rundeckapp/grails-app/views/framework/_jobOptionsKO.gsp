@@ -98,9 +98,9 @@ data for configuring remote option cascading/dependencies
     css: { 'has-warning': hasError, 'remote': hasRemote }
     ">
             <label class="remoteoptionfield col-sm-2 control-label"
-                   data-bind="attr: { for: fieldId }">
-                <span data-bind="if: hasRemote(), click: reloadRemoteValues">
-                    <span data-bind="if: loading()">
+                   data-bind="attr: { for: fieldId }, click: reloadRemoteValues">
+                <span data-bind="if: hasRemote()">
+                    <span data-bind="if: loading() ">
                         <g:img file="spinner-gray.gif" width="16px" height="16px"/>
                     </span>
                     <span class="remotestatus"

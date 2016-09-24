@@ -32,7 +32,7 @@
         <g:expander key="notificationplugin${ukey}"><g:enc>${desc.title}</g:enc> </g:expander>
         <span class="" id="notificationplugin${ukey}" style="display:none;" title="">
             <g:render template="/framework/renderPluginConfig"
-                      model="${[values: notification.configuration, description: desc, hideTitle: true]}"/>
+                      model="${[serviceName:'Notification',values: notification.configuration, description: desc, hideTitle: true]}"/>
         </span>
     </g:if>
     <g:elseif test="${!notificationPlugins?.get(notification.type)}">

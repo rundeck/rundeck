@@ -308,10 +308,11 @@ function NodeSet(data) {
         result.sort(function(a,b){return a.shortname.localeCompare(b.shortname);});
         return result;
     };
+    self.attributeNamespaceRegex=/^(.+?):.+$/;
     self.attributeNamespaceNames=function(attrs){
         var namespaces=[];
         for(var e in attrs){
-            var found=e.match(/^(\w+):.+$/);
+            var found=e.match(self.attributeNamespaceRegex);
             if(found && found.length>1){
                 if(namespaces.indexOf(found[1])<0){
                     namespaces.push(found[1]);
@@ -325,13 +326,17 @@ function NodeSet(data) {
         var index={};
         var names=[];
         for(var e in attrs){
-            var found=e.match(/^(\w+):.+$/);
+            var found=e.match(self.attributeNamespaceRegex);
             if(found && found.length>1){
                 if(!index[found[1]]){
                     index[found[1]]=[];
                     names.push(found[1]);
                 }
-                index[found[1]].push({name:e,value:attrs[e](),shortname: e.substring(found[1].length+1)});
+                index[found[1]].push({
+                    name:e,
+                    value:ko.utils.unwrapObservable(attrs[e]),
+                    shortname: e.substring(found[1].length+1)
+                });
             }
         }
         names.sort();

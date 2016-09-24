@@ -20,6 +20,8 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
+import com.dtolabs.rundeck.core.plugins.PluginMetadata
+import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
@@ -31,6 +33,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
+import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.apache.log4j.Logger
@@ -48,6 +51,9 @@ import org.springframework.context.ApplicationContextAware
  */
 class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
     public static Logger log = Logger.getLogger(RundeckPluginRegistry.class.name)
+    /**
+     * Registry of spring bean plugin providers, "providername"->"beanname"
+     */
     HashMap pluginRegistryMap
     def ApplicationContext applicationContext
     /**
@@ -369,5 +375,33 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         }
 
         list
+    }
+
+    @Override
+    PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException {
+        //TODO: check groovy plugins
+        rundeckServerServiceProviderLoader.getResourceLoader service, provider
+    }
+
+    @Override
+    PluginMetadata getPluginMetadata(final String service, final String provider) throws ProviderLoaderException {
+        if (pluginRegistryMap[provider]) {
+            Class groovyPluginType = ServiceTypes.TYPES[service]
+            String beanName=pluginRegistryMap[provider]
+            try {
+                def bean = findBean(beanName)
+                if (bean instanceof PluginBuilder) {
+                    if (bean.pluginClass == groovyPluginType) {
+                        if (bean instanceof PluginMetadata) {
+                            def metadata = bean as PluginMetadata
+                            return metadata
+                        }
+                    }
+                }
+            } catch (NoSuchBeanDefinitionException e) {
+                log.error("No such bean: ${beanName}")
+            }
+        }
+        rundeckServerServiceProviderLoader.getPluginMetadata service, provider
     }
 }

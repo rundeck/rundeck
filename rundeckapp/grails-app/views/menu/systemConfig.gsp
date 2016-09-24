@@ -82,6 +82,23 @@
 
     <g:render template="displayConfigProps" model="[map: flatConfig, keys: flatConfig.keySet().grep(~/^rundeck\.execution\.logs\..*$/)]"/>
 
+    <h4><g:message code="login.module" /></h4>
+    <div class="text-muted">
+        <g:message code="authentication.is.performed.using.jaas.the.configuration.file.is.defined.using.a.system.property" />
+    </div>
+    <div>
+        <g:render template="displayConfigProps" model="[map:System.properties,keys:['java.security.auth.login.config']]"/>
+    </div>
+    <div class="text-muted">
+        <g:message code="the.currently.used.login.module" />
+    </div>
+    <div>
+        <g:set var="loginmodule" value="${System.getProperty('loginmodule.name', "rundecklogin")}"/>
+
+        <div>
+            <code><g:enc>${loginmodule}</g:enc></code>
+        </div>
+    </div>
     </div>
 </div>
 </body>

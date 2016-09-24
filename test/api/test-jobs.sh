@@ -3,6 +3,7 @@
 #test output from /api/jobs
 
 DIR=$(cd `dirname $0` && pwd)
+export API_XML_NO_WRAPPER=1
 source $DIR/include.sh
 
 proj="test"
@@ -24,7 +25,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
 
 if [ "" == "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -66,7 +67,10 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
+#wrapper expected in job import response
+export API_XML_NO_WRAPPER=
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+export API_XML_NO_WRAPPER=1
 
 cat > $DIR/temp.out <<END
 - 
@@ -97,7 +101,10 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
+#wrapper expected in job import response
+export API_XML_NO_WRAPPER=
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+export API_XML_NO_WRAPPER=1
 
 # load a top-level job not in a group
 cat > $DIR/temp.out <<END
@@ -128,7 +135,10 @@ if [ 0 != $? ] ; then
     exit 2
 fi
 
+#wrapper expected in job import response
+export API_XML_NO_WRAPPER=
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
+export API_XML_NO_WRAPPER=1
 
 ###
 # test query with match filter and exact filter
@@ -150,7 +160,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
 
 if [ "2" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -177,7 +187,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -204,7 +214,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -231,7 +241,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
 
 if [ "2" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -257,7 +267,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -283,7 +293,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -310,7 +320,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -336,7 +346,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
 
 if [ "0" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -362,7 +372,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
 
 if [ "0" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"
@@ -388,7 +398,7 @@ fi
 $SHELL $SRC_DIR/api-test-success.sh $DIR/curl.out || exit 2
 
 #Check projects list
-itemcount=$($XMLSTARLET sel -T -t -v "/result/jobs/@count" $DIR/curl.out)
+itemcount=$($XMLSTARLET sel -T -t -v "/jobs/@count" $DIR/curl.out)
 
 if [ "1" != "$itemcount" ] ; then
     errorMsg "Wrong count: $itemcount"

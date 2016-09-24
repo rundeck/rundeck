@@ -24,14 +24,91 @@ import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
+import rundeck.services.ScheduledExecutionService
 import spock.lang.Specification
 
 /**
  * Created by greg on 3/15/16.
  */
 @TestFor(MenuController)
-@Mock([ScheduledExecution,CommandExec,Workflow])
+@Mock([ScheduledExecution, CommandExec, Workflow])
 class MenuControllerSpec extends Specification {
+    def "api job detail xml"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime=200*1000
+        job1.execCount=100
+        job1.save()
+
+        when:
+        params.id=testUUID
+        def result = controller.apiJobDetail()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, 18) >> true
+        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
+        1 * controller.apiService.requireExists(_, job1, _) >> true
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'AProject') >>
+                Mock(UserAndRolesAuthContext)
+        1 * controller.frameworkService.authorizeProjectJobAll(_, job1, ['read'], 'AProject') >> true
+        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
+        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
+
+        response.xml != null
+        response.xml.id  == testUUID
+        response.xml.description  == 'a job'
+        response.xml.name  == 'job1'
+        response.xml.group  == 'some/where'
+        response.xml.href  == 'api/href'
+        response.xml.permalink  == 'gui/href'
+        response.xml.averageDuration  == '2000'
+    }
+    def "api job detail json"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime=200*1000
+        job1.execCount=100
+        job1.save()
+
+        when:
+        params.id=testUUID
+        response.format='json'
+        def result = controller.apiJobDetail()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, 18) >> true
+        1 * controller.apiService.requireParameters(_, _, ['id']) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID(testUUID) >> job1
+        1 * controller.apiService.requireExists(_, job1, _) >> true
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'AProject') >>
+                Mock(UserAndRolesAuthContext)
+        1 * controller.frameworkService.authorizeProjectJobAll(_, job1, ['read'], 'AProject') >> true
+        1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
+        1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
+
+        response.json != null
+        response.json.id  == testUUID
+        response.json.description  == 'a job'
+        response.json.name  == 'job1'
+        response.json.group  == 'some/where'
+        response.json.href  == 'api/href'
+        response.json.permalink  == 'gui/href'
+        response.json.averageDuration  == 2000
+    }
+
     def "scheduler list jobs invalid uuid"() {
         given:
         def paramUUID = "not a uuid"

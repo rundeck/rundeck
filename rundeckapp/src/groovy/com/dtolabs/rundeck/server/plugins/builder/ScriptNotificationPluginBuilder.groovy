@@ -34,8 +34,8 @@ import org.codehaus.groovy.runtime.InvokerHelper
 class ScriptNotificationPluginBuilder extends ScriptPluginBuilder implements PluginBuilder<NotificationPlugin>{
     static Logger logger = Logger.getLogger(ScriptNotificationPluginBuilder)
     Map<String, Closure> triggers=[:]
-    ScriptNotificationPluginBuilder(String name) {
-        super(name)
+    ScriptNotificationPluginBuilder(Class clazz,String name) {
+        super(clazz,name)
     }
 
     @Override

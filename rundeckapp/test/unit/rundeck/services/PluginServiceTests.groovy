@@ -17,7 +17,10 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
+import com.dtolabs.rundeck.core.plugins.PluginMetadata
+import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import com.dtolabs.rundeck.core.plugins.ProviderIdent
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider
 import com.dtolabs.rundeck.core.plugins.configuration.Description
@@ -200,6 +203,18 @@ class PluginServiceTests extends GrailsUnitTestCase {
         Map getPluginConfigurationByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) {
             getPluginConfigurationByNameCalled=true
             return allConfiguration
+        }
+
+        @Override
+        PluginResourceLoader getResourceLoader(final String service, final String provider)
+                throws ProviderLoaderException
+        {
+            return null
+        }
+
+        @Override
+        PluginMetadata getPluginMetadata(final String service, final String provider) throws ProviderLoaderException {
+            return null
         }
     }
 

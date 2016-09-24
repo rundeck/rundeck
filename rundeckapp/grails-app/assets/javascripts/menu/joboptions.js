@@ -44,12 +44,14 @@ function OptionVal(data) {
         return sel || val ? "" : null;
     });
 }
+var _option_uid=0;
 function Option(data) {
     "use strict";
 
     var self = this;
     self.remoteLoadCallback = null;
     self.name = ko.observable(data.name);
+    self.uid = ko.observable(data.uid||(++_option_uid+'_opt'));
     self.description = ko.observable(data.description);
     self.descriptionHtml = ko.observable(data.descriptionHtml);
     self.loading = ko.observable(false);
@@ -140,6 +142,10 @@ function Option(data) {
             }
             return false;
         };
+        if(self.selectedMultiValues().length<1 && self.defaultMultiValues().length>0){
+            //automatically select the default values
+            self.selectedMultiValues(self.defaultMultiValues());
+        }
         if (!self.enforced() && self.selectedMultiValues()) {
             //add any selectedMultiValues that are not in values list
 

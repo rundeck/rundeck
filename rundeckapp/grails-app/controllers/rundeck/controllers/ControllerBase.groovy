@@ -22,6 +22,7 @@ import org.codehaus.groovy.grails.web.metaclass.ValidResponseHandler
 import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
 import org.codehaus.groovy.grails.web.servlet.mvc.TokenResponseHandler
 import org.springframework.web.context.request.RequestContextHolder
+import rundeck.services.UiPluginService
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -33,8 +34,52 @@ import java.util.zip.GZIPOutputStream
  * @since 2014-03-12
  */
 class ControllerBase {
+    public static final ArrayList<String> UIPLUGIN_PAGES = [
+            'menu/jobs',
+            'menu/home',
+            'menu/executionMode',
+            'menu/admin',
+            "menu/logStorage",
+            "menu/securityConfig",
+            "menu/systemInfo",
+            "menu/systemConfig",
+            "menu/metrics",
+            "menu/plugins",
+            "menu/welcome",
+            "menu/storage",
+            "scheduledExecution/show",
+            "scheduledExecution/edit",
+            "scheduledExecution/delete",
+            "scheduledExecution/create",
+            "execution/show",
+            "framework/nodes",
+            "framework/adhoc",
+            "framework/createProject",
+            "framework/editProject",
+            "framework/editProjectConfig",
+            "scm/index",
+            "reports/index",
+    ]
     def grailsApplication
+    UiPluginService uiPluginService
 
+    protected def loadUiPlugins(path) {
+        def uiplugins = [:]
+        if ((path in UIPLUGIN_PAGES)) {
+            uiPluginService.pluginsForPage(path).each { name, inst ->
+                uiplugins[name] = [
+                        scripts: inst.scriptResourcesForPath(path),
+                        styles : inst.styleResourcesForPath(path),
+                ]
+            }
+        }
+        uiplugins
+    }
+
+    def afterInterceptor = { model ->
+        model.uiplugins = loadUiPlugins(controllerName + "/" + actionName)
+        model.uipluginsPath = controllerName + "/" + actionName
+    }
     protected def withHmacToken(Closure valid){
         GrailsWebRequest request= (GrailsWebRequest) RequestContextHolder.currentRequestAttributes()
         TokenResponseHandler handler

@@ -131,7 +131,7 @@ get_archive(){
       errorMsg "ERROR: output file does not exist"
       exit 2
   fi
-  file $archive_file | egrep -q 'archive data'
+  file $archive_file | egrep -q 'Jar file data|archive data'
   if [ $? != 0 ] ; then
       file $archive_file 1>&2
       errorMsg "Expected 'archive data' file contents"

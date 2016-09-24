@@ -29,6 +29,8 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.ApiService
+import rundeck.services.ApiServiceSpec
+import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.NotificationService
 import rundeck.services.OrchestratorPluginService
@@ -144,6 +146,61 @@ class ScheduledExecutionControllerSpec extends Specification {
         isEnabled | _
         true      | _
         false     | _
+    }
+    def "api run job at time"(){
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        when:
+        request.api_version=18
+        request.method='POST'
+        params.id='ajobid'
+        params.runAtTime='timetorun'
+        def result=controller.apiJobRun()
+
+        then:
+
+
+        1 * controller.apiService.requireApi(_,_)>>true
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[:]
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,_)
+        1 * controller.frameworkService.authorizeProjectJobAll(_,_,['run'],_)>>true
+        1 * controller.apiService.requireExists(_,_,_)>>true
+        1 * controller.executionService.scheduleAdHocJob(_,_,_,[runAtTime:'timetorun'])>>[success: true]
+        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        0 * controller.executionService._(*_)
+    }
+    def "api run job at time json"(){
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        when:
+        request.api_version=18
+        request.method='POST'
+        request.format='json'
+        request.json=[
+                runAtTime:'timetorun'
+        ]
+        params.id='ajobid'
+        def result=controller.apiJobRun()
+
+        then:
+
+
+        1 * controller.apiService.requireApi(_,_)>>true
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid')>>[:]
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,_)
+        1 * controller.frameworkService.authorizeProjectJobAll(_,_,['run'],_)>>true
+        1 * controller.apiService.requireExists(_,_,_)>>true
+        1 * controller.executionService.scheduleAdHocJob(_,_,_,[runAtTime:'timetorun'])>>[success: true]
+        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        0 * controller.executionService._(*_)
     }
     def "api scheduler takeover cluster mode disabled"(){
         given:

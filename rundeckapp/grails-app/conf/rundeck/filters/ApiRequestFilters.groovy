@@ -17,6 +17,8 @@
 package rundeck.filters
 
 import com.codahale.metrics.MetricRegistry
+import grails.converters.JSON
+import grails.converters.XML
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.util.WebUtils
@@ -59,15 +61,16 @@ public class ApiRequestFilters {
     public static final int V15 = 15
     public static final int V16 = 16
     public static final int V17 = 17
+    public static final int V18 = 18
     public static final Map VersionMap = [:]
-    public static final List Versions = [V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14,V15,V16,V17]
+    public static final List Versions = [V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18]
     static {
         Versions.each { VersionMap[it.toString()] = it }
     }
     public static final Set VersionStrings = new HashSet(VersionMap.values())
 
     public final static int API_EARLIEST_VERSION = V1
-    public final static int API_CURRENT_VERSION = V17
+    public final static int API_CURRENT_VERSION = V18
     public final static int API_MIN_VERSION = API_EARLIEST_VERSION
     public final static int API_MAX_VERSION = API_CURRENT_VERSION
 
@@ -160,6 +163,10 @@ public class ApiRequestFilters {
                 }
                 request.api_version = VersionMap[params.api_version]
                 request['ApiRequestFilters.request.parameters.project']=params.project?:request.project?:''
+                if (request.api_version >= V18) {
+                    XML.use('v' + request.api_version)
+                    JSON.use('v' + request.api_version)
+                }
                 return true
             }
             after = {

@@ -90,6 +90,27 @@ class FrameworkService implements ApplicationContextAware {
      * @param grailsApplication
      * @return
      */
+    def listEmbeddedPlugins(GrailsApplication grailsApplication) {
+        def loader = new ApplicationContextPluginFileSource(grailsApplication.mainContext, '/WEB-INF/rundeck/plugins/')
+        def result = [success: true, logs: []]
+        def pluginsDir = getRundeckFramework().getLibextDir()
+        def pluginList
+        try {
+            pluginList = loader.listManifests()
+        } catch (IOException e) {
+            log.error("Could not load plugins: ${e}", e)
+            result.message = "Could not load plugins: ${e}"
+            result.success = false
+            return result
+        }
+        result.pluginList=pluginList
+        return result
+    }
+    /**
+     * Install all the embedded plugins, will not overwrite existing plugin files with the same name
+     * @param grailsApplication
+     * @return
+     */
     def extractEmbeddedPlugins(GrailsApplication grailsApplication){
         def loader = new ApplicationContextPluginFileSource(grailsApplication.mainContext, '/WEB-INF/rundeck/plugins/')
         def result=[success:true,logs:[]]

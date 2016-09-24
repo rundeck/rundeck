@@ -29,6 +29,9 @@
                  data="${[filter: scheduledExecution?.filter, doNodeDispatch: scheduledExecution?.doNodedispatch, project: params.project
                          ?:
                          request.project]}"/>
+    <g:embedJSON id="jobDetail"
+                 data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
+                          project: params.project ?: request.project]}"/>
     <g:embedJSON id="pageParams" data="${[project: params.project ?: request.project]}"/>
 
     <g:jsMessages code="Node,Node.plural,option.value.required,options.remote.dependency.missing.required,option.default.button.title,option.default.button.text,option.select.choose.text"/>

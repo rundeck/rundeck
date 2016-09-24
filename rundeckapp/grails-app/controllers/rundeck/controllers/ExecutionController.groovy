@@ -649,7 +649,7 @@ class ExecutionController extends ControllerBase{
                 return
             }
             def message = msgbuf.message
-            def msghtml=message
+            def msghtml=message.encodeAsHTML()
             if (message.contains('\033[')) {
                 try {
                     msghtml = message.decodeAnsiColor()

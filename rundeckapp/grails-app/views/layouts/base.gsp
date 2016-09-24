@@ -61,12 +61,58 @@
         <g:set var="_metaTabPage" value="${g.pageProperty(name: 'meta.tabpage')}" scope="page"/>
     </g:ifPageProperty>
 
+    <!-- Placeholder for additional assets in footer -->
+    <g:ifPageProperty name="page.footScripts">
+        <g:pageProperty name="page.footScripts" />
+    </g:ifPageProperty>
+    <!-- END footer assets -->
+
     <g:if test="${pageProperty(name:'meta.rssfeed')}">
         <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
             <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${pageProperty(name:'meta.rssfeed')}"/>
         </g:ifServletContextAttribute>
     </g:if>
+
+    <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
+
+        <g:embedJSON id="uipluginData" data="${[path   : uipluginsPath, project: params.project ?: request.project,
+                                                baseUrl: createLink(uri: "/plugin/file/UI",absolute:true)]}"/>
+        <g:if test="${uiplugins}">
+            <asset:javascript src="global/uiplugins.js"/>
+            <g:jsonToken id="uiplugin_tokens" url="${request.forwardURI}"/>
+        </g:if>
+        <g:each in="${uiplugins?.keySet()}" var="pluginname">
+            <!-- BEGIN UI plugin scripts for ${pluginname} -->
+            <g:each in="${uiplugins[pluginname].scripts}" var="scriptPath">
+                <script src="${createLink(
+                        controller: 'plugin',
+                        action: 'pluginFile',
+                        params: [service: 'UI', name: pluginname, path: scriptPath]
+                )}" type="text/javascript"></script>
+            </g:each>
+            <!-- END UI Plugin scripts for ${pluginname} -->
+        </g:each>
+
+        <g:each in="${uiplugins?.keySet()}" var="pluginname">
+            <!-- BEGIN UI plugin css for ${pluginname} -->
+            <g:each in="${uiplugins[pluginname].styles}" var="scriptPath">
+                <link rel="stylesheet" href="${createLink(
+                        controller: 'plugin',
+                        action: 'pluginFile',
+                        params: [service: 'UI', name: pluginname, path: scriptPath]
+                )}"/>
+            </g:each>
+            <!-- END UI Plugin css for ${pluginname} -->
+        </g:each>
+
+    </g:if>
     <g:layoutHead/>
+    <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
+        <g:javascript>
+            //call after gsp page has loaded javascript
+            jQuery(function(){window.rundeckPage.onPageLoad();});
+        </g:javascript>
+    </g:if>
 </head>
 <body>
 <g:render template="/common/topbar"/>
