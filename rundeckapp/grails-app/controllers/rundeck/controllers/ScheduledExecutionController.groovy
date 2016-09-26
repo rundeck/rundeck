@@ -2972,7 +2972,7 @@ class ScheduledExecutionController  extends ControllerBase{
         // Add any option.* values, or nodeInclude/nodxclude filters
         if (params.extra) {
             inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option',
-                                                  '_replaceNodeFilters', 'filter']).findAll { it.value })
+                                                  '_replaceNodeFilters', 'filter', 'nodeoverride','nodefilter']).findAll { it.value })
             inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
                     it.key.startsWith('nodeExclude')}.findAll { it.value })
         }

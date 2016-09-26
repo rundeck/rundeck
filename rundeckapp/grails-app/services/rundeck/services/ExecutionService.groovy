@@ -1734,6 +1734,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         try {
 
             Map allowedOptions = input.subMap(['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter',
+                                               'nodeoverride','nodefilter',
                                                'retryAttempt']).findAll { it.value != null }
             allowedOptions.putAll(input.findAll {
                         it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
