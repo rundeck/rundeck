@@ -1,3 +1,4 @@
+<%@ page import="rundeck.User" %>
 
 <div class="row">
 <div class="col-sm-12 ">
