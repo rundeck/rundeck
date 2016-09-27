@@ -37,7 +37,7 @@ class ExecutionSpec extends Specification {
                                status: 'true'
         ).save(flush: true)
         when:
-        def result = Execution.withServerUUID(uuid1).list()
+        def result = Execution.withServerNodeUUID(uuid1).list()
         then:
         e1 != null
         result == [e1]

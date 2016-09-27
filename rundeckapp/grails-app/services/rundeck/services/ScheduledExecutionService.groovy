@@ -327,9 +327,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param serverUUID uuid to assign to the scheduled job
      * @return
      */
-    private boolean claimScheduledJob(ScheduledExecution scheduledExecution, String serverUUID, String fromServerUUID=null){
+    private Map claimScheduledJob(
+            ScheduledExecution scheduledExecution,
+            String serverUUID,
+            String fromServerUUID = null
+    )
+    {
         def schedId=scheduledExecution.id
         def claimed=false
+        List<Execution> claimedExecs = []
+        Date claimDate = new Date()
         while (!claimed) {
             try {
                 ScheduledExecution.withNewSession {
@@ -343,6 +350,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     } else {
                         log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
                     }
+                    //claim scheduled adhoc executions
+                    Execution.findAllByScheduledExecutionAndStatusAndDateStartedGreaterThanAndDateCompletedIsNull(
+                            scheduledExecution,
+                            'scheduled',
+                            claimDate
+                    ).each {
+                        it.serverNodeUUID = serverUUID
+                        it.save(flush:true)
+                        log.error("claimed adhoc execution ${it.id}")
+                        claimedExecs << it
+                    }
                 }
             } catch (org.springframework.dao.OptimisticLockingFailureException e) {
                 log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: locking failure")
@@ -350,7 +368,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: stale data")
             }
         }
-        return claimed
+        return [claimed: claimed, executions: claimedExecs]
     }
 
     /**
@@ -378,6 +396,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     eq('scheduled', true)
                     executions(CriteriaSpecification.LEFT_JOIN) {
                         eq('status', ExecutionService.EXECUTION_SCHEDULED)
+                        if (!selectAll) {
+                            if (queryFromServerUUID) {
+                                eq('serverNodeUUID', queryFromServerUUID)
+                            } else {
+                                isNull('serverNodeUUID')
+                            }
+                        } else {
+                            or {
+                                isNull('serverNodeUUID')
+                                ne('serverNodeUUID', toServerUUID)
+                            }
+                        }
                     }
                 }
                 if (!selectAll) {
@@ -400,10 +430,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
+                def claimResult = claimScheduledJob(se, toServerUUID, queryFromServerUUID)
                 claimed[se.extid] = [
-                    success: claimScheduledJob(se, toServerUUID, queryFromServerUUID), 
-                    job: se, 
-                    previous: orig
+                        success   : claimResult.claimed,
+                        job       : se,
+                        previous  : orig,
+                        executions: claimResult.executions
                 ]
             }
         }
@@ -425,7 +457,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def results = Execution.isScheduledAdHoc()
         if (serverUUID) {
-            results = results.withServerUUID(serverUUID)
+            results = results.withServerNodeUUID(serverUUID)
         }
         results.list().each { Execution e ->
             ScheduledExecution se = e.scheduledExecution
@@ -482,7 +514,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         // Reschedule jobs on fixed schedules
-        results.list().each { ScheduledExecution se ->
+        def scheduledList = results.list()
+        scheduledList.each { ScheduledExecution se ->
             try {
                 scheduleJob(se, null, null)
                 log.info("rescheduled job: ${se.id}")
@@ -495,12 +528,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         // Reschedule any executions which were scheduled ad hoc
         results = Execution.isScheduledAdHoc()
         if (serverUUID) {
-            results = results.withServerUUID(serverUUID)
+            results = results.withServerNodeUUID(serverUUID)
         }
 
         List<Execution> cleanupExecutions   = []
 
-        results.list().each { Execution e ->
+        def executionList = results.list()
+        executionList.each { Execution e ->
             boolean ok = true
             ScheduledExecution se = e.scheduledExecution
 

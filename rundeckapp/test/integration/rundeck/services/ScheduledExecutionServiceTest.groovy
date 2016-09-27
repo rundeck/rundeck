@@ -78,6 +78,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
                 project: project,
                 loglevel: 'WARN',
                 doNodedispatch: false,
+                serverNodeUUID: TEST_UUID1,
                 status: 'scheduled',
                 dateStarted: startTime
         ).save(flush: true, failOnError: true)
@@ -155,6 +156,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
                 project: project,
                 loglevel: 'WARN',
                 doNodedispatch: false,
+                serverNodeUUID: TEST_UUID1,
                 status: 'scheduled',
                 dateStarted: startTime
         ).save(flush: true, failOnError: true)
@@ -208,7 +210,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
                     workflow: workflow,
                     scheduled: false
                 )
-        ).save(failOnError: true)
+        ).save(failOnError: true, flush: true)
 
         def startTime   = new Date()
         startTime       = startTime.plus(1)
@@ -220,9 +222,11 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
                 project: project,
                 loglevel: 'WARN',
                 doNodedispatch: false,
+                serverNodeUUID: TEST_UUID1,
                 status: 'scheduled',
-                dateStarted: startTime
-        ).save(failOnError: true)
+                dateStarted: startTime,
+                dateCompleted: null
+        ).save(failOnError: true, flush: true)
 
         se.executions = [e]
         se.save(flush: true, failOnError: true)
@@ -237,6 +241,9 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
 
 
         then:
+        e != null
+        e.serverNodeUUID == TEST_UUID2
+        se != null
         1 * service.executionServiceBean.executionsAreActive >> true
         1 * service.quartzScheduler.scheduleJob(_ as JobDetail, _ as SimpleTrigger) >> {
             arguments ->
@@ -250,6 +257,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
         results[jobUuid].job.jobName == 'cerulean'
         results[jobUuid].success
         se.serverNodeUUID == TEST_UUID2
+        e.serverNodeUUID == TEST_UUID2
     }
 
     def "should not be rescheduled ad hoc if executions disabled"() {
@@ -287,6 +295,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
                 project: project,
                 loglevel: 'WARN',
                 doNodedispatch: false,
+                serverNodeUUID: TEST_UUID1,
                 status: 'scheduled',
                 dateStarted: startTime
         ).save(failOnError: true)
@@ -352,6 +361,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
                 project: project,
                 loglevel: 'WARN',
                 doNodedispatch: false,
+                serverNodeUUID: TEST_UUID1,
                 status: 'scheduled',
                 dateStarted: startTime
         ).save(failOnError: true)
