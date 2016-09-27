@@ -643,15 +643,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      *
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
-    def cleanupRunningJobsAsync(String serverUUID = null) {
+    def cleanupRunningJobsAsync(String serverUUID = null, Date before=new Date()) {
         def executionIds = Execution.withCriteria {
-            ne('status', EXECUTION_SCHEDULED)
+            isNotNull('dateStarted')
             isNull('dateCompleted')
             if (serverUUID == null) {
                 isNull('serverNodeUUID')
             } else {
                 eq('serverNodeUUID', serverUUID)
             }
+            lt('dateStarted', before)
+            or{
+                isNull('status')
+                ne('status', EXECUTION_SCHEDULED)
+            }
+
             projections {
                 property('id')
             }
@@ -668,14 +674,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      *
      * @param   serverUUID  if not null, only match executions assigned to the given server UUID
      */
-    private List<Execution> findRunningExecutions(String serverUUID = null) {
+    private List<Execution> findRunningExecutions(String serverUUID = null, Date before=new Date()) {
         return Execution.withCriteria{
-            ne('status', EXECUTION_SCHEDULED)
+            isNotNull('dateStarted')
             isNull('dateCompleted')
             if (serverUUID == null) {
                 isNull('serverNodeUUID')
             } else {
                 eq('serverNodeUUID', serverUUID)
+            }
+            lt('dateStarted', before)
+            or{
+                isNull('status')
+                ne('status', EXECUTION_SCHEDULED)
             }
         }
     }
@@ -683,8 +694,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Set the result status to FAIL for any Executions that are not complete
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
-    def cleanupRunningJobs(String serverUUID=null) {
-        cleanupRunningJobs findRunningExecutions(serverUUID)
+    def cleanupRunningJobs(String serverUUID=null, Date before=new Date()) {
+        cleanupRunningJobs findRunningExecutions(serverUUID,before)
     }
 
     /**

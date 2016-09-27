@@ -130,12 +130,7 @@ class Execution extends ExecutionContext {
             eq 'status', ExecutionService.EXECUTION_SCHEDULED
         }
         withServerUUID { uuid ->
-            and {
-                isNotNull 'scheduledExecution'
-                scheduledExecution {
-                    eq 'serverNodeUUID', uuid
-                }
-            }
+            eq 'serverNodeUUID', uuid
         }
 	}
 
