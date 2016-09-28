@@ -34,6 +34,7 @@ public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements U
     Map<String, List<String>> pathResources = new LinkedHashMap<>();
     Map<String, List<String>> pathScripts = new LinkedHashMap<>();
     Map<String, List<String>> pathStyles = new LinkedHashMap<>();
+    Map<String, List<String>> pathRequires = new LinkedHashMap<>();
 
     public ScriptUIPlugin(
             final ScriptPluginProvider provider,
@@ -50,6 +51,7 @@ public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements U
         List<String> pages = asStringList(uimap.get("pages"));
         List<String> styles = asStringList(uimap.get("styles"));
         List<String> scripts = asStringList(uimap.get("scripts"));
+        List<String> requires = asStringList(uimap.get("requires"));
         for (String page : pages) {
             if (styles != null) {
                 for (String resource : styles) {
@@ -61,6 +63,12 @@ public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements U
                 for (String resource : scripts) {
                     addResource(page, resource, pathResources);
                     addResource(page, resource, pathScripts);
+                }
+            }
+            if (requires != null) {
+                for (String plugin : requires) {
+                    addResource(page, plugin, pathResources);
+                    addResource(page, plugin, pathRequires);
                 }
             }
         }
@@ -152,6 +160,12 @@ public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements U
                     "in provider metadata: 'ui: pages:' either 'scripts' or 'styles' was expected to be a String or " +
                     "String list");
         }
+        Object requires = uimap.get("requires");
+        List<String> requirePlugins = asStringList(requires);
+        if (requires != null && requirePlugins == null) {
+            throw new IllegalArgumentException(
+                    "in provider metadata: 'ui: pages: requires:' is not a String or String list");
+        }
     }
 
     private List<String> keyAppliedForPath(String path, Map<String, List<String>> map) {
@@ -182,6 +196,11 @@ public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements U
     @Override
     public List<String> styleResourcesForPath(final String path) {
         return keyAppliedForPath(path, pathStyles);
+    }
+
+    @Override
+    public List<String> requires(final String path) {
+        return keyAppliedForPath(path, pathRequires);
     }
 
     @Override

@@ -49,4 +49,11 @@ public interface UIPlugin {
      * @return list of css stylesheets to load at the path
      */
     List<String> styleResourcesForPath(String path);
+
+    /**
+     * @param path
+     *
+     * @return list of plugin names this plugin depends on for the specified path
+     */
+    List<String> requires(String path);
 }
