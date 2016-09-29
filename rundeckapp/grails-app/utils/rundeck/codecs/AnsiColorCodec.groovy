@@ -75,7 +75,7 @@ class AnsiColorCodec {
                 return
             }
             if (!coded) {
-                sb << str.encodeAsHTMLElement()
+                sb << str.encodeAsHTML()
                 coded = true
                 return
             }
@@ -111,12 +111,12 @@ class AnsiColorCodec {
                                 }
                             }
                         } catch (NumberFormatException e) {
-                            sb << matcher.group(1).encodeAsHTMLElement()
+                            sb << matcher.group(1).encodeAsHTML()
                         }
                     }
                 }
                 if (!cols) {
-                    sb << matcher.group(1).encodeAsHTMLElement()
+                    sb << matcher.group(1).encodeAsHTML()
                 } else {
                     //256 col ansi
                     def ncols=[]
@@ -155,9 +155,9 @@ class AnsiColorCodec {
 
                     sb << (rvals ? '<span class="' + rvals + '">' : '')
                 }
-                str = str.substring(len).encodeAsHTMLElement()
+                str = str.substring(len).encodeAsHTML()
             }
-            sb << str.encodeAsHTMLElement()
+            sb << str.encodeAsHTML()
         }
         sb << ('' + (ctx ? ctx.collect { '</span>' }.join('') : ''))
         sb.toString()

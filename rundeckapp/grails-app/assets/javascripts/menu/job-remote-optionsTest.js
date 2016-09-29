@@ -232,6 +232,64 @@ jQuery(function () {
                 this.assert("should load option", ['opt3'], toload);
                 this.assert("should do callback", true, didcallback);
             },
+        reloadOptionIfRequirementsMet_nullDeps_Test: function (pref) {
+            var opts = new JobOptions({});
+            var opt1 = mkopt({name: 'opt1', required: true, value: 'zzz'});
+            var opt2 = mkopt({name: 'opt2', required: true, value: 'xyz'});
+            var opt3 = mkopt({name: 'opt3', hasRemote: true, value: ''});
+            opts.options([
+                opt1,
+                opt2,
+                opt3
+            ]);
+            var toload = [];
+            var didcallback = false;
+            var loader = {
+                loadRemoteOptionValues: function (option, opts) {
+                    toload.push(option.name());
+                    return {
+                        then: function (func) {
+                            didcallback = true;
+                        }
+                    };
+                }
+            };
+            var control = new RemoteOptionController({loader: loader});
+            control.setupOptions(opts);
+            var optConfig = {
+                options: {
+                    opt1: {
+                        //optionDependencies: [],
+                        optionDeps: ['opt3'],
+                        optionAutoReload: false,
+                        loadonstart: true,
+                        hasUrl: false
+                    },
+                    opt2: {
+                        optionDependencies: [],
+                        optionDeps: ['opt3'],
+                        optionAutoReload: false,
+                        loadonstart: true,
+                        hasUrl: false
+                    },
+                    opt3: {
+                        optionDependencies: ['opt1', 'opt2'],
+                        optionDeps: [],
+                        optionAutoReload: true,
+                        loadonstart: true,
+                        hasUrl: true
+                    }
+                }
+            };
+            control.loadData(optConfig);
+
+            this.assert("expect undefined dependencies", undefined, control.dependencies['opt1']);
+            
+            control.reloadOptionIfRequirementsMet('opt1');
+            //opt2 should have error
+            this.assert("should load option", ['opt1'], toload);
+            this.assert("should do callback", true, didcallback);
+        },
             optionValueChanged_Test: function (pref) {
                 var self = this;
                 this.testMatrix("optionValueChanged({0})", [

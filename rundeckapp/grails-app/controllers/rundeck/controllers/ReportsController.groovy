@@ -260,7 +260,7 @@ class ReportsController extends ControllerBase{
         results.params=params
         return results
     }
-    def eventsAjax={ ExecQuery query ->
+    def eventsAjax(ExecQuery query){
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
 
@@ -288,12 +288,22 @@ class ReportsController extends ControllerBase{
 
                 }
             }
+            map.jobName= map.remove('reportId')
             if(map.jcJobId){
                 map.jobId= map.remove('jcJobId')
                 try {
                     def job = ScheduledExecution.get(Long.parseLong(map.jobId))
                     map.jobId=job?.extid
                     map.jobDeleted = job==null
+                    map['jobPermalink']= createLink(
+                            controller: 'scheduledExecution',
+                            action: 'show',
+                            absolute: true,
+                            id: job?.extid,
+                            params:[project:job?.project]
+                    )
+                    map.jobName=job?.jobName
+                    map.jobGroup=job?.groupPath
                 }catch(Exception e){
                 }
                 if(map.execution.argString){
@@ -301,7 +311,6 @@ class ReportsController extends ControllerBase{
                 }
             }
             map.user= map.remove('author')
-            map.jobName= map.remove('reportId')
             map.executionString= map.remove('title')
             return map
         }

@@ -16,6 +16,8 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
+import org.rundeck.util.Toposort
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.codehaus.groovy.grails.web.metaclass.InvalidResponseHandler
 import org.codehaus.groovy.grails.web.metaclass.ValidResponseHandler
@@ -66,18 +68,47 @@ class ControllerBase {
     protected def loadUiPlugins(path) {
         def uiplugins = [:]
         if ((path in UIPLUGIN_PAGES)) {
-            uiPluginService.pluginsForPage(path).each { name, inst ->
+            def page = uiPluginService.pluginsForPage(path)
+            page.each { name, inst ->
+                def requires = inst.requires(path)
+
                 uiplugins[name] = [
-                        scripts: inst.scriptResourcesForPath(path),
-                        styles : inst.styleResourcesForPath(path),
+                        scripts : inst.scriptResourcesForPath(path),
+                        styles  : inst.styleResourcesForPath(path),
+                        requires: requires,
                 ]
             }
         }
         uiplugins
     }
 
+    protected def sortUiPlugins(Map uiplugins) {
+        Map inbound = [:]
+        Map outbound = [:]
+
+        uiplugins.each { name, inst ->
+            inbound[name] = inst.requires ?: []
+            inbound[name].each { k ->
+                if (!outbound[k]) {
+                    outbound[k] = [name]
+                } else {
+                    outbound[k] << name
+                }
+            }
+        }
+        List sort = uiplugins.keySet().sort()
+        if (outbound.size() > 0 || inbound.size() > 0) {
+            def result = Toposort.toposort(sort, outbound, inbound)
+            if (!result.cycle) {
+                result.result
+            }
+        }
+        sort
+    }
+
     def afterInterceptor = { model ->
         model.uiplugins = loadUiPlugins(controllerName + "/" + actionName)
+        model.uipluginsorder = sortUiPlugins(model.uiplugins)
         model.uipluginsPath = controllerName + "/" + actionName
     }
     protected def withHmacToken(Closure valid){

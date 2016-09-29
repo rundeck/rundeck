@@ -130,12 +130,14 @@ function RemoteOptionController(data) {
 
         // reload iff: all of its required dependencies have a value
         var missing = [];
-        for (var j = 0; j < self.dependencies[name].length; j++) {
-            var dependencyName = self.dependencies[name][j];
-            var option = self.options[dependencyName];
-            if (!option.value() && option.required()) {
-                skip = true;
-                missing.push(dependencyName);
+        if(self.dependencies[name]) {
+            for (var j = 0; j < self.dependencies[name].length; j++) {
+                var dependencyName = self.dependencies[name][j];
+                var option = self.options[dependencyName];
+                if (!option.value() && option.required()) {
+                    skip = true;
+                    missing.push(dependencyName);
+                }
             }
         }
         if (!skip) {
@@ -278,11 +280,11 @@ function RemoteOptionLoader(data) {
             type: 'json',
             url: _genUrl(self.url, params),
             success: function (data, status, jqxhr) {
-                // self.addReloadRemoteOptionValues(opt,data);
-                opt.loading(false);
+                //show loading spinner at least for a little while
+                setTimeout(opt.loading.curry(false),200);
             },
             error: function (jqxhr, status, message) {
-                opt.loading(false);
+                setTimeout(opt.loading.curry(false),200);
                 opt.remoteError({error: "ERROR loading result from Rundeck server: " + status + ": " + message});
             }
         });

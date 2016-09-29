@@ -144,6 +144,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
                     def jobArgs = OptsUtil.burst(jexec.argString ?: '')
                     newContext = executionService.createJobReferenceContext(
                             se,
+                            null,
                             parent,
                             jobArgs,
                             jexec.nodeFilter,

@@ -162,6 +162,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return results
     }
     def nowrunningAjax = {QueueQuery query->
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'index', controller: 'reports', params: params)
+        }
         def results = nowrunning(query)
         //structure dataset for client-side event status processing
         def running= results.nowrunning.collect {
@@ -176,6 +179,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 data['executionString']=map.workflow.commands[0].exec
             }else{
                 data['jobName']=it.scheduledExecution.jobName
+                data['jobGroup']=it.scheduledExecution.groupPath
+                data['jobId']=it.scheduledExecution.extid
+                data['jobPermalink']= createLink(
+                        controller: 'scheduledExecution',
+                        action: 'show',
+                        absolute: true,
+                        id: it.scheduledExecution.extid,
+                        params:[project:it.scheduledExecution.project]
+                )
                 if (it.scheduledExecution && it.scheduledExecution.totalTime >= 0 && it.scheduledExecution.execCount > 0) {
                     data['jobAverageDuration']= Math.floor(it.scheduledExecution.totalTime / it.scheduledExecution.execCount)
                 }
@@ -273,6 +285,71 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
             }
         }
+    }
+    /**
+     *
+     * @param query
+     * @return
+     */
+    def jobsAjax(ScheduledExecutionQuery query){
+        if('true'!=request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'jobs', controller: 'menu', params: params)
+        }
+        if(!params.project){
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
+                                                        code: 'api.error.parameter.required', args: ['project']])
+        }
+        query.projFilter = params.project
+        //test valid project
+
+        def exists=frameworkService.existsFrameworkProject(params.project)
+        if(!exists){
+            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
+                                                        code: 'api.error.item.doesnotexist', args: ['project',params.project]])
+        }
+        if(query.hasErrors()){
+            return apiService.renderErrorFormat(response,
+                                                [
+                                                        status: HttpServletResponse.SC_BAD_REQUEST,
+                                                        code: "api.error.parameter.error",
+                                                        args: [query.errors.allErrors.collect { message(error: it) }.join("; ")]
+                                                ])
+        }
+        //don't load scm status for api response
+        params['_no_scm']=true
+
+        def results = jobsFragment(query)
+
+        def clusterModeEnabled = frameworkService.isClusterModeEnabled()
+        def serverNodeUUID = frameworkService.serverUUID
+        def data = new JobInfoList(
+                results.nextScheduled.collect { ScheduledExecution se ->
+                    Map data = [:]
+                    if (clusterModeEnabled) {
+                        data = [
+                                serverNodeUUID: se.serverNodeUUID,
+                                serverOwner   : se.serverNodeUUID == serverNodeUUID
+                        ]
+                    }
+                    if(results.nextExecutions?.get(se.id)){
+                        data.nextScheduledExecution=results.nextExecutions?.get(se.id)
+                    }
+                    if (se.totalTime >= 0 && se.execCount > 0) {
+                        def long avg = Math.floor(se.totalTime / se.execCount)
+                        data.averageDuration = avg
+                    }
+                    JobInfo.from(
+                            se,
+                            apiService.apiHrefForJob(se),
+                            apiService.guiHrefForJob(se),
+                            data
+                    )
+                }
+        )
+        respond(
+                data,
+                [formats: [ 'json']]
+        )
     }
 
     def jobsFragment(ScheduledExecutionQuery query) {
@@ -996,7 +1073,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         [rundeckFramework: frameworkService.rundeckFramework]
     }
-    def securityConfig(){
+
+    def securityConfig() {
+        return redirect(action: 'acls', params: params)
+    }
+
+    def acls() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
@@ -1010,8 +1092,27 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         Map<File,Validation> validation=list.collectEntries{
             [it,authorizationService.validateYamlPolicy(it)]
         }
+        def projectlist = []
+        if (params.project
+                && frameworkService.authorizeApplicationResourceAny(
+                authContext,
+                frameworkService.authResourceForProject(params.project),
+                [AuthConstants.ACTION_ADMIN]
+        )
+        ) {
+            def project = frameworkService.getFrameworkProject(params.project)
+            projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
+                it.replaceAll(/^acls\//, '')
+            }
+        }
 
-        [rundeckFramework: frameworkService.rundeckFramework,fwkConfigDir:fwkConfigDir, aclFileList: list, validations: validation]
+        [
+                rundeckFramework: frameworkService.rundeckFramework,
+                fwkConfigDir    : fwkConfigDir,
+                aclFileList     : list,
+                validations     : validation,
+                projectlist     : projectlist
+        ]
     }
 
     def systemInfo (){
@@ -1757,6 +1858,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 return
             }
         }
+        if(null!=query.scheduleEnabledFilter || null!=query.executionEnabledFilter){
+            if (!apiService.requireVersion(request,response,ApiRequestFilters.V18)) {
+                return
+            }
+        }
 
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
@@ -1834,6 +1940,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (scheduledExecution.totalTime >= 0 && scheduledExecution.execCount > 0) {
             def long avg = Math.floor(scheduledExecution.totalTime / scheduledExecution.execCount)
             extra.averageDuration = avg
+        }
+        if(scheduledExecution.shouldScheduleExecution()){
+            extra.nextScheduledExecution=scheduledExecutionService.nextExecutionTime(scheduledExecution)
         }
         respond(
 

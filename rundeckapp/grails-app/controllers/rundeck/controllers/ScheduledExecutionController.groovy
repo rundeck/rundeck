@@ -49,6 +49,7 @@ import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.quartz.Scheduler
+import org.rundeck.util.Toposort
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
@@ -58,6 +59,7 @@ import rundeck.filters.ApiRequestFilters
 import rundeck.services.*
 
 import javax.servlet.http.HttpServletResponse
+import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 class ScheduledExecutionController  extends ControllerBase{
@@ -258,16 +260,15 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    private def jobDetailData() {
-        Framework framework = frameworkService.getRundeckFramework()
+    private def jobDetailData(keys = []) {
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
-        //list executions using query params and pagination params
 
-        def executions=Execution.findAllByScheduledExecution(scheduledExecution,[offset: params.offset?params.offset:0, max: params.max?params.max:10, sort:'dateStarted', order:'desc'])
-
-        def total = Execution.countByScheduledExecution(scheduledExecution)
+        def total = -1
+        if (keys.contains('total') || !keys) {
+            total = Execution.countByScheduledExecution(scheduledExecution)
+        }
 
         def remoteClusterNodeUUID = null
         if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()
@@ -275,15 +276,31 @@ class ScheduledExecutionController  extends ControllerBase{
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
 
-        [scheduledExecution:scheduledExecution, crontab:crontab, params:params,
-            executions:executions,
-            total:total,
-            nextExecution:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-            remoteClusterNodeUUID: remoteClusterNodeUUID,
-            max: params.max?params.max:10,
-            notificationPlugins: notificationService.listNotificationPlugins(),
-            orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
-            offset:params.offset?params.offset:0]
+        def notificationPlugins = null
+        if (keys.contains('notificationPlugins') || !keys) {
+            notificationPlugins = notificationService.listNotificationPlugins()
+        }
+        def orchestratorPlugins = null
+        if (keys.contains('orchestratorPlugins') || !keys) {
+            orchestratorPlugins = orchestratorPluginService.listOrchestratorPlugins()
+        }
+        def nextExecution = null
+        if (keys.contains('nextExecution') || !keys) {
+            nextExecution = scheduledExecution.scheduled ? scheduledExecutionService.nextExecutionTime(
+                    scheduledExecution
+            ) : null
+        }
+        [scheduledExecution   : scheduledExecution,
+         crontab              : crontab,
+         params               : params,
+         total                : total,
+         nextExecution        : nextExecution,
+         remoteClusterNodeUUID: remoteClusterNodeUUID,
+         max                  : params.max ? params.max : 10,
+         notificationPlugins  : notificationPlugins,
+         orchestratorPlugins  : orchestratorPlugins,
+         offset               : params.offset ? params.offset : 0
+        ]
     }
     def detailFragment () {
         log.debug("ScheduledExecutionController: detailFragment : params: " + params)
@@ -312,11 +329,20 @@ class ScheduledExecutionController  extends ControllerBase{
                 [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ,'Job',params.id)){
             return
         }
-        def model=jobDetailData()
+        def model = jobDetailData(['total', 'nextExecution', 'max', 'scheduledExecution'])
         def se = model.scheduledExecution
+
+        if (model.nextExecution) {
+
+            final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US)
+            format.setTimeZone(TimeZone.getTimeZone("GMT"));
+            model.nextExecutionW3CTime = format.format(model.nextExecution)
+        }
+
         render(contentType: 'application/json') {
             total = model.total
             nextExecution = model.nextExecution
+            nextExecutionW3CTime = model.nextExecutionW3CTime
             max = model.max
             job(
                     id: se.extid,
@@ -2611,7 +2637,7 @@ class ScheduledExecutionController  extends ControllerBase{
         model.optionordering = scheduledExecution.options*.name
 
         //topo sort the dependencies
-        def toporesult = toposort(model.optionordering, depopts, optdeps)
+        def toporesult = Toposort.toposort(model.optionordering, depopts, optdeps)
         if (scheduledExecution.options && !toporesult.result) {
             log.warn("Cyclic dependency for options for job ${scheduledExecution.extid}: (${toporesult.cycle})")
             model.optionsDependenciesCyclic = true
@@ -2647,60 +2673,6 @@ class ScheduledExecutionController  extends ControllerBase{
         model.remoteOptionData=remoteOptionData
 
         return model
-    }
-    private deepClone(Map map) {
-        def copy = [:]
-        map.each { k, v ->
-            if (v instanceof List){
-                copy[k] = v.clone()
-            }
-            else {
-                copy[k] = v
-            }
-        }
-        return copy
-    }
-
-    /**
-     * Return topo sorted list of nodes, if acyclic, preserving
-     * order of input node list for independent nodes
-     * @param nodes
-     * @param oedgesin
-     * @param iedgesin
-     * @return
-     */
-    private toposort(List nodes,Map oedgesin,Map iedgesin){
-        def Map oedges = deepClone(oedgesin)
-        def Map iedges = deepClone(iedgesin)
-        def l = new ArrayList()
-        List s = new ArrayList(nodes.findAll {!iedges[it]})
-        while(s){
-            def n = s.first()
-            s.remove(n)
-            l.add(n)
-            //for each node dependent on n
-            def edges = new ArrayList()
-            if(oedges[n]){
-                edges.addAll(oedges[n])
-            }
-            def k=[] //preserve input order when processing new leaf nodes
-            edges.each{p->
-                oedges[n].remove(p)
-                iedges[p].remove(n)
-                if(!iedges[p]){
-                    k<<p
-                }
-            }
-            if(k){
-                s.addAll(0,k)
-            }
-        }
-        if (iedges.any {it.value} || oedges.any{it.value}){
-            //cyclic graph
-            return [cycle: iedges]
-        }else{
-            return [result:l]
-        }
     }
     public def executeFragment(RunJobCommand runParams, ExtraCommand extra) {
         if ([runParams, extra].any { it.hasErrors() }) {
@@ -3686,13 +3658,29 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * API: /api/job/{id}/executions , version 1
      */
-    def apiJobExecutions (){
+    def apiJobExecutions() {
         if (!apiService.requireApi(request, response)) {
             return
         }
         if (!apiService.requireParameters(params, response, ['id'])) {
             return
         }
+        return apiJobExecutionsResult(true)
+    }
+    /**
+     * API: /api/job/{id}/executions , version 1
+     */
+    def jobExecutionsAjax() {
+        if ('true' != request.getHeader('x-rundeck-ajax')) {
+            return redirect(action: 'jobs', controller: 'menu', params: params)
+        }
+        return apiJobExecutionsResult(false)
+    }
+
+    /**
+     * API: /api/job/{id}/executions , version 1
+     */
+    private def apiJobExecutionsResult(boolean apiRequest) {
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (!apiService.requireExists(response, scheduledExecution, ['Job ID', params.id])) {
             return
@@ -3717,7 +3705,7 @@ class ScheduledExecutionController  extends ControllerBase{
             )
         }
 
-        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+        if (apiRequest && request.api_version < ApiRequestFilters.V14 && !(response.format in ['all', 'xml'])) {
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',

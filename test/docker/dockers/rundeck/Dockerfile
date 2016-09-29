@@ -83,6 +83,7 @@ RUN sudo mkdir -p /tests
 COPY tests /tests
 RUN sudo chmod -R a+x /tests/*
 
+VOLUME /var/lib/docker
 VOLUME /test
 VOLUME $HOME/resources
 

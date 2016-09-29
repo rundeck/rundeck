@@ -75,12 +75,13 @@
 
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
-        <g:embedJSON id="uipluginData" data="${[path: uipluginsPath, project: params.project ?: request.project]}"/>
+        <g:embedJSON id="uipluginData" data="${[path   : uipluginsPath, project: params.project ?: request.project,
+                                                baseUrl: createLink(uri: "/plugin/file/UI",absolute:true)]}"/>
         <g:if test="${uiplugins}">
             <asset:javascript src="global/uiplugins.js"/>
             <g:jsonToken id="uiplugin_tokens" url="${request.forwardURI}"/>
         </g:if>
-        <g:each in="${uiplugins?.keySet()}" var="pluginname">
+        <g:each in="${uipluginsorder?:uiplugins?.keySet()?.sort()}" var="pluginname">
             <!-- BEGIN UI plugin scripts for ${pluginname} -->
             <g:each in="${uiplugins[pluginname].scripts}" var="scriptPath">
                 <script src="${createLink(
@@ -92,7 +93,7 @@
             <!-- END UI Plugin scripts for ${pluginname} -->
         </g:each>
 
-        <g:each in="${uiplugins?.keySet()}" var="pluginname">
+        <g:each in="${uipluginsorder?:uiplugins?.keySet()?.sort()}" var="pluginname">
             <!-- BEGIN UI plugin css for ${pluginname} -->
             <g:each in="${uiplugins[pluginname].styles}" var="scriptPath">
                 <link rel="stylesheet" href="${createLink(

@@ -34,7 +34,7 @@
     </div>
 </g:hasErrors>
 <div id="optionSelect">
-    <g:render template="/framework/commandOptionsKO"
+    <g:render template="/framework/jobOptionsKO"
               model="[
                       paramsPrefix        : 'extra.',
                       selectedargstring   : selectedargstring,

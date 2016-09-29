@@ -148,6 +148,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if(apiv14){
                     data.permalink=apiService.guiHrefForExecution(e)
                 }
+            if(e.customStatusString){
+                data.customStatus=e.customStatusString
+            }
                 if(e.retryExecution) {
                     data.retryExecution = [
                             id    : e.retryExecution.id,
@@ -171,6 +174,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         status: getExecutionState(e),
                         summary: summarizeJob(e.scheduledExecution, e)
                 ]
+            if(e.customStatusString){
+                data.customStatus=e.customStatusString
+            }
                 if(e.retryExecution){
                     data.retryExecution=[
                             id:e.retryExecution.id,
@@ -637,15 +643,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      *
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
-    def cleanupRunningJobsAsync(String serverUUID = null) {
+    def cleanupRunningJobsAsync(String serverUUID = null, Date before=new Date()) {
         def executionIds = Execution.withCriteria {
-            ne('status', EXECUTION_SCHEDULED)
+            isNotNull('dateStarted')
             isNull('dateCompleted')
             if (serverUUID == null) {
                 isNull('serverNodeUUID')
             } else {
                 eq('serverNodeUUID', serverUUID)
             }
+            lt('dateStarted', before)
+            or{
+                isNull('status')
+                ne('status', EXECUTION_SCHEDULED)
+            }
+
             projections {
                 property('id')
             }
@@ -662,14 +674,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      *
      * @param   serverUUID  if not null, only match executions assigned to the given server UUID
      */
-    private List<Execution> findRunningExecutions(String serverUUID = null) {
+    private List<Execution> findRunningExecutions(String serverUUID = null, Date before=new Date()) {
         return Execution.withCriteria{
-            ne('status', EXECUTION_SCHEDULED)
+            isNotNull('dateStarted')
             isNull('dateCompleted')
             if (serverUUID == null) {
                 isNull('serverNodeUUID')
             } else {
                 eq('serverNodeUUID', serverUUID)
+            }
+            lt('dateStarted', before)
+            or{
+                isNull('status')
+                ne('status', EXECUTION_SCHEDULED)
             }
         }
     }
@@ -677,8 +694,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Set the result status to FAIL for any Executions that are not complete
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
-    def cleanupRunningJobs(String serverUUID=null) {
-        cleanupRunningJobs findRunningExecutions(serverUUID)
+    def cleanupRunningJobs(String serverUUID=null, Date before=new Date()) {
+        cleanupRunningJobs findRunningExecutions(serverUUID,before)
     }
 
     /**
@@ -2636,6 +2653,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     /**
      * Create a step execution context for a Job Reference step
      * @param se the job
+     * @param exec the execution, or null if not known
      * @param executionContext the original step context
      * @param newargs argument strings for the job, which will have data context references expanded
      * @param nodeFilter overriding node filter
@@ -2647,6 +2665,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     StepExecutionContext createJobReferenceContext(
             ScheduledExecution se,
+            Execution exec,
             StepExecutionContext executionContext,
             String[] newargs,
             String nodeFilter,
@@ -2661,6 +2680,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         //substitute any data context references in the arguments
         if (null != newargs && executionContext.dataContext) {
+            def curDate=exec?exec.dateStarted: new Date()
+            newargs = newargs.collect { expandDateStrings(it, curDate) }.toArray()
+
             newargs = DataContextUtils.replaceDataReferences(
                     newargs,
                     executionContext.dataContext
@@ -2799,9 +2821,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         id = schedlist[0].id
         def StepExecutionContext newContext
         def WorkflowExecutionItem newExecItem
+        String execid=executionContext.dataContext.job?.execid
+        if(!execid){
+            def msg = "Execution identifier (job.execid) not found in data context"
+            executionContext.getExecutionListener().log(0, msg)
+            throw new StepException(msg, JobReferenceFailureReason.NotFound)
+        }
 
         ScheduledExecution.withTransaction { status ->
             ScheduledExecution se = ScheduledExecution.get(id)
+            Execution exec = Execution.get(execid as Long)
+            if(!exec){
+                def msg = "Execution not found: ${execid}"
+                executionContext.getExecutionListener().log(0, msg);
+                result = createFailure(JobReferenceFailureReason.NotFound, msg)
+                return
+            }
 
             if (!frameworkService.authorizeProjectJobAll(executionContext.getAuthContext(), se, [AuthConstants.ACTION_RUN], se.project)) {
                 def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
@@ -2814,6 +2849,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             try {
                 newContext = createJobReferenceContext(
                         se,
+                        exec,
                         executionContext,
                         jitem.args,
                         jitem.nodeFilter,

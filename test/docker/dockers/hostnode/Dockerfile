@@ -1,6 +1,8 @@
 FROM ubuntu:16.04
 
 
+VOLUME /var/lib/docker
+
 ## General package configuration
 RUN apt-get -y update && \
     apt-get -y install \

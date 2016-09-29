@@ -487,6 +487,7 @@ class ExecutionServiceSpec extends Specification {
 
         def newCtxt = service.createJobReferenceContext(
                 se,
+                null,
                 context,
                 ['-test1', '${option.test1}', '-test2', '${option.test2}'] as String[],
                 null, null, null, null, null, false
@@ -542,6 +543,7 @@ class ExecutionServiceSpec extends Specification {
 
         def newCtxt = service.createJobReferenceContext(
                 se,
+                null,
                 context,
                 [] as String[],
                 null, null, null, null, null, false
@@ -549,6 +551,73 @@ class ExecutionServiceSpec extends Specification {
 
         then:
         newCtxt.dataContext['globals'] == [a: 'b', c: 'd']
+    }
+
+    def "createJobReferenceContext expands DATE template strings"() {
+        given:
+        def context = ExecutionContextImpl.builder().with {
+            threadCount 1
+            keepgoing false
+            dataContext(['option': ['monkey': 'wakeful'], 'secureOption': [:], 'job': ['execid': '123']])
+            privateDataContext(['option': [:],])
+            user 'aUser'
+            build()
+        }
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                options: [
+                        new Option(name: 'blah', enforced: false, required: false),
+                        new Option(name: 'blah2', enforced: false, required: false),
+                ],
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                )
+        null != se.save()
+        Execution exec = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false,
+                scheduledExecution: se,
+                dateStarted: new Date(2015 - 1900, 02, 03, 04, 05, 06)
+        )
+        null != exec.save()
+
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'AProject')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
+            0 * _(*_)
+        }
+
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        when:
+
+        def newCtxt = service.createJobReferenceContext(
+                se,
+                exec,
+                context,
+                args as String[],
+                null, null, null, null, null, false
+        )
+
+        then:
+        newCtxt.dataContext['option'] == result
+
+        where:
+        args                                       | result
+        ['-blah', 'xyz', '-blah2', '${DATE:yyyy}'] | ['blah': 'xyz', blah2: '2015']
     }
 
     def "createJobReferenceContext secure opts default storage path values should be read from storage"() {
@@ -615,6 +684,7 @@ class ExecutionServiceSpec extends Specification {
 
         def newCtxt = service.createJobReferenceContext(
                 se,
+                null,
                 context,
                 [] as String[],//null values for the input options
                 null, null, null, null, null, false
@@ -687,6 +757,7 @@ class ExecutionServiceSpec extends Specification {
 
         def newCtxt = service.createJobReferenceContext(
                 se,
+                null,
                 context,
                 ['-test1', '${option.zilch}', '-test2', '${option.test2}'] as String[],
                 null, null, null, null, null, false
