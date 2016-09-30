@@ -84,12 +84,20 @@
         <g:else>
             <li id="projectSelect" class="dropdown disabled">
                 <a data-toggle="dropdown" href="#" class="disabled">
-                    <i class="glyphicon glyphicon-tasks"></i>
-                    <g:enc>${ params.project ?: request.project}</g:enc>
                     <i class="caret"></i>
                 </a>
             </li>
         </g:else>
+        <li id="projectHomeLink">
+            <a href="${createLink(
+                    controller: 'menu',
+                    action: 'projectHome',
+                    params: [project: project ?: params.project ?: request.project]
+            )}">
+                <i class="glyphicon glyphicon-tasks"></i>
+                <g:enc>${project ?: params.project ?: request.project ?: 'Choose ...'}</g:enc>
+            </a>
+        </li>
     </g:if>
 
         <g:set var="selectedclass" value="active"/>

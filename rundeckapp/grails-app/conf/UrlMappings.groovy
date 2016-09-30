@@ -198,6 +198,7 @@ class UrlMappings {
         "/api/$api_version/$action?"(controller: 'api', action: 'invalid')
 
         //simplified url mappings for link generation
+        "/project/$project/home"(controller: 'menu', action: 'projectHome')
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')
         "/project/$project/run/"(controller: 'framework', action: 'nodes')
         "/project/$project/scm/$integration?/$action?"(controller: 'scm')

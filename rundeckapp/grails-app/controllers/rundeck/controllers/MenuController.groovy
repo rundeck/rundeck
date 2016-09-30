@@ -1424,6 +1424,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ])
     }
 
+    def projectHome() {
+        if (!params.project) {
+            return redirect(controller: 'menu', action: 'home')
+        }
+        [project: params.project]
+    }
+
     def welcome(){
     }
 
