@@ -39,6 +39,7 @@ class ControllerBase {
     public static final ArrayList<String> UIPLUGIN_PAGES = [
             'menu/jobs',
             'menu/home',
+            'menu/projectHome',
             'menu/executionMode',
             'menu/admin',
             "menu/logStorage",

@@ -16,17 +16,18 @@
 
 <g:set var="projectSet" value="${projects.sort()}"/>
 <g:set var="selectParams" value="${selectParams?:[:]}"/>
-    <a data-toggle="dropdown" href="#">
-        <i class="glyphicon glyphicon-tasks"></i>
-        <g:enc>${ selectItemTitle}${project?:params.project?:request.project?: 'Choose ...'}</g:enc>
-        <i class="caret"></i>
+    <a class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        ${project && selectItemTitle ? selectItemTitle : emptyTitle}
+        <span class="caret"></span>
+        <span class="sr-only">Toggle Dropdown</span>
     </a>
-    <ul class="dropdown-menu" role="menu" aria-labelledby="dLabel">
+
+    <ul class="dropdown-menu " role="menu" aria-labelledby="dLabel">
 <auth:resourceAllowed action="create" kind="project" context="application">
         <g:if test="${!params.nocreate}">
             <li>
                 <g:link controller="framework" action="createProject">
-                    New Project
+                    <g:message code="page.home.new.project.button.label"/>
                     <b class="glyphicon glyphicon-plus"></b>
                 </g:link>
             </li>
