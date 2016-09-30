@@ -34,17 +34,17 @@
     <g:if test="${session.frameworkProjects}">
         <li class="${selected == 'project' ? 'active' : ''} dropdown" id="projectSelect">
             <g:render template="/framework/projectSelect"
-                      model="${[projects: session.frameworkProjects, project: params.project ?:
-                          request.project,
-                              selectParams: [page:'configure'],selectItemTitle:'Project Configuration: ']}"/>
+                      model="${[projects    : session.frameworkProjects, project: params.project ?: request.project,
+                                selectParams: [page: 'configure'], selectItemTitle: message(code:"project.configuration.prompt") + params.project,
+                                emptyTitle  : message(code:"select.project")]}"/>
         </li>
     </g:if>
     <g:else>
         <li id="projectSelect" class="${selected == 'project' ? 'active' : ''} dropdown">
             <span class="action textbtn" onclick="loadProjectSelect({page:'configure'});"
-                  title="Select project...">
+                  title="${message(code:"select.project")}">
                     <g:message code="project.configuration" />
-                <g:enc>${params.project ?: request.project ?: 'Select project...'}</g:enc>
+                <g:enc>${params.project ?: request.project ?: message(code:"select.project")}</g:enc>
             </span>
         </li>
     </g:else>

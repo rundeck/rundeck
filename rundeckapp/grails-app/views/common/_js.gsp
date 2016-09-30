@@ -45,7 +45,7 @@
         menuHomeAjax: "${g.createLink(controller: 'menu', action: 'homeAjax',params:projParams)}",
         menuHomeSummaryAjax: "${g.createLink(controller: 'menu', action: 'homeSummaryAjax',params:projParams)}",
         menuProjectNamesAjax: "${g.createLink(controller: 'menu', action: 'projectNamesAjax',params:projParams)}",
-        menuJobsAjax: "${g.createLink(controller: 'menu', action: 'jobsAjax',params:projParams+[format:'json'])}",
+        menuJobsAjax: "${g.createLink(controller: 'menu', action: 'jobsAjax',params:[format:'json'])}",
         scheduledExecutionRunAdhocInline: "${createLink(controller:'scheduledExecution',action:'runAdhocInline',params:projParams)}",
         scheduledExecutionCreate: "${createLink(controller:'scheduledExecution',action:'create',params:projParams)}",
         scheduledExecutionExecuteFragment: '${createLink(controller:"scheduledExecution",action:"executeFragment",params:projParams)}',

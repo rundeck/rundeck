@@ -73,6 +73,33 @@ class ScriptUIPluginSpec extends Specification {
 
     }
 
+    def "create invalid requires:"() {
+        given:
+        def provider = Mock(ScriptPluginProvider) {
+            getMetadata() >> [
+                    ui: [
+                            pages   : 'xyz',
+                            scripts : 'asdf',
+                            requires: invalidRequires
+                    ]
+            ]
+        }
+        when:
+        def plugin = new ScriptUIPlugin(provider, Mock(Framework))
+
+        then:
+        IllegalArgumentException e = thrown()
+        e.message =~ /ui: pages: requires:/
+
+        where:
+        invalidRequires | _
+        [a: 'b']        | _
+        123L            | _
+        [123]           | _
+        []              | _
+
+    }
+
     def "create missing pages: scripts or styles"() {
         given:
         def provider = Mock(ScriptPluginProvider) {

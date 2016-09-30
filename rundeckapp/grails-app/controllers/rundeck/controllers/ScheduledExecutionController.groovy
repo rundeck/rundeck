@@ -49,6 +49,7 @@ import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.quartz.Scheduler
+import org.rundeck.util.Toposort
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
@@ -2653,7 +2654,7 @@ class ScheduledExecutionController  extends ControllerBase{
         model.optionordering = scheduledExecution.options*.name
 
         //topo sort the dependencies
-        def toporesult = toposort(model.optionordering, depopts, optdeps)
+        def toporesult = Toposort.toposort(model.optionordering, depopts, optdeps)
         if (scheduledExecution.options && !toporesult.result) {
             log.warn("Cyclic dependency for options for job ${scheduledExecution.extid}: (${toporesult.cycle})")
             model.optionsDependenciesCyclic = true
@@ -2689,60 +2690,6 @@ class ScheduledExecutionController  extends ControllerBase{
         model.remoteOptionData=remoteOptionData
 
         return model
-    }
-    private deepClone(Map map) {
-        def copy = [:]
-        map.each { k, v ->
-            if (v instanceof List){
-                copy[k] = v.clone()
-            }
-            else {
-                copy[k] = v
-            }
-        }
-        return copy
-    }
-
-    /**
-     * Return topo sorted list of nodes, if acyclic, preserving
-     * order of input node list for independent nodes
-     * @param nodes
-     * @param oedgesin
-     * @param iedgesin
-     * @return
-     */
-    private toposort(List nodes,Map oedgesin,Map iedgesin){
-        def Map oedges = deepClone(oedgesin)
-        def Map iedges = deepClone(iedgesin)
-        def l = new ArrayList()
-        List s = new ArrayList(nodes.findAll {!iedges[it]})
-        while(s){
-            def n = s.first()
-            s.remove(n)
-            l.add(n)
-            //for each node dependent on n
-            def edges = new ArrayList()
-            if(oedges[n]){
-                edges.addAll(oedges[n])
-            }
-            def k=[] //preserve input order when processing new leaf nodes
-            edges.each{p->
-                oedges[n].remove(p)
-                iedges[p].remove(n)
-                if(!iedges[p]){
-                    k<<p
-                }
-            }
-            if(k){
-                s.addAll(0,k)
-            }
-        }
-        if (iedges.any {it.value} || oedges.any{it.value}){
-            //cyclic graph
-            return [cycle: iedges]
-        }else{
-            return [result:l]
-        }
     }
     public def executeFragment(RunJobCommand runParams, ExtraCommand extra) {
         if ([runParams, extra].any { it.hasErrors() }) {
