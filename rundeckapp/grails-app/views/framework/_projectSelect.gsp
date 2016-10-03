@@ -38,7 +38,7 @@
 </auth:resourceAllowed>
         <g:each var="project" in="${projectSet}">
             <li>
-                <g:link controller="menu" action="index" params="${selectParams + [project: project]}" >
+                <g:link controller="menu" action="projectHome" params="${selectParams + [project: project]}" >
                     <i class="glyphicon glyphicon-tasks"></i>
                     <g:enc>${project}</g:enc>
                 </g:link>
