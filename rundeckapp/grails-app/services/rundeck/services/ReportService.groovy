@@ -326,8 +326,8 @@ class ReportService  {
             }
 
             if(query.execnodeFilter){
-                if(query.execnodeFilter.startsWith('name:')){
-                    def node = (query.execnodeFilter.split("name:")[1]).stripIndent()
+                if(query.execnodeFilter.startsWith('name:') || !query.execnodeFilter.contains(":")){
+                    def node = query.execnodeFilter.startsWith('name:')?(query.execnodeFilter.split("name:")[1]).stripIndent():query.execnodeFilter;
                     or {
                         ilike("failedNodeList", '%' + node + '%')
                         ilike("succeededNodeList", '%' + node + '%')

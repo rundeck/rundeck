@@ -57,7 +57,7 @@
 <div class="row">
 <div class="${hideHead?'col-sm-9':'col-sm-12'}">
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
-    <g:if test="${scheduledExecution.nodeFilterEditable}">
+
     <div class="form-group" style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
     <div class="col-sm-2 control-label text-form-label">
         Nodes
@@ -109,7 +109,7 @@
                 --%>
                 <g:if test="${!nodesetvariables && nodes}">
                 <g:if test="${namegroups}">
-                    <label for="cherrypickradio">
+                    <label for=" ">
                     <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes !=null)}">
                         <input id="cherrypickradio"
                                type="radio"
@@ -198,6 +198,7 @@
                     </g:each>
                 </g:else>
                 </g:if>
+                <g:if test="${scheduledExecution.nodeFilterEditable || nodefilter == ''}">
                 <div class="subfields nodeFilterFields ">
                     %{-- filter text --}%
                     <div class="">
@@ -208,7 +209,7 @@
                            name="extra.nodeoverride"
                            value="filter"
                     />
-                        <spans>
+                        <span>
                     <g:if test="${!nodesetvariables && nodes}"><g:message code="or"/> </g:if>
                             <g:message code="job.run.override.node"/>: </span>
                     <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
@@ -228,6 +229,7 @@
 
 
                 </div>
+                    </g:if>
             </div>
             <g:javascript>
                 var updateSelectCount = function (evt) {
@@ -342,7 +344,7 @@
 
     </div>
     </div>
-    </g:if>
+
     <div class="error note" id="formerror" style="display:none">
 
     </div>
