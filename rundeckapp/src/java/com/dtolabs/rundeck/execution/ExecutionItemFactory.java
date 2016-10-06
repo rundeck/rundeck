@@ -218,6 +218,7 @@ public class ExecutionItemFactory {
                 null,
                 null,
                 null,
+                null,
                 null
         );
     }
@@ -243,7 +244,8 @@ public class ExecutionItemFactory {
             final Integer nodeThreadcount,
             final Boolean nodeKeepgoing,
             final String nodeRankAttribute,
-            final Boolean nodeRankOrderAscending
+            final Boolean nodeRankOrderAscending,
+            final Boolean nodeIntersect
     )
     {
         return new JobRefCommandBase() {
@@ -289,6 +291,10 @@ public class ExecutionItemFactory {
 
             @Override public Boolean getNodeRankOrderAscending() {
                 return nodeRankOrderAscending;
+            }
+
+            @Override public Boolean getNodeIntersect() {
+                return nodeIntersect;
             }
         };
     }

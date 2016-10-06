@@ -1185,7 +1185,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     jobcmditem.nodeThreadcount!=null && jobcmditem.nodeThreadcount>=1?jobcmditem.nodeThreadcount:null,
                     jobcmditem.nodeKeepgoing,
                     jobcmditem.nodeRankAttribute,
-                    jobcmditem.nodeRankOrderAscending
+                    jobcmditem.nodeRankOrderAscending,
+                    jobcmditem.nodeIntersect
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
@@ -2592,20 +2593,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     StepExecutionContext overrideJobReferenceNodeFilter(
-            Map<String,Map<String,String>> origData,
             StepExecutionContext origContext,
+            StepExecutionContext newContext,
             String nodeFilter,
             Integer nodeThreadcount,
             Boolean nodeKeepgoing,
             String nodeRankAttribute,
-            Boolean nodeRankOrderAscending
+            Boolean nodeRankOrderAscending,
+            Boolean nodeIntersect
     )
     {
-        def builder = ExecutionContextImpl.builder(origContext);
+        def builder = ExecutionContextImpl.builder(newContext);
         def nodeselector
         if (nodeFilter) {
             //set nodeset for the context if doNodedispatch parameter is true
-            def filter = DataContextUtils.replaceDataReferences(nodeFilter, origData)
+            def filter = DataContextUtils.replaceDataReferences(nodeFilter, origContext.dataContext)
             NodeSet nodeset = filtersAsNodeSet([
                     filter               : filter,
                     nodeExcludePrecedence: true, //XXX: fix
@@ -2614,11 +2616,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ])
             nodeselector = nodeset
 
-            def INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
-                    origContext.frameworkProject,
+            def INodeSet nodeSet
+            if(null!=nodeIntersect && nodeIntersect){
+                // Create intersection of overridden node filter and upstream job nodes
+                nodeSet = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nodeselector, origContext.nodes)
+                filter = DataContextUtils.replaceDataReferences(nodeSet.nodeNames.join(" "), origContext.dataContext)
+                nodeselector = filtersAsNodeSet([
+                        filter                  : filter,
+                        nodeExcludePrecedence   : true,
+                        nodeThreadcount      : nodeThreadcount?:1,
+                        nodeKeepgoing        : nodeKeepgoing
+                ])
+            }
+
+            nodeSet = frameworkService.filterAuthorizedNodes(
+                    newContext.frameworkProject,
                     new HashSet<String>(["read", "run"]),
-                    frameworkService.filterNodeSet(nodeselector, origContext.frameworkProject),
-                    origContext.authContext);
+                    frameworkService.filterNodeSet(nodeselector, newContext.frameworkProject),
+                    newContext.authContext);
 
             builder.nodeSelector(nodeselector).nodes(nodeSet)
 
@@ -2634,6 +2649,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (null != nodeRankOrderAscending) {
                 builder.nodeRankOrderAscending(nodeRankOrderAscending)
             }
+        }else if(null!=nodeIntersect && nodeIntersect){
+            // Create intersection of referenced job node filter and upstream job nodes
+            def INodeSet nodeSet = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(newContext.nodeSelector, origContext.nodes)
+            def filter = DataContextUtils.replaceDataReferences(nodeSet.nodeNames.join(" "), origContext.dataContext)
+            nodeselector = filtersAsNodeSet([
+                    filter                  : filter,
+                    nodeExcludePrecedence   : true,
+                    nodeThreadcount      : newContext.threadCount,
+                    nodeKeepgoing        : newContext.keepgoing
+            ])
+
+            nodeSet = frameworkService.filterAuthorizedNodes(
+                    newContext.frameworkProject,
+                    new HashSet<String>(["read", "run"]),
+                    frameworkService.filterNodeSet(nodeselector, newContext.frameworkProject),
+                    newContext.authContext);
+
+            builder.nodeSelector(nodeselector).nodes(nodeSet)
         }
 
         return builder.build()
@@ -2662,6 +2695,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Integer nodeThreadcount,
             String nodeRankAttribute,
             Boolean nodeRankOrderAscending,
+            Boolean nodeIntersect = false,
             dovalidate = true
     )
     throws ExecutionServiceValidationException
@@ -2758,15 +2792,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 evalSecOpts
         )
 
-        if (null != newContext && nodeFilter) {
+        if (null != newContext && (nodeFilter || nodeIntersect)) {
             newContext = overrideJobReferenceNodeFilter(
-                    executionContext.dataContext,
+                    executionContext,
                     newContext,
                     nodeFilter,
                     nodeThreadcount,
                     nodeKeepgoing,
                     nodeRankAttribute,
-                    nodeRankOrderAscending
+                    nodeRankOrderAscending,
+                    nodeIntersect
             )
         }
         return newContext
@@ -2845,7 +2880,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         jitem.nodeKeepgoing,
                         jitem.nodeThreadcount,
                         jitem.nodeRankAttribute,
-                        jitem.nodeRankOrderAscending
+                        jitem.nodeRankOrderAscending,
+                        jitem.nodeIntersect
                 )
             } catch (ExecutionServiceValidationException e) {
                 executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");

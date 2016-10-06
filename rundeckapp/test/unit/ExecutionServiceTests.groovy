@@ -1445,7 +1445,7 @@ class ExecutionServiceTests  {
                                           .threadCount(1)
                                           .keepgoing(false)
                                           .build()
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, null, null, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null, context, null, null, null, null, null, null)
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1460,7 +1460,7 @@ class ExecutionServiceTests  {
                                           .threadCount(1)
                                           .keepgoing(false)
                                           .build()
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, null, 2, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null, context, null, 2, null, null, null, null)
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1475,7 +1475,7 @@ class ExecutionServiceTests  {
                                           .threadCount(1)
                                           .keepgoing(false)
                                           .build()
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, null, null, true, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null, context, null, null, true, null, null, null)
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1500,7 +1500,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, 'z p', null, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(new ExecutionContextImpl() , context, 'z p', null, null, null, null, null)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1525,7 +1525,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, 'z p', 2, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(new ExecutionContextImpl(), context, 'z p', 2, null, null, null, null)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(false,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
@@ -1550,7 +1550,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, 'z p', 2, true, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(new ExecutionContextImpl(), context, 'z p', 2, true, null, null, false)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
@@ -1576,7 +1576,7 @@ class ExecutionServiceTests  {
         }
         assertEquals(null, context.nodeRankAttribute)
         assertEquals(true, context.nodeRankOrderAscending)
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, 'z p', 2, true, 'rank', false)
+        def newctx=service.overrideJobReferenceNodeFilter(new ExecutionContextImpl(), context, 'z p', 2, true, 'rank', false, null)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
@@ -1603,14 +1603,97 @@ class ExecutionServiceTests  {
                 makeNodeSet(['z','p'])
             }
         }
+        def origContext = ExecutionContextImpl.builder().
+                dataContext([option:[test1:'blah']]).build()
         assertEquals(null, context.nodeRankAttribute)
         assertEquals(true, context.nodeRankOrderAscending)
-        def newctx=service.overrideJobReferenceNodeFilter([option:[test1:'blah']], context, 'z p ${option.test1}', 2, true, 'rank', false)
+        def newctx=service.overrideJobReferenceNodeFilter(origContext, context, 'z p ${option.test1}', 2, true, 'rank', false, false)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
         assertEquals('rank',newctx.nodeRankAttribute)
         assertEquals(false,newctx.nodeRankOrderAscending)
+    }
+
+    /**
+     * set nodeIntersect and override node filter
+     * when:
+     *      origContext (triggered job)
+     *          nodes => a b
+     *      newContext (referenced job)
+     *          nodes => x y
+     *      nodeFilter => a x
+     *      nodeIntersect => true
+     * then:
+     *      overridden context for referenced job is intersection of origContext and node filter
+     *          nodes => a
+     */
+    void testOverrideJobReferenceNodeFilter_filterAndNodeIntersect() {
+        def origContext = ExecutionContextImpl.builder()
+                .nodes(makeNodeSet(['a','b']))
+                .nodeSelector(makeSelector("a b", 1, false))
+                .threadCount(1)
+                .keepgoing(false)
+                .build()
+        def newContext = ExecutionContextImpl.builder()
+                .nodes(makeNodeSet(['x', 'y']))
+                .nodeSelector(makeSelector("x y", 1, false))
+                .threadCount(1)
+                .keepgoing(false)
+                .build()
+        service.frameworkService=mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                makeNodeSet(['a',])
+            }
+            filterAuthorizedNodes(1..1){ final String project, final Set<String> actions, final INodeSet unfiltered,
+                                         AuthContext authContext->
+                makeNodeSet(['a'])
+            }
+        }
+
+        def newctx=service.overrideJobReferenceNodeFilter(origContext, newContext, 'a x', 2, null, null, null, true)
+        assertEquals(['a'] as Set,newctx.nodes.nodeNames as Set)
+    }
+
+    /**
+     * set nodeIntersect and override node filter
+     * when:
+     *      origContext (triggered job)
+     *          nodes => a b x y
+     *      newContext (referenced job)
+     *          nodes => x y z
+     *      nodeIntersect => true
+     * then:
+     *      overridden context for referenced job is intersection of origContext and newContext
+     *          nodes => x y
+     */
+    void testOverrideJobReferenceNodeFilter_NodeIntersectWithoutFilter() {
+        def origContext = ExecutionContextImpl.builder()
+                .nodes(makeNodeSet(['a','b','x','y']))
+                .nodeSelector(makeSelector("a b x y", 1, false))
+                .threadCount(1)
+                .keepgoing(false)
+                .build()
+        def newContext = ExecutionContextImpl.builder()
+                .nodes(makeNodeSet(['x','y','z']))
+                .nodeSelector(makeSelector("x y z", 1, false))
+                .threadCount(10)
+                .keepgoing(true)
+                .build()
+        service.frameworkService=mockWith(FrameworkService){
+            filterNodeSet(1..1){ NodesSelector selector, String project->
+                makeNodeSet(['x','y'])
+            }
+            filterAuthorizedNodes(1..1){ final String project, final Set<String> actions, final INodeSet unfiltered,
+                                         AuthContext authContext->
+                makeNodeSet(['x','y'])
+            }
+        }
+
+        def newctx=service.overrideJobReferenceNodeFilter(origContext, newContext, null, 0, null, null, null, true)
+        assertEquals(['x','y'] as Set,newctx.nodes.nodeNames as Set)
+        assertEquals(true,newctx.keepgoing)
+        assertEquals(10,newctx.threadCount)
     }
 
     protected NodesSelector makeSelector(String filter, int threadcount, boolean keepgoing) {

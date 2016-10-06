@@ -73,4 +73,8 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
     @Override public Boolean getNodeRankOrderAscending() {
         return null;
     }
+
+    @Override public Boolean getNodeIntersect() {
+        return null;
+    }
 }

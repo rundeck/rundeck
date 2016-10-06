@@ -38,6 +38,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     Boolean nodeStep
     String nodeRankAttribute
     Boolean nodeRankOrderAscending
+    Boolean nodeIntersect
     static transients = ['jobIdentifier']
 
     static constraints = {
@@ -50,6 +51,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         nodeThreadcount(nullable: true)
         nodeRankAttribute(nullable: true, maxSize: 256)
         nodeRankOrderAscending(nullable: true)
+        nodeIntersect(nullable: true)
     }
 
     static mapping = {
@@ -68,6 +70,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
                 "nodeThreadcount=\"${nodeThreadcount}\"" +
                 "nodeRankAttribute=\"${nodeRankAttribute}\"" +
                 "nodeRankOrderAscending=\"${nodeRankOrderAscending}\"" +
+                "nodeIntersect=\"${nodeIntersect}\"" +
                 ")" + (errorHandler ? " [handler: ${errorHandler}" : '')
     }
 
@@ -123,6 +126,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             if(null!=nodeRankOrderAscending){
                 dispatch.rankOrder=nodeRankOrderAscending?'ascending':'descending'
             }
+            if(null!=nodeIntersect){
+                dispatch.nodeIntersect=nodeIntersect
+            }
             if(dispatch){
                 map.jobref.nodefilters.dispatch=dispatch
             }
@@ -164,6 +170,13 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
                 }
                 if (null != dispatch?.rankOrder) {
                     exec.nodeRankOrderAscending = (dispatch.rankOrder == 'ascending')
+                }
+                if(null!=dispatch?.nodeIntersect){
+                    if (dispatch.nodeIntersect in ['true', true]) {
+                        exec.nodeIntersect=true
+                    }else{
+                        exec.nodeIntersect=false
+                    }
                 }
                 exec.nodeRankAttribute= dispatch?.rankAttribute
             }
