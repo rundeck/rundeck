@@ -23,8 +23,13 @@ function RundeckPage(data) {
     self.project = ko.observable(data.project);
     self.path = ko.observable(data.path);
     self.baseUrl = ko.observable(data.baseUrl);
+    self.basei18nUrl = ko.observable(data.basei18nUrl);
+    self.lang = ko.observable(data.lang);
     self.pluginBaseUrl = function (plugin) {
         return self.baseUrl() + '/' + plugin;
+    };
+    self.pluginBasei18nUrl = function (plugin) {
+        return self.basei18nUrl() + '/' + plugin;
     };
     self.onPageLoad = function () {
 
