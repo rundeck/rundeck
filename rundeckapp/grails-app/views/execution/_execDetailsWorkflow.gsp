@@ -170,9 +170,16 @@ jQuery(function(){
     <div>
     <span class="text-muted text-em">
         <g:message code="strategy"/>:
-        <g:render template="/framework/renderPluginConfig"
-            model="[type:workflow?.strategy,values: workflow?.getPluginConfigData('WorkflowStrategy',workflow?.strategy), description: strategyPlugins.find{it.name==workflow?.strategy}]"
-        />
+        <div id="workflowstrategydetail" data-strategy="${workflow?.strategy}">
+            <g:embedJSON id="workflowstrategyconfigdata"
+                         data="${workflow?.getPluginConfigData('WorkflowStrategy', workflow?.strategy)}"/>
+            <g:render template="/framework/renderPluginConfig"
+                      model="[showPluginIcon: true,
+                              type          : workflow?.strategy,
+                              values        : workflow?.getPluginConfigData('WorkflowStrategy', workflow?.strategy),
+                              description   : strategyPlugins.find { it.name == workflow?.strategy }
+                      ]"/>
+        </div>
     </span>
 
     </div>
