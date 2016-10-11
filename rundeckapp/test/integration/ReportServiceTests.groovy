@@ -70,7 +70,7 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([reportIdFilter: 'blah4'], [])
     }
     void testgetExecNodeFilterReportIdFilter(){
-        def r1,r2,r3
+        def r1,r2,r3, r4
 
         ExecReport.withNewSession {
             r1=proto(reportId:'blah', jcExecId: '123', succeededNodeList:'test')
@@ -84,23 +84,29 @@ class ReportServiceTests extends GroovyTestCase {
             r3 = proto(reportId: 'blah3', jcExecId: '125', filterApplied:'tags: monkey')
             assert r3.validate()
             println r3.save(flush: true)
+            r4 = proto(reportId: 'blah4', jcExecId: '126', filterApplied:'.*',succeededNodeList:'test')
+            assert r4.validate()
+            println r4.save(flush: true)
 
             sessionFactory.currentSession.flush()
         }
         r1=r1.refresh()
         r2=r2.refresh()
         r3=r3.refresh()
-        assertEquals(3,ExecReport.count())
+        r4=r4.refresh()
+        assertEquals(4,ExecReport.count())
         def query = new ExecQuery(execnodeFilter: 'name: test')
 
         def result=reportService.getExecutionReports(query,true)
-        assert result.total==2
-        assert result.reports.size()==2
+        assert result.total==3
+        assert result.reports.size()==3
         assert result.reports.contains(r1)
 
-        assertQueryResult([execnodeFilter: 'name: test'], [r1,r2])
+        assertQueryResult([execnodeFilter: 'name: test'], [r1,r2,r4])
+        assertQueryResult([execnodeFilter: 'test'], [r1,r2,r4])
         assertQueryResult([execnodeFilter: 'tags: monkey'], [r3])
         assertQueryResult([execnodeFilter: 'tags: test'], [])
+        assertQueryResult([execnodeFilter: '.*'], [r4])
     }
 
     void testgetExecReportsProjFilterIsExact(){
