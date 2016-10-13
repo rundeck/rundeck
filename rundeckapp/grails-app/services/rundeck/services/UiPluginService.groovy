@@ -107,7 +107,7 @@ class UiPluginService implements InitializingBean {
         }
         def metadata = metadataForPlugin(key.service, key.name)
         if (!metadata) {
-            log.error("No metadata for ${key}")
+            log.debug("No metadata for ${key}")
         }
         new CachedPluginMeta(date: metadata?.dateLoaded, iconResource: iconResourcePath)
     }
