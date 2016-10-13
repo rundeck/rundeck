@@ -28,7 +28,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
-    <title>Plugins</title>
+    <title><g:message code="page.Plugins.title"/></title>
 </head>
 <body>
 <div class="row">
@@ -39,11 +39,10 @@
     <div class="row">
     <div class="col-sm-10">
     <h2>
-        Installed and Bundled Plugins
+        <g:message code="page.Plugins.description"/>
     </h2>
     <div class="text-info">
-        <g:markdown>Some plugin behavior can be configured by modifying the `project.properties` or `framework.properties`
-        configuration files.</g:markdown>
+        <g:markdown><g:message code="page.Plugins.description2.md"/></g:markdown>
     </div>
     </div>
     <div class="col-sm-2">
@@ -137,30 +136,31 @@
                     </g:if>
                     </div>
 
-                    <g:set var="source" value="${
-                        pluginFileMetadata?.filename && embeddedFilenames &&
+                    <g:set var="source" value=" " />
+                    <g:set var="metaInfo" value=" " />
+                    <g:set var="siteInfo" value=" " />
+                    <g:set var="authorInfo" value=" " />
+
+                    %{
+                      source =  pluginFileMetadata?.filename && embeddedFilenames &&
                                 embeddedFilenames.contains(pluginFileMetadata?.filename) ?
                                 'embed' :
 
                                 bundledPlugins && bundledPlugins[serviceName] &&
                                         bundledPlugins[serviceName].contains(pluginName) ?
                                         'builtin' :
-                                        'file'
-                    }"/>
+                                        'file';
 
-                    <g:set var="metaInfo" value="${
-                        (pluginFileMetadata?.pluginDate ? '\n Date: ' + pluginFileMetadata?.pluginDate : '') +
-                                'Source: ' + (
-                                source == 'embed' ? 'This plugin file was included with Rundeck.' :
-                                        source == 'builtin' ? 'This provider is built in to Rundeck.' :
-                                                'This plugin was installed with a file.'
-                        )
-                    }"/>
-                    <g:set var="linkInfo" value="${
-                        (pluginFileMetadata?.pluginUrl ? "Website: " + pluginFileMetadata?.pluginUrl : '') +
-                                (pluginFileMetadata?.pluginAuthor ? '\nAuthor: ' + pluginFileMetadata?.pluginAuthor :
-                                        '')
-                    }"/>
+                        metaInfo= (
+                                pluginFileMetadata?.pluginDate
+                                        ? message( code: 'plugin.metadata.date', args: [pluginFileMetadata?.pluginDate] )
+                                        : ''
+                        ) + '\n' + message ( code : 'plugin.source.' + source );
+
+                        siteInfo = (pluginFileMetadata?.pluginUrl ? message(code:"plugin.metadata.website", args:[pluginFileMetadata?.pluginUrl]) : '');
+                        authorInfo=(pluginFileMetadata?.pluginAuthor ? message(code:"plugin.metadata.author", args:[pluginFileMetadata?.pluginAuthor]) : '');
+                    }%
+                    <g:set var="linkInfo" value="${siteInfo} ${authorInfo}"/>
                     <div class="col-sm-4 text-right">
                         <g:if test="${pluginFileMetadata?.pluginUrl}">
                             <a class="textbtn small textbtn-info has_tooltip "
@@ -171,14 +171,15 @@
                         </g:if>
                         <g:elseif test="${pluginFileMetadata?.pluginAuthor}">
                             <span class="text-muted small has_tooltip"
-                                  title="Author">
+                                  title="${message(code:"author",encodeAs:'HTMLAttribute')}">
                                 ${pluginFileMetadata?.pluginAuthor}
                             </span>
                         </g:elseif>
 
                         <span class=" ${source == 'file' ? 'label label-info' : 'text-muted small'} has_tooltip "
                               data-container="body"
-                              title="${metaInfo}">${pluginFileMetadata?.pluginFileVersion ?: ''}
+                              title="${enc(attr: metaInfo)}">
+                            ${pluginFileMetadata?.pluginFileVersion ?: ''}
 
                         <g:if test="${source == 'embed'}">
                             <g:icon name="file"/>
@@ -243,7 +244,7 @@
                     <g:unless test="${pluginDescription?.properties?.any{!(it.scope==null||it.scope==PropertyScope.Unspecified? serviceDefaultScope.isInstanceLevel(): it.scope.isInstanceLevel())}}">
                         %{--no config properties--}%
                         <p class="text-muted">
-                            No configuration
+                            <g:message code="no.configuration" />
                         </p>
                     </g:unless>
                 </div>
@@ -253,7 +254,7 @@
             </div>
             <g:unless test="${pluginDescList}">
                 <p class="text-muted">
-        None
+        <g:message code="none" />
                 </p>
             </g:unless>
                 </div>
