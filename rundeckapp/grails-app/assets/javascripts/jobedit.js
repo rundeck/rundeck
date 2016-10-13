@@ -752,7 +752,7 @@ function jobChosen(name, group) {
     }
     hideJobChooser();
 }
-function loadJobChooser(elem, target, nameid, groupid) {
+function loadJobChooser(elem, nameid, groupid) {
     if (jQuery(elem).hasClass('active')) {
         hideJobChooser();
         return;
