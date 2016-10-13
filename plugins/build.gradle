@@ -21,7 +21,7 @@
 
 eclipse.project.name =  "${project.getParent().eclipse.project.name}:plugins";
 
-ext.rundeckPluginVersion= '1.1'
+ext.rundeckPluginVersion= '1.2'
 subprojects{
 
 
