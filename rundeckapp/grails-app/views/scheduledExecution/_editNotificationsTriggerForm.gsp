@@ -178,9 +178,29 @@
                 <div>
                     <g:checkBox name="${checkboxFieldName}" value="true"
                                 checked="${definedNotif ? true : false}"/>
-                    <label for="${enc(attr:checkboxFieldName)}"><g:enc>${pluginDescription['title'] ?: pluginDescription['name'] ?: pluginName}</g:enc></label>
+                    <label for="${enc(attr:checkboxFieldName)}">
+                    <stepplugin:pluginIcon service="Notification"
+                                           name="${pluginName}"
+                                           width="16px"
+                                           height="16px">
+                    </stepplugin:pluginIcon>
+                    <stepplugin:message
+                            service="Notification"
+                            name="${pluginName}"
+                            code="plugin.title"
+                            default="${pluginDescription.title?:pluginName}"/>
+                </label>
                     <g:if test="${pluginDescription['description']}">
-                        <span class="text-muted"><g:enc>${pluginDescription['description']}</g:enc></span>
+                        <span class="text-muted"><g:render template="/scheduledExecution/description"
+                                                           model="[description:
+                                                                           stepplugin.messageText(
+                                                                                   service: 'Notification',
+                                                                                   name: pluginName,
+                                                                                   code: 'plugin.description',
+                                                                                   default: pluginDescription.description
+                                                                           ),
+                                                                   textCss    : '',
+                                                                   mode       : 'hidden', rkey: g.rkey()]"/></span>
                     </g:if>
                 </div>
 
@@ -195,6 +215,8 @@
 
                             <g:if test="${pluginDescription?.properties}">
                                 <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                        service:com.dtolabs.rundeck.plugins.ServiceNameConstants.Notification,
+                                        provider:pluginDescription.name,
                                         properties:pluginDescription?.properties,
                                         report:validation,
                                         prefix:prefix,

@@ -48,6 +48,7 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     private File extdir;
     private File cachedir;
     private  PluginCache cache;
+    private Map<String, String> serviceAliases;
     /**
      * Create a PluginManagerService
      */
@@ -137,6 +138,14 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
 
     @Override
     public PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException {
+        PluginResourceLoader pluginResourceLoader = tryResourceLoader(service, provider);
+        if (pluginResourceLoader == null && serviceAliases != null && serviceAliases.containsKey(service)) {
+            pluginResourceLoader = tryResourceLoader(serviceAliases.get(service), provider);
+        }
+        return pluginResourceLoader;
+    }
+
+    private PluginResourceLoader tryResourceLoader(String service, String provider) throws ProviderLoaderException {
         ProviderLoader loaderForIdent = getCache().getLoaderForIdent(new ProviderIdent(service, provider));
         if (null != loaderForIdent && loaderForIdent instanceof PluginResourceLoader) {
             return (PluginResourceLoader) loaderForIdent;
@@ -146,6 +155,16 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
 
     @Override
     public PluginMetadata getPluginMetadata(final String service, final String provider)
+            throws ProviderLoaderException
+    {
+        PluginMetadata pluginMetadata = tryPluginMetadata(service, provider);
+        if (pluginMetadata == null && serviceAliases != null && serviceAliases.containsKey(service)) {
+            pluginMetadata = tryPluginMetadata(serviceAliases.get(service), provider);
+        }
+        return pluginMetadata;
+    }
+
+    private PluginMetadata tryPluginMetadata(String service, final String provider)
             throws ProviderLoaderException
     {
         ProviderLoader loaderForIdent = getCache().getLoaderForIdent(new ProviderIdent(service, provider));
@@ -177,5 +196,13 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
 
     public void setCache(PluginCache cache) {
         this.cache = cache;
+    }
+
+    public Map<String, String> getServiceAliases() {
+        return serviceAliases;
+    }
+
+    public void setServiceAliases(Map<String, String> serviceAliases) {
+        this.serviceAliases = serviceAliases;
     }
 }

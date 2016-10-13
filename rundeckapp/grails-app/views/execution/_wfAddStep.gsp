@@ -72,21 +72,26 @@
 
                         <a  class="list-group-item textbtn  add_node_step_type" data-node-step-type="${enc(attr:typedesc.name)}"
                             href="#">
-                            <g:if test="${uiPluginProfiles?.get('WorkflowNodeStep:'+typedesc.name)?.icon}">
-                                <img src="${createLink(
-                                        controller: 'plugin',
-                                        action: 'pluginIcon',
-                                        params: [service: 'WorkflowNodeStep', name: typedesc.name]
-                                )}" width="16px" height="16px"/>
-                            </g:if>
-                            <g:else>
+                            <stepplugin:pluginIcon service="WorkflowNodeStep"
+                                                   name="${typedesc.name}"
+                                                   width="16px"
+                                                   height="16px">
                                 <i class="rdicon icon-small plugin"></i>
-                            </g:else>
-                            <g:enc>${typedesc.title}</g:enc>
+                            </stepplugin:pluginIcon>
+                            <stepplugin:message
+                                    service="WorkflowNodeStep"
+                                    name="${typedesc.name}"
+                                    code="plugin.title"
+                                    default="${typedesc.title}"/>
                             <span class="text-info">-
                             <g:render template="/scheduledExecution/description"
-                                      model="[description: typedesc.description, textCss: '',
-                                              mode: 'hidden', rkey: g.rkey()]"/>
+                                      model="[description: stepplugin.messageText(
+                                              service: 'WorkflowNodeStep',
+                                              name: typedesc.name,
+                                              code: 'plugin.description',
+                                              default: typedesc.description
+                                      ), textCss         : '',
+                                              mode       : 'hidden', rkey: g.rkey()]"/>
                             </span>
                         </a>
                     </g:each>
@@ -111,21 +116,28 @@
                     </div>
                     <g:each in="${stepDescriptions.sort{a,b->a.name<=>b.name}}" var="typedesc">
                         <a class="list-group-item textbtn  add_step_type" data-step-type="${enc(attr:typedesc.name)}" href="#">
-                            <g:if test="${uiPluginProfiles?.get('WorkflowStep:'+typedesc.name)?.icon}">
-                                <img src="${createLink(
-                                        controller: 'plugin',
-                                        action: 'pluginIcon',
-                                        params: [service: 'WorkflowStep', name: typedesc.name]
-                                )}" width="16px" height="16px"/>
-                            </g:if>
-                            <g:else>
+                            <stepplugin:pluginIcon service="WorkflowStep"
+                                                   name="${typedesc.name}"
+                                                   width="16px"
+                                                   height="16px">
                                 <i class="rdicon icon-small plugin"></i>
-                            </g:else>
-                            <g:enc>${typedesc.title}</g:enc>
+                            </stepplugin:pluginIcon>
+                            <stepplugin:message
+                                    service="WorkflowStep"
+                                    name="${typedesc.name}"
+                                    code="plugin.title"
+                                    default="${typedesc.title}"/>
                             <span class="text-info">-
                                 <g:render template="/scheduledExecution/description"
-                                          model="[description: typedesc.description, textCss: '',
-                                                  mode: 'hidden', rkey: g.rkey()]"/>
+                                          model="[description:
+                                                          stepplugin.messageText(
+                                                                  service: 'WorkflowStep',
+                                                                  name: typedesc.name,
+                                                                  code: 'plugin.description',
+                                                                  default: typedesc.description
+                                                          ),
+                                                  textCss    : '',
+                                                  mode       : 'hidden', rkey: g.rkey()]"/>
                             </span>
                         </a>
                     </g:each>

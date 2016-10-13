@@ -526,32 +526,45 @@
     </div>
 </g:elseif>
 <g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && newitemDescription}">
+    <g:set var="isNodeStep" value="${item ? !!item.nodeStep : newitemnodestep == 'true'}"/>
+    <g:set var="serviceName" value="${isNodeStep ? 'WorkflowNodeStep' : 'WorkflowStep'}"/>
     <div>
         <div>
-            <span class="h4"><g:enc>${newitemDescription.title}</g:enc></span>
+            <span class="h4"><stepplugin:message
+                    service="${serviceName}"
+                    name="${newitemDescription.name}"
+                    code="plugin.title"
+                    default="${newitemDescription.title}"/></span>
             <span class="help-block">
                 <g:render template="/scheduledExecution/description"
-                          model="[description: newitemDescription.description,
-                                  textCss: '',
-                                  mode: 'collapsed',
-                                  moreText:'More Information',
-                                  rkey: g.rkey()]"/>
+                          model="[description: stepplugin.messageText(
+                                  service: serviceName,
+                                  name: newitemDescription.name,
+                                  code: 'plugin.description',
+                                  default: newitemDescription.description
+                          ),
+                                  textCss    : '',
+                                  mode       : 'collapsed',
+                                  moreText   : message(code: 'more.information', default: 'More Information'),
+                                  rkey       : g.rkey()]"/>
             </span>
         </div>
         <g:hiddenField name="pluginItem" value="true"/>
-        <g:hiddenField name="newitemnodestep" value="${item?!!item.nodeStep:newitemnodestep=='true'}"/>
+        <g:hiddenField name="newitemnodestep" value="${isNodeStep}"/>
 
 
         <div>
             <g:set var="pluginprefix" value="pluginConfig."/>
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                    properties:newitemDescription.properties,
-                    report:report,
-                    prefix:pluginprefix,
-                    values:item?.configuration,
-                    fieldnamePrefix:pluginprefix,
+                    service            : serviceName,
+                    provider           : newitemDescription.name,
+                    properties         : newitemDescription.properties,
+                    report             : report,
+                    prefix             : pluginprefix,
+                    values             : item?.configuration,
+                    fieldnamePrefix    : pluginprefix,
                     origfieldnamePrefix:'orig.' + pluginprefix,
-                    allowedScope:PropertyScope.Instance
+                    allowedScope       : PropertyScope.Instance
             ]}"/>
 
         </div>
