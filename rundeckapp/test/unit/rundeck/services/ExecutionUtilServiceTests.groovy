@@ -71,7 +71,7 @@ class ExecutionUtilServiceTests {
         thread.success = false
         def logcontrol = mockFor(ExecutionLogWriter)
         logcontrol.demand.logError(1..1){String value->
-            assertEquals("Execution failed: 1: null",value)
+            assertEquals("Execution failed: 1 in project p1: null",value)
         }
         logcontrol.demand.close(1..1){->
         }
@@ -86,7 +86,7 @@ class ExecutionUtilServiceTests {
         executionUtilService.sysThreadBoundOut=stbocontrol.createMock()
         executionUtilService.sysThreadBoundErr=stbecontrol.createMock()
 
-        executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:[id:1]])
+        executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:[id:1, project:'p1']])
     }
     /**
      * Finish logging when no error cause, with result
@@ -102,7 +102,7 @@ class ExecutionUtilServiceTests {
             assertEquals("abcd",value)
         }
         logcontrol.demand.logError(1..1){String value->
-            assertEquals("Execution failed: 1: abcd",value)
+            assertEquals("Execution failed: 1 in project x1: abcd",value)
         }
         logcontrol.demand.close(1..1){->
         }
@@ -117,7 +117,7 @@ class ExecutionUtilServiceTests {
         executionUtilService.sysThreadBoundOut=stbocontrol.createMock()
         executionUtilService.sysThreadBoundErr=stbecontrol.createMock()
 
-        executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:[id:1]])
+        executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:[id:1, project:"x1"]])
     }
     /**
      * Finish logging when no error cause, with result
