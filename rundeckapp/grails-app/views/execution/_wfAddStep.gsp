@@ -1,5 +1,4 @@
-<div class="panel-heading">
-    <span class="h3 ">%{--
+%{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,8 +13,10 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-
-<g:message code="${addMessage}"/></span>
+<div class="panel-heading">
+    <span class="h3 ">
+        <g:message code="${addMessage}"/>
+    </span>
 </div>
 <div class=" add_step_buttons panel-body">
 <div class="row">
@@ -29,40 +30,44 @@
 <div class="row row-space">
 <div class="col-sm-12">
     <ul class="nav nav-tabs" >
-            <li class="active node_step_section"><a href="#addnodestep" data-toggle="tab">Node Steps</a></li>
-            <li class="step_section"><a href="#addwfstep" data-toggle="tab">Workflow Steps</a></li>
+        <li class="active node_step_section">
+            <a href="#addnodestep" data-toggle="tab">
+                <g:message code="node.steps" />
+            </a>
+        </li>
+        <li class="step_section">
+            <a href="#addwfstep" data-toggle="tab">
+                <g:message code="framework.service.WorkflowStep.label.plural" />
+            </a>
+        </li>
     </ul>
     <div class="tab-content">
             <div class="node_step_section tab-pane active " id="addnodestep">
                 <div class="list-group">
                 <div class="list-group-item">
                     <span class=" list-group-item-heading h4 text-info">
-                        Node Steps execute for each matched Node
+                        <g:message code="framework.service.WorkflowNodeStep.description" />
                     </span>
                 </div>
-                    <a class="list-group-item  add_node_step_type"
-                             data-node-step-type="command"
-                        href="#"
-                             >
-                            <i class="rdicon icon-small shell"></i>
-                            Command <span class="text-info">- Execute a remote command</span>
+                    <a class="list-group-item  add_node_step_type" data-node-step-type="command" href="#">
+                        <i class="rdicon icon-small shell"></i>
+                        <g:message code="step.type.exec.title"/>
+                        <span class="text-info">- <g:message code="step.type.exec.description"/></span>
                     </a>
-                    <a class="list-group-item textbtn  add_node_step_type" href="#"
-                              data-node-step-type="script"
-                              >
+                    <a class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="script">
                         <i class="rdicon icon-small script"></i>
-                            Script <span class="text-info">- Execute an inline script</span>
+                        <g:message code="step.type.script.title"/>
+                        <span class="text-info">- <g:message code="step.type.script.description"/></span>
                     </a>
-                    <a class="list-group-item textbtn  add_node_step_type" href="#"
-                              data-node-step-type="scriptfile"
-                              >
+                    <a class="list-group-item textbtn  add_node_step_type" href="#" data-node-step-type="scriptfile">
                         <i class="rdicon icon-small scriptfile"></i>
-                            Script file or URL
-                            <span class="text-info">- Execute a local script file or a script from a URL</span>
+                        <g:message code="step.type.scriptfile.title"/>
+                        <span class="text-info">- <g:message code="step.type.scriptfile.description"/></span>
                     </a>
                     <a class="list-group-item textbtn add_node_step_type" data-node-step-type="job" href="#">
                         <i class="glyphicon glyphicon-book"></i>
-                        Job Reference <span class="text-info">- Execute another Job for each Node</span>
+                        <g:message code="step.type.jobreference.title"/>
+                        <span class="text-info">- <g:message code="step.type.jobreference.nodestep.description"/></span>
                     </a>
                 <g:if test="${nodeStepDescriptions}">
                     <div class="list-group-item text-muted ">
@@ -102,13 +107,13 @@
                 <div class="list-group">
                 <div class="list-group-item">
                     <span class=" list-group-item-heading h4 text-info">
-                        Workflow Steps execute once in the workflow
+                        <g:message code="framework.service.WorkflowStep.description" />
                     </span>
                 </div>
 
                 <a class="list-group-item textbtn add_step_type" data-step-type="job" href="#">
                     <i class="glyphicon glyphicon-book"></i>
-                    Job Reference <span class="text-info">- Execute another Job</span>
+                    <g:message code="step.type.jobreference.title" /> <span class="text-info">- <g:message code="step.type.jobreference.description" /></span>
                 </a>
                 <g:if test="${stepDescriptions}">
                     <div class="list-group-item text-muted ">
@@ -151,5 +156,5 @@
 </div>
 
 <div class="panel-footer">
-    <span class="btn btn-default btn-sm cancel_add_step_type" >Cancel</span>
+    <span class="btn btn-default btn-sm cancel_add_step_type" ><g:message code="button.action.Cancel" /></span>
 </div>
