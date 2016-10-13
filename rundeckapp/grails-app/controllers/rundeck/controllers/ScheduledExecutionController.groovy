@@ -1896,16 +1896,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-        def uiPluginProfiles = [:]
-        nodeStepTypes.each{ Description desc->
-            def profile = uiPluginService.getProfileFor(ServiceNameConstants.WorkflowNodeStep, desc.name)
-            uiPluginProfiles[ServiceNameConstants.WorkflowNodeStep+":"+desc.name]=profile
-        }
-        stepTypes.each {
-            def profile = uiPluginService.getProfileFor(ServiceNameConstants.WorkflowStep, it.name)
-            uiPluginProfiles[ServiceNameConstants.WorkflowStep+":"+it.name]=profile
-        }
-
+        
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
 
         def notificationPlugins = notificationService.listNotificationPlugins()
@@ -1918,8 +1909,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 nextExecutionTime   :scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 authorized          :scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
-                stepDescriptions:stepTypes,
-                 uiPluginProfiles:uiPluginProfiles]
+                stepDescriptions    : stepTypes]
     }
 
 

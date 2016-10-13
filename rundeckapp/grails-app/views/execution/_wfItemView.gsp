@@ -16,22 +16,6 @@
 
 <%@ page import="rundeck.PluginStep; rundeck.ScheduledExecution; rundeck.JobExec" %>
 <%--
- Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-
- --%>
-<%--
     _wfItemView.gsp
     
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
@@ -83,16 +67,12 @@
             </g:if>
             <g:elseif test="${pluginitem}">
                 <g:if test="${!noimgs && item.description}">
-                    <g:if test="${uiPluginProfiles?.get("Workflow${item.nodeStep?'Node':''}Step:"+item.type)?.icon}">
-                        <img src="${createLink(
-                                controller: 'plugin',
-                                action: 'pluginIcon',
-                                params: [service: "Workflow${item.nodeStep?'Node':''}Step:", name: item.type]
-                        )}" width="16px" height="16px"/>
-                    </g:if>
-                    <g:else>
+                    <stepplugin:pluginIcon service="Workflow${item.nodeStep ? 'Node' : ''}Step"
+                                           name="${item.type}"
+                                           width="16px"
+                                           height="16px">
                         <i class="rdicon icon-small plugin"></i>
-                    </g:else>
+                    </stepplugin:pluginIcon>
                     <g:if test="${item && item.nodeStep}">
                         <i class="rdicon icon-small node"></i>
                     </g:if>

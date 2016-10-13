@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.core.plugins.configuration.Description" %>
+<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.core.plugins.configuration.Description" %>
 <g:if test="${orchestratorPlugins}">
     <div class="form-group">
         <div class="${labelColSize} control-label text-form-label">
@@ -22,7 +22,17 @@
         </div>
         <g:set var="setOrchestrator" value="${params?.orchestratorId ?: scheduledExecution?.orchestrator?.type}"/>
         <div class="${fieldColSize}">
-            <g:select name="orchestratorId" optionKey="name" optionValue="title" from="${orchestratorPlugins}" noSelection="${['':'']}" value="${setOrchestrator}" class="form-control"/>
+            <select name="orchestratorId" value="${setOrchestrator}" class="form-control">
+                <option name="" ${!setOrchestrator ? 'selected' : ''}></option>
+                <g:each in="${orchestratorPlugins}" var="plugin">
+                    <option value="${plugin.name}" ${setOrchestrator == plugin.name ? 'selected' :
+                            ''}><stepplugin:message
+                            service="Orchestrator"
+                            name="${plugin.name}"
+                            code="plugin.title"
+                            default="${plugin.title ?: plugin.name}"/></option>
+                </g:each>
+            </select>
 
             <span class="help-block">
                 <g:message code="scheduledExecution.property.orchestrator.description"/>
@@ -34,33 +44,51 @@
                 <g:set var="definedNotif" value="${setOrchestrator == pluginName ? scheduledExecution?.orchestrator : null}"/>
                 <g:set var="definedConfig"
                     value="${params.orchestratorPlugin?.get(pluginName)?.config ?: definedNotif?.configuration}"/>
-                <span id="orchestratorPlugin${pluginName}" style="${wdgt.styleVisible(if: setOrchestrator == pluginName ? true : false)}"
+                <span data-orchestrator="${pluginName}"  style="${wdgt.styleVisible(if: setOrchestrator == pluginName ? true : false)}"
                       class="orchestratorPlugin">
                     <span class="text-info">
                         <g:render template="/scheduledExecution/description"
-                                  model="[description: pluginDescription.description,
-                                          textCss: '',
-                                          mode: 'collapsed',
-                                          moreText:'More Information',
-                                          rkey: g.rkey()]"/>
+                                  model="[description: stepplugin.messageText(
+                                          service: ServiceNameConstants.Orchestrator,
+                                          name: pluginName,
+                                          code: 'plugin.description',
+                                          default: pluginDescription.description
+                                  ),
+                                          textCss    : '',
+                                          mode       : 'collapsed',
+                                          moreText   : message(code: 'more.information'),
+                                          rkey       : g.rkey()]"/>
                     </span>
                 <div>
 
                         <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                                properties:pluginDescription?.properties,
-                                report:null,
-                                prefix:prefix,
-                                values:definedConfig,
-                                fieldnamePrefix:prefix,
+                                service            : ServiceNameConstants.Orchestrator,
+                                provider           : pluginDescription.name,
+                                properties         : pluginDescription?.properties,
+                                report             :null,
+                                prefix             :prefix,
+                                values             :definedConfig,
+                                fieldnamePrefix    :prefix,
                                 origfieldnamePrefix:'orig.' + prefix,
-                                allowedScope:PropertyScope.Instance
+                                allowedScope       :PropertyScope.Instance
                         ]}"/>
 
                 </div>
                 </span>
-                <wdgt:eventHandler for="orchestratorId" equals="${pluginName}"
-                                   target="orchestratorPlugin${pluginName}" visible="true"/>
+
         </g:each>
+            <g:javascript>jQuery(function () {
+                "use strict";
+                jQuery('[name="orchestratorId"]').on('change', function (d) {
+                    jQuery('.orchestratorPlugin').hide();
+                    var val = jQuery(this).val();
+                    if (val) {
+                        jQuery('.orchestratorPlugin[data-orchestrator="' + val+'"]').show();
+                    }
+
+                });
+            });
+            </g:javascript>
 
 
         </div>

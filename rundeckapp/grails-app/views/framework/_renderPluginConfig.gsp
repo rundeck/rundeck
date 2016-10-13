@@ -25,32 +25,43 @@
     <div class="row">
     <div class="col-sm-12">
         <g:if test="${showPluginIcon}">
-            <g:if test="${uiPluginProfiles?.get(serviceName+":"+description.name)?.icon}">
-                <img src="${createLink(
-                        controller: 'plugin',
-                        action: 'pluginIcon',
-                        params: [service: serviceName, name: description.name]
-                )}" width="16px" height="16px"/>
-            </g:if>
-            <g:else>
+            <stepplugin:pluginIcon service="${serviceName}"
+                                   name="${description.name}"
+                                   width="16px"
+                                   height="16px">
                 <i class="rdicon icon-small plugin"></i>
-            </g:else>
+            </stepplugin:pluginIcon>
         </g:if>
         <g:if test="${showNodeIcon}">
             <i class="rdicon icon-small node"></i>
         </g:if>
         <span class=" text-info">
-            <g:if test="${!hideTitle}"><g:enc>${description.title}</g:enc></g:if>
+            <g:if test="${!hideTitle}">
+                <stepplugin:message
+                        service="${serviceName}"
+                        name="${description.name}"
+                        code="plugin.title"
+                        default="${description.title}"/>
+            </g:if>
         </span>
             <g:if test="${!hideDescription}">
             <g:if test="${!fullDescription}">
 
                 <g:render template="/scheduledExecution/description"
-                          model="[description: description.description, textCss: 'small text-muted',
-                                  mode: 'hidden', rkey: g.rkey()]"/>
+                          model="[description: stepplugin.messageText(
+                                  service: serviceName,
+                                  name: description.name,
+                                  code: 'plugin.description',
+                                  default: description.description
+                          ), textCss         : 'small text-muted',
+                                  mode       : 'hidden', rkey: g.rkey()]"/>
             </g:if>
                 <g:else>
-                    <small class="text-muted"><g:enc>${description.description}</g:enc></small>
+                    <small class="text-muted"><stepplugin:message
+                            service="${serviceName}"
+                            name="${description.name}"
+                            code="plugin.description"
+                            default="${description.description}"/></small>
 
                 </g:else>
             </g:if>
@@ -72,7 +83,7 @@
             <g:if test="${description}">
                 <g:each in="${description.properties}" var="prop">
                     <g:render template="/framework/pluginConfigPropertySummaryValue"
-                              model="${[prop:prop,prefix:prefix,values:values,includeFormFields:includeFormFields]}"/>
+                              model="${[service: serviceName, provider: description.name, prop: prop, prefix: prefix, values: values, includeFormFields: includeFormFields]}"/>
                 </g:each>
             </g:if>
         </span>

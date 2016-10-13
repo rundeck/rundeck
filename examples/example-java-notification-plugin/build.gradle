@@ -1,9 +1,9 @@
-version = '1.5.1-SNAPSHOT'
+version = '2.6.9'
 defaultTasks 'clean','build'
 apply plugin: 'java'
 apply plugin: 'idea'
 sourceCompatibility = 1.5
-ext.rundeckPluginVersion= '1.1'
+ext.rundeckPluginVersion= '1.2'
 
 
 repositories {

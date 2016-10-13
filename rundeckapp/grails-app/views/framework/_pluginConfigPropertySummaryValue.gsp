@@ -21,19 +21,33 @@
 --%>
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" contentType="text/html;charset=UTF-8" %>
 
-<g:set var="propdesc" value="${g.textFirstLine(text:prop.description)}"/>
+<g:set var="propDescription" value="${stepplugin.messageText(
+        service: service,
+        name: provider,
+        code: 'property.' + prop.name + '.description',
+        default: prop.description
+)}"/>
+<g:set var="propdesc" value="${g.textFirstLine(text: propDescription)}"/>
 <g:if test="${prop.type.toString()=='Boolean'}">
     <g:if test="${values[prop.name]=='true'}">
         <span class="configpair">
-            <span title="${enc(attr:propdesc)}"><g:enc>${prop.title?:prop.name}</g:enc>:</span>
-            <span class="text-success">Yes</span>
+            <span title="${enc(attr: propdesc)}"><stepplugin:message
+                    service="${service}"
+                    name="${provider}"
+                    code="property.${prop.name}.title"
+                    default="${prop.title ?: prop.name}"/>:</span>
+            <span class="text-success"><g:message code="yes"/></span>
         </span>
     </g:if>
 </g:if>
 <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
     <g:if test="${values[prop.name]}">
     <span class="configpair">
-        <span title="${enc(attr:propdesc)}"><g:enc>${prop.title?:prop.name}</g:enc>:</span>
+        <span title="${enc(attr: propdesc)}"><stepplugin:message
+                service="${service}"
+                name="${provider}"
+                code="property.${prop.name}.title"
+                default="${prop.title ?: prop.name}"/>:</span>
         <span class="text-success">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
     </span>
     </g:if>
@@ -44,7 +58,11 @@
     <g:set var="split" value="${script.split('(\r?\n)') as List}"/>
 
     <span class="configpair">
-        <span title="${enc(attr:propdesc)}"><g:enc>${prop.title?:prop.name}</g:enc>:</span>
+        <span title="${enc(attr: propdesc)}"><stepplugin:message
+                service="${service}"
+                name="${provider}"
+                code="property.${prop.name}.title"
+                default="${prop.title ?: prop.name}"/>:</span>
         <g:collapser key="${rakey}"><g:enc>${label ? label : ''}</g:enc>${split.size()} lines</g:collapser>
         <div class="collapse collapse-expandable" id="${enc(attr:rakey)}">
         <div class="scriptContent apply_ace" ><g:enc>${script}</g:enc></div>
@@ -53,7 +71,11 @@
 </g:elseif>
 <g:elseif test="${values[prop.name]}">
     <span class="configpair">
-        <span title="${enc(attr:propdesc)}"><g:enc>${prop.title?:prop.name}</g:enc>:</span>
+        <span title="${enc(attr: propdesc)}"><stepplugin:message
+                service="${service}"
+                name="${provider}"
+                code="property.${prop.name}.title"
+                default="${prop.title ?: prop.name}"/>:</span>
         <span class="text-success"><g:enc>${values[prop.name]}</g:enc></span>
     </span>
 </g:elseif>
