@@ -113,21 +113,26 @@
                         <i class="auto-caret text-muted"></i>
                             <g:set var="pluginFileMetadata"
                                    value="${uiPluginProfiles?.get(serviceName + ":" + pluginName)?.metadata}"/>
-                    <g:if test="${uiPluginProfiles?.get(serviceName+":"+pluginName)?.icon}">
-                        <img src="${createLink(
-                                controller: 'plugin',
-                                action: 'pluginIcon',
-                                params: [service: serviceName, name: pluginName]
-                        )}" width="16px" height="16px"/>
-                    </g:if>
-                    <g:else>
-                        <i class="rdicon icon-small plugin"></i>
-                    </g:else>
-                    <g:enc>${pluginTitle?:pluginName}</g:enc></a>
+                            <stepplugin:pluginIcon service="${serviceName}"
+                                                   name="${pluginName}"
+                                                   width="16px"
+                                                   height="16px">
+                                <i class="rdicon icon-small plugin"></i>
+                            </stepplugin:pluginIcon>
+                            <stepplugin:message
+                                    service="${serviceName}"
+                                    name="${pluginName}"
+                                    code="plugin.title"
+                                    default="${pluginTitle?:pluginName}"/></a>
 
                     <g:if test="${pluginDesc}">
                         <g:render template="/scheduledExecution/description"
-                                  model="[description: pluginDesc, textCss: 'text-muted',
+                                  model="[description: stepplugin.messageText(
+                                          service: serviceName,
+                                          name: pluginName,
+                                          code: 'plugin.description',
+                                          default: pluginDesc
+                                  ), textCss: 'text-muted',
                                           mode: 'hidden', rkey: g.rkey()]"/>
                     </g:if>
                     </div>
@@ -197,7 +202,12 @@
                 <div class="panel-body">
                     <div><g:message code="provider.name" />: <code>${pluginName}</code></div>
                     <g:render template="/scheduledExecution/description"
-                              model="[description: pluginDesc, textCss: 'text-muted',
+                              model="[description: stepplugin.messageText(
+                                      service: serviceName,
+                                      name: pluginName,
+                                      code: 'plugin.description',
+                                      default: pluginDesc
+                              ), textCss: 'text-muted',
                                       mode: 'shown', rkey: g.rkey()]"/>
                     <g:if test="${specialConfiguration[serviceName]}">
                         <div class="text-info">
@@ -209,7 +219,9 @@
                                value="${prop.scope && !prop.scope.isInstanceLevel() && !prop.scope.isUnspecified()}"/>
                             <g:render
                                     template="/framework/pluginConfigPropertyFormField"
-                                    model="${[prop: prop,
+                                    model="${[service:serviceName,
+                                              provider:pluginName,
+                                              prop: prop,
                                             prefix: specialConfiguration[serviceName]?.prefix?:'',
                                             specialConfiguration: specialConfiguration[serviceName],
                                             error: null,

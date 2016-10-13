@@ -52,6 +52,8 @@
         <div class="col-sm-12 form-horizontal">
 
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                    service:com.dtolabs.rundeck.plugins.ServiceNameConstants.ResourceModelSource,
+                    provider:description.name,
                     properties:description.properties,
                     report:report,
                     prefix:prefix,

@@ -83,16 +83,12 @@
             </g:if>
             <g:elseif test="${pluginitem}">
                 <g:if test="${!noimgs && item.description}">
-                    <g:if test="${uiPluginProfiles?.get("Workflow${item.nodeStep?'Node':''}Step:"+item.type)?.icon}">
-                        <img src="${createLink(
-                                controller: 'plugin',
-                                action: 'pluginIcon',
-                                params: [service: "Workflow${item.nodeStep?'Node':''}Step:", name: item.type]
-                        )}" width="16px" height="16px"/>
-                    </g:if>
-                    <g:else>
+                    <stepplugin:pluginIcon service="Workflow${item.nodeStep ? 'Node' : ''}Step"
+                                           name="${item.type}"
+                                           width="16px"
+                                           height="16px">
                         <i class="rdicon icon-small plugin"></i>
-                    </g:else>
+                    </stepplugin:pluginIcon>
                     <g:if test="${item && item.nodeStep}">
                         <i class="rdicon icon-small node"></i>
                     </g:if>

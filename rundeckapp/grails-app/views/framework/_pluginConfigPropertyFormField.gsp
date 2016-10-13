@@ -41,7 +41,11 @@
 
 <g:if test="${outofscope}">
     <label class="${labelColType} form-control-static ${error?'has-error':''}  ${prop.required ? 'required' : ''}">
-        <g:enc>${prop.title?:prop.name}</g:enc>:
+        <stepplugin:message
+                service="${service}"
+                name="${provider}"
+                code="property.${prop.name}.title"
+                default="${prop.title ?: prop.name}"/>:
     </label>
 </g:if>
 <g:elseif test="${prop.type.toString()=='Boolean'}">
@@ -54,7 +58,11 @@
                 <g:checkBox name="${fieldname}" value="true"
                             checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}"
                             id="${fieldid}"/>
-                <g:enc>${prop.title ?: prop.name}</g:enc>
+                <stepplugin:message
+                        service="${service}"
+                        name="${provider}"
+                        code="property.${prop.name}.title"
+                        default="${prop.title ?: prop.name}"/>
             </label>
         </div>
     </div>
@@ -62,7 +70,11 @@
 <g:elseif test="${prop.type.toString()=='Select' || prop.type.toString()=='FreeSelect'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
     <label class="${labelColType}   ${prop.required ? 'required' : ''}"
-           for="${enc(attr:fieldid)}"><g:enc>${prop.title ?: prop.name}</g:enc></label>
+           for="${enc(attr: fieldid)}"><stepplugin:message
+            service="${service}"
+            name="${provider}"
+            code="property.${prop.name}.title"
+            default="${prop.title ?: prop.name}"/></label>
 
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
     <g:if test="${prop.type.toString()=='FreeSelect'}">
@@ -98,7 +110,11 @@
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:set var="hasStorageSelector" value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.STORAGE_PATH,'STORAGE_PATH']}"/>
     <label class="${labelColType}  ${prop.required?'required':''}"
-           for="${enc(attr:fieldid)}" ><g:enc>${prop.title ?: prop.name}</g:enc></label>
+           for="${enc(attr: fieldid)}"><stepplugin:message
+            service="${service}"
+            name="${provider}"
+            code="property.${prop.name}.title"
+            default="${prop.title ?: prop.name}"/></label>
     <div class="${hasStorageSelector? valueColTypeSplit80: valueColType}">
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
     <g:set var="valueText" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"/>
@@ -122,16 +138,24 @@
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.STATIC_TEXT, 'STATIC_TEXT']}">
         %{--display value/defaultValue as static text in some format--}%
         %{--text/html--}%
+        <g:set var="staticTextValue" value="${
+                    stepplugin.messageText(
+                            service: service,
+                            name: provider,
+                            code: 'property.' + prop.name + '.defaultValue',
+                            default: prop.defaultValue
+                    )
+        }"/>
         <g:if test="${prop.renderingOptions?.(StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY) in ['text/html']}">
-            <g:enc sanitize="${valueText}"/>
+           <g:enc sanitize="${staticTextValue}"/>
         </g:if>
         <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.STATIC_TEXT_CONTENT_TYPE_KEY) in ['text/x-markdown']}">
             %{--markdown--}%
-            <g:markdown>${valueText}</g:markdown>
+            <g:markdown>${staticTextValue}</g:markdown>
         </g:elseif>
         <g:else>
             %{--plain--}%
-            <g:enc>${valueText}</g:enc>
+            <g:enc html="${staticTextValue}"/>
         </g:else>
     </g:elseif>
     <g:else>
@@ -156,8 +180,13 @@
 </g:else>
 <div class="${outofscope?valueColType:offsetColType}">
     <div class="help-block"> <g:render template="/scheduledExecution/description"
-                                       model="[description: prop.description, textCss: '',
-                                               mode: 'collapsed', rkey: g.rkey()]"/></div>
+                                       model="[description: stepplugin.messageText(
+                                               service: service,
+                                               name: provider,
+                                               code: 'property.' + prop.name + '.description',
+                                               default: prop.description
+                                       ), , textCss       : '',
+                                               mode       : 'collapsed', rkey: g.rkey()]"/></div>
     <g:if test="${error}">
         <div class="text-warning"><g:enc>${error}</g:enc></div>
     </g:if>
