@@ -64,18 +64,30 @@ class ExecutionUtilService {
                     loghandler.logVerbose(thread.resultObject.toString())
                 }
                 if (errmsgs) {
-                    log.error("Execution failed: " + execMap.execution.id + ": " + errmsgs.join(","))
+                    log.error(
+                            "Execution failed: " + execMap.execution.id +
+                                    " in project ${execMap.execution.project}: " +
+                                    errmsgs.join(",")
+                    )
 
                     loghandler.logError(errmsgs.join(','))
                     if (exc) {
                         loghandler.logVerbose(getStackTrace(exc))
                     }
                 } else {
-                    log.error("Execution failed: " + execMap.execution.id + ": " + thread.resultObject?.toString())
-                    loghandler.logError("Execution failed: " + execMap.execution.id + ": " + thread.resultObject?.toString())
+                    log.error(
+                            "Execution failed: " + execMap.execution.id +
+                                    " in project ${execMap.execution.project}: " +
+                                    thread.resultObject?.toString()
+                    )
+                    loghandler.logError(
+                            "Execution failed: " + execMap.execution.id +
+                                    " in project ${execMap.execution.project}: " +
+                                    thread.resultObject?.toString()
+                    )
                 }
             } else {
-                log.info("Execution successful: " + execMap.execution.id)
+                log.info("Execution successful: " + execMap.execution.id + " in project ${execMap.execution.project}")
             }
         } finally {
             sysThreadBoundOut.close()
