@@ -29,6 +29,8 @@
         executionCancelExecution: '${createLink(controller:"execution",action:"cancelExecution",params:[format:'json'])}',
         tailExecutionOutput: '${createLink(controller: "execution", action: "tailExecutionOutput",params:[format:'json'])}',
         reportsEventsFragment:"${createLink(controller:'reports',action:'eventsFragment',params:projParams)}",
+        executionAjaxExecState: "${createLink(action: 'ajaxExecState', controller: 'execution')}",
+        executionAjaxExecNodeState: "${createLink(action: 'ajaxExecNodeState', controller: 'execution')}",
         frameworkViewResourceModelConfig: "${createLink(action: 'viewResourceModelConfig', controller: 'framework')}",
         frameworkCheckResourceModelConfig: "${createLink(action: 'checkResourceModelConfig', controller: 'framework')}",
         frameworkEditResourceModelConfig: "${createLink(action: 'editResourceModelConfig', controller: 'framework')}",

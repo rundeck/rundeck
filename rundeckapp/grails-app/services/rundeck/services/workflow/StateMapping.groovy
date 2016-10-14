@@ -30,7 +30,7 @@ import java.text.SimpleDateFormat
  */
 class StateMapping {
 
-    def Map summarize(Map map,List<String> nodes,boolean selectedOnly){
+    def Map summarize(Map map, List<String> nodes, boolean selectedOnly, boolean stepStates = false) {
         def nodeSummaries=[:]
         def nodeSteps=[:]
         (selectedOnly?nodes:map.allNodes).each{node->
@@ -43,7 +43,7 @@ class StateMapping {
         }
         map.nodeSummaries=nodeSummaries
         map.nodeSteps=nodeSteps
-        map.steps=[]
+        map.steps = stepStates ? map.steps : []
         map.remove('nodes')
         map.remove('targetNodes')
         map
