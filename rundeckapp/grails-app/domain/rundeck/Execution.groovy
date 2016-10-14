@@ -94,6 +94,7 @@ class Execution extends ExecutionContext {
         retryAttempt(nullable: true)
         retryExecution(nullable: true)
         willRetry(nullable: true)
+        nodeFilterEditable(nullable: true)
     }
 
     static mapping = {
