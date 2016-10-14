@@ -23,6 +23,7 @@ var FlowState = Class.create({
     targetElement:null,
     retry:5,
     loadUrl:null,
+    loadUrlParamsBase: {},
     loadUrlParams:null,
     outputUrl:null,
     shouldUpdate:false,

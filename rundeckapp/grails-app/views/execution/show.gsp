@@ -182,9 +182,9 @@
             ko.applyBindings(nodeflowvm,jQuery('#execution_main')[0]);
             nodeflowvm.selectedNodes.subscribe(function (newValue) {
                 if (newValue) {
-                    flowState.loadUrlParams={nodes:newValue.join(",")};
+                    flowState.loadUrlParams=jQuery.extend(flowState.loadUrlParamsBase,{nodes:newValue.join(",")});
                 }else{
-                    flowState.loadUrlParams=null;
+                    flowState.loadUrlParams=flowState.loadUrlParamsBase;
                 }
             });
             //link flow and output tabs to initialize following
