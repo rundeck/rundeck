@@ -30,6 +30,7 @@ addons:
 branches:
   only:
     - master
+    - prerelease-2.7.0
 
 notifications:
   irc:
