@@ -140,9 +140,9 @@
 
 
             <td class="  user autoclickable" style="white-space: nowrap">
-                <g:if test="${it?.nodeList}">
+                <g:if test="${it?.filterApplied}">
                     <em><g:message code="activity.jobs.executed.node"/>:</em>
-                    ${it?.nodeList}
+                    ${it?.filterApplied}
                 </g:if>
                 <g:else>
                     <em><g:message code="activity.jobs.executed.local"/></em>
