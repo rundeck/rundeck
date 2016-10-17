@@ -136,9 +136,7 @@ public class WorkflowEngine implements WorkflowSystem {
                             operation
                     );
                     final ListenableFuture<T> submit = executorService.submit(operation);
-                    synchronized (inProcess) {
-                        inProcess.add(operation);
-                    }
+                    inProcess.add(operation);
                     futures.add(submit);
                     FutureCallback<T> cleanup = new FutureCallback<T>() {
                         @Override
@@ -165,9 +163,7 @@ public class WorkflowEngine implements WorkflowSystem {
                                 results.add(result);
                             }
                             queueChange(successResult.getNewState());
-                            synchronized (inProcess) {
-                                inProcess.remove(operation);
-                            }
+                            inProcess.remove(operation);
                         }
 
                         @Override
@@ -185,9 +181,7 @@ public class WorkflowEngine implements WorkflowSystem {
                             if (null != newFailureState && newFailureState.getState().size() > 0) {
                                 queueChange(newFailureState);
                             }
-                            synchronized (inProcess) {
-                                inProcess.remove(operation);
-                            }
+                            inProcess.remove(operation);
 
                         }
                     };
@@ -271,11 +265,11 @@ public class WorkflowEngine implements WorkflowSystem {
         return results;
     }
 
-    private void event(final WorkflowSystemEventType endOfChanges, final String message) {
-        event(endOfChanges, message, null);
+    private void event(final WorkflowSystemEventType eventType, final String message) {
+        event(eventType, message, null);
     }
 
-    private void event(final WorkflowSystemEventType endOfChanges, final String message, final Object data) {
+    private void event(final WorkflowSystemEventType eventType, final String message, final Object data) {
         logDebug(message);
 
         if (null != listener) {
@@ -287,7 +281,7 @@ public class WorkflowEngine implements WorkflowSystem {
 
                 @Override
                 public WorkflowSystemEventType getEventType() {
-                    return endOfChanges;
+                    return eventType;
                 }
 
                 @Override
