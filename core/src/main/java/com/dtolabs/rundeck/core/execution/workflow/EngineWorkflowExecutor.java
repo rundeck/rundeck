@@ -398,7 +398,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return new WorkflowSystemEventListener() {
             @Override
             public void onEvent(final WorkflowSystemEvent event) {
-                executionListener.log(Constants.DEBUG_LEVEL, event.getMessage());
+                executionListener.log(Constants.DEBUG_LEVEL, event.getEventType() + ": " + event.getMessage());
             }
         };
     }
