@@ -85,6 +85,11 @@
     }
     jQuery(document).ready(init);
 </script>
+    <div class=" collapse" id="queryFilterHelp">
+        <div class="help-block">
+            <g:render template="/common/nodefilterStringHelp"/>
+        </div>
+    </div>
 <div class="list-group list-group-tab-content">
 <div class="list-group-item">
 <div class="row">

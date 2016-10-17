@@ -2965,10 +2965,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         if (scheduledExecution.doNodedispatch) {
-            if (!scheduledExecution.asFilter()) {
-                scheduledExecution.errors.rejectValue('filter', 'scheduledExecution.filter.blank.message')
-                failed = true
-            } else if (!scheduledExecution.nodeThreadcount) {
+            if (!scheduledExecution.nodeThreadcount) {
                 scheduledExecution.nodeThreadcount = 1
             }
         }
