@@ -241,7 +241,7 @@
                     %{-- filter text --}%
                     <div class="">
                         <g:set var="filtvalue" value="${nodefilter}"/>
-                        <label for="filterradio">
+                        <label for="filterradio" style="display: block">
                     <input id="filterradio"
                            type="radio"
                            name="extra.nodeoverride"
