@@ -19,8 +19,6 @@ package org.rundeck.plugin.scm.git.exp.actions
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
-import org.eclipse.jgit.api.FetchCommand
-import org.eclipse.jgit.api.PullCommand
 import org.eclipse.jgit.merge.MergeStrategy
 import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.BuilderUtil
