@@ -36,7 +36,7 @@ class BuilderUtil {
         return builder.build()
     }
 
-    static BasicInputView inputView(String id, @DelegatesTo(BasicInputViewBuilder) Closure clos) {
+    static BasicInputView inputViewBuilder(String id, @DelegatesTo(BasicInputViewBuilder) Closure clos) {
         def builder = BasicInputViewBuilder.forActionId(id)
         clos.delegate = builder
         clos.resolveStrategy = Closure.DELEGATE_FIRST
