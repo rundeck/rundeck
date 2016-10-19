@@ -1778,7 +1778,9 @@ class ExecutionServiceSpec extends Specification {
         where:
         runAtTime                       | executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled
         "2200-01-01T12:43:10.000+00:00" | true                | true            | true             | true        | true
+        "2200-01-01T12:43:10.000Z"      | true                | true            | true             | true        | true
         "2200-01-01T12:43:10+00:00"     | true                | true            | true             | true        | true
+        "2200-01-01T12:43:10Z"          | true                | true            | true             | true        | true
     }
 
     @Unroll
@@ -1818,6 +1820,6 @@ class ExecutionServiceSpec extends Specification {
         time                               | executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled
         "01/01/2001 10:11:12.000000 +0000" | true                | true            | true             | true        | true
         "0000-00-00 00:00:00.000+0000"     | true                | true            | true             | true        | true
-        "2080-01-01T01:00:01.000+0000    " | true                | true            | true             | true        | true
+        "2080-01-01T01:00:01.000"          | true                | true            | true             | true        | true
     }
 }
