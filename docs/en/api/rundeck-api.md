@@ -61,7 +61,9 @@ Changes introduced by API Version number:
     - [`GET /api/18/job/[ID]/info`][/api/V/job/[ID]/info] - Get metadata about a Job: Project name and scheduling info.
 * Updated Endpoints:       
     - [`/api/18/job/[ID]/run`][/api/V/job/[ID]/run]       
-       - new `runAtTime` parameter to run once at a certain time.      
+        - new `runAtTime` parameter to run once at a certain time.
+        - Job options can now be specified separately outside of the `argString`. Use `option.NAME=value` parameters,
+       or specify `options` entry in JSON body.
 * Updated responses for Executions
     - Executions results include custom status strings.
     - Documented `timedout`,`failed-with-retry`, and `scheduled` status values.
@@ -1774,6 +1776,8 @@ Optional parameters:
 * Node filter parameters as described under [Using Node Filters](#using-node-filters)
 * `filter` can be a node filter string.
 * `runAtTime`: Specify a time to run the job (**API v18** or later).
+* `option.OPTNAME`: Option value for option named `OPTNAME`. If any `option.OPTNAME` parameters are specified,
+    the `argString` value is ignored (**API v18** or later).
 
 `runAtTime`
 :    This is a ISO-8601 date and time stamp with timezone, with optional milliseconds.,
@@ -1788,9 +1792,15 @@ and this format is expected in the content:
     "loglevel":"...",
     "asUser":"...",
     "filter":"...",
-    "runAtTime":"..."
+    "runAtTime":"...",
+    "options": {
+        "myopt1":"value",
+        ...
+    }
 }
 ~~~~~
+
+(**API v18** or later): The `options` entry can contain a map of option name -> value, in which case the `argString` is ignored.
 
 
 **Response**:
