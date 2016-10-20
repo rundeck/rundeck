@@ -31,7 +31,16 @@ class FeedController  extends ControllerBase{
         if(null!=query && !params.find{ it.key.endsWith('Filter')}){
             //no default filter
         }
-
+        if (params.max != null && params.max != query.max.toString()) {
+            query.errors.rejectValue('max', 'typeMismatch.java.lang.Integer', ['max'] as Object[], 'invalid')
+        }
+        if (params.offset != null && params.offset != query.offset.toString()) {
+            query.errors.rejectValue('offset', 'typeMismatch.java.lang.Integer', ['offset'] as Object[], 'invalid')
+        }
+        if (query.hasErrors()) {
+            response.status = 400
+            return render(view: '/common/error', model: [beanErrors: query.errors])
+        }
         if(null!=query){
             query.configureFilter()
         }

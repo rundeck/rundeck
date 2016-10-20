@@ -36,7 +36,7 @@ class ExecQuery extends ReportQuery{
         abortedByFilter(nullable: true)
         controllerFilter(nullable: true)
         typeFilter(nullable: true)
-        recentFilter(nullable: true)
+        recentFilter nullable: true, matches: /^((\d+)([hdwmy])|-)$/
         tagsFilter(nullable: true)
         jobListFilter(nullable: true)
         startafterFilter(nullable: true)

@@ -49,8 +49,8 @@
                             alt=""/> RSS</a>
                 </g:ifServletContextAttribute>
                 <g:hiddenField name="max" value="${max}"/>
-                <g:render template="baseFiltersPlain" model="${[params: params, query: query]}"/>
-                <g:render template="recentDateFiltersPlain" model="${[params:params,query:query]}"/>
+                <g:render template="baseFiltersPlain" model="${[ query: query]}"/>
+                <g:render template="recentDateFiltersPlain" model="${[query:query]}"/>
                 <g:render template="advDateFiltersPlain" model="${[params:params,query:query]}"/>
 
                 <g:submitButton value="Filter" name="filterAll" class="btn btn-default btn-sm"/>
