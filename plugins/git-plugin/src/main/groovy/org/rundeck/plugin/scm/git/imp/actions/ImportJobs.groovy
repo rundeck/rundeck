@@ -24,11 +24,11 @@ import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.treewalk.TreeWalk
 import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitImportAction
 import org.rundeck.plugin.scm.git.GitImportPlugin
 import org.rundeck.plugin.scm.git.GitUtil
 
-import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
 
 /**
  * Action to import selected jobs from git HEAD commit
@@ -40,7 +40,7 @@ class ImportJobs extends BaseAction implements GitImportAction {
 
 
     BasicInputView getInputView(final ScmOperationContext context, GitImportPlugin plugin) {
-        inputView(id) {
+        BuilderUtil.inputViewBuilder(id) {
             title "Import remote Changes"
             description '''Import the modifications to Rundeck'''
             buttonTitle "Import"

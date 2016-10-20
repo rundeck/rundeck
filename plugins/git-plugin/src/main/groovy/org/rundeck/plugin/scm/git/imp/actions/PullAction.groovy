@@ -25,11 +25,10 @@ import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import org.eclipse.jgit.merge.MergeStrategy
 import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitImportAction
 import org.rundeck.plugin.scm.git.GitImportPlugin
 
-import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
-import static org.rundeck.plugin.scm.git.BuilderUtil.property
 
 /**
  * Created by greg on 9/28/15.
@@ -44,7 +43,7 @@ class PullAction extends BaseAction implements GitImportAction {
 
         def status = plugin.getStatusInternal(context, false)
         def props = [
-                property {
+                BuilderUtil.property {
                     string "status"
                     title "Git Status"
                     renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
@@ -56,7 +55,7 @@ Pulling from remote branch: `${plugin.branch}`"""
         ]
         if (status.branchTrackingStatus?.behindCount > 0 && status.branchTrackingStatus?.aheadCount > 0) {
             props.addAll([
-                    property {
+                    BuilderUtil.property {
                         select "refresh"
                         title "Synch Method"
                         description """Choose a method to synch the remote branch changes with local git repository.
@@ -68,7 +67,7 @@ Pulling from remote branch: `${plugin.branch}`"""
                         defaultValue "merge"
                         required true
                     },
-                    property {
+                    BuilderUtil.property {
                         select "resolution"
                         title "Conflict Resolution Strategy"
                         description """Choose a strategy to resolve conflicts in the synched files.
@@ -82,7 +81,7 @@ Pulling from remote branch: `${plugin.branch}`"""
             ]
             )
         }
-        inputView(id) {
+        BuilderUtil.inputViewBuilder(id) {
             title this.title
             description this.description
             if (status.branchTrackingStatus?.behindCount > 0) {
