@@ -19,7 +19,7 @@
 <g:if test="${pageScope._metaTabPage}">
     <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>
 </g:if>
-<nav class="navbar navbar-default navbar-static-top" role="navigation">
+<nav class="navbar-overrides navbar navbar-default navbar-static-top" role="navigation">
 
     <div class="navbar-header">
         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
