@@ -30,6 +30,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
+import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
@@ -51,6 +53,7 @@ import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.rundeck.util.Toposort
 import org.springframework.web.multipart.MultipartHttpServletRequest
+import org.springframework.web.multipart.MultipartRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import rundeck.codecs.JobsXMLCodec
@@ -3232,7 +3235,28 @@ class ScheduledExecutionController  extends ControllerBase{
             response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED)
             return
         }
-        def jobid = params.id
+        String jobid = params.id
+
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
+            return
+        }
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scheduledExecution.project
+        )
+
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+                                                     scheduledExecution.project
+        )) {
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                                                           code  : 'api.error.item.unauthorized', args: ['Run', 'Job ' +
+                    'ID', jobid]]
+            )
+        }
+        def username = session.user
+
         def jobAsUser, jobArgString, jobLoglevel, jobFilter, jobRunAtTime, jobOptions
         if (request.format == 'json') {
             def data= request.JSON
@@ -3249,29 +3273,38 @@ class ScheduledExecutionController  extends ControllerBase{
             jobRunAtTime = params.runAtTime
             jobOptions = params.option
         }
+        if (request instanceof MultipartRequest) {
+            //process file uploads
+            ((MultipartRequest) request).fileMap.each { String name, file ->
+                if (name.startsWith('option.')) {
+                    //process file option upload
+                    String fuploadPlugin = 'filesystem' //TODO: from option config
 
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+                    def plugin = pluginService.getPlugin(fuploadPlugin, ExecutionFileStoragePlugin)
 
-        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
-            return
+                    plugin.store(jobid + name + file.originalFilename + UUID.randomUUID().toString(),
+                                 file.inputStream,
+                                 file.size,
+                                 new Date()
+
+                    )
+                } else if (name == 'run' && file.contentType == 'application/json') {
+                    //process job run json
+                }
+            }
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
-            scheduledExecution.project)) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Run', 'Job ID', jobid]])
-        }
-        def username = session.user
         if(jobAsUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
             // authorize RunAs User
             if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUNAS],
-                    scheduledExecution.project)) {
+                                                         scheduledExecution.project
+            )) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                        code: 'api.error.item.unauthorized', args: ['Run as User', 'Job ID', jobid]])
+                                                               code  : 'api.error.item.unauthorized', args: ['Run as User', 'Job ID', jobid]]
+                )
             }
             username = jobAsUser
         }
+
         def inputOpts = [:]
 
         if (request.api_version >= ApiRequestFilters.V18 && jobOptions && jobOptions instanceof Map) {
