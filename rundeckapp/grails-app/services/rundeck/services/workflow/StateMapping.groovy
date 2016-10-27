@@ -196,6 +196,9 @@ class StateMapping {
         def params = stepid.params?StateUtils.parameterString(stepid.params):''
 
         Map step = model.steps[ndx];
+        if (!step) {
+            return null
+        }
         if(params && step.parameterStates && step.parameterStates[params]){
             step = step.parameterStates[params];
         }else if(!params && node && step.parameterStates["node=${node}"]){
