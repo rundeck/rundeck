@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.services;
+package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
-import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 

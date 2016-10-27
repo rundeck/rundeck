@@ -64,6 +64,16 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
     def File pluginDirectory
     def File pluginCacheDirectory
 
+    private String createServiceName(final String simpleName) {
+        if (simpleName.endsWith("Plugin")) {
+            return simpleName.substring(0, simpleName.length() - "Plugin".length());
+        }
+        return simpleName + "Service";
+    }
+    public <T> PluggableProviderService<T> createPluggableService(Class<T> type) {
+        def name = createServiceName(type.getSimpleName())
+        rundeckServerServiceProviderLoader.createPluginService(type, name)
+    }
     /**
      * Create and configure a plugin instance with the given bean or provider name
      * @param name name of bean or provider
@@ -76,6 +86,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         return configurePluginByName(name, service, resolver, PropertyScope.InstanceOnly)
     }
 
+
     /**
      * Create and configure a plugin instance with the given bean or provider name, resolving properties via
      * the framework and specified project properties as well as instance configuration.
@@ -86,16 +97,20 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
      * @param instanceConfiguration configuration or null
      * @return
      */
-    public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
-    Framework framework,
-                                        String project, Map instanceConfiguration) {
+    public <T> ConfiguredPlugin<T> configurePluginByName(
+            String name,
+            PluggableProviderService<T> service,
+            Framework framework,
+            String project, Map instanceConfiguration
+    )
+    {
 
         final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework,
                 project, instanceConfiguration, name, service.getName());
         return configurePluginByName(name, service, resolver, PropertyScope.Instance)
     }
 
-    /**
+/**
      * Create and configure a plugin instance with the given bean or provider name, resolving properties via
      * the framework and specified project properties as well as instance configuration.
      * @param name name of bean or provider
@@ -118,7 +133,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
                 projectLookup, instanceConfiguration, name, service.getName());
         return configurePluginByName(name, service, resolver, PropertyScope.Instance)
     }
-    /**
+/**
      * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
      * default property scope
      * @param name name of bean or provider
@@ -165,9 +180,12 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
      * @param instanceConfiguration config map
      * @return Map containing valid:true/false, and report: {@link Validator.Report}
      */
-    public ValidatedPlugin validatePluginByName(String name, PluggableProviderService service,
-    Framework framework,
-                                    String project, Map instanceConfiguration) {
+    public ValidatedPlugin validatePluginByName(
+            String name, PluggableProviderService service,
+            Framework framework,
+            String project, Map instanceConfiguration
+    )
+    {
         final PropertyResolver resolver = PropertyResolverFactory.createFrameworkProjectRuntimeResolver(framework,
                 project, instanceConfiguration, name, service.getName());
         return validatePluginByName(name, service, resolver, PropertyScope.Instance)
@@ -207,9 +225,13 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
      * @param defaultScope default scope to search for property values when undeclared
      * @return Map containing valid:true/false, and report: {@link Validator.Report}
      */
-    public ValidatedPlugin validatePluginByName(String name, PluggableProviderService service,
-    PropertyResolver resolver,
-                                  PropertyScope defaultScope, PropertyScope ignoredScope) {
+    public ValidatedPlugin validatePluginByName(
+            String name,
+            PluggableProviderService service,
+            PropertyResolver resolver,
+            PropertyScope defaultScope, PropertyScope ignoredScope
+    )
+    {
         def pluginDesc = loadPluginDescriptorByName(name, service)
         if(null==pluginDesc) {
             return null
@@ -232,7 +254,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
     public <T> T loadPluginByName(String name, PluggableProviderService<T> service) {
         return loadPluginDescriptorByName(name, service)?.instance
     }
-    /**
+/**
      * Load a plugin instance with the given bean or provider name
      * @param name name of bean or provider
      * @param service provider service
@@ -313,7 +335,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
         }
         map
     }
-    /**
+/**
      * List all plugin type definitions that are either ServiceProvider plugins of the given service name,
      * or are groovy plugins of the given type
      * @param providerServiceName
