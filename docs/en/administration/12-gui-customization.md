@@ -30,7 +30,7 @@ these properties in the [rundeck-config.properties](configuration-file-reference
 `rundeck.gui.helpLink`                      URL for the "help" link in the app   http://rundeck.org/
                                             header.                              docs
 
-`rundeck.gui.navbar.background              Color of the background of the top   `#3C3C3C`
+`rundeck.gui.navbar.background`             Color of the background of the top   `#3C3C3C`
                                             navigation bar.
 
 `rundeck.gui.realJobTree`                   Displaying a real tree in the Jobs   false
