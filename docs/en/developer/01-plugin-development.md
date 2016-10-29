@@ -711,6 +711,10 @@ The following message Codes will be used:
 * `property.NAME.title` Title for configuration property named "NAME"
 * `property.NAME.description` Description for configuration property named "NAME"
 
+(*Note*: SCM Plugins have additional message codes.  See: [SCM Plugins - Localization][]).
+
+[SCM Plugins - Localization]: scm-plugins.html#localization
+
 Additionally, if a property has a [Property Rendering Option](#property-rendering-options) marking it as `STATIC_TEXT`
 normally the `defaultValue` of the property is used to render it as text or HTML.  This value can be localized as well:
 
