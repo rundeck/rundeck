@@ -237,7 +237,7 @@
                         </g:if>
                         <g:if test="${!jobs && !deletedPaths && scmProjectStatus.state.toString() == 'CLEAN'}">
                             <div class="list-group-item">
-                                No Changes
+                                <g:message code="no.changes" />
                             </div>
                         </g:if>
                     </g:if>
