@@ -57,11 +57,17 @@
                 params="${[project: params.project, type: type, integration: integration]}"
                 useToken="true"
                 method="post" class="form form-horizontal">
+            <g:set var="serviceName" value="${integration=='export'?'ScmExport':'ScmImport'}"/>
             <div class="panel panel-primary" id="createform">
                 <div class="panel-heading">
                     <span class="h3">
                         <g:message code="scmController.page.setup.description" />:
-                        ${plugin.description?.title ?: plugin.name}
+
+                        <stepplugin:message
+                                service="${serviceName}"
+                                name="${type}"
+                                code="plugin.title"
+                                default="${plugin.description?.title?:plugin.name}"/>
                     </span>
                 </div>
 
@@ -79,6 +85,9 @@
                     <div class="list-group-item">
                         <g:if test="${properties}">
                             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                    service:serviceName,
+                                    provider:type,
+                                    messagePrefix:"setup.",
                                     properties:properties,
                                     report:report,
                                     values:config,

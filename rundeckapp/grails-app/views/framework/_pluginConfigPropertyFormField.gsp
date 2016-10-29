@@ -44,7 +44,7 @@
         <stepplugin:message
                 service="${service}"
                 name="${provider}"
-                code="property.${prop.name}.title"
+                code="${messagePrefix}property.${prop.name}.title"
                 default="${prop.title ?: prop.name}"/>:
     </label>
 </g:if>
@@ -61,7 +61,7 @@
                 <stepplugin:message
                         service="${service}"
                         name="${provider}"
-                        code="property.${prop.name}.title"
+                        code="${messagePrefix}property.${prop.name}.title"
                         default="${prop.title ?: prop.name}"/>
             </label>
         </div>
@@ -73,7 +73,7 @@
            for="${enc(attr: fieldid)}"><stepplugin:message
             service="${service}"
             name="${provider}"
-            code="property.${prop.name}.title"
+            code="${messagePrefix}property.${prop.name}.title"
             default="${prop.title ?: prop.name}"/></label>
 
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
@@ -112,7 +112,7 @@
            for="${enc(attr: fieldid)}"><stepplugin:message
             service="${service}"
             name="${provider}"
-            code="property.${prop.name}.title"
+            code="${messagePrefix}property.${prop.name}.title"
             default="${prop.title ?: prop.name}"/></label>
     <div class="${hasStorageSelector? valueColTypeSplit80: valueColType}">
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>

@@ -83,7 +83,7 @@
             <g:if test="${description}">
                 <g:each in="${description.properties}" var="prop">
                     <g:render template="/framework/pluginConfigPropertySummaryValue"
-                              model="${[service: serviceName, provider: description.name, prop: prop, prefix: prefix, values: values, includeFormFields: includeFormFields]}"/>
+                              model="${[service: serviceName, provider: description.name, messagePrefix:messagePrefix, prop: prop, prefix: prefix, values: values, includeFormFields: includeFormFields]}"/>
                 </g:each>
             </g:if>
         </span>
