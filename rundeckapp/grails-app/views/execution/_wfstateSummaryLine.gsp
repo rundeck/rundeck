@@ -1,6 +1,4 @@
-
-<span class=" execstate execstatedisplay overall h4"
-      data-execstate="%{--
+%{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +13,8 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-
-${enc(attr:execState)}"
+<span class=" execstate execstatedisplay overall h4"
+      data-execstate="${enc(attr:execState)}"
       data-bind="attr: { 'data-execstate': executionState() } ">
 </span>
 <span data-bind="if: executionStatusString()!=null && executionState() != executionStatusString().toUpperCase()">
