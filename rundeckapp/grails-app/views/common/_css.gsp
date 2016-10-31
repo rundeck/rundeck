@@ -51,5 +51,12 @@
         background-size: ${ enc(rawtext:appLogoW) } ${ enc(rawtext:appLogoH) };
     }
     }
+
+    <g:if test="${grailsApplication.config.rundeck.gui.navbar.background}">
+    .navbar-overrides {
+        background: ${grailsApplication.config.rundeck.gui.navbar.background};
+    }
+    </g:if>
+
     ${enc(rawtext:customCss)}
 </style>
