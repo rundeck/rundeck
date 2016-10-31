@@ -910,6 +910,7 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
     self.executionId=ko.observable();
     self.outputScrollOffset=0;
     self.activeTab=ko.observable("summary");
+    self.scheduled=ko.pureComputed(function(){ return self.executionState()=='SCHEDULED'; });
     self.failed=ko.pureComputed(function(){ return self.executionState()=='FAILED'; });
     self.totalSteps=ko.pureComputed(function(){ return self.workflow.workflow.length; });
     self.activeNodes=ko.pureComputed(function(){
