@@ -1,6 +1,3 @@
-
-<div class="row">
-<div class="col-sm-12 ">
 %{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
@@ -16,6 +13,9 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
+
+<div class="row">
+<div class="col-sm-12 ">
 
 <g:form controller="scheduledExecution" method="post" useToken="true"
         params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
