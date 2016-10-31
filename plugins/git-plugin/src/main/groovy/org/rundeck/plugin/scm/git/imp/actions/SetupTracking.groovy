@@ -26,14 +26,13 @@ import com.dtolabs.rundeck.plugins.scm.ScmExportResultImpl
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitImportAction
 import org.rundeck.plugin.scm.git.GitImportPlugin
 
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
-import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
-import static org.rundeck.plugin.scm.git.BuilderUtil.property
 
 /**
  * Created by greg on 9/10/15.
@@ -49,7 +48,7 @@ class SetupTracking extends BaseAction implements GitImportAction {
 
 
     BasicInputView getInputView(final ScmOperationContext context, GitImportPlugin plugin) {
-        inputView(id) {
+        BuilderUtil.inputViewBuilder(id) {
             title "Setup Tracking"
             description '''Enter a Regular expression to match potential new repo files that are added.
 
@@ -60,7 +59,7 @@ then new files added to the repo *will not* be available for Job Import, and onl
 files will be watched for changes.'''
             buttonTitle "Setup"
             properties([
-                    property {
+                    BuilderUtil.property {
                         booleanType USE_FILE_PATTERN
                         title "Match a Regular Expression?"
                         description "Check to match all paths that match the regular expression."
@@ -68,7 +67,7 @@ files will be watched for changes.'''
                         defaultValue 'true'
                         build()
                     },
-                    property {
+                    BuilderUtil.property {
                         freeSelect FILE_PATTERN
                         title "Regular Expression"
                         description "Enter a regular expression. New paths in the repo matching this expression will also be imported."

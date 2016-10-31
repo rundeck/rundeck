@@ -85,7 +85,7 @@ class BootStrap {
          def appname=messageSource.getMessage('main.app.name',null,'',null) ?: messageSource.getMessage('main.app.default.name',null,'',null) ?: 'Rundeck'
 
          servletContext.setAttribute("app.ident",grailsApplication.metadata['build.ident'])
-         log.info("Starting ${appname} ${servletContext.getAttribute('app.ident')}...")
+         log.info("Starting ${appname} ${servletContext.getAttribute('app.ident')} ($shortBuildDate) ...")
          /*filterInterceptor.handlers.sort { FilterToHandlerAdapter handler1,
                                            FilterToHandlerAdapter handler2 ->
              FilterConfig filter1 = handler1.filterConfig

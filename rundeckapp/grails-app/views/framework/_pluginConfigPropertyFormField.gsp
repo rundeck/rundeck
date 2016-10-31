@@ -83,25 +83,24 @@
                      id="${fieldid}" size="100" class="${formControlType}"/>
         </div>
         <div class="${valueColTypeSplitB}">
-        <g:select name="${fieldid+'_sel'}" from="${prop.selectValues}" id="${fieldid}"
-                  value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
+        <g:set var="propSelectValues" value="${prop.selectValues.collect{[key:it.encodeAsHTML(),value:it]}}"/>
+        <g:select name="${fieldid+'_sel'}" from="${propSelectValues}" id="${fieldid}"
+                    optionKey="key" optionValue="value"
+                  value="${(values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue)?.encodeAsHTML()}"
                   noSelection="['':'-choose a value-']"
             onchange="if(this.value){\$('${fieldid}').value=this.value;}"
             class="${formControlType}"
         />
         </div>
     </g:if>
-    <g:elseif test="${prop.required}">
-        <div class="${valueColType}">
-        <g:select name="${fieldname}" from="${prop.selectValues}" id="${fieldid}"
-                  value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
-                  class="${formControlType}"/>
-        </div>
-    </g:elseif>
     <g:else>
+        <g:set var="propSelectValues" value="${prop.selectValues.collect{[key:it.encodeAsHTML(),value:it]}}"/>
+        <g:set var="noSelectionValue" value="${prop.required ? null : ['':'-none selected-']}"/>
         <div class="${valueColType}">
-        <g:select name="${fieldname}" from="${prop.selectValues}" id="${fieldid}" noSelection="['':'-none selected-']"
-                  value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
+        <g:select name="${fieldname}" from="${propSelectValues}" id="${fieldid}"
+                  optionKey="key" optionValue="value"
+                  noSelection="${ noSelectionValue }"
+                  value="${(values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue)?.encodeAsHTML()}"
                   class="${formControlType}"/>
         </div>
     </g:else>

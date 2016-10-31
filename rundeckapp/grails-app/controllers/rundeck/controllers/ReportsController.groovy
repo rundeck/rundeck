@@ -156,6 +156,15 @@ class ReportsController extends ControllerBase{
                 params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
             return
         }
+        if (params.max != null && params.max != query.max.toString()) {
+            query.errors.rejectValue('max', 'typeMismatch.java.lang.Integer', ['max'] as Object[], 'invalid')
+        }
+        if (params.offset != null && params.offset != query.offset.toString()) {
+            query.errors.rejectValue('offset', 'typeMismatch.java.lang.Integer', ['offset'] as Object[], 'invalid')
+        }
+        if (query.hasErrors()) {
+            return render(view: '/common/error', model: [beanErrors: query.errors])
+        }
         def User u = userService.findOrCreateUser(session.user)
         
         if(params.filterName){
@@ -316,18 +325,6 @@ class ReportsController extends ControllerBase{
         }
         results.params=params
         render(contentType: 'application/json', text: results as JSON)
-    }
-    def jobsFragment={ ExecQuery query ->
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
-
-        if (unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
-                .resourceType('event'), [AuthConstants.ACTION_READ],
-                params.project), AuthConstants.ACTION_READ, 'Events for project', params.project)) {
-            return
-        }
-        def results = jobs(query)
-        results.params=params
-        render(view:'eventsFragment',model:results)
     }
 
 

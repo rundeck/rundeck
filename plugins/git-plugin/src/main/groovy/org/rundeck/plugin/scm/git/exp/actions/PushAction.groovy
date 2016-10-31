@@ -17,20 +17,18 @@
 package org.rundeck.plugin.scm.git.exp.actions
 
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.transport.RemoteRefUpdate
 import org.rundeck.plugin.scm.git.BaseAction
 import org.rundeck.plugin.scm.git.BaseGitPlugin
+import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 import org.rundeck.plugin.scm.git.GitScmCommit
 import org.rundeck.plugin.scm.git.GitUtil
 
-import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
-import static org.rundeck.plugin.scm.git.BuilderUtil.property
 
 /**
  * Created by greg on 9/8/15.
@@ -44,11 +42,11 @@ class PushAction extends BaseAction implements GitExportAction {
     @Override
     BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
         def status = plugin.getStatusInternal(context, false)
-        inputView(id) {
+        BuilderUtil.inputViewBuilder(id) {
             title "Push remote Git changes"
             buttonTitle "Push"
             properties([
-                    property {
+                    BuilderUtil.property {
                         string "status"
                         title "Export Status"
                         renderingOption StringRenderingConstants.DISPLAY_TYPE_KEY, StringRenderingConstants.DisplayType.STATIC_TEXT
@@ -57,13 +55,13 @@ class PushAction extends BaseAction implements GitExportAction {
 
 Pushing to remote branch: `${plugin.branch}`"""
                     },
-                    property {
+                    BuilderUtil.property {
                         string TagAction.P_TAG_NAME
                         title "Tag"
                         description "Enter a tag name to include, will be pushed with the branch. The tag will be created if it does not exist."
                         required false
                     },
-                    property {
+                    BuilderUtil.property {
                         string TagAction.P_MESSAGE
                         title "Tag Message"
                         description "Enter a message for the annotated Tag."

@@ -28,7 +28,7 @@
 %>
     <div id="extDateFilters"
         class="panel panel-default"
-        style="${!params.recentFilter || params.recentFilter != '-' ? 'display:none;' : ''}">
+        style="${query.recentFilter!='-'  ? 'display:none;' : ''}">
         <div class="panel-body">
         <g:if test="${!hidestart}">
             <div>

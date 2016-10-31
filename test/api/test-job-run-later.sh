@@ -20,8 +20,20 @@ fi
 #escape the string for xml
 xmlargs=$($XMLSTARLET esc "$args")
 xmlproj=$($XMLSTARLET esc "$project")
+datewhen(){
+    local secs=$1
+  #determine h:m:s to run, 10 seconds from now
+    local NDATES=$(date '+%s')
+    NDATES=$(( $NDATES + $secs ))
+    local osname=$(uname)
+    if [ "Darwin" = "$osname" ] ; then
+        env TZ=GMT date -r "$NDATES" '+%S %M %H %d %m %a %Y %z'
+    else
+        env TZ=GMT date --date="@$NDATES" '+%S %M %H %d %m %a %Y %z'
+    fi
+}
 
-schedule_datetime=$(env TZ=GMT date --date='now + 50 seconds' +'%S %M %H %d %m %a %Y %z')
+schedule_datetime=$(datewhen 50)
 # Convert to uppercase (for weekday)
 tokens=($schedule_datetime)
 seconds=${tokens[0]}

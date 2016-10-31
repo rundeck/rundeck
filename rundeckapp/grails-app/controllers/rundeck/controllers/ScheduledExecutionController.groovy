@@ -3228,7 +3228,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         def jobid = params.id
-        def jobAsUser, jobArgString, jobLoglevel, jobFilter, jobRunAtTime
+        def jobAsUser, jobArgString, jobLoglevel, jobFilter, jobRunAtTime, jobOptions
         if (request.format == 'json') {
             def data= request.JSON
             jobAsUser = data?.asUser
@@ -3236,11 +3236,13 @@ class ScheduledExecutionController  extends ControllerBase{
             jobLoglevel = data?.loglevel
             jobFilter = data?.filter
             jobRunAtTime = data?.runAtTime
+            jobOptions = data?.options
         } else {
             jobAsUser=params.asUser
             jobArgString=params.argString
             jobLoglevel=params.loglevel
             jobRunAtTime = params.runAtTime
+            jobOptions = params.option
         }
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
@@ -3267,7 +3269,11 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def inputOpts = [:]
 
-        if (jobArgString) {
+        if (request.api_version >= ApiRequestFilters.V18 && jobOptions && jobOptions instanceof Map) {
+            jobOptions.each { k, v ->
+                inputOpts['option.' + k] = v
+            }
+        } else if (jobArgString) {
             inputOpts["argString"] = jobArgString
         }
         if (jobLoglevel) {

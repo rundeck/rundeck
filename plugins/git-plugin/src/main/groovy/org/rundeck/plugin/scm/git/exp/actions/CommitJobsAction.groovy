@@ -16,22 +16,19 @@
 
 package org.rundeck.plugin.scm.git.exp.actions
 
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.eclipse.jgit.api.AddCommand
 import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.Status
-import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.revwalk.RevCommit
 import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 import org.rundeck.plugin.scm.git.GitScmCommit
 import org.rundeck.plugin.scm.git.GitUtil
 
-import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
-import static org.rundeck.plugin.scm.git.BuilderUtil.property
 
 /**
  * Created by greg on 9/8/15.
@@ -46,12 +43,12 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
     }
 
     BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
-        inputView(id) {
+        BuilderUtil.inputViewBuilder(id) {
             title getTitle()
             description getDescription()
             buttonTitle "Commit"
             properties([
-                    property {
+                    BuilderUtil.property {
                         string P_MESSAGE
                         title "Commit Message"
                         description "Enter a commit message. Committing to branch: `" + plugin.branch + '`'
@@ -59,14 +56,14 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
                         renderingAsTextarea()
                     },
 
-                    property {
+                    BuilderUtil.property {
                         string TagAction.P_TAG_NAME
                         title "Tag"
                         description "Enter a tag name to include, will be pushed with the branch."
                         required false
                     },
 
-                    property {
+                    BuilderUtil.property {
                         booleanType P_PUSH
                         title "Push Remotely?"
                         description "Check to push to the remote"

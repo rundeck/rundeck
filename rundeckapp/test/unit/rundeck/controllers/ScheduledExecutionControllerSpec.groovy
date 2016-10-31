@@ -147,7 +147,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         true      | _
         false     | _
     }
-    def "api run job at time"(){
+    def "api run job option params"() {
         given:
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.apiService = Mock(ApiService)
@@ -158,7 +158,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         request.api_version=18
         request.method='POST'
         params.id='ajobid'
-        params.runAtTime='timetorun'
+        params.putAll(paramoptions)
         def result=controller.apiJobRun()
 
         then:
@@ -169,8 +169,78 @@ class ScheduledExecutionControllerSpec extends Specification {
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,_)
         1 * controller.frameworkService.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
-        1 * controller.executionService.scheduleAdHocJob(_,_,_,[runAtTime:'timetorun'])>>[success: true]
+        1 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+        ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_,_,_)
+        0 * controller.executionService._(*_)
+
+        where:
+
+        paramoptions                               | _
+        [option: [abc: 'tyz', def: 'xyz']]         | _
+        ['option.abc': 'tyz', 'option.def': 'xyz'] | _
+    }
+    def "api run job option params json"() {
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        when:
+        request.api_version = 18
+        request.method = 'POST'
+        params.id = 'ajobid'
+        request.json = [
+                options: [abc: 'tyz', def: 'xyz']
+        ]
+        def result = controller.apiJobRun()
+
+        then:
+
+
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.apiService.requireExists(_, _, _) >> true
+        1 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+        ) >> [success: true]
+        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        0 * controller.executionService._(*_)
+    }
+    def "api run job at time"() {
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        when:
+        request.api_version = 18
+        request.method = 'POST'
+        params.id = 'ajobid'
+        params.runAtTime = 'timetorun'
+        def result = controller.apiJobRun()
+
+        then:
+
+
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.apiService.requireExists(_, _, _) >> true
+        1 * controller.executionService.scheduleAdHocJob(_, _, _, [runAtTime: 'timetorun']) >> [success: true]
+        1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
     }
     def "api run job at time json"(){

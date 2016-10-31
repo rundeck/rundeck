@@ -27,14 +27,14 @@
         <%
             def recentfilts = [[value: '1d', label: g.recentDescription(value: '1d')], [value: '1w', label: g.recentDescription(value: '1w')], [value: '1m', label: g.recentDescription(value: '1m')]]
 
-            if (params.recentFilter && !['1d', '1w', '1m', '-'].contains(params.recentFilter)) {
-                recentfilts << [value: params.recentFilter, label: g.recentDescription(value: params.recentFilter)]
+            if (query.recentFilter && !['1d', '1w', '1m', '-'].contains(query.recentFilter)) {
+                recentfilts << [value: query.recentFilter.encodeAsHTML(), label: g.recentDescription(value: query.recentFilter)]
             }
 
             recentfilts << [value: '-', label: 'Other...']
 
         %>
-        <g:select name="recentFilter" from="${recentfilts}" value="${params.recentFilter}"
+        <g:select name="recentFilter" from="${recentfilts}" value="${query.recentFilter?.encodeAsHTML()}"
                   noSelection="['': 'Any Time']" optionKey="value" optionValue="label"
                   onchange="if(this.value=='-'){Element.show('extDateFilters')}else{Element.hide('extDateFilters')};"
             class="form-control input-sm"
