@@ -121,7 +121,7 @@
                         </table>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
-                                <span class="info note">Showing <g:enc>${reports.size()}</g:enc> of <span class="_obs_histtotal"><g:enc>${total}</g:enc></span></span>
+                                <div class="info note">Showing <g:enc>${reports.size()}</g:enc> of <span class="_obs_histtotal"><g:enc>${total}</g:enc></span></div>
                                 <g:if test="${params.compact}">
                                     <a href="${createLink(controller:'reports',action:params.moreLinkAction?params.moreLinkAction:'index',params:filterName?[filterName:filterName]:paginateParams?paginateParams:[:])}">More&hellip;</a>
                                 </g:if>
