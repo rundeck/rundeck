@@ -232,6 +232,209 @@ jQuery(function () {
                 this.assert("should load option", ['opt3'], toload);
                 this.assert("should do callback", true, didcallback);
             },
+        createOption_singleValue_enforced_autodefault_Test: function (pref) {
+
+            var opt1 = mkopt({
+                name: 'opt1',
+                required: true,
+                values: ['abc'],
+                enforced: true,
+                defaultValue: null,
+                value: ''
+            });
+
+            this.assert("option value should be set by single allowed value", 'abc', opt1.value());
+        },
+        createOption_singleValue_enforced_withdefault_Test: function (pref) {
+
+            var opt1 = mkopt({
+                name: 'opt1',
+                required: true,
+                values: ['abc'],
+                enforced: true,
+                defaultValue: 'abc',
+                value: ''
+            });
+
+            this.assert("option value should be set by single allowed value", 'abc', opt1.value());
+        },
+        createOption_singleValue_notenforced_withdefault_Test: function (pref) {
+
+            var opt1 = mkopt({
+                name: 'opt1',
+                required: true,
+                values: ['abc'],
+                enforced: false,
+                defaultValue: 'abc',
+                value: ''
+            });
+
+            this.assert("option value should be set by default value", 'abc', opt1.value());
+        },
+        reloadOptionIfRequirementsMet_singleValue_autoDefault_EnforcedRequired_Test: function (pref) {
+            var opts = new JobOptions({});
+            var opt1 = mkopt({
+                name: 'opt1',
+                required: true,
+                values: ['abc'],
+                enforced: true,
+                defaultValue: null,
+                value: ''
+            });
+            var opt3 = mkopt({name: 'opt3', hasRemote: true, value: ''});
+            opts.options([
+                opt1,
+                opt3
+            ]);
+            var toload = [];
+            var didcallback = false;
+            var loader = {
+                loadRemoteOptionValues: function (option, opts) {
+                    toload.push(option.name());
+                    return {
+                        then: function (func) {
+                            didcallback = true;
+                        }
+                    };
+                }
+            };
+            var control = new RemoteOptionController({loader: loader});
+            control.setupOptions(opts);
+            var optConfig = {
+                options: {
+                    opt1: {
+                        optionDependencies: [],
+                        optionDeps: ['opt3'],
+                        optionAutoReload: false,
+                        loadonstart: true,
+                        hasUrl: false
+                    },
+
+                    opt3: {
+                        optionDependencies: ['opt1'],
+                        optionDeps: [],
+                        optionAutoReload: true,
+                        loadonstart: true,
+                        hasUrl: true
+                    }
+                }
+            };
+            control.loadData(optConfig);
+            control.reloadOptionIfRequirementsMet('opt3');
+            //opt3 should not have error
+            this.assert("should load option", ['opt3'], toload);
+            this.assert("should do callback", true, didcallback);
+        },
+        reloadOptionIfRequirementsMet_singleValue_WithDefault_NotEnforcedRequired_Test: function (pref) {
+            var opts = new JobOptions({});
+            var opt1 = mkopt({
+                name: 'opt1',
+                required: true,
+                values: ['abc'],
+                enforced: false,
+                defaultValue: 'abc',
+                value: ''
+            });
+            var opt3 = mkopt({name: 'opt3', hasRemote: true, value: '', defaultValue:''});
+            opts.options([
+                opt1,
+                opt3
+            ]);
+            var toload = [];
+            var didcallback = false;
+            var loader = {
+                loadRemoteOptionValues: function (option, opts) {
+                    toload.push(option.name());
+                    return {
+                        then: function (func) {
+                            didcallback = true;
+                        }
+                    };
+                }
+            };
+            var control = new RemoteOptionController({loader: loader});
+            control.setupOptions(opts);
+            var optConfig = {
+                options: {
+                    opt1: {
+                        optionDependencies: [],
+                        optionDeps: ['opt3'],
+                        optionAutoReload: false,
+                        loadonstart: true,
+                        hasUrl: false
+                    },
+
+                    opt3: {
+                        optionDependencies: ['opt1'],
+                        optionDeps: [],
+                        optionAutoReload: true,
+                        loadonstart: true,
+                        hasUrl: true
+                    }
+                }
+            };
+            control.loadData(optConfig);
+            control.reloadOptionIfRequirementsMet('opt3');
+            //opt3 should not have error
+            this.assert("option should have value", 'abc', opt1.value());
+            this.assert("should load option", ['opt3'], toload);
+            this.assert("should do callback", true, didcallback);
+        },
+        reloadOptionIfRequirementsMet_singleValue_NotEnforcedRequired_Test: function (pref) {
+            var opts = new JobOptions({});
+            var opt1 = mkopt({
+                name: 'opt1',
+                required: true,
+                values: ['abc'],
+                enforced: false,
+                defaultValue: 'abc',
+                value: 'abc'
+            });
+            var opt3 = mkopt({name: 'opt3', hasRemote: true, value: '', defaultValue:'',values:null});
+            opts.options([
+                opt1,
+                opt3
+            ]);
+            var toload = [];
+            var didcallback = false;
+            var loader = {
+                loadRemoteOptionValues: function (option, opts) {
+                    toload.push(option.name());
+                    return {
+                        then: function (func) {
+                            didcallback = true;
+                        }
+                    };
+                }
+            };
+            var control = new RemoteOptionController({loader: loader});
+            control.setupOptions(opts);
+            var optConfig = {
+                options: {
+                    opt1: {
+                        optionDependencies: [],
+                        optionDeps: ['opt3'],
+                        optionAutoReload: false,
+                        loadonstart: true,
+                        hasUrl: false
+                    },
+
+                    opt3: {
+                        optionDependencies: ['opt1'],
+                        optionDeps: [],
+                        optionAutoReload: true,
+                        loadonstart: true,
+                        hasUrl: true
+                    }
+                }
+            };
+            control.loadData(optConfig);
+            control.reloadOptionIfRequirementsMet('opt3');
+            //opt3 should not have error
+            this.assert("option should have value", 'abc', opt1.value());
+            this.assert("should load option", ['opt3'], toload);
+            this.assert("should do callback", true, didcallback);
+        },
         reloadOptionIfRequirementsMet_nullDeps_Test: function (pref) {
             var opts = new JobOptions({});
             var opt1 = mkopt({name: 'opt1', required: true, value: 'zzz'});
