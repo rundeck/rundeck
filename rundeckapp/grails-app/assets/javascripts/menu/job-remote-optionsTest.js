@@ -61,9 +61,6 @@ jQuery(function () {
                 this.assert("options length", 0, Object.keys(control.dependents).length);
                 this.assert("options length", 0, Object.keys(control.dependencies).length);
                 this.assert("options length", 0, Object.keys(control.observers).length);
-                this.assert("options length", 0, Object.keys(control.autoreload).length);
-                this.assert("options length", 0, Object.keys(control.loadonstart).length);
-                this.assert("observing", false, control.observing);
                 this.assert("cyclic", false, control.cyclic);
                 this.assert("loader", 'xyz', control.loader);
             },
@@ -114,15 +111,11 @@ jQuery(function () {
                         opt1: {
                             optionDependencies: [],
                             optionDeps: ['opt2'],
-                            optionAutoReload: false,
-                            loadonstart: true,
                             hasUrl: false
                         },
                         opt2: {
                             optionDependencies: ['opt1'],
                             optionDeps: [],
-                            optionAutoReload: true,
-                            loadonstart: true,
                             hasUrl: true
                         }
                     }
@@ -132,8 +125,12 @@ jQuery(function () {
                 this.assert("cyclic", false, control.cyclic);
                 this.assert("dependencies", {opt1: [], opt2: ['opt1']}, control.dependencies);
                 this.assert("dependents", {opt1: ['opt2'], opt2: []}, control.dependents);
-                this.assert("autoreload", {opt2: true}, control.autoreload);
-                this.assert("loadonstart", {opt2: true}, control.loadonstart);
+
+                this.assert("autoreload1", true, control.shouldAutoReload('opt1'));
+                this.assert("loadonstart1", false, control.shouldLoadOnStart('opt1'));
+
+                this.assert("autoreload2", true, control.shouldAutoReload('opt2'));
+                this.assert("loadonstart2", false, control.shouldLoadOnStart('opt2'));
             },
             reloadOptionIfRequirementsMet_missingRequired_Test: function (pref) {
                 var opts = new JobOptions({});

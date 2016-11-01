@@ -2645,15 +2645,12 @@ class ScheduledExecutionController  extends ControllerBase{
             def optData = [
                     'optionDependencies': model.optiondependencies[optName],
                     'optionDeps': model.dependentoptions[optName],
-                    optionAutoReload: model.dependentoptions[optName] && opt.enforced || model.selectedoptsmap && model.selectedoptsmap[optName]
             ];
             if (opt.realValuesUrl != null) {
                 optData << [
                         'hasUrl': true,
                         'scheduledExecutionId': scheduledExecution.extid,
                         'selectedOptsMap': model.selectedoptsmap ? model.selectedoptsmap[optName] : '',
-                        'loadonstart': !model.optiondependencies[optName] || model.optionsDependenciesCyclic,
-                        'optionAutoReload': (model.dependentoptions[optName] || model.selectedoptsmap && model.selectedoptsmap[optName]) && !model.optionsDependenciesCyclic
                 ]
             } else {
                 optData['localOption'] = true;

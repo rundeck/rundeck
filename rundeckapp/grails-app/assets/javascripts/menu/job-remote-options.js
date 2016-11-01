@@ -37,28 +37,20 @@ function RemoteOptionController(data) {
      * list of option names
      */
     self.names = [];
-    /**
-     * indicates if observing was started
-     */
-    self.observing = false;
+
     /**
      * container of observer subscriptions, keyed by option name
      */
     self.observers = {};
-    /**
-     * container of true/false whether the option should automatically trigger reload of dependents at startup, keyed
-     * by option name
-     */
-    self.autoreload = {};
-    /**
-     * container of true/false whether the option should automatically load at startup, keyed by option name
-     */
-    self.loadonstart = {};
+
     /**
      * indicates cyclic dependencies
      */
     self.cyclic = false;
 
+    function emptyValue(val) {
+        return (!val || val === '');
+    }
     /**
      * Setup dependencies using the loaded options
      * @param joboptions
@@ -163,24 +155,41 @@ function RemoteOptionController(data) {
             }
         }
     };
+    /**
+     * True if the option should force dependent options to load at start
+     * @param name
+     * @returns {*}
+     */
+    self.shouldAutoReload = function (name) {
+        var option = self.options[name];
+        if (option.hasRemote()) {
+            return !!(!self.cyclic && (self.dependents[name] || !emptyValue(option.value())));
+        } else {
+            return !!((self.dependents[name] && option.enforced()) || !emptyValue(option.value()));
+        }
+    };
+    /**
+     * True if The option should load remote values at start
+     * @param name
+     * @returns {*|boolean}
+     */
+    self.shouldLoadOnStart = function (name) {
+        return self.options[name].hasRemote() && (!self.dependencies[name] || self.cyclic);
+    };
 
+    /**
+     * Auto reload dependent options if necessary
+     * @param name
+     * @returns {boolean}
+     */
     self.doOptionAutoReload = function (name) {
-        if (self.autoreload[name]) {
+        if (self.shouldAutoReload(name)) {
             //trigger change immediately
             var value = self.options[name].value();
             self.optionValueChanged(name, value);
             return true;
         }
         return false;
-    };
-
-    /**
-     * set autoreload value for the option
-     * @param name
-     * @param value
-     */
-    self.setOptionAutoReload = function (name, value) {
-        self.autoreload[name] = value;
     };
 
     /**
@@ -202,17 +211,7 @@ function RemoteOptionController(data) {
             if (params['optionDeps']) {
                 self.addOptionDeps(opt, params['optionDeps']);
             }
-            if (params['optionAutoReload']) {
-                self.setOptionAutoReload(opt, params['optionAutoReload']);
-            }
-            if (params['hasUrl']) {
-                if (params['loadonstart']) {
-                    self.loadonstart[opt] = true;
-                }
-                if (params['optionAutoReload']) {
-                    self.setOptionAutoReload(opt, true);
-                }
-            }
+
         }
     };
 
@@ -241,12 +240,9 @@ function RemoteOptionController(data) {
     self.begin = function () {
         for (var i = 0; i < self.names.length; i++) {
             var name = self.names[i];
-            if (self.loadonstart[name]) {
+            if (self.shouldLoadOnStart(name)) {
                 self.loadRemoteOptionValues(name);
             }
-        }
-        self.observing = true;
-        for (var i = 0; i < self.names.length; i++) {
             self.doOptionAutoReload(self.names[i]);
         }
 
