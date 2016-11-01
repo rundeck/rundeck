@@ -1,6 +1,3 @@
-
-<div class="row">
-<div class="col-sm-12 ">
 %{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
@@ -17,6 +14,9 @@
   - limitations under the License.
   --}%
 
+<div class="row">
+<div class="col-sm-12 ">
+
 <g:form controller="scheduledExecution" method="post" useToken="true"
         params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
 
@@ -27,7 +27,7 @@
     <div class="panel-heading">
         <div class="row">
             <tmpl:showHead scheduledExecution="${scheduledExecution}" iconName="icon-job"
-                           subtitle="Choose Execution Options" runPage="true" jobDescriptionMode="collapsed"/>
+                           runPage="true" jobDescriptionMode="collapsed"/>
         </div>
     </div>
 </g:if>
@@ -38,7 +38,7 @@
     <g:render template="editOptions" model="${[scheduledExecution:scheduledExecution, selectedoptsmap:selectedoptsmap, selectedargstring:selectedargstring,authorized:authorized,jobexecOptionErrors:jobexecOptionErrors, optiondependencies: optiondependencies, dependentoptions: dependentoptions, optionordering: optionordering]}"/>
     <div class="form-group" style="${wdgt.styleVisible(if: nodesetvariables && !failedNodes || nodesetempty || nodes)}">
     <div class="col-sm-2 control-label text-form-label">
-        Nodes
+        <g:message code="Node.plural" />
     </div>
     <div class="col-sm-10">
         <g:if test="${nodesetvariables && !failedNodes}">
@@ -70,7 +70,7 @@
                            data-target="#nodeSelect"
                         ${selectedNodes!=null?'checked':''}
                            id="doReplaceFilters"/>
-                    Change the Target Nodes
+                    <g:message code="change.the.target.nodes" />
                 (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)</label>
                 </div>
 
@@ -84,9 +84,9 @@
                 --%>
                 <g:if test="${namegroups}">
                     <div class=" group_select_control" style="${wdgt.styleVisible(if: selectedNodes !=null)}">
-                        Select:
-                        <span class="textbtn textbtn-default textbtn-on-hover selectall">All</span>
-                        <span class="textbtn textbtn-default textbtn-on-hover selectnone">None</span>
+                        <g:message code="select.prompt" />
+                        <span class="textbtn textbtn-default textbtn-on-hover selectall"><g:message code="all" /></span>
+                        <span class="textbtn textbtn-default textbtn-on-hover selectnone"><g:message code="none" /></span>
                         <g:if test="${tagsummary}">
                             <g:render template="/framework/tagsummary"
                                       model="${[tagsummary:tagsummary,action:[classnames:'tag active textbtn obs_tag_group',onclick:'']]}"/>
@@ -100,13 +100,13 @@
                                 <g:if test="${group!='other'}">
                                     <span class="prompt">
                                     <g:enc>${namegroups[group][0]}</g:enc></span>
-                                    to
+                                    <g:message code="to"/>
                                     <span class="prompt">
                                 <g:enc>${namegroups[group][-1]}</g:enc>
                                     </span>
                                 </g:if>
                                 <g:else>
-                                    <span class="prompt"><g:enc>${namegroups.size()>1?'Other ':''}</g:enc>Matched Nodes</span>
+                                    <span class="prompt"><g:enc>${namegroups.size()>1?'Other ':''}</g:enc><g:message code="matched.nodes.prompt" /></span>
                                 </g:else>
                                 <g:enc>(${namegroups[group].size()})</g:enc>
                             </g:expander>
@@ -114,7 +114,7 @@
                         <div id="${enc(attr:expkey)}" style="${wdgt.styleVisible(if: selectedNodes!=null)}" class="group_section panel-body">
                                 <g:if test="${namegroups.size()>1}">
                                 <div class="group_select_control" style="display:none">
-                                    Select:
+                                    <g:message code="select.prompt" />
                                     <span class="textbtn textbtn-default textbtn-on-hover selectall" >All</span>
                                     <span class="textbtn textbtn-default textbtn-on-hover selectnone" >None</span>
                                     <g:if test="${grouptags && grouptags[group]}">
@@ -314,13 +314,13 @@
                                     </span>
                                 </div>
                                 <div id='dateAlert' class='alert alert-warning alert-block fade' style='display: none'>
-                                    The time must be in the future.
+                                    ${message(code:"the.time.must.be.in.the.future")}
                                 </div>
                                 <button type='submit'
                                         id='scheduleSubmitButton'
                                         name='_action_runJobLater'
                                         class=' btn btn-success schedule-button'>
-                                    <g:message code='schedule.job' />
+                                    ${message(code:'schedule.job')}
                                     <b class='glyphicon glyphicon-time'></b>
                                 </button>
                             </div>">
@@ -379,13 +379,13 @@
                                     </span>
                                 </div>
                                 <div id='dateAlert' class='alert alert-warning alert-block fade' style='display: none'>
-                                    The time must be in the future.
+                                    ${message(code:"the.time.must.be.in.the.future")}
                                 </div>
                                 <button type='submit'
                                         id='scheduleAjaxButton'
                                         class=' btn btn-success schedule-button'>
                                     <i class='glyphicon glyphicon-time'></i>
-                                    <g:message code='schedule.job' />
+                                    ${message(code:'schedule.job')}
                                 </button>
                             </div>">
                     <i class="glyphicon glyphicon-time"></i>
