@@ -854,12 +854,16 @@ class ScheduledExecutionController  extends ControllerBase{
                 'user.name': (session?.user?: "anonymous"),
         ]
         extraJobProps.putAll rundeckProps.collectEntries {['rundeck.'+it.key,it.value]}
+        Map globals=frameworkService.getProjectGlobals(scheduledExecution.project)
 
         def replacement= { Object[] group ->
             if (group[2] == 'job' && jobprops[group[3]] && scheduledExecution.properties.containsKey(jobprops[group[3]])) {
                 scheduledExecution.properties.get(jobprops[group[3]]).toString()
             } else if (group[2] == 'job' && null != extraJobProps[group[3]]) {
                 def value = extraJobProps[group[3]]
+                value.toString()
+            }else if (group[2] == 'globals' && null != globals[group[3]]) {
+                def value = globals[group[3]]
                 value.toString()
             }else if (group[2] == 'rundeck' && null != rundeckProps[group[3]]) {
                 def value = rundeckProps[group[3]]
@@ -884,7 +888,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def codecs=['URIComponent','URL']
         def result=[]
         arr.eachWithIndex { String entry, int i ->
-            result<<entry.replaceAll(/(\$\{(job|option|rundeck)\.([^}]+?(\.value)?)\})/) { Object[] group ->
+            result<<entry.replaceAll(/(\$\{(job|option|rundeck|globals)\.([^}]+?(\.value)?)\})/) { Object[] group ->
                 def val = replacement(group)
                  if (null != val) {
                      if(!isHttp){

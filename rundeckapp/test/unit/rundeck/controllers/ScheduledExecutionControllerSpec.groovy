@@ -23,18 +23,11 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.codehaus.groovy.grails.plugins.codecs.URLCodec
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
-import rundeck.CommandExec
-import rundeck.Execution
-import rundeck.ScheduledExecution
-import rundeck.Workflow
-import rundeck.services.ApiService
-import rundeck.services.ApiServiceSpec
-import rundeck.services.ExecutionService
-import rundeck.services.FrameworkService
-import rundeck.services.NotificationService
-import rundeck.services.OrchestratorPluginService
-import rundeck.services.ScheduledExecutionService
+import rundeck.*
+import rundeck.codecs.URIComponentCodec
+import rundeck.services.*
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -44,9 +37,12 @@ import javax.security.auth.Subject
  * Created by greg on 7/14/15.
  */
 @TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution,Workflow,CommandExec,Execution])
+@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution])
 class ScheduledExecutionControllerSpec extends Specification {
-
+    def setup() {
+        mockCodec(URIComponentCodec)
+        mockCodec(URLCodec)
+    }
 
     public static final String TEST_UUID1 = UUID.randomUUID().toString()
 
@@ -61,6 +57,38 @@ class ScheduledExecutionControllerSpec extends Specification {
                 serverNodeUUID: null,
                 scheduled: true
         ]+overrides
+    }
+
+    def "expandUrl with project globals"() {
+        given:
+        Option option = new Option()
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        def optsmap = [:]
+        def ishttp = true
+        controller.frameworkService = Mock(FrameworkService)
+
+
+        when:
+        def result = controller.expandUrl(option, url, job, optsmap, ishttp)
+
+        then:
+        expected == result
+        1 * controller.frameworkService.getFrameworkNodeName() >> 'anode'
+        1 * controller.frameworkService.getProjectGlobals('AProject') >> globals
+        1 * controller.frameworkService.getServerUUID()
+        0 * controller.frameworkService._(*_)
+
+
+        where:
+        url                                             | globals                           | expected
+        ''                                              | [:]                               | ''
+        'http://${globals.host}/a/path'                 | [host: 'myhost.com']              | 'http://myhost.com/a/path'
+        'http://${globals.host}/a/path/${globals.path}' | [host: 'myhost.com', path: 'x y'] |
+                'http://myhost.com/a/path/x%20y'
+        'http://${globals.host}/a/path?q=${globals.q}'  | [host: 'myhost.com', q: 'a b']    |
+                'http://myhost.com/a/path?q=a+b'
+
+
     }
 
     def "flip execution enabled"() {
