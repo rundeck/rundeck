@@ -174,16 +174,16 @@ class ScheduledExecutionControllerTests  {
         assertEquals 'xyz', controller.expandUrl(option, '${rundeck.serverUUID}', se)
     }
     public void testExpandUrlJobRundeckBasedir() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller,false)
         assertEquals '/a/path', controller.expandUrl(option, '${job.rundeck.basedir}', se,[:],false)
     }
 
     public void testExpandUrlJobRundeckBasedir2() {
-        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller)
+        def (Option option, ScheduledExecution se) = setupExpandUrlJob(controller,false)
         assertEquals '/a/path', controller.expandUrl(option, '${rundeck.basedir}', se,[:],false)
     }
 
-    protected List setupExpandUrlJob(def controller) {
+    protected List setupExpandUrlJob(def controller,boolean ishttp=true) {
         ScheduledExecution se = new ScheduledExecution(jobName: 'blue', groupPath: 'some/where',
                 description: 'a job', project: 'AProject', argString: '-a b -c d')
 
@@ -198,8 +198,13 @@ class ScheduledExecutionControllerTests  {
             getServerUUID(1..1) {->
                 'xyz'
             }
-            getRundeckBase(1..2){->
-                '/a/path'
+            if(!ishttp) {
+                getRundeckBase(1..2) { ->
+                    '/a/path'
+                }
+            }
+            getProjectGlobals(1..1){String x->
+                [:]
             }
         }
         [option, se]
