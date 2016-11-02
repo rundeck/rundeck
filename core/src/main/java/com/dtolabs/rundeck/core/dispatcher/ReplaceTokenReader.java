@@ -21,7 +21,6 @@ import org.apache.commons.collections.Predicate;
 import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Arrays;
 import java.util.Map;
 
 /**
@@ -39,6 +38,64 @@ public class ReplaceTokenReader extends FilterReader {
     char tokenEsc = DEFAULT_ESCAPE;
     private Predicate tokenCharPredicate;
 
+    static class Buf {
+        StringBuilder buffer = new StringBuilder();
+        int index = -1;
+
+        int length() {
+            return index > -1
+                   ? buffer.length() - index
+                   : -1;
+        }
+
+        boolean avail() {
+            return length() > 0;
+        }
+
+        public int read() {
+            int val = -1;
+            if (index > -1 && index < buffer.length()) {
+                val = buffer.charAt(index++);
+                if (!avail()) {
+                    buffer.setLength(0);
+                    index = -1;
+                }
+            }
+            return val;
+        }
+
+        public void append(final char read) {
+            buffer.append((char) read);
+            if (index < 0) {
+                index = 0;
+            }
+        }
+
+        public void reset() {
+            buffer.setLength(0);
+            index = -1;
+        }
+
+        public void append(final String value) {
+            buffer.append(value);
+            if (index < 0) {
+                index = 0;
+            }
+        }
+
+        public void append(final Buf buf) {
+            buffer.append(buf.buffer);
+            if (index < 0) {
+                index = 0;
+            }
+        }
+
+        public String readAll() {
+            String substring = buffer.substring(index);
+            reset();
+            return substring;
+        }
+    }
 
     public ReplaceTokenReader(Reader reader, Map<String, String> tokens, boolean blankIfMissing, char tokenStart,
             char tokenEnd) {
@@ -57,12 +114,8 @@ public class ReplaceTokenReader extends FilterReader {
         this.tokenStart = tokenStart;
         this.tokenEnd = tokenEnd;
         this.tokenEsc = tokenEsc;
-        replaceBuffer = new StringBuilder();
-        readBuffer = new StringBuilder();
-        tokenBuffer = new StringBuilder();
-        replaceBufferIndex = -1;
-        readBufferIndex = -1;
-        tokenBufferIndex = -1;
+        readBuffer = new Buf();
+        tokenBuffer = new Buf();
         tokenCharPredicate = DEFAULT_ALLOWED_PREDICATE;
     }
 
@@ -75,13 +128,9 @@ public class ReplaceTokenReader extends FilterReader {
     };
 
 
-    private StringBuilder replaceBuffer;
-    private int replaceBufferIndex;
-    private int readBufferIndex;
-    private int tokenBufferIndex;
     private boolean escaped;
-    private StringBuilder readBuffer;
-    private StringBuilder tokenBuffer;
+    private Buf readBuffer;
+    private Buf tokenBuffer;
 
     @Override
     public int read(char[] chars, int offset, int len) throws IOException {
@@ -102,18 +151,14 @@ public class ReplaceTokenReader extends FilterReader {
 
     @Override
     public int read() throws IOException {
-        //return replacement text
-        if (replaceBufferIndex >= 0 && replaceBufferIndex < replaceBuffer.length()) {
-            return replaceBuffer.charAt(replaceBufferIndex++);
-        }
         //return buffered content that has no tokens
-        if (readBufferIndex >= 0 && readBufferIndex < readBuffer.length()) {
-            return readBuffer.charAt(readBufferIndex++);
+        if (readBuffer.avail()) {
+            return readBuffer.read();
         }
         int read = -1;
         //re-read from buffered token chars
-        if (tokenBufferIndex >= 0 && tokenBufferIndex < tokenBuffer.length()) {
-            read = tokenBuffer.charAt(tokenBufferIndex++);
+        if (tokenBuffer.avail()) {
+            read = tokenBuffer.read();
         } else {
             read = super.read();
         }
@@ -123,9 +168,6 @@ public class ReplaceTokenReader extends FilterReader {
         } else if (escaped) {
             escaped = false;
             readBuffer.append((char) read);
-            if (readBufferIndex < 0) {
-                readBufferIndex = 0;
-            }
             return tokenEsc;
         }
         if (read == tokenEsc) {
@@ -134,72 +176,50 @@ public class ReplaceTokenReader extends FilterReader {
         }
         if (read == tokenStart) {
             readBuffer.append((char) read);
-            if (readBufferIndex < 0) {
-                readBufferIndex = 0;
-            }
             do {
                 read = super.read();
                 if (read == tokenStart) {
                     if (readBuffer.length() == 1) {
                         //start token followed by start token
                         tokenBuffer.append((char) read);
-                        if (tokenBufferIndex < 0) {
-                            tokenBufferIndex = 0;
-                        }
-                        //restart as token
-                        replaceBuffer.setLength(0);
-                        replaceBuffer.append(readBuffer);
-                        replaceBufferIndex = 0;
-                        readBuffer.setLength(0);
-                        readBufferIndex = -1;
                         return read();
                     }
                 }
                 if (read == tokenEnd) {
-                    //end of replacement
-                    String key = readBuffer.substring(1);
-                    replaceBuffer.setLength(0);
-                    readBuffer.setLength(0);
-                    appendTokenSubstitute(key, replaceBuffer);
-                    replaceBufferIndex = 0;
-                    readBufferIndex = -1;
+                    //eat tokenStart
+                    readBuffer.read();
+                    String key = readBuffer.readAll();
+                    readBuffer.append(substitution(key));
                     return read();
-                } else if(read!=-1) {
+                } else if (read != -1) {
                     readBuffer.append((char) read);
-                    if(readBufferIndex<0){
-                        readBufferIndex=0;
-                    }
                     if (readBuffer.length() > 1 && !tokenCharPredicate.evaluate((char) read)) {
                         //not an allowed token character
                         //simply replace the content, and continue
-                        replaceBuffer.setLength(0);
-                        replaceBuffer.append(readBuffer);
-                        replaceBufferIndex=0;
-                        readBuffer.setLength(0);
-                        readBufferIndex=-1;
                         return read();
                     }
                 }
             } while (read != -1);
 
             //return buffered content that has no tokens
-            if (readBufferIndex >= 0 && readBufferIndex < readBuffer.length()) {
-                return readBuffer.charAt(readBufferIndex++);
+            if (readBuffer.avail()) {
+                return readBuffer.read();
             }
         }
         return read;
     }
 
 
-    private void appendTokenSubstitute(String key, StringBuilder replaceBuffer) {
+    private String substitution(String key) {
         if (null != tokens.get(key)) {
-            replaceBuffer.append(tokens.get(key));
+            return tokens.get(key);
         } else if (blankIfMissing) {
-            replaceBuffer.append("");
+            return "";
         } else {
-            replaceBuffer.append(tokenStart).append(key).append(tokenEnd);
+            return tokenStart + key + tokenEnd;
         }
     }
+
 
     public Predicate getTokenCharPredicate() {
         return tokenCharPredicate;
