@@ -443,7 +443,7 @@ public class DataContextUtils {
                 new InputStreamReader(
                         new FileInputStream
                                 (sourceFile)
-                ), toks, true, '@', '@'
+                ), toks, true, '@', '@', '\\'
         );
         final File temp;
         if (null != destination) {
@@ -504,18 +504,18 @@ public class DataContextUtils {
         if (null == script) {
             throw new NullPointerException("script cannot be null");
         }
-        if (null == framework) {
-            throw new NullPointerException("framework cannot be null");
-        }
         //use ReplaceTokens to replace tokens within the content
         final Reader read = new StringReader(script);
         final Map<String, String> toks = flattenDataContext(dataContext);
-        final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(read, toks, true, '@', '@');
+        final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(read, toks, true, '@', '@', '\\');
         final File temp;
         if (null != destination) {
             ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination);
             temp = destination;
         } else {
+            if (null == framework) {
+                throw new NullPointerException("framework cannot be null");
+            }
             temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens, style);
         }
         ScriptfileUtils.setExecutePermissions(temp);
@@ -573,7 +573,8 @@ public class DataContextUtils {
                 toks,
                 true,
                 '@',
-                '@'
+                '@',
+                '\\'
         );
         final File temp;
         if (null != destination) {
