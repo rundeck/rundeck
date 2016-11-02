@@ -65,6 +65,30 @@ public class ReplaceTokenReaderTest {
         test("prefixed text value, c value, final tet", "prefixed text value, @value3@, final tet", defaultTokens(), true, '@', '@');
     }
     @Test
+    public void duplicateStartToken() throws IOException {
+        test("abc xyz@b value", "abc xyz@@value2@", defaultTokens(), true, '@', '@');
+    }
+    @Test
+    public void defaultEscapeStartToken() throws IOException {
+        test("abc xyz@asdfb value", "abc xyz\\@asdf@value2@", defaultTokens(), true, '@', '@');
+    }
+
+    @Test
+    public void customEscapeStartToken() throws IOException {
+        test("abc xyz@asdfb value", "abc xyz^@asdf@value2@", defaultTokens(), true, '@', '@', '^');
+    }
+
+    @Test
+    public void eofBeforeTokenEnd() throws IOException {
+        test("abc @value2", "abc @value2", defaultTokens(), true, '@', '@');
+    }
+    @Test
+    public void eofBeforeTokenEnd2() throws IOException {
+        test("abc @@value2", "abc @@value2", defaultTokens(), true, '@', '@');
+        test("abc @@@value2", "abc @@@value2", defaultTokens(), true, '@', '@');
+    }
+
+    @Test
     public void script() throws IOException {
         test("test script some data this is a test\n" +
                 "test line 2 some data @test.data2@\n",
@@ -132,8 +156,23 @@ public class ReplaceTokenReaderTest {
 
     public void test(String expected, String input, Map<String, String> tokens, boolean blankIfMissing, char tokenstart, char tokenend) throws IOException {
 
+        test(expected, input, tokens, blankIfMissing, tokenstart, tokenend, ReplaceTokenReader.DEFAULT_ESCAPE);
+    }
+
+    public void test(
+            String expected,
+            String input,
+            Map<String, String> tokens,
+            boolean blankIfMissing,
+            char tokenstart,
+            char tokenend,
+            char escToken
+    ) throws IOException
+    {
+
         ReplaceTokenReader replaceTokenReader = new ReplaceTokenReader(new StringReader(input), tokens,
-                blankIfMissing, tokenstart, tokenend);
+                                                                       blankIfMissing, tokenstart, tokenend, escToken
+        );
         StringWriter writer = new StringWriter();
         writeReader(replaceTokenReader, writer);
         Assert.assertEquals(expected, writer.toString());
