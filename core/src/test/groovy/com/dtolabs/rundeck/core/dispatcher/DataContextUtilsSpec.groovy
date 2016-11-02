@@ -53,6 +53,10 @@ class DataContextUtilsSpec extends Specification {
         'echo \'hello@@option.domain@\''      | [option: [domain: 'peabody']] | 'echo \'hello@peabody\'\n'
         'echo \'hello@milk @option.domain@\'' | [option: [domain: 'peabody']] | 'echo \'hello@milk peabody\'\n'
         'echo \'hello@milk@option.domain@\''  | [option: [domain: 'peabody']] | 'echo \'hellooption.domain@\'\n'
+        'bloo hello@@@nothing@'               | [:]                           | 'bloo hello@@\n'
+        'bloo hello@@@ending'                 | [:]                           | 'bloo hello@@@ending\n'
+        'bloo hello@ending'                   | [:]                           | 'bloo hello@ending\n'
+        'bloo hello@@@ending\n'               | [:]                           | 'bloo hello@@@ending\n'
     }
 
     @Unroll
