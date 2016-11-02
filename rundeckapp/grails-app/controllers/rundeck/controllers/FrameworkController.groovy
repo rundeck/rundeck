@@ -1098,8 +1098,14 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             //validate input values
             final nevalidation = frameworkService.validateServiceConfig(nodeExecType, "", nodeConfig, nodeExecService)
             if (!nevalidation.valid) {
-                nodeexecreport = nevalidation.report
-                errors << nevalidation.error ? "Node Executor configuration was invalid: " + nevalidation.error : "Node Executor configuration was invalid"
+                nodeexecreport = nevalidation.report ? frameworkService.remapReportProperties(
+                        nevalidation.report,
+                        nodeExecType,
+                        nodeExecService
+
+                ) : null
+                errors << (nevalidation.error ? ("Node Executor configuration was invalid: " + nevalidation.error) :
+                        "Node Executor configuration was invalid: " + nodeexecreport?.toString())
             }else{
                 //store back in props
                 frameworkService.addProjectNodeExecutorPropertiesForType(nodeExecType, projProps, nodeConfig)
@@ -1122,8 +1128,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             //validate input values
             final fcvalidation = frameworkService.validateServiceConfig(fileCopyType, "", filecopyConfig, fileCopierService)
             if (!fcvalidation.valid) {
-                nodeexecreport = fcvalidation.report
-                errors << fcvalidation.error ? "File Copier configuration was invalid: " + fcvalidation.error : "File Copier configuration was invalid"
+                nodeexecreport = nevalidation.report ? frameworkService.remapReportProperties(
+                        nevalidation.report,
+                        fileCopyType,
+                        fileCopierService
+
+                ) : null
+                errors << (fcvalidation.error ? ("File Copier configuration was invalid: " + fcvalidation.error) : "File Copier configuration was invalid: "+nodeexecreport?.toString())
             }else{
                 frameworkService.addProjectFileCopierPropertiesForType(fileCopyType, projProps, filecopyConfig)
             }
