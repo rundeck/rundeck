@@ -605,7 +605,7 @@ public class SSHTaskBuilder {
                 if (null != privateKeyPassphraseStoragePath) {
                     if (!PathUtil.hasRoot(privateKeyPassphraseStoragePath, "keys")) {
                         throw new BuilderException(
-                                "SSH Private key path is expected to start with \"keys/\": " +
+                                "SSH Private key passphrase path is expected to start with \"keys/\": " +
                                 privateKeyPassphraseStoragePath
                         );
                     }
@@ -638,7 +638,7 @@ public class SSHTaskBuilder {
             case password:
                 final String passwordStoragePath = sshConnectionInfo.getPasswordStoragePath();
                 if (null != passwordStoragePath) {
-                    if (!PathUtil.asPath(passwordStoragePath).getPath().startsWith("keys/")) {
+                    if (!PathUtil.hasRoot(passwordStoragePath, "keys")) {
                         throw new BuilderException("SSH Password storage path is expected to start with \"keys/\": " +
                                 passwordStoragePath);
                     }
