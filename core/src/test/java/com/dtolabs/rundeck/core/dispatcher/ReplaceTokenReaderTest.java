@@ -65,6 +65,10 @@ public class ReplaceTokenReaderTest {
         test("prefixed text value, c value, final tet", "prefixed text value, @value3@, final tet", defaultTokens(), true, '@', '@');
     }
     @Test
+    public void duplicateStartToken() throws IOException {
+        test("abc xyz@b value", "abc xyz\\@@value2@", defaultTokens(), true, '@', '@');
+    }
+    @Test
     public void script() throws IOException {
         test("test script some data this is a test\n" +
                 "test line 2 some data @test.data2@\n",

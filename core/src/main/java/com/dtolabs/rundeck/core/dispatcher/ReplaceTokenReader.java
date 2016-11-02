@@ -31,27 +31,38 @@ import java.util.Map;
 public class ReplaceTokenReader extends FilterReader {
     public static final char DEFAULT_TOKEN_START = '@';
     public static final char DEFAULT_TOKEN_END = '@';
+    public static final char DEFAULT_ESCAPE = '\\';
     private Map<String, String> tokens;
     boolean blankIfMissing;
     char tokenStart = DEFAULT_TOKEN_START;
     char tokenEnd = DEFAULT_TOKEN_END;
+    char tokenEsc = DEFAULT_ESCAPE;
     private Predicate tokenCharPredicate;
 
-    public ReplaceTokenReader(Reader reader, Map<String, String> tokens, boolean blankIfMissing) {
-        this(reader, tokens, blankIfMissing, DEFAULT_TOKEN_START, DEFAULT_TOKEN_END);
-    }
 
     public ReplaceTokenReader(Reader reader, Map<String, String> tokens, boolean blankIfMissing, char tokenStart,
             char tokenEnd) {
+        this(reader, tokens, blankIfMissing, tokenStart, tokenEnd, DEFAULT_ESCAPE);
+
+    }
+
+    public ReplaceTokenReader(
+            Reader reader, Map<String, String> tokens, boolean blankIfMissing, char tokenStart,
+            char tokenEnd, char tokenEsc
+    )
+    {
         super(reader);
         this.tokens = tokens;
         this.blankIfMissing = blankIfMissing;
         this.tokenStart = tokenStart;
         this.tokenEnd = tokenEnd;
+        this.tokenEsc = tokenEsc;
         replaceBuffer = new StringBuilder();
         readBuffer = new StringBuilder();
+        tokenBuffer = new StringBuilder();
         replaceBufferIndex = -1;
         readBufferIndex = -1;
+        tokenBufferIndex = -1;
         tokenCharPredicate = DEFAULT_ALLOWED_PREDICATE;
     }
 
@@ -67,7 +78,10 @@ public class ReplaceTokenReader extends FilterReader {
     private StringBuilder replaceBuffer;
     private int replaceBufferIndex;
     private int readBufferIndex;
+    private int tokenBufferIndex;
+    private boolean escaped;
     private StringBuilder readBuffer;
+    private StringBuilder tokenBuffer;
 
     @Override
     public int read(char[] chars, int offset, int len) throws IOException {
@@ -96,7 +110,28 @@ public class ReplaceTokenReader extends FilterReader {
         if (readBufferIndex >= 0 && readBufferIndex < readBuffer.length()) {
             return readBuffer.charAt(readBufferIndex++);
         }
-        int read = super.read();
+        int read = -1;
+        //re-read from buffered token chars
+        if (tokenBufferIndex >= 0 && tokenBufferIndex < tokenBuffer.length()) {
+            read = tokenBuffer.charAt(tokenBufferIndex++);
+        } else {
+            read = super.read();
+        }
+        if (escaped && read == tokenStart) {
+            escaped = false;
+            return read;
+        } else if (escaped) {
+            escaped = false;
+            readBuffer.append((char) read);
+            if (readBufferIndex < 0) {
+                readBufferIndex = 0;
+            }
+            return tokenEsc;
+        }
+        if (read == tokenEsc) {
+            escaped = true;
+            return read();
+        }
         if (read == tokenStart) {
             readBuffer.append((char) read);
             if (readBufferIndex < 0) {
@@ -104,6 +139,22 @@ public class ReplaceTokenReader extends FilterReader {
             }
             do {
                 read = super.read();
+                if (read == tokenStart) {
+                    if (readBuffer.length() == 1) {
+                        //start token followed by start token
+                        tokenBuffer.append((char) read);
+                        if (tokenBufferIndex < 0) {
+                            tokenBufferIndex = 0;
+                        }
+                        //restart as token
+                        replaceBuffer.setLength(0);
+                        replaceBuffer.append(readBuffer);
+                        replaceBufferIndex = 0;
+                        readBuffer.setLength(0);
+                        readBufferIndex = -1;
+                        return read();
+                    }
+                }
                 if (read == tokenEnd) {
                     //end of replacement
                     String key = readBuffer.substring(1);
