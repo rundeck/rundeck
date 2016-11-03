@@ -19,6 +19,16 @@
 
 <g:form controller="scheduledExecution" method="post" useToken="true"
         params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
+    <!-- BEGIN: firefox hack https://bugzilla.mozilla.org/show_bug.cgi?id=1119063 -->
+    <input type="text" style="display:none" class="ixnay">
+    <input type="password" style="display:none" class="ixnay">
+    <g:javascript>
+    jQuery(function(){
+        var nay=function(){jQuery('.ixnay').val('');},ix=setTimeout;
+        nay(); ix(nay,50); ix(nay,200); ix(nay, 1000);
+    });
+    </g:javascript>
+    <!-- END: firefox hack -->
 
 <input id='runAtTime' type='hidden' name='runAtTime' value='' />
 
