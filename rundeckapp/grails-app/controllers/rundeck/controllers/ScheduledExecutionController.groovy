@@ -2636,7 +2636,8 @@ class ScheduledExecutionController  extends ControllerBase{
             log.warn("Cyclic dependency for options for job ${scheduledExecution.extid}: (${toporesult.cycle})")
             model.optionsDependenciesCyclic = true
         }
-        if (toporesult.result) {
+        if (toporesult.result && !scheduledExecution.options.any { it.sortIndex != null }) {
+            //auto sort only if no ordering is defined
             model.optionordering = toporesult.result
         }
 
