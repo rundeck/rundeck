@@ -142,7 +142,7 @@ function getCurSEID(){
             registerNodeFilters(jobRefNodeFilter,root);
         }
         function pageinit(){
-            _enableDragdrop();
+            _enableWFDragdrop();
 
             Event.observe(document,'keydown',function(evt){
                 //escape key hides popup bubble
