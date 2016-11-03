@@ -45,7 +45,7 @@
 </head>
 
 <body>
-
+    <g:render template="/common/messages" />
 
     <div class="row">
         <g:form action="saveProjectConfig" method="post"

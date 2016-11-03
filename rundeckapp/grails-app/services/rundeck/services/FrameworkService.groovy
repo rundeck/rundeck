@@ -885,10 +885,10 @@ class FrameworkService implements ApplicationContextAware {
         def result=[:]
         result.valid=false
         result.desc = description
-        result.props = parseResourceModelConfigInput(result.desc, prefix, params)
+        result.props = parseResourceModelConfigInput(description, prefix, params)
 
-        if (result.desc) {
-            def report = Validator.validate(result.props as Properties, result.desc)
+        if (description) {
+            def report = Validator.validate(result.props as Properties, description)
             if (report.valid) {
                 result.valid = true
             }
@@ -1065,6 +1065,26 @@ class FrameworkService implements ApplicationContextAware {
             }
         }
         properties
+    }
+    /**
+     * Convert property keys in a Validator.Report to the mapped property names for the provider properties
+     * @param report a validator report
+     * @param serviceType service type
+     * @param service plugin service
+     * @return Report with error keys using the property mappings
+     */
+    public Validator.Report remapReportProperties(Validator.Report report, String serviceType, PluggableProviderRegistryService service) {
+        def properties = [:]
+        if (serviceType) {
+            try {
+                final desc = service.providerOfType(serviceType).description
+                properties = Validator.mapProperties(report.errors, desc)
+            } catch (ExecutionServiceException e) {
+                log.error(e.message)
+                log.debug(e.message,e)
+            }
+        }
+        Validator.buildReport().errors(properties).build()
     }
 
 
