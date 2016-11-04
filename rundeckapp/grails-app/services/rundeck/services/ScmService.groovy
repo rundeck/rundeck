@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
@@ -472,7 +473,8 @@ class ScmService {
     {
         { JobChangeEvent event, JobSerializer serializer ->
             log.debug("job change event: " + event)
-            def scmRef = scmJobRef(event.jobReference, serializer)
+            JobScmReference scmRef = scmJobRef(event.jobReference, serializer)
+            JobScmReference origScmRef = scmOrigJobRef(event.originalJobReference, null)
             if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
                 //record deleted path
                 recordDeletedJob(
@@ -487,14 +489,21 @@ class ScmService {
                 )
             } else if (event.eventType == JobChangeEvent.JobChangeEventType.MODIFY_RENAME) {
                 //record original path for renamed job, if it is different
-                def origpath = plugin.getRelativePathForJob(event.originalJobReference)
+                def origpath = plugin.getRelativePathForJob(origScmRef)
                 def newpath = plugin.getRelativePathForJob(scmRef)
                 if (origpath != newpath) {
                     recordRenamedJob(context.frameworkProject, event.jobReference.id, origpath)
                 }
             }
 
-            plugin.jobChanged(event, scmRef)
+            plugin.jobChanged(
+                    new StoredJobChangeEvent(
+                            eventType: event.eventType,
+                            originalJobReference: origScmRef,
+                            jobReference: scmRef
+                    ),
+                    scmRef
+            )
         } as JobChangeListener
     }
 
@@ -753,6 +762,16 @@ class ScmService {
         )
     }
 
+    static JobRevReference jobOrigRevReference(JobReference entry) {
+        new JobRevReferenceImpl(
+                id: entry.id,
+                jobName: entry.jobName,
+                groupPath: entry.groupPath,
+                project: entry.project,
+                version: -1
+        )
+    }
+
     List<JobExportReference> exportjobRefsForJobs(List<ScheduledExecution> jobs) {
         jobs.collect { ScheduledExecution job ->
             exportJobRef(job)
@@ -826,6 +845,19 @@ class ScmService {
         )
         impl.jobSerializer = serializer ?: lazySerializerForJob(job)
         impl
+    }
+    /**
+     * Create reference for job with scm import metadata and serializer
+     * @param job job
+     * @param serializer predefined serializer, or null to create lazy serializer
+     * @return JobScmReference
+     */
+    JobScmReference scmOrigJobRef(JobReference reference, JobSerializer serializer) {
+        if (reference instanceof JobRevReference) {
+            return scmJobRef((JobRevReference) reference, (JobSerializer)serializer)
+        } else {
+            return scmJobRef(jobOrigRevReference(reference), (JobSerializer) serializer)
+        }
     }
     /**
      * Create reference for job with scm import metadata and serializer
