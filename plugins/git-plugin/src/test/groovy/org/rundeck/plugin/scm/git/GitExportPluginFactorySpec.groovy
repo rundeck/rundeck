@@ -46,7 +46,7 @@ class GitExportPluginFactorySpec extends Specification {
         expect:
         desc.title == 'Git Export'
         desc.name == 'git-export'
-        desc.properties.size() == 11
+        desc.properties.size() == 12
     }
 
     def "base description properties"() {
@@ -58,6 +58,7 @@ class GitExportPluginFactorySpec extends Specification {
         desc.properties*.name as Set == [
                 'dir',
                 'pathTemplate',
+                'stripUuid',
                 'url',
                 'branch',
                 'strictHostKeyChecking',
@@ -79,6 +80,7 @@ class GitExportPluginFactorySpec extends Specification {
         properties*.name as Set == [
                 'dir',
                 'pathTemplate',
+                'stripUuid',
                 'url',
                 'branch',
                 'strictHostKeyChecking',
@@ -106,6 +108,7 @@ class GitExportPluginFactorySpec extends Specification {
         properties*.name  as Set == [
                 'dir',
                 'pathTemplate',
+                'stripUuid',
                 'url',
                 'branch',
                 'strictHostKeyChecking',

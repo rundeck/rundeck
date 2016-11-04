@@ -54,13 +54,32 @@ Available expansion patterns:
 * `${job.name}` - the job name
 * `${job.group}` - blank, or `path/`
 * `${job.project} - project name`
-* `${job.id}` - job UUID (this value *should* be included in the template to guarantee a unique path for each job.)
+* `${job.id}` - job UUID
 * `${config.format}` - Serialization format chosen below.
+
+If you set `Strip Job UUID` to true, then you most likely do not want to include `${job.id}` in the expansion pattern,
+as it the job UUID after import will be different than the one on disk.
 ''',
             defaultValue = '${job.group}${job.name}-${job.id}.${config.format}',
             required = true
     )
+    @SelectValues(
+            values = ['${job.group}${job.name}-${job.id}.${config.format}', '${job.group}${job.name}.${config.format}'],
+            freeSelect = true
+    )
     String pathTemplate
+
+
+    @PluginProperty(
+            title = "Strip Job UUID",
+            description = '''If true, remove the UUID from jobs when importing/exporting.
+
+If true, then the `${job.id}` value *should not* be included in the "File Path Template".''',
+            defaultValue = 'false',
+            required = false
+    )
+    Boolean stripUuid
+
 
     @PluginProperty(
             title = "Git URL",

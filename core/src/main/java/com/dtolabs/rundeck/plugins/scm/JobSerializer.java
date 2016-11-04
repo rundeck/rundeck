@@ -29,4 +29,12 @@ public interface JobSerializer {
      * @param outputStream destination
      */
     void serialize(String format, OutputStream outputStream) throws IOException;
+
+    /**
+     * @param format       format name: 'xml' or 'yaml'
+     * @param outputStream destination
+     * @param preserveUuid if true, preserve UUID in output, otherwise remove it
+     * @param sourceId     if present, and preserveUuid is false, substitute the sourceId in place of the ID
+     */
+    void serialize(String format, OutputStream outputStream, boolean preserveUuid, String sourceId) throws IOException;
 }

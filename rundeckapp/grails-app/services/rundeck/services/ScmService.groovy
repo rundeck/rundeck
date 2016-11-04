@@ -53,6 +53,8 @@ import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderServic
 import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
 import rundeck.ScheduledExecution
 import rundeck.User
+import rundeck.codecs.JobsXMLCodec
+import rundeck.codecs.JobsYAMLCodec
 import rundeck.services.scm.ContextJobImporter
 import rundeck.services.scm.ResolvedJobImporter
 import rundeck.services.scm.ScmPluginConfig
@@ -470,11 +472,12 @@ class ScmService {
     {
         { JobChangeEvent event, JobSerializer serializer ->
             log.debug("job change event: " + event)
+            def scmRef = scmJobRef(event.jobReference, serializer)
             if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
                 //record deleted path
                 recordDeletedJob(
                         context.frameworkProject,
-                        plugin.getRelativePathForJob(event.jobReference),
+                        plugin.getRelativePathForJob(scmRef),
                         [
                                 id             : event.jobReference.id,
                                 jobName        : event.jobReference.getJobName(),
@@ -485,12 +488,13 @@ class ScmService {
             } else if (event.eventType == JobChangeEvent.JobChangeEventType.MODIFY_RENAME) {
                 //record original path for renamed job, if it is different
                 def origpath = plugin.getRelativePathForJob(event.originalJobReference)
-                def newpath = plugin.getRelativePathForJob(event.jobReference)
+                def newpath = plugin.getRelativePathForJob(scmRef)
                 if (origpath != newpath) {
                     recordRenamedJob(context.frameworkProject, event.jobReference.id, origpath)
                 }
             }
-            plugin.jobChanged(event, scmJobRef(event.jobReference, serializer))
+
+            plugin.jobChanged(event, scmRef)
         } as JobChangeListener
     }
 
@@ -701,7 +705,14 @@ class ScmService {
      * @return map of job ID to file path
      */
     Map<String, String> exportFilePathsMapForJobs(List<ScheduledExecution> jobs) {
-        exportFilePathsMapForJobRefs(jobRefsForJobs(jobs))
+        def files = [:]
+        jobs.each { ScheduledExecution job ->
+            def plugin = getLoadedExportPluginFor job.project
+            if (plugin) {
+                files[job.extid] = plugin.getRelativePathForJob(scmJobRef(job))
+            }
+        }
+        files
     }
     /**
      * @param refs list of {@link JobRevReference} objects
@@ -749,27 +760,27 @@ class ScmService {
     }
 
     private JobExportReference exportJobRef(ScheduledExecution job) {
-        new JobSerializerReferenceImpl(
-                jobRevReference(job),
-                lazySerializerForJob(job)
-        )
+        scmJobRef(job)
+    }
+
+    static class LazySerializer implements JobSerializer {
+        ScheduledExecution job
+
+        @Override
+        void serialize(final String format, final OutputStream outputStream) throws IOException {
+            new JobFromMapSerializer(job.toMap()).serialize(format, outputStream)
+        }
+
+        @Override
+        void serialize(final String format, final OutputStream os, final boolean preserveUuid, String sourceId)
+                throws IOException
+        {
+            new JobFromMapSerializer(job.toMap()).serialize(format, os, preserveUuid, sourceId)
+        }
     }
 
     private JobSerializer lazySerializerForJob(ScheduledExecution job) {
-        { String format, OutputStream os ->
-            switch (format) {
-                case 'xml':
-                    def str = job.encodeAsJobsXML() + '\n'
-                    os.write(str.getBytes("UTF-8"))
-                    break;
-                case 'yaml':
-                    def str = job.encodeAsJobsYAML() + '\n'
-                    os.write(str.getBytes("UTF-8"))
-                    break;
-                default:
-                    throw new IllegalArgumentException("Format not supported: " + format)
-            }
-        } as JobSerializer
+        new LazySerializer(job: job)
     }
 
     List<JobImportReference> importJobRefsForJobs(List<ScheduledExecution> jobs) {
@@ -794,7 +805,8 @@ class ScmService {
         new JobImportReferenceImpl(
                 jobRevReference(job),
                 metadata?.version != null ? metadata.version : -1L,
-                metadata?.pluginMeta
+                metadata?.pluginMeta,
+                metadata?.srcId
         )
     }
 
@@ -809,7 +821,8 @@ class ScmService {
         def impl = new JobImportReferenceImpl(
                 jobRevReference(job),
                 metadata?.version != null ? metadata.version : -1L,
-                metadata?.pluginMeta
+                metadata?.pluginMeta,
+                metadata?.srcId
         )
         impl.jobSerializer = serializer ?: lazySerializerForJob(job)
         impl
@@ -825,7 +838,8 @@ class ScmService {
         def impl = new JobImportReferenceImpl(
                 reference,
                 metadata?.version != null ? metadata.version : -1L,
-                metadata?.pluginMeta
+                metadata?.pluginMeta,
+                metadata?.srcId
         )
         impl.jobSerializer = serializer
         impl
@@ -844,7 +858,8 @@ class ScmService {
         def impl = new JobImportReferenceImpl(
                 reference,
                 metadata?.version != null ? metadata.version : -1L,
-                metadata?.pluginMeta
+                metadata?.pluginMeta,
+                metadata?.srcId
         )
         impl.jobSerializer = serializer
         impl
@@ -1025,10 +1040,12 @@ class ScmService {
             if (result && result.success && result.commit) {
                 //synch import commit info to exported commit data
                 jobs.each { job ->
+                    def orig = jobMetadataService.getJobPluginMeta(job, 'scm-import') ?: [:]
+
                     jobMetadataService.setJobPluginMeta(
                             job,
                             'scm-import',
-                            [version: job.version, pluginMeta: result.commit.asMap()]
+                            orig + [version: job.version, pluginMeta: result.commit.asMap()]
                     )
                 }
             }

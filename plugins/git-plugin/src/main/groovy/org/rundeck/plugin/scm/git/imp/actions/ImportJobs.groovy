@@ -80,7 +80,8 @@ class ImportJobs extends BaseAction implements GitImportAction {
             def importResult = importer.importFromStream(
                     plugin.config.format,
                     new ByteArrayInputStream(bytes),
-                    meta
+                    meta,
+                    !plugin.config.stripUuid
             )
             if (!importResult.successful) {
                 success = false

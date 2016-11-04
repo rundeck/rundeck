@@ -257,14 +257,14 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     @Override
     JobState jobChanged(JobChangeEvent event, JobExportReference exportReference) {
         File origfile = mapper.fileForJob(event.originalJobReference)
-        File outfile = mapper.fileForJob(event.jobReference)
+        File outfile = mapper.fileForJob(exportReference)
         String origPath = null
         log.debug("Job event (${event}), writing to path: ${outfile}")
         switch (event.eventType) {
             case JobChangeEvent.JobChangeEventType.DELETE:
                 origfile.delete()
-                def status = refreshJobStatus(event.jobReference, origPath, false)
-                jobStateMap.remove(event.jobReference.id)
+                def status = refreshJobStatus(exportReference, origPath, false)
+                jobStateMap.remove(exportReference.id)
                 return createJobStatus(status, jobActionsForStatus(status))
                 break;
 
@@ -293,10 +293,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         String ident = createStatusCacheIdent(job, commit)
 
         if (jobStateMap[job.id] && jobStateMap[job.id].ident == ident) {
-            log.debug("hasJobStatusCached(${ident}): FOUND")
+            log.debug("hasJobStatusCached(${ident}): FOUND for path $path")
             return jobStateMap[job.id]
         }
-        log.debug("hasJobStatusCached(${ident}): (no)")
+        log.debug("hasJobStatusCached(${ident}): (no) for path $path")
 
         null
     }
@@ -411,7 +411,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     JobState getJobStatus(final JobExportReference job, final String originalPath) {
-        log.debug("getJobStatus(${job.id},${originalPath})")
+        log.debug("getJobStatus(${job.id},${originalPath}): ${job}")
         if (!inited) {
             return null
         }

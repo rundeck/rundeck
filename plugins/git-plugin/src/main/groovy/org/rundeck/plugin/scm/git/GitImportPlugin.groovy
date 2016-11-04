@@ -247,7 +247,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                 job.scmImportMetadata.commitId
         ) : null
 
-        def path = relativePath(job)
+        def path = getRelativePathForJob(job)
 
         jobStateMap.remove(job.id)
 
@@ -266,7 +266,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             importTracker.trackJobAtPath(job, path)
         }
         log.debug(
-                "import job status: ${synchState} with meta ${job.scmImportMetadata}, version ${job.importVersion}/${job.version} commit ${latestCommit?.name}"
+                "import job status: ${synchState} with meta ${job.scmImportMetadata}, " +
+                        "version ${job.importVersion}/${job.version} commit ${latestCommit?.name}" +
+                        " sourceID: ${job.sourceId}"
         )
 
         def ident = job.id + ':' + String.valueOf(job.version) + ':' + (latestCommit ? latestCommit.name : '')
@@ -276,6 +278,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         jobstat['version'] = job.version
         jobstat['synch'] = synchState
         jobstat['path'] = path
+        jobstat['sourceId'] = job.sourceId
         if (previousImportCommit) {
             jobstat['commitId'] = previousImportCommit.name
             jobstat['commitMeta'] = GitUtil.metaForCommit(previousImportCommit)
@@ -342,7 +345,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     boolean contentDiffers(final JobScmReference job, RevCommit commit, final String path) {
         def currentJob = new ByteArrayOutputStream()
-        job.jobSerializer.serialize(path.endsWith('.xml') ? 'xml' : 'yaml', currentJob)
+        job.jobSerializer.serialize(path.endsWith('.xml') ? 'xml' : 'yaml', currentJob, !config.stripUuid, job.sourceId)
         def id = lookupId(commit, path)
         if (!id) {
             return true
@@ -360,7 +363,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     @Override
     JobImportState getJobStatus(final JobScmReference job, String originalPath) {
         log.debug("getJobStatus(${job.id},${originalPath})")
-        def path = relativePath(job)
+        def path = getRelativePathForJob(job)
         if (null == originalPath) {
             originalPath = importTracker.originalValue(path)
         }
@@ -382,8 +385,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     JobImportState jobChanged(JobChangeEvent event, JobScmReference reference) {
-        def path = relativePath(event.originalJobReference)
-        def newpath = relativePath(event.jobReference)
+        def path = getRelativePathForJob(event.originalJobReference)
+        def newpath = getRelativePathForJob(event.jobReference)
         String origPath = null
         if (!isTrackedPath(path) && !isTrackedPath(newpath)) {
             return null
@@ -450,7 +453,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     String getRelativePathForJob(final JobReference job) {
-        relativePath(job)
+        importTracker.trackedPath(job.id)?:relativePath(job)
     }
 
 
@@ -462,11 +465,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     ScmImportDiffResult getFileDiff(final JobScmReference job, String originalPath) {
-        def path = relativePath(job)
+        def path = getRelativePathForJob(job)
         if (!originalPath) {
             originalPath = importTracker.originalValue(path)
         }
-        path = originalPath ?: relativePath(job)
+        path = originalPath ?: getRelativePathForJob(job)
         def temp = serializeTemp(job, config.format)
         def latestCommit = GitUtil.lastCommitForPath repo, git, path
         def id = latestCommit ? lookupId(latestCommit, path) : null

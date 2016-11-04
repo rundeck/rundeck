@@ -37,22 +37,46 @@ import rundeck.controllers.JobXMLException
 
 class JobsXMLCodec {
 
-    static encode = {list ->
+    static encodeStripUuid = { list ->
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(list,xml)
+        JobsXMLCodec.encodeWithBuilder(list, xml, false)
         return writer.toString()
     }
-    static encodeWithBuilder={ list,xml ->
+    static encodeReplaceUuid = { list, Map replacements ->
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        JobsXMLCodec.encodeWithBuilder(list, xml, false, replacements)
+        return writer.toString()
+    }
+    static encode = { list ->
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        JobsXMLCodec.encodeWithBuilder(list, xml)
+        return writer.toString()
+    }
+    static encodeMaps = { list, boolean preserveUuid = true, Map<String, String> replaceIds = [:] ->
+        def writer = new StringWriter()
+        def xml = new MarkupBuilder(writer)
+        JobsXMLCodec.encodeMapsWithBuilder(list, xml, preserveUuid, replaceIds)
+        return writer.toString()
+    }
+    static encodeWithBuilder = { list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:] ->
+        return encodeMapsWithBuilder(list.collect{it.toMap()},preserveUuid,replaceIds)
+    }
+    static encodeMapsWithBuilder = { list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:] ->
         BuilderUtil bu = new BuilderUtil()
         bu.forceLineEndings=true
         bu.lineEndingChars='\n'
         //todo: set line ending from config?
         bu.canonical=true
         xml.joblist() {
-            list.each{ ScheduledExecution jobi->
+            list.each{ Map jobMap->
                 job{
-                    bu.mapToDom(JobsXMLCodec.convertJobMap(jobi.toMap()),delegate)
+                    bu.mapToDom(
+                            JobsXMLCodec.convertJobMap(jobMap, preserveUuid, replaceIds[jobMap.id]),
+                            delegate
+                    )
                 }
             }
         }
@@ -384,8 +408,16 @@ class JobsXMLCodec {
     /**
      * Convert structure returned by job.toMap into correct structure for jobs xml
      */
-    static convertJobMap={Map map->
+    static convertJobMap = { Map map, boolean preserveUuid = true, String replaceId = null ->
         map.remove('project')
+        if (!preserveUuid) {
+            map.remove('id')
+            map.remove('uuid')
+            if (replaceId) {
+                map['id'] = replaceId
+                map['uuid'] = replaceId
+            }
+        }
 
         def optdata = map.remove('options')
         boolean preserveOrder=false

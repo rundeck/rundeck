@@ -57,7 +57,8 @@ public class JobsYAMLCodecTests  {
             month: '3',
             dayOfMonth: '?',
             dayOfWeek: '4',
-            year: '2011'
+            year: '2011',
+                uuid:UUID.randomUUID().toString()
         ])
         def jobs1 = [se]
         def  ymlstr = JobsYAMLCodec.encode(jobs1)
@@ -69,6 +70,101 @@ public class JobsYAMLCodecTests  {
             assertNotNull doc
             assertEquals "wrong number of jobs", 1, doc.size()
             assertEquals "wrong name", "test job 1", doc[0].name
+            assertEquals "wrong name", jobs1[0].uuid, doc[0].uuid
+            assertEquals "wrong description", "test descrip", doc[0].description
+            assertEquals "wrong loglevel", "INFO", doc[0].loglevel
+            assertEquals "wrong scheduleEnabled", true, doc[0].scheduleEnabled
+            assertEquals "wrong executionEnabled", true, doc[0].executionEnabled
+            assertEquals "incorrect context project", null, doc[0].project
+            assertNotNull "missing sequence", doc[0].sequence
+            assertFalse "wrong wf keepgoing", doc[0].sequence.keepgoing
+            assertEquals "wrong wf strategy", "node-first", doc[0].sequence.strategy
+            assertNotNull "missing commands", doc[0].sequence.commands
+            assertEquals "missing commands", 5, doc[0].sequence.commands.size()
+            doc[0].sequence.commands.eachWithIndex{cmd,i->
+                assertEquals "wrong desc at ${i}", "test${i+1}", cmd.description
+            }
+            assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
+            assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'", doc[0].sequence.commands[1].script
+            assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
+            assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
+            assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
+            assertEquals "missing command jobref.group", "agroup", doc[0].sequence.commands[3].jobref.group
+            assertEquals "missing command jobref.group", 'true', doc[0].sequence.commands[3].jobref.nodeStep
+
+            assertEquals "missing command scriptfile", "http://example.com/blah", doc[0].sequence.commands[4].scripturl
+            assertNotNull "missing options", doc[0].options
+            assertTrue ("wrong type", doc[0].options instanceof Collection)
+            assertNotNull "missing option opt1", doc[0].options[0]
+            assertEquals "wrong name", "opt1", doc[0].options[0].name
+            assertEquals "missing option opt1", "an opt", doc[0].options[0].description
+            assertEquals "missing option default", "xyz", doc[0].options[0].value
+            assertTrue "missing option enforced", doc[0].options[0].enforced
+            assertTrue "missing option required", doc[0].options[0].required
+            assertNotNull "missing option values", doc[0].options[0].values
+            assertEquals "wrong option values size", 2, doc[0].options[0].values.size()
+            assertEquals "wrong option values[0]", "a", doc[0].options[0].values[0]
+            assertEquals "wrong option values[1]", "b", doc[0].options[0].values[1]
+
+            assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
+            assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
+            assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
+            assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
+            assertEquals "wrong nodefilters include hostname", "hostname: testhost1 !name: x1", doc[0].nodefilters.filter
+            assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.include
+            assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.exclude
+
+            assertNotNull "not scheduled", doc[0].schedule
+            assertNotNull "not scheduled.time", doc[0].schedule.time
+            assertEquals "not scheduled.time", "*", doc[0].schedule.time.seconds
+            assertEquals "not scheduled.time", "0", doc[0].schedule.time.minute
+            assertEquals "not scheduled.time", "2,15", doc[0].schedule.time.hour
+            assertEquals "not scheduled.time", "3", doc[0].schedule.month
+            assertEquals "not scheduled.time", "4", doc[0].schedule.weekday.day
+            assertEquals "not scheduled.time", "2011", doc[0].schedule.year
+
+    }
+    void testEncodeBasicStripUuid() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution([
+            jobName: 'test job 1',
+            description: 'test descrip',
+            loglevel: 'INFO',
+            project: 'test1',
+            workflow: new Workflow([keepgoing: false, threadcount: 1, commands: [new CommandExec([adhocRemoteString: 'test script',description: 'test1']),
+                new CommandExec([adhocLocalString: "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", description: 'test2']),
+                new CommandExec([adhocFilepath: 'some file path', description: 'test3']),
+                new JobExec([jobName: 'another job', jobGroup: 'agroup', nodeStep:true, description: 'test4']),
+                new CommandExec([adhocFilepath: 'http://example.com/blah', description: 'test5']),
+            ]]),
+            options: [new Option(name: 'opt1', description: "an opt", defaultValue: "xyz", enforced: true, required: true, values: new TreeSet(["a", "b"]))] as TreeSet,
+            nodeThreadcount: 1,
+            nodeKeepgoing: true,
+            doNodedispatch: true,
+            nodeInclude: "testhost1",
+            nodeExcludeName: "x1",
+            scheduled: true,
+            seconds: '*',
+            minute: '0',
+            hour: '2,15',
+            month: '3',
+            dayOfMonth: '?',
+            dayOfWeek: '4',
+            year: '2011',
+            uuid:UUID.randomUUID().toString()
+        ])
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encodeStripUuid(jobs1)
+            assertNotNull ymlstr
+            assertTrue ymlstr instanceof String
+
+
+            def doc = yaml.load(ymlstr)
+            assertNotNull doc
+            assertEquals "wrong number of jobs", 1, doc.size()
+            assertEquals "wrong name", "test job 1", doc[0].name
+        assertEquals "wrong uuid", null, doc[0].uuid
+        assertEquals "wrong id", null, doc[0].id
             assertEquals "wrong description", "test descrip", doc[0].description
             assertEquals "wrong loglevel", "INFO", doc[0].loglevel
             assertEquals "wrong scheduleEnabled", true, doc[0].scheduleEnabled

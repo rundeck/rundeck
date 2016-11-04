@@ -69,6 +69,7 @@ class BaseGitPluginSpec extends Specification {
     def "serialize job to valid file path"() {
         given:
         Common config = new Common()
+        config.stripUuid = stripUuid
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
         def job = Mock(JobExportReference){
@@ -83,7 +84,7 @@ class BaseGitPluginSpec extends Specification {
         then:
         1 * base.mapper.fileForJob(_) >> outfile
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)>>{args->
+            1 * serialize(format, !null, (!stripUuid),_) >> { args ->
                 args[1].write('data'.bytes)
             }
         }
@@ -91,9 +92,11 @@ class BaseGitPluginSpec extends Specification {
 
 
         where:
-        format | _
-        'xml'  | _
-        'yaml' | _
+        format | stripUuid
+        'xml'  | true
+        'yaml' | true
+        'xml'  | false
+        'yaml' | false
     }
 
     def "serialize job with two threads will not write same revision twice"() {
@@ -115,13 +118,13 @@ class BaseGitPluginSpec extends Specification {
         AtomicLong serializedCounter=new AtomicLong(0)
 
         _ * job.getJobSerializer() >> Mock(JobSerializer) {
-            _ * serialize(format, !null)>>{args->
+            _ * serialize(format, !null, _,_) >> { args ->
                 serializedCounter.incrementAndGet()
                 args[1].write('data'.bytes)
             }
         }
         _ * job2.getJobSerializer() >> Mock(JobSerializer) {
-            _ * serialize(format, !null)>>{args->
+            _ * serialize(format, !null, _,_) >> { args ->
                 serializedCounter.incrementAndGet()
                 args[1].write('data2'.bytes)
             }
@@ -173,13 +176,13 @@ class BaseGitPluginSpec extends Specification {
         AtomicLong serializedCounter=new AtomicLong(0)
 
         _ * job.getJobSerializer() >> Mock(JobSerializer) {
-            0 * serialize(format, !null)>>{args->
+            0 * serialize(format, !null, _,_) >> { args ->
                 serializedCounter.incrementAndGet()
                 args[1].write('data'.bytes)
             }
         }
         _ * newerJob.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)>>{args->
+            1 * serialize(format, !null, _,_) >> { args ->
                 serializedCounter.incrementAndGet()
                 args[1].write('data2'.bytes)
             }
@@ -248,7 +251,7 @@ class BaseGitPluginSpec extends Specification {
         then:
         1 * base.mapper.fileForJob(_) >> outfile
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)//no write to stream
+            1 * serialize(format, !null, _,_)//no write to stream
         }
         ScmPluginException e = thrown()
         e.message.startsWith('Failed to serialize job, no content was written')
@@ -276,7 +279,7 @@ class BaseGitPluginSpec extends Specification {
         then:
         1 * base.mapper.fileForJob(_) >> outfile
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)>>{
+            1 * serialize(format, !null, _,_) >> {
                 throw new IOException("test forced error")
             }
         }
@@ -306,7 +309,7 @@ class BaseGitPluginSpec extends Specification {
 
         then:
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)
+            1 * serialize(format, !null, _,_)
         }
         outfile != null
         outfile.isFile()

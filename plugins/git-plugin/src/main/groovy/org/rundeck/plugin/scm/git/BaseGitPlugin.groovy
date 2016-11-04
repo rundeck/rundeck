@@ -153,7 +153,12 @@ class BaseGitPlugin {
                     try {
                         temp.withOutputStream { out ->
                             try {
-                                job.jobSerializer.serialize(format, out)
+                                job.jobSerializer.serialize(
+                                        format,
+                                        out,
+                                        !commonConfig.stripUuid,
+                                        job instanceof JobScmReference ? job.sourceId : null
+                                )
                             } catch (Throwable e) {
                                 thrown = e;
                             }
@@ -189,7 +194,7 @@ class BaseGitPlugin {
         File outfile = File.createTempFile("${this.class.name}-serializeTemp", ".${format}")
         outfile.deleteOnExit()
         outfile.withOutputStream { out ->
-            job.jobSerializer.serialize(format, out)
+            job.jobSerializer.serialize(format, out, !commonConfig.stripUuid, job instanceof JobScmReference ? job.sourceId : null)
         }
         return outfile
     }

@@ -335,7 +335,7 @@ class GitExportPluginSpec extends Specification {
 
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
-        Export config = createTestConfig(gitdir, origindir)
+        Export config = createTestConfig(gitdir, origindir, [stripUuid: stripUuid])
 
         //create a git dir
         def git = createGit(origindir)
@@ -359,10 +359,15 @@ class GitExportPluginSpec extends Specification {
         status != null
         status.synchState == SynchState.CREATE_NEEDED
         status.commit == null
-        1 * serializer.serialize('xml', _)>>{args->
+        1 * serializer.serialize('xml', _, (!stripUuid),_) >> { args ->
             args[1].write('data'.bytes)
         }
         0 * serializer.serialize(*_)
+
+        where:
+        stripUuid | _
+        true      | _
+        false     | _
     }
 
     def "get job status, exists in repo"() {
@@ -404,7 +409,7 @@ class GitExportPluginSpec extends Specification {
         status.commit.asMap().authorName == 'test user1'
         status.commit.asMap().commitId == commit.name
         status.commit.asMap().commitId6 == commit.abbreviate(6).name()
-        1 * serializer.serialize('xml', _) >> {
+        1 * serializer.serialize('xml', _, _,_) >> {
             it[1].write(contents.bytes)
         }
         0 * serializer.serialize(*_)
@@ -451,7 +456,7 @@ class GitExportPluginSpec extends Specification {
         diff.content == (modified ? """@@ -1 +1 @@
 -${orig}+${contents}""" : orig ? '' : null)
 
-        1 * serializer.serialize('xml', _) >> {
+        1 * serializer.serialize('xml', _, _,_) >> {
             it[1].write(contents.bytes)
         }
         0 * serializer.serialize(*_)
@@ -1017,7 +1022,7 @@ class GitExportPluginSpec extends Specification {
         def localfile = new File(gitdir, 'blah-xyz.xml')
 
         def serializer = Mock(JobSerializer) {
-            1 * serialize('xml', _) >> { args ->
+            1 * serialize('xml', _, _,_) >> { args ->
                 args[1].write('newcontent'.bytes)
                 return 10
             }
@@ -1070,7 +1075,7 @@ class GitExportPluginSpec extends Specification {
         def localfile = new File(gitdir, 'blah-xyz.xml')
 
         def serializer = Mock(JobSerializer) {
-            1 * serialize('xml', _) >> { args ->
+            1 * serialize('xml', _, _,_) >> { args ->
                 throw new IllegalArgumentException('failure')
             }
         }
@@ -1102,12 +1107,13 @@ class GitExportPluginSpec extends Specification {
         JobChangeEvent.JobChangeEventType.MODIFY | _
     }
 
-    def "job change create creates file"() {
+    @Unroll
+    def "job change create creates file #isStripUuid"() {
         given:
 
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
-        Export config = createTestConfig(gitdir, origindir)
+        Export config = createTestConfig(gitdir, origindir, [stripUuid: isStripUuid.toString()])
 
         //create a git dir
         def git = createGit(origindir)
@@ -1121,10 +1127,12 @@ class GitExportPluginSpec extends Specification {
         def localfile = new File(gitdir, 'blah-xyz.xml')
 
         def serializer = Mock(JobSerializer) {
-            1 * serialize('xml', _) >> { args ->
+            1 * serialize('xml', _, (!isStripUuid),_) >> { args ->
                 args[1].write('newcontent'.bytes)
                 return 10
             }
+            0 * serialize(*_)
+
         }
         def jobref = Stub(JobExportReference) {
             getJobName() >> 'blah'
@@ -1150,8 +1158,9 @@ class GitExportPluginSpec extends Specification {
         result.synchState == SynchState.CREATE_NEEDED
 
         where:
-        theEventType                             | _
-        JobChangeEvent.JobChangeEventType.CREATE | _
+        theEventType                             | isStripUuid
+        JobChangeEvent.JobChangeEventType.CREATE | true
+        JobChangeEvent.JobChangeEventType.CREATE | false
     }
 
     def "job change modify-rename removes old and writes new file"() {
@@ -1175,7 +1184,7 @@ class GitExportPluginSpec extends Specification {
         def localnewfile = new File(gitdir, 'blah2-xyz.xml')
 
         def serializer = Mock(JobSerializer) {
-            1 * serialize('xml', _) >> { args ->
+            1 * serialize('xml', _, _,_) >> { args ->
                 args[1].write('newcontent'.bytes)
                 return 10
             }
