@@ -386,8 +386,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     @Override
     JobImportState jobChanged(JobChangeEvent event, JobScmReference reference) {
         def path = getRelativePathForJob(event.originalJobReference)
-        def newpath = getRelativePathForJob(event.jobReference)
-        String origPath = null
+        def newpath = relativePath(reference)//recalculate path
         if (!isTrackedPath(path) && !isTrackedPath(newpath)) {
             return null
         }

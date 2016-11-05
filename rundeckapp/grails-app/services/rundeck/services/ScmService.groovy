@@ -458,7 +458,13 @@ class ScmService {
     {
         { JobChangeEvent event, JobSerializer serializer ->
             log.debug("job change event: " + event)
-            plugin.jobChanged(event, scmJobRef(event.jobReference, serializer))
+            def scmRef = scmJobRef(event.jobReference, serializer)
+            def origScmRef = event.originalJobReference?scmOrigJobRef(event.originalJobReference, null):null
+            plugin.jobChanged(new StoredJobChangeEvent(
+                    eventType: event.eventType,
+                    originalJobReference: origScmRef,
+                    jobReference: scmRef
+            ), scmRef )
             if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
                 jobMetadataService.removeJobPluginMetaAll(event.jobReference.project, event.jobReference.id)
             }
@@ -474,7 +480,7 @@ class ScmService {
         { JobChangeEvent event, JobSerializer serializer ->
             log.debug("job change event: " + event)
             JobScmReference scmRef = scmJobRef(event.jobReference, serializer)
-            JobScmReference origScmRef = scmOrigJobRef(event.originalJobReference, null)
+            JobScmReference origScmRef = event.originalJobReference?scmOrigJobRef(event.originalJobReference, null):null
             if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
                 //record deleted path
                 recordDeletedJob(
