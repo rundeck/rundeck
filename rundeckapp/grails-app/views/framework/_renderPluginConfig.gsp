@@ -53,8 +53,12 @@
                                   name: description.name,
                                   code: 'plugin.description',
                                   default: description.description
-                          ), textCss         : 'small text-muted',
-                                  mode       : 'hidden', rkey: g.rkey()]"/>
+                          ),
+                                  service:serviceName,
+                                  name:description.name,
+                                  markdownCss: 'small text-muted',
+                                  textCss    : 'small text-muted',
+                                  mode       : 'collapsed', rkey: g.rkey()]"/>
             </g:if>
                 <g:else>
                     <small class="text-muted"><stepplugin:message

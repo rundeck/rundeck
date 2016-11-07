@@ -139,6 +139,11 @@
             <div class="list-group-item">
 
                 <h4 class="list-group-item-heading">
+                    <stepplugin:pluginIcon service="${serviceName}"
+                                           name="${pluginName}"
+                                           width="24px"
+                                           height="24px"
+                    />
                     <stepplugin:message
                             service="${serviceName}"
                             name="${pluginName}"

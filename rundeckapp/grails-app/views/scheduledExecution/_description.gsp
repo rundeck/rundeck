@@ -28,7 +28,17 @@
             <span class="expandComponentHolder">
             <g:expander key="desc_${rkey}" open="${mode=='expanded'?'true':'false'}">${moreText?:'More'}</g:expander>
             <span class="${enc(attr: markdownCss ?: '')}" style="${wdgt.styleVisible(if:mode=='expanded')}" id="desc_${enc(attr: rkey)}">
-                <g:markdown>${remainingLine}</g:markdown>
+                <g:if test="${service && name}">
+                    <g:set var="pluginBaseUrl" value="${g.createLink(
+                            controller: 'plugin',
+                            action: 'pluginFile',
+                            params: [service: service, name: name]
+                    )}"/>
+                    <g:markdown>${remainingLine.replaceAll('\\{\\{plugin\\}\\}',pluginBaseUrl)}</g:markdown>
+                </g:if>
+                <g:else>
+                    <g:markdown>${remainingLine}</g:markdown>
+                </g:else>
             </span>
             </span>
         </g:if>
