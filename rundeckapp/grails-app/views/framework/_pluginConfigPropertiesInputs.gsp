@@ -76,7 +76,8 @@
                       fieldname    : (fieldnamePrefix ?: '') + prop.name,
                       origfieldname: (origfieldnamePrefix ?: '') + prop.name,
                       service      : service,
-                      provider     : provider
+                      provider     : provider,
+                      messagePrefix:messagePrefix
             ]}"/>
 </g:each>
 <g:set var="defaultGroupName" value="${g.message(code:'plugin.property.secondary.groupName',default:'More')}"/>
@@ -116,7 +117,8 @@
                               fieldname    : (fieldnamePrefix ?: '') + prop.name,
                               origfieldname: (origfieldnamePrefix ?: '') + prop.name,
                               service      : service,
-                              provider     : provider
+                              provider     : provider,
+                              messagePrefix:messagePrefix
                     ]}"/>
         </g:each>
     </div>
