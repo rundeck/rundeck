@@ -53,6 +53,9 @@ class RenameTracker<A> {
      * @param newval new
      */
     void trackItem(A oldval, A newval) {
+        if (oldval == newval) {
+            throw new IllegalArgumentException("trackItem ${oldval}==${newval}")
+        }
         if (renamedTrackedItems[newval] == oldval) {
             //reverted name change
             renamedTrackedItems.remove(newval)

@@ -47,4 +47,15 @@ class RenameTrackerSpec extends Specification {
         t.renamedValue("a") == null
         t.originalValue("b") == null
     }
+
+    def "trackItem invalid"() {
+        given:
+        def t = new RenameTracker<String>()
+
+        when:
+        t.trackItem("a", "a")
+
+        then:
+        IllegalArgumentException e = thrown()
+    }
 }
