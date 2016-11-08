@@ -52,19 +52,21 @@ class JobsXMLCodec {
     static encode = { list ->
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeWithBuilder(list, xml)
+        encodeWithBuilder(list, xml)
         return writer.toString()
     }
-    static encodeMaps = { list, boolean preserveUuid = true, Map<String, String> replaceIds = [:] ->
+    static encodeMaps (list, boolean preserveUuid = true, Map<String, String> replaceIds = [:] ){
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
-        JobsXMLCodec.encodeMapsWithBuilder(list, xml, preserveUuid, replaceIds)
+        encodeMapsWithBuilder(list, xml, preserveUuid, replaceIds)
         return writer.toString()
     }
-    static encodeWithBuilder = { list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:] ->
-        return encodeMapsWithBuilder(list.collect{it.toMap()},preserveUuid,replaceIds)
+
+    static encodeWithBuilder(list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:]) {
+        return encodeMapsWithBuilder(list.collect { it.toMap() }, xml, preserveUuid, replaceIds)
     }
-    static encodeMapsWithBuilder = { list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:] ->
+
+    static encodeMapsWithBuilder(list, xml, boolean preserveUuid = true, Map<String, String> replaceIds = [:]) {
         BuilderUtil bu = new BuilderUtil()
         bu.forceLineEndings=true
         bu.lineEndingChars='\n'

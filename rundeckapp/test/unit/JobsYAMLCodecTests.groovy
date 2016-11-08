@@ -70,7 +70,7 @@ public class JobsYAMLCodecTests  {
             assertNotNull doc
             assertEquals "wrong number of jobs", 1, doc.size()
             assertEquals "wrong name", "test job 1", doc[0].name
-            assertEquals "wrong name", jobs1[0].uuid, doc[0].uuid
+            assertEquals "wrong uuid", jobs1[0].uuid, doc[0].uuid
             assertEquals "wrong description", "test descrip", doc[0].description
             assertEquals "wrong loglevel", "INFO", doc[0].loglevel
             assertEquals "wrong scheduleEnabled", true, doc[0].scheduleEnabled

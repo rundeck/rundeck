@@ -46,10 +46,12 @@ class JobsYAMLCodec {
         }
         result
     }
-    static encodeStripUuid = { list ->
+
+    static encodeStripUuid(List list) {
         encodeReplaceUuid(list, [:])
     }
-    static encodeReplaceUuid = { list, Map replaceIds ->
+
+    static encodeReplaceUuid(List list, Map replaceIds) {
         def writer = new StringWriter()
         final DumperOptions dumperOptions = new ForceMultilineLiteralOptions();
         dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
@@ -71,7 +73,8 @@ class JobsYAMLCodec {
 
         return writer.toString()
     }
-    static encodeMaps = { list, boolean preserveUuid = true, Map<String, String> replaceIds = [:] ->
+
+    static encodeMaps(List list, boolean preserveUuid = true, Map<String, String> replaceIds = [:]) {
         def writer = new StringWriter()
         final DumperOptions dumperOptions = new ForceMultilineLiteralOptions();
         dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
@@ -81,7 +84,7 @@ class JobsYAMLCodec {
             if (replaceIds && replaceIds[map['id']]) {
                 map['id'] = replaceIds[map.remove('id')]
                 map['uuid'] = replaceIds[map.remove('uuid')]
-            } else {
+            } else if (!preserveUuid) {
                 map.remove('id')
                 map.remove('uuid')
             }
