@@ -72,7 +72,6 @@ class GitExportPluginSpec extends Specification {
                 strictHostKeyChecking: 'yes',
                 format               : 'xml',
                 url                  : new File(tempdir, 'origin'),
-                exportUuidBehavior   : 'preserve'
         ]
         input.remove(requiredInputName)
 
@@ -96,7 +95,6 @@ class GitExportPluginSpec extends Specification {
         _ | 'url'
         _ | 'strictHostKeyChecking'
         _ | 'format'
-        _ | 'exportUuidBehavior'
 
     }
 
@@ -326,8 +324,7 @@ class GitExportPluginSpec extends Specification {
                 committerEmail       : 'test@example.com',
                 format               : 'xml',
                 strictHostKeyChecking: 'yes',
-                url                  : origindir.absolutePath,
-                exportUuidBehavior   : 'preserve'
+                url                  : origindir.absolutePath
         ] + override
         def config = Config.create(Export, input)
         config

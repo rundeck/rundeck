@@ -37,14 +37,14 @@ class Import extends Common{
 * `remove` - Remove the source UUID
  ''',
             defaultValue = 'preserve',
-            required = true
+            required = false
     )
     @SelectValues(values = ['preserve', 'archive', 'remove'])
     String importUuidBehavior
 
 
     boolean isImportPreserve() {
-        importUuidBehavior == 'preserve'
+        importUuidBehavior == 'preserve' || !importUuidBehavior
     }
     boolean isImportArchive() {
         importUuidBehavior == 'archive'

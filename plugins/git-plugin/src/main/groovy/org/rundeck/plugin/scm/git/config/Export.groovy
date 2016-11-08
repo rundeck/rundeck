@@ -62,13 +62,13 @@ Template".
 * `remove` - Do not write a UUID into the exported Jobs.
 ''',
             defaultValue = 'preserve',
-            required = true
+            required = false
     )
     @SelectValues(values = ['preserve', 'original', 'remove'])
     String exportUuidBehavior
 
     boolean isExportPreserve() {
-        exportUuidBehavior == 'preserve'
+        exportUuidBehavior == 'preserve' || !exportUuidBehavior
     }
     boolean isExportOriginal() {
         exportUuidBehavior == 'original'
