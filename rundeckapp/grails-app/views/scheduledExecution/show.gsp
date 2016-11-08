@@ -67,7 +67,51 @@
 
             jQuery('input').on('keydown', function (evt) {
                 return noenter(evt);
-            });
+            })
+
+            //Rundeck-853 Override option list by providing options in URL (https://github.com/rundeck/rundeck/issues/853)
+            setTimeout(function () {
+                overrideOptions(window.location.href);
+            }, 200);
+        }
+
+        function overrideOptions(href) {
+            var data = parseUrlParams(href)
+            for (var key in data){
+
+                //1. when option is not strict and allowed to enter any values other then drop downs
+                var element = document.getElementsByName("extra.option."+key);
+                if(jQuery(element).is(":text")) {
+                    element[0].value = data[key];
+                }
+
+                var selectElement = document.getElementById("extra.option."+key);
+                if(jQuery(selectElement).is("select")) {
+                    if(selectElement == undefined || selectElement == null) {
+                        selectElement = document.getElementsByName("extra.option."+key)[0];
+                    }
+                    selectElement.value = data[key];
+                }
+
+                //2. when option is strict
+                var selectElementStrict = document.getElementsByName("extra.option."+key)[0];
+                if(jQuery(selectElementStrict).is("select")) {
+                    selectElementStrict.value = data[key];
+                }
+
+                //3. when options are multivalued
+                var checkboxeElements = document.getElementsByName("extra.option."+key);
+                if(jQuery(checkboxeElements).is(":checkbox")) {
+                    var elementValues = data[key].split(",");
+                    if(elementValues.length > 0) {
+                        jQuery('input[name="extra.option.'+key+'"]').prop('checked', false);
+                    }
+                    for(i = 0; i<elementValues.length; i++) {
+                        jQuery('input[name="extra.option.'+key+'"][value='+elementValues[i]+']').prop('checked', true);
+                    }
+                }
+
+            }
         }
         jQuery(init);
     </script>

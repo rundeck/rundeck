@@ -133,7 +133,7 @@
 
                 <div data-bind="if:!multivalued()">
                     <select class="optionvalues form-control"
-                            data-bind="attr: {name: !hasTextfield()?fieldName():'', id: !hasTextfield()?fieldId():'' },
+                            data-bind="attr: {name: !hasTextfield()?fieldName():'', id: !hasTextfield()?fieldId():fieldName() },
                          options: selectOptions,
                          optionsText: 'label',
                          optionsValue: 'value',
