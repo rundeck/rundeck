@@ -18,6 +18,7 @@ package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.plugins.scm.JobFileMapper
+import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
@@ -71,19 +72,20 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
-        def job = Mock(JobExportReference){
+        def job = Mock(JobScmReference) {
             getVersion()>>1L
+            getSourceId() >> sourceId
         }
         def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
         outfile.deleteOnExit()
 
         when:
-        base.serialize(job, format, !stripUuid, false)
+        base.serialize(job, format, !stripUuid, useSourceId)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null, (!stripUuid),_) >> { args ->
+            1 * serialize(format, !null, (!stripUuid), sourceId) >> { args ->
                 args[1].write('data'.bytes)
             }
         }
@@ -91,11 +93,19 @@ class BaseGitPluginSpec extends Specification {
 
 
         where:
-        format | stripUuid
-        'xml'  | true
-        'yaml' | true
-        'xml'  | false
-        'yaml' | false
+        format | stripUuid | useSourceId | sourceId
+        'xml'  | true      | false       | null
+        'xml'  | true      | true        | null
+        'xml'  | true      | true        | '123'
+        'yaml' | true      | false       | null
+        'yaml' | true      | true        | null
+        'yaml' | true      | true        | '123'
+        'xml'  | false     | false       | null
+        'xml'  | false     | true        | null
+        'xml'  | false     | true        | '123'
+        'yaml' | false     | false       | null
+        'yaml' | false     | true        | null
+        'yaml' | false     | true        | '123'
     }
 
     def "serialize job with two threads will not write same revision twice"() {
