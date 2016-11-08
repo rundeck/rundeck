@@ -160,11 +160,12 @@ class BaseGitPlugin {
                     try {
                         temp.withOutputStream { out ->
                             try {
+                                def sourceId = (job instanceof JobScmReference) ? job.sourceId  : null
                                 job.jobSerializer.serialize(
                                         format,
                                         out,
                                         preserveId,
-                                        (useSourceId && job instanceof JobScmReference) ? job.sourceId : null
+                                        useSourceId ? (sourceId ?: job.id) : null
                                 )
                             } catch (Throwable e) {
                                 thrown = e;

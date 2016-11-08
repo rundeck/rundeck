@@ -479,6 +479,12 @@ class ScmService {
     {
         { JobChangeEvent event, JobSerializer serializer ->
             log.debug("job change event: " + event)
+            if(event.eventType == JobChangeEvent.JobChangeEventType.CREATE){
+                //generate "source" UUID in case the local UUID will not be exported
+                jobMetadataService.setJobPluginMeta(event.jobReference.project, event.jobReference.id, 'scm-import',[
+                        srcId:UUID.randomUUID().toString()
+                ])
+            }
             JobScmReference scmRef = scmJobRef(event.jobReference, serializer)
             JobScmReference origScmRef = event.originalJobReference?scmOrigJobRef(event.originalJobReference, null):null
             if (event.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
@@ -1080,10 +1086,12 @@ class ScmService {
                 jobs.each { job ->
                     def orig = jobMetadataService.getJobPluginMeta(job, 'scm-import') ?: [:]
 
+                    def newmeta = [version: job.version, pluginMeta: result.commit.asMap()]
+
                     jobMetadataService.setJobPluginMeta(
                             job,
                             'scm-import',
-                            orig + [version: job.version, pluginMeta: result.commit.asMap()]
+                            orig + newmeta
                     )
                 }
             }
