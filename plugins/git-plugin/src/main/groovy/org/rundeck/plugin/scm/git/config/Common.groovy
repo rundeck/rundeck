@@ -31,22 +31,7 @@ import java.util.regex.Pattern
 /**
  * Common configuration class
  */
-@CompileStatic
 class Common extends Config {
-    @PluginProperty(
-            title = "Base Directory",
-            description = "Directory for checkout",
-            required = true
-    )
-    String dir
-
-    static class PathTemplateValidator implements PropertyValidator {
-        @Override
-        boolean isValid(final String value) throws ValidationException {
-            value ==~ ('^.*' + Pattern.quote('${job.id}') + '.*$')
-        }
-    }
-
     @PluginProperty(
             title = "File Path Template",
             description = '''Path template for storing a Job to a file within the base dir.
@@ -55,7 +40,7 @@ Available expansion patterns:
 
 * `${job.name}` - the job name
 * `${job.group}` - blank, or `path/`
-* `${job.project} - project name`
+* `${job.project}` - project name
 * `${job.id}` - job UUID
 * `${job.sourceId}` - Original Job UUID from imported source (see *Strip Job UUID*)
 * `${config.format}` - Serialization format chosen below.
@@ -72,7 +57,30 @@ as it the job UUID after import will be different than the one on disk.
                     '${job.group}${job.name}.${config.format}'],
             freeSelect = true
     )
+    @RenderingOption(
+            key = StringRenderingConstants.GROUP_NAME,
+            value = "Job Source Files"
+    )
     String pathTemplate
+
+    @PluginProperty(
+            title = "Base Directory",
+            description = "Directory for checkout",
+            required = true
+    )
+    @RenderingOption(
+            key = StringRenderingConstants.GROUP_NAME,
+            value = "Git Repository"
+    )
+    String dir
+
+    static class PathTemplateValidator implements PropertyValidator {
+        @Override
+        boolean isValid(final String value) throws ValidationException {
+            value ==~ ('^.*' + Pattern.quote('${job.id}') + '.*$')
+        }
+    }
+
 
     @PluginProperty(
             title = "Git URL",
@@ -90,6 +98,10 @@ Some examples:
 * `rsync://host.xz/path/to/repo.git/`''',
             required = true
     )
+    @RenderingOption(
+            key = StringRenderingConstants.GROUP_NAME,
+            value = "Git Repository"
+    )
     String url
 
     @PluginProperty(
@@ -97,6 +109,10 @@ Some examples:
             description = "Checkout branch",
             required = true,
             defaultValue = "master"
+    )
+    @RenderingOption(
+            key = StringRenderingConstants.GROUP_NAME,
+            value = "Git Repository"
     )
     String branch
 
@@ -109,6 +125,17 @@ If `yes`, require remote host SSH key is defined in the `~/.ssh/known_hosts` fil
             defaultValue = 'yes'
     )
     @SelectValues(values = ['yes', 'no'])
+    @RenderingOptions([
+
+            @RenderingOption(
+                    key = StringRenderingConstants.GROUP_NAME,
+                    value = "Authentication"
+            ),
+            @RenderingOption(
+                    key = StringRenderingConstants.GROUPING,
+                    value = "secondary"
+            )
+    ])
     String strictHostKeyChecking
 
     @PluginProperty(
@@ -132,6 +159,14 @@ If `yes`, require remote host SSH key is defined in the `~/.ssh/known_hosts` fil
                     @RenderingOption(
                             key = StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY,
                             value = "Rundeck-key-type=private"
+                    ),
+                    @RenderingOption(
+                            key = StringRenderingConstants.GROUP_NAME,
+                            value = "Authentication"
+                    ),
+                    @RenderingOption(
+                            key = StringRenderingConstants.GROUPING,
+                            value = "secondary"
                     )
             ]
     )
@@ -159,6 +194,14 @@ Path can include variable references
                     @RenderingOption(
                             key = StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY,
                             value = "Rundeck-data-type=password"
+                    ),
+                    @RenderingOption(
+                            key = StringRenderingConstants.GROUP_NAME,
+                            value = "Authentication"
+                    ),
+                    @RenderingOption(
+                            key = StringRenderingConstants.GROUPING,
+                            value = "secondary"
                     )
             ]
     )
@@ -171,6 +214,10 @@ Path can include variable references
             required = true
     )
     @SelectValues(values = ['xml', 'yaml'])
+    @RenderingOption(
+            key = StringRenderingConstants.GROUP_NAME,
+            value = "Job Source Files"
+    )
     String format
 
     @PluginProperty(
@@ -180,6 +227,10 @@ Path can include variable references
             required = false
     )
     @SelectValues(values = ['true', 'false'])
+    @RenderingOption(
+            key = StringRenderingConstants.GROUP_NAME,
+            value = "Git Repository"
+    )
     String fetchAutomatically
 
     boolean shouldFetchAutomatically(){

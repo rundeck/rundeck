@@ -16,14 +16,15 @@
 
 package org.rundeck.plugin.scm.git.config
 
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import groovy.transform.CompileStatic
 
 /**
  * Created by greg on 10/13/15.
  */
-@CompileStatic
 class Import extends Common{
 
     @PluginProperty(
