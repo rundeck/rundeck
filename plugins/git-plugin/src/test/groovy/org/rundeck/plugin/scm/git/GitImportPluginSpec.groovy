@@ -59,23 +59,6 @@ class GitImportPluginSpec extends Specification {
         config
     }
 
-    static Import createTestConfig2(File gitdir, File origindir, Map<String, String> override = [:]) {
-        Map<String, String> input = [
-                dir                  : gitdir.absolutePath,
-                pathTemplate         : '${job.group}${job.name}-${job.sourceId}.xml',
-                branch               : 'master',
-                format               : 'xml',
-                strictHostKeyChecking: 'yes',
-                url                  : origindir.absolutePath,
-                useFilePattern       : 'true',
-                filePattern          : '.*\\.xml',
-                stripUuid            : 'true'
-
-        ] + override
-        def config = Config.create(Import, input)
-        config
-    }
-
     def "get job status unimported job"() {
         given:
         def projectName = 'GitImportPluginSpec'
