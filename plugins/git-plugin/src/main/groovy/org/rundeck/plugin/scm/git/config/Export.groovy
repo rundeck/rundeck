@@ -18,10 +18,13 @@ package org.rundeck.plugin.scm.git.config
 
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.SelectValues
+import groovy.transform.CompileStatic
 
 /**
  * Created by greg on 10/13/15.
  */
+@CompileStatic
 class Export extends Common {
 
     @PluginProperty(
@@ -48,5 +51,28 @@ as the email of the committing user''',
     )
     String committerEmail
 
+    @PluginProperty(
+            title = "Export UUID Behavior",
+            description = '''How to handle UUIDs for exported Job source files
 
+* `preserve` - Write the Job UUID into exported Jobs, and as `${job.id}` in the "File Path Template"
+* `original` - Write the imported Source UUID into exported Jobs, and use it as the `${job.sourceId}` in the "File Path
+Template".
+* `remove` - Do not write a UUID into the exported Jobs.
+''',
+            defaultValue = 'preserve',
+            required = true
+    )
+    @SelectValues(values = ['preserve', 'original', 'remove'])
+    String exportUuidBehavior
+
+    boolean isExportPreserve() {
+        exportUuidBehavior == 'preserve'
+    }
+    boolean isExportOriginal() {
+        exportUuidBehavior == 'original'
+    }
+    boolean isExportRemove() {
+        exportUuidBehavior == 'remove'
+    }
 }

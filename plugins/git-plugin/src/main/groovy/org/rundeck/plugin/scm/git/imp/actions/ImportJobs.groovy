@@ -81,7 +81,7 @@ class ImportJobs extends BaseAction implements GitImportAction {
                     plugin.config.format,
                     new ByteArrayInputStream(bytes),
                     meta,
-                    !plugin.config.stripUuid
+                    plugin.config.importPreserve
             )
             if (!importResult.successful) {
                 success = false

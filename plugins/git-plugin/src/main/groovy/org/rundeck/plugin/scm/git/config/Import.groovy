@@ -16,8 +16,39 @@
 
 package org.rundeck.plugin.scm.git.config
 
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.SelectValues
+import groovy.transform.CompileStatic
+
 /**
  * Created by greg on 10/13/15.
  */
+@CompileStatic
 class Import extends Common{
+
+    @PluginProperty(
+            title = "Import UUID Behavior",
+            description = '''How to handle UUIDs from imported Job source files
+
+* `preserve` - Preserve the Source UUID as the Job UUID
+* `archive` - Remove the Source UUID but keep it for use in Export. Allows you to use `${job.sourceId}` in the "File
+ Path Template" instead of `${job.id}`.
+* `remove` - Remove the source UUID
+ ''',
+            defaultValue = 'preserve',
+            required = true
+    )
+    @SelectValues(values = ['preserve', 'archive', 'remove'])
+    String importUuidBehavior
+
+
+    boolean isImportPreserve() {
+        importUuidBehavior == 'preserve'
+    }
+    boolean isImportArchive() {
+        importUuidBehavior == 'archive'
+    }
+    boolean isImportRemove() {
+        importUuidBehavior == 'remove'
+    }
 }

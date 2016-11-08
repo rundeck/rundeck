@@ -345,7 +345,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     boolean contentDiffers(final JobScmReference job, RevCommit commit, final String path) {
         def currentJob = new ByteArrayOutputStream()
-        job.jobSerializer.serialize(path.endsWith('.xml') ? 'xml' : 'yaml', currentJob, !config.stripUuid, job.sourceId)
+        job.jobSerializer.serialize(
+                path.endsWith('.xml') ? 'xml' : 'yaml',
+                currentJob,
+                config.importPreserve,
+                config.importArchive ? job.sourceId : null
+        )
         def id = lookupId(commit, path)
         if (!id) {
             return true
@@ -469,7 +474,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             originalPath = importTracker.originalValue(path)
         }
         path = originalPath ?: getRelativePathForJob(job)
-        def temp = serializeTemp(job, config.format)
+        def temp = serializeTemp(job, config.format, config.importPreserve, config.importArchive)
         def latestCommit = GitUtil.lastCommitForPath repo, git, path
         def id = latestCommit ? lookupId(latestCommit, path) : null
         if (!latestCommit || !id) {

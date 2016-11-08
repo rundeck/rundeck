@@ -58,7 +58,6 @@ class GitExportPluginFactorySpec extends Specification {
         desc.properties*.name as Set == [
                 'dir',
                 'pathTemplate',
-                'stripUuid',
                 'url',
                 'branch',
                 'strictHostKeyChecking',
@@ -68,6 +67,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'fetchAutomatically',
                 'committerName',
                 'committerEmail',
+                'exportUuidBehavior',
         ] as Set
     }
 
@@ -80,7 +80,6 @@ class GitExportPluginFactorySpec extends Specification {
         properties*.name as Set == [
                 'dir',
                 'pathTemplate',
-                'stripUuid',
                 'url',
                 'branch',
                 'strictHostKeyChecking',
@@ -90,6 +89,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'fetchAutomatically',
                 'committerName',
                 'committerEmail',
+                'exportUuidBehavior',
         ] as Set
         def dirprop = properties.find { it.name == 'dir' }
         dirprop.defaultValue == null
@@ -108,7 +108,6 @@ class GitExportPluginFactorySpec extends Specification {
         properties*.name  as Set == [
                 'dir',
                 'pathTemplate',
-                'stripUuid',
                 'url',
                 'branch',
                 'strictHostKeyChecking',
@@ -118,6 +117,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'fetchAutomatically',
                 'committerName',
                 'committerEmail',
+                'exportUuidBehavior',
         ] as Set
         properties.find { it.name == 'dir' }.defaultValue == new File(tempdir.absolutePath, 'scm').absolutePath
     }
@@ -136,7 +136,8 @@ class GitExportPluginFactorySpec extends Specification {
                 committerEmail       : 'test@example.com',
                 strictHostKeyChecking: 'yes',
                 format               : 'xml',
-                url                  : origindir.absolutePath
+                url                  : origindir.absolutePath,
+                exportUuidBehavior   : 'preserve'
         ]
 
         //create a git dir

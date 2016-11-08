@@ -276,7 +276,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                     origfile.delete()
                 }
                 try {
-                    serialize(exportReference, format, outfile)
+                    serialize(exportReference, format, config.exportPreserve, config.exportOriginal, outfile)
                 } catch (Throwable t) {
                     getLogger().warn("Could not serialize job: ${t}", t)
                 }
@@ -323,7 +323,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
 
         if (job instanceof JobExportReference && doSerialize) {
-            serialize(job, format)
+            serialize(job, format, config.exportPreserve, config.exportOriginal)
         }
 
 
@@ -443,7 +443,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     ScmDiffResult getFileDiff(final JobExportReference job, final String originalPath) throws ScmPluginException {
         def file = getLocalFileForJob(job)
         def path = originalPath ?: relativePath(job)
-        serialize(job, format)
+        serialize(job, format, config.exportPreserve, config.exportOriginal)
 
         def id = lookupId(getHead(), path)
         if (!id) {

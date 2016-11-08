@@ -69,7 +69,6 @@ class BaseGitPluginSpec extends Specification {
     def "serialize job to valid file path"() {
         given:
         Common config = new Common()
-        config.stripUuid = stripUuid
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
         def job = Mock(JobExportReference){
@@ -79,7 +78,7 @@ class BaseGitPluginSpec extends Specification {
         outfile.deleteOnExit()
 
         when:
-        base.serialize(job, format)
+        base.serialize(job, format, !stripUuid, false)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
@@ -135,11 +134,11 @@ class BaseGitPluginSpec extends Specification {
             //grab lock on counter
             //now start threads which will block at the synchronized block
             def t1=Thread.start {
-                base.serialize(job, format)
+                base.serialize(job, format, true, false)
                 latch.countDown()
             }
             def t2=Thread.start {
-                base.serialize(job2, format)
+                base.serialize(job2, format, true, false)
                 latch.countDown()
             }
         }
@@ -189,9 +188,9 @@ class BaseGitPluginSpec extends Specification {
         }
         when:
 
-        base.serialize(newerJob, format)
+        base.serialize(newerJob, format, true, false)
 
-        base.serialize(job, format)
+        base.serialize(job, format, true, false)
 
         then:
         2 * base.mapper.fileForJob(_) >> outfile
@@ -221,7 +220,7 @@ class BaseGitPluginSpec extends Specification {
 
 
         when:
-        base.serialize(job, format)
+        base.serialize(job, format, true, false)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
@@ -246,7 +245,7 @@ class BaseGitPluginSpec extends Specification {
         outfile.deleteOnExit()
 
         when:
-        base.serialize(job, format)
+        base.serialize(job, format, true, false)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
@@ -274,7 +273,7 @@ class BaseGitPluginSpec extends Specification {
         outfile.deleteOnExit()
 
         when:
-        base.serialize(job, format)
+        base.serialize(job, format, true, false)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
@@ -304,7 +303,7 @@ class BaseGitPluginSpec extends Specification {
         }
 
         when:
-        def outfile = base.serializeTemp(job, format)
+        def outfile = base.serializeTemp(job, format, true, false)
 
 
         then:

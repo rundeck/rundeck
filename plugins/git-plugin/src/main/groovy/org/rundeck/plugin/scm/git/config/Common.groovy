@@ -24,12 +24,14 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
+import groovy.transform.CompileStatic
 
 import java.util.regex.Pattern
 
 /**
  * Common configuration class
  */
+@CompileStatic
 class Common extends Config {
     @PluginProperty(
             title = "Base Directory",
@@ -55,6 +57,7 @@ Available expansion patterns:
 * `${job.group}` - blank, or `path/`
 * `${job.project} - project name`
 * `${job.id}` - job UUID
+* `${job.sourceId}` - Original Job UUID from imported source (see *Strip Job UUID*)
 * `${config.format}` - Serialization format chosen below.
 
 If you set `Strip Job UUID` to true, then you most likely do not want to include `${job.id}` in the expansion pattern,
@@ -64,22 +67,12 @@ as it the job UUID after import will be different than the one on disk.
             required = true
     )
     @SelectValues(
-            values = ['${job.group}${job.name}-${job.id}.${config.format}', '${job.group}${job.name}.${config.format}'],
+            values = ['${job.group}${job.name}-${job.id}.${config.format}',
+                    '${job.group}${job.name}-${job.sourceId}.${config.format}',
+                    '${job.group}${job.name}.${config.format}'],
             freeSelect = true
     )
     String pathTemplate
-
-
-    @PluginProperty(
-            title = "Strip Job UUID",
-            description = '''If true, remove the UUID from jobs when importing/exporting.
-
-If true, then the `${job.id}` value *should not* be included in the "File Path Template".''',
-            defaultValue = 'false',
-            required = false
-    )
-    Boolean stripUuid
-
 
     @PluginProperty(
             title = "Git URL",

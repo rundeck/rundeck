@@ -72,6 +72,7 @@ class GitExportPluginSpec extends Specification {
                 strictHostKeyChecking: 'yes',
                 format               : 'xml',
                 url                  : new File(tempdir, 'origin'),
+                exportUuidBehavior   : 'preserve'
         ]
         input.remove(requiredInputName)
 
@@ -95,6 +96,7 @@ class GitExportPluginSpec extends Specification {
         _ | 'url'
         _ | 'strictHostKeyChecking'
         _ | 'format'
+        _ | 'exportUuidBehavior'
 
     }
 
@@ -324,7 +326,8 @@ class GitExportPluginSpec extends Specification {
                 committerEmail       : 'test@example.com',
                 format               : 'xml',
                 strictHostKeyChecking: 'yes',
-                url                  : origindir.absolutePath
+                url                  : origindir.absolutePath,
+                exportUuidBehavior   : 'preserve'
         ] + override
         def config = Config.create(Export, input)
         config
@@ -335,7 +338,7 @@ class GitExportPluginSpec extends Specification {
 
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
-        Export config = createTestConfig(gitdir, origindir, [stripUuid: stripUuid])
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: stripUuid ? 'remove' : 'preserve'])
 
         //create a git dir
         def git = createGit(origindir)
@@ -359,7 +362,7 @@ class GitExportPluginSpec extends Specification {
         status != null
         status.synchState == SynchState.CREATE_NEEDED
         status.commit == null
-        1 * serializer.serialize('xml', _, (!stripUuid),_) >> { args ->
+        1 * serializer.serialize('xml', _, (!stripUuid), null) >> { args ->
             args[1].write('data'.bytes)
         }
         0 * serializer.serialize(*_)
@@ -1113,7 +1116,7 @@ class GitExportPluginSpec extends Specification {
 
         def gitdir = new File(tempdir, 'scm')
         def origindir = new File(tempdir, 'origin')
-        Export config = createTestConfig(gitdir, origindir, [stripUuid: isStripUuid.toString()])
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: isStripUuid ? 'remove' : 'preserve'])
 
         //create a git dir
         def git = createGit(origindir)
