@@ -21,7 +21,7 @@ import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
 
 /**
- * Created by greg on 11/3/16.
+ * Serialize a job using its map representation into xml or yaml
  */
 class JobFromMapSerializer implements JobSerializer {
     Map<String, String> data
@@ -44,10 +44,12 @@ class JobFromMapSerializer implements JobSerializer {
     ) throws IOException
     {
         String str
+        def list = [data]
+        def replaceIds = [(data.id): sourceId]
         if (format == 'xml') {
-            str = JobsXMLCodec.encodeMaps([data], preserveUuid, [(data.id): sourceId])
+            str = JobsXMLCodec.encodeMaps(list, preserveUuid, replaceIds)
         } else if (format == 'yaml') {
-            str = JobsYAMLCodec.encodeMaps([data], preserveUuid, [(data.id): sourceId])
+            str = JobsYAMLCodec.encodeMaps(list, preserveUuid, replaceIds)
         } else {
             throw new IllegalArgumentException('Unsupported format: ' + format)
         }
