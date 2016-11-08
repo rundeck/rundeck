@@ -56,6 +56,6 @@ class RenameTrackerSpec extends Specification {
         t.trackItem("a", "a")
 
         then:
-        IllegalArgumentException e = thrown()
+        !t.renamedTrackedItems['a']
     }
 }
