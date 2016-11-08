@@ -32,16 +32,7 @@ class JobFromMapSerializer implements JobSerializer {
 
     @Override
     void serialize(final String format, final OutputStream outputStream) throws IOException {
-        String str
-        if (format == 'xml') {
-            str = JobsXMLCodec.encodeMaps([data])
-        } else if (format == 'yaml') {
-            str = JobsYAMLCodec.encodeMaps([data])
-        } else {
-            throw IllegalArgumentException('Unsupported format: ' + format)
-        }
-        outputStream.write(str.getBytes("UTF-8"))
-        outputStream.write('\n'.getBytes("UTF-8"))
+        serialize(format, outputStream, true, null)
     }
 
     @Override
@@ -58,7 +49,7 @@ class JobFromMapSerializer implements JobSerializer {
         } else if (format == 'yaml') {
             str = JobsYAMLCodec.encodeMaps([data], preserveUuid, [(data.id): sourceId])
         } else {
-            throw IllegalArgumentException('Unsupported format: ' + format)
+            throw new IllegalArgumentException('Unsupported format: ' + format)
         }
         outputStream.write(str.getBytes("UTF-8"))
         outputStream.write('\n'.getBytes("UTF-8"))
