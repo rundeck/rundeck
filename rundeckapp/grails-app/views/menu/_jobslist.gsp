@@ -147,6 +147,7 @@
                                                   textCss:'text-muted',
                                                   mode:'collapsed',
                                                   rkey:g.rkey(),
+                                                  jobLinkId:scheduledExecution?.extid,
                                                   cutoffMarker: ScheduledExecution.RUNBOOK_MARKER
                                           ]"/>
 
