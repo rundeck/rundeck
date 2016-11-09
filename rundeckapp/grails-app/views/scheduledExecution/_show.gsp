@@ -53,7 +53,7 @@
                                                         data-toggle="tab"><g:message code="definition"/></a></li>
             <g:if test="${rundoctext}">
                 <li>
-                    <a href="#rundoc" data-toggle="tab">Runbook</a>
+                    <a href="#rundoc" data-toggle="tab"><g:message code="runbook" /></a>
                 </li>
             </g:if>
         </ul>
