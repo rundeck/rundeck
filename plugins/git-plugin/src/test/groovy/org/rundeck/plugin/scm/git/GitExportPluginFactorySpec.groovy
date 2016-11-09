@@ -67,6 +67,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'fetchAutomatically',
                 'committerName',
                 'committerEmail',
+                'exportUuidBehavior'
         ] as Set
     }
 
@@ -88,6 +89,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'fetchAutomatically',
                 'committerName',
                 'committerEmail',
+                'exportUuidBehavior'
         ] as Set
         def dirprop = properties.find { it.name == 'dir' }
         dirprop.defaultValue == null
@@ -115,6 +117,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'fetchAutomatically',
                 'committerName',
                 'committerEmail',
+                'exportUuidBehavior',
         ] as Set
         properties.find { it.name == 'dir' }.defaultValue == new File(tempdir.absolutePath, 'scm').absolutePath
     }
