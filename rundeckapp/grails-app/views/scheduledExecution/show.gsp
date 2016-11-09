@@ -39,7 +39,17 @@
         var pagehistory;
         var joboptions;
         var remotecontroller;
+        function loadTab() {
+            "use strict";
+            var tabs = jQuery('#jobtabs').find('a[data-toggle="tab"]').map(function (i, e) {
+                return jQuery(e).attr('href');
+            }).get();
+            if (tabs.indexOf(document.location.hash)) {
+                jQuery('a[href="' + document.location.hash + '"]').tab('show');
+            }
+        }
         function init() {
+            "use strict";
             var params = loadJsonData('jobParams');
             var jobNodeFilters = initJobNodeFilters(params);
             ko.applyBindings(jobNodeFilters, document.getElementById('schedExDetails'));
@@ -68,6 +78,8 @@
             jQuery('input').on('keydown', function (evt) {
                 return noenter(evt);
             });
+
+            loadTab();
         }
         jQuery(init);
     </script>

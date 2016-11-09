@@ -34,7 +34,7 @@
 <g:set var="rundoctext" value="${extendeddesc?g.textAfterLine(text: extendeddesc, marker:ScheduledExecution.RUNBOOK_MARKER):null}"/>
 <div class="row">
     <div class="col-sm-12">
-        <ul class="nav nav-tabs">
+        <ul class="nav nav-tabs" id="jobtabs">
             <g:if test="${canRunJob}">
                 <li class="active"><a href="#runjob" data-toggle="tab"><g:message
                         code="scheduledExecution.show.run.tab.name"/></a></li>
