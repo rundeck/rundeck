@@ -1249,6 +1249,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def errjobs = []
         def skipjobs = []
         def jobChangeEvents=[]
+        def remappedIds=[:]
         jobset.each { jobdata ->
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
@@ -1263,6 +1264,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 i++
                 return
             }
+            String origid=jobdata.uuid?:jobdata.id
             if (uuidOption == 'remove') {
                 jobdata.uuid = null
                 jobdata.id = null
@@ -1355,11 +1357,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
                 }
             }
+            if (origid && origid != scheduledExecution.extid) {
+                remappedIds[scheduledExecution.extid] = origid
+            }
 
             i++
 
         }
-        return [jobs: jobs, jobsi: jobsi, errjobs: errjobs, skipjobs: skipjobs,jobChangeEvents:jobChangeEvents]
+        return [jobs: jobs, jobsi: jobsi, errjobs: errjobs, skipjobs: skipjobs,jobChangeEvents:jobChangeEvents,idMap:remappedIds]
     }
     static Logger jobChangeLogger = Logger.getLogger("com.dtolabs.rundeck.data.jobs.changes")
 

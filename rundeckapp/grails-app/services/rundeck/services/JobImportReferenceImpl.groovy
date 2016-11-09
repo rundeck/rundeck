@@ -29,8 +29,15 @@ class JobImportReferenceImpl extends JobReferenceImpl implements JobScmReference
     Map scmImportMetadata
     Long importVersion
     JobSerializer jobSerializer
+    String sourceId
 
-    JobImportReferenceImpl(final JobRevReference job, final long importVersion, final Map scmImportMetadata) {
+    JobImportReferenceImpl(
+            final JobRevReference job,
+            final long importVersion,
+            final Map scmImportMetadata,
+            String sourceId
+    )
+    {
         this.id=job.id
         this.groupPath=job.groupPath
         this.jobName=job.jobName
@@ -38,5 +45,20 @@ class JobImportReferenceImpl extends JobReferenceImpl implements JobScmReference
         this.project=job.project
         this.scmImportMetadata = scmImportMetadata
         this.importVersion = importVersion
+        this.sourceId = sourceId
+    }
+
+    @Override
+    String toString() {
+            return "JobImportReferenceImpl{" +
+                    "id='" + id + '\'' +
+                    ", project='" + project + '\'' +
+                    ", jobName='" + jobName + '\'' +
+                    ", groupPath='" + groupPath + '\'' +
+                    ", version='" + version + '\'' +
+                    ", importVersion='" + importVersion + '\'' +
+                    ", scmImportMetadata='" + scmImportMetadata + '\'' +
+                    ", sourceId='" + sourceId + '\'' +
+                    '}';
     }
 }

@@ -126,7 +126,14 @@ class BaseGitPlugin {
         }
     }
 
-    def serialize(final JobExportReference job, format, File outfile = null) {
+    def serialize(
+            final JobExportReference job,
+            String format,
+            boolean preserveId,
+            boolean useSourceId,
+            File outfile = null
+    )
+    {
         if (!outfile) {
             outfile = mapper.fileForJob(job)
         }
@@ -153,7 +160,13 @@ class BaseGitPlugin {
                     try {
                         temp.withOutputStream { out ->
                             try {
-                                job.jobSerializer.serialize(format, out)
+                                def sourceId = (job instanceof JobScmReference) ? job.sourceId  : null
+                                job.jobSerializer.serialize(
+                                        format,
+                                        out,
+                                        preserveId,
+                                        useSourceId ? (sourceId ?: job.id) : null
+                                )
                             } catch (Throwable e) {
                                 thrown = e;
                             }
@@ -185,17 +198,28 @@ class BaseGitPlugin {
         logger.debug("Done serialize[${Thread.currentThread().name}]...")
     }
 
-    def serializeTemp(final JobExportReference job, format) {
+    def serializeTemp(final JobExportReference job, String format, boolean preserveId, boolean useSourceId) {
         File outfile = File.createTempFile("${this.class.name}-serializeTemp", ".${format}")
         outfile.deleteOnExit()
         outfile.withOutputStream { out ->
-            job.jobSerializer.serialize(format, out)
+            job.jobSerializer.serialize(
+                    format,
+                    out,
+                    preserveId,
+                    (useSourceId && job instanceof JobScmReference) ? job.sourceId : null
+            )
         }
         return outfile
     }
 
-    def serializeAll(final Set<JobExportReference> jobExportReferences, String format) {
-        jobExportReferences.each { serialize(it, format) }
+    def serializeAll(
+            final Set<JobExportReference> jobExportReferences,
+            String format,
+            boolean preserveId,
+            boolean useOriginal
+    )
+    {
+        jobExportReferences.each { serialize(it, format, preserveId, useOriginal) }
     }
 
     TrackingRefUpdate fetchFromRemote(ScmOperationContext context, Git git1 = null) {

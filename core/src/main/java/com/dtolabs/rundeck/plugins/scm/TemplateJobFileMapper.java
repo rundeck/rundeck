@@ -56,6 +56,12 @@ public class TemplateJobFileMapper implements JobFileMapper {
         data.put("id", reference.getId());
         data.put("name", reference.getJobName());
         data.put("group", group);
+        if (reference instanceof JobScmReference) {
+            String sourceId = ((JobScmReference) reference).getSourceId();
+            data.put("sourceId", sourceId != null ? sourceId : reference.getId());
+        }else{
+            data.put("sourceId", reference.getId());
+        }
         return data;
     }
 

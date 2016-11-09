@@ -51,7 +51,8 @@ class GitImportPluginSpec extends Specification {
                 strictHostKeyChecking: 'yes',
                 url                  : origindir.absolutePath,
                 useFilePattern       : 'true',
-                filePattern          : '.*\\.xml'
+                filePattern          : '.*\\.xml',
+                importUuidBehavior   : 'preserve'
 
         ] + override
         def config = Config.create(Import, input)

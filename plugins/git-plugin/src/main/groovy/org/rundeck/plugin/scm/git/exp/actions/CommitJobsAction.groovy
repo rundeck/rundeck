@@ -114,7 +114,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
             ScmUserInfoMissing.fieldMissing("committerEmail")
         }
 
-        plugin.serializeAll(jobs, plugin.format)
+        plugin.serializeAll(jobs, plugin.format, plugin.config.exportPreserve, plugin.config.exportOriginal)
         String commitMessage = input[P_MESSAGE].toString()
         Status status = plugin.git.status().call()
         int pathcount=0

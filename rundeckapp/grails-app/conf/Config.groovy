@@ -155,6 +155,7 @@ log4j={
             info 'grails.app.services.rundeck.services.ProjectManagerService'
             off 'h2database'
             //info 'grails.app.utils.rundeck.codecs.SanitizedHTMLCodec'
+            debug 'org.rundeck.plugin.scm.git'
         }
     }
 }

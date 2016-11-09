@@ -200,11 +200,11 @@
                                                 }"/>
 
                                                 <g:render template="statusIcon"
-                                                          model="[iscommit: true, status: 'DELETED', notext: true,
-                                                                                                     integration:'export', text: '',]"/>
+                                                          model="[iscommit: true, exportStatus: 'DELETED', notext: true,
+                                                                                                     text: '',]"/>
                                                 <g:render template="statusIcon"
-                                                          model="[iscommit: true, status: 'DELETED', noicon: true,
-                                                                                                     integration:'export', text: deletedJobText]"/>
+                                                          model="[iscommit: true, exportStatus: 'DELETED', noicon: true,
+                                                                                                     text: deletedJobText]"/>
 
                                             </label>
                                         </div>

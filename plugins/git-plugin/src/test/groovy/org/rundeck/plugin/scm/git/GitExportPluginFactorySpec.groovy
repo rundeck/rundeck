@@ -46,7 +46,7 @@ class GitExportPluginFactorySpec extends Specification {
         expect:
         desc.title == 'Git Export'
         desc.name == 'git-export'
-        desc.properties.size() == 11
+        desc.properties.size() == 12
     }
 
     def "base description properties"() {
@@ -67,6 +67,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'fetchAutomatically',
                 'committerName',
                 'committerEmail',
+                'exportUuidBehavior'
         ] as Set
     }
 
@@ -88,6 +89,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'fetchAutomatically',
                 'committerName',
                 'committerEmail',
+                'exportUuidBehavior'
         ] as Set
         def dirprop = properties.find { it.name == 'dir' }
         dirprop.defaultValue == null
@@ -115,6 +117,7 @@ class GitExportPluginFactorySpec extends Specification {
                 'fetchAutomatically',
                 'committerName',
                 'committerEmail',
+                'exportUuidBehavior',
         ] as Set
         properties.find { it.name == 'dir' }.defaultValue == new File(tempdir.absolutePath, 'scm').absolutePath
     }
@@ -133,7 +136,7 @@ class GitExportPluginFactorySpec extends Specification {
                 committerEmail       : 'test@example.com',
                 strictHostKeyChecking: 'yes',
                 format               : 'xml',
-                url                  : origindir.absolutePath
+                url                  : origindir.absolutePath,
         ]
 
         //create a git dir

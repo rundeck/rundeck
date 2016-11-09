@@ -24,7 +24,7 @@ import java.util.Map;
  */
 public interface JobImporter {
     /**
-     * Import a serialized job
+     * Import a serialized job, preserving the UUID
      *
      * @param format         format, 'xml' or 'yaml'
      * @param input          input stream
@@ -35,7 +35,7 @@ public interface JobImporter {
     ImportResult importFromStream(String format, InputStream input, Map importMetadata);
 
     /**
-     * Import a Map-representation of a Job
+     * Import a Map-representation of a Job, preserving the UUID
      *
      * @param input          input map data
      * @param importMetadata metadata to attach to the job
@@ -43,4 +43,27 @@ public interface JobImporter {
      * @return result
      */
     ImportResult importFromMap(Map input, Map importMetadata);
+
+    /**
+     * Import a Map-representation of a Job
+     *
+     * @param input          input map data
+     * @param importMetadata metadata to attach to the job
+     * @param preserveUuid   if true, preserve any UUID on import, otherwise remove it
+     *
+     * @return result
+     */
+    ImportResult importFromMap(Map input, Map importMetadata, boolean preserveUuid);
+
+    /**
+     * Import a serialized job
+     *
+     * @param format         format, 'xml' or 'yaml'
+     * @param input          input stream
+     * @param importMetadata metadata to attach to the job
+     * @param preserveUuid   if true, preserve any UUID on import, otherwise remove it
+     *
+     * @return result
+     */
+    ImportResult importFromStream(String format, InputStream input, Map importMetadata, boolean preserveUuid);
 }
