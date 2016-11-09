@@ -105,7 +105,7 @@ public class AuthorizationFilters implements ApplicationContextAware{
                             log.error("Unauthenticated API request");
                         }
                     }
-                } else if (!request.remoteUser && controllerName && !(controllerName in ['assets'])) {
+                } else if (!request.remoteUser && controllerName && !(controllerName in ['assets','feed'])) {
                     //unauthenticated request to an action
                     response.status = 403
                     request.errorCode = 'request.authentication.required'
