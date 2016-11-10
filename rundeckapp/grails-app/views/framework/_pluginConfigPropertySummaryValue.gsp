@@ -24,7 +24,7 @@
 <g:set var="propDescription" value="${stepplugin.messageText(
         service: service,
         name: provider,
-        code: 'property.' + prop.name + '.description',
+        code: (messagePrefix?:'')+'property.' + prop.name + '.description',
         default: prop.description
 )}"/>
 <g:set var="propdesc" value="${g.textFirstLine(text: propDescription)}"/>
@@ -34,7 +34,7 @@
             <span title="${enc(attr: propdesc)}"><stepplugin:message
                     service="${service}"
                     name="${provider}"
-                    code="property.${prop.name}.title"
+                    code="${messagePrefix}property.${prop.name}.title"
                     default="${prop.title ?: prop.name}"/>:</span>
             <span class="text-success"><g:message code="yes"/></span>
         </span>
@@ -46,7 +46,7 @@
         <span title="${enc(attr: propdesc)}"><stepplugin:message
                 service="${service}"
                 name="${provider}"
-                code="property.${prop.name}.title"
+                code="${messagePrefix}property.${prop.name}.title"
                 default="${prop.title ?: prop.name}"/>:</span>
         <span class="text-success">&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</span>
     </span>
@@ -61,7 +61,7 @@
         <span title="${enc(attr: propdesc)}"><stepplugin:message
                 service="${service}"
                 name="${provider}"
-                code="property.${prop.name}.title"
+                code="${messagePrefix}property.${prop.name}.title"
                 default="${prop.title ?: prop.name}"/>:</span>
         <g:collapser key="${rakey}"><g:enc>${label ? label : ''}</g:enc>${split.size()} lines</g:collapser>
         <div class="collapse collapse-expandable" id="${enc(attr:rakey)}">
@@ -74,7 +74,7 @@
         <span title="${enc(attr: propdesc)}"><stepplugin:message
                 service="${service}"
                 name="${provider}"
-                code="property.${prop.name}.title"
+                code="${messagePrefix}property.${prop.name}.title"
                 default="${prop.title ?: prop.name}"/>:</span>
         <span class="text-success"><g:enc>${values[prop.name]}</g:enc></span>
     </span>

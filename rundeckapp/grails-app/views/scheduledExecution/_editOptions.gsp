@@ -46,6 +46,7 @@
                       jobexecOptionErrors : jobexecOptionErrors,
                       optiondependencies  : optiondependencies,
                       dependentoptions    : dependentoptions,
+                      remoteOptionData    : remoteOptionData,
                       optionordering      : optionordering
               ]"/>
 </div>

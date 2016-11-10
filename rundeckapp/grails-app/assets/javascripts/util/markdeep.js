@@ -90,7 +90,7 @@ function measureFontSize(fontStack) {
 var codeFontStack = "Menlo,\'Lucida Console\',monospace";
 var codeFontSize  = 105.1316178 / measureFontSize(codeFontStack) + 'px';
 
-console.log(codeFontSize);
+//console.log(codeFontSize);
 
 var BODY_STYLESHEET = entag('style', 'body{max-width:680px;' +
     'margin:auto;' +

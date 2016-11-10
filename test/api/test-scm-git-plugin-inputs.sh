@@ -15,8 +15,8 @@ if [ "" == "$2" ] ; then
 fi
 
 #/ props for input plugin
-props="dir
-pathTemplate
+commonprops="pathTemplate
+dir
 url
 branch
 strictHostKeyChecking
@@ -25,14 +25,18 @@ gitPasswordPath
 format
 fetchAutomatically
 "
-pcount=9
+props="importUuidBehavior
+$commonprops
+"
+pcount=10
 
 #/ additional props for export plugin
 exprops="committerName
 committerEmail
-$props
+exportUuidBehavior
+$commonprops
 "
-expcount=11
+expcount=12
 
 test_git_plugin_input_xml(){
 	local integration=$1
@@ -59,12 +63,13 @@ test_git_plugin_input_xml(){
 	
 	else
 		assert_xml_value "$pcount" 'count(/scmPluginSetupInput/fields/scmPluginInputField)' $DIR/curl.out
+
+		for prop in $props ; do
+			assert_xml_value "$prop" "/scmPluginSetupInput/fields/scmPluginInputField[name='$prop']/name" $DIR/curl.out
+		done
 	fi
 	
 
-	for prop in $props ; do
-		assert_xml_value "$prop" "/scmPluginSetupInput/fields/scmPluginInputField[name='$prop']/name" $DIR/curl.out
-	done
 	
 	test_succeed
 
@@ -85,16 +90,17 @@ test_git_plugin_input_json(){
 	
 	assert_json_value "$integration" '.integration' $DIR/curl.out
 	assert_json_value "$plugintype" '.type' $DIR/curl.out
+	local pnames=$props
 
 	if [ "$integration" == "export" ] ; then
 		assert_json_value "$expcount" '.fields | length' $DIR/curl.out
-		props=$exprops
+		pnames=$exprops
 	else
 		assert_json_value "$pcount" '.fields | length' $DIR/curl.out
 	fi
 	
 
-	assert_json_value "$props" ".fields[].name" $DIR/curl.out
+	assert_json_value "$pnames" ".fields[].name" $DIR/curl.out
 	
 	test_succeed
 

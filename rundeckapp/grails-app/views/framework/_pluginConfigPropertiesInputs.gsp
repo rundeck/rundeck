@@ -76,17 +76,18 @@
                       fieldname    : (fieldnamePrefix ?: '') + prop.name,
                       origfieldname: (origfieldnamePrefix ?: '') + prop.name,
                       service      : service,
-                      provider     : provider
+                      provider     : provider,
+                      messagePrefix:messagePrefix
             ]}"/>
 </g:each>
 <g:set var="defaultGroupName" value="${g.message(code:'plugin.property.secondary.groupName',default:'More')}"/>
-<g:each in="${groupSet.keySet()}" var="group" status="i">
+<g:each in="${groupSet.keySet()}" var="group" status="n">
     <g:set var="groupProps" value="${groupSet[group]}"/>
     <g:set var="gkey" value="${g.rkey()}"/>
-    <g:set var="hasValue" value="${values && groupProps*.name.find{values[it]}}"/>
+    <g:set var="hasValue" value="${values && groupProps*.name.find{name->values[name] && values[name]!= groupProps.find{it.name==name}?.defaultValue}}"/>
     <g:set var="isSecondary" value="${group in secondary}"/>
 
-    <g:if test="${i>0 || ungrouped}">
+    <g:if test="${ungrouped || n>0}">
         <hr/>
     </g:if>
 
@@ -118,7 +119,8 @@
                               fieldname    : (fieldnamePrefix ?: '') + prop.name,
                               origfieldname: (origfieldnamePrefix ?: '') + prop.name,
                               service      : service,
-                              provider     : provider
+                              provider     : provider,
+                              messagePrefix:messagePrefix
                     ]}"/>
         </g:each>
     </div>

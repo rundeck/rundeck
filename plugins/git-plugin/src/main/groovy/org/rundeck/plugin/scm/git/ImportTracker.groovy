@@ -26,6 +26,10 @@ class ImportTracker {
 
     Map<String, String> trackedCommits = Collections.synchronizedMap([:])
     Map<String, String> trackedJobIds = Collections.synchronizedMap([:])
+    /**
+     * job ID -> path
+     */
+    Map<String, String> trackedPathsMap = Collections.synchronizedMap([:])
 
     public Set<String> trackedPaths() {
         return trackedCommits.keySet() + trackedJobIds.keySet()
@@ -60,6 +64,7 @@ class ImportTracker {
     void trackJobAtPath(JobScmReference job, String path) {
         trackedCommits[path] = job.scmImportMetadata?.commitId
         trackedJobIds[path] = job.id
+        trackedPathsMap[job.id] = path
     }
 
     String untrackPath(String path) {
@@ -75,6 +80,10 @@ class ImportTracker {
         trackedJobIds[path]
     }
 
+    String trackedPath(String jobId) {
+        trackedPathsMap[jobId]
+    }
+
     Map<String, String> trackedDetail(String path) {
         [id: trackedJobIds[path], commitId: trackedCommits[path]]
     }
@@ -85,6 +94,7 @@ class ImportTracker {
                 "renamedTrackedItems=" + renamedTrackedItems +
                 ", trackedCommits=" + trackedCommits +
                 ", trackedJobIds=" + trackedJobIds +
+                ", trackedPathsMap=" + trackedPathsMap +
                 '}';
     }
 }

@@ -734,7 +734,10 @@ function paginate(elem,offset,total,max,options){
     }
     var opts={
         //message text
-        'paginate.next':'Next','paginate.prev':'Previous',
+        'paginate.next': 'Next',
+        'paginate.prev': 'Previous',
+        'paginate.ff': '»',
+        'paginate.rew': '«',
         //css classes
         nextClass:'',prevClass:'', stepClass:'', currentStepClass:'active',
         //url parameter names
@@ -760,10 +763,24 @@ function paginate(elem,offset,total,max,options){
     page.addClassName(opts.ulCss);
 
     //generate paginate links
-    var firststep=1
+    var firststep = 1;
+    while (curpage - firststep >= opts.maxsteps) {
+        //shift window
+        firststep += opts.maxsteps;
+    }
+    console.log("total, offset, curpage,firststep,maxsteps", total, offset, curpage, firststep, opts.maxsteps);
     var a;
-    var li = new Element('li');
-    if(curpage>firststep){
+    var li;
+
+    if (firststep > 1) {
+        //elipsis
+        a= _pageLink(opts.baseUrl, {offset: max * (firststep-2), max: max}, opts['paginate.rew'], opts['prevClass'], opts.stepBehavior);
+        li = new Element('li');
+        li.appendChild(a);
+        page.appendChild(li);
+    }
+    li = new Element('li');
+    if (curpage > firststep || firststep > 1) {
         //previous
         a= _pageLink(opts.baseUrl, {offset: (offset - max), max: max}, opts['paginate.prev'], opts['prevClass'], opts.prevBehavior);
     }else{
@@ -774,16 +791,19 @@ function paginate(elem,offset,total,max,options){
     li.appendChild(a);
     page.appendChild(li);
     //generate intermediate pages
-    var step=1;
-    for(var i=0;i<opts.maxsteps && (max * i)<total;i++){
-        var a = _pageLink(opts.baseUrl, {offset: max * i , max: max}, i+1, opts['stepClass'], opts.stepBehavior);
-        var li = new Element('li');
-        if (i + 1 == curpage) {
+    for (var i = 0; i < opts.maxsteps && (max * (i + firststep - 1)) < total; i++) {
+        a = _pageLink(opts.baseUrl, {
+            offset: max * (i + firststep - 1),
+            max: max
+        }, firststep + i, opts['stepClass'], opts.stepBehavior);
+        li = new Element('li');
+        if (i + firststep == curpage) {
             li.addClassName(opts['currentStepClass']);
         }
         li.appendChild(a);
         page.appendChild(li);
     }
+
     li = new Element('li');
     if (offset<total-max) {
         //next
@@ -795,8 +815,13 @@ function paginate(elem,offset,total,max,options){
     }
     li.appendChild(a);
     page.appendChild(li);
-    if(pages>opts.maxsteps){
+    if (pages >= firststep + opts.maxsteps) {
+        //elipsis
 
+        a= _pageLink(opts.baseUrl, {offset: max * (firststep + opts.maxsteps - 1), max: max}, opts['paginate.ff'], opts['nextClass'], opts.stepBehavior);
+        li = new Element('li');
+        li.appendChild(a);
+        page.appendChild(li);
     }
 
     var insert= {};

@@ -840,7 +840,7 @@ You can use the *Default Value* of an option to provide a value in the case wher
 
 You can also handle default values within a script, if your option doesn't specify one, or the user specifies a blank value for the option:
 
-Environment variable:
+**Environment variable:**
 
 As a precaution you might test existence for the variable and
 perhaps set a default value.
@@ -857,7 +857,7 @@ value:
 ${RD_OPTION_NAME:=mydefault} 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Replacement token	 
+**Replacement token:**
 
 If the option is blank or unset the token will be replaced with a blank
 string. You might write your script a bit more defensively and
@@ -872,6 +872,37 @@ fi
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        
 
 > Note, The replacement token syntax is only supported in inline script steps (ie, not script file or command steps).
+
+**Escaping Replacement Token:**
+
+If you want to use the `@` char in a way that looks like a replacement token
+you can escape it using `\` backslash.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
+# escaping of @ sign to avoid expansion before the @option.domain@
+email="user\@mail.@option.domain@"
+
+# If the first @ sign comes right before the token, it will work as expected
+email="user@@option.domain@"
+
+# or you can explicitly escape the first @ sign
+email="user\@@option.domain@"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
+
+In this example, the `@@option.domain@` will result in `@mydomain`,
+and `\@mail.@option.domain2@` will result in `@mail.mydomain`.
+
+If you do not escape the `@` in the second example, then `@mail.@`
+will be expanded to a missing value, resulting in a blank string.
+
+You do not need to escape the `@` sign in all cases, only when it might look
+like an expansion token.  If there are any whitespace characters
+before the next `@` sign it will not be expanded.
+
+~~~~ {.bash}
+# first @ sign does not need to be escaped
+text="Hi user@somewhere, @option.greeting@!"
+~~~~
 
 ## Escaped values
 

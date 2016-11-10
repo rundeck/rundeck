@@ -46,16 +46,58 @@ class JobsYAMLCodec {
         }
         result
     }
-    static encode = {list ->
+
+    static encodeStripUuid(List list) {
+        encodeReplaceUuid(list, [:])
+    }
+
+    static encodeReplaceUuid(List list, Map replaceIds) {
         def writer = new StringWriter()
         final DumperOptions dumperOptions = new ForceMultilineLiteralOptions();
         dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
         dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         Yaml yaml = new Yaml(dumperOptions)
+        def mapping = {
+            def map = it.toMap()
+            if (replaceIds && replaceIds[map['id']]) {
+                map['id'] = replaceIds[map.remove('id')]
+                map['uuid'] = replaceIds[map.remove('uuid')]
+            } else {
+                map.remove('id')
+                map.remove('uuid')
+            }
+            map
+        }
 
-        yaml.dump(list.collect {canonicalMap it.toMap()}, writer)
+        yaml.dump(list.collect { canonicalMap(mapping(it)) }, writer)
 
         return writer.toString()
+    }
+
+    static encodeMaps(List list, boolean preserveUuid = true, Map<String, String> replaceIds = [:]) {
+        def writer = new StringWriter()
+        final DumperOptions dumperOptions = new ForceMultilineLiteralOptions();
+        dumperOptions.lineBreak = DumperOptions.LineBreak.UNIX
+        dumperOptions.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        Yaml yaml = new Yaml(dumperOptions)
+        def mapping = {map->
+            if (replaceIds && replaceIds[map['id']]) {
+                map['id'] = replaceIds[map.remove('id')]
+                map['uuid'] = replaceIds[map.remove('uuid')]
+            } else if (!preserveUuid) {
+                map.remove('id')
+                map.remove('uuid')
+            }
+            map
+        }
+
+        yaml.dump(list.collect{canonicalMap(mapping(it))}, writer)
+
+        return writer.toString()
+    }
+    static encode = { list ->
+
+        return encodeMaps(list.collect { it.toMap() })
     }
 
     static decodeFromStream = {InputStream stream ->

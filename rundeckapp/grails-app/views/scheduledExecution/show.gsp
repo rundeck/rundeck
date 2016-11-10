@@ -39,10 +39,20 @@
         var pagehistory;
         var joboptions;
         var remotecontroller;
+        function loadTab(anchor) {
+            "use strict";
+            var tabs = jQuery('#jobtabs').find('a[data-toggle="tab"]').map(function (i, e) {
+                return jQuery(e).attr('href');
+            }).get();
+            if (tabs.indexOf(anchor)>=0) {
+                jQuery('a[href="' + anchor + '"]').tab('show');
+            }
+        }
         function init() {
+            "use strict";
             var params = loadJsonData('jobParams');
             var jobNodeFilters = initJobNodeFilters(params);
-            ko.applyBindings(jobNodeFilters, document.getElementById('schedExDetails'));
+            ko.applyBindings(jobNodeFilters, document.getElementById('definition'));
 
             pagehistory = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
             ko.applyBindings(pagehistory, document.getElementById('activity_section'));
@@ -67,6 +77,17 @@
 
             jQuery('input').on('keydown', function (evt) {
                 return noenter(evt);
+            });
+
+            loadTab(document.location.hash);
+            jQuery(window).on('hashchange', function () {
+                loadTab(document.location.hash);
+            });
+            jQuery(window).on('show.bs.tab', function (e) {
+                var t = jQuery(e.target);
+                if (t.attr('href').startsWith('#')) {
+                    document.location.hash = t.attr('href');
+                }
             });
         }
         jQuery(init);

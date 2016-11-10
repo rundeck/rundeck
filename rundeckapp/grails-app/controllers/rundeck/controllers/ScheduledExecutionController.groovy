@@ -856,12 +856,16 @@ class ScheduledExecutionController  extends ControllerBase{
                 'user.name': (session?.user?: "anonymous"),
         ]
         extraJobProps.putAll rundeckProps.collectEntries {['rundeck.'+it.key,it.value]}
+        Map globals=frameworkService.getProjectGlobals(scheduledExecution.project)
 
         def replacement= { Object[] group ->
             if (group[2] == 'job' && jobprops[group[3]] && scheduledExecution.properties.containsKey(jobprops[group[3]])) {
                 scheduledExecution.properties.get(jobprops[group[3]]).toString()
             } else if (group[2] == 'job' && null != extraJobProps[group[3]]) {
                 def value = extraJobProps[group[3]]
+                value.toString()
+            }else if (group[2] == 'globals' && null != globals[group[3]]) {
+                def value = globals[group[3]]
                 value.toString()
             }else if (group[2] == 'rundeck' && null != rundeckProps[group[3]]) {
                 def value = rundeckProps[group[3]]
@@ -886,7 +890,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def codecs=['URIComponent','URL']
         def result=[]
         arr.eachWithIndex { String entry, int i ->
-            result<<entry.replaceAll(/(\$\{(job|option|rundeck)\.([^}]+?(\.value)?)\})/) { Object[] group ->
+            result<<entry.replaceAll(/(\$\{(job|option|rundeck|globals)\.([^}]+?(\.value)?)\})/) { Object[] group ->
                 def val = replacement(group)
                  if (null != val) {
                      if(!isHttp){
@@ -2649,7 +2653,8 @@ class ScheduledExecutionController  extends ControllerBase{
             log.warn("Cyclic dependency for options for job ${scheduledExecution.extid}: (${toporesult.cycle})")
             model.optionsDependenciesCyclic = true
         }
-        if (toporesult.result) {
+        if (toporesult.result && !scheduledExecution.options.any { it.sortIndex != null }) {
+            //auto sort only if no ordering is defined
             model.optionordering = toporesult.result
         }
 
@@ -2662,15 +2667,12 @@ class ScheduledExecutionController  extends ControllerBase{
             def optData = [
                     'optionDependencies': model.optiondependencies[optName],
                     'optionDeps': model.dependentoptions[optName],
-                    optionAutoReload: model.dependentoptions[optName] && opt.enforced || model.selectedoptsmap && model.selectedoptsmap[optName]
             ];
             if (opt.realValuesUrl != null) {
                 optData << [
                         'hasUrl': true,
                         'scheduledExecutionId': scheduledExecution.extid,
                         'selectedOptsMap': model.selectedoptsmap ? model.selectedoptsmap[optName] : '',
-                        'loadonstart': !model.optiondependencies[optName] || model.optionsDependenciesCyclic,
-                        'optionAutoReload': (model.dependentoptions[optName] || model.selectedoptsmap && model.selectedoptsmap[optName]) && !model.optionsDependenciesCyclic
                 ]
             } else {
                 optData['localOption'] = true;

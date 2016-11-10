@@ -432,7 +432,8 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
      * @return local file
      * @throws FileCopierException on error
      */
-    protected  File writeLocalFile(
+    @Override
+    public File writeLocalFile(
             File original,
             InputStream input,
             String script,

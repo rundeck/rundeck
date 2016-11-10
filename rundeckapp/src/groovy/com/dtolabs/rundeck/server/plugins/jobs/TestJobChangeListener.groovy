@@ -60,7 +60,7 @@ class TestJobChangeListener {
                     }
                 }
                 outfile.withOutputStream {out->
-                    reference.jobSerializer.serialize('xml',out)
+                    reference.jobSerializer.serialize('xml',out,true)
                 }
         }
     }

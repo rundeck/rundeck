@@ -39,12 +39,27 @@ class ResolvedJobImporter implements JobImporter {
 
     @Override
     ImportResult importFromStream(final String format, final InputStream input, final Map importMetadata) {
-        return jobImporter.importFromStream(context, format, input, importMetadata)
-
+        return importFromStream(format, input, importMetadata, true)
     }
 
     @Override
     ImportResult importFromMap(final Map input, final Map importMetadata) {
-        return jobImporter.importFromMap(context, input, importMetadata)
+        return importFromMap(input, importMetadata, true)
+    }
+
+    @Override
+    ImportResult importFromStream(
+            final String format,
+            final InputStream input,
+            final Map importMetadata,
+            boolean preserveUuid
+    )
+    {
+        return jobImporter.importFromStream(context, format, input, importMetadata, preserveUuid)
+    }
+
+    @Override
+    ImportResult importFromMap(final Map input, final Map importMetadata, boolean preserveUuid) {
+        return jobImporter.importFromMap(context, input, importMetadata, preserveUuid)
     }
 }

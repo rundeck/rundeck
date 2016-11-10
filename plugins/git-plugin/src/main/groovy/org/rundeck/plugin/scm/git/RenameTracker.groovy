@@ -53,6 +53,11 @@ class RenameTracker<A> {
      * @param newval new
      */
     void trackItem(A oldval, A newval) {
+        if (oldval == newval) {
+            //ignore
+            renamedTrackedItems.remove(oldval)
+            return
+        }
         if (renamedTrackedItems[newval] == oldval) {
             //reverted name change
             renamedTrackedItems.remove(newval)

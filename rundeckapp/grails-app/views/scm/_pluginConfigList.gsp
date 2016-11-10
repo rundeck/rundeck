@@ -19,6 +19,7 @@
 <span class="help-block">
     <g:message code="scm.${integration}.plugins.help"/>
 </span>
+<g:set var="serviceName" value="${integration=='export'?'ScmExport':'ScmImport'}"/>
 
 <g:if test="${pluginConfig && pluginConfig.type && enabled && configuredPlugin && enabled}">
 %{--Disable plugin modal--}%
@@ -43,7 +44,11 @@
 
                             <div class="col-sm-10">
                                 <span class="form-control-static">
-                                    ${configuredPlugin.description.title}
+                                    <stepplugin:message
+                                            service="${serviceName}"
+                                            name="${configuredPlugin?.description.name}"
+                                            code="plugin.title"
+                                            default="${configuredPlugin?.description.title?:configuredPlugin?.description.name}"/>
                                 </span>
                                 <g:hiddenField name="type" value="${pluginConfig.type}"/>
                                 <g:hiddenField name="project" value="${params.project}"/>
@@ -92,7 +97,11 @@
 
                             <div class="col-sm-10">
                                 <span class="form-control-static">
-                                    ${configuredPlugin?.description.title}
+                                    <stepplugin:message
+                                            service="${serviceName}"
+                                            name="${configuredPlugin?.description.name}"
+                                            code="plugin.title"
+                                            default="${configuredPlugin?.description.title?:configuredPlugin?.description.name}"/>
                                 </span>
                                 <g:hiddenField name="type" value="${pluginConfig.type}"/>
                                 <g:hiddenField name="project" value="${params.project}"/>
@@ -130,8 +139,16 @@
             <div class="list-group-item">
 
                 <h4 class="list-group-item-heading">
-                    ${plugins[pluginName].description.title}
-
+                    <stepplugin:pluginIcon service="${serviceName}"
+                                           name="${pluginName}"
+                                           width="24px"
+                                           height="24px"
+                    />
+                    <stepplugin:message
+                            service="${serviceName}"
+                            name="${pluginName}"
+                            code="plugin.title"
+                            default="${plugins[pluginName].description.title?:pluginName}"/>
                     <g:if test="${isConfiguredButDisabled}">
                         <span class="badge"><g:message code="badge.Disabled.title"/></span>
                     </g:if>
@@ -148,9 +165,10 @@
 
                     <g:render template="/framework/renderPluginConfig"
                               model="${[
-                                      serviceName:integration=='export'?'ScmExport':'ScmImport',
+                                      serviceName:serviceName,
                                       values     : isConfigured ? pluginConfig.config : [:],
                                       description: plugins[pluginName].description,
+                                      messagePrefix:'setup.',
                                       hideTitle  : true
                               ]}"/>
 

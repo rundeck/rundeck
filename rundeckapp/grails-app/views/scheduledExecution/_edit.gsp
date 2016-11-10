@@ -142,7 +142,7 @@ function getCurSEID(){
             registerNodeFilters(jobRefNodeFilter,root);
         }
         function pageinit(){
-            _enableDragdrop();
+            _enableWFDragdrop();
 
             Event.observe(document,'keydown',function(evt){
                 //escape key hides popup bubble
@@ -461,13 +461,8 @@ function getCurSEID(){
                    value="${!(grailsApplication.config.rundeck?.gui?.job?.description?.disableHTML in [true, 'true'])}"/>
             <div class="help-block">
                 <g:if test="${allowHTML}">
-                    <g:message code="ScheduledExecution.property.description.description"/>
-                    <a href="http://en.wikipedia.org/wiki/Markdown" target="_blank" class="text-info">
-                        <i class="glyphicon glyphicon-question-sign"></i>
-                    </a>
-                    <a href="https://casual-effects.com/markdeep" target="_blank" class="text-info">
-                        Markdeep <i class="glyphicon glyphicon-question-sign"></i>
-                    </a>
+                    <g:render template="/scheduledExecution/description"
+                              model="${[description: g.message(code:"ScheduledExecution.property.description.description"),mode:'collapsed',rkey:g.rkey()]}"/>
                 </g:if>
                 <g:else>
                     <g:message code="ScheduledExecution.property.description.plain.description"/>

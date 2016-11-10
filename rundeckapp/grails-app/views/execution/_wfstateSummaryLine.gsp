@@ -1,6 +1,4 @@
-
-<span class=" execstate execstatedisplay overall h4"
-      data-execstate="%{--
+%{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,8 +13,8 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-
-${enc(attr:execState)}"
+<span class=" execstate execstatedisplay overall h4"
+      data-execstate="${enc(attr:execState)}"
       data-bind="attr: { 'data-execstate': executionState() } ">
 </span>
 <span data-bind="if: executionStatusString()!=null && executionState() != executionStatusString().toUpperCase()">
@@ -25,17 +23,13 @@ ${enc(attr:execState)}"
 </span>
 </span>
 
-<g:set var="didNotStart" value="${execution?.dateStarted?.getTime() > execution?.dateCompleted?.getTime() ? true : false}"/>
-
-<span data-bind="visible: completed()" style="${wdgt.styleVisible(if: execution.dateCompleted)}">
-    <g:if test="${!didNotStart}">
-        <g:message code="after" />
-        <span data-bind="text: execDurationHumanized(), attr: {title: execDurationSimple() } " class="text-info">
-            <g:if test="${execution.dateCompleted}">
-                <g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}"/>
-            </g:if>
-        </span>
-    </g:if>
+<span data-bind="visible: completed()" >
+    <g:message code="after" />
+    <span data-bind="text: execDurationHumanized(), attr: {title: execDurationSimple() } " class="text-info">
+        <g:if test="${execution.dateCompleted}">
+            <g:relativeDate start="${execution.dateStarted}" end="${execution.dateCompleted}"/>
+        </g:if>
+    </span>
     <span class="timerel">
         <g:message code="at" />
         <span data-bind="text: formatTimeAtDate(endTime()), attr: {title: endTime() }">
@@ -46,19 +40,18 @@ ${enc(attr:execState)}"
     </span>
 </span>
 
-<g:if test="${execution.status == 'scheduled' || didNotStart}">
-    <g:message code="scheduled" />
-</g:if>
-<g:else>
-    <g:message code="started" />
-</g:else>
+
+<span data-bind="if: !scheduled()">
+<g:message code="started" />
+</span>
 <span class="timerel">
-    <g:if test="${execution.status == 'scheduled' || didNotStart}">
+
+    <span data-bind="if: scheduled()">
         <g:message code="for" />
-    </g:if>
-    <g:else>
+    </span>
+    <span data-bind="if: !scheduled()">
         <g:message code="at" />
-    </g:else>
+    </span>
     <span data-bind="text: formatTimeAtDate(startTime()), attr: {title: startTime() }">
         <g:if test="${execution.dateStarted}">
             <g:relativeDate atDate="${execution.dateStarted}"/>

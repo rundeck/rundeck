@@ -53,8 +53,12 @@
                                   name: description.name,
                                   code: 'plugin.description',
                                   default: description.description
-                          ), textCss         : 'small text-muted',
-                                  mode       : 'hidden', rkey: g.rkey()]"/>
+                          ),
+                                  service:serviceName,
+                                  name:description.name,
+                                  markdownCss: 'small text-muted',
+                                  textCss    : 'small text-muted',
+                                  mode       : 'collapsed', rkey: g.rkey()]"/>
             </g:if>
                 <g:else>
                     <small class="text-muted"><stepplugin:message
@@ -83,7 +87,7 @@
             <g:if test="${description}">
                 <g:each in="${description.properties}" var="prop">
                     <g:render template="/framework/pluginConfigPropertySummaryValue"
-                              model="${[service: serviceName, provider: description.name, prop: prop, prefix: prefix, values: values, includeFormFields: includeFormFields]}"/>
+                              model="${[service: serviceName, provider: description.name, messagePrefix:messagePrefix, prop: prop, prefix: prefix, values: values, includeFormFields: includeFormFields]}"/>
                 </g:each>
             </g:if>
         </span>

@@ -107,7 +107,7 @@ class PluginController {
             } finally {
                 istream.close()
             }
-            return render(contentType: 'json', text: new HashMap(jprops) as JSON)
+            return render(contentType: 'application/json', text: new HashMap(jprops) as JSON)
         }
 
         try {

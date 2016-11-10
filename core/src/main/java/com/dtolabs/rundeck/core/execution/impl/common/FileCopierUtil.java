@@ -210,4 +210,20 @@ public interface FileCopierUtil {
             ExecutionContext context, File original, InputStream input,
             String script
     ) throws FileCopierException;
+
+    /**
+     *
+     * @param original source file
+     * @param input source stream
+     * @param script source string
+     * @param destinationFile destination
+     * @return local file
+     * @throws FileCopierException on error
+     */
+    File writeLocalFile(
+            File original,
+            InputStream input,
+            String script,
+            File destinationFile
+    ) throws FileCopierException;
 }

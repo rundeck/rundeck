@@ -769,7 +769,7 @@ class ScmController extends ControllerBase {
         jobs = jobs.findAll {
             it.extid in scmJobStatus.keySet()
         }
-        Map<String, String> scmFiles = scmService.exportFilePathsMapForJobRefs(scmService.jobRefsForJobs(jobs))
+        Map<String, String> scmFiles = scmService.exportFilePathsMapForJobs(jobs)
 
         jobs.each { ScheduledExecution job ->
             ScmExportActionItem item = new ScmExportActionItem()
@@ -925,8 +925,8 @@ class ScmController extends ControllerBase {
 
             List<ScheduledExecution> uncleanJobs = jobMap.subMap(scmJobStatus.keySet()).values() as List
 
-            Map<String, String> scmFiles = scmService.exportFilePathsMapForJobRefs(
-                    scmService.jobRefsForJobs(uncleanJobs)
+            Map<String, String> scmFiles = scmService.exportFilePathsMapForJobs(
+                    uncleanJobs
             )
             Map reversed = [:]
             scmFiles.each { k, v ->
@@ -1093,9 +1093,7 @@ class ScmController extends ControllerBase {
         }
 
         def scmProjectStatus = scmService.getPluginStatus(authContext, integration, project)
-        def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobRefs(
-                scmService.jobRefsForJobs(jobs)
-        ) : null
+        def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(jobs) : null
 
 
 
@@ -1200,6 +1198,8 @@ class ScmController extends ControllerBase {
                     request.errorHelp = result.extendedMessage
                 }
             }
+            def jobMap = [:]
+            def pluginDesc = scmService.loadProjectPluginDescriptor(project, integration)
             def deletedPaths = scmService.deletedExportFilesForProject(project)
             Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(params.project)
             //remove deleted paths that are known to be renamed jobs
@@ -1207,30 +1207,33 @@ class ScmController extends ControllerBase {
                 deletedPaths.remove(it)
             }
             def scmStatus = scmService.exportStatusForJobs(jobs)
-            def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobRefs(
-                    scmService.jobRefsForJobs(jobs)
-            ) : null
+            def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(jobs) : null
 
             def scmProjectStatus = scmService.getPluginStatus(authContext, integration, params.project)
             def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null
 
+            jobs.each{job->
+                jobMap[job.extid]=job
+            }
             render view: 'performAction',
                    model: [
-                           actionView      : scmService.getInputView(authContext, integration, project, actionId),
-                           jobs            : jobs,
-                           scmStatus       : scmStatus,
-                           selected        : params.id ? jobIds : [],
-                           filesMap        : scmFiles,
-                           trackingItems   : trackingItems,
-                           selectedItems   : chosenTrackedItems,
-                           report          : report,
-                           config          : params.pluginProperties,
-                           deletedPaths    : deletedPaths,
-                           renamedJobPaths : renamedJobPaths,
-                           selectedPaths   : deletePaths,
-                           scmProjectStatus: scmProjectStatus,
-                           actionId        : actionId,
-                           integration     : integration
+                           actionView       : scmService.getInputView(authContext, integration, project, actionId),
+                           jobs             : jobs,
+                           jobMap           : jobMap,
+                           scmStatus        : scmStatus,
+                           selected         : params.id ? jobIds : [],
+                           filesMap         : scmFiles,
+                           trackingItems    : trackingItems,
+                           selectedItems    : chosenTrackedItems,
+                           report           : report,
+                           config           : params.pluginProperties,
+                           deletedPaths     : deletedPaths,
+                           renamedJobPaths  : renamedJobPaths,
+                           selectedPaths    : deletePaths,
+                           scmProjectStatus : scmProjectStatus,
+                           actionId         : actionId,
+                           integration      : integration,
+                           pluginDescription: pluginDesc,
                    ]
             return
         }

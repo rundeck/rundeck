@@ -15,7 +15,7 @@
  */
 
 /*
-* TestBaseFileCopier.java
+* TestdefaultFileCopierUtil.java
 * 
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 3/24/11 4:20 PM
@@ -56,9 +56,10 @@ import java.util.regex.Pattern;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class TestBaseFileCopier extends TestCase {
+public class TestDefaultFileCopierUtil extends TestCase {
+    DefaultFileCopierUtil defaultFileCopierUtil;
     public void setUp() throws Exception {
-
+        defaultFileCopierUtil = new DefaultFileCopierUtil();
     }
 
     public void tearDown() throws Exception {
@@ -70,37 +71,55 @@ public class TestBaseFileCopier extends TestCase {
         NodeEntryImpl node = new NodeEntryImpl();
         node.setOsFamily("unix");
 
-        assertEquals("/tmp/", baseFileCopier.getRemoteDirForNode(node));
+        assertEquals("/tmp/", defaultFileCopierUtil.getRemoteDirForNode(node));
 
         node.setOsFamily("windows");
 
-        assertEquals("C:\\WINDOWS\\TEMP\\", baseFileCopier.getRemoteDirForNode(node));
+        assertEquals("C:\\WINDOWS\\TEMP\\", defaultFileCopierUtil.getRemoteDirForNode(node));
     }
 
     public void testGenerateFilepathUnix() throws Exception{
         NodeEntryImpl node = new NodeEntryImpl("node1");
         node.setOsFamily("unix");
-        assertMatches("/tmp/\\d+-.{10}-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh"));
+        assertMatches(
+                "/tmp/\\d+-.{10}-node1-blah.sh",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh")
+        );
     }
     public void testGenerateFilepathFileExtension() throws Exception{
         NodeEntryImpl node = new NodeEntryImpl("node1");
         node.setOsFamily("unix");
-        assertMatches("/tmp/\\d+-.{10}-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh"));
-        assertMatches("/tmp/\\d+-.{10}-node1-blah.sh.ext", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh","ext"));
         assertMatches(
-                "/tmp/\\d+-.{10}-node1-blah.sh.ext", BaseFileCopier.generateRemoteFilepathForNode(
+                "/tmp/\\d+-.{10}-node1-blah.sh",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh")
+        );
+        assertMatches(
+                "/tmp/\\d+-.{10}-node1-blah.sh.ext",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh", "ext")
+        );
+        assertMatches(
+                "/tmp/\\d+-.{10}-node1-blah.sh.ext", defaultFileCopierUtil.generateRemoteFilepathForNode(
                         node,
                         "blah.sh",
                         ".ext"
                 )
         );
-        assertMatches("/tmp/\\d+-.{10}-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh",null));
+        assertMatches(
+                "/tmp/\\d+-.{10}-node1-blah.sh",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh", null)
+        );
     }
     public void testGenerateFilepathFileExtensionIdent() throws Exception{
         NodeEntryImpl node = new NodeEntryImpl("node1");
         node.setOsFamily("unix");
-        assertMatches("/tmp/\\d+-abc-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh",null,"abc"));
-        assertMatches("/tmp/\\d+-def-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh",null,"def"));
+        assertMatches(
+                "/tmp/\\d+-abc-node1-blah.sh",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh", null, "abc")
+        );
+        assertMatches(
+                "/tmp/\\d+-def-node1-blah.sh",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh", null, "def")
+        );
     }
     class testProject implements IRundeckProject{
         Map<String, String> properties;
@@ -225,9 +244,9 @@ public class TestBaseFileCopier extends TestCase {
         node.setOsFamily("unix");
         testProject project=new testProject();
         project.properties = new HashMap<>();
-        project.properties.put(BaseFileCopier.PROJECT_FILE_COPY_DESTINATION_DIR, "/tmp2");
+        project.properties.put(DefaultFileCopierUtil.PROJECT_FILE_COPY_DESTINATION_DIR, "/tmp2");
         assertMatches(
-                "/tmp2/\\d+-abc-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(
+                "/tmp2/\\d+-abc-node1-blah.sh", defaultFileCopierUtil.generateRemoteFilepathForNode(
                         node,
                         project,
                         null,
@@ -242,10 +261,10 @@ public class TestBaseFileCopier extends TestCase {
         node.setOsFamily("unix");
         testProject project=new testProject();
         project.properties = new HashMap<>();
-        project.properties.put(BaseFileCopier.PROJECT_FILE_COPY_DESTINATION_DIR, "/tmp2");
-        project.properties.put(BaseFileCopier.PROJECT_FILE_COPY_DESTINATION_DIR+".unix", "/tmp3");
+        project.properties.put(DefaultFileCopierUtil.PROJECT_FILE_COPY_DESTINATION_DIR, "/tmp2");
+        project.properties.put(DefaultFileCopierUtil.PROJECT_FILE_COPY_DESTINATION_DIR + ".unix", "/tmp3");
         assertMatches(
-                "/tmp3/\\d+-abc-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(
+                "/tmp3/\\d+-abc-node1-blah.sh", defaultFileCopierUtil.generateRemoteFilepathForNode(
                         node,
                         project,
                         null,
@@ -260,12 +279,12 @@ public class TestBaseFileCopier extends TestCase {
         node.setOsFamily("windows");
         testProject project=new testProject();
         project.properties = new HashMap<>();
-        project.properties.put(BaseFileCopier.PROJECT_FILE_COPY_DESTINATION_DIR, "/tmp2");
-        project.properties.put(BaseFileCopier.PROJECT_FILE_COPY_DESTINATION_DIR+".unix", "/tmp3");
-        project.properties.put(BaseFileCopier.PROJECT_FILE_COPY_DESTINATION_DIR+".windows", "c:\\my\\tmp");
+        project.properties.put(DefaultFileCopierUtil.PROJECT_FILE_COPY_DESTINATION_DIR, "/tmp2");
+        project.properties.put(DefaultFileCopierUtil.PROJECT_FILE_COPY_DESTINATION_DIR + ".unix", "/tmp3");
+        project.properties.put(DefaultFileCopierUtil.PROJECT_FILE_COPY_DESTINATION_DIR + ".windows", "c:\\my\\tmp");
         assertMatches(
                 "c:\\\\my\\\\tmp\\\\\\d+-abc-node1-blah.sh.bat",
-                BaseFileCopier.generateRemoteFilepathForNode(
+                defaultFileCopierUtil.generateRemoteFilepathForNode(
                         node,
                         project,
                         null,
@@ -275,7 +294,7 @@ public class TestBaseFileCopier extends TestCase {
                 )
         );
     }
-    class testFramework implements IFramework{
+    private class testFramework implements IFramework{
         Map<String, String> properties;
         @Override
         public ProjectManager getFrameworkProjectMgr() {
@@ -431,9 +450,9 @@ public class TestBaseFileCopier extends TestCase {
         node.setOsFamily("unix");
         testFramework framework = new testFramework();
         framework.properties = new HashMap<>();
-        framework.properties.put(BaseFileCopier.FRAMEWORK_FILE_COPY_DESTINATION_DIR, "/tmp3");
+        framework.properties.put(DefaultFileCopierUtil.FRAMEWORK_FILE_COPY_DESTINATION_DIR, "/tmp3");
         assertMatches(
-                "/tmp3/\\d+-abc-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(
+                "/tmp3/\\d+-abc-node1-blah.sh", defaultFileCopierUtil.generateRemoteFilepathForNode(
                         node,
                         null,
                         framework,
@@ -448,10 +467,10 @@ public class TestBaseFileCopier extends TestCase {
         node.setOsFamily("unix");
         testFramework framework = new testFramework();
         framework.properties = new HashMap<>();
-        framework.properties.put(BaseFileCopier.FRAMEWORK_FILE_COPY_DESTINATION_DIR, "/tmp3");
-        framework.properties.put(BaseFileCopier.FRAMEWORK_FILE_COPY_DESTINATION_DIR+".unix", "/tmp4");
+        framework.properties.put(DefaultFileCopierUtil.FRAMEWORK_FILE_COPY_DESTINATION_DIR, "/tmp3");
+        framework.properties.put(DefaultFileCopierUtil.FRAMEWORK_FILE_COPY_DESTINATION_DIR + ".unix", "/tmp4");
         assertMatches(
-                "/tmp4/\\d+-abc-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(
+                "/tmp4/\\d+-abc-node1-blah.sh", defaultFileCopierUtil.generateRemoteFilepathForNode(
                         node,
                         null,
                         framework,
@@ -466,12 +485,15 @@ public class TestBaseFileCopier extends TestCase {
         node.setOsFamily("windows");
         testFramework framework = new testFramework();
         framework.properties = new HashMap<>();
-        framework.properties.put(BaseFileCopier.FRAMEWORK_FILE_COPY_DESTINATION_DIR, "/tmp3");
-        framework.properties.put(BaseFileCopier.FRAMEWORK_FILE_COPY_DESTINATION_DIR+".unix", "/tmp4");
-        framework.properties.put(BaseFileCopier.FRAMEWORK_FILE_COPY_DESTINATION_DIR+".windows", "c:\\tmp\\blah");
+        framework.properties.put(DefaultFileCopierUtil.FRAMEWORK_FILE_COPY_DESTINATION_DIR, "/tmp3");
+        framework.properties.put(DefaultFileCopierUtil.FRAMEWORK_FILE_COPY_DESTINATION_DIR + ".unix", "/tmp4");
+        framework.properties.put(
+                DefaultFileCopierUtil.FRAMEWORK_FILE_COPY_DESTINATION_DIR + ".windows",
+                "c:\\tmp\\blah"
+        );
         assertMatches(
                 "c:\\\\tmp\\\\blah\\\\\\d+-abc-node1-blah.sh.bat",
-                BaseFileCopier.generateRemoteFilepathForNode(
+                defaultFileCopierUtil.generateRemoteFilepathForNode(
                         node,
                         null,
                         framework,
@@ -484,12 +506,12 @@ public class TestBaseFileCopier extends TestCase {
     public void testGenerateFilepathFileExtensionNodeVsFramework() throws Exception{
         NodeEntryImpl node = new NodeEntryImpl("node1");
         node.setOsFamily("unix");
-        node.getAttributes().put(BaseFileCopier.FILE_COPY_DESTINATION_DIR, "/tmp4");
+        node.getAttributes().put(DefaultFileCopierUtil.FILE_COPY_DESTINATION_DIR, "/tmp4");
         testFramework framework = new testFramework();
         framework.properties = new HashMap<>();
-        framework.properties.put(BaseFileCopier.FRAMEWORK_FILE_COPY_DESTINATION_DIR, "/tmp3");
+        framework.properties.put(DefaultFileCopierUtil.FRAMEWORK_FILE_COPY_DESTINATION_DIR, "/tmp3");
         assertMatches(
-                "/tmp4/\\d+-abc-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(
+                "/tmp4/\\d+-abc-node1-blah.sh", defaultFileCopierUtil.generateRemoteFilepathForNode(
                         node,
                         null,
                         framework,
@@ -502,12 +524,12 @@ public class TestBaseFileCopier extends TestCase {
     public void testGenerateFilepathFileExtensionNodeVsProject() throws Exception{
         NodeEntryImpl node = new NodeEntryImpl("node1");
         node.setOsFamily("unix");
-        node.getAttributes().put(BaseFileCopier.FILE_COPY_DESTINATION_DIR, "/tmp4");
+        node.getAttributes().put(DefaultFileCopierUtil.FILE_COPY_DESTINATION_DIR, "/tmp4");
         testProject project = new testProject();
         project.properties = new HashMap<>();
-        project.properties.put(BaseFileCopier.PROJECT_FILE_COPY_DESTINATION_DIR, "/tmp3");
+        project.properties.put(DefaultFileCopierUtil.PROJECT_FILE_COPY_DESTINATION_DIR, "/tmp3");
         assertMatches(
-                "/tmp4/\\d+-abc-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(
+                "/tmp4/\\d+-abc-node1-blah.sh", defaultFileCopierUtil.generateRemoteFilepathForNode(
                         node,
                         project,
                         null,
@@ -522,12 +544,12 @@ public class TestBaseFileCopier extends TestCase {
         node.setOsFamily("unix");
         testProject project = new testProject();
         project.properties = new HashMap<>();
-        project.properties.put(BaseFileCopier.PROJECT_FILE_COPY_DESTINATION_DIR, "/tmp3");
+        project.properties.put(DefaultFileCopierUtil.PROJECT_FILE_COPY_DESTINATION_DIR, "/tmp3");
         testFramework framework = new testFramework();
         framework.properties = new HashMap<>();
-        framework.properties.put(BaseFileCopier.FRAMEWORK_FILE_COPY_DESTINATION_DIR, "/tmp4");
+        framework.properties.put(DefaultFileCopierUtil.FRAMEWORK_FILE_COPY_DESTINATION_DIR, "/tmp4");
         assertMatches(
-                "/tmp3/\\d+-abc-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(
+                "/tmp3/\\d+-abc-node1-blah.sh", defaultFileCopierUtil.generateRemoteFilepathForNode(
                         node,
                         project,
                         framework,
@@ -540,44 +562,96 @@ public class TestBaseFileCopier extends TestCase {
     public void testGenerateFilepathFileExtensionWindows() throws Exception{
         NodeEntryImpl node = new NodeEntryImpl("node1");
         node.setOsFamily("windows");
-        assertMatches("C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.sh.bat", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh"));
-        assertMatches("C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.bat", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.bat"));
-        assertMatches("C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.sh.ext", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh","ext"));
-        assertMatches("C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.bat.ext", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.bat","ext"));
-        assertMatches("C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.sh.bat", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh",null));
+        assertMatches(
+                "C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.sh.bat",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh")
+        );
+        assertMatches(
+                "C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.bat",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.bat")
+        );
+        assertMatches(
+                "C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.sh.ext",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh", "ext")
+        );
+        assertMatches(
+                "C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.bat.ext",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.bat", "ext")
+        );
+        assertMatches(
+                "C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.sh.bat",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh", null)
+        );
     }
 
     public void testGenerateFilepathWindows() throws Exception {
         NodeEntryImpl node = new NodeEntryImpl("node1");
         node.setOsFamily("windows");
-        assertMatches("C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.sh.bat", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh"));
-        assertMatches("C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.bat", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.bat"));
+        assertMatches(
+                "C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.sh.bat",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh")
+        );
+        assertMatches(
+                "C:\\\\WINDOWS\\\\TEMP\\\\\\d+-.{10}-node1-blah.bat",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.bat")
+        );
     }
     public void testGenerateFilepathTargetDir() throws Exception {
         NodeEntryImpl node = new NodeEntryImpl("node1");
         node.setOsFamily("windows");
-        node.setAttribute(BaseFileCopier.FILE_COPY_DESTINATION_DIR, "c:\\my\\tmp");
-        assertMatches("c:\\\\my\\\\tmp\\\\\\d+-.{10}-node1-blah.sh.bat", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh"));
-        assertMatches("c:\\\\my\\\\tmp\\\\\\d+-.{10}-node1-blah.bat", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.bat"));
-        node.setAttribute(BaseFileCopier.FILE_COPY_DESTINATION_DIR, "c:\\my\\tmp\\");
-        assertMatches("c:\\\\my\\\\tmp\\\\\\d+-.{10}-node1-blah.sh.bat", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh"));
-        assertMatches("c:\\\\my\\\\tmp\\\\\\d+-.{10}-node1-blah.bat", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.bat"));
+        node.setAttribute(DefaultFileCopierUtil.FILE_COPY_DESTINATION_DIR, "c:\\my\\tmp");
+        assertMatches(
+                "c:\\\\my\\\\tmp\\\\\\d+-.{10}-node1-blah.sh.bat",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh")
+        );
+        assertMatches(
+                "c:\\\\my\\\\tmp\\\\\\d+-.{10}-node1-blah.bat",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.bat")
+        );
+        node.setAttribute(DefaultFileCopierUtil.FILE_COPY_DESTINATION_DIR, "c:\\my\\tmp\\");
+        assertMatches(
+                "c:\\\\my\\\\tmp\\\\\\d+-.{10}-node1-blah.sh.bat",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh")
+        );
+        assertMatches(
+                "c:\\\\my\\\\tmp\\\\\\d+-.{10}-node1-blah.bat",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.bat")
+        );
 
         node.setOsFamily("unix");
-        node.setAttribute(BaseFileCopier.FILE_COPY_DESTINATION_DIR, "/my/tmp");
-        assertMatches("/my/tmp/\\d+-.{10}-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh"));
-        assertMatches("/my/tmp/\\d+-.{10}-node1-blah.bat.sh", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.bat"));
-        node.setAttribute(BaseFileCopier.FILE_COPY_DESTINATION_DIR, "/my/tmp/");
-        assertMatches("/my/tmp/\\d+-.{10}-node1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh"));
-        assertMatches("/my/tmp/\\d+-.{10}-node1-blah.bat.sh", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.bat"));
+        node.setAttribute(DefaultFileCopierUtil.FILE_COPY_DESTINATION_DIR, "/my/tmp");
+        assertMatches(
+                "/my/tmp/\\d+-.{10}-node1-blah.sh",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh")
+        );
+        assertMatches(
+                "/my/tmp/\\d+-.{10}-node1-blah.bat.sh",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.bat")
+        );
+        node.setAttribute(DefaultFileCopierUtil.FILE_COPY_DESTINATION_DIR, "/my/tmp/");
+        assertMatches(
+                "/my/tmp/\\d+-.{10}-node1-blah.sh",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh")
+        );
+        assertMatches(
+                "/my/tmp/\\d+-.{10}-node1-blah.bat.sh",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.bat")
+        );
     }
     public void testGenerateFilepathBadChars() throws Exception{
         NodeEntryImpl node = new NodeEntryImpl("node name1");
         node.setOsFamily("unix");
-        assertMatches("/tmp/\\d+-.{10}-node_name1-blah.sh", BaseFileCopier.generateRemoteFilepathForNode(node, "blah.sh"));
-        assertMatches("/tmp/\\d+-.{10}-node_name1-blah_flah.sh", BaseFileCopier.generateRemoteFilepathForNode(node,
+        assertMatches(
+                "/tmp/\\d+-.{10}-node_name1-blah.sh",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah.sh")
+        );
+        assertMatches("/tmp/\\d+-.{10}-node_name1-blah_flah.sh", defaultFileCopierUtil.generateRemoteFilepathForNode(
+                node,
                 "blah flah.sh"));
-        assertMatches("/tmp/\\d+-.{10}-node_name1-blah___flah.sh", BaseFileCopier.generateRemoteFilepathForNode(node, "blah///flah.sh"));
+        assertMatches(
+                "/tmp/\\d+-.{10}-node_name1-blah___flah.sh",
+                defaultFileCopierUtil.generateRemoteFilepathForNode(node, "blah///flah.sh")
+        );
     }
 
     private void assertMatches(String pattern, String string) {
