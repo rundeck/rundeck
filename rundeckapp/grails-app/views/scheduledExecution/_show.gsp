@@ -18,13 +18,13 @@
 <div class="row">
     <g:render template="/scheduledExecution/showHead"
               model="[scheduledExecution: scheduledExecution,
-                      followparams: [mode: followmode, lastlines: params.lastlines],
+                      followparams      : [mode: followmode, lastlines: params.lastlines],
                       jobDescriptionMode:'expanded',
-                      jobActionButtons:true,
-                      scmExportEnabled:scmExportEnabled,
-                      scmExportStatus:scmExportStatus,
-                      scmImportEnabled:scmImportEnabled,
-                      scmImportStatus:scmImportStatus
+                      jobActionButtons  : true,
+                      scmExportEnabled  : scmExportEnabled,
+                      scmExportStatus   : scmExportStatus,
+                      scmImportEnabled  : scmImportEnabled,
+                      scmImportStatus   : scmImportStatus
               ]"/>
 </div>
 <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
@@ -34,7 +34,7 @@
 <g:set var="rundoctext" value="${extendeddesc?g.textAfterLine(text: extendeddesc, marker:ScheduledExecution.RUNBOOK_MARKER):null}"/>
 <div class="row">
     <div class="col-sm-12">
-        <ul class="nav nav-tabs">
+        <ul class="nav nav-tabs" id="jobtabs">
             <g:if test="${canRunJob}">
                 <li class="active"><a href="#runjob" data-toggle="tab"><g:message
                         code="scheduledExecution.show.run.tab.name"/></a></li>
@@ -49,11 +49,11 @@
                     </a>
                 </li>
             </g:else>
-            <li class="${canRunJob ? '' : 'active'}"><a href="#schedExDetails"
+            <li class="${canRunJob ? '' : 'active'}"><a href="#definition"
                                                         data-toggle="tab"><g:message code="definition"/></a></li>
             <g:if test="${rundoctext}">
                 <li>
-                    <a href="#rundoc" data-toggle="tab">Runbook</a>
+                    <a href="#runbook" data-toggle="tab"><g:message code="runbook" /></a>
                 </li>
             </g:if>
         </ul>
@@ -68,7 +68,7 @@
                             defaultFollow="${true}"/>
                 </div>
             </g:if>
-            <div id="schedExDetails"
+            <div id="definition"
                  class="tab-pane panel panel-default panel-tab-content  ${canRunJob ? '' : 'active'}">
                 <div class="panel-body">
                     <g:render template="/execution/execDetails" model="[execdata: scheduledExecution, showEdit: true, hideOptions: true, knockout: true]"/>
@@ -76,7 +76,7 @@
                 </div>
             </div>
             <g:if test="${rundoctext}">
-                <div id="rundoc" class="tab-pane panel panel-default panel-tab-content">
+                <div id="runbook" class="tab-pane panel panel-default panel-tab-content">
                     <div class="panel-body">
                         <div class="markdeep">${rundoctext}</div>
                     </div>
@@ -105,7 +105,7 @@
 
 <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
 <g:javascript>
-    fireWhenReady('schedExDetails', function (z) {
+    fireWhenReady('definition', function (z) {
         jQuery('.apply_ace').each(function () {
             _applyAce(this,'400px');
         });

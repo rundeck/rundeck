@@ -138,6 +138,7 @@
                           textCss     : 'h4 text-muted',
                           mode        : jobDescriptionMode ?: 'expanded',
                           cutoffMarker: ScheduledExecution.RUNBOOK_MARKER,
+                          jobLinkId   : scheduledExecution.extid,
                           rkey        : g.rkey()
                   ]"/>
 </section>

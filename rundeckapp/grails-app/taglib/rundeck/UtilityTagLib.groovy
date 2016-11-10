@@ -517,6 +517,20 @@ class UtilityTagLib{
                         }
                 ]
         ]
+        if(attrs.jobLinkId){
+            linkopts.jobhref=[
+                    pattern: /\{\{job\.permalink\}\}/,
+                    hrefParams:[action:'show',controller:'scheduledExecution',id:attrs.jobLinkId] + xparams,
+            ]
+        }
+        if(attrs.tokens){
+            attrs.tokens.each{k,v->
+                linkopts[k]=[
+                        pattern: Pattern.quote("{{$k}}"),
+                        linkText: v
+                ]
+            }
+        }
         linkopts.each{k,opts->
             outx=outx.replaceAll(opts.pattern){
                 if(opts.linkParams){
@@ -524,6 +538,9 @@ class UtilityTagLib{
                     lparams.id=it[2]
                     def text = opts.textValue?opts.textValue(it[2]):it[1]
                     return g.link(lparams,text)
+                }else if(opts.hrefParams){
+                    def lparams= [:]+opts.hrefParams
+                    return g.createLink(lparams)
                 }else if(opts.textValue){
                     return opts.textValue(it)?:it[0]
                 }else if(opts.linkText){
