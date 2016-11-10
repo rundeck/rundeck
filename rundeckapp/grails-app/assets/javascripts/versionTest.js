@@ -22,9 +22,9 @@ var VersionIdentityTest = function () {
         } else {
             jQuery(document.body).append(jQuery('<div></div>').append(jQuery('<span class="text-success"></span>').text("OK: " + msg)));
         }
-    }
+    };
     function mkvid(vers){
-          return new VersionIdentity({versionString:vers});
+          return new RundeckVersion({versionString:vers});
     }
     self.basicTest = function (pref) {
         assert(pref + "success", 1, 1);
@@ -73,7 +73,11 @@ var VersionIdentityTest = function () {
         assert("Start tests", 1, 1);
         for (var i in self) {
             if (i.endsWith('Test')) {
-                self[i].call(self, i + ': ');
+                try {
+                    self[i].call(self, i + ': ');
+                }catch(e){
+                    assert('Error: ' + e, 1, 0);
+                }
             }
         }
     };
