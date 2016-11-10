@@ -63,11 +63,10 @@ check_args(){
 check_release_notes(){
     local PATTERN=$1
     set +e
-    local output=$( head -n 1 < RELEASE.md | grep "$PATTERN" )
-    local result=$?
+    local result=$( head -n 1 < RELEASE.md | grep -c "$PATTERN" )
     set -e
 
-    if [ $result -ne 0 ] ; then
+    if [ $result != "1" ] ; then
         die "ERROR: RELEASE.md has not been updated, please add release notes."
     fi
 }
