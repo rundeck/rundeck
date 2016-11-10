@@ -125,10 +125,19 @@ public class AuthorizationFilters implements ApplicationContextAware{
                     log.error("${authid} UNAUTHORIZED for ${controllerName}/${actionName}");
                     if (request.api_version) {
                         //api request
-                        render(contentType: "text/xml", encoding: "UTF-8") {
-                            result(error: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
-                                delegate.'error'(code: "unauthorized") {
-                                    message("${authid} is not authorized for: ${request.forwardURI}")
+                        if (response.format in ['json']) {
+                            render(contentType: "application/json", encoding: "UTF-8") {
+                                error = true
+                                apiversion = ApiRequestFilters.API_CURRENT_VERSION
+                                errorCode = "unauthorized"
+                                message = ("${authid} is not authorized for: ${request.forwardURI}")
+                            }
+                        } else {
+                            render(contentType: "text/xml", encoding: "UTF-8") {
+                                result(error: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+                                    delegate.'error'(code: "unauthorized") {
+                                        message("${authid} is not authorized for: ${request.forwardURI}")
+                                    }
                                 }
                             }
                         }
