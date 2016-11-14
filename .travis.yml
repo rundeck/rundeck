@@ -30,7 +30,6 @@ addons:
 branches:
   only:
     - master
-    - prerelease-2.7.0
     - '2.6.x'
 
 notifications:
