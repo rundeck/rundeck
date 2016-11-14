@@ -203,9 +203,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def results = nowrunning(query)
         return results
     }
-    
-    
-    def index ={
+
+
+    def index() {
         /**
         * redirect to configured start page, or default to Run page
          */
@@ -219,11 +219,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(!params.project){
             startpage='home'
         }else if (params.project && startpage == 'home') {
-            startpage = 'jobs'
+            startpage = 'projectHome'
         }
         switch (startpage){
             case 'home':
                 return redirect(controller: 'menu', action: 'home')
+            case 'projectHome':
+                return redirect(controller: 'menu', action: 'projectHome', params: [project: params.project])
             case 'nodes':
                 return redirect(controller:'framework',action:'nodes',params:[project:params.project])
             case 'run':

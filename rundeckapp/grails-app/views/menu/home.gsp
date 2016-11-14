@@ -225,7 +225,7 @@
                 <div class="list-group-item project_list_item" data-bind="attr: { 'data-project': project }, ">
                 <div class="row">
                         <div class="col-sm-6 col-md-4">
-                            <a href="${g.createLink(action:'projectHome',controller:'menu',params:[project:'<$>'])}"
+                            <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}"
                                 data-bind="urlPathParam: project"
                                class="h3">
                                 <i class="glyphicon glyphicon-tasks"></i>
