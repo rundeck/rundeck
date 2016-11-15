@@ -1962,7 +1962,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     isNotNull('dateStarted')
                 }
                 if (found && !(retry && prevId && found.size()==1 && found[0].id==prevId)) {
-                    throw new ExecutionServiceException('Job "' + se.jobName + '" [' + se.extid + '] is currently being executed (execution [' + found.id + '])','conflict')
+                    throw new ExecutionServiceException('Job "' + se.jobName + '" {{Job ' + se.extid + '}} is currently being executed {{Execution ' + found[0].id + '}}','conflict')
                 }
                 return int_createExecution(se,authContext,runAsUser,input)
             }

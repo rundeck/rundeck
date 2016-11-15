@@ -518,12 +518,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def scheduledList = results.list()
         scheduledList.each { ScheduledExecution se ->
             try {
-                log.info("rescheduled job: ${se.id}")
                 def nexttime = scheduleJob(se, null, null)
                 succeededJobs << [job: se, nextscheduled: nexttime]
+                log.info("rescheduled job in project ${se.project}: ${se.extid}")
             } catch (Exception e) {
-                log.error("Job not rescheduled: ${se.id}: ${e.message}", e)
                 failedJobs << [job: se, error: e.message]
+                log.error("Job not rescheduled in project ${se.project}: ${se.extid}: ${e.message}", e)
                 log.error(e)
             }
         }
@@ -557,7 +557,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             if (ok) {
                 log.info("Rescheduling ad hoc execution of: " +
-                    "${se.jobName} [${se.id}]: ${e.dateStarted}")
+                                 "${se.jobName} [${e.id}]: ${e.dateStarted}"
+                )
                 try {
                     AuthContext authContext = frameworkService.getAuthContextForUserAndRoles(se.user, se.userRoles)
                     Date nexttime = scheduleAdHocJob(se, se.user, authContext, e, null, null, 0, e.dateStarted)
@@ -835,12 +836,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
         if (!executionService.executionsAreActive) {
-            log.warn("Attempt to schedule job ${se}, but executions are disabled.")
+            log.warn("Attempt to schedule job ${se} ${se.extid} in project ${se.project}, but executions are disabled.")
             return null
         }
 
         if (!se.shouldScheduleExecution()) {
-            log.warn("Attempt to schedule job ${se}, but job execution is disabled.")
+            log.warn(
+                    "Attempt to schedule job ${se} ${se.extid} in project ${se.project}, but job execution is disabled."
+            )
             return null;
         }
 
@@ -853,15 +856,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             deleteJob(oldJobName,oldGroupName)
         }
         if ( hasJobScheduled(se) ) {
-            log.info("rescheduling existing job: " + se.generateJobScheduledName())
+            log.info("rescheduling existing job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
             
             nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()), trigger)
         } else {
-            log.info("scheduling new job: " + se.generateJobScheduledName())
+            log.info("scheduling new job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
             nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
         }
 
-        log.info("scheduled job. next run: " + nextTime.toString())
+        log.info("scheduled job ${se.extid}. next run: " + nextTime.toString())
         return nextTime
     }
 
