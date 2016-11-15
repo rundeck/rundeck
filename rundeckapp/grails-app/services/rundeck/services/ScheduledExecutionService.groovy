@@ -512,15 +512,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (serverUUID) {
             results = results.withServerUUID(serverUUID)
         }
-
+        def succeededJobs = []
+        def failedJobs = []
         // Reschedule jobs on fixed schedules
         def scheduledList = results.list()
         scheduledList.each { ScheduledExecution se ->
             try {
-                scheduleJob(se, null, null)
                 log.info("rescheduled job: ${se.id}")
+                def nexttime = scheduleJob(se, null, null)
+                succeededJobs << [job: se, nextscheduled: nexttime]
             } catch (Exception e) {
                 log.error("Job not rescheduled: ${se.id}: ${e.message}", e)
+                failedJobs << [job: se, error: e.message]
                 log.error(e)
             }
         }
@@ -532,7 +535,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         List<Execution> cleanupExecutions   = []
-
+        def succeedExecutions = []
         def executionList = results.list()
         executionList.each { Execution e ->
             boolean ok = true
@@ -555,9 +558,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if (ok) {
                 log.info("Rescheduling ad hoc execution of: " +
                     "${se.jobName} [${se.id}]: ${e.dateStarted}")
-                AuthContext authContext = frameworkService.getAuthContextForUserAndRoles(se.user, se.userRoles)
                 try {
-                    scheduleAdHocJob(se, se.user, authContext, e, null, null, 0, e.dateStarted)
+                    AuthContext authContext = frameworkService.getAuthContextForUserAndRoles(se.user, se.userRoles)
+                    Date nexttime = scheduleAdHocJob(se, se.user, authContext, e, null, null, 0, e.dateStarted)
+                    if (nexttime) {
+                        succeedExecutions << [execution: e, time: nexttime]
+                    }
                 } catch (Exception ex) {
                     log.error("Ad hoc job not rescheduled: ${se.jobName}: ${ex.message}", ex)
                     ok = false
@@ -574,6 +580,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 "could not be rescheduled and will be killed")
             executionService.cleanupRunningJobs(cleanupExecutions)
         }
+        [jobs: succeededJobs, failedJobs: failedJobs, executions: succeedExecutions, failedExecutions: cleanupExecutions]
     }
 
     /**

@@ -1636,4 +1636,91 @@ class ScheduledExecutionServiceSpec extends Specification {
                         nodeExclude: 'testo',
                         nodeExcludeTags: 'dev']
     }
+
+    def "reschedule scheduled jobs"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob')).save()
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def result = service.rescheduleJobs(null)
+
+        then:
+        job1.shouldScheduleExecution()
+        1 * service.executionServiceBean.getExecutionsAreActive() >> true
+        1 * service.frameworkService.getRundeckBase() >> ''
+        1 * service.frameworkService.isClusterModeEnabled() >> false
+        1 * service.quartzScheduler.checkExists(*_) >> false
+        1 * service.quartzScheduler.scheduleJob(_, _) >> new Date()
+    }
+
+    def "reschedule adhoc executions"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob', scheduled: false)).save()
+        def exec1 = new Execution(
+                scheduledExecution: job1,
+                status: 'scheduled',
+                dateStarted: new Date() + 2,
+                dateCompleted: null,
+                project: job1.project,
+                user: 'bob',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+        ).save(flush: true)
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def result = service.rescheduleJobs(null)
+
+        then:
+        result.failedJobs.size() == 0
+        result.failedExecutions.size() == 0
+        result.jobs.size() == 0
+        result.executions.size() == 1
+        exec1 != null
+        !exec1.hasErrors()
+        !job1.shouldScheduleExecution()
+        job1.user == 'bob'
+        job1.userRoles == ['a', 'b']
+        1 * service.frameworkService.getAuthContextForUserAndRoles('bob', ['a', 'b']) >> Mock(UserAndRolesAuthContext)
+        1 * service.executionServiceBean.getExecutionsAreActive() >> true
+        1 * service.frameworkService.getRundeckBase() >> ''
+        1 * service.quartzScheduler.scheduleJob(_, _) >> new Date()
+    }
+    def "reschedule adhoc execution getAuthContext error"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob', scheduled: false)).save()
+        def exec1 = new Execution(
+                scheduledExecution: job1,
+                status: 'scheduled',
+                dateStarted: new Date() + 2,
+                dateCompleted: null,
+                project: job1.project,
+                user: 'bob',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+        ).save(flush: true)
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def result = service.rescheduleJobs(null)
+
+        then:
+        result.failedJobs.size() == 0
+        result.failedExecutions.size() == 1
+        result.jobs.size() == 0
+        result.executions.size() == 0
+        exec1 != null
+        !exec1.hasErrors()
+        !job1.shouldScheduleExecution()
+        job1.user == 'bob'
+        job1.userRoles == ['a', 'b']
+        1 * service.frameworkService.getAuthContextForUserAndRoles('bob', ['a', 'b']) >> {
+            throw new RuntimeException("getAuthContextForUserAndRoles failure")
+        }
+        0 * service.executionServiceBean.getExecutionsAreActive() >> true
+        0 * service.frameworkService.getRundeckBase() >> ''
+        0 * service.quartzScheduler.scheduleJob(_, _) >> new Date()
+    }
 }
