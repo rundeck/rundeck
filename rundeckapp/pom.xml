@@ -19,7 +19,7 @@
   <groupId>org.rundeck</groupId>
   <artifactId>rundeck</artifactId>
   <packaging>war</packaging>
-  <version>2.6.11-SNAPSHOT</version>
+  <version>2.6.11</version>
   <name>RunDeck App</name>
   <description>RunDeck Command and Job Console</description>
   <url>http://rundeck.org</url>
