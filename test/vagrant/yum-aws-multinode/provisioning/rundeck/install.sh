@@ -80,7 +80,7 @@ then
     let count=0
     while true
     do
-        if ! grep  "Started SelectChannelConnector@" /var/log/rundeck/service.log
+        if ! grep  "Started ServerConnector@" /var/log/rundeck/service.log
         then  printf >&2 ".";# progress output.
         else  break; # successful message.
         fi
@@ -95,7 +95,7 @@ else
     let count=0
     while true
     do
-        if ! grep  "Started SelectChannelConnector@" /var/log/rundeck/service.log
+        if ! grep  "Started ServerConnector@" /var/log/rundeck/service.log
         then  printf >&2 ".";# progress output.
         else  break; # successful message.
         fi
