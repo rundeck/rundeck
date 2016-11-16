@@ -102,7 +102,7 @@ grails.project.dependency.resolution = {
         runtime ':profiler:0.5'
         runtime ':miniprofiler:0.4.1'
         provided ':codenarc:0.22'
-        build   ':jetty:2.0.3'
+        build   ':jetty:3.0.0'
     }
 
     dependencies {
@@ -133,7 +133,7 @@ grails.project.dependency.resolution = {
     }
 }
 grails.war.resources = { stagingDir, args ->
-    delete(file: "${stagingDir}/WEB-INF/lib/jetty-all-7.6.0.v20120127.jar")
+    delete(file: "${stagingDir}/WEB-INF/lib/jetty-all-9.0.7.v20131107.jar")
     delete(file: "${stagingDir}/WEB-INF/lib/rundeck-jetty-server-${rundeckVersion}.jar")
     delete(file: "${stagingDir}/WEB-INF/lib/servlet-api-2.5.jar")
     if(System.getProperty('rundeck.war.additional')!=null){

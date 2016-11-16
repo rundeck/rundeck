@@ -16,15 +16,14 @@
 
 package com.dtolabs.rundeck;
 
-import org.eclipse.jetty.plus.jaas.JAASLoginService;
+import org.eclipse.jetty.http.HttpVersion;
+import org.eclipse.jetty.jaas.JAASLoginService;
 import org.eclipse.jetty.security.HashLoginService;
-import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
-import org.eclipse.jetty.server.ssl.SslSelectChannelConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
-import org.eclipse.jetty.server.Handler;
+
 import java.io.*;
 import java.util.Properties;
 
@@ -146,24 +145,44 @@ public class RunServer {
     }
 
     private void configureHTTPConnector(final Server server) {
-        final SelectChannelConnector connector = new SelectChannelConnector();
+        HttpConfiguration http_config = new HttpConfiguration();
+        http_config.setOutputBufferSize(32768);
+        if (Boolean.getBoolean(RUNDECK_JETTY_CONNECTOR_FORWARDED)) {
+            ForwardedRequestCustomizer forwarding = new ForwardedRequestCustomizer();
+            http_config.addCustomizer(forwarding);
+        }
+        final ServerConnector connector = new ServerConnector(server, new HttpConnectionFactory(http_config));
         connector.setPort(port);
         connector.setHost(System.getProperty(SERVER_HTTP_HOST, null));
-        connector.setForwarded(Boolean.getBoolean(RUNDECK_JETTY_CONNECTOR_FORWARDED));
         server.addConnector(connector);
     }
 
     private void configureSSLConnector(final Server server) {
         //configure ssl
-        final SslSelectChannelConnector connector = new SslSelectChannelConnector();
-        connector.setPort(httpsPort);
-        connector.setMaxIdleTime(30000);
-        connector.setForwarded(Boolean.getBoolean(RUNDECK_JETTY_CONNECTOR_FORWARDED));
-        SslContextFactory cf = connector.getSslContextFactory();
+        HttpConfiguration http_config = new HttpConfiguration();
+        http_config.setSecureScheme("https");
+        http_config.setSecurePort(httpsPort);
+        http_config.setOutputBufferSize(32768);
+
+        ServerConnector http = new ServerConnector(
+                server,
+                new HttpConnectionFactory(http_config)
+        );
+        http.setPort(httpsPort);
+        http.setIdleTimeout(30000);
+
+        HttpConfiguration https_config = new HttpConfiguration(http_config);
+        SecureRequestCustomizer src = new SecureRequestCustomizer();
+
+//        src.setStsMaxAge(2000);
+//        src.setStsIncludeSubDomains(true);
+
+        https_config.addCustomizer(src);
+        SslContextFactory cf = new SslContextFactory();
         cf.setKeyStorePath(keystore);
         cf.setKeyStorePassword(keystorePassword);
         cf.setKeyManagerPassword(keyPassword);
-        cf.setTrustStore(truststore);
+        cf.setTrustStorePath(truststore);
         cf.setTrustStorePassword(truststorePassword);
         cf.setExcludeProtocols(
                 System.getProperty(
@@ -192,8 +211,20 @@ public class RunServer {
         if(includeCipherSuites!=null) {
             cf.setIncludeCipherSuites(includeCipherSuites.split(","));
         }
-        connector.setHost(System.getProperty(SERVER_HTTP_HOST, null));
-        server.addConnector(connector);
+        ServerConnector https = new ServerConnector(
+                server,
+                new SslConnectionFactory(cf, HttpVersion.HTTP_1_1.asString()),
+                new HttpConnectionFactory(https_config)
+        );
+        if (Boolean.getBoolean(RUNDECK_JETTY_CONNECTOR_FORWARDED)) {
+            ForwardedRequestCustomizer forwarding = new ForwardedRequestCustomizer();
+            https_config.addCustomizer(forwarding);
+        }
+        https.setPort(httpsPort);
+        https.setIdleTimeout(500000);
+        https.setHost(System.getProperty(SERVER_HTTP_HOST, null));
+
+        server.setConnectors(new Connector[]{http, https});
     }
 
     /**

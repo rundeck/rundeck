@@ -143,7 +143,7 @@ run_ci_test(){
 		echo "Rundeck process PID: $RDPID"
 	fi
 
-	wait_for $DIR/rundeck.out 'Started SelectChannelConnector@'
+	wait_for $DIR/rundeck.out 'Started ServerConnector@'
 
 	echo "Rundeck started."
 
