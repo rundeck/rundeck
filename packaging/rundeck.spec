@@ -80,7 +80,7 @@ fi
 # Server Bootstrap
 %dir /var/lib/rundeck/bootstrap
 /var/lib/rundeck/bootstrap/javax.servlet-3.0.0.v201112011016.jar
-/var/lib/rundeck/bootstrap/jetty-9.0.7.v20131107.jar
+/var/lib/rundeck/bootstrap/jetty-all-9.0.7.v20131107.jar
 /var/lib/rundeck/bootstrap/jetty-security-9.0.7.v20131107.jar
 /var/lib/rundeck/bootstrap/jetty-server-9.0.7.v20131107.jar
 /var/lib/rundeck/bootstrap/jetty-util-9.0.7.v20131107.jar
