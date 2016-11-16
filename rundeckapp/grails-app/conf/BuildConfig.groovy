@@ -59,7 +59,7 @@ if(System.properties['disable.grails.central']) {
 grails.plugin.location.webrealms = 'webrealms'
 grails.plugin.location.metricsweb = 'metricsweb'
 grails.plugin.location.authfilter = 'authfilter'
-
+grails.servlet.version = "3.0"
 grails.project.dependency.resolution = {
     inherits 'global' // inherit Grails' default dependencies
     log 'warn' // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
