@@ -22,8 +22,8 @@ import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.List;
 
-import org.eclipse.jetty.plus.jaas.callback.ObjectCallback;
-import org.eclipse.jetty.plus.jaas.spi.UserInfo;
+import org.eclipse.jetty.jaas.callback.ObjectCallback;
+import org.eclipse.jetty.jaas.spi.UserInfo;
 import org.junit.Assert;
 import org.junit.Test;
 

@@ -43,7 +43,7 @@ grails.project.dependency.resolution = {
     }
 
     plugins {
-        build(":jetty:2.0.3",
+        build(":jetty:3.0.0",
               ":release:2.2.1",
               ":rest-client-builder:1.0.3") {
             export = false

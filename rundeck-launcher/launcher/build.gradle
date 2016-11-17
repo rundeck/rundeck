@@ -28,8 +28,8 @@ archivesBaseName = 'rundeck-launcher'
 defaultTasks 'clean','launcherJar'
 ext.launcherMainClass = mainClassName
 ext.launcherStartClass = "com.dtolabs.rundeck.RunServer"
-ext.launcherJettyLibs = "servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.11.jar"
-ext.launcherJettyLibsUnexpanded = 'servlet-api-2.5-20081211.jar jetty-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-naming-${jettyVersion}.jar jetty-plus-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.11.jar'
+ext.launcherJettyLibs = "javax.servlet-3.0.0.v201112011016.jar jetty-${jettyVersion}.jar jetty-security-${jettyVersion}.jar jetty-server-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-io-${jettyVersion}.jar jetty-http-${jettyVersion}.jar jetty-jaas-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.11.jar"
+ext.launcherJettyLibsUnexpanded = 'javax.servlet-3.0.0.v201112011016.jar jetty-${jettyVersion}.jar jetty-security-${jettyVersion}.jar jetty-server-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-io-${jettyVersion}.jar jetty-http-${jettyVersion}.jar jetty-jaas-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.11.jar'
 ext.launcherJettyLibPath = "pkgs/webapp/WEB-INF/lib"
 
 ext.launcherContentsDir = new File("$projectDir/build/launcher-contents")

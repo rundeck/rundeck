@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import org.eclipse.jetty.plus.jaas.JAASLoginService
+import org.eclipse.jetty.jaas.JAASLoginService
 import org.eclipse.jetty.server.Server;
 
 eventConfigureJetty = { Server server ->

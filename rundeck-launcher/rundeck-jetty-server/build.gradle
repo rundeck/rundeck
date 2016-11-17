@@ -29,14 +29,16 @@ dependencies {
     compile( 
         [group: 'log4j', name: 'log4j', version: '1.2.16',ext:'jar'],
         [group: 'commons-cli', name: 'commons-cli', version: '1.0',ext:'jar'],
-        [group: 'org.eclipse.jetty.aggregate', name: 'jetty-all', version: jettyVersion,ext:'jar'],
+        [group: 'org.eclipse.jetty.aggregate', name: 'jetty-all', version: jettyVersion],
+        [group: 'org.eclipse.jetty', name: 'jetty-jaas', version: jettyVersion],
         [group: 'org.kohsuke', name:'libpam4j', version:'1.5', ext:'jar'],
         // This is in httpcomponents 4+ but stuck on 3.x for now.
         [group: 'ca.juliusdavies', name: 'not-yet-commons-ssl', version: '0.3.11', ext: 'jar'],
     )
     runtime(
-        [group: 'org.eclipse.jetty.aggregate', name: 'jetty-all', version: jettyVersion, ext: 'jar'],
-        [group: 'javax.servlet', name: 'servlet-api', version: '2.5', ext: 'jar'],
+        [group: 'org.eclipse.jetty.aggregate', name: 'jetty-all', version: jettyVersion],
+        [group: 'org.eclipse.jetty', name: 'jetty-jaas', version: jettyVersion],
+//        [group: 'org.eclipse.jetty.orbit', name: 'javax.servlet', version: '3.0.0.v201112011016'],
     )
     testCompile (
         [group: 'junit', name: 'junit', version: '4.8.1',ext:'jar'],

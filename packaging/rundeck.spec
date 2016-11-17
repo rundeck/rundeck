@@ -15,6 +15,8 @@ RunDeck, is no ordinary wooden deck. You can build a bon fire on this deck.
 Rundeck provides a single console for dispatching commands across many resources.
 
 %changelog
+* Wed Nov 16 2016 Greg Schueler <greg@simplifyops.com> 2.7.0-0
+	- Upgraded jetty jar dependencies
 * Tue Jan 20 2015 Greg Schueler <greg@simplifyops.com> 2.5-0
 	- Fix cli jar file versions, fix changelog date
 * Sat Apr 19 2014 Diomidis Spinellis <dds@aueb.gr> 2.0-4
@@ -77,12 +79,18 @@ fi
 
 # Server Bootstrap
 %dir /var/lib/rundeck/bootstrap
-/var/lib/rundeck/bootstrap/jetty-all-7.6.0.v20120127.jar
+/var/lib/rundeck/bootstrap/javax.servlet-3.0.0.v201112011016.jar
+/var/lib/rundeck/bootstrap/jetty-all-9.0.7.v20131107.jar
+/var/lib/rundeck/bootstrap/jetty-security-9.0.7.v20131107.jar
+/var/lib/rundeck/bootstrap/jetty-server-9.0.7.v20131107.jar
+/var/lib/rundeck/bootstrap/jetty-util-9.0.7.v20131107.jar
+/var/lib/rundeck/bootstrap/jetty-io-9.0.7.v20131107.jar
+/var/lib/rundeck/bootstrap/jetty-http-9.0.7.v20131107.jar
+/var/lib/rundeck/bootstrap/jetty-jaas-9.0.7.v20131107.jar
 /var/lib/rundeck/bootstrap/log4j-1.2.16.jar
 /var/lib/rundeck/bootstrap/jna-3.2.2.jar
 /var/lib/rundeck/bootstrap/libpam4j-1.5.jar
 /var/lib/rundeck/bootstrap/rundeck-jetty-server-%{_vname}.jar
-/var/lib/rundeck/bootstrap/servlet-api-2.5.jar
 /var/lib/rundeck/bootstrap/not-yet-commons-ssl-0.3.11.jar
 
 # CLI Lib Support

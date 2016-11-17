@@ -25,7 +25,7 @@ eclipse.project.name = "${project.getParent().eclipse.project.name}:launcher"
 
 subprojects{
     defaultTasks 'clean','assemble'
-    ext.jettyVersion='7.6.0.v20120127'
+    ext.jettyVersion='9.0.7.v20131107'
 }
 
 task createPom << {

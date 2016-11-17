@@ -16,9 +16,9 @@
 
 package org.rundeck.jaas.jetty;
 
-import org.eclipse.jetty.plus.jaas.JAASPrincipal;
-import org.eclipse.jetty.plus.jaas.JAASRole;
-import org.eclipse.jetty.plus.jaas.callback.ObjectCallback;
+import org.eclipse.jetty.jaas.JAASPrincipal;
+import org.eclipse.jetty.jaas.JAASRole;
+import org.eclipse.jetty.jaas.callback.ObjectCallback;
 
 import javax.security.auth.callback.Callback;
 import javax.security.auth.callback.CallbackHandler;
