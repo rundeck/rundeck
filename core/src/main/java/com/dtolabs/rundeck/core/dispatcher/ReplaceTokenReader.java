@@ -162,13 +162,9 @@ public class ReplaceTokenReader extends FilterReader {
         } else {
             read = super.read();
         }
-        if (escaped && read == tokenStart) {
+        if (escaped) {
             escaped = false;
             return read;
-        } else if (escaped) {
-            escaped = false;
-            readBuffer.append((char) read);
-            return tokenEsc;
         }
         if (read == tokenEsc) {
             escaped = true;

@@ -68,9 +68,35 @@ public class ReplaceTokenReaderTest {
     public void duplicateStartToken() throws IOException {
         test("abc xyz@b value", "abc xyz@@value2@", defaultTokens(), true, '@', '@');
     }
+
+    /**
+     * Escaped start token should be ignored as start token when another start token encountered
+     * @throws IOException
+     */
     @Test
     public void defaultEscapeStartToken() throws IOException {
         test("abc xyz@asdfb value", "abc xyz\\@asdf@value2@", defaultTokens(), true, '@', '@');
+    }
+    @Test
+    public void escapeCharBeforevalidToken() throws IOException {
+        test("abc xyz@value2@", "abc xyz\\@value2@", defaultTokens(), true, '@', '@');
+    }
+    @Test
+    public void escapeCharBeforevalidToken4() throws IOException {
+        test("abc xyz\\b value", "abc xyz\\\\@value2@", defaultTokens(), true, '@', '@');
+    }
+    @Test
+    public void escapeCharBeforevalidToken2() throws IOException {
+        test("abc xyz@value2@", "abc xyz\\@value2\\@", defaultTokens(), true, '@', '@');
+    }
+    @Test
+    public void escapeCharBeforevalidToken3() throws IOException {
+        test("abc xyz@b value@", "abc xyz@@value2@@", defaultTokens(), true, '@', '@');
+    }
+
+    @Test
+    public void escapedStartToken() throws IOException {
+        test("TEST @monkey something", "TEST \\@monkey something", defaultTokens(), true, '@', '@');
     }
 
     @Test
