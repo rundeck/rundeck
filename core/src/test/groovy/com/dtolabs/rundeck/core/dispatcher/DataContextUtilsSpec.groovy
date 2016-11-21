@@ -82,7 +82,7 @@ class DataContextUtilsSpec extends Specification {
 
         script                                  | context                       | expect
         'abc'                                   | [a: [b: 'bcd']]               | 'abc\n'
-        'a\\bc'                                 | [a: [b: 'bcd']]               | 'a\\bc\n'
+        'a\\\\bc'                                 | [a: [b: 'bcd']]               | 'a\\bc\n'
         'echo \'hello\\@@option.domain@\''      | [:]                           | 'echo \'hello@\'\n'
         'echo \'hello\\@milk @option.domain@\'' | [:]                           | 'echo \'hello@milk \'\n'
         'echo \'hello\\@@option.domain@\''      | [option: [domain: 'peabody']] | 'echo \'hello@peabody\'\n'
