@@ -13,7 +13,7 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-
+<%@ page import="rundeck.User;" %>
 <div class="row">
 <div class="col-sm-12 ">
 
@@ -59,6 +59,7 @@
 
         //setup node filters knockout bindings
         var filterParams = loadJsonData('filterParamsJSON');
+        <g:if test="${scheduledExecution.nodeFilterEditable || nodefilter == ''}">
         var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
         nodeFilter = new NodeFilters(
                 appLinks.frameworkAdhoc,
@@ -73,8 +74,9 @@
                     nodesTitleSingular: message('Node'),
                     nodesTitlePlural: message('Node.plural')
                 }));
-        ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
 
+            ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
+        </g:if>
         //show selected named filter
         nodeFilter.filterName.subscribe(function (val) {
             if (val) {
@@ -143,7 +145,10 @@
                         ${selectedNodes!=null?'checked':''}
                            id="doReplaceFilters"/>
                     <g:message code="change.the.target.nodes" />
-                (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)</label>
+                    <g:if test="${selectedNodes || nodes}">
+                        (<span class="nodeselectcount"><g:enc>${selectedNodes!=null?selectedNodes.size():nodes.size()}</g:enc></span>)
+                    </g:if>
+                    </label>
                 </div>
 
             </div>
