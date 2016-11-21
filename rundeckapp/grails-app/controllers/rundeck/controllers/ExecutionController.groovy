@@ -237,6 +237,7 @@ class ExecutionController extends ControllerBase{
                         e.scheduledExecution
                 ) : null,
                 orchestratorPlugins   : orchestratorPluginService.listOrchestratorPlugins(),
+                strategyPlugins       : scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 enext                 : enext,
                 eprev                 : eprev,
                 stepPluginDescriptions: pluginDescs,
@@ -345,7 +346,13 @@ class ExecutionController extends ControllerBase{
         }else if(params.nodes){
             selectedNodes=[params.nodes].flatten()
         }
-        def loader = workflowService.requestStateSummary(e,selectedNodes,false)
+        def loader = workflowService.requestStateSummary(
+                e,
+                selectedNodes,
+                params.selectedNodesOnly == 'true',
+                true,
+                params.stepStates == 'true'
+        )
         if (loader.state == ExecutionLogState.AVAILABLE) {
             data.state = loader.workflowState
         }else if(loader.state in [ExecutionLogState.NOT_FOUND]) {

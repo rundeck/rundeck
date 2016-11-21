@@ -54,6 +54,10 @@ public class Validator {
     public static class ReportBuilder {
         Report report = new Report();
 
+        public ReportBuilder errors(Map<String, String> errors) {
+            report.errors.putAll(errors);
+            return this;
+        }
         public ReportBuilder error(String key, String message) {
             report.errors.put(key, message);
             return this;

@@ -63,11 +63,10 @@ check_args(){
 check_release_notes(){
     local PATTERN=$1
     set +e
-    local output=$( head -n 1 < RELEASE.md | grep "$PATTERN" )
-    local result=$?
+    local result=$( head -n 1 < RELEASE.md | grep -c "$PATTERN" )
     set -e
 
-    if [ $result -ne 0 ] ; then
+    if [ $result != "1" ] ; then
         die "ERROR: RELEASE.md has not been updated, please add release notes."
     fi
 }
@@ -81,12 +80,32 @@ check_git_is_clean(){
         die "ERROR: Git has modified files, please stash/commit any changes before updating version."
     fi
 }
+generate_release_name(){
+    local vers=$1
+    local osascript=$(which osascript)
+    local TEMPL='<span style="color: $REL_COLOR"><span class="glyphicon glyphicon-$REL_ICON"></span> "$REL_TEXT"</span>'
+    if [ -n "$osascript" ] ; then
+        # run javascript file with osascript (mac)
+        local vars=$(cat rundeckapp/grails-app/assets/javascripts/version.js  releaseversion.js  | osascript -l JavaScript - $vers )
+        eval $vars
+        echo $TEMPL | sed "s#\$REL_COLOR#$REL_COLOR#" \
+            | sed "s#\$REL_ICON#$REL_ICON#" \
+            | sed "s#\$REL_TEXT#$REL_TEXT#"
+    fi
+}
 #/ Run the makefile to copy RELEASE.md into the documentation source, and git add the changes.
 generate_release_notes_documentation(){
     local NEW_VERS=$1
     local DDATE=$(date "+%Y-%m-%d")
     sed "s#Date: ....-..-..#Date: $DDATE#" < RELEASE.md > RELEASE.md.new
     mv RELEASE.md.new RELEASE.md
+    local RELNAME=$(generate_release_name $NEW_VERS)
+    if [ -z "$RELNAME" ] ; then
+        die "Failed to generate release name"
+    fi
+    sed "s#Name: <span.*/span>#Name: $RELNAME#" < RELEASE.md > RELEASE.md.new
+    mv RELEASE.md.new RELEASE.md
+    
     make -C docs notes
     git add RELEASE.md
     git add CHANGELOG.md
@@ -110,7 +129,7 @@ main() {
     check_git_is_clean
 
     local -a NEW_VERS=( $( rd_make_release_version "${VERS[@]}" ) )
-
+    
     check_release_notes "Release ${NEW_VERS[0]}"
 
     rd_set_version "${NEW_VERS[@]}"

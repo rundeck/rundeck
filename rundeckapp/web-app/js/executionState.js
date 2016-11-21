@@ -23,6 +23,7 @@ var FlowState = Class.create({
     targetElement:null,
     retry:5,
     loadUrl:null,
+    loadUrlParamsBase: {},
     loadUrlParams:null,
     outputUrl:null,
     shouldUpdate:false,
@@ -194,7 +195,11 @@ var FlowState = Class.create({
     updateState: function(model){
         if(this.updaters){
             for(var i=0;i<this.updaters.length;i++){
-                this.updaters[i].updateState(model);
+                try {
+                    this.updaters[i].updateState(model);
+                } catch (e) {
+                    console.log("error on updateState: ", e);
+                }
             }
         }
     },
@@ -202,7 +207,11 @@ var FlowState = Class.create({
         if(this.updaters){
             for(var i=0;i<this.updaters.length;i++){
                 if(typeof(this.updaters[i].updateError)=='function'){
-                    this.updaters[i].updateError(error,model);
+                    try {
+                        this.updaters[i].updateError(error, model);
+                    } catch (e) {
+                        console.log("error on updateError: ", e);
+                    }
                 }
             }
         }

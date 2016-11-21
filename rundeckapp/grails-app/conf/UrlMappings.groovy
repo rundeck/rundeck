@@ -198,6 +198,7 @@ class UrlMappings {
         "/api/$api_version/$action?"(controller: 'api', action: 'invalid')
 
         //simplified url mappings for link generation
+        "/project/$project/home"(controller: 'menu', action: 'projectHome')
         "/project/$project/nodes/"(controller: 'framework', action: 'nodes')
         "/project/$project/run/"(controller: 'framework', action: 'nodes')
         "/project/$project/scm/$integration?/$action?"(controller: 'scm')
@@ -235,6 +236,7 @@ class UrlMappings {
         "/execution/show/$id"(controller: 'execution',action: 'show')
         "/plugin/icon/$service/$name"(controller: 'plugin', action: 'pluginIcon')
         "/plugin/file/$service/$name/$path**"(controller: 'plugin', action: 'pluginFile')
+        "/plugin/i18n/$service/$name/$path**"(controller: 'plugin', action: 'pluginMessages')
 
         "404"(view: '/404')
         "500"(view: '/error')

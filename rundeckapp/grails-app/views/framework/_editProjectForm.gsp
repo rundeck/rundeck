@@ -180,6 +180,8 @@
                          style="${wdgt.styleVisible(if: isSelected)}">
                         <div class="form-horizontal " >
                             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                    service:com.dtolabs.rundeck.plugins.ServiceNameConstants.NodeExecutor,
+                                    provider:description.name,
                                     properties:description.properties,
                                     report:nodeexecreport?.errors && isSelected ? nodeexecreport : null,
                                     prefix:nodeexecprefix,
@@ -229,6 +231,8 @@
                 <div class="form-horizontal " >
 
                     <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                            service:com.dtolabs.rundeck.plugins.ServiceNameConstants.FileCopier,
+                            provider:description.name,
                             properties:description.properties,
                             report:fcopyreport?.errors && isSelected ? fcopyreport : null,
                             prefix:fcopyprefix,

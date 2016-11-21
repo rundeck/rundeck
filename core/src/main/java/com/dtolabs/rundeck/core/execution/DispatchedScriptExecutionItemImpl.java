@@ -31,7 +31,7 @@ import com.dtolabs.rundeck.core.dispatcher.IDispatchedScript;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * @version $Revision$
  */
-class DispatchedScriptExecutionItemImpl implements DispatchedScriptExecutionItem{
+class DispatchedScriptExecutionItemImpl extends BaseExecutionItem implements DispatchedScriptExecutionItem{
     private IDispatchedScript dispatchedScript;
 
     public DispatchedScriptExecutionItemImpl(final IDispatchedScript dispatchedScript) {

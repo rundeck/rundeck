@@ -103,6 +103,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def ApiService apiService
     def UserService userService
     def ScmService scmService
+    def PluginService pluginService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -398,6 +399,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
 				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
+                strategyPlugins: scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
 
@@ -854,12 +856,16 @@ class ScheduledExecutionController  extends ControllerBase{
                 'user.name': (session?.user?: "anonymous"),
         ]
         extraJobProps.putAll rundeckProps.collectEntries {['rundeck.'+it.key,it.value]}
+        Map globals=frameworkService.getProjectGlobals(scheduledExecution.project)
 
         def replacement= { Object[] group ->
             if (group[2] == 'job' && jobprops[group[3]] && scheduledExecution.properties.containsKey(jobprops[group[3]])) {
                 scheduledExecution.properties.get(jobprops[group[3]]).toString()
             } else if (group[2] == 'job' && null != extraJobProps[group[3]]) {
                 def value = extraJobProps[group[3]]
+                value.toString()
+            }else if (group[2] == 'globals' && null != globals[group[3]]) {
+                def value = globals[group[3]]
                 value.toString()
             }else if (group[2] == 'rundeck' && null != rundeckProps[group[3]]) {
                 def value = rundeckProps[group[3]]
@@ -884,7 +890,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def codecs=['URIComponent','URL']
         def result=[]
         arr.eachWithIndex { String entry, int i ->
-            result<<entry.replaceAll(/(\$\{(job|option|rundeck)\.([^}]+?(\.value)?)\})/) { Object[] group ->
+            result<<entry.replaceAll(/(\$\{(job|option|rundeck|globals)\.([^}]+?(\.value)?)\})/) { Object[] group ->
                 def val = replacement(group)
                  if (null != val) {
                      if(!isHttp){
@@ -1893,25 +1899,21 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
-        def uiPluginProfiles = [:]
-        nodeStepTypes.each{ Description desc->
-            def profile = uiPluginService.getProfileFor(ServiceNameConstants.WorkflowNodeStep, desc.name)
-            uiPluginProfiles[ServiceNameConstants.WorkflowNodeStep+":"+desc.name]=profile
-        }
-        stepTypes.each {
-            def profile = uiPluginService.getProfileFor(ServiceNameConstants.WorkflowStep, it.name)
-            uiPluginProfiles[ServiceNameConstants.WorkflowStep+":"+it.name]=profile
-        }
-
+        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
+        
         def crontab = scheduledExecution.timeAndDateAsBooleanMap()
-        return [ scheduledExecution:scheduledExecution, crontab:crontab,params:params,
-                notificationPlugins: notificationService.listNotificationPlugins(),
-                orchestratorPlugins: orchestratorPluginService.listDescriptions(),
-                nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
-                authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
+
+        def notificationPlugins = notificationService.listNotificationPlugins()
+
+        def orchestratorPlugins = orchestratorPluginService.listDescriptions()
+        return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
+                notificationPlugins : notificationPlugins,
+                orchestratorPlugins : orchestratorPlugins,
+                strategyPlugins     : strategyPlugins,
+                nextExecutionTime   :scheduledExecutionService.nextExecutionTime(scheduledExecution),
+                authorized          :scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
-                stepDescriptions:stepTypes,
-                 uiPluginProfiles:uiPluginProfiles]
+                stepDescriptions    : stepTypes]
     }
 
 
@@ -1961,11 +1963,13 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
             def stepTypes = frameworkService.getStepPluginDescriptions()
+            def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
             return render(view:'edit', model: [scheduledExecution:scheduledExecution,
                        nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
                     notificationValidation: params['notificationValidation'],
                     nodeStepDescriptions: nodeStepTypes,
                     stepDescriptions: stepTypes,
+                    strategyPlugins: strategyPlugins,
                     notificationPlugins: notificationService.listNotificationPlugins(),
                     orchestratorPlugins: orchestratorPluginService.listDescriptions(),
                     params:params
@@ -2036,12 +2040,15 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
-		
+
+        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
+
         render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params,
                 iscopy:true,
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
+                                      strategyPlugins: strategyPlugins,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 orchestratorPlugins: orchestratorPluginService.listDescriptions()])
 
@@ -2171,9 +2178,11 @@ class ScheduledExecutionController  extends ControllerBase{
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
+        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
+                strategyPlugins:strategyPlugins,
                 orchestratorPlugins: orchestratorPluginService.listDescriptions()]
     }
 
@@ -2366,10 +2375,12 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
+        def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params,
                                        nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
+                   strategyPlugins:strategyPlugins,
                 orchestratorPlugins: orchestratorPluginService.listDescriptions(),
                 notificationValidation:params['notificationValidation']
         ])
@@ -2642,7 +2653,8 @@ class ScheduledExecutionController  extends ControllerBase{
             log.warn("Cyclic dependency for options for job ${scheduledExecution.extid}: (${toporesult.cycle})")
             model.optionsDependenciesCyclic = true
         }
-        if (toporesult.result) {
+        if (toporesult.result && !scheduledExecution.options.any { it.sortIndex != null }) {
+            //auto sort only if no ordering is defined
             model.optionordering = toporesult.result
         }
 
@@ -2655,15 +2667,12 @@ class ScheduledExecutionController  extends ControllerBase{
             def optData = [
                     'optionDependencies': model.optiondependencies[optName],
                     'optionDeps': model.dependentoptions[optName],
-                    optionAutoReload: model.dependentoptions[optName] && opt.enforced || model.selectedoptsmap && model.selectedoptsmap[optName]
             ];
             if (opt.realValuesUrl != null) {
                 optData << [
                         'hasUrl': true,
                         'scheduledExecutionId': scheduledExecution.extid,
                         'selectedOptsMap': model.selectedoptsmap ? model.selectedoptsmap[optName] : '',
-                        'loadonstart': !model.optiondependencies[optName] || model.optionsDependenciesCyclic,
-                        'optionAutoReload': (model.dependentoptions[optName] || model.selectedoptsmap && model.selectedoptsmap[optName]) && !model.optionsDependenciesCyclic
                 ]
             } else {
                 optData['localOption'] = true;
@@ -2847,7 +2856,7 @@ class ScheduledExecutionController  extends ControllerBase{
         Map inputOpts=[:]
         //add any option.* values, or nodeInclude/nodeExclude filters
         if(params.extra){
-            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters', 'filter']).findAll { it.value })
+            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters', 'filter', 'nodeoverride','nodefilter']).findAll { it.value })
             inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.')||it.key.startsWith('nodeInclude')|| it.key.startsWith('nodeExclude')}.findAll { it.value })
         }
         def result = executionService.executeJob(scheduledExecution, authContext,session.user, inputOpts)
@@ -2902,7 +2911,7 @@ class ScheduledExecutionController  extends ControllerBase{
         // Add any option.* values, or nodeInclude/nodxclude filters
         if (params.extra) {
             inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option',
-                                                  '_replaceNodeFilters', 'filter']).findAll { it.value })
+                                                  '_replaceNodeFilters', 'filter', 'nodeoverride','nodefilter']).findAll { it.value })
             inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
                     it.key.startsWith('nodeExclude')}.findAll { it.value })
         }
@@ -3221,7 +3230,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         def jobid = params.id
-        def jobAsUser, jobArgString, jobLoglevel, jobFilter, jobRunAtTime
+        def jobAsUser, jobArgString, jobLoglevel, jobFilter, jobRunAtTime, jobOptions
         if (request.format == 'json') {
             def data= request.JSON
             jobAsUser = data?.asUser
@@ -3229,11 +3238,13 @@ class ScheduledExecutionController  extends ControllerBase{
             jobLoglevel = data?.loglevel
             jobFilter = data?.filter
             jobRunAtTime = data?.runAtTime
+            jobOptions = data?.options
         } else {
             jobAsUser=params.asUser
             jobArgString=params.argString
             jobLoglevel=params.loglevel
             jobRunAtTime = params.runAtTime
+            jobOptions = params.option
         }
 
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
@@ -3260,7 +3271,11 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def inputOpts = [:]
 
-        if (jobArgString) {
+        if (request.api_version >= ApiRequestFilters.V18 && jobOptions && jobOptions instanceof Map) {
+            jobOptions.each { k, v ->
+                inputOpts['option.' + k] = v
+            }
+        } else if (jobArgString) {
             inputOpts["argString"] = jobArgString
         }
         if (jobLoglevel) {

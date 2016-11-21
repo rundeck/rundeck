@@ -50,6 +50,7 @@ source $RDECK_BASE/etc/profile
 echo "starting test-all.sh"
 
 set +e
+chmod -w /tests/rundeck/test-all.sh
 
 
 /tests/rundeck/test-all.sh \

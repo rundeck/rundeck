@@ -16,22 +16,6 @@
 
 <%@ page import="rundeck.User; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; rundeck.PluginStep; rundeck.CommandExec; rundeck.JobExec" %>
 <%--
- Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-
- --%>
-<%--
     _wfitemEdit.gsp
 
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
@@ -54,49 +38,39 @@
 <g:if test="${'job'==newitemtype || item instanceof JobExec || (item instanceof java.util.Map && item?.jobName)}">
 <section >
     <div class="form-group">
-       <label class="col-sm-2 control-label" for="jobNameField${rkey}">Job Name/Group</label>
+       <label class="col-sm-2 control-label" for="jobNameField${rkey}"><g:message code="Workflow.Step.jobreference.name-group.label" /></label>
         <div class="col-sm-4">
 
             <input id="jobNameField${rkey}" type="text" name="jobName" value="${enc(attr: item?.jobName)}"
-                placeholder="Job Name"
+                placeholder="${message(code:"scheduledExecution.jobName.label")}"
                 class="form-control"
                    size="100" autofocus/>
         </div>
         <div class="col-sm-4">
             <input id="jobGroupField${rkey}"  type="text" name="jobGroup" value="${enc(attr:item?.jobGroup)}" size="100"
-                placeholder="Group Name"
+                placeholder="${message(code:"scheduledExecution.groupPath.label")}"
                 class="form-control"
             />
         </div>
 
         <div class="col-sm-2">
-            <span class="btn btn-sm btn-default act_choose_job" onclick="loadJobChooser(this, 'jobChooser','jobNameField${rkey}','jobGroupField${rkey}');"
+            <span class="btn btn-sm btn-default act_choose_job" onclick="loadJobChooser(this, 'jobNameField${rkey}','jobGroupField${rkey}');"
                   id="jobChooseBtn${rkey}"
-                  title="Select an existing Job to use"
+                  title="${message(code:"select.an.existing.job.to.use")}"
                   data-loading-text="Loading...">
-                Choose A Job&hellip;
+                <g:message code="choose.a.job..." />
                 <i class="caret"></i>
             </span>
             <span id="jobChooseSpinner"></span>
         </div>
     </div>
     <div class="form-group" >
-        <label class="col-sm-2 control-label">Arguments</label>
+        <label class="col-sm-2 control-label"><g:message code="Workflow.Step.argString.label" /></label>
         <div class="col-sm-10">
             <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100"
-                placeholder="Enter arguments, e.g. -option1 value -option2 value"
+                placeholder="${message(code:"Workflow.Step.jobreference.argString.placeholder")}"
                    id="jobArgStringField"
                    class="form-control"/>
-        </div>
-    </div>
-    <div class="popout jobChooser" id="jobChooser" style="display:none; width:300px; padding: 5px; background:white; position:absolute;">
-        <div style="margin-bottom:5px;">
-            <span class="text-muted">Click on the name of the Job to use</span>
-            <button type="button" class=" close" style="text-align:right" onclick="hideJobChooser();">
-                &times;
-            </button>
-        </div>
-        <div id="jobChooserContent" style="overflow-y:auto;">
         </div>
     </div>
 
@@ -104,7 +78,7 @@
     <div class="col-sm-2 control-label">
     <span class="btn   btn-link ${wdgt.css(if: item?.nodeFilter, then: 'active')}"
                 data-toggle="collapse" data-target="#nodeFilterOverride${enc(attr: rkey)}">
-        Override Node Filters?
+        <g:message code="override.node.filters" />
         <i class="glyphicon ${wdgt.css(if: item?.nodeFilter, then: 'glyphicon-chevron-down', else: 'glyphicon-chevron-right')} "></i>
     </span>
     </div>
@@ -160,9 +134,9 @@
 
             <div class="well well-sm embed matchednodes">
                 <button type="button" class="pull-right btn btn-info btn-sm refresh_nodes"
-                        data-loading-text="Loading..."
+                        data-loading-text="${message(code:"loading.text")}"
                         data-bind="click: $data.updateMatchedNodes"
-                        title="click to refresh">
+                        title="${message(code:"click.to.refresh")}">
                     <g:message code="refresh"/>
                     <i class="glyphicon glyphicon-refresh"></i>
                 </button>
@@ -505,7 +479,7 @@
         </div>
         <div>
         <div class="form-group">
-            <div class="col-sm-2 control-label">Execution Preview</div>
+            <div class="col-sm-2 control-label"><g:message code="Workflow.step.script.execution.preview.label" /></div>
 
                 <div id='interpreterArgsQuotedHelp${rkey}_preview' class="col-sm-10 form-control-static">
                     <code>$ <span data-bind="html: invocationPreviewHtml"></span></code>
@@ -526,32 +500,45 @@
     </div>
 </g:elseif>
 <g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && newitemDescription}">
+    <g:set var="isNodeStep" value="${item ? !!item.nodeStep : newitemnodestep == 'true'}"/>
+    <g:set var="serviceName" value="${isNodeStep ? 'WorkflowNodeStep' : 'WorkflowStep'}"/>
     <div>
         <div>
-            <span class="h4"><g:enc>${newitemDescription.title}</g:enc></span>
+            <span class="h4"><stepplugin:message
+                    service="${serviceName}"
+                    name="${newitemDescription.name}"
+                    code="plugin.title"
+                    default="${newitemDescription.title}"/></span>
             <span class="help-block">
                 <g:render template="/scheduledExecution/description"
-                          model="[description: newitemDescription.description,
-                                  textCss: '',
-                                  mode: 'collapsed',
-                                  moreText:'More Information',
-                                  rkey: g.rkey()]"/>
+                          model="[description: stepplugin.messageText(
+                                  service: serviceName,
+                                  name: newitemDescription.name,
+                                  code: 'plugin.description',
+                                  default: newitemDescription.description
+                          ),
+                                  textCss    : '',
+                                  mode       : 'collapsed',
+                                  moreText   : message(code: 'more.information', default: 'More Information'),
+                                  rkey       : g.rkey()]"/>
             </span>
         </div>
         <g:hiddenField name="pluginItem" value="true"/>
-        <g:hiddenField name="newitemnodestep" value="${item?!!item.nodeStep:newitemnodestep=='true'}"/>
+        <g:hiddenField name="newitemnodestep" value="${isNodeStep}"/>
 
 
         <div>
             <g:set var="pluginprefix" value="pluginConfig."/>
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                    properties:newitemDescription.properties,
-                    report:report,
-                    prefix:pluginprefix,
-                    values:item?.configuration,
-                    fieldnamePrefix:pluginprefix,
+                    service            : serviceName,
+                    provider           : newitemDescription.name,
+                    properties         : newitemDescription.properties,
+                    report             : report,
+                    prefix             : pluginprefix,
+                    values             : item?.configuration,
+                    fieldnamePrefix    : pluginprefix,
                     origfieldnamePrefix:'orig.' + pluginprefix,
-                    allowedScope:PropertyScope.Instance
+                    allowedScope       : PropertyScope.Instance
             ]}"/>
 
         </div>
@@ -560,9 +547,9 @@
 <g:elseif test="${( newitemtype || item && item.instanceOf(PluginStep) ) && pluginNotFound}">
     <div>
         <div>
-            <span class="text-danger invalidProvider">Provider not found</span>
+            <span class="text-danger invalidProvider"><g:message code="Workflow.step.plugin.provider.not.found" /></span>
             <span class="help-block text-danger">
-                The step plugin provider "${newitemtype?:item?.type}" is not installed, or could not be loaded.
+                <g:message code="Workflow.step.plugin.provider.not.found.description" args="[newitemtype?:item?.type]" />
             </span>
         </div>
         <g:hiddenField name="pluginItem" value="true"/>
@@ -581,11 +568,12 @@
 </g:if>
 <g:else>
     <div class="form-group">
-        <label class="col-sm-2 control-label" for="description${rkey}">Step Description</label>
+        <label class="col-sm-2 control-label" for="description${rkey}"><g:message
+                code="Workflow.step.property.description.label"/></label>
         <div class="col-sm-10">
         <input id="description${rkey}" type="text" name="description" value="${enc(attr:item?.description)}"
-            class="form-control"
-            placeholder="Description of this step"
+               class="form-control"
+               placeholder="${message(code: "Workflow.step.property.description.placeholder")}"
                size="100"/>
         </div>
     </div>
@@ -607,22 +595,22 @@
             <g:if test="${isErrorHandler}">
                 <g:hiddenField name="num" value="${num}"/>
                 <span class="btn btn-default btn-sm" onclick="_wficancelnewEH(this);"
-                      title="Cancel adding new ${g.message(code: 'Workflow.'+ msgItem+'.label')}">Cancel</span>
-                <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}',${ isErrorHandler?true:false});" title="Save the new ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
+                      title="${message(code:"Workflow.stepErrorHandler.cancel.title")}"><g:message code="button.action.Cancel" /></span>
+                <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}', ${num}, 'wfiedit_${rkey}',true);" title="${message(code:"Workflow.stepErrorHandler.savenew.title")}"><g:message code="button.action.Save" /></span>
             </g:if>
             <g:else>
 
                 <span class="btn btn-default btn-sm" onclick="_wficancelnew(${num});"
-                      title="Cancel adding new ${g.message(code: 'Workflow.step.label')}">Cancel</span>
-                <span class="btn btn-primary btn-sm" onclick="_wfisavenew('wfiedit_${rkey}');" title="Save the new ${g.message(code:'Workflow.step.label')}">Save</span>
+                      title="${message(code:"Workflow.step.cancel.title")}"><g:message code="button.action.Cancel" /></span>
+                <span class="btn btn-primary btn-sm" onclick="_wfisavenew('wfiedit_${rkey}');" title="${message(code:"Workflow.step.savenew.title")}"><g:message code="button.action.Save" /></span>
             </g:else>
         </g:if>
         <g:else>
             <g:hiddenField name="num" value="${num}"/>
             <g:hiddenField name="origitemtype" value="${origitemtype}"/>
-            <span class="btn btn-default btn-sm" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="Discard changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Discard</span>
+            <span class="btn btn-default btn-sm" onclick="_wfiview('${key}',${num},${isErrorHandler?true:false});" title="${message(code:"Workflow."+msgItem+".discard.title")}" ><g:message code="button.action.discard" /></span>
             <span class="btn btn-primary btn-sm" onclick="_wfisave('${key}',${num}, 'wfiedit_${rkey}', ${ isErrorHandler?true:false});"
-                  title="Save changes to the ${g.message(code:'Workflow.'+ msgItem+'.label')}">Save</span>
+                  title="${message(code:"Workflow."+msgItem+".save.title")}"><g:message code="button.action.Save" /></span>
         </g:else>
     </div>
     <div class="clear"></div>

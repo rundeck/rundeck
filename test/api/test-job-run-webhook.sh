@@ -17,10 +17,26 @@ if [ "" == "$2" ] ; then
     project="test"
 fi
 
+randport(){
+  FLOOR=${1:-0}
+  RANGE=${2:-1000}
+
+  number=0   #initialize
+  while [ "$number" -le $FLOOR ]
+  do
+    number=$RANDOM
+    let "number %= $RANGE"  # Scales $number down within $RANGE.
+    let "number += $FLOOR"  # Scales $number down within $RANGE.
+  done
+  echo $number
+}
+
+PORT=$(randport 4441 1000)
+
 #escape the string for xml
 xmlargs=$($XMLSTARLET esc "$args")
 xmlproj=$($XMLSTARLET esc "$project")
-xmlhost=$($XMLSTARLET esc $(hostname))
+xmlhost=$($XMLSTARLET esc "localhost")
 echo "host is $xmlhost"
 
 #produce job.xml content corresponding to the dispatch request
@@ -45,7 +61,7 @@ cat > $DIR/temp.out <<END
       
       <notification>
         <onsuccess>
-        <webhook urls="http://127.0.0.1:4441/test?id=\${execution.id}&amp;status=\${execution.status}"/>
+        <webhook urls="http://$xmlhost:$PORT/test?id=\${execution.id}&amp;status=\${execution.status}"/>
         </onsuccess>
       </notification>
       
@@ -89,7 +105,7 @@ fi
 
 
 ###
-#  start nc process to listen on port 4441, cat any input to a file, and echo http 200 response
+#  start nc process to listen on port , cat any input to a file, and echo http 200 response
 ###
 startnc(){
     port=$1
@@ -99,7 +115,7 @@ startnc(){
     echo -n "HTTP/1.1 200 OK\r\n\r\n" | nc -w 30 -l $port > $file || fail "Unable to run netcat on port $port"
 }
 
-startnc 4441 $DIR/nc.out &
+startnc $PORT $DIR/nc.out &
 ncpid=$!
 
 ###

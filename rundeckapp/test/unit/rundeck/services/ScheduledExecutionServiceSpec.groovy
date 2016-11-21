@@ -18,6 +18,11 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
@@ -54,6 +59,12 @@ class ScheduledExecutionServiceSpec extends Specification {
             existsFrameworkProject('testProject') >> true
             isClusterModeEnabled()>>enabled
             getServerUUID()>>TEST_UUID1
+            getFrameworkPropertyResolverWithProps(*_)>>Mock(PropertyResolver)
+        }
+        service.pluginService=Mock(PluginService)
+        service.executionServiceBean=Mock(ExecutionService)
+        service.executionUtilService=Mock(ExecutionUtilService){
+            createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
         TEST_UUID1
     }
@@ -847,9 +858,19 @@ class ScheduledExecutionServiceSpec extends Specification {
             }
             isClusterModeEnabled()>>enabled
             getServerUUID()>>uuid
+            getRundeckFramework()>>Mock(Framework){
+                getWorkflowStrategyService()>>Mock(WorkflowStrategyService){
+                    getStrategyForWorkflow(*_)>>Mock(WorkflowStrategy)
+                }
+            }
         }
         service.executionServiceBean=Mock(ExecutionService){
             executionsAreActive()>>false
+        }
+        service.pluginService=Mock(PluginService)
+
+        service.executionUtilService=Mock(ExecutionUtilService){
+            createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
         }
         service.quartzScheduler = Mock(Scheduler)
         uuid
@@ -1635,5 +1656,92 @@ class ScheduledExecutionServiceSpec extends Specification {
                         nodeIncludeName: 'test',
                         nodeExclude: 'testo',
                         nodeExcludeTags: 'dev']
+    }
+
+    def "reschedule scheduled jobs"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob')).save()
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def result = service.rescheduleJobs(null)
+
+        then:
+        job1.shouldScheduleExecution()
+        1 * service.executionServiceBean.getExecutionsAreActive() >> true
+        1 * service.frameworkService.getRundeckBase() >> ''
+        1 * service.frameworkService.isClusterModeEnabled() >> false
+        1 * service.quartzScheduler.checkExists(*_) >> false
+        1 * service.quartzScheduler.scheduleJob(_, _) >> new Date()
+    }
+
+    def "reschedule adhoc executions"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob', scheduled: false)).save()
+        def exec1 = new Execution(
+                scheduledExecution: job1,
+                status: 'scheduled',
+                dateStarted: new Date() + 2,
+                dateCompleted: null,
+                project: job1.project,
+                user: 'bob',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+        ).save(flush: true)
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def result = service.rescheduleJobs(null)
+
+        then:
+        result.failedJobs.size() == 0
+        result.failedExecutions.size() == 0
+        result.jobs.size() == 0
+        result.executions.size() == 1
+        exec1 != null
+        !exec1.hasErrors()
+        !job1.shouldScheduleExecution()
+        job1.user == 'bob'
+        job1.userRoles == ['a', 'b']
+        1 * service.frameworkService.getAuthContextForUserAndRoles('bob', ['a', 'b']) >> Mock(UserAndRolesAuthContext)
+        1 * service.executionServiceBean.getExecutionsAreActive() >> true
+        1 * service.frameworkService.getRundeckBase() >> ''
+        1 * service.quartzScheduler.scheduleJob(_, _) >> new Date()
+    }
+    def "reschedule adhoc execution getAuthContext error"() {
+        given:
+        def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob', scheduled: false)).save()
+        def exec1 = new Execution(
+                scheduledExecution: job1,
+                status: 'scheduled',
+                dateStarted: new Date() + 2,
+                dateCompleted: null,
+                project: job1.project,
+                user: 'bob',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+        ).save(flush: true)
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def result = service.rescheduleJobs(null)
+
+        then:
+        result.failedJobs.size() == 0
+        result.failedExecutions.size() == 1
+        result.jobs.size() == 0
+        result.executions.size() == 0
+        exec1 != null
+        !exec1.hasErrors()
+        !job1.shouldScheduleExecution()
+        job1.user == 'bob'
+        job1.userRoles == ['a', 'b']
+        1 * service.frameworkService.getAuthContextForUserAndRoles('bob', ['a', 'b']) >> {
+            throw new RuntimeException("getAuthContextForUserAndRoles failure")
+        }
+        0 * service.executionServiceBean.getExecutionsAreActive() >> true
+        0 * service.frameworkService.getRundeckBase() >> ''
+        0 * service.quartzScheduler.scheduleJob(_, _) >> new Date()
     }
 }

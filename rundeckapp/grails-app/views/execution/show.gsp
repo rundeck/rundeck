@@ -50,6 +50,9 @@
 
       <g:javascript library="prototype/effects"/>
       <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
+      <g:embedJSON id="jobDetail"
+                   data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
+                            project: params.project ?: request.project]}"/>
       <g:embedJSON id="workflowDataJSON" data="${workflowTree}"/>
       <g:embedJSON id="nodeStepPluginsJSON" data="${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:embedJSON id="wfStepPluginsJSON" data="${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }}"/>
@@ -182,9 +185,9 @@
             ko.applyBindings(nodeflowvm,jQuery('#execution_main')[0]);
             nodeflowvm.selectedNodes.subscribe(function (newValue) {
                 if (newValue) {
-                    flowState.loadUrlParams={nodes:newValue.join(",")};
+                    flowState.loadUrlParams=jQuery.extend(flowState.loadUrlParamsBase,{nodes:newValue.join(",")});
                 }else{
-                    flowState.loadUrlParams=null;
+                    flowState.loadUrlParams=flowState.loadUrlParamsBase;
                 }
             });
             //link flow and output tabs to initialize following

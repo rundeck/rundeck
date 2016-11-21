@@ -49,8 +49,8 @@
                             alt=""/> RSS</a>
                 </g:ifServletContextAttribute>
                 <g:hiddenField name="max" value="${max}"/>
-                <g:render template="baseFiltersPlain" model="${[params: params, query: query]}"/>
-                <g:render template="recentDateFiltersPlain" model="${[params:params,query:query]}"/>
+                <g:render template="baseFiltersPlain" model="${[ query: query]}"/>
+                <g:render template="recentDateFiltersPlain" model="${[query:query]}"/>
                 <g:render template="advDateFiltersPlain" model="${[params:params,query:query]}"/>
 
                 <g:submitButton value="Filter" name="filterAll" class="btn btn-default btn-sm"/>
@@ -121,7 +121,7 @@
                         </table>
 
                             <g:if test="${total && max && total.toInteger() > max.toInteger()}">
-                                <span class="info note">Showing <g:enc>${reports.size()}</g:enc> of <span class="_obs_histtotal"><g:enc>${total}</g:enc></span></span>
+                                <div class="info note">Showing <g:enc>${reports.size()}</g:enc> of <span class="_obs_histtotal"><g:enc>${total}</g:enc></span></div>
                                 <g:if test="${params.compact}">
                                     <a href="${createLink(controller:'reports',action:params.moreLinkAction?params.moreLinkAction:'index',params:filterName?[filterName:filterName]:paginateParams?paginateParams:[:])}">More&hellip;</a>
                                 </g:if>

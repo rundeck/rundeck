@@ -24,7 +24,6 @@ ext.pluginDescription = 'Control execution flow'
 
 jar {
     manifest {
-        attributes 'Rundeck-Plugin-Version': '1.2'
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames
         attributes 'Rundeck-Plugin-Name': pluginName
         attributes 'Rundeck-Plugin-Description': pluginDescription

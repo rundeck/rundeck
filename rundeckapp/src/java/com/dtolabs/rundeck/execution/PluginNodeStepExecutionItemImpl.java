@@ -41,8 +41,9 @@ public class PluginNodeStepExecutionItemImpl extends PluginStepExecutionItemImpl
     public PluginNodeStepExecutionItemImpl(final String type,
                                            final Map stepConfiguration,
                                            final boolean keepgoingOnSuccess,
-                                           final StepExecutionItem handler) {
-        super(NodeDispatchStepExecutor.STEP_EXECUTION_TYPE, stepConfiguration, keepgoingOnSuccess, handler);
+                                           final StepExecutionItem handler,
+                                           final String label) {
+        super(NodeDispatchStepExecutor.STEP_EXECUTION_TYPE, stepConfiguration, keepgoingOnSuccess, handler, label);
         this.nodeStepType = type;
     }
 

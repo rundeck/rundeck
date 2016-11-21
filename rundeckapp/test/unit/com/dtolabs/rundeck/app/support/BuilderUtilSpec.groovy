@@ -33,6 +33,7 @@ class BuilderUtilSpec extends Specification {
         def bu = new BuilderUtil()
         bu.forceLineEndings = force
         bu.lineEndingChars = chars
+        bu.automaticMultilineCdata = false
 
         def map = [(key): string]
 
@@ -81,30 +82,62 @@ class BuilderUtilSpec extends Specification {
         false | '\n'   | 'data'        | 'abc\ndef\nghi'     | '<test><data>abc\ndef\nghi</data></test>'
         false | '\n'   | 'data'        | 'abc\r\ndef\r\nghi' | '<test><data>abc\r\ndef\r\nghi</data></test>'
     }
-    def "replace line endings"() {
+
+    @Unroll
+    def "multiline strings force CDATA"() {
+        given:
+        final StringWriter writer = new StringWriter()
+        def builder = new MarkupBuilder(new IndentPrinter(new PrintWriter(writer), "", false))
+        def bu = new BuilderUtil()
+        bu.forceLineEndings = true
+        bu.lineEndingChars = '\n'
+        bu.automaticMultilineCdata = forcecdata
+
+        def map = [(key): string]
 
         when:
-        def result = BuilderUtil.replaceLineEndings(string,chars)
+        bu.objToDom('test', map, builder)
+        final String result = writer.toString()
 
         then:
         result == expected
 
         where:
-         chars  | string              | expected
-         '\n'   | 'abc def ghi'       | 'abc def ghi'
-         '\n'   | 'abc\rdef\rghi'     | 'abc\ndef\nghi'
-         '\n'   | 'abc\ndef\nghi'     | 'abc\ndef\nghi'
-         '\n'   | 'abc\r\ndef\r\nghi' | 'abc\ndef\nghi'
+        forcecdata | key           | string              | expected
+        true       | 'data<cdata>' | 'abc def ghi'       | '<test><data><![CDATA[abc def ghi]]></data></test>'
+        true       | 'data<cdata>' | 'abc\rdef\rghi'     | '<test><data><![CDATA[abc\ndef\nghi]]></data></test>'
+        true       | 'data<cdata>' | 'abc\ndef\nghi'     | '<test><data><![CDATA[abc\ndef\nghi]]></data></test>'
+        true       | 'data<cdata>' | 'abc\r\ndef\r\nghi' | '<test><data><![CDATA[abc\ndef\nghi]]></data></test>'
+        true       | 'data'        | 'abc def ghi'       | '<test><data>abc def ghi</data></test>'
+        true       | 'data'        | 'abc\rdef\rghi'     | '<test><data><![CDATA[abc\ndef\nghi]]></data></test>'
+        true       | 'data'        | 'abc\ndef\nghi'     | '<test><data><![CDATA[abc\ndef\nghi]]></data></test>'
+        true       | 'data'        | 'abc\r\ndef\r\nghi' | '<test><data><![CDATA[abc\ndef\nghi]]></data></test>'
+    }
 
-         '\r'   | 'abc def ghi'       | 'abc def ghi'
-         '\r'   | 'abc\rdef\rghi'     | 'abc\rdef\rghi'
-         '\r'   | 'abc\ndef\nghi'     | 'abc\rdef\rghi'
-         '\r'   | 'abc\r\ndef\r\nghi' | 'abc\rdef\rghi'
+    def "replace line endings"() {
 
-         '\r\n' | 'abc def ghi'       | 'abc def ghi'
-         '\r\n' | 'abc\rdef\rghi'     | 'abc\r\ndef\r\nghi'
-         '\r\n' | 'abc\ndef\nghi'     | 'abc\r\ndef\r\nghi'
-         '\r\n' | 'abc\r\ndef\r\nghi' | 'abc\r\ndef\r\nghi'
+        when:
+        def result = BuilderUtil.replaceLineEndings(string, chars)
+
+        then:
+        result == expected
+
+        where:
+        chars  | string              | expected
+        '\n'   | 'abc def ghi'       | 'abc def ghi'
+        '\n'   | 'abc\rdef\rghi'     | 'abc\ndef\nghi'
+        '\n'   | 'abc\ndef\nghi'     | 'abc\ndef\nghi'
+        '\n'   | 'abc\r\ndef\r\nghi' | 'abc\ndef\nghi'
+
+        '\r'   | 'abc def ghi'       | 'abc def ghi'
+        '\r'   | 'abc\rdef\rghi'     | 'abc\rdef\rghi'
+        '\r'   | 'abc\ndef\nghi'     | 'abc\rdef\rghi'
+        '\r'   | 'abc\r\ndef\r\nghi' | 'abc\rdef\rghi'
+
+        '\r\n' | 'abc def ghi'       | 'abc def ghi'
+        '\r\n' | 'abc\rdef\rghi'     | 'abc\r\ndef\r\nghi'
+        '\r\n' | 'abc\ndef\nghi'     | 'abc\r\ndef\r\nghi'
+        '\r\n' | 'abc\r\ndef\r\nghi' | 'abc\r\ndef\r\nghi'
 
     }
 }

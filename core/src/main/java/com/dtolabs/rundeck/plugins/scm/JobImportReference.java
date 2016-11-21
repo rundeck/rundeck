@@ -32,4 +32,9 @@ public interface JobImportReference extends JobRevReference {
      * @return the version of the job associated with the import metadata
      */
     public Long getImportVersion();
+
+    /**
+     * @return source Job ID if different from current ID
+     */
+    String getSourceId();
 }

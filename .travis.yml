@@ -30,6 +30,7 @@ addons:
 branches:
   only:
     - master
+    - '2.6.x'
 
 notifications:
   irc:

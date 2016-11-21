@@ -45,7 +45,8 @@ class ExecutionItemFactoryTest {
                 "script string",
                 ['args', 'args2'] as String[],
                 null,
-                true
+                true,
+                null
         )
         Assert.assertTrue(test instanceof ScriptFileCommandExecutionItem)
         ScriptFileCommandExecutionItem testcommand=(ScriptFileCommandExecutionItem) test
@@ -60,7 +61,8 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void creatScriptFileWithScript_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a','b'] as String[],null,false)
+        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a','b'] as String[],null,false,
+                                                                           null)
         StepExecutionItem test = ExecutionItemFactory.createScriptFileItem(
                 "interp",
                 "ext",
@@ -68,7 +70,8 @@ class ExecutionItemFactoryTest {
                 "script string",
                 ['args', 'args2'] as String[],
                 handler,
-                true
+                true,
+                null
         )
         Assert.assertTrue(test instanceof ScriptFileCommandExecutionItem)
         ScriptFileCommandExecutionItem testcommand=(ScriptFileCommandExecutionItem) test
@@ -92,7 +95,8 @@ class ExecutionItemFactoryTest {
                 new File("/path/test/testscript"),
                 ['args', 'args2'] as String[],
                 null,
-                true
+                true,
+                null
         )
         Assert.assertTrue(test instanceof ScriptFileCommandExecutionItem)
         ScriptFileCommandExecutionItem testcommand=(ScriptFileCommandExecutionItem) test
@@ -107,7 +111,8 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void creatScriptFileWithFile_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false)
+        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
+                                                                           null)
         StepExecutionItem test = ExecutionItemFactory.createScriptFileItem(
                 "interp",
                 "ext",
@@ -115,7 +120,8 @@ class ExecutionItemFactoryTest {
                 new File("/path/test/testscript"),
                 ['args', 'args2'] as String[],
                 handler,
-                true
+                true,
+                null
         )
         Assert.assertTrue(test instanceof ScriptFileCommandExecutionItem)
         ScriptFileCommandExecutionItem testcommand=(ScriptFileCommandExecutionItem) test
@@ -139,7 +145,8 @@ class ExecutionItemFactoryTest {
                 "http://example.com/nothing",
                 ['args', 'args2'] as String[],
                 null,
-                true
+                true,
+                null
         )
         Assert.assertTrue(test instanceof ScriptURLCommandExecutionItem)
         ScriptURLCommandExecutionItem testcommand=(ScriptURLCommandExecutionItem) test
@@ -152,7 +159,8 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void creatScriptUrl_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false)
+        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
+                                                                           null)
         StepExecutionItem test = ExecutionItemFactory.createScriptURLItem(
                 "interp",
                 "ext",
@@ -160,7 +168,8 @@ class ExecutionItemFactoryTest {
                 "http://example.com/nothing",
                 ['args', 'args2'] as String[],
                 handler,
-                true
+                true,
+                null
         )
         Assert.assertTrue(test instanceof ScriptURLCommandExecutionItem)
         ScriptURLCommandExecutionItem testcommand=(ScriptURLCommandExecutionItem) test
@@ -178,7 +187,8 @@ class ExecutionItemFactoryTest {
         StepExecutionItem test = ExecutionItemFactory.createExecCommand(
                 ['args', 'args2'] as String[],
                 null,
-                true
+                true,
+                null
         )
         Assert.assertTrue(test instanceof ExecCommandExecutionItem)
         ExecCommandExecutionItem testcommand=(ExecCommandExecutionItem) test
@@ -187,11 +197,13 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createCommand_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false)
+        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
+                                                                           null)
         StepExecutionItem test = ExecutionItemFactory.createExecCommand(
                 ['args', 'args2'] as String[],
                 handler,
-                true
+                true,
+                null
         )
         Assert.assertTrue(test instanceof ExecCommandExecutionItem)
         ExecCommandExecutionItem testcommand=(ExecCommandExecutionItem) test
@@ -208,6 +220,7 @@ class ExecutionItemFactoryTest {
                 false,
                 null,
                 true,
+                null,
                 null,
                 null,
                 null,
@@ -255,6 +268,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                null,
                 null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -271,6 +285,7 @@ class ExecutionItemFactoryTest {
                 true,
                 null,
                 2,
+                null,
                 null,
                 null,
                 null
@@ -292,6 +307,7 @@ class ExecutionItemFactoryTest {
                 null,
                 true,
                 null,
+                null,
                 null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -310,6 +326,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 false,
+                null,
                 null,
                 null
         )
@@ -330,6 +347,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 'rank',
+                null,
                 null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -349,7 +367,8 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
-                true
+                true,
+                null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -368,7 +387,8 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
-                false
+                false,
+                null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
         JobExecutionItem testcommand=(JobExecutionItem) test
@@ -377,13 +397,15 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createJobRef_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false)
+        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
+                                                                           null)
         StepExecutionItem test = ExecutionItemFactory.createJobRef(
                 "monkey/piece",
                 ['args', 'args2'] as String[],
                 false,
                 handler,
                 true,
+                null,
                 null,
                 null,
                 null,
@@ -411,6 +433,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                null,
                 null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -422,13 +445,15 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createJobRefNodeStep_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false)
+        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
+                                                                           null)
         StepExecutionItem test = ExecutionItemFactory.createJobRef(
                 "monkey/piece",
                 ['args', 'args2'] as String[],
                 true,
                 handler,
                 true,
+                null,
                 null,
                 null,
                 null,
@@ -451,6 +476,7 @@ class ExecutionItemFactoryTest {
                 "myplugin",
                 [a:'b'],
                 true,
+                null,
                 null
         )
         Assert.assertEquals( 'myplugin',test.type)
@@ -469,12 +495,14 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createPluginStep_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false)
+        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
+                                                                           null)
         StepExecutionItem test = ExecutionItemFactory.createPluginStepItem(
                 "myplugin",
                 [a:'b'],
                 true,
-                handler
+                handler,
+                null
         )
         Assert.assertEquals( 'myplugin',test.type)
 
@@ -496,6 +524,7 @@ class ExecutionItemFactoryTest {
                 "myplugin",
                 [a:'b'],
                 true,
+                null,
                 null
         )
         Assert.assertEquals( 'NodeDispatch',test.type)
@@ -518,12 +547,14 @@ class ExecutionItemFactoryTest {
     }
     @Test
     public void createPluginNodeStep_withHandler(){
-        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false)
+        StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
+                                                                           null)
         StepExecutionItem test = ExecutionItemFactory.createPluginNodeStepItem(
                 "myplugin",
                 [a:'b'],
                 true,
-                handler
+                handler,
+                null
         )
         Assert.assertEquals( 'NodeDispatch',test.type)
 

@@ -41,5 +41,6 @@ abstract class ExecutionContext extends BaseNodeFilters{
     Integer nodeThreadcount=1
     String nodeRankAttribute
     Boolean nodeRankOrderAscending=true
+    Boolean nodeFilterEditable = false
 }
 

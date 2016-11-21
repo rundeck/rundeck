@@ -138,6 +138,17 @@
                 <g:username user="${it?.author}"/>
             </td>
 
+
+            <td class="  user autoclickable" style="white-space: nowrap">
+                <g:if test="${it?.filterApplied}">
+                    <em><g:message code="activity.jobs.executed.node"/>:</em>
+                    ${it?.filterApplied}
+                </g:if>
+                <g:else>
+                    <em><g:message code="activity.jobs.executed.local"/></em>
+                </g:else>
+            </td>
+
             <g:unless test="${hideNodes}">
             <td class="${vals[1] != '0' ? 'fail' : 'ok'}  nodecount autoclickable ">
                 <g:if test="${vals[1] != '0'}">

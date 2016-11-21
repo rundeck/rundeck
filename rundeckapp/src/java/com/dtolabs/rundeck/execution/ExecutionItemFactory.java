@@ -45,8 +45,15 @@ public class ExecutionItemFactory {
             final String script,
             final String[] strings,
             final StepExecutionItem handler,
-            final boolean keepgoingOnSuccess) {
+            final boolean keepgoingOnSuccess, final String label
+    )
+    {
         return new ScriptFileCommandBase() {
+            @Override
+            public String getLabel() {
+                return label;
+            }
+
             @Override
             public String getScript() {
                 return script;
@@ -89,9 +96,16 @@ public class ExecutionItemFactory {
             final File file,
             final String[] strings,
             final StepExecutionItem handler,
-            final boolean keepgoingOnSuccess) {
+            final boolean keepgoingOnSuccess, final String label
+    )
+    {
         final String filepath = file.getAbsolutePath();
         return new ScriptFileCommandBase() {
+            @Override
+            public String getLabel() {
+                return label;
+            }
+
             @Override
             public String getServerScriptFilePath() {
                 return filepath;
@@ -132,8 +146,15 @@ public class ExecutionItemFactory {
             final String fileExtension,
             final boolean interpreterArgsQuoted,
             final String urlString, final String[] strings,
-            final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
+            final StepExecutionItem handler, final boolean keepgoingOnSuccess, final String label
+    )
+    {
         return new ScriptURLCommandBase() {
+            @Override
+            public String getLabel() {
+                return label;
+            }
+
             public String getURLString() {
                 return urlString;
             }
@@ -167,10 +188,18 @@ public class ExecutionItemFactory {
         };
     }
 
-    public static StepExecutionItem createExecCommand(final String[] command,
-            final StepExecutionItem handler, final boolean keepgoingOnSuccess) {
+    public static StepExecutionItem createExecCommand(
+            final String[] command,
+            final StepExecutionItem handler, final boolean keepgoingOnSuccess, final String label
+    )
+    {
 
         return new ExecCommandBase() {
+            @Override
+            public String getLabel() {
+                return label;
+            }
+
             public String[] getCommand() {
                 return command;
             }
@@ -205,7 +234,8 @@ public class ExecutionItemFactory {
             final String[] args,
             final boolean nodeStep,
             final StepExecutionItem handler,
-            final boolean keepgoingOnSuccess
+            final boolean keepgoingOnSuccess,
+            final String label
     )
     {
         return createJobRef(
@@ -218,7 +248,8 @@ public class ExecutionItemFactory {
                 null,
                 null,
                 null,
-                null
+                null,
+                label
         );
     }
 
@@ -243,10 +274,15 @@ public class ExecutionItemFactory {
             final Integer nodeThreadcount,
             final Boolean nodeKeepgoing,
             final String nodeRankAttribute,
-            final Boolean nodeRankOrderAscending
+            final Boolean nodeRankOrderAscending, final String label
     )
     {
         return new JobRefCommandBase() {
+            @Override
+            public String getLabel() {
+                return label;
+            }
+
             public String getJobIdentifier() {
                 return jobIdentifier;
             }
@@ -271,23 +307,28 @@ public class ExecutionItemFactory {
                 return keepgoingOnSuccess;
             }
 
-            @Override public Boolean getNodeKeepgoing() {
+            @Override
+            public Boolean getNodeKeepgoing() {
                 return nodeKeepgoing;
             }
 
-            @Override public String getNodeFilter() {
+            @Override
+            public String getNodeFilter() {
                 return nodeFilter;
             }
 
-            @Override public Integer getNodeThreadcount() {
+            @Override
+            public Integer getNodeThreadcount() {
                 return nodeThreadcount;
             }
 
-            @Override public String getNodeRankAttribute() {
+            @Override
+            public String getNodeRankAttribute() {
                 return nodeRankAttribute;
             }
 
-            @Override public Boolean getNodeRankOrderAscending() {
+            @Override
+            public Boolean getNodeRankOrderAscending() {
                 return nodeRankOrderAscending;
             }
         };
@@ -296,22 +337,28 @@ public class ExecutionItemFactory {
     /**
      * Create a workflow execution item for a plugin node step.
      */
-    public static StepExecutionItem createPluginNodeStepItem(final String type,
+    public static StepExecutionItem createPluginNodeStepItem(
+            final String type,
             final Map configuration,
             final boolean keepgoingOnSuccess,
-            final StepExecutionItem handler) {
+            final StepExecutionItem handler, final String label
+    )
+    {
 
-        return new PluginNodeStepExecutionItemImpl(type, configuration, keepgoingOnSuccess, handler);
+        return new PluginNodeStepExecutionItemImpl(type, configuration, keepgoingOnSuccess, handler, label);
     }
 
     /**
      * Create a workflow execution item for a plugin step.
      */
-    public static StepExecutionItem createPluginStepItem(final String type,
+    public static StepExecutionItem createPluginStepItem(
+            final String type,
             final Map configuration,
             final boolean keepgoingOnSuccess,
-            final StepExecutionItem handler) {
+            final StepExecutionItem handler, final String label
+    )
+    {
 
-        return new PluginStepExecutionItemImpl(type, configuration, keepgoingOnSuccess, handler);
+        return new PluginStepExecutionItemImpl(type, configuration, keepgoingOnSuccess, handler, label);
     }
 }

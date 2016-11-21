@@ -86,6 +86,10 @@ function Option(data) {
      */
     self.multiValueList = ko.observableArray(data.multiValueList);
 
+    function emptyValue(val) {
+        return (!val || val === '');
+    }
+
     self.setReloadCallback = function (func) {
         self.remoteLoadCallback = func;
     };
@@ -200,10 +204,16 @@ function Option(data) {
                 self.multiValueList(temp);
             });
         }
+    } else if (self.enforced() && self.values().length == 1 && emptyValue(self.value())) {
+        //auto-set the value to only allowed value
+        self.value(self.defaultValue() || self.values()[0]);
+    }else if (!self.enforced() && emptyValue(self.value()) && !emptyValue(self.defaultValue())) {
+        //auto-set the value to only allowed value
+        self.value(self.defaultValue());
     }
     self.remoteError = ko.observable();
 
-    self.selectedOptionValue = ko.observable(data.value);
+    self.selectedOptionValue = ko.observable(self.value());
     self.defaultStoragePath = ko.observable(data.defaultStoragePath);
     self.truncateDefaultValue = ko.computed(function () {
         var val = self.defaultValue();

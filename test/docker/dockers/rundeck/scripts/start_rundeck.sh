@@ -183,15 +183,17 @@ $HOME/server/sbin/rundeckd start
 echo "started rundeck"
 
 # Wait for server to start
-SUCCESS_MSG="Started SelectChannelConnector@0.0.0.0:"
+SUCCESS_MSG="Started ServerConnector@"
 MAX_ATTEMPTS=30
 SLEEP=10
 echo "Waiting for $RUNDECK_NODE to start. This will take about 2 minutes... "
 declare -i count=0
 while (( count <= MAX_ATTEMPTS ))
 do
-    if ! grep "${SUCCESS_MSG}" "$LOGFILE"
-    then  echo "Still working. hang on..."; # output a progress character.
+    if ! [ -f "$LOGFILE" ] 
+    then  echo "Waiting. hang on..."; # output a progress character.
+    elif ! grep "${SUCCESS_MSG}" "$LOGFILE" ; then
+      echo "Still working. hang on..."; # output a progress character.
     else  break; # found successful startup message.
     fi
     (( count += 1 ))  ; # increment attempts counter.

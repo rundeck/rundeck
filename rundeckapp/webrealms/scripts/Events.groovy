@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import org.eclipse.jetty.plus.jaas.JAASLoginService
 import org.eclipse.jetty.server.Server;
 
 eventConfigureJetty = { Server server ->
@@ -30,12 +29,20 @@ eventConfigureJetty = { Server server ->
 //                    def org.mortbay.jetty.plus.jaas.JAASUserRealm realm = (org.mortbay.jetty.plus.jaas.JAASUserRealm)o
 //                    realm.setCallbackHandlerClass("org.mortbay.jetty.plus.jaas.callback.DefaultCallbackHandler")
 //                }
-                if (o instanceof JAASLoginService) {
-                    //configure properties
-                    def JAASLoginService realm = (JAASLoginService) o
-                    realm.setName(config.server.addrealm.name)
-                    realm.setLoginModuleName(config.server.addrealm.LoginModuleName)
-                    server.addBean(realm)
+                try {
+                    Class jaasclass = Class.forName("org.eclipse.jetty.jaas.JAASLoginService")
+
+                    if (o.class.isAssignableFrom(jaasclass)) {
+                        //configure properties
+//                        def JAASLoginService realm = (JAASLoginService) o
+                        def realm=o
+                        realm.name=config.server.addrealm.name
+                        realm.loginModuleName=config.server.addrealm.LoginModuleName
+                        server.addBean(realm)
+                    }
+                }catch (Exception e){
+                    System.err.println "Failed to add login service: ${e}"
+                    throw e
                 }
             } catch (Exception e) {
                 System.err.println "Failed to add login service: ${e}"

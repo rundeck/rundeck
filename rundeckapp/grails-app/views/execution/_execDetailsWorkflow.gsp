@@ -1,3 +1,4 @@
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" %>
 %{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
@@ -34,80 +35,66 @@
         <g:message code="Workflow.property.keepgoing.true.description"/>
     </label>
 </div>
-<div>
+<div class="" id="workflowstrategyplugins">
+    <g:set var="wfstrat" value="${params?.workflow?.strategy?:workflow?.strategy=='step-first'?'sequential':workflow?.strategy?:'node-first'}"/>
+    <div class="form-inline">
+        <div class="form-group ${hasErrors(bean: workflow, field: 'strategy', 'has-error')}">
+            <label class="col-sm-12" title="Strategy for iteration">
+                <g:message code="strategy"/>:
+                <g:select name="workflow.strategy" from="${strategyPlugins}" optionKey="name" optionValue="title"
+                          value="${wfstrat}"
+                          class="form-control"/>
+            </label>
+            <g:hasErrors bean="${workflow}" field="strategy">
 
-    <span class="" title="Strategy for iteration"><g:message code="strategy" />:</span>
-        <label title="Execute the full workflow on each node before the next node">
-            <input id="wf_strat_node_first" type="radio" name="workflow.strategy" value="node-first" ${!workflow?.strategy||workflow?.strategy=='node-first'?'checked':''}/>
-            <g:message code="Workflow.strategy.label.node-first"/>
-        </label>
-        <label title="Execute each step on all nodes before the next step">
-            <input type="radio" name="workflow.strategy" value="step-first" ${workflow?.strategy=='step-first'?'checked':''}/>
-            <g:message code="Workflow.strategy.label.step-first"/>
-        </label>
-        <g:if test="${workflow?.strategy == 'parallel' || grailsApplication.config.feature?.incubator?.parallelWorkflowStrategy in [true,'true']}">
-        <label title="Execute each step in parallel across all nodes before next step">
-            <input type="radio" name="workflow.strategy" value="parallel" ${workflow?.strategy=='parallel'?'checked':''}/>
-            <g:message code="Workflow.strategy.label.parallel"/>
-        </label>
-        </g:if>
+                <div class="text-warning col-sm-12">
+                    %{--<i class="glyphicon glyphicon-warning-sign"></i>--}%
+                    <g:renderErrors bean="${workflow}" as="list" field="strategy"/>
 
-    <span id="nodeStratHelp"
-          data-toggle="popover"
-          data-popover-content-ref="#nodeStratHelp_tooltip"
-          data-placement="bottom"
-          data-trigger="hover"
-    ><i
-            class="glyphicon glyphicon-question-sign text-info"></i> Explain </span>
-        <div class="" id="nodeStratHelp_tooltip" style="display:none; background:white;">
-            <style type="text/css">
-                td.nodea{
-                    color:blue;
-                }
-                td.nodeb{
-                    color:green;
-                }
-                
-            </style>
-            <table>
-                <tr>
-                    <td width="200px;">
+                </div>
 
-                <span class="text-muted">Node-oriented: <g:message code="Workflow.strategy.description.node-first"/></span>
-                    </td>
-                    <td width="200px;"><span class="text-muted">Step-oriented: <g:message code="Workflow.strategy.description.step-first" /></span></td>
-                <g:if test="${workflow?.strategy == 'parallel' || grailsApplication.config.feature?.incubator?.parallelWorkflowStrategy in [true, 'true']}">
-                    <td width="200px;"><span class="text-muted">Parallel executes all steps in parallel across all nodes before the next step</span></td>
-                </g:if>
-                </tr>
-                <tr>
-                <td>
-                <table>
-                    <tr><td>1.</td><td class="nodea">NodeA</td> <td>step 1</td></tr>
-                    <tr><td>2.</td><td class="nodea">"</td> <td>step 2</td></tr>
-                    <tr><td>3.</td><td class="nodea">"</td> <td>step 3</td></tr>
-                    <tr><td>4.</td><td class="nodeb">NodeB</td> <td>step 1</td></tr>
-                    <tr><td>5.</td><td class="nodeb">"</td> <td>step 2</td></tr>
-                    <tr><td>6.</td><td class="nodeb">"</td> <td>step 3</td></tr>
-                </table>
-
-            </td>
-
-            <td>
-
-            <table>
-                <tr><td>1.</td><td class="nodea">NodeA</td> <td class="step1">step 1</td></tr>
-                <tr><td>2.</td><td class="nodeb">NodeB</td> <td class="step1">"</td></tr>
-                <tr><td>3.</td><td class="nodea">NodeA</td> <td class="step2">step 2</td></tr>
-                <tr><td>4.</td><td class="nodeb">NodeB</td> <td class="step2">"</td></tr>
-                <tr><td>5.</td><td class="nodea">NodeA</td> <td>step 3</td></tr>
-                <tr><td>6.</td><td class="nodeb">NodeB</td> <td>"</td></tr>
-            </table>
-            </td></tr></table>
+            </g:hasErrors>
         </div>
-        <g:javascript>
-            fireWhenReady('nodeStratHelp', _initPopoverContentRef);
-        </g:javascript>
+    </div>
+    <g:each in="${strategyPlugins}" var="pluginDescription">
+        <g:set var="pluginName" value="${pluginDescription.name}"/>
+        <g:set var="prefix" value="${('workflow.strategyPlugin.'+ pluginName + '.config.')}"/>
+        <g:set var="definedConfig"
+               value="${params.workflow?.strategyPlugin?.get(pluginName)?.config ?: wfstrat == pluginName?workflow?.getPluginConfigData('WorkflowStrategy',pluginName):null}"/>
+        <div id="strategyPlugin${pluginName}" style="${wdgt.styleVisible(if: wfstrat == pluginName ? true : false)}"
+              class="strategyPlugin">
+            <span class="text-info">
+                <g:render template="/scheduledExecution/description"
+                          model="[description: pluginDescription.description,
+                                  textCss: '',
+                                  mode: 'collapsed',
+                                  moreText:'More Information',
+                                  rkey: g.rkey()]"/>
+            </span>
+            <div>
+
+                <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                        properties:pluginDescription?.properties,
+                        report:params?.strategyValidation?.get(pluginName)?:null,
+                        prefix:prefix,
+                        values:definedConfig,
+                        fieldnamePrefix:prefix,
+                        origfieldnamePrefix:'orig.' + prefix,
+                        allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                ]}"/>
+
+            </div>
+        </div>
+        <wdgt:eventHandler for="workflow.strategy" equals="${pluginName}"
+                           target="strategyPlugin${pluginName}" visible="true"/>
+    </g:each>
+<g:javascript>
+jQuery(function(){
+    "use strict";
+    jQuery('#workflowstrategyplugins').find('textarea.apply_ace').each(function(ndx,elem){_addAceTextarea(elem)});
+})
+</g:javascript>
+
 </div>
 </g:if>
 </g:unless>
@@ -183,7 +170,16 @@
     <div>
     <span class="text-muted text-em">
         <g:message code="strategy"/>:
-        <strong><g:message code="Workflow.strategy.description.${workflow?.strategy}"/></strong>
+        <div id="workflowstrategydetail" data-strategy="${workflow?.strategy}">
+            <g:embedJSON id="workflowstrategyconfigdata"
+                         data="${workflow?.getPluginConfigData('WorkflowStrategy', workflow?.strategy)}"/>
+            <g:render template="/framework/renderPluginConfig"
+                      model="[showPluginIcon: true,
+                              type          : workflow?.strategy,
+                              values        : workflow?.getPluginConfigData('WorkflowStrategy', workflow?.strategy),
+                              description   : strategyPlugins.find { it.name == workflow?.strategy }
+                      ]"/>
+        </div>
     </span>
 
     </div>

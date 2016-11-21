@@ -1,5 +1,5 @@
 RDpropertyfilelogin {
-org.eclipse.jetty.plus.jaas.spi.PropertyFileLoginModule required
+org.eclipse.jetty.jaas.spi.PropertyFileLoginModule required
 debug="true"
 file="${realm.properties.location}";
 };

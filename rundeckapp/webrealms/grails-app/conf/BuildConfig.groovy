@@ -27,8 +27,8 @@ grails.project.dependency.resolution = {
     log "warn" // log level of Ivy resolver, either 'error', 'warn', 'info', 'debug' or 'verbose'
     legacyResolve false // whether to do a secondary resolve on plugin installation, not advised and here for backwards compatibility
     repositories {
-        grailsCentral()
         mavenCentral()
+        grailsCentral()
         // uncomment the below to enable remote dependency resolution
         // from public Maven repositories
         //mavenLocal()
@@ -40,11 +40,12 @@ grails.project.dependency.resolution = {
     dependencies {
         // specify dependencies here under either 'build', 'compile', 'runtime', 'test' or 'provided' scopes eg.
 
-        // runtime 'mysql:mysql-connector-java:5.1.21'
+         runtime 'org.eclipse.jetty.aggregate:jetty-all:9.0.7.v20131107'
+         runtime 'org.eclipse.jetty:jetty-jaas:9.0.7.v20131107'
     }
 
     plugins {
-        build(":jetty:2.0.3",
+        build(":jetty:3.0.0",
               ":release:2.2.1",
               ":rest-client-builder:1.0.3") {
             export = false

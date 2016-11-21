@@ -33,6 +33,8 @@ docker-compose -f $DOCKER_COMPOSE_SPEC exec -T --user rundeck rundeck1 bash scri
 EC=$?
 echo "run_tests.sh finished with: $EC"
 
+docker-compose -f $DOCKER_COMPOSE_SPEC logs
+
 # Stop and clean all
 docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans
 

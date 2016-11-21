@@ -27,12 +27,11 @@ import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
 import org.rundeck.plugin.scm.git.BaseAction
+import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitExportAction
 import org.rundeck.plugin.scm.git.GitExportPlugin
 import org.rundeck.plugin.scm.git.GitUtil
 
-import static org.rundeck.plugin.scm.git.BuilderUtil.inputView
-import static org.rundeck.plugin.scm.git.BuilderUtil.property
 
 /**
  * Create a tag
@@ -47,11 +46,11 @@ class TagAction extends BaseAction implements GitExportAction {
     }
 
     BasicInputView getInputView(final ScmOperationContext context, GitExportPlugin plugin) {
-        inputView(id) {
+        BuilderUtil.inputViewBuilder(id) {
             title "Commit Changes to Git"
             buttonTitle "Commit"
             properties([
-                    property {
+                    BuilderUtil.property {
                         string P_MESSAGE
                         title "Message"
                         description "Enter a message for the Tag."
@@ -59,7 +58,7 @@ class TagAction extends BaseAction implements GitExportAction {
                         renderingAsTextarea()
                     },
 
-                    property {
+                    BuilderUtil.property {
                         string P_TAG_NAME
                         title "Tag"
                         description "Enter a tag name to include, will be pushed with the branch."

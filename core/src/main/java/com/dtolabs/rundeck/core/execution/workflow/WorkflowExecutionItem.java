@@ -45,6 +45,7 @@ public interface WorkflowExecutionItem extends StepExecutionItem {
      * Parallel strategy name
      */
     public static final String PARALLEL = "parallel";
+    public static final String CONDITIONAL = "condition";
     /**
      * Provider name for node first provider implementation
      */
@@ -58,7 +59,13 @@ public interface WorkflowExecutionItem extends StepExecutionItem {
      */
     public static final String COMMAND_TYPE_PARALLEL = "rundeck-workflow-" + PARALLEL;
     /**
+     * Provider name for parallel provider implementation
+     */
+    public static final String COMMAND_TYPE_CONDITIONAL = "rundeck-workflow-" + CONDITIONAL;
+
+    /**
      * Return the workflow definition
+     *
      * @return workflow
      */
     public IWorkflow getWorkflow();

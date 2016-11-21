@@ -75,8 +75,12 @@
 
     <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
 
-        <g:embedJSON id="uipluginData" data="${[path   : uipluginsPath, project: params.project ?: request.project,
-                                                baseUrl: createLink(uri: "/plugin/file/UI",absolute:true)]}"/>
+        <g:embedJSON id="uipluginData" data="${[path       : uipluginsPath,
+                                                lang       : org.springframework.web.servlet.support.RequestContextUtils.getLocale(request).toLanguageTag(),
+                                                project    : params.project ?: request.project,
+                                                baseUrl    : createLink(uri: "/plugin/file/UI", absolute: true),
+                                                basei18nUrl: createLink(uri: "/plugin/i18n/UI", absolute: true),
+        ]}"/>
         <g:if test="${uiplugins}">
             <asset:javascript src="global/uiplugins.js"/>
             <g:jsonToken id="uiplugin_tokens" url="${request.forwardURI}"/>

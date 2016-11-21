@@ -145,6 +145,7 @@ beans={
         extdir = pluginDir
         cachedir = cacheDir
         cache = filePluginCache
+        serviceAliases = [WorkflowNodeStep: 'RemoteScriptNodeStep']
     }
 
     /**

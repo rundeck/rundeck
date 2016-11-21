@@ -19,7 +19,7 @@
 <g:if test="${pageScope._metaTabPage}">
     <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>
 </g:if>
-<nav class="navbar navbar-default navbar-static-top" role="navigation">
+<nav class="navbar-overrides navbar navbar-default navbar-static-top" role="navigation">
 
     <div class="navbar-header">
         <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
@@ -84,12 +84,20 @@
         <g:else>
             <li id="projectSelect" class="dropdown disabled">
                 <a data-toggle="dropdown" href="#" class="disabled">
-                    <i class="glyphicon glyphicon-tasks"></i>
-                    <g:enc>${ params.project ?: request.project}</g:enc>
                     <i class="caret"></i>
                 </a>
             </li>
         </g:else>
+        <li id="projectHomeLink">
+            <a href="${createLink(
+                    controller: 'menu',
+                    action: 'projectHome',
+                    params: [project: project ?: params.project ?: request.project]
+            )}">
+                <i class="glyphicon glyphicon-tasks"></i>
+                <g:enc>${project ?: params.project ?: request.project ?: 'Choose ...'}</g:enc>
+            </a>
+        </li>
     </g:if>
 
         <g:set var="selectedclass" value="active"/>

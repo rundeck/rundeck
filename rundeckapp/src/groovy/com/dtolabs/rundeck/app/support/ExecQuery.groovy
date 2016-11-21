@@ -36,7 +36,7 @@ class ExecQuery extends ReportQuery{
         abortedByFilter(nullable: true)
         controllerFilter(nullable: true)
         typeFilter(nullable: true)
-        recentFilter(nullable: true)
+        recentFilter nullable: true, matches: /^((\d+)([hdwmy])|-)$/
         tagsFilter(nullable: true)
         jobListFilter(nullable: true)
         startafterFilter(nullable: true)
@@ -58,6 +58,7 @@ class ExecQuery extends ReportQuery{
         startbeforeFilter(nullable: true)
         excludeJobListFilter(nullable: true)
         statFilter(nullable:true,inList:["succeed","fail",'cancel'])
+        execnodeFilter(nullable: true)
         sortBy(nullable:true,inList:[
             "jobFilter",
             "jobIdFilter",

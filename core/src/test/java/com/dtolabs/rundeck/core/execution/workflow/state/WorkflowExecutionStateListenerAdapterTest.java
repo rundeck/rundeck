@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.execution.workflow.state;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
 import com.dtolabs.rundeck.core.common.NodeSetImpl;
+import com.dtolabs.rundeck.core.execution.BaseExecutionItem;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior;
@@ -120,7 +121,7 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         List<WorkflowStateListener> testListener1s = Arrays.asList((WorkflowStateListener) testListener1);
         test = new WorkflowExecutionStateListenerAdapter(testListener1s);
 
-        testitem = new StepExecutionItem() {
+        testitem = new BaseExecutionItem() {
             @Override
             public String getType() {
                 return "test1";

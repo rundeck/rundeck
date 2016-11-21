@@ -832,7 +832,7 @@ class JarPluginProviderLoader implements ProviderLoader, FileCache.Expireable, P
         String value = mainAttributes.getValue(RUNDECK_PLUGIN_DATE);
         if (null != value) {
             try {
-                return new SimpleDateFormat().parse(value);
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX").parse(value);
             } catch (ParseException e) {
 
             }

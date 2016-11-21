@@ -21,8 +21,14 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.plugins.quartz.listeners.SessionBinderJobListener
@@ -32,7 +38,6 @@ import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.*
-import org.quartz.impl.matchers.KeyMatcher
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -71,6 +76,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def MessageSource messageSource
     def grailsEvents
+    def pluginService
+    def executionUtilService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -89,6 +96,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return executionServiceBean
     }
 
+    def getWorkflowStrategyPluginDescriptions(){
+        pluginService.listPlugins(WorkflowStrategy, frameworkService.rundeckFramework.workflowStrategyService).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+    }
 
     def Map finishquery ( query,params,model){
 
@@ -512,15 +524,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (serverUUID) {
             results = results.withServerUUID(serverUUID)
         }
-
+        def succeededJobs = []
+        def failedJobs = []
         // Reschedule jobs on fixed schedules
         def scheduledList = results.list()
         scheduledList.each { ScheduledExecution se ->
             try {
-                scheduleJob(se, null, null)
-                log.info("rescheduled job: ${se.id}")
+                def nexttime = scheduleJob(se, null, null)
+                succeededJobs << [job: se, nextscheduled: nexttime]
+                log.info("rescheduled job in project ${se.project}: ${se.extid}")
             } catch (Exception e) {
-                log.error("Job not rescheduled: ${se.id}: ${e.message}", e)
+                failedJobs << [job: se, error: e.message]
+                log.error("Job not rescheduled in project ${se.project}: ${se.extid}: ${e.message}", e)
                 log.error(e)
             }
         }
@@ -532,7 +547,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         List<Execution> cleanupExecutions   = []
-
+        def succeedExecutions = []
         def executionList = results.list()
         executionList.each { Execution e ->
             boolean ok = true
@@ -554,10 +569,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             if (ok) {
                 log.info("Rescheduling ad hoc execution of: " +
-                    "${se.jobName} [${se.id}]: ${e.dateStarted}")
-                AuthContext authContext = frameworkService.getAuthContextForUserAndRoles(se.user, se.userRoles)
+                                 "${se.jobName} [${e.id}]: ${e.dateStarted}"
+                )
                 try {
-                    scheduleAdHocJob(se, se.user, authContext, e, null, null, 0, e.dateStarted)
+                    AuthContext authContext = frameworkService.getAuthContextForUserAndRoles(se.user, se.userRoles)
+                    Date nexttime = scheduleAdHocJob(se, se.user, authContext, e, null, null, 0, e.dateStarted)
+                    if (nexttime) {
+                        succeedExecutions << [execution: e, time: nexttime]
+                    }
                 } catch (Exception ex) {
                     log.error("Ad hoc job not rescheduled: ${se.jobName}: ${ex.message}", ex)
                     ok = false
@@ -574,6 +593,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 "could not be rescheduled and will be killed")
             executionService.cleanupRunningJobs(cleanupExecutions)
         }
+        [jobs: succeededJobs, failedJobs: failedJobs, executions: succeedExecutions, failedExecutions: cleanupExecutions]
     }
 
     /**
@@ -828,12 +848,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
         if (!executionService.executionsAreActive) {
-            log.warn("Attempt to schedule job ${se}, but executions are disabled.")
+            log.warn("Attempt to schedule job ${se} ${se.extid} in project ${se.project}, but executions are disabled.")
             return null
         }
 
         if (!se.shouldScheduleExecution()) {
-            log.warn("Attempt to schedule job ${se}, but job execution is disabled.")
+            log.warn(
+                    "Attempt to schedule job ${se} ${se.extid} in project ${se.project}, but job execution is disabled."
+            )
             return null;
         }
 
@@ -846,15 +868,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             deleteJob(oldJobName,oldGroupName)
         }
         if ( hasJobScheduled(se) ) {
-            log.info("rescheduling existing job: " + se.generateJobScheduledName())
+            log.info("rescheduling existing job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
             
             nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()), trigger)
         } else {
-            log.info("scheduling new job: " + se.generateJobScheduledName())
+            log.info("scheduling new job in project ${se.project} ${se.extid}: " + se.generateJobScheduledName())
             nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
         }
 
-        log.info("scheduled job. next run: " + nextTime.toString())
+        log.info("scheduled job ${se.extid}. next run: " + nextTime.toString())
         return nextTime
     }
 
@@ -1249,6 +1271,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def errjobs = []
         def skipjobs = []
         def jobChangeEvents=[]
+        def remappedIds=[:]
         jobset.each { jobdata ->
             log.debug("saving job data: ${jobdata}")
             def ScheduledExecution scheduledExecution
@@ -1263,6 +1286,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 i++
                 return
             }
+            String origid=jobdata.uuid?:jobdata.id
             if (uuidOption == 'remove') {
                 jobdata.uuid = null
                 jobdata.id = null
@@ -1355,11 +1379,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
                 }
             }
+            if (origid && origid != scheduledExecution.extid) {
+                remappedIds[scheduledExecution.extid] = origid
+            }
 
             i++
 
         }
-        return [jobs: jobs, jobsi: jobsi, errjobs: errjobs, skipjobs: skipjobs,jobChangeEvents:jobChangeEvents]
+        return [jobs: jobs, jobsi: jobsi, errjobs: errjobs, skipjobs: skipjobs,jobChangeEvents:jobChangeEvents,idMap:remappedIds]
     }
     static Logger jobChangeLogger = Logger.getLogger("com.dtolabs.rundeck.data.jobs.changes")
 
@@ -1604,6 +1631,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return [success: false]
         }
 
+        scheduledExecution.nodeFilterEditable = (params.nodeFilterEditable && 'false' != params.nodeFilterEditable)
+
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_UPDATE], scheduledExecution.project)) {
             return [success: false, scheduledExecution: scheduledExecution, message: "Update Job ${scheduledExecution.extid}", unauthorized: true]
         }
@@ -1793,6 +1822,26 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         //validate error handler types
         if (!validateWorkflow(scheduledExecution.workflow,scheduledExecution)) {
             failed = true
+        }
+        //workflow strategy plugin config and validation
+        if (scheduledExecution.workflow && params.workflow?.strategyPlugin?.get(
+                scheduledExecution.workflow.strategy
+        )?.config) {
+            Map configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
+            scheduledExecution.workflow.setPluginConfigData(
+                    'WorkflowStrategy',
+                    scheduledExecution.workflow.strategy,
+                    configmap
+            )
+            def report=validateWorkflowStrategyPlugin(
+                    scheduledExecution,
+                    projectProps,
+                    configmap
+            )
+            if(null!=report && !report.valid) {
+                rejectWorkflowStrategyInput(scheduledExecution,params,report)
+                failed = true
+            }
         }
         if (( params.options || params['_nooptions']) && scheduledExecution.options) {
             def todelete = []
@@ -2611,6 +2660,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 cmdi++
             }
         }
+        //TODO: validate workflow plugin
         return valid
     }
 
@@ -2794,6 +2844,38 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             failed = true
         }
 
+        //workflow strategy plugin config and validation
+        if (params.workflow instanceof Map) {
+            Map configmap = params.workflow?.strategyPlugin?.get(scheduledExecution.workflow.strategy)?.config
+
+            scheduledExecution.workflow.setPluginConfigData(
+                    'WorkflowStrategy',
+                    scheduledExecution.workflow.strategy,
+                    configmap
+            )
+
+            def report=validateWorkflowStrategyPlugin(scheduledExecution, projectProps, configmap)
+
+            if(null!=report && !report.valid) {
+                rejectWorkflowStrategyInput(scheduledExecution,params,report)
+                failed = true
+            }
+        } else if (params.workflow instanceof Workflow) {
+            scheduledExecution.workflow.pluginConfigMap = params.workflow.pluginConfigMap
+            def report=validateWorkflowStrategyPlugin(
+                    scheduledExecution,
+                    projectProps,
+                    scheduledExecution.workflow.getPluginConfigData(
+                            'WorkflowStrategy',
+                            scheduledExecution.workflow.strategy
+                    )
+            )
+            if(null!=report && !report.valid) {
+                rejectWorkflowStrategyInput(scheduledExecution,params,report)
+                failed = true
+            }
+        }
+
         if (scheduledExecution.argString) {
             try {
                 scheduledExecution.argString.replaceAll(/\$\{DATE:(.*)\}/, { all, tstamp ->
@@ -2898,15 +2980,78 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         if (scheduledExecution.doNodedispatch) {
-            if (!scheduledExecution.asFilter()) {
-                scheduledExecution.errors.rejectValue('filter', 'scheduledExecution.filter.blank.message')
-                failed = true
-            } else if (!scheduledExecution.nodeThreadcount) {
+            if (!scheduledExecution.nodeThreadcount) {
                 scheduledExecution.nodeThreadcount = 1
             }
         }
         failed = failed || !valid
         return [failed: failed, scheduledExecution: scheduledExecution]
+    }
+
+    /**
+     * Validate a workflow strategy plugin input
+     * @param scheduledExecution job
+     * @param projectProps project level properties
+     * @param configmap configuration of the strategy plugin
+     * @param params parameters map
+     * @return true if valid, false otherwise,
+     */
+    private Validator.Report validateWorkflowStrategyPlugin(
+            ScheduledExecution scheduledExecution,
+            Map<String, String> projectProps,
+            Map configmap
+    )
+    {
+
+        def service = frameworkService.rundeckFramework.workflowStrategyService
+        def workflow = new Workflow(scheduledExecution.workflow)
+        workflow.discard()
+        def name = workflow.strategy
+        PropertyResolver resolver = frameworkService.getFrameworkPropertyResolverWithProps(
+                projectProps,
+                configmap
+        )
+        //validate input values wrt to property definitions
+        def validation = pluginService.validatePlugin(name,
+                                                      service,
+                                                      resolver,
+                                                      PropertyScope.Instance
+        )
+        def report=validation?.report
+        if (!report||report.valid) {
+            //validate input values of configured plugin in context of the workflow defintion
+            def workflowItem = executionUtilService.createExecutionItemForWorkflow(workflow)
+
+            def workflowStrategy = service.getStrategyForWorkflow(workflowItem, resolver)
+
+            report = workflowStrategy.validate(workflowItem.workflow)
+        }
+
+        report
+    }
+    private def rejectWorkflowStrategyInput(scheduledExecution,params, report){
+        def name=scheduledExecution.workflow.strategy
+        if (params instanceof Map) {
+            if (!params['strategyValidation']) {
+                params['strategyValidation'] = [:]
+            }
+            if (!params['strategyValidation'][name]) {
+                params['strategyValidation'][name] = [:]
+            }
+            params['strategyValidation'][name] = report
+        }
+        scheduledExecution?.errors.rejectValue('workflow',
+                                               'Workflow.strategy.plugin.config.invalid',
+                                               [name] as Object[],
+                                               "Workflow strategy {0}: Some config values were not valid"
+        )
+
+        scheduledExecution.workflow.errors.rejectValue(
+                'strategy',
+                'scheduledExecution.workflowStrategy.invalidPlugin.message',
+                [name] as Object[],
+                'Invalid Configuration for plugin: {0}'
+        )
     }
 
 }

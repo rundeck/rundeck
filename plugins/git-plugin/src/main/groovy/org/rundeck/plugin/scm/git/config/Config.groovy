@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.scm.ScmPluginInvalidInput
+import groovy.transform.CompileStatic
 import org.rundeck.plugin.scm.git.BuilderUtil
 
 /**
@@ -38,7 +39,7 @@ class Config {
     static List<Property> listProperties(Class<?>... classes) {
         classes.collect {
             PluginAdapterUtility.buildFieldProperties(it)
-        }.flatten()
+        }.flatten() as List
     }
 
     /**
@@ -48,7 +49,7 @@ class Config {
      * @throws ScmPluginInvalidInput
      */
     static void configure(Config config, final Map<String, String> input) throws ScmPluginInvalidInput {
-        def unused = PluginAdapterUtility.configureObjectFieldsWithProperties(config, input)
+        Map<String,Object> unused = PluginAdapterUtility.configureObjectFieldsWithProperties(config, input as Map<String,Object>)
         listProperties(config.class).findAll { it.required }.each { prop ->
             //verify required input
             if (!input[prop.name]) {

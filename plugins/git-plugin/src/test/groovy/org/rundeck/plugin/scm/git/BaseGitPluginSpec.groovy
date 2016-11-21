@@ -18,6 +18,7 @@ package org.rundeck.plugin.scm.git
 
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.plugins.scm.JobFileMapper
+import com.dtolabs.rundeck.plugins.scm.JobScmReference
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
@@ -71,19 +72,20 @@ class BaseGitPluginSpec extends Specification {
         Common config = new Common()
         def base = new BaseGitPlugin(config)
         base.mapper = Mock(JobFileMapper)
-        def job = Mock(JobExportReference){
+        def job = Mock(JobScmReference) {
             getVersion()>>1L
+            getSourceId() >> sourceId
         }
         def outfile = File.createTempFile("BaseGitPluginSpec", "serialize-job.temp")
         outfile.deleteOnExit()
 
         when:
-        base.serialize(job, format)
+        base.serialize(job, format, !stripUuid, useSourceId)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)>>{args->
+            1 * serialize(format, !null, (!stripUuid), sourceId) >> { args ->
                 args[1].write('data'.bytes)
             }
         }
@@ -91,9 +93,19 @@ class BaseGitPluginSpec extends Specification {
 
 
         where:
-        format | _
-        'xml'  | _
-        'yaml' | _
+        format | stripUuid | useSourceId | sourceId
+        'xml'  | true      | false       | null
+        'xml'  | true      | true        | null
+        'xml'  | true      | true        | '123'
+        'yaml' | true      | false       | null
+        'yaml' | true      | true        | null
+        'yaml' | true      | true        | '123'
+        'xml'  | false     | false       | null
+        'xml'  | false     | true        | null
+        'xml'  | false     | true        | '123'
+        'yaml' | false     | false       | null
+        'yaml' | false     | true        | null
+        'yaml' | false     | true        | '123'
     }
 
     def "serialize job with two threads will not write same revision twice"() {
@@ -115,13 +127,13 @@ class BaseGitPluginSpec extends Specification {
         AtomicLong serializedCounter=new AtomicLong(0)
 
         _ * job.getJobSerializer() >> Mock(JobSerializer) {
-            _ * serialize(format, !null)>>{args->
+            _ * serialize(format, !null, _,_) >> { args ->
                 serializedCounter.incrementAndGet()
                 args[1].write('data'.bytes)
             }
         }
         _ * job2.getJobSerializer() >> Mock(JobSerializer) {
-            _ * serialize(format, !null)>>{args->
+            _ * serialize(format, !null, _,_) >> { args ->
                 serializedCounter.incrementAndGet()
                 args[1].write('data2'.bytes)
             }
@@ -132,11 +144,11 @@ class BaseGitPluginSpec extends Specification {
             //grab lock on counter
             //now start threads which will block at the synchronized block
             def t1=Thread.start {
-                base.serialize(job, format)
+                base.serialize(job, format, true, false)
                 latch.countDown()
             }
             def t2=Thread.start {
-                base.serialize(job2, format)
+                base.serialize(job2, format, true, false)
                 latch.countDown()
             }
         }
@@ -173,22 +185,22 @@ class BaseGitPluginSpec extends Specification {
         AtomicLong serializedCounter=new AtomicLong(0)
 
         _ * job.getJobSerializer() >> Mock(JobSerializer) {
-            0 * serialize(format, !null)>>{args->
+            0 * serialize(format, !null, _,_) >> { args ->
                 serializedCounter.incrementAndGet()
                 args[1].write('data'.bytes)
             }
         }
         _ * newerJob.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)>>{args->
+            1 * serialize(format, !null, _,_) >> { args ->
                 serializedCounter.incrementAndGet()
                 args[1].write('data2'.bytes)
             }
         }
         when:
 
-        base.serialize(newerJob, format)
+        base.serialize(newerJob, format, true, false)
 
-        base.serialize(job, format)
+        base.serialize(job, format, true, false)
 
         then:
         2 * base.mapper.fileForJob(_) >> outfile
@@ -218,7 +230,7 @@ class BaseGitPluginSpec extends Specification {
 
 
         when:
-        base.serialize(job, format)
+        base.serialize(job, format, true, false)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
@@ -243,12 +255,12 @@ class BaseGitPluginSpec extends Specification {
         outfile.deleteOnExit()
 
         when:
-        base.serialize(job, format)
+        base.serialize(job, format, true, false)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)//no write to stream
+            1 * serialize(format, !null, _,_)//no write to stream
         }
         ScmPluginException e = thrown()
         e.message.startsWith('Failed to serialize job, no content was written')
@@ -271,12 +283,12 @@ class BaseGitPluginSpec extends Specification {
         outfile.deleteOnExit()
 
         when:
-        base.serialize(job, format)
+        base.serialize(job, format, true, false)
 
         then:
         1 * base.mapper.fileForJob(_) >> outfile
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)>>{
+            1 * serialize(format, !null, _,_) >> {
                 throw new IOException("test forced error")
             }
         }
@@ -301,12 +313,12 @@ class BaseGitPluginSpec extends Specification {
         }
 
         when:
-        def outfile = base.serializeTemp(job, format)
+        def outfile = base.serializeTemp(job, format, true, false)
 
 
         then:
         1 * job.getJobSerializer() >> Mock(JobSerializer) {
-            1 * serialize(format, !null)
+            1 * serialize(format, !null, _,_)
         }
         outfile != null
         outfile.isFile()

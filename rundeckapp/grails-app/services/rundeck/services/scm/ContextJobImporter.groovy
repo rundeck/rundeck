@@ -29,12 +29,14 @@ interface ContextJobImporter {
             final ScmOperationContext context,
             final String format,
             final InputStream input,
-            final Map importMetadata
+            final Map importMetadata,
+            final boolean preserveUuid
     )
 
     ImportResult importFromMap(
             final ScmOperationContext context,
             final Map input,
-            final Map importMetadata
+            final Map importMetadata,
+            final boolean preserveUuid
     )
 }

@@ -41,6 +41,8 @@ public class ServiceNameConstants {
      * Service name of the Workflow Step service
      */
     public static final String WorkflowStep = "WorkflowStep";
+    public static final String WorkflowExecution = "WorkflowExecution";
+    public static final String WorkflowStrategy = "WorkflowStrategy";
 
     public static final String NodeExecutor = "NodeExecutor";
     public static final String FileCopier = "FileCopier";

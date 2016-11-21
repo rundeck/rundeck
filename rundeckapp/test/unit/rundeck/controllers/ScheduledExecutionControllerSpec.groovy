@@ -23,18 +23,11 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.codehaus.groovy.grails.plugins.codecs.URLCodec
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
-import rundeck.CommandExec
-import rundeck.Execution
-import rundeck.ScheduledExecution
-import rundeck.Workflow
-import rundeck.services.ApiService
-import rundeck.services.ApiServiceSpec
-import rundeck.services.ExecutionService
-import rundeck.services.FrameworkService
-import rundeck.services.NotificationService
-import rundeck.services.OrchestratorPluginService
-import rundeck.services.ScheduledExecutionService
+import rundeck.*
+import rundeck.codecs.URIComponentCodec
+import rundeck.services.*
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -44,9 +37,12 @@ import javax.security.auth.Subject
  * Created by greg on 7/14/15.
  */
 @TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution,Workflow,CommandExec,Execution])
+@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution])
 class ScheduledExecutionControllerSpec extends Specification {
-
+    def setup() {
+        mockCodec(URIComponentCodec)
+        mockCodec(URLCodec)
+    }
 
     public static final String TEST_UUID1 = UUID.randomUUID().toString()
 
@@ -61,6 +57,38 @@ class ScheduledExecutionControllerSpec extends Specification {
                 serverNodeUUID: null,
                 scheduled: true
         ]+overrides
+    }
+
+    def "expandUrl with project globals"() {
+        given:
+        Option option = new Option()
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        def optsmap = [:]
+        def ishttp = true
+        controller.frameworkService = Mock(FrameworkService)
+
+
+        when:
+        def result = controller.expandUrl(option, url, job, optsmap, ishttp)
+
+        then:
+        expected == result
+        1 * controller.frameworkService.getFrameworkNodeName() >> 'anode'
+        1 * controller.frameworkService.getProjectGlobals('AProject') >> globals
+        1 * controller.frameworkService.getServerUUID()
+        0 * controller.frameworkService._(*_)
+
+
+        where:
+        url                                             | globals                           | expected
+        ''                                              | [:]                               | ''
+        'http://${globals.host}/a/path'                 | [host: 'myhost.com']              | 'http://myhost.com/a/path'
+        'http://${globals.host}/a/path/${globals.path}' | [host: 'myhost.com', path: 'x y'] |
+                'http://myhost.com/a/path/x%20y'
+        'http://${globals.host}/a/path?q=${globals.q}'  | [host: 'myhost.com', q: 'a b']    |
+                'http://myhost.com/a/path?q=a+b'
+
+
     }
 
     def "flip execution enabled"() {
@@ -147,7 +175,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         true      | _
         false     | _
     }
-    def "api run job at time"(){
+    def "api run job option params"() {
         given:
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.apiService = Mock(ApiService)
@@ -158,7 +186,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         request.api_version=18
         request.method='POST'
         params.id='ajobid'
-        params.runAtTime='timetorun'
+        params.putAll(paramoptions)
         def result=controller.apiJobRun()
 
         then:
@@ -169,8 +197,78 @@ class ScheduledExecutionControllerSpec extends Specification {
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,_)
         1 * controller.frameworkService.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
-        1 * controller.executionService.scheduleAdHocJob(_,_,_,[runAtTime:'timetorun'])>>[success: true]
+        1 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+        ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_,_,_)
+        0 * controller.executionService._(*_)
+
+        where:
+
+        paramoptions                               | _
+        [option: [abc: 'tyz', def: 'xyz']]         | _
+        ['option.abc': 'tyz', 'option.def': 'xyz'] | _
+    }
+    def "api run job option params json"() {
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        when:
+        request.api_version = 18
+        request.method = 'POST'
+        params.id = 'ajobid'
+        request.json = [
+                options: [abc: 'tyz', def: 'xyz']
+        ]
+        def result = controller.apiJobRun()
+
+        then:
+
+
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.apiService.requireExists(_, _, _) >> true
+        1 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+        ) >> [success: true]
+        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        0 * controller.executionService._(*_)
+    }
+    def "api run job at time"() {
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        when:
+        request.api_version = 18
+        request.method = 'POST'
+        params.id = 'ajobid'
+        params.runAtTime = 'timetorun'
+        def result = controller.apiJobRun()
+
+        then:
+
+
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.apiService.requireExists(_, _, _) >> true
+        1 * controller.executionService.scheduleAdHocJob(_, _, _, [runAtTime: 'timetorun']) >> [success: true]
+        1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
     }
     def "api run job at time json"(){

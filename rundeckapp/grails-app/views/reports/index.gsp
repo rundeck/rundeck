@@ -73,7 +73,7 @@
             loadNowRunning();
         }
         function loadNowRunning(){
-            jQuery('#nowrunning').load(_genUrl(links.nowrunning,jQuery.extend(eventsparams,{offset:nroffset})),
+            jQuery('#nowrunning').load(_genUrl(links.nowrunning,jQuery.extend({},eventsparams,{offset:nroffset})),
                 function(response, status, xhr){
                     if ( status == "error" ) {
                         showError("AJAX error: Now Running [" + links.nowrunning + "]: " + xhr.status + " "+ xhr.statusText);
@@ -89,8 +89,8 @@
          *
          */
         var histControl = new HistoryControl('histcontent',{xcompact:true,nofilters:true});
-        function loadHistory(){
-            histControl.loadHistory( eventsparams );
+        function loadHistory(params){
+            histControl.loadHistory( params|| eventsparams );
         }
         function setAutoLoad(auto){
             autoLoad=auto;
@@ -185,15 +185,17 @@
                 var e = $('evtsholder').down('.paginate');
                 if(e){
                     var pagefunc=function(e,params){
-                        Object.extend(eventsparams,params);
-                        loadHistory();
+                        loadHistory(jQuery.extend({},eventsparams,params));
                         history.pushState(params, pageTitle, e.href);
                     };
                     paginate(e,data.offset,data.total,data.max,{
                         baseUrl:links.baseUrl,
                         ulCss:'pagination pagination-sm pagination-embed',
-                        'paginate.prev':"${g.message(code: 'default.paginate.prev',default:'«')}",
-                        'paginate.next':"${g.message(code: 'default.paginate.next',default:'»')}",
+                        'paginate.prev':"${g.message(code: 'default.paginate.prev',default:'-')}",
+                        'paginate.next':"${g.message(code: 'default.paginate.next',default:'+')}",
+                        'paginate.rew':"${g.message(code: 'default.paginate.rew',default:'«')}",
+                        'paginate.ff':"${g.message(code: 'default.paginate.ff',default:'»')}",
+                        maxsteps:20,
                         prevBehavior:pagefunc,
                         stepBehavior:pagefunc,
                         nextBehavior:pagefunc

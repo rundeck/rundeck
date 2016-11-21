@@ -588,6 +588,9 @@ class ProjectServiceTests  {
   <adhocExecution />
   <adhocScript />
   <abortedByUser />
+  <succeededNodeList />
+  <failedNodeList />
+  <filterApplied />
 </report>'''
     public void  testExportReport() {
 

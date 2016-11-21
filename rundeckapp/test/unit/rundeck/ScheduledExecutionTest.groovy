@@ -102,6 +102,23 @@ class ScheduledExecutionTest  {
         assertNotNull(jobMap)
         assertEquals(true,jobMap.nodesSelectedByDefault)
     }
+    void testToMapNodeFilterEditable() {
+        ScheduledExecution se = createBasicScheduledExecution()
+        se.nodeFilterEditable=true
+        def jobMap = se.toMap()
+        assertNotNull(jobMap)
+        assertNotNull(jobMap.nodeFilterEditable)
+        assertEquals(true,jobMap.nodeFilterEditable)
+    }
+
+    void testToMapNodeFilterNotEditable() {
+        ScheduledExecution se = createBasicScheduledExecution()
+        se.nodeFilterEditable=false
+        def jobMap = se.toMap()
+        assertNotNull(jobMap)
+        assertNotNull(jobMap.nodeFilterEditable)
+        assertEquals(false,jobMap.nodeFilterEditable)
+    }
 
     void testFromMapScheduleCrontabString() {
         ScheduledExecution se = ScheduledExecution.fromMap(
@@ -335,6 +352,30 @@ class ScheduledExecutionTest  {
         assertEquals('*',se.year)
         assertEquals('?',se.dayOfMonth)
         assertEquals('*',se.dayOfWeek)
+    }
+
+    void testFromMapNodeFilterEditable() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        nodeFilterEditable: true
+                ]
+        )
+        assertNotNull(se)
+        assertNotNull(se.nodeFilterEditable)
+        assertEquals(true, se.nodeFilterEditable)
+    }
+
+    void testFromMapNodeFilterNotEditable() {
+        ScheduledExecution se = ScheduledExecution.fromMap(
+                [
+                        jobName: 'abc',
+                        nodeFilterEditable: false
+                ]
+        )
+        assertNotNull(se)
+        assertNotNull(se.nodeFilterEditable)
+        assertEquals(false, se.nodeFilterEditable)
     }
 
     void testValidateBasic() {

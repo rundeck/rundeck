@@ -66,6 +66,7 @@ class BuilderUtil{
     ArrayList context
     boolean canonical=false
     String lineEndingChars = NEW_LINE
+    boolean automaticMultilineCdata =true
     /**
      * If true, replace all line endings in string output with the value of lineEndingChars
      */
@@ -135,7 +136,7 @@ class BuilderUtil{
             if(forceLineEndings) {
                 os = replaceLineEndings(os,lineEndingChars)
             }
-            if(key.endsWith(CDATA_SUFFIX)){
+            if(key.endsWith(CDATA_SUFFIX) || (automaticMultilineCdata && os.indexOf(lineEndingChars)>=0)){
                 builder."${key-CDATA_SUFFIX}"(){
                     mkp.yieldUnescaped("<![CDATA["+os.replaceAll(']]>',']]]]><![CDATA[>')+"]]>")
                 }

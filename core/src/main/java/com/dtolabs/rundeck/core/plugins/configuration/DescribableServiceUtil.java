@@ -48,15 +48,9 @@ public class DescribableServiceUtil {
         for (final ProviderIdent providerIdent : service.listProviders()) {
             try {
                 final T providerForType = service.providerOfType(providerIdent.getProviderName());
-                if (providerForType instanceof Describable) {
-                    final Describable desc = (Describable) providerForType;
-                    final Description description = desc.getDescription();
-                    if (null != description) {
-                        list.add(description);
-                    }
-                } else if (PluginAdapterUtility.canBuildDescription(providerForType)) {
-                    list.add(PluginAdapterUtility.buildDescription(providerForType, DescriptionBuilder.builder(),
-                            includeFieldProperties));
+                Description desc = descriptionForProvider(includeFieldProperties, providerForType);
+                if(null!=desc) {
+                    list.add(desc);
                 }
             } catch (ExecutionServiceException e) {
                 e.printStackTrace();
@@ -64,6 +58,28 @@ public class DescribableServiceUtil {
 
         }
         return list;
+    }
+
+    /**
+     * Get or build the description of a plugin instance of a given type
+     * @param includeFieldProperties true to include introspected field properties
+     * @param providerForType plugin instance
+     * @return description, or null
+     */
+    public static Description descriptionForProvider(
+            final boolean includeFieldProperties,
+            final Object providerForType
+    )
+    {
+        if (providerForType instanceof Describable) {
+            final Describable desc = (Describable) providerForType;
+            return desc.getDescription();
+        } else if (PluginAdapterUtility.canBuildDescription(providerForType)) {
+            return PluginAdapterUtility.buildDescription(providerForType, DescriptionBuilder.builder(),
+                                                         includeFieldProperties
+            );
+        }
+        return null;
     }
 
     public static <T> List<ProviderIdent> listDescribableProviders(final ProviderService<T> service) {

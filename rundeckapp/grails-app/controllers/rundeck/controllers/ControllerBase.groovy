@@ -39,6 +39,7 @@ class ControllerBase {
     public static final ArrayList<String> UIPLUGIN_PAGES = [
             'menu/jobs',
             'menu/home',
+            'menu/projectHome',
             'menu/executionMode',
             'menu/admin',
             "menu/logStorage",
@@ -100,7 +101,7 @@ class ControllerBase {
         if (outbound.size() > 0 || inbound.size() > 0) {
             def result = Toposort.toposort(sort, outbound, inbound)
             if (!result.cycle) {
-                result.result
+                return result.result
             }
         }
         sort

@@ -24,29 +24,68 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkSupportService;
-import com.dtolabs.rundeck.core.plugins.BaseProviderRegistryService;
+import com.dtolabs.rundeck.core.common.ProviderService;
+import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;
+import com.dtolabs.rundeck.core.plugins.configuration.DescribableServiceUtil;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * WorkflowExecutionService provides ability to execute workflows
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class WorkflowExecutionService extends BaseProviderRegistryService<WorkflowExecutor> implements
-    FrameworkSupportService {
-    private static final String SERVICE_NAME = "WorkflowExecution";
+public class WorkflowExecutionService extends ChainedProviderService<WorkflowExecutor> implements DescribableService {
+    private static final String SERVICE_NAME = ServiceNameConstants.WorkflowExecution;
+
+    private List<ProviderService<WorkflowExecutor>> serviceList;
+    private final Map<String, Class<? extends WorkflowExecutor>> registry;
 
     public String getName() {
         return SERVICE_NAME;
     }
 
     WorkflowExecutionService(final Framework framework) {
-        super(framework);
+        this.serviceList = new ArrayList<>();
+        /*
+         * WorkflowExecutionService chains several other services:
+         * 1. builtin providers
+         * 2. plugin providers
+         */
 
-        registry.put(WorkflowStrategy.STEP_FIRST, StepFirstWorkflowStrategy.class);
-        registry.put(WorkflowStrategy.NODE_FIRST, NodeFirstWorkflowStrategy.class);
-        registry.put(WorkflowStrategy.PARALLEL, ParallelWorkflowStrategy.class);
+        registry = new HashMap<>();
+        //TODO:
+        registry.put(WorkflowExecutor.NODE_FIRST, NodeFirstWorkflowExecutor.class);
+//        registry.put(WorkflowExecutor.STEP_FIRST, StepFirstWorkflowExecutor.class);
+//        registry.put(WorkflowExecutor.PARALLEL, ParallelWorkflowExecutor.class);
+
+        registry.put(WorkflowExecutor.STEP_FIRST, EngineWorkflowExecutor.class);
+        registry.put(WorkflowExecutor.PARALLEL, EngineWorkflowExecutor.class);
+
+        final ProviderService<WorkflowExecutor> primaryService = ServiceFactory.builtinService(
+                framework,
+                SERVICE_NAME,
+                registry
+        );
+
+//        final ProviderService<WorkflowExecutor> pluginService =
+//                ServiceFactory.pluginService(SERVICE_NAME, framework, WorkflowExecutor.class);
+
+
+        serviceList.add(primaryService);
+//        serviceList.add(pluginService);
+    }
+
+    @Override
+    protected List<ProviderService<WorkflowExecutor>> getServiceList() {
+        return serviceList;
     }
 
     public static WorkflowExecutionService getInstanceForFramework(Framework framework) {
@@ -59,7 +98,21 @@ public class WorkflowExecutionService extends BaseProviderRegistryService<Workfl
     }
 
     public WorkflowExecutor getExecutorForItem(final WorkflowExecutionItem workflow) throws ExecutionServiceException {
-        return providerOfType(workflow.getWorkflow().getStrategy());
+        String strategy = workflow.getWorkflow().getStrategy();
+        if (registry.containsKey(strategy)) {
+            return providerOfType(strategy);
+        } else {
+            return providerOfType(WorkflowExecutor.STEP_FIRST);
+        }
     }
+
+    public List<Description> listDescriptions() {
+        return DescribableServiceUtil.listDescriptions(this);
+    }
+
+    public List<ProviderIdent> listDescribableProviders() {
+        return DescribableServiceUtil.listDescribableProviders(this);
+    }
+
 
 }

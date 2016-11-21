@@ -30,10 +30,7 @@ import com.dtolabs.rundeck.core.execution.service.MissingProviderException;
 import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 
 import java.lang.reflect.Constructor;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * BaseProviderRegistryService is an abstract base that provides a registry of available service providers based on
@@ -49,8 +46,13 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
 
     public BaseProviderRegistryService(Framework framework) {
         this.framework = framework;
-        instanceregistry = new HashMap<String, T>();
-        registry = new HashMap<String, Class<? extends T>>();
+        instanceregistry = new HashMap<>();
+        registry = new HashMap<>();
+    }
+    public BaseProviderRegistryService(Framework framework, Map<String, Class<? extends T>> classes) {
+        this.framework = framework;
+        instanceregistry = new HashMap<>();
+        registry = new HashMap<>(classes);
     }
 
     public void registerClass(String name, Class<? extends T> clazz) {

@@ -30,26 +30,31 @@ these properties in the [rundeck-config.properties](configuration-file-reference
 `rundeck.gui.helpLink`                      URL for the "help" link in the app   http://rundeck.org/
                                             header.                              docs
 
+`rundeck.gui.navbar.background`             Color of the background of the top   `#3C3C3C`
+                                            navigation bar.
+
 `rundeck.gui.realJobTree`                   Displaying a real tree in the Jobs   false
                                             overview instead of collapsing            
                                             empty groups. **Default: true**           
 
-`rundeck.gui.startpage`                     Change the default page shown after  'jobs'
-                                            choosing a project. values: 'run',
-                                            'jobs' or 'history'. Default: 'jobs'.
+`rundeck.gui.startpage`                     Change the default page shown after
+                                            choosing a project. Values: 'adhoc',
+                                            'configure', 'createJob', 'events',
+                                            'home', 'jobs', 'nodes', 'projectHome' or 'uploadJob'.
+                                            Default: 'projectHome'.
 
 `rundeck.gui.execution.tail.lines.default`  Change the default number of lines   50
-                                            shown in the execution page in tail 
+                                            shown in the execution page in tail
                                             mode view. (Default: 20)
 
 `rundeck.gui.execution.tail.lines.max`      Change the maximum number of lines   200
-                                            shown in the execution page in tail 
+                                            shown in the execution page in tail
                                             mode view. (Default: 100)
 
 `rundeck.gui.enableJobHoverInfo`            Shows job information when the user  false
                                             hovers over a job name in various  
                                             pages. (Default: true)
-                                            
+
 `rundeck.gui.login.welcome`                 Text displayed in the login form
                                             pages. (Default: blank)     
 
@@ -58,7 +63,7 @@ these properties in the [rundeck-config.properties](configuration-file-reference
                                             before display. (Default: blank)
 
 `rundeck.gui.errorpage.hidestacktrace`      Hide Java stacktraces from the end   true/false
-                                            user when an error occurs. 
+                                            user when an error occurs.
                                             Default: false.                        
 
 `rundeck.gui.job.description.disableHTML`   Disable extended Job description     true/false
@@ -74,7 +79,7 @@ these properties in the [rundeck-config.properties](configuration-file-reference
                                             (Default: true)
 -------------------------------------------------------------------------------
 
-The `rundeck.gui.errorpage.hidestacktrace` can also be set to true via a Java system property defined at system startup: 
+The `rundeck.gui.errorpage.hidestacktrace` can also be set to true via a Java system property defined at system startup:
 `-Dorg.rundeck.gui.errorpage.hidestacktrace=true`.
 
 ## Localization

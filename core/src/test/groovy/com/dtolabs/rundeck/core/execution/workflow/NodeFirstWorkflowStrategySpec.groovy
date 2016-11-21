@@ -23,12 +23,9 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
@@ -38,21 +35,22 @@ import spock.lang.Specification
  * Created by greg on 11/6/15.
  */
 class NodeFirstWorkflowStrategySpec extends Specification {
+    public static final String TEST_PROJ = 'NodeFirstWorkflowStrategySpec'
     Framework framework
     FrameworkProject testProject
 
     def setup() {
         framework = AbstractBaseTest.createTestFramework()
-        testProject = framework.getFrameworkProjectMgr().createFrameworkProject('NodeFirstWorkflowStrategySpec')
+        testProject = framework.getFrameworkProjectMgr().createFrameworkProject(TEST_PROJ)
     }
 
     def cleanup() {
-        framework.getFrameworkProjectMgr().removeFrameworkProject('NodeFirstWorkflowStrategySpec')
+        framework.getFrameworkProjectMgr().removeFrameworkProject(TEST_PROJ)
     }
 
     def "node step fails then workflow step success should fail"() {
         given:
-        def strategy = new NodeFirstWorkflowStrategy(framework)
+        def strategy = new NodeFirstWorkflowExecutor(framework)
         def nodeSet = new NodeSetImpl()
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
@@ -63,6 +61,7 @@ class NodeFirstWorkflowStrategySpec extends Specification {
                 }
             }
             getNodes() >> nodeSet
+            getFrameworkProject()>>TEST_PROJ
         }
         def successExecutor = Mock(StepExecutor) {
             isNodeDispatchStep(_) >> false
