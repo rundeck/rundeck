@@ -24,7 +24,6 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.CoreException;
-import com.dtolabs.rundeck.core.cli.ExecTool;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
@@ -67,37 +66,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         return wlistener;
     }
-    public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem executionItem)
-        throws ExecutionException, ExecutionServiceException {
-        if (null != getWorkflowListener(context)) {
-            getWorkflowListener(context).beginStepExecution(null,context, executionItem);
-        }
-        if (!(executionItem instanceof NodeStepExecutionItem)) {
-            throw new IllegalArgumentException("Cannot dispatch item which is not a NodeStepExecutionItem: " +
-                    executionItem);
-        }
-        NodeStepExecutionItem item = (NodeStepExecutionItem) executionItem;
 
-        boolean success = false;
-        DispatcherResult result = null;
-        BaseExecutionResult baseExecutionResult = null;
-        final LogReformatter formatter = createLogReformatter(null, context.getExecutionListener());
-        final ThreadStreamFormatter loggingReformatter = new ThreadStreamFormatter(formatter).invoke();
-        try {
-            result = dispatchToNodes(context, item);
-            success = result.isSuccess();
-            baseExecutionResult = new BaseExecutionResult(result, success, null);
-        } catch (DispatcherException e) {
-            baseExecutionResult = new BaseExecutionResult(result, success, e);
-        } finally {
-            loggingReformatter.resetOutputStreams();
-            if (null != getWorkflowListener(context)) {
-                getWorkflowListener(context).finishStepExecution(null,baseExecutionResult, context, item);
-            }
-        }
-
-        return baseExecutionResult;
-    }
 
     public StepExecutionResult executeStep(StepExecutionContext context, StepExecutionItem item) throws StepException {
 
@@ -343,123 +312,5 @@ class ExecutionServiceImpl implements ExecutionService {
         return SERVICE_NAME;
     }
 
-    /**
-     * @deprecated
-     */
-    private static class ContextLoggerExecutionListenerMapGenerator implements MapGenerator<String,String>{
-        final ContextLoggerExecutionListener ctxListener;
 
-        private ContextLoggerExecutionListenerMapGenerator(final ContextLoggerExecutionListener ctxListener) {
-            this.ctxListener = ctxListener;
-        }
-
-        public Map<String, String> getMap() {
-            return ctxListener.getLoggingContext();
-        }
-    }
-    /**
-     * Create a LogReformatter for the specified node and listener. If the listener is a {@link ContextLoggerExecutionListener},
-     * then the context map data is used by the reformatter.
-     * @deprecated
-     */
-    public static LogReformatter createLogReformatter(final INodeEntry node, final ExecutionListener listener) {
-        LogReformatter gen;
-        if (null != listener && listener.isTerse()) {
-            gen = null;
-        } else {
-            String logformat = ExecTool.DEFAULT_LOG_FORMAT;
-            if (null != listener && null != listener.getLogFormat()) {
-                logformat = listener.getLogFormat();
-            }
-            if (listener instanceof ContextLoggerExecutionListener) {
-                final ContextLoggerExecutionListener ctxListener = (ContextLoggerExecutionListener) listener;
-                gen = new LogReformatter(logformat, new ContextLoggerExecutionListenerMapGenerator(ctxListener));
-            } else {
-                final HashMap<String, String> baseContext = new HashMap<String, String>();
-                //discover node name and username
-                baseContext.put("node", null != node?node.getNodename():"");
-                baseContext.put("user", null != node?node.extractUserName():"");
-                gen = new LogReformatter(logformat, baseContext);
-            }
-
-        }
-        return gen;
-    }
-
-    /**
-     * @deprecated
-     */
-    static class ThreadStreamFormatter {
-        final LogReformatter gen;
-        private ThreadBoundOutputStream threadBoundSysOut;
-        private ThreadBoundOutputStream threadBoundSysErr;
-        private OutputStream origout;
-        private OutputStream origerr;
-
-        ThreadStreamFormatter(final LogReformatter gen) {
-            this.gen = gen;
-        }
-
-        public ThreadBoundOutputStream getThreadBoundSysOut() {
-            return threadBoundSysOut;
-        }
-
-        public ThreadBoundOutputStream getThreadBoundSysErr() {
-            return threadBoundSysErr;
-        }
-
-        public OutputStream getOrigout() {
-            return origout;
-        }
-
-        public OutputStream getOrigerr() {
-            return origerr;
-        }
-
-
-        public ThreadStreamFormatter invoke() {
-            //bind System printstreams to the thread
-            threadBoundSysOut = ThreadBoundOutputStream.bindSystemOut();
-            threadBoundSysErr = ThreadBoundOutputStream.bindSystemErr();
-
-            //get outputstream for reformatting destination
-            origout = threadBoundSysOut.getThreadStream();
-            origerr = threadBoundSysErr.getThreadStream();
-
-            //replace any existing logreformatter
-            final FormattedOutputStream outformat;
-            if (origout instanceof FormattedOutputStream) {
-                final OutputStream origsink = ((FormattedOutputStream) origout).getOriginalSink();
-                outformat = new FormattedOutputStream(gen, origsink);
-            } else {
-                outformat = new FormattedOutputStream(gen, origout);
-            }
-            outformat.setContext("level", "INFO");
-
-            final FormattedOutputStream errformat;
-            if (origerr instanceof FormattedOutputStream) {
-                final OutputStream origsink = ((FormattedOutputStream) origerr).getOriginalSink();
-                errformat = new FormattedOutputStream(gen, origsink);
-            } else {
-                errformat = new FormattedOutputStream(gen, origerr);
-            }
-            errformat.setContext("level", "ERROR");
-
-            //install the OutputStreams for the thread
-            threadBoundSysOut.installThreadStream(outformat);
-            threadBoundSysErr.installThreadStream(errformat);
-            return this;
-        }
-
-        public void resetOutputStreams() {
-            threadBoundSysOut.removeThreadStream();
-            threadBoundSysErr.removeThreadStream();
-            if (null != origout) {
-                threadBoundSysOut.installThreadStream(origout);
-            }
-            if (null != origerr) {
-                threadBoundSysErr.installThreadStream(origerr);
-            }
-        }
-    }
 }

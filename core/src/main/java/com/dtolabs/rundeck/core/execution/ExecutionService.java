@@ -49,20 +49,6 @@ import java.io.InputStream;
  */
 public interface ExecutionService extends FrameworkSupportService {
     public static final String SERVICE_NAME = "ExecutionService";
-    /**
-     * Execute the item for the given context and return the result.
-     *
-     *
-     * @param context context
-     * @param item item
-     *
-     * @return result
-     * @deprecated use {@link #executeStep(com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext, StepExecutionItem)}
-     * @throws com.dtolabs.rundeck.core.execution.service.ExecutionServiceException on error
-     * @throws ExecutionException on execution error
-     */
-    public ExecutionResult executeItem(StepExecutionContext context, StepExecutionItem item)
-        throws ExecutionException, ExecutionServiceException;
 
     /**
      * Execute a workflow step item for the given context and return the result.
