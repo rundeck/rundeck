@@ -15,6 +15,8 @@ RunDeck, is no ordinary wooden deck. You can build a bon fire on this deck.
 Rundeck provides a single console for dispatching commands across many resources.
 
 %changelog
+* Tue Nov 22 2016 Greg Schueler <greg@simplifyops.com> 2.7.0-0
+	- Remove old CLI tools
 * Wed Nov 16 2016 Greg Schueler <greg@simplifyops.com> 2.7.0-0
 	- Upgraded jetty jar dependencies
 * Tue Jan 20 2015 Greg Schueler <greg@simplifyops.com> 2.5-0
@@ -135,12 +137,7 @@ fi
 
 
 # CLI Tools
-%attr(755, root, root) /usr/bin/run
-%attr(755, root, root) /usr/bin/dispatch
-%attr(755, root, root) /usr/bin/rd-jobs
 %attr(755, root, root) /usr/bin/rd-acl
-%attr(755, root, root) /usr/bin/rd-project
-%attr(755, root, root) /usr/bin/rd-queue
 
 %package config
 summary: RunDeck configuration package
