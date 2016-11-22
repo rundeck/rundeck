@@ -58,7 +58,7 @@ There are several install options: a self-contained jar file, or RPM, or Debian.
 
 To start from the rundeck-launcher.jar, put it in a directory named ~/rundeck, then execute:
 
-    java -XX:MaxPermSize=256m -Xmx1024m -Xms256m -server -jar rundeck-launcher-2.0.0.jar
+    java -Xmx1024m -Xms256m -server -jar rundeck-launcher-2.5.2.jar
 
 If you'd like to install via RPM, you can use Yum:
 
@@ -67,7 +67,7 @@ If you'd like to install via RPM, you can use Yum:
 
 OR install directly from RPM:
 
-    rpm -ivh rundeck-2.0.0-xxx.rpm rundeck-config-2.0.0-xxx.rpm
+    rpm -ivh rundeck-2.5.2-xxx.rpm rundeck-config-2.5.2-xxx.rpm
 
 Once the RPM is installed, execute:
 
@@ -77,14 +77,14 @@ The server should launch on port 4440, with default username/password of `admin/
 
 For Debian, download the .deb from the [downloads page](http://rundeck.org/downloads.html), then run:
 
-    dpkg -i rundeck-2.0.0-x.deb
+    dpkg -i rundeck-2.5.2-x.deb
 
 * For more info and configuration information, see the [Rundeck docs](http://docs.rundeck.org).
 
 Requirements
 =======
 
-Java 7 (openjdk, sun)
+Java 8 (openjdk, sun)
 
 [Pandoc](http://johnmacfarlane.net/pandoc/) (documentation build only)
 
