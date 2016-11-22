@@ -88,7 +88,7 @@ assert_json_not_null  ".user" $DIR/curl.out
 echo "OK"
 
 
-rd-queue follow -q -e $execid || {
+api_waitfor_execution $execid || {
   errorMsg "Failed to wait for execution $execid to finish"
   exit 2
 }

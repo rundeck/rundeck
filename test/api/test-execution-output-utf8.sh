@@ -117,7 +117,7 @@ fi
 rm $expectfile $outfile
 
 ##wait for exec to finish...
-rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
+api_waitfor_execution $execid || fail "Waiting for $execid to finish"
 $SHELL $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 
 echo "OK"

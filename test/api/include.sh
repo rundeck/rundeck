@@ -131,7 +131,45 @@ api_request(){
     EXPECT_STATUS=
     
 }
+api_waitfor_execution(){
+    local execid=$1
+    local shouldfail=${2:-true}
+    # now submit req
+    local runurl="${APIURL}/execution/${execid}"
 
+    local status='running'
+
+    local rsleep=3
+    local rmax=10
+    local rc=0
+    
+    while [[ ( $status == "running" || $status == "scheduled" ) && $rc -lt $rmax ]]; do
+
+        # get listing
+        docurl ${runurl} > $DIR/curl.out || fail "failed request: ${runurl}"
+
+        
+        #Check projects list
+        assert_xml_valid $DIR/curl.out
+        assert_xml_value "1" "//executions/@count" $DIR/curl.out
+
+        status=$(xmlsel "//executions/execution/@status" $DIR/curl.out)
+
+        if [[ $status == 'running' ]] ; then
+            rc=$(( $rc + 1 ))
+            sleep $rsleep
+        fi
+    done
+    
+    # only return 1 if failed or aborted, 
+    # this is how rd-queue used to work, 
+    if [[ $status == 'failed' || $status == 'aborted' ]] ; then
+        if [[ $shouldfail == "true" ]] ; then
+            echo "Status is $status shouldfail $shouldfail"
+            #return 1
+        fi
+    fi
+}
 
 ##
 # utilities for testing http responses

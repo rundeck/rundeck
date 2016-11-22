@@ -94,6 +94,27 @@ clean_dir(){
 
 	mkdir -p $DIR
 }
+setup_project(){
+	local FARGS=("$@")
+	local DIR=${FARGS[0]}
+	local PROJ=${FARGS[1]}
+	mkdir -p $DIR/projects/$PROJ/etc
+	cat >$DIR/projects/$PROJ/etc/project.properties<<END
+project.name=$PROJ
+project.nodeCache.delay=30
+project.nodeCache.enabled=true
+project.ssh-authentication=privateKey
+#project.ssh-keypath=
+resources.source.1.config.file=$DIR/projects/\${project.name}/etc/resources.xml
+resources.source.1.config.format=resourcexml
+resources.source.1.config.generateFileAutomatically=true
+resources.source.1.config.includeServerNode=true
+resources.source.1.config.requireFileExists=false
+resources.source.1.type=file
+service.FileCopier.default.provider=jsch-scp
+service.NodeExecutor.default.provider=jsch-ssh
+END
+}
 copy_jar(){
 	local FARGS=("$@")
 	local DIR=${FARGS[0]}
@@ -124,6 +145,7 @@ run_ci_test(){
 	local DIR=$PWD/build/citest
 
 	clean_dir $DIR
+	setup_project $DIR 'test'
 
 	local launcherJar=$( copy_jar $DIR )
 

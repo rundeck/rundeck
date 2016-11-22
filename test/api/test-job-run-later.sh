@@ -44,7 +44,7 @@ month=${tokens[4]}
 weekday=${tokens[5]}
 year=${tokens[6]}
 timezone=${tokens[7]}
-unixts=$(env TZ=GMT date -d "${year}/${month}/${day} ${hours}:${minutes}:${seconds}" +"%s")
+#unixts=$(env TZ=GMT date -d "${year}/${month}/${day} ${hours}:${minutes}:${seconds}" +"%s")
 runtime="${year}-${month}-${day}T${hours}:${minutes}:${seconds}.000+0000"
 echo "Schedule time is: $runtime (unix ts: $unixts)"
 
@@ -146,7 +146,7 @@ fi
 
 #wait for execution to complete
 
-rd-queue follow -e "$execid"
+api_waitfor_execution "$execid" true
 
 if [ 0 != $? ]; then
     fail "Failed waiting for execution $execid to complete"
