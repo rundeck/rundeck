@@ -155,7 +155,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertEquals("monkey", project.getProperty("a.b"));
         assertEquals("helmann", project.getProperty("b.c"));
         Map<String, String> projectProperties = project.getProperties();
-        assertEquals(3+16, projectProperties.size());
+        assertEquals(3+14, projectProperties.size());
     }
     public void testProjectProperties() throws IOException {
         final File projectDir = new File(getFrameworkProjectsBase(), PROJECT_NAME);
