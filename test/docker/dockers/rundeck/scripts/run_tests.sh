@@ -3,6 +3,12 @@
 set -e
 
 export API_KEY=letmein99
+# define env vars used by rd tool
+export RD_TOKEN=$API_KEY
+export RD_URL="http://$RUNDECK_NODE:4440"
+export RD_COLOR=0
+export RD_OPTS="-Dfile.encoding=utf-8"
+
 echo "API_KEY=$API_KEY"
 
 #bash $HOME/scripts/start_rundeck.sh

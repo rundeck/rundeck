@@ -20,7 +20,7 @@ describe "project: rundeck project should exist: $RUNDECK_PROJECT"
 
 
 it_should_list_project_nodes() {
-    bash -c "dispatch -p $RUNDECK_PROJECT"
+    bash -c "rd nodes list -p $RUNDECK_PROJECT"
 }
 
 it_should_contain_remote_node() {
@@ -29,7 +29,7 @@ it_should_contain_remote_node() {
     IFS=$'\n\t'
 
     # Run the uname command across the nodes tagged 'adhoc'. Should be two nodes.
-    rawout=($(bash -c "dispatch -p $RUNDECK_PROJECT -I tags=remote"))
+    rawout=($(bash -c "rd nodes -p $RUNDECK_PROJECT -% \"%nodename\" -f tags:remote"))
 
     test "${rawout[0]}" = $REMOTE_NODE
 
