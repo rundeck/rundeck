@@ -483,10 +483,14 @@ class StorageController extends ControllerBase{
     private def postResource() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
-        if (storageService.hasResource(authContext, resourcePath)) {
+        //require path is longer than "/keys/"
+        if (resourcePath.length() <= '/keys/'.length()) {
+            response.status = 400
+            return renderError("POST requires a path: ${resourcePath}")
+        } else if (storageService.hasResource(authContext, resourcePath)) {
             response.status = 409
             return renderError("resource already exists: ${resourcePath}")
-        }else if(storageService.hasPath(authContext, resourcePath)){
+        } else if (storageService.hasPath(authContext, resourcePath)) {
             response.status = 409
             return renderError("directory already exists: ${resourcePath}")
         }
@@ -525,6 +529,10 @@ class StorageController extends ControllerBase{
     private def deleteResource() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
+        if (resourcePath.length() <= '/keys/'.length()) {
+            response.status = 400
+            return renderError("DELETE requires a path: ${resourcePath}")
+        }
         if(!storageService.hasResource(authContext, resourcePath)) {
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_NOT_FOUND,
@@ -568,6 +576,10 @@ class StorageController extends ControllerBase{
     private def putResource() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
+        if (resourcePath.length() <= '/keys/'.length()) {
+            response.status = 400
+            return renderError("PUT requires a path: ${resourcePath}")
+        }
         def found = storageService.hasResource(authContext, resourcePath)
         if (!found) {
             response.status = 404

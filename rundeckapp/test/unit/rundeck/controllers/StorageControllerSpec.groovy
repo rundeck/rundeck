@@ -1,0 +1,76 @@
+/*
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package rundeck.controllers
+
+import grails.test.mixin.TestFor
+import org.rundeck.storage.api.Path
+import org.rundeck.storage.api.Resource
+import rundeck.services.ApiService
+import rundeck.services.FrameworkService
+import rundeck.services.StorageService
+import spock.lang.Specification
+
+/**
+ * @author greg
+ * @since 11/28/16
+ */
+@TestFor(StorageController)
+class StorageControllerSpec extends Specification {
+    def "require sub path param for create/upload/delete"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        when:
+        request.method = method
+        def result = controller.apiKeys()
+
+
+        then:
+        response.status == 400
+        1 * controller.apiService.requireApi(*_) >> true
+        1 * controller.apiService.requireVersion(*_) >> true
+
+        where:
+        method   | _
+        'POST'   | _
+        'PUT'    | _
+        'DELETE' | _
+    }
+
+    def "don't require sub path param for get"() {
+        given:
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.storageService = Mock(StorageService)
+        when:
+        request.method = 'GET'
+        def result = controller.apiKeys()
+
+
+        then:
+        response.status == 200
+        1 * controller.apiService.requireApi(*_) >> true
+        1 * controller.apiService.requireVersion(*_) >> true
+        1 * controller.storageService.hasPath(_, '/keys/') >> true
+        1 * controller.storageService.getResource(_, '/keys/') >> Mock(Resource) {
+            isDirectory()>>true
+            getPath()>>Mock(Path)
+        }
+        1 * controller.storageService.listDir(_, '/keys/') >> ([] as Set)
+
+    }
+}
