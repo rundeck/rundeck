@@ -8,13 +8,11 @@ export CLI_VERS=${CLI_VERS:-0.1.27-1}
 
 
 if [ -f rundeck-launcher.jar ] ; then
-	#LAUNCHER_URL=file:/home/rundeck/rundeck-launcher.jar
-    mv rundeck-launcher.jar dockers/rundeck/data/
+	mv rundeck-launcher.jar dockers/rundeck/data/
 fi
 
 if [ -f rd.deb ] ; then
-	#LAUNCHER_URL=file:/home/rundeck/rundeck-launcher.jar
-    mv rd.deb dockers/rundeck/data/
+	mv rd.deb dockers/rundeck/data/
 fi
 
 # tickle installer for it to rebuild

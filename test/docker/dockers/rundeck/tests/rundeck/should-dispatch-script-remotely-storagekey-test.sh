@@ -21,9 +21,7 @@ describe "project: dispatch script remote node using storage key"
 it_should_dispatch_script_remotely_stored_key() {
     # Run the script file on the remote node
     bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F ${REMOTE_NODE}-stored -s /tests/rundeck/test-dispatch-script.sh | grep -v ^#" > test.output
-    #test "$(head -n1 test.output)" = "Succeeded queueing adhoc"
-    #tail -n +3 test.output > test2.output
-
+    
     # diff with expected
     cat >expected.output <<END
 This is test-dispatch-script.sh
@@ -45,9 +43,7 @@ END
 it_should_dispatch_script_remotely_dos_lineendings_stored_key() {
     # Run the script file on the remote node
     bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F ${REMOTE_NODE}-stored -s /tests/rundeck/test-dispatch-script-dos.sh | grep -v ^#" > test.output
-    #test "$(head -n1 test.output)" = "Succeeded queueing adhoc"
-    #tail -n +3 test.output > test2.output
-
+    
     # diff with expected
     cat >expected.output <<END
 This is test-dispatch-script-dos.sh
@@ -68,9 +64,7 @@ END
 
 it_should_dispatch_script_remotely_with_args_stored_key() {
     bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F '${REMOTE_NODE}-stored' -s /tests/rundeck/test-dispatch-script.sh -- arg1 arg2 | grep -v ^#"> test.output
-    #test "$(head -n1 test.output)" = "Succeeded queueing adhoc"
-    #tail -n +3 test.output > test2.output
-
+    
     # diff with expected
     cat >expected.output <<END
 This is test-dispatch-script.sh
@@ -91,9 +85,7 @@ END
 
 it_should_dispatch_url_remotely_stored_key() {
     bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F '${REMOTE_NODE}-stored' -u file:/tests/rundeck/test-dispatch-script.sh -- arg1 arg2 | grep -v ^#"> test.output
-    #test "$(head -n1 test.output)" = "Succeeded queueing adhoc"
-    #tail -n +3 test.output > test2.output
-
+    
     # diff with expected
     cat >expected.output <<END
 This is test-dispatch-script.sh
