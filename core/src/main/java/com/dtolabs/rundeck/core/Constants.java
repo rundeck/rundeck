@@ -136,7 +136,7 @@ public final class Constants {
     
     /**
      * @return the scratch directory used for temporary storage located within the 
-     * the directory returned by {@link getSystemBaseDir}
+     * the directory returned by {@link #getSystemBaseDir()}
      */
     public static String getBaseTempDirectory() {
         return getBaseTempDirectory(getSystemBaseDir());
