@@ -155,7 +155,7 @@ echo "TEST: job/id/executions?status=succeeded should succeed with 1 results"
 runurl="${APIURL}/job/${jobid}/executions"
 params="status=succeeded"
 
-rd-queue follow -q -e $execid || {
+api_waitfor_execution $execid || {
   errorMsg "Failed to wait for execution $execid to finish"
   exit 2
 }
@@ -203,7 +203,7 @@ else
 fi
 
 #wait for execution to finish
-rd-queue follow -q -e $execid || fail "Waiting for execution $execid to finish"
+api_waitfor_execution $execid || fail "Waiting for execution $execid to finish"
 $SHELL $SRC_DIR/api-expect-exec-success.sh $execid || fail "Wrong exit status for exec $execid"
 
 ###
@@ -412,7 +412,7 @@ fi
 
 
 
-rd-queue follow -q -e $execid || {
+api_waitfor_execution $execid || {
   errorMsg "Failed to wait for execution $execid to finish"
   exit 2
 }

@@ -197,12 +197,12 @@ END
 
   #run job to completion twice
   EXECID=$(runJob $JOBID)
-  rd-queue follow -q -e $EXECID || fail "rd-queue failed to wait for job completion $EXECID"
+  api_waitfor_execution $EXECID || fail "failed to wait for job completion $EXECID"
 
 
   #run job to completion twice
   EXECID2=$(runJob $JOBID)
-  rd-queue follow -q -e $EXECID2 || fail "rd-queue failed to wait for job completion $EXECID2"
+  api_waitfor_execution $EXECID2 || fail "failed to wait for job completion $EXECID2"
   
   echo "TEST: Export specifying executions, 2"
   

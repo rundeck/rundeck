@@ -23,16 +23,11 @@
 */
 package com.dtolabs.rundeck.core.cli;
 
-import com.dtolabs.client.services.DispatcherConfig;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.VersionConstants;
-import com.dtolabs.rundeck.core.common.FrameworkFactory;
-import com.dtolabs.rundeck.core.dispatcher.CentralDispatcher;
-import com.dtolabs.rundeck.core.utils.IPropertyLookup;
 import org.apache.commons.cli.*;
 import org.apache.log4j.PropertyConfigurator;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,7 +49,6 @@ public abstract class BaseTool implements CLITool {
     private CommandLine commandLine;
     private final List<CLIToolOptions> toolOptions;
     private boolean shouldExit = false;
-    private CentralDispatcher centralDispatcher;
 
     /**
      * Add a new CLIToolOptions object to the options used by this tool.
@@ -249,44 +243,4 @@ public abstract class BaseTool implements CLITool {
         this.shouldExit = shouldExit;
     }
 
-    public CentralDispatcher getCentralDispatcher() {
-        return centralDispatcher;
-    }
-
-    public void setCentralDispatcher(final CentralDispatcher centralDispatcher) {
-        this.centralDispatcher = centralDispatcher;
-    }
-
-    public static DispatcherConfig createDefaultDispatcherConfig() {
-        DispatcherConfig envConfig = FrameworkFactory.createDispatcherConfig(
-                System.getProperty("rundeck.server.url", System.getenv("RUNDECK_URL")),
-                System.getProperty("rundeck.server.username", System.getenv("RUNDECK_USER")),
-                System.getProperty("rundeck.server.password", System.getenv("RUNDECK_PASS"))
-        );
-        if (FrameworkFactory.isValid(envConfig)) {
-            return envConfig;
-        }
-
-        IPropertyLookup propertyLookup = FrameworkFactory.createFilesystemFramework(
-                new File(Constants.getSystemBaseDir())
-        ).getPropertyLookup();
-
-        if(propertyLookup.hasProperty("framework.server.url") &&
-                propertyLookup.hasProperty("framework.server.username") &&
-                propertyLookup.hasProperty("framework.server.password")) {
-            DispatcherConfig fwkPropsConfig = FrameworkFactory.createDispatcherConfig(propertyLookup);
-
-            if (FrameworkFactory.isValid(fwkPropsConfig)) {
-                return fwkPropsConfig;
-            }
-        }
-        throw new RuntimeException("Unable to determine credentials for connecting to the Rundeck Server.\n" +
-                                   "   Set environment variables: RUNDECK_URL, RUNDECK_USER, RUNDECK_PASS.\n" +
-                                   "Or \n" +
-                                   "   Set JVM System properties: \n" +
-                                   "   rundeck.server.url, rundeck.server.username, rundeck.server.password\n" +
-                                   "Or \n" +
-                                   "   In framework.properties, set properties:\n" +
-                                   "   framework.server.url, framework.server.username, framework.server.password");
-    }
 }

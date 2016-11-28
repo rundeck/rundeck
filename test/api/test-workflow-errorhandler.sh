@@ -142,7 +142,7 @@ waitexecstatus(){
   shift
   # sleep
   # 
-  rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
+  api_waitfor_execution $execid || fail "Waiting for $execid to finish"
   $SHELL $SRC_DIR/api-expect-exec-success.sh $execid $expectstatus || exit 2
 }
 

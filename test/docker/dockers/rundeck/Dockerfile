@@ -14,7 +14,20 @@ RUN apt-get -y update && \
         uuid-runtime \
         ncurses-bin \
         iputils-ping \
-        zip
+        zip \
+        apt-transport-https
+
+# add cli tool debian repo
+ARG CLI_DEB_URL
+ARG CLI_VERS
+RUN echo "deb $CLI_DEB_URL /" | sudo tee -a /etc/apt/sources.list
+
+# add GPG key
+#RUN curl "https://bintray.com/user/downloadSubjectPublicKey?username=rundeck" > /tmp/rundeck.gpg.key
+#RUN apt-key add - < /tmp/rundeck.gpg.key
+RUN curl "https://bintray.com/user/downloadSubjectPublicKey?username=bintray" > /tmp/bintray.gpg.key
+RUN apt-key add - < /tmp/bintray.gpg.key
+
 
 ## Install Oracle JVM
 RUN \
@@ -48,6 +61,11 @@ WORKDIR $HOME
 RUN mkdir -p $HOME/data
 COPY data $HOME/data
 VOLUME $HOME/data
+
+#Install Rundeck CLI tool
+RUN test -f $HOME/data/rd.deb && dpkg -i $HOME/data/rd.deb || true
+RUN test -f $HOME/data/rd.deb || apt-get -y update
+RUN test -f $HOME/data/rd.deb || apt-get -y install rundeck-cli=$CLI_VERS
 
 
 #download installer

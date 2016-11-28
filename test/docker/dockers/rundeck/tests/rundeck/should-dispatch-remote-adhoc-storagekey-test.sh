@@ -21,7 +21,7 @@ describe "project: dispatch adhoc command to remote node using storage key"
 
 it_should_dispatch_whoami_remotely_stored_key() {
 
-    bash -c "dispatch -p $RUNDECK_PROJECT -F ${REMOTE_NODE}-stored -f -- whoami"
+    bash -c "rd adhoc -p $RUNDECK_PROJECT -F ${REMOTE_NODE}-stored -f -- whoami"
 
 }
 
@@ -31,16 +31,8 @@ it_should_dispatch_uname_remotely_stored_key() {
     IFS=$'\n\t'
 
     # Run the uname command across the nodes tagged 'adhoc'. Should be two nodes.
-    rawout=($(bash -c "dispatch -p $RUNDECK_PROJECT -f -F '${REMOTE_NODE}-stored tags: remote-stored' -- uname -n"))
-
-    test "${rawout[0]}" = "Succeeded queueing adhoc"
-
-    # Count the lines in the raw output to strip off the queue and follow link lines.
-    size=${#rawout[@]}
-
-    # Create an array by slicing the lines with the command ouput.
-    eval cmdout=( ${rawout[@]:2:$size} )
-
+    cmdout=($(bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F '${REMOTE_NODE}-stored tags: remote-stored' -- uname -n | grep -v ^#"))
+    
     # There should be one line for the uname response.
     if ! test 1 = ${#cmdout[*]}
     then

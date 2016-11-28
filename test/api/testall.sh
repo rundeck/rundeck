@@ -30,6 +30,8 @@ test_fail(){
     echo -e "$1: ${TEST_FAIL}"
 }
 myexit=0
+
+
 for i in $(ls ./unauthorized-test*.sh)  ; do
     tname=$(basename $i)
     $SHELL ${i} ${URL} &>$DIR/${tname}.output
@@ -48,6 +50,9 @@ done
 rm $DIR/cookies
 $SHELL $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && test_ok "Login" || die "Login: ${TEST_FAIL}"
 
+# prepare a new project
+$SHELL $DIR/prepare.sh ${URL} 'test'
+
 TESTS=$(ls ./test-*.sh)
 if [ -n "$TEST_NAME" ] ; then
     TESTS=$(ls $TEST_NAME)
@@ -56,9 +61,14 @@ for i in $TESTS ; do
     tname=$(basename $i)
     $SHELL ${i} ${URL} &>$DIR/${tname}.output
     if [ $? != 0 ] ; then
+        if [ -f $DIR/curl.out ] ; then
+            cat $DIR/curl.out >>  $DIR/${tname}.output
+        fi
         let myexit=2
         test_fail "$i"
+        echo "*****************" >> $DIR/testall.output
         echo "${i}: FAILED" >> $DIR/testall.output
+        echo "*****************" >> $DIR/testall.output
         cat $DIR/${tname}.output >> $DIR/testall.output
     else
         test_ok "$i"

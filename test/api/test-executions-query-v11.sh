@@ -182,19 +182,19 @@ execid3=$(runJob $jobid)
 execid4=$(runJob $jobid2)
 
 #wait for executions to complete
-rd-queue follow -q -e $execid1 || {
+api_waitfor_execution $execid1 false || {
   errorMsg "Failed to wait for execution $execid1 to finish"
   exit 2
 }
-rd-queue follow -q -e $execid2 || {
+api_waitfor_execution $execid2 false || {
   errorMsg "Failed to wait for execution $execid2 to finish"
   exit 2
 }
-rd-queue follow -q -e $execid3 || {
+api_waitfor_execution $execid3 false || {
   errorMsg "Failed to wait for execution $execid3 to finish"
   exit 2
 }
-rd-queue follow -q -e $execid4 || {
+api_waitfor_execution $execid4 false || {
   errorMsg "Failed to wait for execution $execid4 to finish"
   exit 2
 }

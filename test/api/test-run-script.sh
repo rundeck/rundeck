@@ -63,7 +63,7 @@ if [ "" == "${execid}" ] ; then
 fi
 
 ##wait for script to execute...
-rd-queue follow -q -e $execid || fail "Waiting for $execid to finish"
+api_waitfor_execution $execid || fail "Waiting for $execid to finish"
 $SHELL $SRC_DIR/api-expect-exec-success.sh $execid || exit 2
 
 if [ ! -f $OUTF ] ; then

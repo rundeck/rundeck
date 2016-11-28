@@ -9,9 +9,6 @@ framework.server.name = @framework.server.name@
 framework.server.hostname = @framework.server.hostname@
 framework.server.port = @framework.server.port@
 framework.server.url = @framework.rundeck.url@
-# Username/password used by CLI tools.
-framework.server.username = @framework.server.username@
-framework.server.password = @framework.server.password@
 
 # ----------------------------------------------------------------
 # Installation locations

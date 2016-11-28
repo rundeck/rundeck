@@ -105,7 +105,7 @@ fi
 
 #wait for execution to complete
 
-rd-queue follow -q -e $execid || fail "Failed waiting for execution $execid to complete"
+api_waitfor_execution $execid false || fail "Failed waiting for execution $execid to complete"
 
 # test execution status
 # 
@@ -133,7 +133,7 @@ retryId=$($XMLSTARLET sel -T -t -v "/result/executions/execution/retriedExecutio
 
 #wait for retry 1 execution to complete
 
-rd-queue follow -q -e $retryId || fail "Failed waiting for execution $retryId to complete"
+api_waitfor_execution $retryId false || fail "Failed waiting for execution $retryId to complete"
 
 
 # test execution status
