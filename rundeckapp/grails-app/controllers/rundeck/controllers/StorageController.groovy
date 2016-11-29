@@ -453,41 +453,50 @@ class StorageController extends ControllerBase{
      * Handle resource requests to the /ssh-key path
      * @return
      */
-    def apiKeys() {
+    def apiKeys(StorageParams storageParams) {
         if(!apiService.requireVersion(request,response,ApiRequestFilters.V11)){
             return
         }
         params.resourcePath = "/keys/${params.resourcePath?:''}"
+        storageParams.resourcePath = params.resourcePath
+        storageParams.validate()
         switch (request.method) {
             case 'POST':
-                apiPostResource()
+                apiPostResource(storageParams)
                 break
             case 'PUT':
-                apiPutResource()
+                apiPutResource(storageParams)
                 break
             case 'GET':
-                apiGetResource()
+                apiGetResource(storageParams)
                 break
             case 'DELETE':
-                apiDeleteResource()
+                apiDeleteResource(storageParams)
                 break
         }
     }
 
-    def apiPostResource() {
+    def apiPostResource(StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        return postResource()
+        return postResource(storageParams)
     }
-    private def postResource() {
+
+    private def postResource(StorageParams storageParams) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        String resourcePath = params.resourcePath
+        String resourcePath = storageParams.resourcePath
+        storageParams.requireRoot('/keys/')
+        if (storageParams.hasErrors()) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.invalid.request',
+                    args  : [storageParams.errors.allErrors.collect { g.message(error: it) }.join(",")]
+            ]
+            )
+        }
         //require path is longer than "/keys/"
-        if (resourcePath.length() <= '/keys/'.length()) {
-            response.status = 400
-            return renderError("POST requires a path: ${resourcePath}")
-        } else if (storageService.hasResource(authContext, resourcePath)) {
+        if (storageService.hasResource(authContext, resourcePath)) {
             response.status = 409
             return renderError("resource already exists: ${resourcePath}")
         } else if (storageService.hasPath(authContext, resourcePath)) {
@@ -520,18 +529,24 @@ class StorageController extends ControllerBase{
     }
 
 
-    def apiDeleteResource() {
+    def apiDeleteResource(StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        return deleteResource()
+        return deleteResource(storageParams)
     }
-    private def deleteResource() {
+
+    private def deleteResource(StorageParams storageParams) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
-        if (resourcePath.length() <= '/keys/'.length()) {
-            response.status = 400
-            return renderError("DELETE requires a path: ${resourcePath}")
+        storageParams.requireRoot('/keys/')
+        if (storageParams.hasErrors()) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.invalid.request',
+                    args  : [storageParams.errors.allErrors.collect { g.message(error: it) }.join(",")]
+            ]
+            )
         }
         if(!storageService.hasResource(authContext, resourcePath)) {
             return apiService.renderErrorFormat(response, [
@@ -567,18 +582,24 @@ class StorageController extends ControllerBase{
         }
     }
 
-    def apiPutResource() {
+    def apiPutResource(StorageParams storageParams) {
         if (!apiService.requireApi(request, response)) {
             return
         }
-        return putResource()
+        return putResource(storageParams)
     }
-    private def putResource() {
+
+    private def putResource(StorageParams storageParams) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         String resourcePath = params.resourcePath
-        if (resourcePath.length() <= '/keys/'.length()) {
-            response.status = 400
-            return renderError("PUT requires a path: ${resourcePath}")
+        storageParams.requireRoot('/keys/')
+        if (storageParams.hasErrors()) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.invalid.request',
+                    args  : [storageParams.errors.allErrors.collect { g.message(error: it) }.join(",")]
+            ]
+            )
         }
         def found = storageService.hasResource(authContext, resourcePath)
         if (!found) {

@@ -16,6 +16,8 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.StorageParams
+import grails.converters.JSON
 import grails.test.mixin.TestFor
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.Resource
@@ -23,6 +25,7 @@ import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * @author greg
@@ -30,7 +33,8 @@ import spock.lang.Specification
  */
 @TestFor(StorageController)
 class StorageControllerSpec extends Specification {
-    def "require sub path param for create/upload/delete"() {
+    @Unroll
+    def "require sub path param for #method request"() {
         given:
         controller.apiService = Mock(ApiService)
         controller.frameworkService = Mock(FrameworkService)
@@ -43,6 +47,12 @@ class StorageControllerSpec extends Specification {
         response.status == 400
         1 * controller.apiService.requireApi(*_) >> true
         1 * controller.apiService.requireVersion(*_) >> true
+        1 * controller.apiService.renderErrorFormat(
+                _,
+                { arg -> arg.status == 400 && arg.code == 'api.error.invalid.request' }
+        ) >> { args ->
+            args[0].status = 400
+        }
 
         where:
         method   | _
@@ -72,5 +82,55 @@ class StorageControllerSpec extends Specification {
         }
         1 * controller.storageService.listDir(_, '/keys/') >> ([] as Set)
 
+    }
+
+    def "validate storage params"() {
+        given:
+        def req = new StorageParams()
+
+        when:
+        req.validate()
+
+        then:
+        !req.hasErrors()
+    }
+
+    def "validate storage params base keypath"() {
+        given:
+        def req = new StorageParams(resourcePath: resourcePath)
+
+        when:
+        req.validate()
+        req.requireRoot('/keys/')
+
+
+        then:
+        req.hasErrors()
+        req.errors.hasFieldErrors('resourcePath')
+
+        where:
+        resourcePath | _
+        '/keys/'     | _
+        null         | _
+        '/bogus/'    | _
+    }
+
+    def "validate storage params valid base keypath"() {
+        given:
+        def req = new StorageParams(resourcePath: resourcePath)
+
+        when:
+        req.validate()
+        req.requireRoot('/keys/')
+
+
+        then:
+        !req.hasErrors()
+        !req.errors.hasFieldErrors('resourcePath')
+
+        where:
+        resourcePath      | _
+        '/keys/xyz'       | _
+        '/keys/asdf/asdf' | _
     }
 }
