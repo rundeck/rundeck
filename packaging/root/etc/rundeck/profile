@@ -58,11 +58,6 @@ if [ -n "$RUNDECK_WITH_SSL" ] ; then
   RDECK_SSL_OPTS="${RDECK_SSL_OPTS:- -Djavax.net.ssl.trustStore=$RDECK_TRUSTSTORE_FILE -Djavax.net.ssl.trustStoreType=$RDECK_TRUSTSTORE_TYPE -Djava.protocol.handler.pkgs=com.sun.net.ssl.internal.www.protocol}"
 fi
 
-if [ -t 0 ] && [ -z "$RUNDECK_CLI_TERSE" ] ; then 
-  RUNDECK_CLI_TERSE=true
-  export RUNDECK_CLI_TERSE
-fi
-
 unset JRE_HOME
 
 umask 002

@@ -9,12 +9,6 @@ export PATH
 
 export JAVA_CMD=$JAVA_HOME/bin/java
 
-if test -t 0 -a -z "$RUNDECK_CLI_TERSE"
-then
-  RUNDECK_CLI_TERSE=true
-  export RUNDECK_CLI_TERSE
-fi
-
 if test -n "$JRE_HOME"
 then
    unset JRE_HOME
