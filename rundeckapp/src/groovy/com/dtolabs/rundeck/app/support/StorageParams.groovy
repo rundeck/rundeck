@@ -37,4 +37,13 @@ class StorageParams {
         inputType(nullable: true, inList: ['file','text'])
         uploadKeyType(nullable: true,inList: ['private','public','password'])
     }
+
+    void requireRoot(String rootPath) {
+        if (!this.resourcePath?.startsWith(rootPath)) {
+            this.errors.rejectValue('resourcePath', 'invalid')
+        }
+        if (this.resourcePath?.length() <= rootPath.length()) {
+            this.errors.rejectValue('resourcePath', 'invalid')
+        }
+    }
 }
