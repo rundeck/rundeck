@@ -51,7 +51,7 @@ rm $DIR/cookies
 $SHELL $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && test_ok "Login" || die "Login: ${TEST_FAIL}"
 
 # prepare a new project
-$SHELL $DIR/prepare.sh ${URL} 'test'
+$SHELL $SRC_DIR/prepare.sh ${URL} 'test'
 
 TESTS=$(ls ./test-*.sh)
 if [ -n "$TEST_NAME" ] ; then
