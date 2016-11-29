@@ -876,28 +876,25 @@ fi
 **Escaping Replacement Token:**
 
 If you want to use the `@` char in a way that looks like a replacement token
-you can escape it using `\` backslash.
+you can escape it using `@@`, i.e. doubling it.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
 # escaping of @ sign to avoid expansion before the @option.domain@
-email="user\@mail.@option.domain@"
+email="user@@mail.@option.domain@"
 
-# If the first @ sign comes right before the token, it will work as expected
-email="user@@option.domain@"
-
-# or you can explicitly escape the first @ sign
-email="user\@@option.domain@"
+# If the first @ sign comes right before the token, use three @
+email="user@@@option.domain@"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~  
 
-In this example, the `@@option.domain@` will result in `@mydomain`,
-and `\@mail.@option.domain2@` will result in `@mail.mydomain`.
+In this example, the `@@@option.domain@` will result in `@mydomain`,
+and `@@mail.@option.domain2@` will result in `@mail.mydomain`.
 
 If you do not escape the `@` in the second example, then `@mail.@`
 will be expanded to a missing value, resulting in a blank string.
 
 You do not need to escape the `@` sign in all cases, only when it might look
 like an expansion token.  If there are any whitespace characters
-before the next `@` sign it will not be expanded.
+before the next `@` sign, it does not need to be escaped:
 
 ~~~~ {.bash}
 # first @ sign does not need to be escaped

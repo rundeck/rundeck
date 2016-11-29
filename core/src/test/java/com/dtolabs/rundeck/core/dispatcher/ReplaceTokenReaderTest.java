@@ -66,17 +66,27 @@ public class ReplaceTokenReaderTest {
     }
     @Test
     public void duplicateStartToken() throws IOException {
-        test("abc xyz@b value", "abc xyz@@value2@", defaultTokens(), true, '@', '@');
+        test("abc xyz@value2@", "abc xyz@@value2@", defaultTokens(), true, '@', '@');
+    }
+
+    /**
+     * Escaped start token should be ignored as start token when another start token encountered
+     * @throws IOException
+     */
+    @Test
+    public void backslashDoesNotEscapeStartToken() throws IOException {
+        test("abc xyz\\value2@", "abc xyz\\@asdf@value2@", defaultTokens(), true, '@', '@');
     }
     @Test
-    public void defaultEscapeStartToken() throws IOException {
-        test("abc xyz@asdfb value", "abc xyz\\@asdf@value2@", defaultTokens(), true, '@', '@');
+    public void backslashDoesNotEscapeEndToken() throws IOException {
+        test("abc xyz", "abc xyz@value2\\@", defaultTokens(), true, '@', '@');
     }
 
     @Test
-    public void customEscapeStartToken() throws IOException {
-        test("abc xyz@asdfb value", "abc xyz^@asdf@value2@", defaultTokens(), true, '@', '@', '^');
+    public void escapedStartToken() throws IOException {
+        test("TEST @monkey something", "TEST @@monkey something", defaultTokens(), true, '@', '@');
     }
+
 
     @Test
     public void eofBeforeTokenEnd() throws IOException {
@@ -84,8 +94,7 @@ public class ReplaceTokenReaderTest {
     }
     @Test
     public void eofBeforeTokenEnd2() throws IOException {
-        test("abc @@value2", "abc @@value2", defaultTokens(), true, '@', '@');
-        test("abc @@@value2", "abc @@@value2", defaultTokens(), true, '@', '@');
+        test("abc @@value2", "abc @@@value2", defaultTokens(), true, '@', '@');
     }
 
     @Test
@@ -154,10 +163,6 @@ public class ReplaceTokenReaderTest {
         return stringStringHashMap;
     }
 
-    public void test(String expected, String input, Map<String, String> tokens, boolean blankIfMissing, char tokenstart, char tokenend) throws IOException {
-
-        test(expected, input, tokens, blankIfMissing, tokenstart, tokenend, ReplaceTokenReader.DEFAULT_ESCAPE);
-    }
 
     public void test(
             String expected,
@@ -165,13 +170,12 @@ public class ReplaceTokenReaderTest {
             Map<String, String> tokens,
             boolean blankIfMissing,
             char tokenstart,
-            char tokenend,
-            char escToken
+            char tokenend
     ) throws IOException
     {
 
         ReplaceTokenReader replaceTokenReader = new ReplaceTokenReader(new StringReader(input), tokens,
-                                                                       blankIfMissing, tokenstart, tokenend, escToken
+                                                                       blankIfMissing, tokenstart, tokenend
         );
         StringWriter writer = new StringWriter();
         writeReader(replaceTokenReader, writer);

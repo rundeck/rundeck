@@ -46,17 +46,20 @@ class DataContextUtilsSpec extends Specification {
 
         where:
 
-        script                                | context                       | expect
-        'abc'                                 | [a: [b: 'bcd']]               | 'abc\n'
-        'echo \'hello@@option.domain@\''      | [:]                           | 'echo \'hello@\'\n'
-        'echo \'hello@milk @option.domain@\'' | [:]                           | 'echo \'hello@milk \'\n'
-        'echo \'hello@@option.domain@\''      | [option: [domain: 'peabody']] | 'echo \'hello@peabody\'\n'
-        'echo \'hello@milk @option.domain@\'' | [option: [domain: 'peabody']] | 'echo \'hello@milk peabody\'\n'
-        'echo \'hello@milk@option.domain@\''  | [option: [domain: 'peabody']] | 'echo \'hellooption.domain@\'\n'
-        'bloo hello@@@nothing@'               | [:]                           | 'bloo hello@@\n'
-        'bloo hello@@@ending'                 | [:]                           | 'bloo hello@@@ending\n'
-        'bloo hello@ending'                   | [:]                           | 'bloo hello@ending\n'
-        'bloo hello@@@ending\n'               | [:]                           | 'bloo hello@@@ending\n'
+        script                                 | context                       | expect
+        'abc'                                  | [a: [b: 'bcd']]               | 'abc\n'
+        'echo \'hello@@option.domain@\''       | [:]                           | 'echo \'hello@option.domain@\'\n'
+        'echo \'hello@@@option.domain@\''      | [:]                           | 'echo \'hello@\'\n'
+        'echo \'hello@milk @option.domain@\''  | [:]                           | 'echo \'hello@milk \'\n'
+        'echo \'hello@@option.domain@\''       | [option: [domain: 'peabody']] | 'echo \'hello@option.domain@\'\n'
+        'echo \'hello@@@option.domain@\''      | [option: [domain: 'peabody']] | 'echo \'hello@peabody\'\n'
+        'echo \'hello@milk @option.domain@\''  | [option: [domain: 'peabody']] | 'echo \'hello@milk peabody\'\n'
+        'echo \'hello@milk@option.domain@\''   | [option: [domain: 'peabody']] | 'echo \'hellooption.domain@\'\n'
+        'echo \'hello@@milk.@option.domain@\'' | [option: [domain: 'peabody']] | 'echo \'hello@milk.peabody\'\n'
+        'bloo hello@@@nothing@'                | [:]                           | 'bloo hello@\n'
+        'bloo hello@@@ending'                  | [:]                           | 'bloo hello@@ending\n'
+        'bloo hello@ending'                    | [:]                           | 'bloo hello@ending\n'
+        'bloo hello@@@ending\n'                | [:]                           | 'bloo hello@@ending\n'
     }
 
     @Unroll
@@ -82,10 +85,15 @@ class DataContextUtilsSpec extends Specification {
 
         script                                  | context                       | expect
         'abc'                                   | [a: [b: 'bcd']]               | 'abc\n'
-        'a\\bc'                                 | [a: [b: 'bcd']]               | 'a\\bc\n'
-        'echo \'hello\\@@option.domain@\''      | [:]                           | 'echo \'hello@\'\n'
-        'echo \'hello\\@milk @option.domain@\'' | [:]                           | 'echo \'hello@milk \'\n'
-        'echo \'hello\\@@option.domain@\''      | [option: [domain: 'peabody']] | 'echo \'hello@peabody\'\n'
-        'echo \'hello\\@milk@option.domain@\''  | [option: [domain: 'peabody']] | 'echo \'hello@milkpeabody\'\n'
+        'a\\\\bc'                               | [a: [b: 'bcd']]               | 'a\\\\bc\n'
+        'a@@bc'                                 | [a: [b: 'bcd']]               | 'a@bc\n'
+        'echo \'hello\\@@option.domain@\''      | [:]                           | 'echo \'hello\\@option.domain@\'\n'
+        'echo \'hello@@@option.domain@\''       | [:]                           | 'echo \'hello@\'\n'
+        'echo \'hello\\@milk @option.domain@\'' | [:]                           | 'echo \'hello\\@milk \'\n'
+        'echo \'hello@@milk @option.domain@\''  | [:]                           | 'echo \'hello@milk \'\n'
+        'echo \'hello\\@@option.domain@\''      | [option: [domain: 'peabody']] | 'echo \'hello\\@option.domain@\'\n'
+        'echo \'hello@@@option.domain@\''       | [option: [domain: 'peabody']] | 'echo \'hello@peabody\'\n'
+        'echo \'hello\\@milk@option.domain@\''  | [option: [domain: 'peabody']] | 'echo \'hello\\option.domain@\'\n'
+        'echo \'hello@@milk@option.domain@\''   | [option: [domain: 'peabody']] | 'echo \'hello@milkpeabody\'\n'
     }
 }

@@ -30,12 +30,10 @@ import java.util.Map;
 public class ReplaceTokenReader extends FilterReader {
     public static final char DEFAULT_TOKEN_START = '@';
     public static final char DEFAULT_TOKEN_END = '@';
-    public static final char DEFAULT_ESCAPE = '\\';
     private Map<String, String> tokens;
     boolean blankIfMissing;
     char tokenStart = DEFAULT_TOKEN_START;
     char tokenEnd = DEFAULT_TOKEN_END;
-    char tokenEsc = DEFAULT_ESCAPE;
     private Predicate tokenCharPredicate;
 
     static class Buf {
@@ -97,15 +95,9 @@ public class ReplaceTokenReader extends FilterReader {
         }
     }
 
-    public ReplaceTokenReader(Reader reader, Map<String, String> tokens, boolean blankIfMissing, char tokenStart,
-            char tokenEnd) {
-        this(reader, tokens, blankIfMissing, tokenStart, tokenEnd, DEFAULT_ESCAPE);
-
-    }
-
     public ReplaceTokenReader(
             Reader reader, Map<String, String> tokens, boolean blankIfMissing, char tokenStart,
-            char tokenEnd, char tokenEsc
+            char tokenEnd
     )
     {
         super(reader);
@@ -113,7 +105,6 @@ public class ReplaceTokenReader extends FilterReader {
         this.blankIfMissing = blankIfMissing;
         this.tokenStart = tokenStart;
         this.tokenEnd = tokenEnd;
-        this.tokenEsc = tokenEsc;
         readBuffer = new Buf();
         tokenBuffer = new Buf();
         tokenCharPredicate = DEFAULT_ALLOWED_PREDICATE;
@@ -162,17 +153,9 @@ public class ReplaceTokenReader extends FilterReader {
         } else {
             read = super.read();
         }
-        if (escaped && read == tokenStart) {
+        if (escaped) {
             escaped = false;
             return read;
-        } else if (escaped) {
-            escaped = false;
-            readBuffer.append((char) read);
-            return tokenEsc;
-        }
-        if (read == tokenEsc) {
-            escaped = true;
-            return read();
         }
         if (read == tokenStart) {
             readBuffer.append((char) read);
@@ -180,8 +163,7 @@ public class ReplaceTokenReader extends FilterReader {
                 read = super.read();
                 if (read == tokenStart) {
                     if (readBuffer.length() == 1) {
-                        //start token followed by start token
-                        tokenBuffer.append((char) read);
+                        //return a single start token
                         return read();
                     }
                 }
