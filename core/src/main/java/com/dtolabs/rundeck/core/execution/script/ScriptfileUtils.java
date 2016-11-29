@@ -114,11 +114,8 @@ public class ScriptfileUtils {
             final LineEndingStyle style
     ) throws IOException
     {
-        final InputStreamReader inStream = new InputStreamReader(input);
-        try {
+        try (InputStreamReader inStream = new InputStreamReader(input)) {
             writeReader(inStream, writer, style);
-        }finally{
-            inStream.close();
         }
     }
 
@@ -202,7 +199,7 @@ public class ScriptfileUtils {
             final LineEndingStyle style
     ) throws IOException
     {
-        /**
+        /*
          * Prepare a file to save the content
          */
         final File scriptfile = createTempFile(framework);
@@ -231,9 +228,8 @@ public class ScriptfileUtils {
             File scriptfile
     ) throws IOException
     {
-        final FileWriter writer = new FileWriter(scriptfile);
 
-        try {
+        try (FileWriter writer = new FileWriter(scriptfile)) {
             if (null != scriptString) {
                 ScriptfileUtils.writeReader(new StringReader(scriptString), writer, style);
             } else if (null != reader) {
@@ -243,8 +239,6 @@ public class ScriptfileUtils {
             } else {
                 throw new IllegalArgumentException("no script source argument");
             }
-        } finally {
-            writer.close();
         }
     }
 

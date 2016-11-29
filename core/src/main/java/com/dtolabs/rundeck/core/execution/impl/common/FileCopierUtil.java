@@ -40,6 +40,7 @@ public interface FileCopierUtil {
      * @param input    input stream to write, or null
      * @param script   file content string, or null
      * @param node     destination node entry, to provide node data context
+     * @param expandTokens if true, expand tokens in the stream or string
      *
      * @return file where the script was stored, this file should later be cleaned up by calling
      * {@link com.dtolabs.rundeck.core.execution.script.ScriptfileUtils#releaseTempFile(java.io.File)}
@@ -53,7 +54,8 @@ public interface FileCopierUtil {
             File original,
             InputStream input,
             String script,
-            INodeEntry node
+            INodeEntry node,
+            boolean expandTokens
     ) throws FileCopierException;
 
     /**
@@ -68,6 +70,7 @@ public interface FileCopierUtil {
      * @param script   file content string, or null
      * @param node     destination node entry, to provide node data context
      * @param destination destination file, or null to generate a new temp file
+     *                    @param expandTokens if true, expand tokens in the stream or string
      *
      * @return file where the script was stored
      *
@@ -80,7 +83,8 @@ public interface FileCopierUtil {
             InputStream input,
             String script,
             INodeEntry node,
-            File destination
+            File destination,
+            boolean expandTokens
     ) throws FileCopierException;
 
     /**

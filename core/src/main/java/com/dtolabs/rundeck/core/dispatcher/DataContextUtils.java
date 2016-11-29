@@ -395,91 +395,6 @@ public class DataContextUtils {
 
 
     /**
-     * Copies the source file to a temp file, replacing the @key.X@ tokens with the values from the
-     * data context
-     *
-     * @param sourceFile  source file
-     * @param dataContext input data context
-     * @param framework   the framework
-     * @param style       line ending style
-     *
-     * @return the token replaced temp file, or null if an error occurs.
-     * @throws java.io.IOException on io error
-     */
-    public static File replaceTokensInFile(
-            final File sourceFile,
-            final Map<String, Map<String, String>> dataContext,
-            final Framework framework,
-            final ScriptfileUtils.LineEndingStyle style
-    ) throws IOException
-    {
-        return replaceTokensInFile(sourceFile, dataContext, framework, style, null);
-    }
-
-    /**
-     * Copies the source file to a destination file, replacing the @key.X@ tokens with the values
-     * from the data context
-     *
-     * @param sourceFile  source file
-     * @param dataContext input data context
-     * @param framework   the framework
-     * @param style       line ending style
-     * @param destination destination file, or null to create a new temp file
-     *
-     * @return the token replaced file, or null if an error occurs.
-     * @throws java.io.IOException on io error
-     */
-    public static File replaceTokensInFile(
-            final File sourceFile,
-            final Map<String, Map<String, String>> dataContext,
-            final Framework framework,
-            final ScriptfileUtils.LineEndingStyle style,
-            final File destination
-    ) throws IOException
-    {
-        //use ReplaceTokens to replace tokens within the file
-        final Map<String, String> toks = flattenDataContext(dataContext);
-        final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(
-                new InputStreamReader(
-                        new FileInputStream
-                                (sourceFile)
-                ), toks, true, '@', '@'
-        );
-        final File temp;
-        if (null != destination) {
-            ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination);
-            temp = destination;
-        } else {
-            temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens, style);
-        }
-        ScriptfileUtils.setExecutePermissions(temp);
-        return temp;
-    }
-
-    /**
-     * Copies the source file to a temp file, replacing the @key.X@ tokens with the values from the
-     * data context
-     *
-     * @param script      source file path
-     * @param dataContext input data context
-     * @param framework   the framework
-     * @param style       line ending style
-     *
-     * @return the token replaced temp file, or null if an error occurs.
-     * @throws java.io.IOException on io error
-     */
-    public static File replaceTokensInScript(
-            final String script,
-            final Map<String, Map<String, String>> dataContext,
-            final Framework framework,
-            final ScriptfileUtils.LineEndingStyle style
-    )
-            throws IOException
-    {
-        return replaceTokensInScript(script, dataContext, framework, style, null);
-    }
-
-    /**
      * Copies the source file to a file, replacing the @key.X@ tokens with the values from the data
      * context
      *
@@ -521,27 +436,7 @@ public class DataContextUtils {
         ScriptfileUtils.setExecutePermissions(temp);
         return temp;
     }
-    /**
-     * Copies the source stream to a temp file, replacing the @key.X@ tokens with the values from the data context
-     *
-     * @param stream  source stream
-     * @param dataContext input data context
-     * @param framework   the framework
-     * @param style script file line ending style to use
-     *
-     * @return the token replaced temp file, or null if an error occurs.
-     * @throws java.io.IOException on io error
-     */
-    public static File replaceTokensInStream(
-            final InputStream stream,
-            final Map<String, Map<String, String>> dataContext,
-            final Framework framework,
-            final ScriptfileUtils.LineEndingStyle style
-    )
-            throws IOException
-    {
-        return replaceTokensInStream(stream, dataContext, framework, style, null);
-    }
+
 
     /**
      * Copies the source stream to a temp file or specific destination, replacing the @key.X@ tokens

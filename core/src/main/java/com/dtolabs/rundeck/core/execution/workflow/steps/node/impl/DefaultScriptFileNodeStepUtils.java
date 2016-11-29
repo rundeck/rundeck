@@ -71,7 +71,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             String[] args,
             String scriptInterpreter,
             boolean quoted,
-            final ExecutionService executionService
+            final ExecutionService executionService,
+            final boolean expandTokens
     ) throws NodeStepException
     {
         final String filename;
@@ -100,7 +101,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     node,
                     scriptString,
                     serverScriptFilePath,
-                    scriptAsStream
+                    scriptAsStream,
+                    expandTokens
             );
             try {
                 filepath = executionService.fileCopyFile(
@@ -154,7 +156,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
             INodeEntry node,
             String scriptString,
             String serverScriptFilePath,
-            InputStream scriptAsStream
+            InputStream scriptAsStream,
+            boolean expandTokens
     ) throws FileCopierException
     {
         File temp;
@@ -165,7 +168,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     null,
                     null,
                     scriptString,
-                    node
+                    node,
+                    expandTokens
             );
         } else if (null != serverScriptFilePath) {
             //DON'T expand tokens in the script
@@ -178,7 +182,8 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
                     null,
                     scriptAsStream,
                     null,
-                    node
+                    node,
+                    expandTokens
             );
         }
         return temp;

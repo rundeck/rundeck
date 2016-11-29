@@ -61,7 +61,8 @@ public interface ScriptFileNodeStepUtils {
             String[] args,
             String scriptInterpreter,
             boolean quoted,
-            ExecutionService executionService
+            ExecutionService executionService,
+            boolean expandTokens
     ) throws NodeStepException;
 
     /**
@@ -84,7 +85,8 @@ public interface ScriptFileNodeStepUtils {
             INodeEntry node,
             String scriptString,
             String serverScriptFilePath,
-            InputStream scriptAsStream
+            InputStream scriptAsStream,
+            boolean expandTokens
     ) throws FileCopierException;
 
     /**

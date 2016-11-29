@@ -54,6 +54,10 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
     throws NodeStepException
     {
         ScriptFileCommand command = (ScriptFileCommand) item;
+        boolean expandTokens = true;
+        if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
+            expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
+        }
         return scriptUtils.executeScriptFile(
                 context,
                 node,
@@ -64,7 +68,8 @@ public class ScriptFileNodeStepExecutor implements NodeStepExecutor {
                 command.getArgs(),
                 command.getScriptInterpreter(),
                 command.getInterpreterArgsQuoted(),
-                framework.getExecutionService()
+                framework.getExecutionService(),
+                expandTokens
         );
     }
 

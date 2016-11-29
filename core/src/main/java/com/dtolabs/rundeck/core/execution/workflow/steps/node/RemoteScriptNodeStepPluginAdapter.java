@@ -150,6 +150,10 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
     )
         throws NodeStepException {
         final ExecutionService executionService = context.getFramework().getExecutionService();
+        boolean expandTokens = true;
+        if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
+            expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
+        }
 
 
         if (null != script.getCommand()) {
@@ -202,7 +206,8 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                     fileScript.getArgs(),
                     fileScript.getScriptInterpreter(),
                     fileScript.isInterpreterArgsQuoted(),
-                    executionService
+                    executionService,
+                    expandTokens
             );
         } else {
             return new NodeStepResultImpl(null,

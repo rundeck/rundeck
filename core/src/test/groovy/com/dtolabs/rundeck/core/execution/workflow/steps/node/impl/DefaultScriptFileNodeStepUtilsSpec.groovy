@@ -79,8 +79,8 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
                 args,
                 null,
                 false,
-                executionService
-
+                executionService,
+                true
         )
         then:
         result != null
@@ -149,8 +149,8 @@ class DefaultScriptFileNodeStepUtilsSpec extends Specification {
                 args,
                 "sudo -blah",
                 false,
-                executionService
-
+                executionService,
+                true
         )
         then:
         result != null
