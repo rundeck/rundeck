@@ -18,14 +18,15 @@
 
 # Source function library
 . /lib/lsb/init-functions
-. /etc/rundeck/profile
 
 prog="rundeckd"
+
+[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+
+. /etc/rundeck/profile
+
 RETVAL=0
 PIDFILE=/var/run/$prog.pid
-DAEMON="${JAVA_HOME:-/usr}/bin/java"
-DAEMON_ARGS="${RDECK_JVM} -cp ${BOOTSTRAP_CP} com.dtolabs.rundeck.RunServer /var/lib/rundeck ${RDECK_HTTP_PORT}"
-rundeckd="$DAEMON $DAEMON_ARGS"
 
 start() {
 	echo -n $"Starting $prog: "
