@@ -152,6 +152,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
                             jexec.nodeThreadcount,
                             jexec.nodeRankAttribute,
                             jexec.nodeRankOrderAscending,
+                            jexec.nodeIntersect,
                             false
                     )
                 } catch (ExecutionServiceValidationException e) {
