@@ -77,6 +77,7 @@ SSH Connection settings:
 Other settings:
 
 * `framework.log.dispatch.console.format`: Default format for non-terse node execution logging run by the `dispatch` CLI tool.
+* `execution.script.tokenexpansion.enabled`: Whether inline script token expansion is enabled, default `true`.  If `false`, the "Inline Script Content" syntax described in [User Guide > Jobs > Context Variable Usage](../manual/jobs.html#context-variable-usage) is disabled.
 
 Static authentication tokens for API access:
 

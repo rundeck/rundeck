@@ -1658,6 +1658,8 @@ Context variables can be used in a few ways in a Job step, with slightly differe
 
     > Note, The "Inline Script Content" variable expansion is **not** available for "Script File" steps.  The Script File is not rewritten at all when used for execution.
 
+    > Note: This can be disabled, see [Administrator Guide > Configuration File Reference > framework.properties](../administration/configuration-file-reference.html#framework.properties).
+
 * Environment Variables (*see note*)
 
     :     `$RD_CTX_NAME`
