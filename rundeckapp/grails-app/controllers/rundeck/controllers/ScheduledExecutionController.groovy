@@ -402,7 +402,9 @@ class ScheduledExecutionController  extends ControllerBase{
                 strategyPlugins: scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
-
+        if (params.opt && (params.opt instanceof Map)) {
+            dataMap.selectedoptsmap = params.opt
+        }
         //add scm export status
         def projectResource = frameworkService.authResourceForProject(params.project)
         if (frameworkService.authorizeApplicationResourceAny(authContext,
