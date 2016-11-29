@@ -137,7 +137,8 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
                 ['someargs'].toArray(),
                 null,
                 false,
-                _
+                _,
+                true
         ) >>
                 Mock(NodeStepResult) {
                     isSuccess() >> true
@@ -182,7 +183,8 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
                 args.toArray(),
                 scriptinterpreter,
                 quoted,
-                _
+                _,
+                true
         ) >>
                 Mock(NodeStepResult) {
                     isSuccess() >> true

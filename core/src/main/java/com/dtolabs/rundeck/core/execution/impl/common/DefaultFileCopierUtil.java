@@ -71,10 +71,11 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
             final File original,
             final InputStream input,
             final String script,
-            final INodeEntry node
+            final INodeEntry node,
+            final boolean expandTokens
     ) throws FileCopierException
     {
-        return writeScriptTempFile(context, original, input, script, node, null);
+        return writeScriptTempFile(context, original, input, script, node, null, expandTokens);
     }
     /**
      * Copy a script file, script source stream, or script string into a temp file, and replace \
@@ -101,7 +102,8 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
             final InputStream input,
             final String script,
             final INodeEntry node,
-            final File destination
+            final File destination,
+            final boolean expandTokens
     ) throws FileCopierException
     {
         final Framework framework = context.getFramework();
@@ -132,21 +134,29 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
                     }
                 }
             } else if (null != script) {
-                DataContextUtils.replaceTokensInScript(
-                        script,
-                        dataContext,
-                        framework,
-                        style,
-                        tempfile
-                );
+                if (expandTokens) {
+                    DataContextUtils.replaceTokensInScript(
+                            script,
+                            dataContext,
+                            framework,
+                            style,
+                            tempfile
+                    );
+                } else {
+                    ScriptfileUtils.writeScriptFile(null, script, null, style, tempfile);
+                }
             } else if (null != input) {
-                DataContextUtils.replaceTokensInStream(
-                        input,
-                        dataContext,
-                        framework,
-                        style,
-                        tempfile
-                );
+                if (expandTokens) {
+                    DataContextUtils.replaceTokensInStream(
+                            input,
+                            dataContext,
+                            framework,
+                            style,
+                            tempfile
+                    );
+                } else {
+                    ScriptfileUtils.writeScriptFile(input, null, null, style, tempfile);
+                }
             } else {
                 return null;
             }
@@ -443,34 +453,19 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
         try {
 
             if (null != original) {
-                final InputStream in = new FileInputStream(original);
-                try {
-                    final FileOutputStream out = new FileOutputStream(destinationFile);
-                    try {
+                try (InputStream in = new FileInputStream(original)) {
+                    try (FileOutputStream out = new FileOutputStream(destinationFile)) {
                         Streams.copyStream(in, out);
-                    } finally {
-                        out.close();
                     }
-                } finally {
-                    in.close();
                 }
             } else if (null != input) {
-                final InputStream in = input;
-                final FileOutputStream out = new FileOutputStream(destinationFile);
-                try {
-                    Streams.copyStream(in, out);
-                } finally {
-                    out.close();
+                try (FileOutputStream out = new FileOutputStream(destinationFile)) {
+                    Streams.copyStream(input, out);
                 }
             } else if (null != script) {
                 Reader in = new StringReader(script);
-                final FileOutputStream out = new FileOutputStream(destinationFile);
-                final Writer write = new OutputStreamWriter(out);
-                try {
+                try (final Writer write = new OutputStreamWriter(new FileOutputStream(destinationFile))) {
                     Streams.copyWriterCount(in, write);
-                    write.flush();
-                } finally {
-                    out.close();
                 }
             }
 
