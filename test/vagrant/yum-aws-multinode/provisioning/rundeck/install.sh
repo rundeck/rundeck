@@ -111,5 +111,5 @@ fi
 
 # test data file is in correct location
 
-ls /var/lib/rundeck/data/rundeckdb.h2.db || die "Rundeck data file not found at /var/lib/rundeck/data/rundeckdb.data.db"
+ls /var/lib/rundeck/data/rundeckdb.mv.db || die "Rundeck data file not found at /var/lib/rundeck/data/rundeckdb.mv.db"
 
