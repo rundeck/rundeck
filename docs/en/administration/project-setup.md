@@ -48,7 +48,7 @@ located at this path:
 ## Project Setup 
 
 A project can be set up either from the graphical console or using the
-[rd-project] shell tool.
+[rd] shell tool.
 
 
 In the graphical console, you will notice a Project
@@ -227,37 +227,40 @@ or by modifying the project.properties file.
 
 ## Related Command Line Tools
 
-The [rd-project] shell tool can also be used to create a
+Note: As of Rundeck 2.7.0, the Rundeck CLI tools are replaced with a single tool
+called `rd`, which can be installed separately.
+
+See the [rd] website to install.
+
+The [rd projects][rd] command can be used to create a
 project.
 
-On the Rundeck server, execute the `rd-project` command and
+Execute the `rd projects create` command and
 specify a project name, here we use "examples":
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-rd-project -a create -p examples
+rd projects create -p examples
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 You can also add configuration properties when you create the project.
 Here the default SSH key setting is declared via the `project.ssh-keypath`:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-rd-project -a create -p examples --project.ssh-keypath=/home/rundeck/.ssh/id_rsa
+rd projects create -p examples -- -project.ssh-keypath=/home/rundeck/.ssh/id_rsa
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 You can specify a resource model source using command options, too.
 Here a "directory" model source is declared.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-rd-project -a create -p examples \
-  --resources.source.2.type=directory \
-  --resources.source.2.config.directory=/path/to/my/resources.d
+rd projects create -p examples -- \
+  -resources.source.2.type=directory \
+  -resources.source.2.config.directory=/path/to/my/resources.d
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Administrators can place multiple resource model files in this directory.
 
-
-[dispatch]: ../man1/dispatch.html
-[rd-project]: ../man1/rd-project.html
+[rd]: https://rundeck.github.io/rundeck-cli/
 
 ## API Usage
 

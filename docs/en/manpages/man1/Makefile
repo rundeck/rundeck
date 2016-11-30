@@ -4,7 +4,7 @@ DIST = ../../dist
 MANSFX=1
 .SUFFIXES: .1
 .PHONY: all
-PAGES = *.md
+PAGES = rd-acl.md
 
 all: roff manpages
 

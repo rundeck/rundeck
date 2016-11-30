@@ -41,17 +41,16 @@ The output will appear below:
 
 ## Using the CLI
 
-The [dispatch] command provides a command line interface to run commands.
+The [rd adhoc][rd] command provides a command line interface to run commands.
 
 ### Filter nodes
 
-First, you must filter the nodes. The `dispatch` command uses 
-pattern filter flags: `-I` to include and `-X` to exclude nodes.
+First, you must filter the nodes. The `rd nodes` command uses filter flag: `-F`.
 
 Here, the `tags` keyword is used to include nodes tagged 'www':
 
 ~~~~~~~~ {.bash}
-dispatch -p anvils -I tags=www
+rd nodes -p anvils -F tags=www
 ~~~~~~~~ 
 
 ~~~~~~~~
@@ -61,7 +60,7 @@ www1.anvils.com www2.anvils.com
 List the nodes tagged "app":
 
 ~~~~~~~~ {.bash}
-dispatch -p anvils -I tags=app
+rd nodes -p anvils -F tags=app
 ~~~~~~~~ 
 
 ~~~~~~~~ 
@@ -71,7 +70,7 @@ app1.anvils.com app2.anvils.com
 Use the `+` (AND) operator to list the web and app nodes:
 
 ~~~~~~~~ {.bash}
-dispatch -p anvils -I tags=www+app
+rd nodes -p anvils -F tags=www+app
 ~~~~~~~~ 
 
 ~~~~~~~~ 
@@ -81,7 +80,7 @@ www1.anvils.com www2.anvils.com app1.anvils.com app2.anvils.com
 Exclude the web and app nodes:
 
 ~~~~~~~~ {.bash}
-dispatch -p anvils -X tags=www+app
+rd nodes -p anvils -F '!tags=www+app'
 ~~~~~~~~ 
 
 ~~~~~~~~ 
@@ -91,27 +90,31 @@ db1.anvils.com
 
 ### Execute command
 
+Use `rd adhoc` to execute adhoc commands and scripts.
+
 Specify the command string you wish to execute on the filtered node set after the `--`.
 Below the `id` command is dispatched:
 
 ~~~~~~~~ {.bash}
-dispatch -p anvils -I tags=www -- id
+rd adhoc -p anvils -F tags=www -- id
 ~~~~~~~~ 
 
 ~~~~~~~~ 
-Succeeded queueing adhoc
-Queued Execution ID: 3 <http://localhost:4440/execution/show/3>
+# Immediate execution scheduled (148)
+148 running 2016-11-3017:21:10-0800 - http://madmartigan.local:4440/project/deps/execution/show/148 adhoc whoami
 ~~~~~~~~ 
 
 Typically, you will want to see the output from the running command. 
 Add the --follow flag to see the output.
 
 ~~~~~~~~ {.bash}
-dispatch -p anvils --follow -I tags=www -- id
+rd adhoc -p anvils --follow -F tags=www -- whoami
 ~~~~~~~~ 
 
 ~~~~~~~~ 
-
+# Started execution 147 running 2016-11-3017:20:43-0800 - http://madmartigan.local:4440/project/deps/execution/show/147 adhoc whoami
+greg
 ~~~~~~~~ 
 
-[dispatch]: ../man1/dispatch.html
+
+[rd]: https://rundeck.github.io/rundeck-cli/
