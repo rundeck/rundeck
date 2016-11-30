@@ -272,6 +272,8 @@ public class ExpandRunServer {
             final File libdir = new File(serverdir, "lib");
             DEBUG("Extracting libs to: " + libdir.getAbsolutePath() + " ... ");
             deleteExistingJarsInDir(libdir, "^rundeck.*");
+            deleteExistingJarsInDir(libdir, "^jetty-all-7\\.6\\.0.*");
+            deleteExistingJarsInDir(libdir, "^servlet-api-2\\.5.*");
             extractLibs(libdir);
             extractJettyLibs(libdir);
             final File expdir = new File(serverdir, "exp");
