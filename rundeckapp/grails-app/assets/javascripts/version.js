@@ -132,7 +132,7 @@ var RundeckVersion = function (data) {
         } else {
             data['point'] = 0;
         }
-        data['minorPoint'] = (data.minor * 10) + data.point;
+        data['minorPoint'] = (data.minor * 20) + data.point;
         var release = 1;
         var tag = '';
         if (parts.length > 1 && /^\d+$/.test(parts[1])) {
@@ -144,9 +144,9 @@ var RundeckVersion = function (data) {
 
         data['tag'] = tag;
         data['release'] = release;
-        data['pointRelease'] = data.point * 10 + release;
-        data['minorPointRelease'] = (data.minor * 100) + data.point * 10 + release;
-        data['full'] = data.major * 100 + data.minor * 10 + data.point;
+        data['pointRelease'] = data.point * 20 + release;
+        data['minorPointRelease'] = (data.minor * 100) + data.point * 20 + release;
+        data['full'] = data.major * 100 + data.minor * 20 + data.point;
         return data;
     };
     self.splitUUID = function (versionString) {
