@@ -280,6 +280,7 @@ public class ExpandRunServer {
             DEBUG("Extracting webapp to: " + expdir.getAbsolutePath() + " ... ");
 
             deleteExistingJarsInDir(new File(expdir, "webapp/WEB-INF/lib"), "^rundeck.*");
+            deleteExistingJarsInDir(new File(expdir, "webapp/WEB-INF/lib"), "^h2-.*");
             extractWar(expdir);
             
             DEBUG("Extracting bin scripts to: " + bindir.getAbsolutePath() + " ... ");
