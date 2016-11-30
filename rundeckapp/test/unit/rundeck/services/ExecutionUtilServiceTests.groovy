@@ -22,17 +22,19 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandEx
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
+import com.dtolabs.rundeck.execution.JobExecutionItem
 import grails.test.mixin.*
 import org.grails.plugins.metricsweb.MetricService
 import org.junit.*
 import rundeck.CommandExec
+import rundeck.JobExec
 import rundeck.services.logging.ExecutionLogWriter
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
  */
 @TestFor(ExecutionUtilService)
-@Mock([CommandExec])
+@Mock([CommandExec, JobExec])
 class ExecutionUtilServiceTests {
 
     void testfinishExecutionMetricsSuccess() {
@@ -348,5 +350,44 @@ class ExecutionUtilServiceTests {
         assertEquals('file:/some/script', item.URLString)
         assertNotNull(item.args)
         assertEquals(['some', 'args'], item.args as List)
+    }
+
+    void testItemForWFCmdItem_jobref() {
+        def testService = service
+        //file url script path
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof ScriptURLCommandExecutionItem)
+        assertTrue(res instanceof JobExecutionItem)
+        JobExecutionItem item = (JobExecutionItem) res
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertNotNull(item.args)
+        assertEquals([], item.args as List)
+    }
+
+    void testItemForWFCmdItem_jobref_args() {
+        def testService = service
+        //file url script path
+        JobExec ce = new JobExec(
+                jobName: 'abc',
+                jobGroup: 'xyz',
+                argString: 'abc def',
+                nodeFilter: 'def',
+                nodeIntersect: true
+        )
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof ScriptURLCommandExecutionItem)
+        assertTrue(res instanceof JobExecutionItem)
+        JobExecutionItem item = (JobExecutionItem) res
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertNotNull(item.args)
+        assertEquals(['abc', 'def'], item.args as List)
+        assertEquals('def', item.getNodeFilter())
+        assertEquals(true, item.getNodeIntersect())
+
     }
 }
