@@ -20,12 +20,32 @@ jQuery(function () {
         init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
             console.log("date ui init");
             var opts = {useCurrent: true, sideBySide: true};
-            var dateFormat = valueAccessor();
+            var val = valueAccessor();
+            if (ko.isObservable(val)) {
+                val = ko.unwrap(val);
+            }
+            if (typeof(val) == 'string') {
+                opts.defaultDate = val;
+            }
+            if (typeof(dateFormat) == 'string') {
+                opts.format = dateFormat;
+            }
+            var dateFormat = allBindings.get('dateFormat');
             if (ko.isObservable(dateFormat)) {
                 dateFormat = ko.unwrap(dateFormat);
             }
-            if (typeof(dateFormat)=='string') {
+            if (typeof(dateFormat) == 'string') {
                 opts.format = dateFormat;
+            }
+            if (opts.defaultDate) {
+                try {
+                    var m = moment(opts.defaultDate, opts.format, true);
+                    if (!m.isValid()) {
+                        opts.defaultDate = null;
+                    }
+                } catch (e) {
+                    opts.defaultDate = null;
+                }
             }
             // var locale = ko.unwrap(allBindings.get('locale'))
             //locale requires moment locale
@@ -34,15 +54,30 @@ jQuery(function () {
             ko.utils.domNodeDisposal.addDisposeCallback(element, function () {
                 jQuery(element).datetimepicker("destroy");
             });
+            //when a user changes the date, update the view model
+            ko.utils.registerEventHandler(element, "dp.change", function (event) {
+                var value = valueAccessor();
+                if (ko.isObservable(value)) {
+                    // value(event.date);
+                    // console.log(event.date);
+                    if (event.date) {
+                        value(moment(event.date).format(dateFormat));
+                    } else {
+                        value(null);
+                    }
+                }
+            });
         },
         update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
             "use strict";
-            var val = valueAccessor();
-            // if (ko.isObservable(val)) {
-            //     val = ko.unwrap(val);
-            //     jQuery(element).datetimepicker('destroy');
-            //     jQuery(element).datetimepicker({});
-            // }
+            var widget = jQuery(element).data("datepicker");
+            //when the view model is updated, update the widget
+            if (widget) {
+                widget.date = ko.utils.unwrapObservable(valueAccessor());
+                if (widget.date) {
+                    widget.setValue();
+                }
+            }
         }
     };
 });

@@ -48,12 +48,12 @@
             <div data-bind="if: !secureInput()">
                 <div data-bind="if: isDate()">
 
-                    <div class='input-group date' data-bind="datetimepicker: dateFormat">
-                        <span class="input-group-addon has_tooltip" data-bind="">
+                    <div class='input-group date' data-bind="datetimepicker: value, dateFormat: dateFormat">
+                        <span class="input-group-addon has_tooltip">
                             <span class="glyphicon glyphicon-calendar"></span>
                         </span>
                         <input type="datetime" name="-"
-                               data-bind=" value:value, attr: {name: fieldName, id: fieldId,title:  dateFormat},bootstrapTooltip: dateFormat"
+                               data-bind="value:value, attr: {name: fieldName, id: fieldId,title:  dateFormat},bootstrapTooltip: dateFormat"
                                class="optionvaluesfield form-control"
                                value=""
                                size="40"
@@ -61,7 +61,6 @@
                     </div>
                 </div>
                 <div data-bind="if: !isDate()">
-
                     <g:textField name="-"
                                  data-bind="value: value, attr: {name: fieldName, id: fieldId}"
                                  class="optionvaluesfield form-control"
