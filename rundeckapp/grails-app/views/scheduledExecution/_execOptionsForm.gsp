@@ -61,7 +61,7 @@
         var filterParams = loadJsonData('filterParamsJSON');
         <g:if test="${scheduledExecution.nodeFilterEditable || nodefilter == ''}">
         var nodeSummary = new NodeSummary({baseUrl:appLinks.frameworkNodes});
-        nodeFilter = new NodeFilters(
+        var nodeFilter = new NodeFilters(
                 appLinks.frameworkAdhoc,
                 appLinks.scheduledExecutionCreate,
                 appLinks.frameworkNodes,
@@ -76,7 +76,6 @@
                 }));
 
             ko.applyBindings(nodeFilter, document.getElementById('nodefilterViewArea'));
-        </g:if>
         //show selected named filter
         nodeFilter.filterName.subscribe(function (val) {
             if (val) {
@@ -93,6 +92,7 @@
         jQuery.data( tmpfilt, "node-filter", "${nodefilter}" );
         nodeFilter.selectNodeFilterLink(tmpfilt);
 
+        </g:if>
     }
     jQuery(document).ready(init);
 </script>
