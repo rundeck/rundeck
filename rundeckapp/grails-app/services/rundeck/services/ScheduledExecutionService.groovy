@@ -403,11 +403,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def queryProject = projectFilter
         ScheduledExecution.withTransaction {
             def c = ScheduledExecution.createCriteria()
-            c.list {
+            c.listDistinct {
                 or {
                     eq('scheduled', true)
                     executions(CriteriaSpecification.LEFT_JOIN) {
                         eq('status', ExecutionService.EXECUTION_SCHEDULED)
+                        isNull('dateCompleted')
                         if (!selectAll) {
                             if (queryFromServerUUID) {
                                 eq('serverNodeUUID', queryFromServerUUID)
@@ -442,13 +443,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
-                def claimResult = claimScheduledJob(se, toServerUUID, queryFromServerUUID)
-                claimed[se.extid] = [
-                        success   : claimResult.claimed,
-                        job       : se,
-                        previous  : orig,
-                        executions: claimResult.executions
-                ]
+                if (!claimed[se.extid]) {
+                    def claimResult = claimScheduledJob(se, toServerUUID, queryFromServerUUID)
+                    claimed[se.extid] = [
+                            success   : claimResult.claimed,
+                            job       : se,
+                            previous  : orig,
+                            executions: claimResult.executions
+                    ]
+                }
             }
         }
         claimed
