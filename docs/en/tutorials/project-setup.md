@@ -21,12 +21,12 @@ the project since SSH is already used to execute remote commands.
 
 ## Create the project
 
-The administrator creates the project using the
-[rd-project] command line tool. Logged in on the
+The administrator can create the project using the
+[rd] command line tool. Logged in on the
 rundeck server as the user "rundeck", the administrator executes:
 
 ~~~~~~~~ {.bash}
-rd-project -p anvils --action create
+rd projects create -p anvils
 ~~~~~~~~
 
 This initializes the "anvils" project in Rundeck.
@@ -157,5 +157,5 @@ to learn more about configuring Rundeck to read node data from external provider
 
 
 [resource-XML]: ../man5/resource-xml.html
-[rd-project]: ../man1/rd-project.html
+[rd]: https://rundeck.github.io/rundeck-cli/
 [tip1]: http://www.thegeekstuff.com/2008/11/3-steps-to-perform-ssh-login-without-password-using-ssh-keygen-ssh-copy-id/

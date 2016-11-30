@@ -11,18 +11,20 @@ current Rundeck "jobs" XML.
 
 ## Loading and unloading
 
-This file can be batch loaded via [rd-jobs] load command:
+This file can be batch loaded via [rd] jobs load command:
 
 ~~~~~~~~ {.bash}
-rd-jobs load -p project --file /path/to/jobs.xml
+rd jobs load -p project --file /path/to/jobs.xml
 ~~~~~~~~ 
 
 Rundeck job definitions can be dumped and saved to a file via
-rd-jobs list command:
+rd jobs list command:
 
 ~~~~~~~~ {.bash}
-rd-jobs list -p project --file /tmp/jobs.xml
+rd jobs list -p project --file /tmp/jobs.xml
 ~~~~~~~~ 
+
+[rd]: https://rundeck.github.io/rundeck-cli/
 
 # joblist 
 

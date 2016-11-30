@@ -1351,11 +1351,6 @@ would type at the terminal on the remote hosts.
 
 ![Command step type](../figures/fig0404.png)
 
-This is similar to calling the command with [dispatch]:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch [filter-options] -- command
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 ### Script step
 
@@ -1363,14 +1358,6 @@ Execute the supplied shell script content. Optionally, can pass an
 argument to the script specified in the lower text field.
 
 ![Script step type](../figures/fig0405.png)
-
-This is similar to calling the command with [dispatch]:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch [filter-options] --stdin -- args <<EOF 
-script content here 
-EOF
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ### Script file step
 
@@ -1381,12 +1368,6 @@ lower text field.
 ![Script file step type](../figures/fig0406.png)
 
 
-This is similar to calling the script file with `dispatch`:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch [filter-options] -s scriptfile -- args
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 ### Script URL step
 
 Downloads a script from a URL, and executes it to the filtered Node
@@ -1395,12 +1376,6 @@ lower text field.
 
 ![Script URL step type](../figures/fig0406.png)
 
-
-This is similar to calling the script URL with `dispatch`:
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-dispatch [filter-options] -u URL -- args
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The URL can contain [Context Variables](#context-variables) that will be expanded at runtime.
 

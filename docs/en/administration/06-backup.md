@@ -4,11 +4,13 @@
 
 While running, export the Job definitions if you do not have these in source control:
 
+You can use the [rd] tool. 
+
 (1) Export the jobs. You will have to do this for each project
 
     ~~~~~~ {.bash}
-    rd-jobs list -f /path/to/backup/dir/project1/jobs.xml -p project1
-    rd-jobs list -f /path/to/backup/dir/project2/jobs.xml -p project2
+    rd jobs list -f /path/to/backup/dir/project1/jobs.xml -p project1
+    rd jobs list -f /path/to/backup/dir/project2/jobs.xml -p project2
     ...
     ~~~~~~
 
@@ -43,6 +45,8 @@ location of the data directory depends on the installation method:
     rundeckd start
     ~~~~~~
 
+[rd]: https://rundeck.github.io/rundeck-cli/
+
 ## Recovery
 
 (1) Stop the server. See: [startup and shutdown](startup-and-shtudown.html). (Rundeck recovery should only be done with the server down.)
@@ -68,8 +72,8 @@ location of the data directory depends on the installation method:
 (4) Reload the Job definitions. You will have to do this for each project:
 
     ~~~~~~ {.bash}
-    rd-jobs load -f /path/to/backup/dir/project1/jobs.xml -p project1
-    rd-jobs load -f /path/to/backup/dir/project2/jobs.xml -p project2
+    rd jobs load -f /path/to/backup/dir/project1/jobs.xml -p project1
+    rd jobs load -f /path/to/backup/dir/project2/jobs.xml -p project2
     ~~~~~~ 
 
 ## Project Import and Export
