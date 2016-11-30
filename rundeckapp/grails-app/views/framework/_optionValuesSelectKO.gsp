@@ -16,22 +16,6 @@
 
 <%@ page import="java.util.regex.Pattern" %>
 <%--
- Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-
- --%>
-<%--
     _optionValuesSelect.gsp
     
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
@@ -62,11 +46,27 @@
             </div>
 
             <div data-bind="if: !secureInput()">
-                <g:textField name="-"
-                             data-bind="value: value, attr: {name: fieldName, id: fieldId}"
-                             class="optionvaluesfield form-control"
-                             value=""
-                             size="40"/>
+                <div data-bind="if: isDate()">
+
+                    <div class='input-group date' data-bind="datetimepicker: value, dateFormat: dateFormat">
+                        <span class="input-group-addon has_tooltip">
+                            <span class="glyphicon glyphicon-calendar"></span>
+                        </span>
+                        <input type="datetime" name="-"
+                               data-bind="value:value, attr: {name: fieldName, id: fieldId,title:  dateFormat},bootstrapTooltip: dateFormat"
+                               class="optionvaluesfield form-control"
+                               value=""
+                               size="40"
+                        />
+                    </div>
+                </div>
+                <div data-bind="if: !isDate()">
+                    <g:textField name="-"
+                                 data-bind="value: value, attr: {name: fieldName, id: fieldId}"
+                                 class="optionvaluesfield form-control"
+                                 value=""
+                                 size="40"/>
+                </div>
             </div>
         </div>
     </div>

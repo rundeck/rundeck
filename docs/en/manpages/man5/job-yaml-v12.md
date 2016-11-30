@@ -560,6 +560,14 @@ Optional map entries are:
 
 :    for a secure option, a storage path to password value to use as default
 
+`isDate`
+
+:    "true/false" - the option should display as a date/time input field
+
+`dateFormat`
+
+:    The date/time format to use in the UI. Using the [momentjs format](http://momentjs.com/docs/#/displaying/format/).
+
 `sortIndex` (deprecated)
 
 :   *integer* - A number indicating the order this option should appear in the GUI.  If specified this

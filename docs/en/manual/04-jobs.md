@@ -744,7 +744,12 @@ Identification
 
 Input Type
 
-:   Choose between "Plain", "Secure" and "Secure Remote Authentication". For input types other than "Plain", the multi-valued option will be disabled.
+:   Choose between "Plain", "Date", "Secure" and "Secure Remote Authentication". For input types other than "Plain", the multi-valued option will be disabled.
+
+Date Format
+
+:   If "Date" Input Type is chosen, you can enter a date format to use when selecting the date
+in the user interface. Using the [momentjs format](http://momentjs.com/docs/#/displaying/format/).
 
 Default Value
 
