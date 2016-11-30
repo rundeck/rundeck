@@ -579,6 +579,14 @@ storagePath
 
 :    for a secure option, a storage path to password value to use as default
 
+isDate
+
+:    "true/false" - the option should display as a date/time input field
+
+dateFormat
+
+:    The date/time format to use in the UI. Using the [momentjs format](http://momentjs.com/docs/#/displaying/format/).
+
 *Example*
 
 Define defaults for the "port" option, requiring regex match. 
