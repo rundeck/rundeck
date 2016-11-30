@@ -946,10 +946,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 .startAt(startTime)
                 .build()
 
-        Date nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
-        log.debug("scheduled ad-hoc job. next run: " + nextTime.toString())
-
-        return nextTime
+        if (quartzScheduler.checkExists(jobDetail.getKey())) {
+            log.info("rescheduling existing ad-hoc job in project ${se.project} ${se.extid} ${e.id}")
+            return quartzScheduler.rescheduleJob(
+                    TriggerKey.triggerKey(identity.jobname, identity.groupname),
+                    trigger
+            )
+        } else {
+            Date nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
+            log.debug("scheduled ad-hoc job. next run: " + nextTime.toString())
+            return nextTime
+        }
     }
 
     def boolean existsJob(String jobName, String groupName){
