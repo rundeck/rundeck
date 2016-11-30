@@ -1744,4 +1744,42 @@ class ScheduledExecutionServiceSpec extends Specification {
         0 * service.frameworkService.getRundeckBase() >> ''
         0 * service.quartzScheduler.scheduleJob(_, _) >> new Date()
     }
+    def "update execution flags change node ownership"() {
+        given:
+        setupDoValidate(true)
+        def uuid = setupDoUpdate(true)
+        
+        def se = new ScheduledExecution(createJobParams()).save()
+        when:
+        def params = baseJobParams()+[
+                
+        ]
+        //def results = service._dovalidate(params, Mock(UserAndRoles))
+        def results = service._doUpdateExecutionFlags(
+                [id: se.id.toString(), executionEnabled: executionEnabled, scheduleEnabled: scheduleEnabled],
+                null,
+                null,
+                null,
+                null,
+                null
+        )
+        def ScheduledExecution scheduledExecution = results.scheduledExecution
+
+        then:
+        scheduledExecution != null
+        scheduledExecution instanceof ScheduledExecution
+        if(scheduleEnabled != null && executionEnabled != null){
+            scheduledExecution.serverNodeUUID == uuid
+        }else{
+            scheduledExecution.serverNodeUUID == null
+        }
+
+        where:
+        scheduleEnabled | executionEnabled
+        true            | true
+        null            | false
+        false           | true
+        true            | null
+        null            | null
+    }
 }
