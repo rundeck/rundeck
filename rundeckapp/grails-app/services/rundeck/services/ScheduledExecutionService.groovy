@@ -346,21 +346,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     )
     {
         def schedId=scheduledExecution.id
-        def claimed=false
+        def retry = true
         List<Execution> claimedExecs = []
         Date claimDate = new Date()
-        while (!claimed) {
+        while (retry) {
             try {
                 ScheduledExecution.withNewSession {
                     scheduledExecution = ScheduledExecution.get(schedId)
                     scheduledExecution.refresh()
 
-                    scheduledExecution.serverNodeUUID=serverUUID
-                    if (scheduledExecution.save(flush: true)) {
-                        claimed=true
-                        log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
-                    } else {
-                        log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
+                    if (scheduledExecution.scheduled) {
+                        scheduledExecution.serverNodeUUID = serverUUID
+                        if (scheduledExecution.save(flush: true)) {
+                            log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
+                        } else {
+                            log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
+                        }
                     }
                     //claim scheduled adhoc executions
                     Execution.findAllByScheduledExecutionAndStatusAndDateStartedGreaterThanAndDateCompletedIsNull(
@@ -373,14 +374,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         log.error("claimed adhoc execution ${it.id}")
                         claimedExecs << it
                     }
+                    retry = false
                 }
             } catch (org.springframework.dao.OptimisticLockingFailureException e) {
                 log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: locking failure")
+                retry = true
             } catch (StaleObjectStateException e) {
                 log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: stale data")
+                retry = true
             }
         }
-        return [claimed: claimed, executions: claimedExecs]
+        return [claimed: !retry, executions: claimedExecs]
     }
 
     /**
