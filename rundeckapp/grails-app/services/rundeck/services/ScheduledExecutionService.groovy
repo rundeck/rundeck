@@ -371,7 +371,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     ).each {
                         it.serverNodeUUID = serverUUID
                         it.save(flush:true)
-                        log.error("claimed adhoc execution ${it.id}")
+                        log.info("claimed adhoc execution ${it.id}")
                         claimedExecs << it
                     }
                     retry = false
