@@ -605,8 +605,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return map of job ID to [success:boolean, job:ScheduledExecution] indicating reclaim was successful or not.
      */
     def reclaimAndScheduleJobs(String fromServerUUID, boolean all=false, String project=null, String id=null) {
-        def claimed = claimScheduledJobs(frameworkService.getServerUUID(), fromServerUUID, all, project, id)
-        rescheduleJobs(frameworkService.getServerUUID())
+        def toServerUuid = frameworkService.getServerUUID()
+        if (toServerUuid == fromServerUUID) {
+            return [:]
+        }
+        def claimed = claimScheduledJobs(toServerUuid, fromServerUUID, all, project, id)
+        if (claimed.find { it.value.success }) {
+            rescheduleJobs(toServerUuid)
+        }
         claimed
     }
 
