@@ -476,6 +476,90 @@ class UtilityTagLib{
         }
     }
 
+    def datepickerUI = { attrs ->
+        def name = attrs['name']?:'myDateField'
+        def id = attrs['id']?:'myDateField'
+        def optionName = attrs['optionName']?:null;
+        def value = attrs['value']
+        def options = attrs['options']?:'{}' //{key1: value1, key2: value2, ...}
+        def locale = attrs['locale']?:request.getLocale().toString().substring(0,2)
+        def htmlClass = attrs['class']
+        def htmlRequired = attrs['required']?"required = 'true'":''
+        def placeholder = attrs['placeholder']?:''
+
+        def namePicker = id+"_picker";
+        def nameDay = id+"_day";
+        def nameMonth = id+"_month";
+        def nameYear = id+"_year";
+        def nameHour = id+"_hour";
+        def nameMinute = id+"_minute";
+
+        def c = null
+        def hour;
+        def minute;
+        def day;
+        def month;
+        def year;
+        if(value!=null){
+                if(value instanceof Calendar) {
+                        c = value
+                } else {
+                        c = new GregorianCalendar();
+                        c.setTime(value)
+                }
+                minute = c.get(GregorianCalendar.MINUTE)
+                hour = c.get(GregorianCalendar.HOUR_OF_DAY)
+                day = c.get(GregorianCalendar.DAY_OF_MONTH)
+                month = c.get(GregorianCalendar.MONTH)+1
+                year = c.get(GregorianCalendar.YEAR)
+        }
+
+        out << "\
+            <input type='text' id='${namePicker}' name='${optionName?:namePicker}' placeholder='${placeholder}' class='${htmlClass}' ${htmlRequired} style='position: relative; z-index:999;'/>\
+            \
+            \
+            <input type='hidden' id='${name}' name='${name}' value='date.struct' />\
+            \
+            <input type='hidden' id='${nameMinute}' name='${nameMinute}' value='${minute}' />\
+            <input type='hidden' id='${nameHour}' name='${nameHour}' value='${hour}' />\
+            <input type='hidden' id='${nameDay}' name='${nameDay}' value='${day}' />\
+            <input type='hidden' id='${nameMonth}' name='${nameMonth}' value='${month}' />\
+            <input type='hidden' id='${nameYear}' name='${nameYear}' value='${year}' />\
+                    "
+
+        out << "\
+            <script type='text/javascript'>\
+            jQuery(document).ready(function(){\n\
+                 jQuery('#${namePicker}').datetimepicker(${options});\n\
+                 jQuery('#${namePicker}').datetimepicker('option',jQuery.timepicker.regional['${locale}']);\n\
+                 jQuery('#${namePicker}').on('change', function(){\n\
+                         selDate = jQuery('#${namePicker}').datetimepicker('getDate');\n\
+                         jQuery('#${nameMinute}').val(selDate?selDate.getMinutes():null);\n\
+                         jQuery('#${nameHour}').val(selDate?selDate.getHours():null);\n\
+                         jQuery('#${nameDay}').val(selDate?selDate.getDate():null);\n\
+                         jQuery('#${nameMonth}').val(selDate?selDate.getMonth()+1:null);\n\
+                         jQuery('#${nameYear}').val(selDate?selDate.getFullYear():null);\n\
+                 });\n\
+                 var dateFormat = jQuery('#${namePicker}').datetimepicker( 'option', 'dateFormat');\n\
+                 var timeFormat = jQuery('#${namePicker}').datetimepicker( 'option', 'timeFormat');\n\
+                 var controlType = jQuery('#${namePicker}').datetimepicker( 'option', 'select');\n\
+            "
+        // If a value is specified it overrides the default date
+        if(attrs['value']){
+            out << "\
+                //Set date from value\n\
+                jQuery('#${namePicker}').datetimepicker('option', 'defaultDate',new Date(${year},${month-1},${day},${hour},${minute}));\n\
+            "
+        }
+        out << "\
+            var defaultDate = jQuery('#${namePicker}').datetimepicker( 'option', 'defaultDate');\n\
+            //Set default date\n\
+            jQuery('#${namePicker}').val(jQuery.datepicker.formatDate(dateFormat, defaultDate) + ' ' + (defaultDate.getHours()<10?'0':'') + defaultDate.getHours() + ':' + (defaultDate.getMinutes()<10?'0':'') + defaultDate.getMinutes())\n\
+            });\n\
+            </script>\
+            \
+            "
+    }
 
     def autoLink={ attrs,body->
         def outx=body()

@@ -20,6 +20,7 @@
 //= require knockout-foreachprop
 //= require menu/job-remote-options
 //= require ko/binding-popover
+//= require ko/binding-datetimepicker
 
 /**
  * Selectable value with name/value pair
@@ -57,6 +58,8 @@ function Option(data) {
     self.loading = ko.observable(false);
     self.required = ko.observable(data.required ? true : false);
     self.enforced = ko.observable(data.enforced ? true : false);
+    self.isDate = ko.observable(data.isDate ? true : false);
+    self.dateFormat = ko.observable(data.dateFormat);
     self.fieldName = ko.observable(data.fieldName);
     self.hasError = ko.observable(data.hasError);
     self.hasRemote = ko.observable(data.hasRemote);

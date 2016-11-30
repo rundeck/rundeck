@@ -536,12 +536,19 @@ class EditOptsController {
         if (params.inputType=='plain') {
             params.secureInput = false
             params.secureExposed = false
+            params.isDate = false
         }else if (params.inputType=='secure') {
             params.secureInput = true
             params.secureExposed = false
+            params.isDate = false
         }else if (params.inputType=='secureExposed') {
             params.secureInput = true
             params.secureExposed = true
+            params.isDate = false
+        }else if (params.inputType=='date') {
+            params.secureInput = false
+            params.secureExposed = false
+            params.isDate = true
         }
 
         opt.properties = params
@@ -588,6 +595,9 @@ class EditOptsController {
             params.inputType='secure'
         } else if (params.secureExposed){
             params.inputType = 'secureExposed'
+        }
+        if(params.isDate){
+            params.inputType='date'
         }
         params.valuesList = opt.produceValuesList()
         ['values','mapping','log','errors','class', 'metaClass', 'constraints', 'belongsTo', 'scheduledExecution', 'hasMany'].each{params.remove(it)}

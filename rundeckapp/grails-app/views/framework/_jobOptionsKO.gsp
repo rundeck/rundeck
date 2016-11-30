@@ -55,6 +55,8 @@ used by _editOptions.gsp template
                                               description        : optionSelect.description,
                                               descriptionHtml    : optionSelect.description?.decodeMarkdown(),
                                               enforced           : optionSelect.enforced,
+                                              isDate             : !!optionSelect.isDate,
+                                              dateFormat         : optionSelect.dateFormat,
                                               values             : optionSelect.values,
                                               defaultValue       : optionSelect.defaultValue,
                                               defaultStoragePath : optionSelect.defaultStoragePath,

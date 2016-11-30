@@ -15,22 +15,7 @@
   --}%
 
 <%@ page import="com.dtolabs.rundeck.core.dispatcher.DataContextUtils" %>
-<%--
- Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
 
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-
- --%>
 <%--
    _optEdit.gsp
 
@@ -101,7 +86,7 @@
             </div>
         </div>
         <div class="form-group ${hasErrors(bean: option, field: 'defaultValue', 'has-error')} opt_keystorage_disabled"
-             style="${wdgt.styleVisible(unless:option?.defaultStoragePath)}">
+             style="${wdgt.styleVisible(unless:option?.defaultStoragePath||option?.isDate || option?.secureInput || option?.secureExposed)}">
             <label class="col-sm-2 control-label"><g:message code="form.option.defaultValue.label" /></label>
             <div class="col-sm-10">
                             <input type="text"
@@ -179,11 +164,35 @@
 
                     <div class="radio">
                         <label>
-                            <g:radio name="inputType" value="plain" checked="${!option?.secureInput}" id="inputplain_${rkey}"/>
+                            <g:radio name="inputType" value="plain" checked="${!option?.secureInput && !option?.isDate}" id="inputplain_${rkey}"/>
                             <g:message code="form.option.secureInput.false.label"/>
                         </label>
                     </div>
 
+                    <div class="radio">
+                        <label>
+                                <g:radio name="inputType" value="date" checked="${option?.isDate}" id="inputdate_${rkey}"/>
+                            <g:message code="form.option.date.label"/>
+                        </label>
+                        <span class="text-muted">
+                            <g:message code="form.option.date.description"/>
+                        </span>
+                    </div>
+                    <div class="opt_date_enabled" style="${wdgt.styleVisible(if:option?.isDate)}">
+                        <label>
+                            <g:message code="form.option.dateFormat.title" />
+                            <g:textField name="dateFormat"
+                                         class="form-control"
+                                         value="${option?.dateFormat}"
+                                         size="60"
+                                         placeholder="MM/DD/YYYY hh:mm a"
+
+                            />
+                        </label>
+                        <span class="text-muted">
+                        <g:markdown><g:message code="form.option.dateFormat.description.md" /></g:markdown>
+                        </span>
+                    </div>
 
                     <div class="radio">
                         <label>
@@ -219,19 +228,24 @@
                     <g:message code="form.option.secureInput.description"/>
                 </div>
             </div>
-    
+
+            <%-- TODO replace with OptionEdit knockout bindings --%>
             <wdgt:eventHandler for="sectrue_${rkey}" state="unempty" inline="true" oneway="true">
                 <wdgt:action target="mvfalse_${rkey}" check="true"/>
                 <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="true"/>
                 <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_disabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_enabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_date_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_date_disabled" visible="true"/>
             </wdgt:eventHandler>
             <wdgt:eventHandler for="secexpfalse_${rkey}" state="unempty" inline="true" oneway="true">
                 <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="true"/>
                 <wdgt:action targetSelector=".opt_sec_disabled" visible="false"/>
                 <wdgt:action targetSelector=".opt_sec_enabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_date_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_date_disabled" visible="true"/>
             </wdgt:eventHandler>
             <wdgt:eventHandler for="inputplain_${rkey}" state="unempty" inline="true" oneway="true">
                 <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="true"/>
@@ -241,6 +255,19 @@
                 <wdgt:action targetSelector="#defaultStoragePath_${storagePathKey}" clear="true"/>
                 <wdgt:action targetSelector=".opt_keystorage_disabled" visible="true"/>
                 <wdgt:action targetSelector=".opt_keystorage_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_date_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_date_disabled" visible="true"/>
+            </wdgt:eventHandler>
+            <wdgt:eventHandler for="inputdate_${rkey}" state="unempty" inline="true" oneway="true">
+                <wdgt:action targetSelector=".opt_sec_nexp_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_sec_nexp_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_sec_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_sec_enabled" visible="false"/>
+                <wdgt:action targetSelector="#defaultStoragePath_${storagePathKey}" clear="true"/>
+                <wdgt:action targetSelector=".opt_keystorage_disabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_keystorage_enabled" visible="false"/>
+                <wdgt:action targetSelector=".opt_date_enabled" visible="true"/>
+                <wdgt:action targetSelector=".opt_date_disabled" visible="false"/>
             </wdgt:eventHandler>
 
         </div>
