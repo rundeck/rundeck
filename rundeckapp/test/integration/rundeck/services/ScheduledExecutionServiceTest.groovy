@@ -102,7 +102,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
         // This job should have been claimed by the node
         results[jobUuid].job.jobName == 'viridian'
         results[jobUuid].success
-        se.serverNodeUUID == TEST_UUID2
+        se.serverNodeUUID == TEST_UUID1
     }
 
     def "reclaiming scheduled jobs should include both ad hoc and fixed"() {
@@ -182,7 +182,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
         results[jobUuid].success
         results[jobUuid2].job.jobName == 'amaranth'
         results[jobUuid2].success
-        se.serverNodeUUID == TEST_UUID2
+        se.serverNodeUUID == TEST_UUID1
         se2.serverNodeUUID == TEST_UUID2
     }
 
@@ -256,7 +256,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
         jobUuid in results
         results[jobUuid].job.jobName == 'cerulean'
         results[jobUuid].success
-        se.serverNodeUUID == TEST_UUID2
+        se.serverNodeUUID == TEST_UUID1
         e.serverNodeUUID == TEST_UUID2
     }
 
@@ -320,7 +320,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
         jobUuid in results
         results[jobUuid].job.jobName == 'manatee'
         results[jobUuid].success
-        se.serverNodeUUID == TEST_UUID2
+        se.serverNodeUUID == TEST_UUID1
     }
 
     def "job with secure input options should be cleaned up"() {
@@ -393,7 +393,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
         jobUuid in results
         results[jobUuid].job.jobName == 'byzantium'
         results[jobUuid].success
-        se.serverNodeUUID == TEST_UUID2
+        se.serverNodeUUID == TEST_UUID1
 	}
 
     void testClaimScheduledJobsUnassigned() {

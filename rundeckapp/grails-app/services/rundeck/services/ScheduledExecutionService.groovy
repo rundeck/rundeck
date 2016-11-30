@@ -346,21 +346,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     )
     {
         def schedId=scheduledExecution.id
-        def claimed=false
+        def retry = true
         List<Execution> claimedExecs = []
         Date claimDate = new Date()
-        while (!claimed) {
+        while (retry) {
             try {
                 ScheduledExecution.withNewSession {
                     scheduledExecution = ScheduledExecution.get(schedId)
                     scheduledExecution.refresh()
 
-                    scheduledExecution.serverNodeUUID=serverUUID
-                    if (scheduledExecution.save(flush: true)) {
-                        claimed=true
-                        log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
-                    } else {
-                        log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
+                    if (scheduledExecution.scheduled) {
+                        scheduledExecution.serverNodeUUID = serverUUID
+                        if (scheduledExecution.save(flush: true)) {
+                            log.info("claimScheduledJob: schedule claimed for ${schedId} on node ${serverUUID}")
+                        } else {
+                            log.debug("claimScheduledJob: failed for ${schedId} on node ${serverUUID}")
+                        }
                     }
                     //claim scheduled adhoc executions
                     Execution.findAllByScheduledExecutionAndStatusAndDateStartedGreaterThanAndDateCompletedIsNull(
@@ -370,17 +371,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     ).each {
                         it.serverNodeUUID = serverUUID
                         it.save(flush:true)
-                        log.error("claimed adhoc execution ${it.id}")
+                        log.info("claimed adhoc execution ${it.id}")
                         claimedExecs << it
                     }
+                    retry = false
                 }
             } catch (org.springframework.dao.OptimisticLockingFailureException e) {
                 log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: locking failure")
+                retry = true
             } catch (StaleObjectStateException e) {
                 log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: stale data")
+                retry = true
             }
         }
-        return [claimed: claimed, executions: claimedExecs]
+        return [claimed: !retry, executions: claimedExecs]
     }
 
     /**
@@ -403,11 +407,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def queryProject = projectFilter
         ScheduledExecution.withTransaction {
             def c = ScheduledExecution.createCriteria()
-            c.list {
+            c.listDistinct {
                 or {
                     eq('scheduled', true)
                     executions(CriteriaSpecification.LEFT_JOIN) {
                         eq('status', ExecutionService.EXECUTION_SCHEDULED)
+                        isNull('dateCompleted')
                         if (!selectAll) {
                             if (queryFromServerUUID) {
                                 eq('serverNodeUUID', queryFromServerUUID)
@@ -442,13 +447,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }.each { ScheduledExecution se ->
                 def orig = se.serverNodeUUID
-                def claimResult = claimScheduledJob(se, toServerUUID, queryFromServerUUID)
-                claimed[se.extid] = [
-                        success   : claimResult.claimed,
-                        job       : se,
-                        previous  : orig,
-                        executions: claimResult.executions
-                ]
+                if (!claimed[se.extid]) {
+                    def claimResult = claimScheduledJob(se, toServerUUID, queryFromServerUUID)
+                    claimed[se.extid] = [
+                            success   : claimResult.claimed,
+                            job       : se,
+                            previous  : orig,
+                            executions: claimResult.executions
+                    ]
+                }
             }
         }
         claimed
@@ -602,8 +609,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return map of job ID to [success:boolean, job:ScheduledExecution] indicating reclaim was successful or not.
      */
     def reclaimAndScheduleJobs(String fromServerUUID, boolean all=false, String project=null, String id=null) {
-        def claimed = claimScheduledJobs(frameworkService.getServerUUID(), fromServerUUID, all, project, id)
-        rescheduleJobs(frameworkService.getServerUUID())
+        def toServerUuid = frameworkService.getServerUUID()
+        if (toServerUuid == fromServerUUID) {
+            return [:]
+        }
+        def claimed = claimScheduledJobs(toServerUuid, fromServerUUID, all, project, id)
+        if (claimed.find { it.value.success }) {
+            rescheduleJobs(toServerUuid)
+        }
         claimed
     }
 
@@ -933,10 +946,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 .startAt(startTime)
                 .build()
 
-        Date nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
-        log.debug("scheduled ad-hoc job. next run: " + nextTime.toString())
-
-        return nextTime
+        if (quartzScheduler.checkExists(jobDetail.getKey())) {
+            log.info("rescheduling existing ad-hoc job in project ${se.project} ${se.extid} ${e.id}")
+            return quartzScheduler.rescheduleJob(
+                    TriggerKey.triggerKey(identity.jobname, identity.groupname),
+                    trigger
+            )
+        } else {
+            Date nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
+            log.debug("scheduled ad-hoc job. next run: " + nextTime.toString())
+            return nextTime
+        }
     }
 
     def boolean existsJob(String jobName, String groupName){
