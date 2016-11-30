@@ -2,6 +2,39 @@
 % Greg Schueler
 % April 15, 2015
 
+## Upgrading to Rundeck 2.7 from 2.6.x
+
+
+* Java 8 is required
+     * well, not technically required for Rundeck server, but you should upgrade, consider Java 7 no longer supported
+
+* Default database (H2) upgraded to 1.4.x
+    * the new version uses a different storage format ("mv_store")
+    * You can remove `;TRACE_LEVEL_FILE=4` from the dataSource.url in rundeck-config.properties
+
+* old CLI tools are gone
+      * the "rd-*" and "dispatch" and "run" tools have been removed from the install
+      * the "rd-acl" tool is still available
+      * Use the new "rd" tool available separately
+          * this does require Java 8
+
+* Debian/RPM startup script changes
+      * The "/etc/rundeck/profile" was modified and will probably not work with your existing install.
+      * (This change was snafu'd into 2.6.10 and reverted in 2.6.11)
+      * If you have customized /etc/rundeck/profile, look at the new profile definition and move your custom env var changes to a file /etc/sysconfig/rundeckd
+
+* Inline script token expansion changes
+      * (Another change tha had some hiccups in 2.6.10)
+      * You must use `@@` (two at-signs) to produce a literal `@` in the script when it might be interpreted as a token, i.e. `@word@` looks like a token, but `@word space@` is ok
+      * You can globally disable inline script token expansion
+
+* Jetty embedded server was upgraded to 9.0.x
+      * The default JAAS configuration for file-based authentication will need to be modified to use correct class name
+      * Use "org.eclipse.jetty.jaas.spi.PropertyFileLoginModule"
+
+* "parallel" workflow strategy is not an "incubator" feature anymore
+
+
 ## Upgrading to Rundeck 2.5
 
 
