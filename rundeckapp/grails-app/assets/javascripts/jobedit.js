@@ -56,15 +56,18 @@ function postLoadItemEdit(item){
     }
     liitem.find('textarea.apply_ace').each(function(ndx,elem){_addAceTextarea(elem)});
 }
-
+var _iseditting=null;
 function _wfiedit(key,num,isErrorHandler) {
+    if(_iseditting){
+        return;
+    }
     jobWasEdited();
     var params = {num:num, isErrorHandler:isErrorHandler?true:false,key:key};
     if (getCurSEID()) {
         params.scheduledExecutionId = getCurSEID();
     }
     jQuery('#wfli_' + key).load(_genUrl(appLinks.workflowEdit, params),function(resp,status,jqxhr){
-        _hideWFItemControls();
+        _hideWFItemControls(key);
         postLoadItemEdit('#wfli_' + key);
     });
 }
@@ -107,7 +110,7 @@ function _wfiaddnew(type,nodestep) {
     }
     clearHtml('wfnewitem');
     jQuery('#wfnewtypes').hide();
-    _hideWFItemControls();
+    _hideWFItemControls('new');
     var wfcontent = jQuery('#workflowContent');
     var olist = wfcontent.find('ol').first();
     var num = wfcontent.find('ol > li').length;
@@ -193,9 +196,10 @@ function _evtNewStepCancel(evt){
     jQuery('#wfnewbutton').show();
 }
 
-function _hideWFItemControls() {
+function _hideWFItemControls(item) {
     jQuery('#workflowContent').find('span.wfitemcontrols').hide();
     jQuery('#wfundoredo,#wfnewbutton').hide();
+    _iseditting=item;
 }
 function _updateEmptyMessage() {
     var x = jQuery('#workflowContent').find('ol li');
@@ -211,6 +215,7 @@ function _showWFItemControls() {
     _updateWFUndoRedo();
     _enableWFDragdrop();
     _updateEmptyMessage();
+    _iseditting=null;
 }
 function _hideWFItemControlsAddEH(num){
     var lielem=jQuery('#wfli_'+num);
@@ -272,7 +277,7 @@ function _wfishownewErrorHandler(key,num,nodeStep){
 
     newehdiv.show();
     wfiehli.parent().show();
-    _hideWFItemControls();
+    _hideWFItemControls('eh');
 }
 
 function _wfiaddNewErrorHandler(elem,type,num,nodestep){
