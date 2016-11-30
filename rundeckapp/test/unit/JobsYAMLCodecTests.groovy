@@ -108,11 +108,8 @@ public class JobsYAMLCodecTests  {
 
             assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
             assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
-            assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
             assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
             assertEquals "wrong nodefilters include hostname", "hostname: testhost1 !name: x1", doc[0].nodefilters.filter
-            assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.include
-            assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.exclude
 
             assertNotNull "not scheduled", doc[0].schedule
             assertNotNull "not scheduled.time", doc[0].schedule.time
@@ -202,11 +199,8 @@ public class JobsYAMLCodecTests  {
 
             assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
             assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
-            assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
             assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
             assertEquals "wrong nodefilters include hostname", "hostname: testhost1 !name: x1", doc[0].nodefilters.filter
-            assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.include
-            assertEquals "missing nodefilters exclude name", null, doc[0].nodefilters.exclude
 
             assertNotNull "not scheduled", doc[0].schedule
             assertNotNull "not scheduled.time", doc[0].schedule.time
@@ -841,9 +835,6 @@ public class JobsYAMLCodecTests  {
             assertTrue "wrong doNodedispatch", se.doNodedispatch
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
             assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
-            assertTrue "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
-            assertEquals "wrong nodeInclude", null, se.nodeInclude
-            assertEquals "wrong nodeExcludeName", null, se.nodeExcludeName
             assertEquals "wrong nodeInclude", "hostname: testhost1 !name: x1", se.filter
 
             //schedule
@@ -1055,9 +1046,6 @@ public class JobsYAMLCodecTests  {
             assertTrue "wrong doNodedispatch", se.doNodedispatch
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
             assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
-            assertTrue "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
-            assertEquals "wrong nodeInclude", null, se.nodeInclude
-            assertEquals "wrong nodeExcludeName", null, se.nodeExcludeName
             assertEquals "wrong nodeInclude", "hostname: testhost1 !name: x1", se.filter
 
             //schedule
@@ -1185,14 +1173,6 @@ public class JobsYAMLCodecTests  {
         assertTrue "wrong doNodedispatch", se.doNodedispatch
         assertEquals "wrong nodeThreadcount", 3, se.nodeThreadcount
         assertFalse "wrong nodeKeepgoing", se.nodeKeepgoing
-        assertFalse "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
-        assertEquals "wrong nodeInclude", null, se.nodeIncludeName
-        assertEquals "wrong nodeExcludeName", null, se.nodeExclude
-        assertEquals "wrong nodeExcludeName", null, se.nodeExcludeTags
-        assertEquals "wrong nodeExcludeName", null, se.nodeExcludeOsFamily
-        assertEquals "wrong nodeExcludeName", null, se.nodeExcludeOsArch
-        assertEquals "wrong nodeExcludeName", null, se.nodeExcludeOsName
-        assertEquals "wrong nodeExcludeName", null, se.nodeExcludeOsVersion
 
         assertEquals "wrong nodeInclude", "name: .* !tags: monkey !os-family: unix !os-name: Linux !os-version: 10.5.* !os-arch: x86 !hostname: shampoo.*", se.filter
 
@@ -1430,10 +1410,7 @@ public class JobsYAMLCodecTests  {
             assertTrue "wrong doNodedispatch", se.doNodedispatch
             assertEquals "wrong nodeThreadcount", 1, se.nodeThreadcount
             assertTrue "wrong nodeKeepgoing", se.nodeKeepgoing
-            assertTrue "wrong nodeExcludePrecedence", se.nodeExcludePrecedence
             assertEquals "wrong nodeInclude", "hostname: testhost1 !name: x1", se.filter
-            assertEquals "wrong nodeInclude", null, se.nodeInclude
-            assertEquals "wrong nodeExcludeName", null, se.nodeExcludeName
 
             //schedule
             assertTrue "wrong scheduled", se.scheduled

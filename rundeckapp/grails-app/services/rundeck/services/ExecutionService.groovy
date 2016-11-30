@@ -1144,7 +1144,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def filter = DataContextUtils.replaceDataReferences(execMap.asFilter(), datacontext)
             NodeSet nodeset = filtersAsNodeSet([
                     filter:filter,
-                    nodeExcludePrecedence:execMap.nodeExcludePrecedence,
                     nodeThreadcount: execMap.nodeThreadcount,
                     nodeKeepgoing: execMap.nodeKeepgoing
             ])
@@ -1378,27 +1377,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     public static NodeSet filtersAsNodeSet(BaseNodeFilters econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
-        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
-        return nodeset
-    }
-    /**
-     * Return a NodeSet using the filters in the execution context and expanding variables by using the supplied
-     * datacontext
-     * @param econtext execution context
-     * @param datacontext data values
-     * @return nodeset
-     */
-    public static NodeSet filtersAsNodeSet(ExecutionContext econtext, Map<String,Map<String,String>> datacontext) {
-        final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(
-                DataContextUtils.replaceDataReferences(BaseNodeFilters.asExcludeMap(econtext),datacontext)
-        ).setDominant(econtext.nodeExcludePrecedence ? true : false);
-        nodeset.createInclude(
-                DataContextUtils.replaceDataReferences(BaseNodeFilters.asIncludeMap(econtext),datacontext)
-        ).setDominant(!econtext.nodeExcludePrecedence ? true : false);
-        nodeset.setKeepgoing(econtext.nodeKeepgoing ? true : false)
-        nodeset.setThreadCount(econtext.nodeThreadcount ? econtext.nodeThreadcount : 1)
+        nodeset.setFilter(econtext.filter);
         return nodeset
     }
     /**
@@ -1406,10 +1385,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     public static NodeSet filtersAsNodeSet(ExecutionContext econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence ? true : false);
-        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence ? true : false);
-        nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
-        nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
+        nodeset.setFilter(
+                econtext.filter,
+                econtext.nodeThreadcount ? econtext.nodeThreadcount : 1,
+                econtext.nodeKeepgoing ? true : false
+        )
         return nodeset
     }
 
@@ -1418,10 +1398,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     public static NodeSet filtersAsNodeSet(Map econtext) {
         final NodeSet nodeset = new NodeSet();
-        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence?true:false);
-        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence?true:false);
-        nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
-        nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
+        nodeset.setFilter(
+                econtext.filter,
+                econtext.nodeThreadcount ? econtext.nodeThreadcount : 1,
+                econtext.nodeKeepgoing ? true : false
+        )
         return nodeset
     }
 
@@ -1526,7 +1507,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if(!execution.save(flush:true)){
             execution.errors.allErrors.each { log.warn(it.defaultMessage) }
             log.error("unable to save execution")
-            throw new ExecutionServiceException("unable to save execution")
+            throw new ExecutionServiceException(
+                    "unable to save execution: " + execution.errors.allErrors.collect { it.defaultMessage }.join(' ')
+            )
         }
         return execution
     }
@@ -1732,7 +1715,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 'loglevel',
                 'doNodedispatch',
                 'filter',
-                'nodeExcludePrecedence',
+//                'nodeExcludePrecedence',
                 'nodeThreadcount',
                 'nodeKeepgoing',
                 'nodeRankOrderAscending',
@@ -1758,8 +1741,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 //remove all existing node filters to replace with input filters
                 props = props.findAll {!(it.key =~ /^(filter|node(Include|Exclude).*)$/)}
 
-                def filterprops = input.findAll { it.key =~ /^(filter|node(Include|Exclude).*)$/ }
-                def nset = filtersAsNodeSet(filterprops)
+                def nset = filtersAsNodeSet([filter: input.filter])
                 input.filter = NodeSet.generateFilter(nset)
                 input.doNodedispatch=true
             }

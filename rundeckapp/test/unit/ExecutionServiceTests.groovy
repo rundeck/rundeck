@@ -395,7 +395,12 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[('_replaceNodeFilters'):"true",nodeIncludeName: 'monkey'])
+        Execution e2 = svc.createExecution(
+                se,
+                createAuthContext("user1"),
+                null,
+                [('_replaceNodeFilters'): "true", filter: 'monkey']
+        )
 
         assertNotNull(e2)
         assertEquals('name: monkey', e2.filter)
@@ -426,7 +431,12 @@ class ExecutionServiceTests  {
         FrameworkService fsvc = new FrameworkService()
         svc.frameworkService=fsvc
 
-        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,[('_replaceNodeFilters'):"true",nodeIncludeName: ['monkey','banana']])
+        Execution e2 = svc.createExecution(
+                se,
+                createAuthContext("user1"),
+                null,
+                [('_replaceNodeFilters'): "true", filter: ['monkey', 'banana']]
+        )
 
         assertNotNull(e2)
         assertEquals('name: monkey,banana', e2.filter)
@@ -903,7 +913,14 @@ class ExecutionServiceTests  {
         u1.save()
         //check nodeset, filtered from execution obj. include name
 
-            Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeIncludeName: "testnode")
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                filter: "testnode"
+        )
             def val = service.createContext(se, null, null, null, null, [id: "3", name: "testjob"], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
@@ -964,7 +981,14 @@ class ExecutionServiceTests  {
         u1.save()
         //check nodeset, filtered from execution obj. exclude name
 
-            Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeExcludeName: "testnode")
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                filter: "!name: testnode"
+        )
             def val = service.createContext(se, null, null, null, null, [id: "3", name: "testjob"], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
@@ -1008,7 +1032,14 @@ class ExecutionServiceTests  {
 
         //basic test
 
-            Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true,nodeIncludeName: "basic")
+        Execution se = new Execution(
+                argString: "-test args -test3 something",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                filter: "basic"
+        )
             def val = service.createContext(se, null, null, null, null, [id:'3',name:'blah',group:'something/else',
                     username:'bill',project:'testproj'], null, null)
             assertNotNull(val)
@@ -1091,21 +1122,8 @@ class ExecutionServiceTests  {
         //variable expansion in include name
 
             Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN',
-                doNodedispatch: true,
-                nodeInclude: "a,\${option.test} \${option.test3}",
-                nodeIncludeName: "b,\${option.test} \${option.test3}",
-                nodeIncludeTags: "c,\${option.test} \${option.test3}",
-                nodeIncludeOsArch: "d,\${option.test} \${option.test3}",
-                nodeIncludeOsFamily: "e,\${option.test} \${option.test3}",
-                nodeIncludeOsName: "f,\${option.test} \${option.test3}",
-                nodeIncludeOsVersion: "g,\${option.test} \${option.test3}",
-                nodeExclude: "h,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
-                nodeExcludeName: "i,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
-                nodeExcludeTags: "j,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
-                nodeExcludeOsArch: "k,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
-                nodeExcludeOsFamily: "l,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
-                nodeExcludeOsName: "m,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
-                nodeExcludeOsVersion: "n,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
+                                         doNodedispatch: true,
+                                         filter: "a,\${option.test} \${option.test3}"
             )
             def val = service.createContext(se, null, null, null, null, [id:'3',name:'blah',group:'something/else',
                     username:'bill',project:'testproj'], null, null)
@@ -1113,20 +1131,7 @@ class ExecutionServiceTests  {
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
             assertNotNull(val.nodeSelector.include)
-            assertEquals("a,args something", val.nodeSelector.include.hostname)
             assertEquals("b,args something", val.nodeSelector.include.name)
-            assertEquals("c,args something", val.nodeSelector.include.tags)
-            assertEquals("d,args something", val.nodeSelector.include.osarch)
-            assertEquals("e,args something", val.nodeSelector.include.osfamily)
-            assertEquals("f,args something", val.nodeSelector.include.osname)
-            assertEquals("g,args something", val.nodeSelector.include.osversion)
-            assertEquals("h,3 blah something/else bill testproj", val.nodeSelector.exclude.hostname)
-            assertEquals("i,3 blah something/else bill testproj", val.nodeSelector.exclude.name)
-            assertEquals("j,3 blah something/else bill testproj", val.nodeSelector.exclude.tags)
-            assertEquals("k,3 blah something/else bill testproj", val.nodeSelector.exclude.osarch)
-            assertEquals("l,3 blah something/else bill testproj", val.nodeSelector.exclude.osfamily)
-            assertEquals("m,3 blah something/else bill testproj", val.nodeSelector.exclude.osname)
-            assertEquals("n,3 blah something/else bill testproj", val.nodeSelector.exclude.osversion)
     }
     /**
      * Test use of ${option.x} and ${job.y} parameter expansion in node filter tag and name filters.
@@ -1597,11 +1602,7 @@ class ExecutionServiceTests  {
 
     protected NodesSelector makeSelector(String filter, int threadcount, boolean keepgoing) {
         def nodeset=new NodeSet()
-        def filter1 = NodeSet.parseFilter(filter)
-        nodeset.createInclude(filter1.include)
-        nodeset.createExclude(filter1.exclude)
-        nodeset.setThreadCount(threadcount)
-        nodeset.setKeepgoing(keepgoing)
+        NodeSet.setFilter(filter, threadcount, keepgoing)
         return nodeset
     }
     protected INodeSet makeNodeSet(List<String> nodes) {

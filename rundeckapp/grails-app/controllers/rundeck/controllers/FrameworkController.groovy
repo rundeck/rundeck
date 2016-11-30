@@ -294,7 +294,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             if(params.formInput=='true' && 'true'!=params.defaultLocalNode){
                 query.filter = 'name: .*'
             }else{
-                query.nodeIncludeName = framework.getFrameworkNodeName()
+                query.filter = framework.getFrameworkNodeName()
             }
         }
 
@@ -557,7 +557,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             if ('true' != params.defaultLocalNode) {
                 query.filter = '.*'
             } else {
-                query.nodeIncludeName = framework.getFrameworkNodeName()
+                query.filter = framework.getFrameworkNodeName()
             }
         }
         //in case named filter stored from another project

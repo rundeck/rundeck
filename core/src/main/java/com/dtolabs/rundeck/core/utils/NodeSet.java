@@ -373,18 +373,6 @@ public class NodeSet  implements NodesSelector {
     }
 
     /**
-     * Create a NodeSet from a filter
-     * @param filter filter string
-     * @return node set
-     */
-    public static NodeSet fromFilter(String filter) {
-        Map<String, Map<String, String>> stringMapMap = parseFilter(filter);
-        NodeSet nodeSet = new NodeSet();
-        nodeSet.createInclude(stringMapMap.get("include"));
-        nodeSet.createExclude(stringMapMap.get("exclude"));
-        return nodeSet;
-    }
-    /**
      * Parse textual filter and return a map of maps: [include: [key:value,...], exclude: [key:value,...]]
      *
      * @param filter filter string
@@ -450,27 +438,22 @@ public class NodeSet  implements NodesSelector {
         }
         return OptsUtil.join(buf);
     }
-    /**
-     * Creates an {@link Exclude} object populating its
-     * properties from the keys of the map
-     * @param excludeMap Map containing nodes.properties data
-     * @return new Exclude object configured for use in this NodeSet
-     */
-    public Exclude createExclude(Map excludeMap) {
-        Exclude exclude = createExclude();
-        populateSetSelector(excludeMap, exclude);
-        return exclude;
+
+    public void setFilter(String filter) {
+        setFilter(filter, 1, false);
     }
-    /**
-     * Creates an {@link Include} object populating its
-     * properties from the keys of the map
-     * @param includeMap Map containing nodes.properties data
-     * @return new Exclude object configured for use in this NodeSet
-     */
-    public Include createInclude(Map includeMap) {
+
+    public void setFilter(String filter, int threadcount, boolean keepgoing) {
+        Map<String, Map<String, String>> stringMapMap = NodeSet.parseFilter(filter);
+        Exclude exclude = createExclude();
+        exclude.setDominant(true);
+        populateSetSelector(stringMapMap.get("exclude"), exclude);
+
         Include include = createInclude();
-        populateSetSelector(includeMap, include);
-        return include;
+        include.setDominant(false);
+        populateSetSelector(stringMapMap.get("include"), include);
+        setThreadCount(threadcount);
+        setKeepgoing(keepgoing);
     }
 
     /**
