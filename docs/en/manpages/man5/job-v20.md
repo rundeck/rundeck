@@ -1165,15 +1165,15 @@ Defines email, webhook or plugin notifications for Job success and failure, with
 
 *Nested elements*
 
-[onsuccess](#onsuccess)
+[onsuccess][]
 
 :    define notifications for success result
 
-[onfailure](#onfailure)
+[onfailure][]
 
 :    define notifications for failure/kill result
 
-[onstart](#onstart)
+[onstart][]
 
 :    define notifications for job start
 
@@ -1236,10 +1236,6 @@ Embed an [plugin](#plugin) element to perform a custom action, within
 
 Define email recipients for Job execution result, within [onsuccess][], [onfailure][] or [onstart][].
 
-[onsuccess]: #onsuccess
-[onfailure]: #onfailure
-[onstart]: #onstart
-
 *Attributes*
 
 recipients
@@ -1254,9 +1250,6 @@ recipients
 
 Define URLs to submit a HTTP POST to containing the job execution result, within [onsuccess][], [onfailure][] or [onstart][].
 
-[onsuccess]: #onsuccess
-[onfailure]: #onfailure
-[onstart]: #onstart
 
 *Attributes*
 
@@ -1276,10 +1269,6 @@ urls
 ### plugin
 
 Defines a configuration for a plugin to perform a Notification, within [onsuccess][], [onfailure][] or [onstart][].
-
-[onsuccess]: #onsuccess
-[onfailure]: #onfailure
-[onstart]: #onstart
 
 *Attributes*
 
@@ -1338,3 +1327,8 @@ value
 
 The Rundeck source code and all documentation may be downloaded from
 <https://github.com/rundeck/rundeck/>.
+
+
+[onsuccess]: #onsuccess
+[onfailure]: #onfailure
+[onstart]: #onstart
