@@ -24,4 +24,4 @@ roff :
 
 clean :
 	@rm -rf $(DIST)/man/man5
-	@-rm *.gz
+	@-rm *.gz *.5
