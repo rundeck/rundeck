@@ -850,6 +850,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobcontext.id = execution.scheduledExecution.extid
         }
         jobcontext.execid = execution.id.toString()
+        jobcontext.executionType = execution.executionType
         jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)
         jobcontext.url = generateExecutionURL(execution,grailsLinkGenerator)
         jobcontext.serverUUID = execution.serverNodeUUID
@@ -1425,21 +1426,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def Execution execution
         if (params.project && params.workflow) {
             execution = new Execution(project:params.project,
-                                      user:params.user,loglevel:params.loglevel,
-                                    doNodedispatch:params.doNodedispatch?"true" == params.doNodedispatch.toString():false,
-                                    filter: params.filter,
-                                    nodeExcludePrecedence:params.nodeExcludePrecedence,
-                                    nodeThreadcount:params.nodeThreadcount,
-                                    nodeKeepgoing:params.nodeKeepgoing,
-                                    orchestrator:params.orchestrator,
-                                    nodeRankOrderAscending:params.nodeRankOrderAscending,
-                                    nodeRankAttribute:params.nodeRankAttribute,
-                                    workflow:params.workflow,
-                                    argString:params.argString,
-                                    timeout:params.timeout?:null,
-                                    retryAttempt:params.retryAttempt?:0,
-                                    retry:params.retry?:null,
-                                    serverNodeUUID: frameworkService.getServerUUID()
+                                      user:params.user, loglevel:params.loglevel,
+                                      doNodedispatch:params.doNodedispatch?"true" == params.doNodedispatch.toString():false,
+                                      filter: params.filter,
+                                      nodeExcludePrecedence:params.nodeExcludePrecedence,
+                                      nodeThreadcount:params.nodeThreadcount,
+                                      nodeKeepgoing:params.nodeKeepgoing,
+                                      orchestrator:params.orchestrator,
+                                      nodeRankOrderAscending:params.nodeRankOrderAscending,
+                                      nodeRankAttribute:params.nodeRankAttribute,
+                                      workflow:params.workflow,
+                                      argString:params.argString,
+                                      executionType: params.executionType ?: 'scheduled',
+                                      timeout:params.timeout?:null,
+                                      retryAttempt:params.retryAttempt?:0,
+                                      retry:params.retry?:null,
+                                      serverNodeUUID: frameworkService.getServerUUID()
             )
 
 
@@ -1572,7 +1574,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         input.retryAttempt = attempt
         try {
 
-            Map allowedOptions = input.subMap(['loglevel', 'argString', 'option','_replaceNodeFilters', 'filter', 'retryAttempt','nodeoverride','nodefilter']).findAll { it.value != null }
+            Map allowedOptions = input.subMap(
+                    ['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter', 'executionType',
+                     'retryAttempt', 'nodeoverride', 'nodefilter']
+            ).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions,attempt>0,prevId)
             def timeout = 0
@@ -1630,7 +1635,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         try {
 
             Map allowedOptions = input.subMap(['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter',
-                                               'nodeoverride','nodefilter',
+                                               'nodeoverride', 'nodefilter',
+                                               'executionType',
                                                'retryAttempt']).findAll { it.value != null }
             allowedOptions.putAll(input.findAll {
                         it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
@@ -1757,6 +1763,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (input) {
             props.putAll(input.subMap(['argString','filter','loglevel','retryAttempt','doNodedispatch']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
+        }
+
+        if (input && input['executionType']) {
+            props.executionType = input['executionType']
+        } else {
+            props.executionType = 'scheduled'
         }
 
         //evaluate embedded Job options for validation
@@ -2135,9 +2147,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if (maxRetries > count) {
                     execution.willRetry = true
                     def input = [
-                            argString: execution.argString,
-                            loglevel : execution.loglevel,
-                            filter   : execution.filter //TODO: failed nodes?
+                            argString    : execution.argString,
+                            executionType: execution.executionType,
+                            loglevel     : execution.loglevel,
+                            filter       : execution.filter //TODO: failed nodes?
                     ]
                     def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
                             retryContext.user, input, retryContext.secureOpts,

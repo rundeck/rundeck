@@ -151,6 +151,67 @@ class ExecutionServiceTests  {
         assertNotNull(e2.dateStarted)
         assertNull(e2.dateCompleted)
         assertEquals('user1', e2.user)
+        assertEquals('scheduled', e2.executionType)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
+    }
+    void testCreateExecutionSimpleUserExecutionType(){
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.save()
+
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,['executionType':'user'])
+
+        assertNotNull(e2)
+        assertEquals('-a b -c d', e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals('user1', e2.user)
+        assertEquals('user', e2.executionType)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
+    }
+    void testCreateExecutionScheduledUserExecutionType(){
+
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            groupPath: 'some/where',
+            description: 'a job',
+            argString: '-a b -c d',
+            workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+        )
+        se.save()
+
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        Execution e2=svc.createExecution(se,createAuthContext("user1"),null,['executionType':'user-scheduled'])
+
+        assertNotNull(e2)
+        assertEquals('-a b -c d', e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals('user1', e2.user)
+        assertEquals('user-scheduled', e2.executionType)
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e2))

@@ -36,6 +36,7 @@ class Execution extends ExecutionContext {
     boolean cancelled
     Boolean timedOut=false
     Workflow workflow
+    String executionType
     Integer retryAttempt=0
     Boolean willRetry=false
     Execution retryExecution
@@ -91,6 +92,7 @@ class Execution extends ExecutionContext {
         timeout(maxSize: 256, blank: true, nullable: true,)
         retry(maxSize: 256, blank: true, nullable: true,matches: /^\d+$/)
         timedOut(nullable: true)
+        executionType(nullable: true, maxSize: 30)
         retryAttempt(nullable: true)
         retryExecution(nullable: true)
         willRetry(nullable: true)
@@ -223,6 +225,9 @@ class Execution extends ExecutionContext {
         }
         map.id= this.id
         map.doNodedispatch= this.doNodedispatch
+        if(this.executionType) {
+            map.executionType=executionType
+        }
         if(this.retryAttempt){
             map.retryAttempt=retryAttempt
         }
@@ -273,6 +278,9 @@ class Execution extends ExecutionContext {
         exec.loglevel = data.loglevel
         exec.doNodedispatch = XmlParserUtil.stringToBool(data.doNodedispatch,false)
         exec.timeout = data.timeout
+        if(data.executionType) {
+            exec.executionType = data.executionType
+        }
         if(data.retryAttempt){
             exec.retryAttempt= XmlParserUtil.stringToInt(data.retryAttempt, 0)
         }
