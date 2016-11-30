@@ -38,7 +38,9 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
+import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.events.Listener
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
@@ -66,6 +68,8 @@ import java.text.DateFormat
 import java.text.MessageFormat
 import java.text.ParseException
 import java.text.SimpleDateFormat
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ConcurrentMap
 import java.util.regex.Pattern
 
 /**
@@ -1813,6 +1817,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return execution
     }
     /**
+     * sync objects for preventing multiple executions of a job within this server
+     */
+    ConcurrentMap<String, Object> multijobflag = new ConcurrentHashMap<String, Object>()
+
+    /**
+     * Return an object for synchronization of the job id
+     * @param id
+     * @return object
+     */
+    private Object syncForJob(String id){
+        def object = new Object()
+        //return existing object if present, or the new object
+        multijobflag.putIfAbsent(id, object) ?: object
+    }
+
+    @Listener
+    def jobChanged(StoredJobChangeEvent e) {
+        if (e.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
+            //clear multijob sync object
+            multijobflag?.remove(e.originalJobReference.id)
+        }
+    }
+    /**
      * Create an execution
      * @param se
      * @param user
@@ -1832,7 +1859,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throws ExecutionServiceException
     {
         if (!se.multipleExecutions ) {
-            synchronized (this) {
+            synchronized (syncForJob(se.extid)) {
                 //find any currently running executions for this job, and if so, throw exception
                 def found = Execution.withCriteria {
                     isNull('dateCompleted')
