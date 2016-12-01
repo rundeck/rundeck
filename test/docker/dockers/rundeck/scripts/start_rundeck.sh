@@ -176,6 +176,34 @@ service.FileCopier.default.provider=jsch-scp
 service.NodeExecutor.default.provider=jsch-ssh
 END
 
+
+setup_project(){
+  local FARGS=("$@")
+  local DIR=${FARGS[0]}
+  local PROJ=${FARGS[1]}
+  echo "setup test project: $PROJ in dir $DIR"
+  mkdir -p $DIR/projects/$PROJ/etc
+  cat >$DIR/projects/$PROJ/etc/project.properties<<END
+project.name=$PROJ
+project.nodeCache.delay=30
+project.nodeCache.enabled=true
+project.ssh-authentication=privateKey
+#project.ssh-keypath=
+resources.source.1.config.file=$DIR/projects/\${project.name}/etc/resources.xml
+resources.source.1.config.format=resourcexml
+resources.source.1.config.generateFileAutomatically=true
+resources.source.1.config.includeServerNode=true
+resources.source.1.config.requireFileExists=false
+resources.source.1.type=file
+service.FileCopier.default.provider=jsch-scp
+service.NodeExecutor.default.provider=jsch-ssh
+END
+}
+
+if [ -n "$SETUP_TEST_PROJECT" ] ; then
+    setup_project $RDECK_BASE $SETUP_TEST_PROJECT
+fi
+
 # (start rundeck)
 #sudo su - rundeck bash -c "RDECK_BASE=$RDECK_BASE $HOME/server/sbin/rundeckd start"
 $HOME/server/sbin/rundeckd start

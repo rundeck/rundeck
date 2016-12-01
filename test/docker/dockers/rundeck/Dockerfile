@@ -14,6 +14,7 @@ RUN apt-get -y update && \
         uuid-runtime \
         ncurses-bin \
         iputils-ping \
+        jq \
         zip \
         apt-transport-https
 
@@ -89,7 +90,7 @@ RUN java \
 
 #      --java-opts "-Djava.security.egd=file:/dev/./urandom" 
 
-EXPOSE 22 4440 4443
+EXPOSE 22 4440 4443 4444
 
 # Copy files.
 #COPY config $HOME/config
@@ -104,6 +105,7 @@ RUN sudo chmod -R a+x /tests/*
 VOLUME /var/lib/docker
 VOLUME /test
 VOLUME $HOME/resources
+VOLUME $HOME/apitests
 
 # Start the instance.
 CMD $HOME/scripts/run.sh
