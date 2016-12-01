@@ -32,12 +32,21 @@ randport(){
 }
 
 PORT=$(randport 4441 1000)
+if [ -n "$TEST_NC_PORT" ]; then
+  echo "use static nc port $TEST_NC_PORT"
+  PORT=$TEST_NC_PORT
+fi
+nchost=127.0.0.1
+#if [ -n "$TEST_NC_HOST" ]; then
+#  echo "use static nc host $TEST_NC_HOST"
+#  nchost=$TEST_NC_HOST
+#fi
 
 #escape the string for xml
 xmlargs=$($XMLSTARLET esc "$args")
 xmlproj=$($XMLSTARLET esc "$project")
-xmlhost=$($XMLSTARLET esc "localhost")
-echo "host is $xmlhost"
+xmlhost=$($XMLSTARLET esc "$nchost")
+echo "host:port is $xmlhost:$PORT"
 
 #produce job.xml content corresponding to the dispatch request
 cat > $DIR/temp.out <<END
@@ -112,7 +121,13 @@ startnc(){
     shift
     file=$1
     shift
-    echo -n "HTTP/1.1 200 OK\r\n\r\n" | nc -w 30 -l $port > $file || fail "Unable to run netcat on port $port"
+    echo "start nc on $port ... "
+    nccmd="nc -w 30 -l -p $port"
+    osname=$(uname)
+    if [ "Darwin" = "$osname" ] ; then
+      nccmd="nc -4 -w 30 -l $port"
+    fi
+    echo -n "HTTP/1.1 200 OK\r\n\r\n" | $nccmd > $file || fail "Unable to run netcat on port $port"
 }
 
 startnc $PORT $DIR/nc.out &
