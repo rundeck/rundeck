@@ -1,3 +1,7 @@
+% Version 2.7.0
+% greg
+% 11/30/2016
+
 Release 2.7.0
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: SlateBlue"><span class="glyphicon glyphicon-headphones
 
 ## Upgrading from 2.6
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## New Features
 
