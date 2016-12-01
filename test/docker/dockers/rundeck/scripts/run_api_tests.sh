@@ -55,7 +55,7 @@ run_tests(){
 	bash -c  $SRC/src/test.sh $RD_URL admin admin
 }
 
-sudo chown -R $USERNAME:$USERNAME $TEST_DIR
+#sudo chown -R $USERNAME:$USERNAME $TEST_DIR
 
 export PATH=$PATH:$HOME/tools/bin
 export RDECK_BASE=$HOME
