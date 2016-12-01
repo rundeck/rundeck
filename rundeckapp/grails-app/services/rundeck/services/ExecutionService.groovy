@@ -1740,8 +1740,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }else{
                 //remove all existing node filters to replace with input filters
                 props = props.findAll {!(it.key =~ /^(filter|node(Include|Exclude).*)$/)}
-
-                def nset = filtersAsNodeSet([filter: input.filter])
+                def filter = [input.filter].flatten().join(" ")
+                def nset = filtersAsNodeSet([filter: filter])
                 input.filter = NodeSet.generateFilter(nset)
                 input.doNodedispatch=true
             }

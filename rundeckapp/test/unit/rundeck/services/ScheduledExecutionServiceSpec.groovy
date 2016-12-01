@@ -461,30 +461,11 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         where:
         inparams                                                             | expectCount
-        [doNodedispatch: 'true', nodeInclude: 'blah', nodeThreadcount: "1"]  | 1
-        [doNodedispatch: 'true', nodeInclude: 'blah', nodeThreadcount: ""]   | 1
-        [doNodedispatch: 'true', nodeInclude: 'blah', nodeThreadcount: null] | 1
-        [doNodedispatch: 'true', nodeInclude: 'blah', nodeThreadcount: "2"]  | 2
-        [doNodedispatch: 'true', nodeInclude: 'blah', nodeThreadcount: 2]    | 2
-    }
-    def "do validate old node filter params"() {
-        given:
-        setupDoValidate()
-        def params = baseJobParams() + inparams
-        when:
-        def results = service._dovalidate(params, Mock(UserAndRoles))
-
-        then:
-        !results.failed
-        for(String key: expect.keySet()){
-            results.scheduledExecution[key] == expect[key]
-        }
-
-        where:
-        inparams                                                             | expect
-        [doNodedispatch: 'true', nodeIncludeName: "bongo",
-                                 nodeExcludeOsFamily: "windows",
-                                 nodeIncludeTags: "spaghetti"]  | [filter:'name: bongo tags: spaghetti !os-family: windows']
+        [doNodedispatch: 'true', filter: 'blah', nodeThreadcount: "1"]  | 1
+        [doNodedispatch: 'true', filter: 'blah', nodeThreadcount: ""]   | 1
+        [doNodedispatch: 'true', filter: 'blah', nodeThreadcount: null] | 1
+        [doNodedispatch: 'true', filter: 'blah', nodeThreadcount: "2"]  | 2
+        [doNodedispatch: 'true', filter: 'blah', nodeThreadcount: 2]    | 2
     }
 
     def "validate notifications email data"() {
@@ -1099,8 +1080,8 @@ class ScheduledExecutionServiceSpec extends Specification {
                 new CommandExec(adhocRemoteString: 'test command'),
                 new CommandExec(adhocRemoteString: 'another command'),
         ])] | [:]                                                                                                                  | [:]
-        [doNodedispatch: true, nodeIncludeName: "nodename",] |[doNodedispatch: true, nodeIncludeName: "nodename",nodeInclude:null] | [doNodedispatch: true, nodeInclude: "hostname",]
-        [doNodedispatch: true, nodeInclude: "hostname",] |[doNodedispatch: true, nodeInclude: "hostname",nodeThreadcount: 3]       | [:]
+        [doNodedispatch: true, filter: "nodename",] |[doNodedispatch: true, filter: "nodename"] | [doNodedispatch: true, filter: "hostname",]
+        [doNodedispatch: true, filter: "hostname",] |[doNodedispatch: true, filter: "hostname",nodeThreadcount: 3]       | [:]
         [scheduled: true, crontabString: '0 21 */4 */4 */6 ? 2010-2040', useCrontabString: 'true'] |
                 [scheduled:true,seconds:'0',minute:'21',hour:'*/4',dayOfMonth:'*/4',month:'*/6',dayOfWeek:'?',year:'2010-2040']                                                                                                  | [:]
 
@@ -1312,10 +1293,10 @@ class ScheduledExecutionServiceSpec extends Specification {
         given:
         setupDoUpdate()
 
-        def se = new ScheduledExecution(createJobParams(doNodedispatch: true, nodeInclude: "hostname",
+        def se = new ScheduledExecution(createJobParams(doNodedispatch: true, filter: "hostname",
                                                         nodeThreadcount: 1)).save()
         def newJob = new ScheduledExecution(createJobParams(
-                doNodedispatch: true, nodeInclude: "hostname",
+                doNodedispatch: true, filter: "hostname",
                 nodeThreadcount: null
         ))
 
@@ -1593,19 +1574,6 @@ class ScheduledExecutionServiceSpec extends Specification {
         def orig = new ScheduledExecution(createJobParams(origprops) + [uuid: uuid]).save()
         def upload = new ScheduledExecution(createJobParams(inparams))
 
-        def testmap=[
-                doNodedispatch: true,
-                nodeThreadcount: 4,
-                nodeKeepgoing: true,
-                nodeExcludePrecedence: true,
-                nodeInclude: 'asuka',
-                nodeIncludeName: 'test',
-                nodeExclude: 'testo',
-                nodeExcludeTags: 'dev',
-                nodeExcludeOsFamily: 'windows',
-                nodeIncludeTags: 'something',
-                description: 'blah'
-        ]
 
         when:
         def result = service.loadJobs([upload], 'update', null, [:], mockAuth())
@@ -1620,42 +1588,26 @@ class ScheduledExecutionServiceSpec extends Specification {
         //basic fields updated
         [:]  | [description: 'milk duds'] | [description: 'milk duds']
         //remove node filters
-        [doNodedispatch: true, nodeInclude: "monkey.*", nodeExcludeOsFamily: 'windows', nodeIncludeTags: 'something',]|
+        [doNodedispatch: true, filter: "hostname: monkey.* !osFamily: windows tags: something",]|
                 [:]|
-                [doNodedispatch: false, nodeInclude: null, nodeExcludeOsFamily: null, nodeIncludeTags: null,]
+                [doNodedispatch: false, filter: null,]
         //override filters
-        [doNodedispatch: true, nodeInclude: "monkey.*", nodeExcludeOsFamily: 'windows', nodeIncludeTags: 'something',]|[doNodedispatch: true,
+        [doNodedispatch: true, filter: 'something',]|[doNodedispatch: true,
                                                                                                                         nodeThreadcount: 1,
                                                                                                                         nodeKeepgoing: true,
-                                                                                                                        nodeExcludePrecedence: true,
-                                                                                                                        nodeInclude: 'asuka',
-                                                                                                                        nodeIncludeName: 'test',
-                                                                                                                        nodeExclude: 'testo',
-                                                                                                                        nodeExcludeTags: 'dev']|[doNodedispatch: true,
+                                                                                                                        filter: 'hostname: asuka test !hostname: testo !tags: dev']|[doNodedispatch: true,
                                                                                                                                                  nodeThreadcount: 1,
                                                                                                                                                  nodeKeepgoing: true,
-                                                                                                                                                 nodeExcludePrecedence: true,
-                                                                                                                                                 nodeInclude: 'asuka',
-                                                                                                                                                 nodeIncludeName: 'test',
-                                                                                                                                                 nodeExclude: 'testo',
-                                                                                                                                                 nodeExcludeTags: 'dev']
+                                                                                                                                                 filter:'hostname: asuka test !hostname: testo !tags: dev']
         //
-        [doNodedispatch: true,nodeInclude: 'test',nodeThreadcount: 1] |
+        [doNodedispatch: true,filter: 'test',nodeThreadcount: 1] |
                 [nodeThreadcount: 4,
                  nodeKeepgoing: true,
-                 nodeExcludePrecedence: true,
-                 nodeInclude: 'asuka',
-                 nodeIncludeName: 'test',
-                 nodeExclude: 'testo',
-                 nodeExcludeTags: 'dev']|
+                 filter: 'hostname: asuka test !hostname: testo !tags: dev']|
                 [
                         nodeThreadcount: 4,
                         nodeKeepgoing: true,
-                        nodeExcludePrecedence: true,
-                        nodeInclude: 'asuka',
-                        nodeIncludeName: 'test',
-                        nodeExclude: 'testo',
-                        nodeExcludeTags: 'dev']
+                        filter: 'hostname: asuka test !hostname: testo !tags: dev']
     }
 
     def "reschedule scheduled jobs"() {

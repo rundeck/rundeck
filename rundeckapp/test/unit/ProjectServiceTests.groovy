@@ -60,7 +60,6 @@ class ProjectServiceTests  {
       <dispatch>
         <threadcount>1</threadcount>
         <keepgoing>false</keepgoing>
-        <excludePrecedence>true</excludePrecedence>
         <rankOrder>ascending</rankOrder>
       </dispatch>
       <filter>hostname: test1 !tags: monkey</filter>
@@ -187,8 +186,7 @@ class ProjectServiceTests  {
                 doNodedispatch: true,
                 dateStarted: new Date(0),
                 dateCompleted: new Date(3600000),
-                nodeInclude: 'test1',
-                nodeExcludeTags: 'monkey',
+                filter: 'hostname: test1 !tags: monkey',
                 status: 'true',
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')])
         )
@@ -235,8 +233,7 @@ class ProjectServiceTests  {
                 doNodedispatch: true,
                 dateStarted: new Date(0),
                 dateCompleted: new Date(3600000),
-                nodeInclude: 'test1',
-                nodeExcludeTags: 'monkey',
+                filter: 'hostname: test1 !tags: monkey',
                 status: 'true',
                 outputfilepath: tempoutfile.absolutePath,
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')])
@@ -293,8 +290,7 @@ class ProjectServiceTests  {
                 doNodedispatch: true,
                 dateStarted: new Date(0),
                 dateCompleted: new Date(3600000),
-                nodeInclude: 'test1',
-                nodeExcludeTags: 'monkey',
+                filter: 'hostname: test1 !tags: monkey',
                 status: 'true',
                 outputfilepath: tempoutfile.absolutePath,
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')])

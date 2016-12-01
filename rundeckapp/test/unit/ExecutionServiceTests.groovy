@@ -926,7 +926,6 @@ class ExecutionServiceTests  {
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
             assertNotNull(val.nodeSelector.include)
-            assertNull(val.nodeSelector.exclude.name)
             assertEquals("testnode", val.nodeSelector.include.name)
     }
 
@@ -995,7 +994,6 @@ class ExecutionServiceTests  {
             assertNotNull(val.nodeSelector.exclude)
             assertNotNull(val.nodeSelector.include)
             assertEquals("testnode", val.nodeSelector.exclude.name)
-            assertNull(val.nodeSelector.include.name)
     }
 
     /**
@@ -1046,9 +1044,6 @@ class ExecutionServiceTests  {
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
             assertNotNull(val.nodeSelector.include)
-            assertNull(val.nodeSelector.exclude.tags)
-            assertNull(val.nodeSelector.exclude.name)
-            assertNull(val.nodeSelector.include.tags)
             assertEquals("basic", val.nodeSelector.include.name)
     }
     /**
@@ -1087,13 +1082,6 @@ class ExecutionServiceTests  {
                     username:'bill',project:'testproj'], null, null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
-            assertNotNull(val.nodeSelector.exclude)
-            assertFalse(val.nodeSelector.exclude.dominant)
-            assertNotNull(val.nodeSelector.include)
-            assertTrue(val.nodeSelector.include.dominant)
-            assertNull(val.nodeSelector.exclude.tags)
-            assertNull(val.nodeSelector.exclude.name)
-            assertNull(val.nodeSelector.include.tags)
             assertEquals("basic", val.nodeSelector.include.name)
             assertEquals(2, val.threadCount)
             assertEquals(true, val.keepgoing)
@@ -1131,7 +1119,7 @@ class ExecutionServiceTests  {
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
             assertNotNull(val.nodeSelector.include)
-            assertEquals("b,args something", val.nodeSelector.include.name)
+            assertEquals("a,args,something", val.nodeSelector.include.name)
     }
     /**
      * Test use of ${option.x} and ${job.y} parameter expansion in node filter tag and name filters.
@@ -1602,7 +1590,7 @@ class ExecutionServiceTests  {
 
     protected NodesSelector makeSelector(String filter, int threadcount, boolean keepgoing) {
         def nodeset=new NodeSet()
-        NodeSet.setFilter(filter, threadcount, keepgoing)
+        nodeset.setFilter(filter, threadcount, keepgoing)
         return nodeset
     }
     protected INodeSet makeNodeSet(List<String> nodes) {

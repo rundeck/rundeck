@@ -464,12 +464,7 @@ class ScheduledExecution extends ExecutionContext {
 
     public clearFilterFields(){
         this.doNodedispatch = false
-        filterKeys.keySet().each{ k->
-            this["nodeInclude${filterKeys[k]}"]=null
-        }
-        filterKeys.keySet().each{ k->
-            this["nodeExclude${filterKeys[k]}"]=null
-        }
+        this.filter=null
     }
 
     public setUserRoles(List l){
