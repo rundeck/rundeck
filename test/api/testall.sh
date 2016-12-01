@@ -20,14 +20,14 @@ if [ "$COLOR" == "yes" ] ; then
     GREEN="\033[0;32m"
     RED="\033[0;31m"
     COLOR_NONE="\033[0m"
-    TEST_OK="${GREEN}OK${COLOR_NONE}"
+    TEST_OK="${GREEN}OK${COLOR_NONE}    "
     TEST_FAIL="${RED}FAILED${COLOR_NONE}"
 fi
 test_ok(){
-    echo -e "$1: ${TEST_OK}"
+    echo -e "${TEST_OK} $1"
 }
 test_fail(){
-    echo -e "$1: ${TEST_FAIL}"
+    echo -e "${TEST_FAIL} $1"
 }
 myexit=0
 
@@ -53,7 +53,7 @@ $SHELL $SRC_DIR/rundecklogin.sh $URL $USER $PASS >/dev/null && test_ok "Login" |
 # prepare a new project
 $SHELL $SRC_DIR/prepare.sh ${URL} 'test'
 
-TESTS=$(ls ./test-*.sh)
+TESTS=$(ls test-*.sh)
 if [ -n "$TEST_NAME" ] ; then
     TESTS=$(ls $TEST_NAME)
 fi
