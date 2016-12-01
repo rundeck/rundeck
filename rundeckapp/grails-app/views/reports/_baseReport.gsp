@@ -133,13 +133,13 @@
                 </g:if>
             </td>
 
-            <td class="  user autoclickable" style="white-space: nowrap">
+            <td class="  user autoclickable" style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden">
                 <em>by</em>
                 <g:username user="${it?.author}"/>
             </td>
 
 
-            <td class="  user autoclickable" style="white-space: nowrap">
+            <td class="  user autoclickable" style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden">
                 <g:if test="${it?.filterApplied}">
                     <em><g:message code="activity.jobs.executed.node"/>:</em>
                     ${it?.filterApplied}
