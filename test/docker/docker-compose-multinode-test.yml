@@ -19,6 +19,8 @@ services:
       - LAUNCHER_URL=${LAUNCHER_URL}
       - CLI_DEB_URL=${CLI_DEB_URL}
       - CLI_VERS=${CLI_VERS}
+      - SETUP_SSH_KEY=1
+      - WAIT_NODES=rundeck1 hostnode
     volumes:
       - logs:/home/rundeck/logs:rw
       - resources:/home/rundeck/resources:rw

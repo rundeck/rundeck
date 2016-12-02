@@ -1,10 +1,10 @@
 #!/bin/bash
 
-export DOCKER_COMPOSE_SPEC=docker-compose-multinode-test.yml
+export DOCKER_COMPOSE_SPEC=docker-compose-ssl-test.yml
 export RUNDECK_VERSION=${RUNDECK_VERSION:-2.6.9}
 export LAUNCHER_URL=${LAUNCHER_URL:-http://dl.bintray.com/rundeck/rundeck-maven/rundeck-launcher-${RUNDECK_VERSION}.jar}
 export CLI_DEB_URL=${CLI_DEB_URL:-https://dl.bintray.com/rundeck/rundeck-deb}
-export CLI_VERS=${CLI_VERS:-0.1.27-1}
+export CLI_VERS=${CLI_VERS:-0.1.30-1}
 
 
 if [ -f rundeck-launcher.jar ] ; then
@@ -33,7 +33,7 @@ echo "up completed, running tests..."
 
 set +e
 
-docker-compose -f $DOCKER_COMPOSE_SPEC exec -T --user rundeck rundeck1 bash scripts/run_tests.sh /tests/rundeck
+docker-compose -f $DOCKER_COMPOSE_SPEC exec -T --user rundeck rundeck1 bash scripts/run_tests.sh /tests/ssltests
 
 EC=$?
 echo "run_tests.sh finished with: $EC"
