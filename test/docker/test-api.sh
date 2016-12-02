@@ -49,6 +49,6 @@ docker-compose -f $DOCKER_COMPOSE_SPEC logs
 # Stop and clean all
 docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans
 
-rm -rf dockers/rundeck/api_test
+rm -rf dockers/rundeck/api_test/src dockers/rundeck/api_test/api
 
 exit $EC
