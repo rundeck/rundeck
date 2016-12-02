@@ -23,8 +23,6 @@ services:
       - logs:/home/rundeck/logs:rw
       - resources:/home/rundeck/resources:rw
       - tests:/home/rundeck/tests:rw
-      - ../src:/home/rundeck/api_test/src:rw
-      - ../api:/home/rundeck/api_test/api:rw
     networks:
       localnet:
         ipv4_address: 192.168.234.11

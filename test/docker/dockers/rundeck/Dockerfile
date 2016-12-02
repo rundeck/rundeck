@@ -78,6 +78,10 @@ RUN test -f $HOME/data/rundeck-launcher.jar && \
      true
 RUN test -f $HOME/rundeck-launcher.jar || curl -sS -f -L -o $HOME/rundeck-launcher.jar ${LAUNCHER_URL}
 
+# copy api test sources
+RUN mkdir $HOME/api_test
+COPY api_test $HOME/api_test
+
 # RUNDECK - install
 RUN chown -R $USERNAME:$USERNAME $HOME
 WORKDIR $HOME
@@ -105,7 +109,6 @@ RUN sudo chmod -R a+x /tests/*
 VOLUME /var/lib/docker
 VOLUME /test
 VOLUME $HOME/resources
-VOLUME $HOME/apitests
 
 # Start the instance.
 CMD $HOME/scripts/run.sh

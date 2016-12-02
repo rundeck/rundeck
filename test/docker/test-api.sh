@@ -15,6 +15,11 @@ if [ -f rd.deb ] ; then
 	mv rd.deb dockers/rundeck/data/
 fi
 
+# setup test dirs
+mkdir dockers/rundeck/api_test
+cp -r ../src dockers/rundeck/api_test/
+cp -r ../api dockers/rundeck/api_test/
+
 # tickle installer for it to rebuild
 #date > dockers/rundeck/rundeckpro-installer/build_control
 
@@ -43,5 +48,7 @@ docker-compose -f $DOCKER_COMPOSE_SPEC logs
 
 # Stop and clean all
 docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans
+
+rm -rf dockers/rundeck/api_test
 
 exit $EC
