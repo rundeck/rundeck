@@ -1,3 +1,7 @@
+% Version 2.7.1
+% greg
+% 12/02/2016
+
 Release 2.7.1
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: SteelBlue"><span class="glyphicon glyphicon-leaf"></sp
 
 ## Upgrading from 2.6
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 
