@@ -17,8 +17,7 @@ services:
       - CLI_DEB_URL=${CLI_DEB_URL}
       - CLI_VERS=${CLI_VERS}
       - SETUP_TEST_PROJECT=test
-      - TEST_NC_PORT=4444
-      - TEST_NC_HOST=rundeck1
+      - SETUP_SSL=1
       - WAIT_NODES=rundeck1
     volumes:
       - logs:/home/rundeck/logs:rw

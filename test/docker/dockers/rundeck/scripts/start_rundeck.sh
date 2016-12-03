@@ -36,14 +36,17 @@ LOGFILE=$RDECK_BASE/var/log/service.log
 mkdir -p $(dirname $LOGFILE)
 FWKPROPS=$HOME/etc/framework.properties
 mkdir -p $(dirname $FWKPROPS)
+export RUNDECK_PORT=4440
+export RUNDECK_URL=http://$RUNDECK_NODE:$RUNDECK_PORT
+if [ -n "$SETUP_SSL" ] ; then
+  export RUNDECK_PORT=4443
+  export RUNDECK_URL=https://$RUNDECK_NODE:$RUNDECK_PORT
+fi
 cat > $FWKPROPS <<END
 framework.server.name = $RUNDECK_NODE
 framework.server.hostname = $RUNDECK_NODE
-framework.server.port = 4440
-framework.server.url = http://$RUNDECK_NODE:4440
-# Username/password used by CLI tools.
-framework.server.username = admin
-framework.server.password = admin
+framework.server.port = $RUNDECK_PORT
+framework.server.url = $RUNDECK_URL
 
 # ----------------------------------------------------------------
 # Installation locations
@@ -200,8 +203,39 @@ service.NodeExecutor.default.provider=jsch-ssh
 END
 }
 
+setup_ssl(){
+  local FARGS=("$@")
+  local DIR=${FARGS[0]}
+  TRUSTSTORE=$DIR/etc/truststore 
+  KEYSTORE=$DIR/etc/keystore 
+  if [ ! -f $TRUSTSTORE ]; then
+     echo "=>Generating ssl cert"
+     sudo -u rundeck keytool -keystore $KEYSTORE -alias $RUNDECK_NODE -genkey -keyalg RSA \
+      -keypass adminadmin -storepass adminadmin -dname "cn=$RUNDECK_NODE, o=test, o=rundeck, o=org, c=US" && \
+     cp $KEYSTORE $TRUSTSTORE
+  fi
+
+cat >> $HOME/etc/profile <<END
+export RDECK_JVM="$RDECK_JVM -Drundeck.ssl.config=$DIR/server/config/ssl.properties -Dserver.https.port=$RUNDECK_PORT"
+END
+}
+
 if [ -n "$SETUP_TEST_PROJECT" ] ; then
     setup_project $RDECK_BASE $SETUP_TEST_PROJECT
+fi
+
+if [ -n "$SETUP_SSL" ] ; then
+    setup_ssl $RDECK_BASE
+fi
+
+
+### PRE CONFIG
+# RUN TEST PRESTART SCRIPT
+if [[ ! -z "$CONFIG_SCRIPT_PRESTART" && -f $CONFIG_SCRIPT_PRESTART ]];
+then
+  . $CONFIG_SCRIPT_PRESTART
+else
+  echo "### Pre start config not set. skipping..."
 fi
 
 # (start rundeck)

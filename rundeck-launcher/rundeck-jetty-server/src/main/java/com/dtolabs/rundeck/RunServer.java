@@ -159,25 +159,14 @@ public class RunServer {
 
     private void configureSSLConnector(final Server server) {
         //configure ssl
-        HttpConfiguration http_config = new HttpConfiguration();
-        http_config.setSecureScheme("https");
-        http_config.setSecurePort(httpsPort);
-        http_config.setOutputBufferSize(32768);
+        HttpConfiguration https_config = new HttpConfiguration();
+        https_config.setSecureScheme("https");
+        https_config.setSecurePort(httpsPort);
+        https_config.setOutputBufferSize(32768);
 
-        ServerConnector http = new ServerConnector(
-                server,
-                new HttpConnectionFactory(http_config)
-        );
-        http.setPort(httpsPort);
-        http.setIdleTimeout(30000);
-
-        HttpConfiguration https_config = new HttpConfiguration(http_config);
         SecureRequestCustomizer src = new SecureRequestCustomizer();
-
-//        src.setStsMaxAge(2000);
-//        src.setStsIncludeSubDomains(true);
-
         https_config.addCustomizer(src);
+
         SslContextFactory cf = new SslContextFactory();
         cf.setKeyStorePath(keystore);
         cf.setKeyStorePassword(keystorePassword);
@@ -224,7 +213,7 @@ public class RunServer {
         https.setIdleTimeout(500000);
         https.setHost(System.getProperty(SERVER_HTTP_HOST, null));
 
-        server.setConnectors(new Connector[]{http, https});
+        server.setConnectors(new Connector[]{https});
     }
 
     /**

@@ -2,12 +2,22 @@
 
 set -e
 
+TEST_DIR=$1
+
+: ${TEST_DIR?"Argument required"}
+echo "run_tests with $TEST_DIR"
+
 export API_KEY=letmein99
 # define env vars used by rd tool
 export RD_TOKEN=$API_KEY
 export RD_URL="http://$RUNDECK_NODE:4440"
 export RD_COLOR=0
 export RD_OPTS="-Dfile.encoding=utf-8"
+if [ -n "$SETUP_SSL" ] ; then
+  export RD_URL=https://$RUNDECK_NODE:4443
+  export TRUSTSTORE="$HOME/etc/truststore"
+  export RD_OPTS="$RD_OPTS -Djavax.net.ssl.trustStore=$TRUSTSTORE"
+fi
 
 echo "API_KEY=$API_KEY"
 
@@ -18,7 +28,7 @@ wait_for(){
     # Wait for resource file to be created
     MAX_ATTEMPTS=30
     SLEEP=10
-    echo "Waiting for $REMOTE_NODE to start... "
+    echo "Waiting for node to start... "
     declare -i count=0
     while (( count <= MAX_ATTEMPTS ))
     do
@@ -36,16 +46,17 @@ wait_for(){
     done
 }
 
-for node in $RUNDECK_NODE $REMOTE_NODE ; do
+for node in $WAIT_NODES ; do
     echo "waiting for $node startup..."
     wait_for $HOME/resources/$node.ready 
 done
 
-echo "Uploading private key to key storage"
-test -f $HOME/resources/$REMOTE_NODE.rsa
+if [ -n "$SETUP_SSH_KEY" ] ; then
+    echo "Uploading private key to key storage"
+    test -f $HOME/resources/$REMOTE_NODE.rsa
 
-bash $HOME/scripts/upload_key_storage.sh $HOME/resources/$REMOTE_NODE.rsa $API_KEY id_rsa.pem
-
+    bash $HOME/scripts/upload_key_storage.sh $HOME/resources/$REMOTE_NODE.rsa $API_KEY id_rsa.pem
+fi
 
 sudo chown -R $USERNAME:$USERNAME /tests
 
@@ -53,20 +64,19 @@ export PATH=$PATH:$HOME/tools/bin
 export RDECK_BASE=$HOME
 source $RDECK_BASE/etc/profile
 
-echo "starting test-all.sh"
+echo "starting tests"
 
 set +e
-chmod -w /tests/rundeck/test-all.sh
+chmod -w /tests/run-tests.sh
 
-
-/tests/rundeck/test-all.sh \
+/tests/run-tests.sh \
 	--rdeck-base $HOME \
 	--rundeck-project testproj1 \
 	--rundeck-user $USERNAME \
-	--remote-node $REMOTE_NODE
+    --test-dir $TEST_DIR
 EC=$?
 
-echo "test-all.sh finished with $EC"
+echo "tests finished with $EC"
 
 touch $HOME/resources/tests.done
 

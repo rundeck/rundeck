@@ -14,7 +14,7 @@ before_install:
   - sudo apt-get install -y xmlstarlet jq
   - sudo chsh --shell $(which bash)
 script:
-  - './gradlew clean build && groovy testbuild.groovy -gradle && make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb && bash run-api-tests.sh && bash run-docker-tests.sh'
+  - './gradlew clean build && groovy testbuild.groovy -gradle && make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb && bash run-api-tests.sh && bash run-docker-tests.sh && bash run-docker-ssl-tests.sh'
 addons:
   hostname: rdbuild
   apt:
