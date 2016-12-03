@@ -21,7 +21,7 @@
 
 prog="rundeckd"
 
-[ -e /etc/sysconfig/$prog ] && . /etc/sysconfig/$prog
+[ -e /etc/default/$prog ] && . /etc/default/$prog
 
 . /etc/rundeck/profile
 
