@@ -1,10 +1,8 @@
 #!/bin/bash
 
+. common.sh
+
 export DOCKER_COMPOSE_SPEC=docker-compose-api-test.yml
-export RUNDECK_VERSION=${RUNDECK_VERSION:-2.6.9}
-export LAUNCHER_URL=${LAUNCHER_URL:-http://dl.bintray.com/rundeck/rundeck-maven/rundeck-launcher-${RUNDECK_VERSION}.jar}
-export CLI_DEB_URL=${CLI_DEB_URL:-https://dl.bintray.com/rundeck/rundeck-deb}
-export CLI_VERS=${CLI_VERS:-0.1.27-1}
 export SETUP_TEST_PROJECT=test
 
 if [ -f rundeck-launcher.jar ] ; then
