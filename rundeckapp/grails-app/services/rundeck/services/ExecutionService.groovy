@@ -2035,7 +2035,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if (opt.required && !optparams[opt.name]) {
 
                     if (!opt.defaultStoragePath) {
-                        invalidOpt opt,lookupMessage("domain.Option.validation.required",[opt.name].toArray())
+                        invalidOpt opt,lookupMessage("domain.Option.validation.required",[opt.name])
                         return
                     }
                     try {
@@ -2048,7 +2048,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         if (!canread) {
                             invalidOpt opt, lookupMessage(
                                     "domain.Option.validation.required.storageDefault",
-                                    [opt.name, opt.defaultStoragePath].toArray()
+                                    [opt.name, opt.defaultStoragePath]
                             )
                             return
                         }
@@ -2056,7 +2056,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                         invalidOpt opt, lookupMessage(
                                 "domain.Option.validation.required.storageDefault.reason",
-                                [opt.name, opt.defaultStoragePath, e1.cause.message].toArray()
+                                [opt.name, opt.defaultStoragePath, e1.cause.message]
 
                         )
                         return
@@ -2096,7 +2096,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     if (opt.regex && !opt.enforced && optparams[opt.name]) {
                         if (!(optparams[opt.name] ==~ opt.regex)) {
                             invalidOpt opt, opt.secureInput ?
-                                    lookupMessage("domain.Option.validation.secure.invalid",[opt.name].toArray())
+                                    lookupMessage("domain.Option.validation.secure.invalid",[opt.name])
                                     : lookupMessage("domain.Option.validation.regex.invalid",[opt.name,optparams[opt.name],opt.regex])
 
                             return
@@ -2107,7 +2107,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             optparams[opt.name] instanceof String &&
                             !opt.values.contains(optparams[opt.name])) {
                         invalidOpt opt,  opt.secureInput ?
-                                lookupMessage("domain.Option.validation.secure.invalid",[opt.name].toArray())
+                                lookupMessage("domain.Option.validation.secure.invalid",[opt.name])
                                 : lookupMessage("domain.Option.validation.allowed.invalid",[opt.name,optparams[opt.name],opt.values])
                         return
                     }
@@ -2448,19 +2448,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
        * @parameter key
        * @returns corresponding value from messages.properties
        */
-      def lookupMessage(String theKey, Object[] data, String defaultMessage=null) {
+      def lookupMessage(String theKey, List<Object> data, String defaultMessage=null) {
           def locale = getLocale()
           def theValue = null
           MessageSource messageSource = messageSource?:applicationContext.getBean("messageSource")
           try {
-              theValue =  messageSource.getMessage(theKey,data,locale )
+              theValue =  messageSource.getMessage(theKey,data as Object[],locale )
           } catch (org.springframework.context.NoSuchMessageException e){
           } catch (java.lang.NullPointerException e) {
               log.error "Expression does not exist."
           }
           if(null==theValue && defaultMessage){
               MessageFormat format = new MessageFormat(defaultMessage);
-              theValue=format.format(data)
+              theValue=format.format(data as Object[])
           }
           return theValue
       }
@@ -2468,12 +2468,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
        * @parameter key
        * @returns corresponding value from messages.properties
        */
-      def lookupMessage(String[] theKeys, Object[] data, String defaultMessage=null) {
+      def lookupMessage(String[] theKeys, List<Object> data, String defaultMessage=null) {
           def locale = getLocale()
           def theValue = null
           theKeys.any{key->
               try {
-                  theValue =  messageSource.getMessage(key,data,locale )
+                  theValue =  messageSource.getMessage(key,data as Object[],locale )
                   return true
               } catch (org.springframework.context.NoSuchMessageException e){
               } catch (java.lang.NullPointerException e) {
@@ -2482,7 +2482,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
           }
           if(null==theValue && defaultMessage){
               MessageFormat format = new MessageFormat(defaultMessage);
-              theValue=format.format(data)
+              theValue=format.format(data as Object[])
           }
           return theValue
       }

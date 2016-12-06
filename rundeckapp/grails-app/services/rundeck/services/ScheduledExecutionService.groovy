@@ -800,7 +800,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def ScheduledExecution scheduledExecution = getByIDorUUID(jobid)
         if (!scheduledExecution) {
             def err = [
-                    message: lookupMessage( "api.error.item.doesnotexist",  ['Job ID', jobid] as Object[]),
+                    message: lookupMessage( "api.error.item.doesnotexist",  ['Job ID', jobid]),
                     errorCode: 'notfound',
                     id: jobid
             ]
@@ -822,7 +822,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 scheduledExecution.project
         )) {
             def err = [
-                    message: lookupMessage('api.error.item.unauthorized', ['Delete', 'Job ID', scheduledExecution.extid] as Object[]),
+                    message: lookupMessage('api.error.item.unauthorized', ['Delete', 'Job ID', scheduledExecution.extid]),
                     errorCode: 'unauthorized',
                     id: scheduledExecution.extid,
                     job: scheduledExecution
@@ -837,7 +837,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return [success:false,error:  [message: result.error, job: scheduledExecution, errorCode: 'failed', id: scheduledExecution.extid]]
         } else {
             logJobChange(changeinfo, jobdata)
-            return [success: [message: lookupMessage('api.success.job.delete.message', [jobtitle] as Object[]), job: scheduledExecution]]
+            return [success: [message: lookupMessage('api.success.job.delete.message', [jobtitle]), job: scheduledExecution]]
         }
     }
     /**
@@ -1226,12 +1226,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @parameter key
      * @returns corresponding value from messages.properties
      */
-    def lookupMessage(String theKey, Object[] data, String defaultMessage = null) {
+    def lookupMessage(String theKey, List<Object> data, String defaultMessage = null) {
         def locale = getLocale()
         def theValue = null
 //        MessageSource messageSource = applicationContext.getBean("messageSource")
         try {
-            theValue = messageSource.getMessage(theKey, data, locale)
+            theValue = messageSource.getMessage(theKey, data as Object[], locale)
         } catch (org.springframework.context.NoSuchMessageException e) {
             log.error "Missing message ${theKey}"
 //        } catch (java.lang.NullPointerException e) {
@@ -1239,7 +1239,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         if (null == theValue && defaultMessage) {
             MessageFormat format = new MessageFormat(defaultMessage);
-            theValue = format.format(data)
+            theValue = format.format(data as Object[])
         }
         return theValue
     }
@@ -1588,8 +1588,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 return [success     : false, scheduledExecution: scheduledExecution,
                         message     : lookupMessage(
                                 'api.error.item.unauthorized',
-                                [AuthConstants.ACTION_TOGGLE_SCHEDULE, 'Job ID', scheduledExecution.extid].toArray()
-
+                                [AuthConstants.ACTION_TOGGLE_SCHEDULE, 'Job ID', scheduledExecution.extid]
                         ),
                         errorCode   : 'api.error.item.unauthorized',
                         unauthorized: true]
@@ -1608,8 +1607,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 return [success          : false, scheduledExecution: scheduledExecution,
                         message          : lookupMessage(
                                 'api.error.item.unauthorized',
-                                [AuthConstants.ACTION_TOGGLE_EXECUTION, 'Job ID', scheduledExecution.extid].toArray()
-
+                                [AuthConstants.ACTION_TOGGLE_EXECUTION, 'Job ID', scheduledExecution.extid]
                         ),
                         errorCode   : 'api.error.item.unauthorized',
                         unauthorized: true]
