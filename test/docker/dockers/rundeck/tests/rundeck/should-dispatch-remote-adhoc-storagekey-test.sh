@@ -21,7 +21,7 @@ describe "project: dispatch adhoc command to remote node using storage key"
 
 it_should_dispatch_whoami_remotely_stored_key() {
 
-    bash -c "RD_DEBUG=3 rd adhoc -p $RUNDECK_PROJECT -F ${REMOTE_NODE}-stored -f -- whoami"
+    bash -c "rd adhoc -p $RUNDECK_PROJECT -F ${REMOTE_NODE}-stored -f -- whoami"
 
 }
 
