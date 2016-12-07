@@ -3076,4 +3076,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
     }
 
+     def listWorkflows(HashMap query) {
+        ScheduledExecutionQuery nquery = new ScheduledExecutionQuery()
+        nquery.setIdlist(query.idlist)
+        nquery.setGroupPath(query.groupPath)
+        nquery.setGroupPathExact(query.groupPathExact)
+        nquery.setMax(query.max)
+        nquery.setOffset(query.offset)
+        nquery.setSortBy(query.sortBy)
+        return listWorkflows(nquery)
+    }
+
+
+    def getScheduledExecutionByUUIDAndProject(String uuid, String project){
+        ScheduledExecution.findByUuidAndProject(uuid, project)
+    }
+
 }
