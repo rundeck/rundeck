@@ -32,6 +32,9 @@ class ExecReport extends BaseReport{
 
     static mapping = {
         adhocScript type: 'text'
+        filterApplied type: 'text'
+        succeededNodeList type: 'text'
+        failedNodeList type: 'text'
     }
 
     static constraints = {
