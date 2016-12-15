@@ -44,6 +44,7 @@ class ControllerBase {
             'menu/admin',
             "menu/logStorage",
             "menu/securityConfig",
+            "menu/acls",
             "menu/systemInfo",
             "menu/systemConfig",
             "menu/metrics",

@@ -84,6 +84,7 @@
                                                 project    : params.project ?: request.project,
                                                 baseUrl    : createLink(uri: "/plugin/file/UI", absolute: true),
                                                 basei18nUrl: createLink(uri: "/plugin/i18n/UI", absolute: true),
+                                                appBaseUrl : createLink(uri: "/", absolute: true),
         ]}"/>
         <g:if test="${uiplugins}">
             <asset:javascript src="global/uiplugins.js"/>
