@@ -234,8 +234,8 @@ class StorageController extends ControllerBase{
      * non-api action wrapper for apiKeys method
      */
     public def keyStorageAccess(StorageParams storageParams){
-        if (!params.resourcePath && null != params.relativePath) {
-            params.resourcePath = "keys${params.relativePath ? ('/' + params.relativePath) : ''}"
+        if (!storageParams.resourcePath ) {
+            storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
         }
         getResource(storageParams)
     }
@@ -243,8 +243,8 @@ class StorageController extends ControllerBase{
      * non-api action wrapper for apiKeys method
      */
     public def keyStorageDownload(StorageParams storageParams){
-        if (!params.resourcePath && null != params.relativePath) {
-            params.resourcePath = "keys${params.relativePath ? ('/' + params.relativePath) : ''}"
+        if (!storageParams.resourcePath ) {
+            storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
         }
         getResource(storageParams,true)
     }
@@ -256,11 +256,11 @@ class StorageController extends ControllerBase{
             flash.errors=storageParams.errors
             return redirect(controller: 'menu',action: 'storage',params: [project:params.project])
         }
-        if (!params.resourcePath && null!=params.relativePath) {
-            params.resourcePath = "keys${params.relativePath ? ('/'+params.relativePath): ''}"
+        if (!storageParams.resourcePath ) {
+            storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/'+storageParams.relativePath): ''}"
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def resourcePath = params.resourcePath
+        def resourcePath = storageParams.resourcePath
         def valid=false
         withForm {
             valid=true
@@ -275,32 +275,32 @@ class StorageController extends ControllerBase{
         def contentLength = -1
         def inputStream = null
 
-        if (params.uploadKeyType == 'public') {
+        if (storageParams.uploadKeyType == 'public') {
             contentType = KeyStorageLayer.PUBLIC_KEY_MIME_TYPE
-        } else if (params.uploadKeyType == 'private') {
+        } else if (storageParams.uploadKeyType == 'private') {
             contentType = KeyStorageLayer.PRIVATE_KEY_MIME_TYPE
-        } else if (params.uploadKeyType == 'password') {
+        } else if (storageParams.uploadKeyType == 'password') {
             contentType = KeyStorageLayer.PASSWORD_MIME_TYPE
         } else {
             //invalid
             flash.errorCode = 'api.error.parameter.invalid'
-            flash.errorArgs = [params.uploadKeyType, 'uploadKeyType']
+            flash.errorArgs = [storageParams.uploadKeyType, 'uploadKeyType']
             return redirect(controller: 'menu', action: 'storage',
                     params: [project: params.project])
         }
-        if( !(params.inputType in ['file','text'])){
+        if( !(storageParams.inputType in ['file','text'])){
             flash.errorCode = 'api.error.parameter.not.inList'
-            flash.errorArgs = [params.inputType, 'inputType']
+            flash.errorArgs = [storageParams.inputType, 'inputType']
             return redirect(controller: 'menu', action: 'storage',
                     params: [project: params.project])
         }
 
         def hasUploadedFile = request instanceof MultipartHttpServletRequest &&
-                params.inputType == 'file' &&
+                storageParams.inputType == 'file' &&
                 request.getFile('storagefile') &&
                 !request.getFile('storagefile').empty
 
-        if (params.inputType == 'file' && !hasUploadedFile) {
+        if (storageParams.inputType == 'file' && !hasUploadedFile) {
             //mising file upload
             flash.errorCode = 'api.error.upload.missing'
             flash.errorArgs = ['storagefile']
@@ -308,7 +308,7 @@ class StorageController extends ControllerBase{
                     params: [project: params.project])
         }
 
-        if (params.inputType == 'text' && !params.fileName) {
+        if (storageParams.inputType == 'text' && !storageParams.fileName) {
             //invalid
             flash.errorCode = 'api.error.parameter.required'
             flash.errorArgs = ['fileName']
@@ -316,9 +316,9 @@ class StorageController extends ControllerBase{
                     params: [project: params.project])
         }
 
-        def filename = params.fileName
+        def filename = storageParams.fileName
 
-        if(params.inputType == 'text' && params.uploadKeyType in ['public','private'] ){
+        if(storageParams.inputType == 'text' && storageParams.uploadKeyType in ['public','private'] ){
             //store a public/private key
             if(!params.uploadText){
                 //invalid
@@ -332,7 +332,7 @@ class StorageController extends ControllerBase{
             def inputBytes = params.uploadText.bytes
             inputStream = new ByteArrayInputStream(inputBytes)
             contentLength= inputBytes.length
-        }else if(params.inputType == 'text' && params.uploadKeyType == 'password' ){
+        }else if(storageParams.inputType == 'text' && storageParams.uploadKeyType == 'password' ){
             //store a password
             if (!params.uploadPassword) {
                 //invalid
@@ -428,9 +428,9 @@ class StorageController extends ControllerBase{
     /**
      * non-api action wrapper for deleteResource method
      */
-    public def keyStorageDelete() {
-        if (!params.resourcePath && null != params.relativePath) {
-            params.resourcePath = "keys${params.relativePath ? ('/' + params.relativePath) : ''}"
+    public def keyStorageDelete(StorageParams storageParams) {
+        if (!storageParams.resourcePath ) {
+            storageParams.resourcePath = "/keys${storageParams.relativePath ? ('/' + storageParams.relativePath) : ''}"
         }
         def valid = false
         withForm {
@@ -447,7 +447,7 @@ class StorageController extends ControllerBase{
         if (!valid) {
             return
         }
-        deleteResource()
+        deleteResource(storageParams)
     }
     /**
      * Handle resource requests to the /ssh-key path
@@ -457,8 +457,7 @@ class StorageController extends ControllerBase{
         if(!apiService.requireVersion(request,response,ApiRequestFilters.V11)){
             return
         }
-        params.resourcePath = "/keys/${params.resourcePath?:''}"
-        storageParams.resourcePath = params.resourcePath
+        storageParams.resourcePath = "/keys/${storageParams.resourcePath?:''}"
         storageParams.validate()
         switch (request.method) {
             case 'POST':
@@ -538,7 +537,7 @@ class StorageController extends ControllerBase{
 
     private def deleteResource(StorageParams storageParams) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        String resourcePath = params.resourcePath
+        String resourcePath = storageParams.resourcePath
         storageParams.requireRoot('/keys/')
         if (storageParams.hasErrors()) {
             return apiService.renderErrorFormat(response, [
@@ -591,7 +590,7 @@ class StorageController extends ControllerBase{
 
     private def putResource(StorageParams storageParams) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        String resourcePath = params.resourcePath
+        String resourcePath = storageParams.resourcePath
         storageParams.requireRoot('/keys/')
         if (storageParams.hasErrors()) {
             return apiService.renderErrorFormat(response, [
@@ -645,7 +644,7 @@ class StorageController extends ControllerBase{
             ])
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        String resourcePath = params.resourcePath
+        String resourcePath = storageParams.resourcePath
         def found = storageService.hasPath(authContext, resourcePath)
         if(!found){
             response.status=404
