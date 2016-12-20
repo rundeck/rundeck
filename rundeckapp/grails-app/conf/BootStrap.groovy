@@ -36,6 +36,7 @@ class BootStrap {
     def messageSource
     def scmService
     HealthCheckRegistry healthCheckRegistry
+    def dataSource
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -46,6 +47,11 @@ class BootStrap {
     }
 
      def init = { ServletContext servletContext ->
+         //setup profiler logging
+         if(!(grailsApplication.config?.grails?.profiler?.disable)) {
+             //re-enable log output for profiler info, which is disabled by miniprofiler
+             grailsApplication.mainContext.profilerLog.appenderNames = ["loggingAppender", 'miniProfilerAppender']
+         }
          long bstart=System.currentTimeMillis()
          def appname=messageSource.getMessage('main.app.name',null,'',null) ?: messageSource.getMessage('main.app.default.name',null,'',null) ?: 'Rundeck'
          log.info("Starting ${appname} ${grailsApplication.metadata['build.ident']}...")
@@ -273,6 +279,27 @@ class BootStrap {
                  }
              }
          })
+         int dbHealthTimeout = configurationService.getInteger("metrics.datasource.health.timeout", 5)
+         healthCheckRegistry?.register("dataSource.connection.time", new HealthCheck() {
+             @Override
+             protected com.codahale.metrics.health.HealthCheck.Result check() throws Exception {
+                 long start=System.currentTimeMillis()
+                 def valid = dataSource.connection.isValid(60)
+                 long dur=System.currentTimeMillis()-start
+                 if(dur<(dbHealthTimeout*1000L)){
+                     com.codahale.metrics.health.HealthCheck.Result.healthy("Datasource connection healthy with timeout ${dbHealthTimeout} seconds")
+                 }  else{
+                     com.codahale.metrics.health.HealthCheck.Result.unhealthy("Datasource connection timeout after ${dbHealthTimeout} seconds")
+                 }
+             }
+         })
+
+         int dbPingTimeout = configurationService.getInteger("metrics.datasource.ping.timeout", 60)
+         metricRegistry.register(MetricRegistry.name("dataSource.connection","pingTime"),new CallableGauge<Long>({
+             long start=System.currentTimeMillis()
+             def valid = dataSource.connection.isValid(dbPingTimeout)
+             System.currentTimeMillis()-start
+         }))
          //set up some metrics collection for the Quartz scheduler
          metricRegistry.register(MetricRegistry.name("rundeck.scheduler.quartz","runningExecutions"),new CallableGauge<Integer>({
              quartzScheduler.getCurrentlyExecutingJobs().size()
@@ -299,24 +326,59 @@ class BootStrap {
              executionService.defaultLogLevel=servletContext.getAttribute("LOGLEVEL_DEFAULT")
 
 
-             timer("reportService.fixReportStatusStrings"){
-                 reportService.fixReportStatusStrings()
+             if(configurationService.getBoolean("reportService.startup.cleanupReports", false)) {
+                 timer("reportService.fixReportStatusStrings") {
+                     reportService.fixReportStatusStrings()
+                 }
              }
-             timer("executionService.cleanupRunningJobs"){
-                 executionService.cleanupRunningJobs(clusterMode ? serverNodeUUID : null)
+
+             def cleanupMode = configurationService.getString(
+                     'executionService.startup.cleanupMode',
+                     'async'
+             )
+             if ('sync' == cleanupMode) {
+                 timer("executionService.cleanupRunningJobs") {
+                     executionService.cleanupRunningJobs(clusterMode ? serverNodeUUID : null)
+                 }
+             } else {
+                 log.debug("executionService.cleanupRunningJobs: starting asynchronously")
+                 executionService.cleanupRunningJobsAsync(clusterMode ? serverNodeUUID : null)
              }
-             if(clusterMode){
-                 timer("scheduledExecutionService.claimScheduledJobs"){
+
+             if (clusterMode && configurationService.getBoolean(
+                     "scheduledExecutionService.startup.claimScheduledJobs",
+                     false
+             )) {
+                 timer("scheduledExecutionService.claimScheduledJobs") {
                      scheduledExecutionService.claimScheduledJobs(serverNodeUUID)
                  }
              }
+
              if(configurationService.executionModeActive) {
-                 timer("scheduledExecutionService.rescheduleJobs"){
-                     scheduledExecutionService.rescheduleJobs(clusterMode ? serverNodeUUID : null)
+                 def rescheduleMode = configurationService.getString(
+                         'scheduledExecutionService.startup.rescheduleMode',
+                         'async'
+                 )
+                 if ('sync' == rescheduleMode) {
+                     timer("scheduledExecutionService.rescheduleJobs") {
+                         scheduledExecutionService.rescheduleJobs(clusterMode ? serverNodeUUID : null)
+                     }
+                 } else {
+                     log.debug("scheduledExecutionService.rescheduleJobs: starting asynchronously")
+                     scheduledExecutionService.rescheduleJobsAsync(clusterMode ? serverNodeUUID : null)
                  }
              }
-             timer("logFileStorageService.resumeIncompleteLogStorage"){
-                 logFileStorageService.resumeIncompleteLogStorage(clusterMode ? serverNodeUUID : null)
+
+             def resumeMode = configurationService.getString("logFileStorageService.startup.resumeMode", "")
+             if ('sync' == resumeMode) {
+                 timer("logFileStorageService.resumeIncompleteLogStorage") {
+                     logFileStorageService.resumeIncompleteLogStorage(clusterMode ? serverNodeUUID : null)
+                 }
+             } else if ('async' == resumeMode) {
+                 log.debug("logFileStorageService.resumeIncompleteLogStorage: resuming asynchronously")
+                 logFileStorageService.resumeIncompleteLogStorageAsync(clusterMode ? serverNodeUUID : null)
+             }else{
+                 log.debug("logFileStorageService.resumeIncompleteLogStorage: skipping per configuration")
              }
          }
          log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")

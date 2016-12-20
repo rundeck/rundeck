@@ -313,6 +313,18 @@ class FrameworkService implements ApplicationContextAware {
         )
     }
     /**
+     * Get a property resolver for optional project level
+     * @param projectName
+     * @return
+     */
+    def getFrameworkPropertyResolverWithProps(Map projectProperties=null, Map instanceConfiguration=null) {
+        return PropertyResolverFactory.createResolver(
+                instanceConfiguration ? PropertyResolverFactory.instanceRetriever(instanceConfiguration) : null,
+                null != projectProperties ? PropertyResolverFactory.instanceRetriever(projectProperties) : null,
+                rundeckFramework.getPropertyRetriever()
+        )
+    }
+    /**
      * Return the property retriever for framework properties from the base dir.
      * @return
      */

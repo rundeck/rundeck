@@ -414,23 +414,33 @@ class BaseGitPlugin {
                 config.setString("rundeck", "scm-plugin", "project-name", context.frameworkProject)
                 config.save()
             }
-            if (found != url) {
+            def needsClone=false;
 
+            if (found != url) {
                 logger.debug("url differs, re-cloning")
+                needsClone = true
+            }else if (agit.repository.getFullBranch() != "refs/heads/$branch") {
+                //check same branch
+                logger.debug("branch differs, re-cloning")
+                needsClone = true
+            }
+
+            if(needsClone){
                 //need to reconfigured
                 removeWorkdir(base)
                 performClone(base, url, context)
-            } else {
-                try {
-                    fetchFromRemote(context, agit)
-                } catch (Exception e) {
-                    logger.debug("Failed fetch from the repository: ${e.message}", e)
-                    String msg = collectCauseMessages(e)
-                    throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
-                }
-                git = agit
-                repo = arepo
+                return
             }
+
+            try {
+                fetchFromRemote(context, agit)
+            } catch (Exception e) {
+                logger.debug("Failed fetch from the repository: ${e.message}", e)
+                String msg = collectCauseMessages(e)
+                throw new ScmPluginException("Failed fetch from the repository: ${msg}", e)
+            }
+            git = agit
+            repo = arepo
         } else {
             performClone(base, url, context)
         }

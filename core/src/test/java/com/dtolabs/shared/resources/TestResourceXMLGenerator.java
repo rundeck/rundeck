@@ -28,6 +28,7 @@ import junit.framework.Test;
 import junit.framework.TestCase;
 import junit.framework.TestSuite;
 import org.dom4j.Document;
+import org.dom4j.DocumentException;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.dom4j.io.SAXReader;
@@ -218,6 +219,43 @@ public class TestResourceXMLGenerator extends TestCase {
             assertEquals("-asdf", root.selectSingleNode("node/attribute/@name").getStringValue());
             assertEquals("test value", root.selectSingleNode("node/attribute/@value").getStringValue());
         }
+    }
+    public void testTags() throws Exception {
+        final ResourceXMLGenerator gen = new ResourceXMLGenerator(test1);
+        //add a node
+        final NodeEntryImpl node = new NodeEntryImpl("test1", "test1name");
+        node.setDescription("test desc");
+        node.setOsArch("test arch");
+        node.setOsFamily("test fam");
+        node.setOsName("test osname");
+        node.setOsVersion("test vers");
+        final HashSet<String> tags = new HashSet<String>();
+        tags.add("a");
+        tags.add("b");
+        node.setTags(tags);
+        node.getTags().add("c");
+        node.setUsername("test user");
+
+        gen.addNode(node);
+        gen.generate();
+        assertTrue(test1.exists());
+        assertTrue(test1.isFile());
+        //assert contents
+        final Document d = reader.read(test1);
+        assertNotNull(d);
+        final Element root = d.getRootElement();
+        assertEquals("project", root.getName());
+        assertEquals(1, root.selectNodes("/project/*").size());
+        assertEquals(1, root.selectNodes("node").size());
+        assertEquals("test1name", root.selectSingleNode("node/@name").getStringValue());
+        assertEquals("test1", root.selectSingleNode("node/@hostname").getStringValue());
+        assertEquals("a, b, c", root.selectSingleNode("node/@tags").getStringValue());
+        assertEquals("test desc", root.selectSingleNode("node/@description").getStringValue());
+        assertEquals("test arch", root.selectSingleNode("node/@osArch").getStringValue());
+        assertEquals("test fam", root.selectSingleNode("node/@osFamily").getStringValue());
+        assertEquals("test osname", root.selectSingleNode("node/@osName").getStringValue());
+        assertEquals("test vers", root.selectSingleNode("node/@osVersion").getStringValue());
+        assertEquals("test user", root.selectSingleNode("node/@username").getStringValue());
     }
 
 

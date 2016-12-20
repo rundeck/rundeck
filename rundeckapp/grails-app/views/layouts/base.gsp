@@ -59,6 +59,9 @@
 <div class="container footer">
 <g:render template="/common/footer"/>
 </div>
-
+<!--
+<g:profilerOutput />
+-->
+<miniprofiler:javascript/>
 </body>
 </html>

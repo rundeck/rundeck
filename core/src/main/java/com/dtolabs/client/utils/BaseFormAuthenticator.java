@@ -265,7 +265,7 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
                 login.releaseConnection();
 
                 Header locHeader = login.getResponseHeader("Location");
-                String location = null != locHeader ? locHeader.getValue() : null;
+                String location = absoluteUrl(baseURL, null != locHeader ? locHeader.getValue() : null);
                 if (isLoginError(login)) {
                     logger.error("Form-based auth failed");
                     return false;
@@ -300,6 +300,19 @@ public abstract class BaseFormAuthenticator implements HttpAuthenticator {
         }
 
         return true;
+    }
+
+    public static String absoluteUrl(final URL baseURL, String location) throws MalformedURLException {
+        if (null != location && location.startsWith("/")) {
+            //make absolute url
+            location = new URL(
+                    baseURL.getProtocol(),
+                    baseURL.getHost(),
+                    baseURL.getPort(),
+                    location
+            ).toExternalForm();
+        }
+        return location;
     }
 
     /**

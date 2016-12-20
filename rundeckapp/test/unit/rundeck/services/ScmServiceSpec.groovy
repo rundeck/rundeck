@@ -10,6 +10,7 @@ import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
 import com.dtolabs.rundeck.plugins.scm.ScmExportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmExportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmExportResult
+import com.dtolabs.rundeck.plugins.scm.ScmExportSynchState
 import com.dtolabs.rundeck.plugins.scm.ScmImportPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory
 import com.dtolabs.rundeck.plugins.scm.ScmOperationContext
@@ -321,6 +322,95 @@ class ScmServiceSpec extends Specification {
         where:
         integration       | _
         ScmService.EXPORT | _
+    }
+
+
+    def "export project status basic"() {
+        given:
+        def ctx = Mock(ScmOperationContext) {
+            getFrameworkProject() >> 'testProject'
+        }
+        def config = [:]
+
+        ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
+        ScmExportPlugin plugin = Mock(ScmExportPlugin)
+
+        service.pluginService = Mock(PluginService)
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.jobEventsService = Mock(JobEventsService)
+        service.frameworkService = Mock(FrameworkService)
+        service.storageService = Mock(StorageService)
+
+        def validated = new ValidatedPlugin(valid: true)
+
+        when:
+        def result = service.exportPluginStatus(Mock(UserAndRolesAuthContext),'testProject')
+
+        then:
+        1 * service.pluginConfigService.loadScmConfig('testProject', 'etc/scm-export.properties', 'scm.export')>>Mock(ScmPluginConfigData){
+            1 * getEnabled()>>true
+            1 * getSetting('username') >> 'testuser'
+            1 * getSettingList('roles') >> ['arole']
+            getType()>>'atype'
+            getConfig()>>config
+        }
+        service.frameworkService.getAuthContextForUserAndRoles(_,_)>>Mock(UserAndRolesAuthContext){
+            getUsername()>>'testuser'
+            getRoles()>>new HashSet<String>(['arole'])
+        }
+        1 * service.frameworkService.getFrameworkPropertyResolver(*_)
+        1 * service.pluginService.validatePlugin(*_) >> validated
+        1 * service.pluginService.getPlugin('atype', _) >> exportFactory
+        1 * exportFactory.createPlugin(_, config) >> plugin
+        1 * service.jobEventsService.addListenerForProject(_, 'testProject')
+        1 * plugin.getStatus(_)>>Mock(ScmExportSynchState)
+
+        result != null
+    }
+
+
+    def "export project status exception"() {
+        given:
+        def ctx = Mock(ScmOperationContext) {
+            getFrameworkProject() >> 'testProject'
+        }
+        def config = [:]
+
+        ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
+        ScmExportPlugin plugin = Mock(ScmExportPlugin)
+
+        service.pluginService = Mock(PluginService)
+        service.pluginConfigService = Mock(PluginConfigService)
+        service.jobEventsService = Mock(JobEventsService)
+        service.frameworkService = Mock(FrameworkService)
+        service.storageService = Mock(StorageService)
+
+        def validated = new ValidatedPlugin(valid: true)
+
+        when:
+        def result = service.exportPluginStatus(Mock(UserAndRolesAuthContext),'testProject')
+
+        then:
+        1 * service.pluginConfigService.loadScmConfig('testProject', 'etc/scm-export.properties', 'scm.export')>>Mock(ScmPluginConfigData){
+            1 * getEnabled()>>true
+            1 * getSetting('username') >> 'testuser'
+            1 * getSettingList('roles') >> ['arole']
+            getType()>>'atype'
+            getConfig()>>config
+        }
+        service.frameworkService.getAuthContextForUserAndRoles(_,_)>>Mock(UserAndRolesAuthContext){
+            getUsername()>>'testuser'
+            getRoles()>>new HashSet<String>(['arole'])
+        }
+        1 * service.frameworkService.getFrameworkPropertyResolver(*_)
+        1 * service.pluginService.validatePlugin(*_) >> validated
+        1 * service.pluginService.getPlugin('atype', _) >> exportFactory
+        1 * exportFactory.createPlugin(_, config) >> plugin
+        1 * service.jobEventsService.addListenerForProject(_, 'testProject')
+        1 * plugin.getStatus(_)>>{
+            throw new RuntimeException("get status failed")
+        }
+        result == null
     }
 
     def "perform export plugin action should store commit metadata into job import metadata"() {

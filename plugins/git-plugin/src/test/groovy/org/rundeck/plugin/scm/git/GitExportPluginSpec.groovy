@@ -15,6 +15,7 @@ import org.eclipse.jgit.api.CommitCommand
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.lib.PersonIdent
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import org.eclipse.jgit.util.FileUtils
 import org.rundeck.plugin.scm.git.config.Config
 import org.rundeck.plugin.scm.git.config.Export
@@ -99,6 +100,7 @@ class GitExportPluginSpec extends Specification {
         then:
         gitdir.isDirectory()
         new File(gitdir, '.git').isDirectory()
+        openGit(gitdir).repository.getFullBranch()=='refs/heads/master'
 
     }
 
@@ -132,6 +134,137 @@ class GitExportPluginSpec extends Specification {
         format | _
         'xml'  | _
         'yaml' | _
+    }
+
+
+    def "re initialize plugin with new url"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        def origin2dir = new File(tempdir, 'origin2')
+        Export config = createTestConfig(gitdir, origindir)
+        //create a git dir
+        def git = createGit(origindir)
+        def commit = addCommitFile(origindir, git, 'testcommit.txt', 'blah')
+        git.close()
+
+        def context = Mock(ScmOperationContext)
+
+        //first init with origin1
+        new GitExportPlugin(config).initialize(Mock(ScmOperationContext))
+
+        //add loose file in working dir
+        def testfile=new File(gitdir,'test-file')
+        testfile<<'test'
+
+
+        //create origin2
+        Export config2 = createTestConfig(gitdir, origin2dir)
+        def git2 = createGit(origin2dir)
+        def commit2 = addCommitFile(origin2dir, git2, 'testcommit.txt', 'blee')
+        git2.close()
+
+        def plugin = new GitExportPlugin(config2)
+
+        when:
+        plugin.initialize(context)
+
+        then:
+        gitdir.isDirectory()
+        new File(gitdir, '.git').isDirectory()
+        //loose file has been removed
+        !testfile.exists()
+        new File(gitdir,'testcommit.txt').exists()
+        new File(gitdir,'testcommit.txt').text=='blee'
+    }
+
+    def "re initialize plugin with new branch"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        //create a git dir
+        def git = createGit(origindir)
+        def commit = addCommitFile(origindir, git, 'testcommit.txt', 'blah')
+        git.close()
+
+        def context = Mock(ScmOperationContext)
+
+        //first init with origin1
+        new GitExportPlugin(config).initialize(Mock(ScmOperationContext))
+
+        //add loose file in working dir
+        def testfile=new File(gitdir,'test-file')
+        testfile<<'test'
+
+
+        //create dev branch
+        def git2 = openGit(origindir)
+        git2.branchCreate().setName('dev').call()
+        git2.checkout().setName('dev').call()
+        def commit2 = addCommitFile(origindir, git2, 'testcommit.txt', 'blee')
+        git2.close()
+
+        Export config2 = createTestConfig(gitdir, origindir,[
+                branch:'dev'
+        ])
+        def plugin = new GitExportPlugin(config2)
+
+        when:
+        plugin.initialize(context)
+
+        then:
+        gitdir.isDirectory()
+        new File(gitdir, '.git').isDirectory()
+        //loose file has been removed
+        !testfile.exists()
+        new File(gitdir,'testcommit.txt').exists()
+        new File(gitdir,'testcommit.txt').text=='blee'
+        openGit(gitdir).repository.getFullBranch()=='refs/heads/dev'
+    }
+    def "re initialize plugin with same branch"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+        //create a git dir
+        def git = createGit(origindir)
+        def commit = addCommitFile(origindir, git, 'testcommit.txt', 'blah')
+        git.close()
+
+        def context = Mock(ScmOperationContext)
+
+        //first init with origin1
+        new GitExportPlugin(config).initialize(Mock(ScmOperationContext))
+
+        //add loose file in working dir
+        def testfile=new File(gitdir,'test-file')
+        testfile<<'test'
+
+
+        //create dev branch
+        def git2 = openGit(origindir)
+        git2.branchCreate().setName('dev').call()
+        git2.checkout().setName('dev').call()
+        def commit2 = addCommitFile(origindir, git2, 'testcommit.txt', 'blee')
+        git2.close()
+
+        def plugin = new GitExportPlugin(config)
+
+        when:
+        plugin.initialize(context)
+
+        then:
+        gitdir.isDirectory()
+        new File(gitdir, '.git').isDirectory()
+        //loose file has been removed
+        testfile.exists()
+        new File(gitdir,'testcommit.txt').exists()
+        new File(gitdir,'testcommit.txt').text=='blah'
+        openGit(gitdir).repository.getFullBranch()=='refs/heads/master'
     }
 
     def "get input view for commit action"() {
@@ -315,6 +448,52 @@ class GitExportPluginSpec extends Specification {
 
     }
 
+    def "get status clean"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        when:
+        def status = plugin.getStatus(Mock(ScmOperationContext))
+
+        then:
+        status!=null
+        status.state==SynchState.CLEAN
+        status.message==null
+
+    }
+    def "get status fetch fails"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir)
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        //delete origin contents, will cause fetch to fail
+        FileUtils.delete(origindir, FileUtils.RECURSIVE)
+
+        when:
+        def status = plugin.getStatus(Mock(ScmOperationContext))
+
+        then:
+        status!=null
+        status.state==SynchState.REFRESH_NEEDED
+        status.message=='Fetch from the repository failed: Invalid remote: origin'
+    }
 
     static RevCommit addCommitFile(final File gitdir, final Git git, final String path, final String content) {
         def outfile = new File(gitdir, path)
@@ -376,6 +555,10 @@ class GitExportPluginSpec extends Specification {
 
     static Git createGit(final File file) {
         Git.init().setDirectory(file).call()
+    }
+    static Git openGit(final File base) {
+       def arepo = new FileRepositoryBuilder().setGitDir(new File(base, ".git")).setWorkTree(base).build()
+       new Git(arepo)
     }
 
 

@@ -93,7 +93,7 @@ fi
 /var/lib/rundeck/cli/commons-beanutils-1.8.3.jar
 /var/lib/rundeck/cli/commons-cli-1.0.jar
 /var/lib/rundeck/cli/commons-codec-1.5.jar
-/var/lib/rundeck/cli/commons-collections-3.2.1.jar
+/var/lib/rundeck/cli/commons-collections-3.2.2.jar
 /var/lib/rundeck/cli/commons-httpclient-3.0.1.jar
 /var/lib/rundeck/cli/commons-lang-2.6.jar
 /var/lib/rundeck/cli/commons-logging-1.1.1.jar
@@ -110,7 +110,7 @@ fi
 /var/lib/rundeck/cli/jsch.agentproxy.sshagent-0.0.9.jar
 /var/lib/rundeck/cli/jsch.agentproxy.usocket-jna-0.0.9.jar
 /var/lib/rundeck/cli/jsch.agentproxy.usocket-nc-0.0.9.jar
-/var/lib/rundeck/cli/jsch-0.1.52.jar
+/var/lib/rundeck/cli/jsch-0.1.53.jar
 /var/lib/rundeck/cli/log4j-1.2.17.jar
 /var/lib/rundeck/cli/rundeck-core-%{_vname}.jar
 /var/lib/rundeck/cli/rundeck-storage-api-%{_vname}.jar
@@ -152,6 +152,7 @@ getent passwd rundeck >/dev/null || useradd -d /var/lib/rundeck -m -g rundeck ru
 %config(noreplace) /etc/rundeck/admin.aclpolicy
 %config(noreplace) /etc/rundeck/apitoken.aclpolicy
 %config(noreplace) /etc/rundeck/log4j.properties
+%config(noreplace) /etc/rundeck/cli-log4j.properties
 %config(noreplace) /etc/rundeck/profile
 %config(noreplace) /etc/rundeck/project.properties
 

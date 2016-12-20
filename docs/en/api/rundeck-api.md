@@ -60,12 +60,18 @@ Changes introduced by API Version number:
 * New Endpoints.
     - [`/api/17/scheduler/server/[UUID]/jobs`][/api/V/scheduler/server/[UUID]/jobs] - List scheduled jobs owned by the server with given UUID.
     - [`/api/17/scheduler/jobs`][/api/V/scheduler/jobs] - List scheduled jobs owned by the target server.
-
+    - [`/api/17/system/logstorage`][/api/V/system/logstorage] - Get stats about the Log File storage system.
+    - [`/api/17/system/logstorage/incomplete`][/api/V/system/logstorage/incomplete] - List all executions with incomplete logstorage.
+    - [`/api/17/system/logstorage/incomplete/resume`][/api/V/system/logstorage/incomplete/resume] - Resume incomplete log storage processing.
+    
 * Updated Endpoints.
     - [`/api/17/project/[PROJECT]/jobs`][/api/V/project/[PROJECT]/jobs] 
         - Response now includes whether a job is enabled, scheduled, schedule is enabled, and in Cluster mode includes the cluster mode server UUID of the schedule owner, and whether that is the current server or not.
         - add `?scheduledFilter=true/false` returns scheduled/unscheduled jobs only
-        - and `?serverNodeUUIDFilter=[uuid]` returns scheduled jobs owned by the given cluster member 
+        - and `?serverNodeUUIDFilter=[uuid]` returns scheduled jobs owned by the given cluster member
+    - [`/api/17/scheduler/takeover`][/api/V/scheduler/takeover]
+        - Response now includes previous scheduler owner UUID for jobs.
+    - [`/api/17/scheduler/takeover`][/api/V/scheduler/takeover] - Can specify a single job ID to takeover.
 
 **Version 16**:
 
@@ -866,6 +872,198 @@ The `memory` section describes memory usage in bytes:
 
 :   Number of active Threads in the JVM
 
+## Log Storage
+
+### Log Storage Info
+
+Get Log Storage information and stats.
+
+**Request:**
+
+    GET /api/17/system/logstorage
+
+**Response:**
+
+Success response, with log storage info and stats in this format:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<logStorage enabled="true" pluginName="NAME">
+  <succeededCount>349</succeededCount>
+  <failedCount>0</failedCount>
+  <queuedCount>0</queuedCount>
+  <totalCount>349</totalCount>
+  <incompleteCount>0</incompleteCount>
+  <missingCount>0</missingCount>
+</logStorage>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+  "enabled": true,
+  "pluginName": "NAME",
+  "succeededCount": 369,
+  "failedCount": 0,
+  "queuedCount": 0,
+  "totalCount": 369,
+  "incompleteCount": 0,
+  "missingCount": 0
+}
+~~~
+
+`enabled`
+
+:   True if a plugin is configured
+
+`pluginName`
+
+:   Name of the configured plugin
+
+`succeededCount`
+
+:   Number of successful storage requests
+
+`failedCount`
+
+:   Number of failed storage requests
+
+`queuedCount`
+
+:   Number of queued storage requests
+
+`totalCount`
+
+:   Total number of storage requests (currently queued plus previously processed)
+
+`incompleteCount`
+
+:   Number of storage requests which have not completed successfully
+
+`missingCount`
+
+:   Number of executions for this cluster node which have no associated storage requests
+
+### List Executions with Incomplete Log Storage
+
+List all executions with incomplete log storage.
+
+**Request:**
+
+    GET /api/17/system/logstorage/incomplete
+
+**Response:**
+
+`Content-Type: application/xml`:
+
+```xml
+<logstorage>
+  <incompleteExecutions total="[#]" max="20" offset="0">
+    <execution id="[EXECID]" project="[PROJECT]" href="[API HREF]" permalink="[GUI HREF]">
+      <storage incompleteFiletypes="[TYPES]" queued="true/false" failed="true/false" date="[DATE]" localFilesPresent="true/false">
+        <errors>
+          <message>[error message]</message>
+          <message>[error message...]</message>
+        </errors>
+    </storage>
+    </execution>
+    ...
+</logstorage>
+```
+
+`Content-Type: application/json`:
+
+```json
+{
+  "total": #,
+  "max": 20,
+  "offset": 0,
+  "executions": [
+    {
+      "id": [EXECID],
+      "project": "[PROJECT]",
+      "href": "[API HREF]",
+      "permalink": "[GUI HREF]",
+      "storage": {
+        "localFilesPresent": true/false,
+        "incompleteFiletypes": "[TYPES]",
+        "queued": true/false,
+        "failed": true/false,
+        "date": "[DATE]"
+      },
+      "errors": ["message","message..."]
+    },
+    ...
+    ]
+}
+```
+
+`total`, `max`, `offset` (paging information)
+
+:   Total number of executions with incomplete log data storage, maximum returned in the response, offset of first result.
+
+`id`
+
+:   Execution ID
+
+`project`
+
+:   Project Name
+
+`href`
+
+:   API URL for Execution
+
+`permalink`
+
+:   GUI URL for Execution
+
+`incompleteFiletypes`
+
+:   Comma-separated list of filetypes which have not be uploaded, e.g. `rdlog,state.json`. Types are `rdlog` (log output), `state.json` (workflow state data), `execution.xml` (execution definition)
+
+`queued`
+
+:   True if the log data storage is queued to be processed.
+
+`failed`
+
+:   True if the log data storage was processed but failed without completion.
+
+`date`
+
+:   Date when log data storage was first processed. (W3C date format.)
+
+`localFilesPresent`
+
+:   True if all local files (`rdlog` and `state.json`) are available for upload.  False if one of them is not proesent on disk.
+
+### Resume Incomplete Log Storage
+
+Resume processing incomplete Log Storage uploads.
+
+**Request:**
+
+    POST /api/17/system/logstorage/incomplete/resume
+
+**Response:**
+
+`Content-Type: application/xml`:
+
+```xml
+<logStorage resumed='true' />
+```
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+  "resumed": true
+}
+~~~
+
 ## Execution Mode ##
 
 Change the server execution mode to ACTIVE or PASSIVE.  The state of the current
@@ -936,6 +1134,8 @@ This endpoint can take over the schedule of certain jobs based on the input:
 Additionally, you can specify a `project` name to take over only jobs matching
 the given project name, in combination with the server options.
 
+Alternately, specify a job ID to takeover only a single Job's schedule.
+
 **Request**
 
     PUT /api/14/scheduler/takeover
@@ -947,10 +1147,12 @@ Either XML or JSON request.
 XML Document containing:
 
 * `<takeoverSchedule>` top level element
-  * required `<server>` element, with one of required attributes:
+  * optional `<server>` element, with one of required attributes:
     * `uuid` server UUID to take over from
     * `all` value of `true` to take over from all servers
   * optional `<project>` element, required attribute: `name`
+  * optional `<job`> element, with attribute:
+    * `id` Job UUID to take over.
 
 Example for a single server UUID:
 
@@ -977,16 +1179,26 @@ Example for all servers and a specific project:
 </takeoverSchedule>
 ~~~
 
+Example for a single Job:
+
+~~~ {.xml}
+<takeoverSchedule>
+    <job id="[UUID]"/>
+</takeoverSchedule>
+~~~
+
 **Note**: The `<server>` element can be the root of the document request for backwards compatibility.
 
 `Content-Type: application/json`:
 
 A JSON object.
 
-* required `server` entry, with one of these required entries:
+* optional `server` entry, with one of these required entries:
     * `uuid` server UUID to take over from
     * `all` value of `true` to take over from all servers
 * optional `project` entry, specifying a project name
+* optional `job` entry, with required entry:
+    * `id` Job UUID
 
 ~~~ {.json}
 {
@@ -998,18 +1210,30 @@ A JSON object.
 }
 ~~~
 
+Specify a job id:
+
+~~~ {.json}
+{
+  "job": {
+    "id": "[UUID]"
+  }
+}
+~~~
+
 **Response:**
 
 If request was XML, then Standard API response containing the following additional elements:
 
-* `self`
-    * `server`
-        *  `@uuid` - this cluster server's uuid
 *  `takeoverSchedule`
+    * `self`
+        * `server`
+            *  `@uuid` - this cluster server's UUID
     *  `server`
-        *  `@uuid` - requested server uuid to take over, if specifed in the request
+        *  `@uuid` - requested server UUID to take over, if specifed in the request
         *  `@all` - `true` if requested
     *  `project` - name of project, if specified in request
+    *  `job`
+        *  `@id` - requested job UUID to take over, if specifed in the request
     *  `jobs` - set of successful and failed jobs taken over
         *  `successful`/`failed` - job set
             *  `@count` number of jobs in the set
@@ -1017,6 +1241,7 @@ If request was XML, then Standard API response containing the following addition
                 *  `@id` Job ID
                 *  `@href` Job API HREF
                 *  `@permalink` Job GUI HREF
+                *  `@previous-owner` UUID of the cluster server that was the previous schedule owner
 
 Example XML Response, when `uuid` was specified:
 
@@ -1030,10 +1255,12 @@ Example XML Response, when `uuid` was specified:
       <successful count='2'>
         <job id='a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
         href='http://localhost:9090/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
-        permalink='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057' />
+        permalink='http://localhost:9090/rundeck/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057'
+        previous-owner="8F3D5976-2232-4529-847B-8E45764608E3" />
         <job id='116e2025-7895-444a-88f7-d96b4f19fdb3'
         href='http://localhost:9090/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3'
-        permalink='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3' />
+        permalink='http://localhost:9090/rundeck/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3'
+        previous-owner="8F3D5976-2232-4529-847B-8E45764608E3" />
       </successful>
       <failed count='0'></failed>
     </jobs>
@@ -1079,12 +1306,14 @@ JSON response for `uuid` specified:
         {
           "href": "http://dignan:4440/api/14/job/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
           "permalink": "http://dignan:4440/job/show/a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
-          "id": "a1aa53ac-73a6-4ead-bbe4-34afbff8e057"
+          "id": "a1aa53ac-73a6-4ead-bbe4-34afbff8e057",
+          "previous-owner": "8F3D5976-2232-4529-847B-8E45764608E3"
         },
         {
           "href": "http://dignan:4440/api/14/job/116e2025-7895-444a-88f7-d96b4f19fdb3",
           "permalink": "http://dignan:4440/job/show/116e2025-7895-444a-88f7-d96b4f19fdb3",
-          "id": "116e2025-7895-444a-88f7-d96b4f19fdb3"
+          "id": "116e2025-7895-444a-88f7-d96b4f19fdb3",
+          "previous-owner": "8F3D5976-2232-4529-847B-8E45764608E3"
         }
       ],
       "total": 2
@@ -5284,13 +5513,13 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `PUT` [Takeover Schedule in Cluster Mode](#takeover-schedule-in-cluster-mode)
 
-[/api/V/scheduler/server/jobs][]
+[/api/V/scheduler/jobs][]
 
-* `GET` [List Scheduled Jobs For this Cluster Server](#list-scheduled-jobs-for-this-cluster-server)
+* `GET` [List Scheduled Jobs For this Cluster Server][/api/V/scheduler/jobs]
 
 [/api/V/scheduler/server/[UUID]/jobs][]
 
-* `GET` [List Scheduled Jobs For a Cluster Server](#list-scheduled-jobs-for-a-cluster-server)
+* `GET` [List Scheduled Jobs For a Cluster Server][/api/V/scheduler/server/[UUID]/jobs]
 
 [/api/V/storage/keys/[PATH]/[FILE]][]
 
@@ -5308,10 +5537,6 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 * `PUT` [Update an ACL Policy](#update-an-acl-policy)
 * `DELETE` [Delete an ACL Policy](#delete-an-acl-policy)
 
-[/api/V/system/info][]
-
-* `GET` [System Info](#system-info)
-
 [/api/V/system/executions/enable][]
 
 * `POST` [Set Active Mode](#set-active-mode)
@@ -5319,6 +5544,22 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/system/executions/disable][]
 
 * `POST` [Set Passive Mode](#set-passive-mode)
+
+[/api/V/system/info][]
+
+* `GET` [System Info](#system-info)
+
+[/api/V/system/logstorage][]
+
+* `GET` [Log Storage Info][/api/V/system/logstorage]
+
+[/api/V/system/logstorage/incomplete][]
+
+* `GET` [List Executions with Incomplete Log Storage][/api/V/system/logstorage/incomplete]
+
+[/api/V/system/logstorage/incomplete/resume][]
+
+* `POST` [Resume Incomplete Log Storage][/api/V/system/logstorage/incomplete/resume]
 
 [/api/V/tokens][]
 
@@ -5463,6 +5704,11 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/system/info]:#system-info
 [/api/V/system/executions/enable]:#set-active-mode
 [/api/V/system/executions/disable]:#set-passive-mode
+
+[/api/V/system/logstorage]:#log-storage-info
+[/api/V/system/logstorage/incomplete]:#list-executions-with-incomplete-log-storage
+[/api/V/system/logstorage/incomplete/resume]:#resume-incomplete-log-storage
+[POST /api/V/system/logstorage/incomplete/resume]:#resume-incomplete-log-storage
 
 [/api/V/tokens]:#list-tokens
 [/api/V/tokens/[USER]]:#list-tokens

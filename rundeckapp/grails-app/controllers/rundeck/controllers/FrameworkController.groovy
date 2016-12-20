@@ -860,12 +860,16 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         Map<String,Map> extraConfig=[:]
         projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
+            if(k.endsWith('Profiled')){
+                //skip profiled versions of beans
+                return
+            }
             //construct input values for the bean
             def beanData=[
                     configurable:v,
-                    prefix:"extraConfig.${k}"
+                    prefix:"extraConfig.${k}."
             ]
-            def input=params.extraConfig."${k}"
+            def input=params.extraConfig?."${k}"?:[:]
             beanData.values=input
 
             v.getProjectConfigProperties().findAll{it.type==Property.Type.Boolean}.each{
@@ -878,12 +882,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             beanData.report=report
             if(!report.valid){
                 errors << ("Some configuration was invalid: "+ report )
-                extraConfig[k]=beanData
             }else{
                 def projvalues = Validator.performMapping(input, v.getPropertiesMapping(),true)
-
                 projProps.putAll(projvalues)
             }
+            extraConfig[k]=beanData
         }
 
 
@@ -972,6 +975,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         Map<String,Map> extraConfig=[:]
         projectConfigurableBeans.each { k, v ->
+            if(k.endsWith('Profiled')){
+                //skip profiled versions of beans
+                return
+            }
             //construct existing values from project properties
             extraConfig[k]=[
                     configurable:v,
@@ -1299,6 +1306,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
 
             projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
+                if(k.endsWith('Profiled')){
+                    //skip profiled versions of beans
+                    return
+                }
                 //construct input values for the bean
                 def beanData=[
                         configurable:v,
@@ -1317,17 +1328,16 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 beanData.report=report
                 if(!report.valid){
                     errors << ("Some configuration was invalid: "+ report )
-                    extraConfig[k]=beanData
                 }else{
                     def projvalues = Validator.performMapping(input, v.getPropertiesMapping(),true)
                     projProps.putAll(projvalues)
                     //remove all previous settings
                     removePrefixes.addAll(v.getPropertiesMapping().values())
                 }
+                extraConfig[k]=beanData
             }
 
             if (!errors) {
-                // Password Field Substitution
 
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
                 if (!result.success) {
@@ -1336,7 +1346,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
 
             if (!errors) {
-                def result = userService.storeFilterPref(session.user, [project: project])
                 flash.message = "Project ${project} saved"
 
                 resourcesPasswordFieldsService.reset()
@@ -1429,6 +1438,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         Map<String,Map> extraConfig=[:]
         projectConfigurableBeans.each { k, v ->
+            if(k.endsWith('Profiled')){
+                //skip profiled versions of beans
+                return
+            }
             //construct existing values from project properties
             def values=Validator.demapProperties(fwkProject.getProjectProperties(),v.getPropertiesMapping(), true)
             extraConfig[k]=[
@@ -2110,7 +2123,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     code: 'api.error.parameter.required', args: ['project']])
 
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         def exists=frameworkService.existsFrameworkProject(params.project)
         if(!exists){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
@@ -2118,6 +2130,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
                 [AuthConstants.ACTION_READ], params.project)) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,

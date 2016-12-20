@@ -484,7 +484,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                         'project.description'
                 ) : null
         )
-        newproj.projectNodes = nodeService.getNodes(projectName)
+        newproj.nodesFactory = nodeService
         return newproj
     }
 
@@ -521,7 +521,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                                        resource.lastModified
         )
         project.projectConfig=rdprojectconfig
-        project.projectNodes = nodeService.getNodes(project.name)
+        project.nodesFactory = nodeService
     }
 
     Map mergeProjectProperties(
@@ -571,7 +571,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                                        resource.lastModified
         )
         project.projectConfig=rdprojectconfig
-        project.projectNodes = nodeService.getNodes(project.name)
+        project.nodesFactory = nodeService
     }
     Map setProjectProperties(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
@@ -663,7 +663,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             return null
         }
         long start=System.currentTimeMillis()
-        log.info("Loading project defintion for ${project}...")
+        log.info("Loading project definition for ${project}...")
         def rdproject = new RundeckProject(loadProjectConfig(project), this)
         //preload cached readme/motd
         String readme = readCachedProjectFileAsAstring(project,"readme.md")
@@ -676,7 +676,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
                                 ? rdproject.getProperty('project.description')
                                 : null
         )
-        rdproject.projectNodes = nodeService.getNodes(project)
+        rdproject.nodesFactory = nodeService
         log.info("Loaded project ${project} in ${System.currentTimeMillis()-start}ms")
         return rdproject
     }

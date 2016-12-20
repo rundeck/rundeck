@@ -1388,7 +1388,7 @@ class ExecutionServiceTests  {
         assertNull(exec2.status)
         assertEquals(2,Execution.findAll().size())
         assertEquals(1,Execution.findAllByDateCompletedAndServerNodeUUID(null, null).size())
-        testService.cleanupRunningJobs(null)
+        testService.cleanupRunningJobs((String)null)
         exec1.refresh()
         assertNotNull(exec1.dateCompleted)
         assertEquals("false", exec1.status)

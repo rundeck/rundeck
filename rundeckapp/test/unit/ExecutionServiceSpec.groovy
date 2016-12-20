@@ -1,3 +1,4 @@
+import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
@@ -1060,6 +1061,55 @@ class ExecutionServiceSpec extends Specification {
         path                 | throwsexception | canread
         'keys/test/password' | false           | true
         'keys/test/password' | true            | false
+
+    }
+
+    def "list now running project"() {
+        given:
+        def query = new QueueQuery()
+        query.projFilter = 'AProject'
+        def exec = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: 'userB',
+                project: 'AProject'
+        ).save()
+        def exec2 = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: 'user',
+                project: 'BProject'
+        ).save()
+        when:
+        def result = service.queryQueue(query)
+
+        then:
+        1 == result.total
+        1 == result.nowrunning.size()
+
+    }
+    def "list now running all projects"() {
+        given:
+        def query = new QueueQuery()
+        query.projFilter = '*'
+        def exec = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: 'userB',
+                project: 'AProject'
+        ).save()
+        def exec2 = new Execution(
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: 'user',
+                project: 'BProject'
+        ).save()
+        when:
+        def result = service.queryQueue(query)
+
+        then:
+        2 == result.total
+        2 == result.nowrunning.size()
 
     }
 }

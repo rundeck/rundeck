@@ -28,6 +28,7 @@ import org.apache.log4j.Logger;
 public abstract class ExceptionCatchingResourceModelSource extends DelegateResourceModelSource {
     public static final Logger logger = Logger.getLogger(ExceptionCatchingResourceModelSource.class);
     String identity;
+    ExceptionHandler handler;
 
     protected ExceptionCatchingResourceModelSource(ResourceModelSource delegate) {
         super(delegate);
@@ -38,6 +39,17 @@ public abstract class ExceptionCatchingResourceModelSource extends DelegateResou
         this.identity = identity;
     }
 
+    protected ExceptionCatchingResourceModelSource(
+            ResourceModelSource delegate,
+            String identity,
+            ExceptionHandler handler
+    )
+    {
+        super(delegate);
+        this.identity = identity;
+        this.handler = handler;
+    }
+
     @Override
     public INodeSet getNodes() throws ResourceModelSourceException {
         INodeSet nodes = null;
@@ -45,13 +57,17 @@ public abstract class ExceptionCatchingResourceModelSource extends DelegateResou
             nodes = getDelegate().getNodes();
         } catch (ResourceModelSourceException e) {
             logException(e);
+            if (null != handler) {
+                handler.handleException(e, getDelegate());
+            }
         } catch (Throwable e) {
             logException(e);
+            if (null != handler) {
+                handler.handleException(new RuntimeException(e), getDelegate());
+            }
         }
         try {
             return returnResultNodes(nodes);
-        } catch (ResourceModelSourceException e) {
-            logException(e);
         } catch (Throwable e) {
             logException(e);
         }
@@ -63,10 +79,15 @@ public abstract class ExceptionCatchingResourceModelSource extends DelegateResou
     }
 
     /**
+     * @param nodes nodes
+     *
      * @return the result nodes given the nodes returned by the underlying call
      *
-     * @param nodes nodes
      * @throws ResourceModelSourceException on error
      */
     abstract INodeSet returnResultNodes(INodeSet nodes) throws ResourceModelSourceException;
+
+    public static interface ExceptionHandler {
+        void handleException(Exception t, ResourceModelSource origin);
+    }
 }

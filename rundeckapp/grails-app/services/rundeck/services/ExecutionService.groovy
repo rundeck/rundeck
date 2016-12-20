@@ -394,11 +394,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
 
-                eqfilters.each{ key,val ->
-                    if(query["${key}Filter"]){
-                        eq(val,query["${key}Filter"])
-                    }
-                }
+                 if(!allProjectsQuery){
+                     eqfilters.each{ key,val ->
+                         if(query["${key}Filter"]){
+                             eq(val,query["${key}Filter"])
+                         }
+                     }
+                 }
 
                  //running status filter.
                  if(query.runningFilter){
@@ -596,14 +598,58 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Set the result status to FAIL for any Executions that are not complete
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
-    def cleanupRunningJobs(String serverUUID=null) {
-        def found = Execution.findAllByDateCompletedAndServerNodeUUID(null, serverUUID)
-        found.each { Execution e ->
-            saveExecutionState(e.scheduledExecution?.id, e.id, [status: String.valueOf(false),
-                    dateCompleted: new Date(), cancelled: true], null,null)
-            log.error("Stale Execution cleaned up: [${e.id}]")
-            metricService.markMeter(this.class.name,'executionCleanupMeter')
+    def cleanupRunningJobsAsync(String serverUUID=null) {
+        def executionIds = Execution.withCriteria{
+            isNull('dateCompleted')
+            if (serverUUID == null) {
+                isNull('serverNodeUUID')
+            } else {
+                eq('serverNodeUUID', serverUUID)
+            }
+            projections{
+                property('id')
+            }
         }
+        callAsync{
+            def found = executionIds.collect { Execution.get(it) }
+            cleanupRunningJobs(found)
+        }
+    }
+
+    private List<Execution> findRunningExecutions(String serverUUID=null){
+        return Execution.withCriteria{
+            isNull('dateCompleted')
+            if (serverUUID == null) {
+                isNull('serverNodeUUID')
+            } else {
+                eq('serverNodeUUID', serverUUID)
+            }
+        }
+    }
+    /**
+     * Set the result status to FAIL for any Executions that are not complete
+     * @param serverUUID if not null, only match executions assigned to the given serverUUID
+     */
+    def cleanupRunningJobs(String serverUUID=null) {
+        cleanupRunningJobs findRunningExecutions(serverUUID)
+    }
+
+    /**
+     * Set the result status to FAIL for any Executions that are not complete
+     * @param serverUUID if not null, only match executions assigned to the given serverUUID
+     */
+    def cleanupRunningJobs(List<Execution> found) {
+        found.each { Execution e ->
+            cleanupExecution(e)
+        }
+    }
+
+    private void cleanupExecution(Execution e) {
+        saveExecutionState(e.scheduledExecution?.id, e.id, [status       : String.valueOf(false),
+                                                            dateCompleted: new Date(), cancelled: true], null, null
+        )
+        log.error("Stale Execution cleaned up: [${e.id}]")
+        metricService.markMeter(this.class.name, 'executionCleanupMeter')
     }
 
     /**

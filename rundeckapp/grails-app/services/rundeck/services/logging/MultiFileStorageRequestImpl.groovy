@@ -1,18 +1,26 @@
 package rundeck.services.logging
 
 import com.dtolabs.rundeck.core.logging.MultiFileStorageRequest
+import com.dtolabs.rundeck.core.logging.MultiFileStorageRequestErrors
 import com.dtolabs.rundeck.core.logging.StorageFile
 
 /**
  * Created by greg on 11/12/15.
  */
-class MultiFileStorageRequestImpl implements MultiFileStorageRequest {
+class MultiFileStorageRequestImpl implements MultiFileStorageRequestErrors {
     Map<String, File> files
     Map<String, Boolean> completion = [:]
+    Map<String, String> errors = [:]
 
     @Override
     void storageResultForFiletype(final String filetype, boolean success) {
         completion[filetype] = success
+    }
+
+    @Override
+    void storageFailureForFiletype(final String filetype, final String message) {
+        completion[filetype] = false
+        errors[filetype] = message
     }
 
     @Override

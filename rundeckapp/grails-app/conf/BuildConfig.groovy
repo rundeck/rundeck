@@ -81,6 +81,9 @@ grails.project.dependency.resolution = {
         compile ":platform-core:1.0.0"
         runtime (':hibernate4:4.3.6.1')
         runtime ':mail:1.0.7', ':quartz:1.0.2', ':executor:0.3'
+
+        runtime ':profiler:0.5'
+        runtime ':miniprofiler:0.4.1'
         provided ':codenarc:0.22'
         build   ':jetty:2.0.3'
     }
@@ -89,7 +92,7 @@ grails.project.dependency.resolution = {
 
         build 'org.yaml:snakeyaml:1.9'
         compile 'org.yaml:snakeyaml:1.9', 'org.apache.ant:ant:1.8.3', 'org.apache.ant:ant-jsch:1.8.3',
-                'com.jcraft:jsch:0.1.52', 'log4j:log4j:1.2.17', 'commons-collections:commons-collections:3.2.1',
+                'com.jcraft:jsch:0.1.53', 'log4j:log4j:1.2.17', 'commons-collections:commons-collections:3.2.2',
                 'commons-codec:commons-codec:1.5',
                 'com.fasterxml.jackson.core:jackson-databind:2.5.3',
                 'com.fasterxml.jackson.core:jackson-annotations:2.5.3',

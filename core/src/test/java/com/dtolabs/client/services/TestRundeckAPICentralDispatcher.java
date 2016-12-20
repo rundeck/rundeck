@@ -535,6 +535,61 @@ public class TestRundeckAPICentralDispatcher extends TestCase {
     }
 
     /**
+     * null filter indicates all nodes
+     * @throws Exception
+     */
+    public void testFilterProjectNodesInternalError() throws Exception {
+        final String testUrl = "http://localhost:4440/test";
+        final RundeckAPICentralDispatcher rundeckAPICentralDispatcher = new RundeckAPICentralDispatcher(
+                testUrl,
+                "test",
+                "test"
+        );
+        final TestResponse testResponse = new TestResponse();
+        testResponse.resultDoc= DocumentFactory.getInstance().createDocument();
+        testResponse.resultDoc.addElement("project").addElement("node").addAttribute("name","test1");
+
+        testResponse.resultCode=500;
+        testResponse.responseMessage = "Internal Error";
+        TestServerService testService = new TestServerService(
+                testUrl,
+                "test",
+                "test"
+        )
+        {
+
+            @Override
+            public WebserviceResponse makeRundeckRequest(
+                    final String urlPath,
+                    final Map queryParams,
+                    final File uploadFile,
+                    final String method,
+                    final String expectedContentType,
+                    final String uploadFileParam
+            ) throws CoreException, MalformedURLException
+            {
+                assertEquals("/api/2/project/project1/resources", urlPath);
+                assertEquals(1, queryParams.size());
+                assertEquals(".*", queryParams.get("filter"));
+                assertNull(uploadFile);
+                assertEquals("GET", method);
+                assertEquals("text/xml", expectedContentType);
+                assertEquals(null, uploadFileParam);
+
+                return testResponse;
+            }
+        };
+        rundeckAPICentralDispatcher.setServerService(testService);
+
+        try {
+            INodeSet result = rundeckAPICentralDispatcher.filterProjectNodes("project1", null);
+            fail("expected failure");
+        }catch (CentralDispatcherException e) {
+            assertTrue(e.getMessage().contains("500: Internal Error"));
+        }
+    }
+
+    /**
      * nodes xml result parser error
      * @throws Exception
      */

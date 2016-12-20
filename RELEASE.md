@@ -1,9 +1,9 @@
-Release 2.6.4
+Release 2.6.7
 ===========
 
-Date: 2016-03-04
+Date: 2016-04-29
 
-Name: <span style="color: firebrick"><span class="glyphicon glyphicon-music"></span> "cafe bonbon firebrick music"</span>
+Name: <span style="color: goldenrod"><span class="glyphicon glyphicon-plane"></span> "cafe bonbon goldenrod plane"</span>
 
 ## Notes
 
@@ -12,19 +12,35 @@ Bug fixes.
 ## Contributors
 
 * Greg Schueler (gschueler)
+* sebastianopilla
 
 ## Bug Reporters
 
+* ahonor
+* ajxb
+* alexey-pankratyev
+* amitk75
+* david-richer-adsk
 * gschueler
-* richiereynolds
-* schast
-* tkald
-* wufpack00
+* jyaworski
+* kmusard
+* ltamaster
+* sebastianopilla
 
 ## Issues
 
-* [SCM initialization can cause slow startup with many projects](https://github.com/rundeck/rundeck/issues/1721)
-* [java.lang.NullPointerException Rundeck 2.6.3](https://github.com/rundeck/rundeck/issues/1717)
-* [After 2.6.3 upgrade, node page doesn't display nodes correctly.](https://github.com/rundeck/rundeck/issues/1716)
-* [After 2.6.3 upgrade, ACL that does not allow job create/delete always shows Bulk edit checkboxes](https://github.com/rundeck/rundeck/issues/1714)
-* [Error after Upgrade to 2.6.3: Failed loading resource model source, java.lang.IllegalStateException: Recursive load](https://github.com/rundeck/rundeck/issues/1713)
+* [Resource Model source errors are not properly shown in config page (2.6.6)](https://github.com/rundeck/rundeck/issues/1830)
+* [Directory Resource Issue using JSON files](https://github.com/rundeck/rundeck/issues/1828)
+* [2.6.6: when adding a new project, the home page may not load the project action buttons properly](https://github.com/rundeck/rundeck/issues/1821)
+* [API: /project/X/resources for invalid project results in 500 instead of 404 response](https://github.com/rundeck/rundeck/issues/1820)
+* [Place Jetty work directory outside of the installation tree](https://github.com/rundeck/rundeck/pull/1819)
+* [CLI tool: "Response content unexpectedly empty" message](https://github.com/rundeck/rundeck/issues/1818)
+* [use separate cli-log4j.properties log4j config for cli tools](https://github.com/rundeck/rundeck/pull/1816)
+* [Git Export and Git Import in YAML format issue in 2.6.6](https://github.com/rundeck/rundeck/issues/1815)
+* [CLI tools should allow relative urls](https://github.com/rundeck/rundeck/issues/1774)
+* [Error in "run" command](https://github.com/rundeck/rundeck/issues/1693)
+* [Project configured for Git export becomes unavailable if repo is not accessible](https://github.com/rundeck/rundeck/issues/1624)
+* [Log file uses system default file encoding, should force UTF-8](https://github.com/rundeck/rundeck/issues/1619)
+* [SCM does not change branches once created](https://github.com/rundeck/rundeck/issues/1515)
+* [Retry Failed Nodes does not handle nodes with spaces](https://github.com/rundeck/rundeck/issues/1508)
+* [Node name with / character causes GUI execution state to be incorrect](https://github.com/rundeck/rundeck/issues/1457)

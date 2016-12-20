@@ -65,6 +65,10 @@ public class NotificationService implements ApplicationContextAware{
         return pluginService.validatePlugin(name, notificationPluginProviderService,
                 frameworkService.getFrameworkPropertyResolver(project, config), PropertyScope.Instance, PropertyScope.Project)
     }
+    def ValidatedPlugin validatePluginConfig(String name, Map projectProps, Map config) {
+        return pluginService.validatePlugin(name, notificationPluginProviderService,
+                frameworkService.getFrameworkPropertyResolverWithProps(projectProps, config), PropertyScope.Instance, PropertyScope.Project)
+    }
     /**
      *
      * @param name

@@ -6,6 +6,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
+import com.dtolabs.rundeck.core.utils.TextUtils;
 import org.apache.log4j.Logger;
 
 import java.io.File;
@@ -32,7 +33,7 @@ public class ProjectNodeSupport implements IProjectNodes {
     public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
 
     private IRundeckProjectConfig projectConfig;
-    private ArrayList<Exception> nodesSourceExceptions;
+    private Map<String,Exception> nodesSourceExceptions;
     private long nodesSourcesLastReload = -1L;
     private List<ResourceModelSource> nodesSourceList;
     private ResourceFormatGeneratorService resourceFormatGeneratorService;
@@ -47,6 +48,7 @@ public class ProjectNodeSupport implements IProjectNodes {
         this.projectConfig = projectConfig;
         this.resourceFormatGeneratorService = resourceFormatGeneratorService;
         this.resourceModelSourceService = resourceModelSourceService;
+        this.nodesSourceExceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
     }
 
     static Set<String> uncachedResourceTypes = new HashSet<String>();
@@ -82,7 +84,9 @@ public class ProjectNodeSupport implements IProjectNodes {
     public INodeSet getNodeSet() {
         //iterate through sources, and add nodes
         final NodeSetMerge list = getNodeSetMerge();
-        nodesSourceExceptions = new ArrayList<Exception>();
+        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        int index=1;
+        Set<String> validSources = new HashSet<>();
         for (final ResourceModelSource nodesSource : getResourceModelSources()) {
             try {
                 INodeSet nodes = nodesSource.getNodes();
@@ -91,20 +95,55 @@ public class ProjectNodeSupport implements IProjectNodes {
                 } else {
                     list.addNodeSet(nodes);
                 }
+                boolean hasErrors=false;
+                if(nodesSource instanceof ResourceModelSourceErrors){
+                    ResourceModelSourceErrors nodeerrors = (ResourceModelSourceErrors) nodesSource;
+                    List<String> modelSourceErrors = nodeerrors.getModelSourceErrors();
+                    if(modelSourceErrors!=null && modelSourceErrors.size()>0){
+                        hasErrors=true;
+                        logger.error("Some errors getting nodes from [" +
+                                     nodesSource.toString() +
+                                     "]: " +
+                                     modelSourceErrors);
+                        exceptions.put(
+                                index + ".source",
+                                new ResourceModelSourceException(
+                                        TextUtils.join(
+                                                modelSourceErrors.toArray(new String[modelSourceErrors.size()]),
+                                                ';'
+                                        )
+                                )
+                        );
+                    }
+                }
+                if(!hasErrors) {
+                    validSources.add(index + ".source");
+                }
             } catch (ResourceModelSourceException | RuntimeException e) {
-                logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
-                nodesSourceExceptions.add(
+                logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
+                logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
+                exceptions.put(
+                        index+".source",
                         new ResourceModelSourceException(
-                                "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e
+                                e.getMessage(), e
                         )
                 );
             } catch (Throwable e) {
-                logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
-                nodesSourceExceptions.add(
+                logger.error("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage());
+                logger.debug("Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage(), e);
+                exceptions.put(
+                        index+".source",
                         new ResourceModelSourceException(
-                                "Cannot get nodes from [" + nodesSource.toString() + "]: " + e.getMessage()
+                                e.getMessage()
                         )
                 );
+            }
+            index++;
+        }
+        synchronized (nodesSourceExceptions){
+            nodesSourceExceptions.putAll(exceptions);
+            for (String validSource : validSources) {
+                nodesSourceExceptions.remove(validSource);
             }
         }
         return list;
@@ -116,30 +155,43 @@ public class ProjectNodeSupport implements IProjectNodes {
      */
     @Override
     public ArrayList<Exception> getResourceModelSourceExceptions() {
-        return nodesSourceExceptions;
+        synchronized (nodesSourceExceptions) {
+            return new ArrayList<>(nodesSourceExceptions.values());
+        }
+    }
+    /**
+     * @return the set of exceptions produced by the last attempt to invoke all node providers
+     */
+    @Override
+    public Map<String,Exception> getResourceModelSourceExceptionsMap() {
+        synchronized (nodesSourceExceptions) {
+            return Collections.unmodifiableMap(nodesSourceExceptions);
+        }
     }
 
     private synchronized Collection<ResourceModelSource> getResourceModelSources() {
         //determine if sources need to be reloaded
         final long lastMod = projectConfig.getConfigLastModifiedTime()!=null? projectConfig.getConfigLastModifiedTime().getTime():0;
         if (lastMod > nodesSourcesLastReload) {
-            nodesSourceList = new ArrayList<ResourceModelSource>();
+            nodesSourceList = new ArrayList<>();
             loadResourceModelSources();
         }
         return nodesSourceList;
     }
 
     private void loadResourceModelSources() {
-        nodesSourceExceptions = new ArrayList<Exception>();
+        Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
+        Set<String> validSources = new HashSet<>();
         //generate Configuration for file source
         if (projectConfig.hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
             try {
                 final Properties config = createFileSourceConfiguration();
                 logger.info("Source (project.resources.file): loading with properties: " + config);
                 nodesSourceList.add(loadResourceModelSource("file", config, shouldCacheForType("file"), "file.file"));
+                validSources.add("project.file");
             } catch (ExecutionServiceException e) {
                 logger.error("Failed to load file resource model source: " + e.getMessage(), e);
-                nodesSourceExceptions.add(e);
+                exceptions.put("project.file",e);
             }
         }
         if (projectConfig.hasProperty(PROJECT_RESOURCES_URL_PROPERTY)) {
@@ -147,9 +199,10 @@ public class ProjectNodeSupport implements IProjectNodes {
                 final Properties config = createURLSourceConfiguration();
                 logger.info("Source (project.resources.url): loading with properties: " + config);
                 nodesSourceList.add(loadResourceModelSource("url", config, shouldCacheForType("url"), "file.url"));
+                validSources.add("project.url");
             } catch (ExecutionServiceException e) {
                 logger.error("Failed to load file resource model source: " + e.getMessage(), e);
-                nodesSourceExceptions.add(e);
+                exceptions.put("project.url",e);
             }
         }
 
@@ -164,14 +217,21 @@ public class ProjectNodeSupport implements IProjectNodes {
                 nodesSourceList.add(
                         loadResourceModelSource(
                                 providerType, props, shouldCacheForType(providerType),
-                                i + "." + providerType
+                                i + ".source"
                         )
                 );
+                validSources.add(i + ".source" );
             } catch (ExecutionServiceException e) {
                 logger.error("Failed loading resource model source #" + i + ", skipping: " + e.getMessage(), e);
-                nodesSourceExceptions.add(e);
+                exceptions.put(i + ".source" ,e);
             }
             i++;
+        }
+        synchronized (nodesSourceExceptions) {
+            nodesSourceExceptions.putAll(exceptions);
+            for (String validSource : validSources) {
+                nodesSourceExceptions.remove(validSource);
+            }
         }
 
         Date configLastModifiedTime = projectConfig.getConfigLastModifiedTime();
@@ -195,11 +255,75 @@ public class ProjectNodeSupport implements IProjectNodes {
         return file;
     }
 
+    class StoreExceptionHandler implements ExceptionCatchingResourceModelSource.ExceptionHandler {
+        String sourceIdent;
 
+        public StoreExceptionHandler(final String sourceIdent) {
+            this.sourceIdent = sourceIdent;
+        }
+
+        @Override
+        public void handleException(final Exception t, final ResourceModelSource origin) {
+            nodesSourceExceptions.put(sourceIdent, t);
+        }
+    }
+
+    /**
+     * @param nodes IProjectNodes
+     *
+     * @return model source view of the nodes
+     */
+    public static ResourceModelSource asModelSource(IProjectNodes nodes) {
+        return new ProjectNodesSource(nodes);
+    }
+
+    /**
+     * implements ResourceModelSource by wrapping IProjectNodes
+     */
+    private static class ProjectNodesSource implements ResourceModelSource {
+        IProjectNodes nodes;
+
+        public ProjectNodesSource(final IProjectNodes nodes) {
+            this.nodes = nodes;
+        }
+
+        @Override
+        public INodeSet getNodes() throws ResourceModelSourceException {
+            return nodes.getNodeSet();
+        }
+    }
+
+    /**
+     * @param origin origin source
+     * @param ident  unique identity for this cached source, used in filename
+     * @param descr  description of the source, used in logging
+     *
+     * @return new source
+     */
     private ResourceModelSource createCachingSource(
-            ResourceModelSource sourceForConfiguration,
+            ResourceModelSource origin,
             String ident,
             String descr
+    )
+    {
+        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.BOTH, true);
+    }
+
+    /**
+     * @param logging
+     * @param origin origin source
+     * @param ident  unique identity for this cached source, used in filename
+     * @param descr  description of the source, used in logging
+     * @param logging if true, log cache access
+     *
+     * @return new source
+     */
+    public ResourceModelSource createCachingSource(
+            ResourceModelSource origin,
+            String ident,
+            String descr,
+            SourceFactory.CacheType type,
+            final boolean logging
     )
     {
         final File file = getResourceModelSourceFileCacheForType(ident);
@@ -207,7 +331,7 @@ public class ProjectNodeSupport implements IProjectNodes {
         final ResourceFormatGeneratorService resourceFormatGeneratorService = getResourceFormatGeneratorService();
         final Properties fileSourceConfig = generateFileSourceConfigurationProperties(
                 file.getAbsolutePath(),
-                ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE, true, false
+                ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE, false, false
         );
         try {
             ResourceModelSource fileSource = nodesSourceService.getSourceForConfiguration("file", fileSourceConfig);
@@ -216,20 +340,58 @@ public class ProjectNodeSupport implements IProjectNodes {
                     (ResourceXMLFormatGenerator.SERVICE_PROVIDER_TYPE);
 
             String ident1 = "[ResourceModelSource: " + descr + ", project: " + projectConfig.getName() + "]";
-            return new CachingResourceModelSource(
-                    sourceForConfiguration,
-                    ident1,
-                    new LoggingResourceModelSourceCache(
-                            new FileResourceModelSourceCache(file, generatorForFormat, fileSource),
-                            ident1
-                    )
+            StoreExceptionHandler handler = new StoreExceptionHandler(ident);
+            ResourceModelSourceCache cache = new FileResourceModelSourceCache(
+                    file,
+                    generatorForFormat,
+                    fileSource
             );
-        } catch (UnsupportedFormatException e) {
-            e.printStackTrace();
-        } catch (ExecutionServiceException e) {
+            if(logging) {
+                cache = new LoggingResourceModelSourceCache(cache, ident1);
+            }
+            return SourceFactory.cachedSource(
+                    origin,
+                    ident1,
+                    handler,
+                    cache,
+                    type
+            );
+        } catch (UnsupportedFormatException | ExecutionServiceException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * @param origin origin source
+     * @param ident  unique identity for this cached source, used in filename
+     * @param descr  description of the source, used in logging
+     *
+     * @return new source
+     */
+    private ResourceModelSource createCacheLoadingSource(
+            ResourceModelSource origin,
+            String ident,
+            String descr
+    )
+    {
+        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.LOAD_ONLY, true);
+    }
+
+    /**
+     * @param origin origin source
+     * @param ident  unique identity for this cached source, used in filename
+     * @param descr  description of the source, used in logging
+     *
+     * @return new source
+     */
+    private ResourceModelSource createCacheWritingSource(
+            ResourceModelSource origin,
+            String ident,
+            String descr
+    )
+    {
+        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.STORE_ONLY, true);
     }
 
     private ResourceFormatGeneratorService getResourceFormatGeneratorService() {

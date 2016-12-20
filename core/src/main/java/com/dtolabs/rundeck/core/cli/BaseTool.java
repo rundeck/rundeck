@@ -155,7 +155,7 @@ public abstract class BaseTool implements CLITool {
      * @throws CLIToolException if an error occurs
      */
     public void run(final String[] args) throws CLIToolException {
-        PropertyConfigurator.configure(Constants.getLog4jProperties(Constants.getSystemBaseDir()));
+        PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
         CommandLine cli = parseArgs(args);
         validateOptions(cli,args);
         go();

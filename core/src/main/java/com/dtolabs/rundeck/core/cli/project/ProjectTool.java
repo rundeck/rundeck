@@ -83,8 +83,7 @@ public class ProjectTool implements ActionMaker, CLITool {
         /**
          * Initialize the log4j logger
          */
-        PropertyConfigurator.configure(new File(Constants.getLog4jProperties(baseDir.getAbsolutePath()))
-            .getAbsolutePath());
+        PropertyConfigurator.configure(Constants.getLog4jPropertiesFile().getAbsolutePath());
         frameworkProperties = FrameworkFactory.createFilesystemFramework(baseDir).getPropertyLookup();
         dispatcher = FrameworkFactory.createDispatcher(config);
         extraProperties = new Properties();

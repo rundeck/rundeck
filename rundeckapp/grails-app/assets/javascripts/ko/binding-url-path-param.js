@@ -31,7 +31,7 @@ ko.bindingHandlers.urlPathParam = {
         }
         var count=0;
         var text = template.replace(/%3C%24%3E/ig,function(match, offset, string){
-            return values[count];
+            return values[count++];
         });
         element.setAttribute('href',text);
     }

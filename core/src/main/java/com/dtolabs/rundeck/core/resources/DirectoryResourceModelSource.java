@@ -42,7 +42,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class DirectoryResourceModelSource implements ResourceModelSource, Configurable {
+public class DirectoryResourceModelSource implements ResourceModelSource, ResourceModelSourceErrors, Configurable {
     static final Logger logger = Logger.getLogger(DirectoryResourceModelSource.class.getName());
     private final Framework framework;
 
@@ -121,16 +121,41 @@ public class DirectoryResourceModelSource implements ResourceModelSource, Config
         return loadNodeSets();
     }
 
+    private List<String> sourceErrors;
+
+    @Override
+    public List<String> getModelSourceErrors() {
+        return sourceErrors!=null?Collections.unmodifiableList(sourceErrors):null;
+    }
+
     private INodeSet loadNodeSets() throws ResourceModelSourceException {
         synchronized (sourceCache) {
+            ArrayList<String> errs = new ArrayList<>();
             AdditiveListNodeSet listNodeSet = new AdditiveListNodeSet();
             for (final File file : sortFiles(sourceCache.keySet())) {
                 try {
                     listNodeSet.addNodeSet(sourceCache.get(file).getNodes());
-                } catch (ResourceModelSourceException e) {
-                    e.printStackTrace();
+                } catch(ResourceModelSourceException t){
+                    String msg = "Error loading file: " +
+                               file +
+                               ": " +
+                               t.getLocalizedMessage();
+                    errs.add(msg);
+                    logger.warn(msg);
+                    logger.debug(msg,t);
+                } catch(Throwable t){
+                    String msg = "Error loading file: " +
+                               file +
+                               ": " +
+                               t.getClass().getName() +
+                               ": " +
+                               t.getLocalizedMessage();
+                    errs.add(msg);
+                    logger.warn(msg);
+                    logger.debug(msg,t);
                 }
             }
+            sourceErrors=errs;
             return listNodeSet;
         }
     }

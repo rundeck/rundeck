@@ -56,6 +56,17 @@
                 <g:message code="gui.menu.SystemInfo" default="System Report"/>
             </g:link>
         </li>
+
+        <g:if test="${g.logStorageEnabled() || selected=='logstorage'}">
+
+        <li class="${selected == 'logstorage' ? 'active' : ''}">
+            <g:link controller="menu" action="logStorage" params="[project: params.project ?: request.project]">
+                <g:message code="gui.menu.LogStorage" default="Log Storage"/>
+            </g:link>
+        </li>
+
+        </g:if>
+
     </g:if>
     <li class="${selected == 'plugins' ? 'active' : ''}">
         <g:link controller="menu" action="plugins" params="[project: params.project ?: request.project]">

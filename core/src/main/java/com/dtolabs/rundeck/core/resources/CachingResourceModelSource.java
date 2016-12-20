@@ -17,15 +17,20 @@
 package com.dtolabs.rundeck.core.resources;
 
 import com.dtolabs.rundeck.core.common.INodeSet;
-import org.apache.log4j.Logger;
 
 /**
  * Abstract caching model source. calls to getNodes will attempt to use the delegate to get nodes.  If successful the
- * nodes will be stored in the cache with a call to {@link ResourceModelSourceCache#storeNodesInCache(com.dtolabs.rundeck.core.common.INodeSet)}.
- * If any exception is thrown it will be caught.  finally getNodes returns the result of {@link ResourceModelSourceCache#loadCachedNodes()}
+ * nodes will be stored in the cache with a call to
+ * {@link ResourceModelSourceCache#storeNodesInCache(com.dtolabs.rundeck.core.common.INodeSet)}.
+ * If any exception is thrown it will be caught.  finally getNodes returns the result of {@link
+ * ResourceModelSourceCache#loadCachedNodes()}.
+ *
+ * The behavior can be changed using the {@link com.dtolabs.rundeck.core.resources.SourceFactory.CacheType} parameter
  */
-public class CachingResourceModelSource extends ExceptionCatchingResourceModelSource  {
+public class CachingResourceModelSource extends ExceptionCatchingResourceModelSource {
     private ResourceModelSourceCache cache;
+    private SourceFactory.CacheType type = SourceFactory.CacheType.BOTH;
+
 
     public CachingResourceModelSource(ResourceModelSource delegate, ResourceModelSourceCache cache) {
         super(delegate);
@@ -37,13 +42,38 @@ public class CachingResourceModelSource extends ExceptionCatchingResourceModelSo
         this.cache = cache;
     }
 
+    public CachingResourceModelSource(
+            final ResourceModelSource delegate,
+            final String identity,
+            final ExceptionHandler handler,
+            final ResourceModelSourceCache cache
+    )
+    {
+        this(delegate, identity, handler, cache, SourceFactory.CacheType.BOTH);
+    }
+
+    public CachingResourceModelSource(
+            final ResourceModelSource delegate,
+            final String identity,
+            final ExceptionHandler handler,
+            final ResourceModelSourceCache cache,
+            final SourceFactory.CacheType type
+    )
+    {
+        super(delegate, identity, handler);
+        this.cache = cache;
+        this.type = type;
+    }
+
     @Override
     INodeSet returnResultNodes(INodeSet nodes) throws ResourceModelSourceException {
-        if (null != nodes) {
+        if (null != nodes && type.isStoreType()) {
             cache.storeNodesInCache(nodes);
-            return nodes;
         }
-        return cache.loadCachedNodes();
+        if (null == nodes && type.isLoadType()) {
+            return cache.loadCachedNodes();
+        }
+        return nodes;
     }
 
 }

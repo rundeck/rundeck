@@ -15,9 +15,9 @@ import java.util.*;
  */
 public class RundeckProject implements IRundeckProject{
     private ProjectManagerService projectService;
-    private IProjectNodes projectNodes;
     private IRundeckProjectConfig projectConfig;
     private IProjectInfo info;
+    private IProjectNodesFactory nodesFactory;
 
     public RundeckProject(
             final IRundeckProjectConfig projectConfig,
@@ -39,12 +39,12 @@ public class RundeckProject implements IRundeckProject{
 
     @Override
     public List<Map<String, Object>> listResourceModelConfigurations() {
-        return projectNodes.listResourceModelConfigurations();
+        return getProjectNodes().listResourceModelConfigurations();
     }
 
     @Override
     public INodeSet getNodeSet() throws NodeFileParserException {
-        return projectNodes.getNodeSet();
+        return getProjectNodes().getNodeSet();
     }
 
     @Override
@@ -110,27 +110,23 @@ public class RundeckProject implements IRundeckProject{
 
     @Override
     public boolean updateNodesResourceFile() throws UpdateUtils.UpdateException {
-        return projectNodes.updateNodesResourceFile(projectService.getNodesResourceFilePath(this));
+        return getProjectNodes().updateNodesResourceFile(projectService.getNodesResourceFilePath(this));
     }
 
     @Override
     public void updateNodesResourceFileFromUrl(final String providerURL, final String username, final String password)
             throws UpdateUtils.UpdateException
     {
-        projectNodes.updateNodesResourceFileFromUrl(providerURL, username, password,projectService.getNodesResourceFilePath(this));
+        getProjectNodes().updateNodesResourceFileFromUrl(providerURL, username, password,projectService.getNodesResourceFilePath(this));
     }
 
     @Override
     public void updateNodesResourceFile(final INodeSet nodeset) throws UpdateUtils.UpdateException {
-        projectNodes.updateNodesResourceFile(nodeset,projectService.getNodesResourceFilePath(this));
+        getProjectNodes().updateNodesResourceFile(nodeset,projectService.getNodesResourceFilePath(this));
     }
 
     public IProjectNodes getProjectNodes() {
-        return projectNodes;
-    }
-
-    public void setProjectNodes(final IProjectNodes projectNodes) {
-        this.projectNodes = projectNodes;
+        return getNodesFactory().getNodes(getName());
     }
 
     @Override
@@ -160,5 +156,13 @@ public class RundeckProject implements IRundeckProject{
 
     public void setInfo(IProjectInfo info) {
         this.info = info;
+    }
+
+    public IProjectNodesFactory getNodesFactory() {
+        return nodesFactory;
+    }
+
+    public void setNodesFactory(IProjectNodesFactory nodesFactory) {
+        this.nodesFactory = nodesFactory;
     }
 }

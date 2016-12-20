@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.utils.NodeSet
+import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
@@ -336,8 +337,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def total = Execution.countByScheduledExecution(scheduledExecution)
 
         def remoteClusterNodeUUID=null
-        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()
-                && scheduledExecution.serverNodeUUID != frameworkService.getServerUUID()) {
+        if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
             remoteClusterNodeUUID = scheduledExecution.serverNodeUUID
         }
 
@@ -349,6 +349,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 total: total,
                 nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
+                serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
 				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
                 max: params.int('max') ?: 10,
@@ -2291,8 +2292,9 @@ class ScheduledExecutionController  extends ControllerBase{
                 if (e && e.scheduledExecution?.id == scheduledExecution.id) {
                     model.failedNodes = e.failedNodeList
                     if(varfound){
-                        nset = ExecutionService.filtersAsNodeSet([filter: "name: " + e.failedNodeList])
+                        nset = ExecutionService.filtersAsNodeSet([filter: OptsUtil.join("name:", e.failedNodeList)])
                     }
+                    model.nodesetvariables = false
                 }
             }
             def nodes = frameworkService.filterAuthorizedNodes(
@@ -3466,13 +3468,22 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V14)) {
             return
         }
+        def api17 = request.api_version >= ApiRequestFilters.V17
+
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         //test valid project
 
         if (!frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
                 AuthConstants.ACTION_ADMIN)) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Reschedule Jobs (admin)', 'Server', params.serverNodeUUID]])
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_FORBIDDEN,
+                    code: 'api.error.item.unauthorized',
+                    args: [
+                            'Reschedule Jobs (admin)',
+                            'Server',
+                            frameworkService.getServerUUID()
+                    ]
+            ])
         }
         if (!frameworkService.isClusterModeEnabled()) {
             withFormat {
@@ -3496,11 +3507,13 @@ class ScheduledExecutionController  extends ControllerBase{
         String serverUUID=null
         boolean serverAll=false
         String project=null
+        def jobid=null
         if(request.format=='json' ){
             def data= request.JSON
             serverUUID = data?.server?.uuid?:null
             serverAll = data?.server?.all?true:false
             project = data?.project?:null
+            jobid = data?.job?.id?:null
         }else if(request.format=='xml' || !request.format){
             def data= request.XML
             if(data.name()=='server'){
@@ -3510,28 +3523,34 @@ class ScheduledExecutionController  extends ControllerBase{
                 serverUUID = data.server?.'@uuid'?.text()?:null
                 serverAll = data.server?.'@all'?.text()=='true'
                 project = data.project?.'@name'?.text()?:null
+                jobid = data.job?.'@id'?.text()?:null
             }
         }else{
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.invalid.request',
                     args: ['Expected content of type text/xml or text/json, content was of type: ' + request.format]])
         }
-        if (!serverUUID && !serverAll) {
+        if (!serverUUID && !serverAll&& !jobid) {
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.invalid.request', args: ['Expected server.uuid or server.all in request.']])
+                    code: 'api.error.invalid.request', args: ['Expected server.uuid or server.all or job.id in request.']])
         }
 
-        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project)
+        def reclaimMap=scheduledExecutionService.reclaimAndScheduleJobs(serverUUID,serverAll,project,jobid)
         def successCount=reclaimMap.findAll {it.value.success}.size()
         def failedCount = reclaimMap.size() - successCount
         //TODO: retry for failed reclaims?
 
         def jobData = { entry ->
-            [
+            def dat=[
                     id: entry.key,
                     href: apiService.apiHrefForJob(entry.value.job),
-                    permalink:apiService.guiHrefForJob(entry.value.job)
+                    permalink:apiService.guiHrefForJob(entry.value.job),
+
             ]
+            if(api17){
+                dat['previous-owner']=entry.value.previous
+            }
+            dat
         }
         def jobLink={ delegate, entry->
             delegate.'job'(jobData(entry))
@@ -3559,6 +3578,9 @@ class ScheduledExecutionController  extends ControllerBase{
                         }
                         if(project){
                             delegate.'project'(name:project)
+                        }
+                        if(jobid){
+                            delegate.'job'(id:jobid)
                         }
                         delegate.'jobs'(total: reclaimMap.size()){
                             delegate.'successful'(count: successCount) {

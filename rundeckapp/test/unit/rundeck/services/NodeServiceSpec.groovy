@@ -9,9 +9,14 @@ import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
 import grails.test.mixin.TestFor
+import org.springframework.core.task.AsyncListenableTaskExecutor
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import java.util.concurrent.Future
 
 /**
  * Created by greg on 2/3/16.
@@ -43,7 +48,7 @@ class NodeServiceSpec extends Specification {
         }
         INodeSet nodeSet = new NodeSetImpl()
         nodeSet.putNode(new NodeEntryImpl('anode'))
-        def properties = ['project.resources.file': '/tmp/test.xml']
+        def properties = ['project.resources.file': '/tmp/test.xml','project.nodeCache.enabled':'false']
 
         def projConfig = new PropsConfig(
                 projectProperties: properties,
@@ -115,6 +120,7 @@ class NodeServiceSpec extends Specification {
                 configLastModifiedTime: new Date()
         )
         def modelSource = Mock(ResourceModelSource)
+        def cacheModelsource = Mock(ResourceModelSource)
 
         service.frameworkService.getRundeckFramework() >> Mock(Framework) {
             getProjectManager() >> Mock(ProjectManager) {
@@ -122,7 +128,17 @@ class NodeServiceSpec extends Specification {
                 1 * loadProjectConfig('test1') >> projConfig
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
-                _ * getSourceForConfiguration('file', _) >> modelSource
+                _ * getSourceForConfiguration('file', {args->
+                    args['file']=='/tmp/test.xml'
+                }) >> modelSource
+                _ * getSourceForConfiguration('file', {args->
+                    args['file']!='/tmp/test.xml'
+                }) >> cacheModelsource
+            }
+            getResourceFormatGeneratorService()>>Mock(ResourceFormatGeneratorService){
+                _ * getGeneratorForFormat('xml')>>Mock(ResourceFormatGenerator){
+
+                }
             }
         }
         when:
@@ -144,6 +160,200 @@ class NodeServiceSpec extends Specification {
         'true'    | 1
         'false'   | 3
         null      | 1
+    }
+    def "get nodes when project cache with preload ignores config asynch"( ) {
+        given:
+        service.nodeTaskExecutor = Mock(AsyncListenableTaskExecutor)
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService) {
+            getCacheEnabledFor('nodeService', 'nodeCache', true) >> true
+            getBoolean('nodeService.nodeCache.firstLoadAsynch',true)>>defFirstLoadAsynch
+        }
+        INodeSet preloadedNodes = new NodeSetImpl()
+        preloadedNodes.putNode(new NodeEntryImpl('bnode'))
+
+        def properties = [
+                'project.resources.file': '/tmp/test.xml',
+
+        ]
+        properties['project.nodeCache.enabled'] = 'true'
+        def projConfig = new PropsConfig(
+                projectProperties: properties,
+                properties: properties,
+                name: 'test1',
+                configLastModifiedTime: new Date()
+        )
+        def modelSource = Mock(ResourceModelSource)
+        def cacheModelsource = Mock(ResourceModelSource)
+
+        service.frameworkService.getRundeckFramework() >> Mock(Framework) {
+            getProjectManager() >> Mock(ProjectManager) {
+                existsFrameworkProject('test1') >> true
+                1 * loadProjectConfig('test1') >> projConfig
+            }
+            getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
+                _ * getSourceForConfiguration('file', {args->
+                    args['file']=='/tmp/test.xml'
+                }) >> modelSource
+                _ * getSourceForConfiguration('file', {args->
+                    args['file']!='/tmp/test.xml'
+                }) >> cacheModelsource
+            }
+            getResourceFormatGeneratorService()>>Mock(ResourceFormatGeneratorService){
+                _ * getGeneratorForFormat('xml')>>Mock(ResourceFormatGenerator){
+
+                }
+            }
+        }
+        when:
+        def result1 = service.getNodes('test1')
+        def nodes1 = result1.getNodeSet()
+        def result2 = service.getNodes('test1')
+        def nodes2 = result2.getNodeSet()
+
+        then:
+        null != nodes1.getNode('bnode')
+        null != nodes2.getNode('bnode')
+        nodes1.nodeNames as List == ['bnode']
+        nodes2.nodeNames as List == ['bnode']
+        result1.doCache == true
+        1 * service.nodeTaskExecutor.execute(_) >> {args->
+            //no op. do not call closure, simulates delay in loading nodes
+        }
+        0 * modelSource.getNodes()
+        1 * cacheModelsource.getNodes() >> preloadedNodes
+
+        where:
+        defFirstLoadAsynch | _
+        true | _
+        false | _
+
+    }
+
+    def "get nodes with project cache without preload with forced synchronous behavior"( ) {
+        given:
+        service.nodeTaskExecutor = Mock(AsyncListenableTaskExecutor)
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService) {
+            getCacheEnabledFor('nodeService', 'nodeCache', true) >> true
+            getBoolean('nodeService.nodeCache.firstLoadAsynch',true)>>false
+        }
+        INodeSet modelNodes = new NodeSetImpl()
+        modelNodes.putNode(new NodeEntryImpl('anode'))
+
+        def properties = [
+                'project.resources.file': '/tmp/test.xml',
+
+        ]
+        properties['project.nodeCache.enabled'] = 'true'
+        def projConfig = new PropsConfig(
+                projectProperties: properties,
+                properties: properties,
+                name: 'test1',
+                configLastModifiedTime: new Date()
+        )
+        def modelSource = Mock(ResourceModelSource)
+        def cacheModelsource = Mock(ResourceModelSource)
+
+        service.frameworkService.getRundeckFramework() >> Mock(Framework) {
+            getProjectManager() >> Mock(ProjectManager) {
+                existsFrameworkProject('test1') >> true
+                1 * loadProjectConfig('test1') >> projConfig
+            }
+            getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
+                _ * getSourceForConfiguration('file', {args->
+                    args['file']=='/tmp/test.xml'
+                }) >> modelSource
+                _ * getSourceForConfiguration('file', {args->
+                    args['file']!='/tmp/test.xml'
+                }) >> cacheModelsource
+            }
+            getResourceFormatGeneratorService()>>Mock(ResourceFormatGeneratorService){
+                _ * getGeneratorForFormat('xml')>>Mock(ResourceFormatGenerator){
+
+                }
+            }
+        }
+        when:
+        def result1 = service.getNodes('test1')
+        def nodes1 = result1.getNodeSet()
+        def result2 = service.getNodes('test1')
+        def nodes2 = result2.getNodeSet()
+
+        then:
+        null != nodes1.getNode('anode')
+        null != nodes2.getNode('anode')
+        nodes1.nodeNames as List == ['anode']
+        nodes2.nodeNames as List == ['anode']
+        result1.doCache == true
+        0 * service.nodeTaskExecutor.execute(_)>>{
+            //never load model nodes
+        }
+        1 * modelSource.getNodes() >> modelNodes
+        1 * cacheModelsource.getNodes() >> null
+
+    }
+
+    def "get nodes with project cache without preload with forced asynchronous behavior"( ) {
+        given:
+        service.nodeTaskExecutor = Mock(AsyncListenableTaskExecutor)
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService) {
+            getCacheEnabledFor('nodeService', 'nodeCache', true) >> true
+            getBoolean('nodeService.nodeCache.firstLoadAsynch',true)>>true
+        }
+        INodeSet modelNodes = new NodeSetImpl()
+        modelNodes.putNode(new NodeEntryImpl('anode'))
+
+        def properties = [
+                'project.resources.file': '/tmp/test.xml',
+
+        ]
+        properties['project.nodeCache.enabled'] = 'true'
+        def projConfig = new PropsConfig(
+                projectProperties: properties,
+                properties: properties,
+                name: 'test1',
+                configLastModifiedTime: new Date()
+        )
+        def modelSource = Mock(ResourceModelSource)
+        def cacheModelsource = Mock(ResourceModelSource)
+
+        service.frameworkService.getRundeckFramework() >> Mock(Framework) {
+            getProjectManager() >> Mock(ProjectManager) {
+                existsFrameworkProject('test1') >> true
+                1 * loadProjectConfig('test1') >> projConfig
+            }
+            getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
+                _ * getSourceForConfiguration('file', {args->
+                    args['file']=='/tmp/test.xml'
+                }) >> modelSource
+                _ * getSourceForConfiguration('file', {args->
+                    args['file']!='/tmp/test.xml'
+                }) >> cacheModelsource
+            }
+            getResourceFormatGeneratorService()>>Mock(ResourceFormatGeneratorService){
+                _ * getGeneratorForFormat('xml')>>Mock(ResourceFormatGenerator){
+
+                }
+            }
+        }
+        when:
+        def result1 = service.getNodes('test1')
+        def nodes1 = result1.getNodeSet()
+        def result2 = service.getNodes('test1')
+        def nodes2 = result2.getNodeSet()
+
+        then:
+        null == nodes1
+        null == nodes2
+        result1.doCache == true
+        1 * service.nodeTaskExecutor.execute(_)>>{
+            //never load model nodes
+        }
+        0 * modelSource.getNodes() >> modelNodes
+        1 * cacheModelsource.getNodes() >> null
+
     }
 
     def "project nodecache delay"(String confval, long expected) {
