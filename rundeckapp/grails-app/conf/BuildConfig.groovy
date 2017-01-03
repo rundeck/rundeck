@@ -96,6 +96,7 @@ grails.project.dependency.resolution = {
         compile (':asset-pipeline:2.7.2')
         compile ':cache:1.1.8'
         compile ":platform-core:1.0.0"
+        runtime ':database-migration:1.4.1'
         runtime (':hibernate4:4.3.6.1')
         runtime ':mail:1.0.7', ':quartz:1.0.2', ':executor:0.3'
 
@@ -119,6 +120,7 @@ grails.project.dependency.resolution = {
                 'org.quartz-scheduler:quartz:2.2.1',
                 'org.markdownj:markdownj-core:0.4',
                 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20160614.1'
+
 
         compile("org.rundeck:rundeck-core:${rundeckVersion}")
         compile("org.rundeck:rundeck-storage-filesys:${rundeckVersion}")

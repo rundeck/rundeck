@@ -63,12 +63,21 @@ def warFileName = "rundeck-${version}.war"
 def warFileLocation = "${project.projectDir}/target/${warFileName}"
 def additionalFileLocation = "${project.projectDir}/target/war-contents"
 
-configurations{
+configurations {
     pluginFiles {
         transitive = false
 
     }
     pluginFiles.extendsFrom(runtime)
+}
+
+
+sourceSets {
+    main {
+        resources {
+            srcDir 'grails-app/migrations'
+        }
+    }
 }
 
 dependencies {
@@ -81,6 +90,7 @@ dependencies {
             project(':plugins:jasypt-encryption-plugin'),
             project(':plugins:orchestrator-plugin'),
             project(':plugins:git-plugin')
+    compile 'org.liquibase:liquibase-core:3.5.3'
 }
 
 task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
