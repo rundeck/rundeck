@@ -29,7 +29,7 @@ hibernate {
 environments {
     development {
         dataSource {
-            dbCreate = "none""
+            dbCreate = "none"
             url = "jdbc:h2:mem:devDb;MVCC=TRUE;LOCK_TIMEOUT=10000"
         }
     }
