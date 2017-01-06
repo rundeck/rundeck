@@ -17,6 +17,8 @@
  limitations under the License.
  */
 
+var dateFormat      = $L('jobslist.date.format.ko');
+
 /**
  * Verify whether the date and time selected in the date and time picker
  * is valid.
@@ -100,7 +102,7 @@ function onSchedulerPopover() {
     jQuery('#scheduleSubmitButton').click(onScheduleSubmit);
 
     jQuery('#datetimepicker').datetimepicker({
-        format: 'ddd, MMM D YYYY, HH:mm',
+        format: dateFormat,
         minDate: moment()
     }).on('dp.change', onDateChanged);
 }
