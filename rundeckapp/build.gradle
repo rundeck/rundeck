@@ -90,7 +90,6 @@ dependencies {
             project(':plugins:jasypt-encryption-plugin'),
             project(':plugins:orchestrator-plugin'),
             project(':plugins:git-plugin')
-    compile 'org.liquibase:liquibase-core:3.5.3'
 }
 
 task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
