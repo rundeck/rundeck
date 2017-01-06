@@ -814,9 +814,7 @@ archive.import.importExecutions.false.title
 archive.import.importExecutions.false.help
 uploading.file
 project.file.readme.md.help.markdown
-  <a href
 project.file.motd.md.help.markdown
-  <a href
 some.files.in.the.archive.could.not.be.imported
 archive.successfully.imported
 failed.to.import.some.jobs
@@ -1189,11 +1187,6 @@ page.home.search.project.title
 page.home.search.projects.input.placeholder
 create.job.button.label
 app.firstRun.md
-  <table class
-  <td><a href
-  <td><a href
-  <td><a href
-  <td><a href
 app.firstRun.title
 welcome.button.use.rundeck
 page.welcome.title.suffix
