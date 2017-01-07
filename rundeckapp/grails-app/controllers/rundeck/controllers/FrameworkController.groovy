@@ -2117,12 +2117,17 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         nset.setSingleNodeName(params.name)
         def pject=frameworkService.getFrameworkProject(params.project)
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nset,pject.getNodeSet())
-        if(!nodes || nodes.nodes.size()<1 ){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['Node Name', params.name]])
 
+        def readnodes = frameworkService.filterAuthorizedNodes(params.project, ['read'] as Set, nodes, authContext)
+
+        if (!readnodes || readnodes.nodes.size() < 1) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_NOT_FOUND,
+                    code  : 'api.error.item.doesnotexist',
+                    args  : ['Node Name', params.name]]
+            )
         }
-        return apiRenderNodeResult(nodes, framework, params.project)
+        return apiRenderNodeResult(readnodes, framework, params.project)
     }
     /**
      * API: /api/2/project/NAME/resources, version 2
@@ -2188,7 +2193,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def pject=frameworkService.getFrameworkProject(params.project)
 //        final Collection nodes = pject.getNodes().filterNodes(ExecutionService.filtersAsNodeSet(query))
         final INodeSet nodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(ExecutionService.filtersAsNodeSet(query), pject.getNodeSet())
-        return apiRenderNodeResult(nodes,framework,params.project)
+        def readnodes = frameworkService.filterAuthorizedNodes(
+                params.project,
+                Collections.singleton('read'),
+                nodes,
+                authContext
+        )
+        return apiRenderNodeResult(readnodes, framework, params.project)
     }
     protected String apiRenderNodeResult(INodeSet nodes, Framework framework, String project) {
         if (params.format && !(params.format in ['xml', 'yaml']) ||

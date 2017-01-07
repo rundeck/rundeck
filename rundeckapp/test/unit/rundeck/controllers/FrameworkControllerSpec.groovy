@@ -17,8 +17,11 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -680,7 +683,125 @@ class FrameworkControllerSpec extends Specification {
         def result=controller.apiResources(query)
 
         then:
-        result=='404result'
+        result == '404result'
+    }
+
+    def "get project resources filters authorized nodes"() {
+        setup:
+        def authCtx = Mock(UserAndRolesAuthContext)
+        def nodeSet = new NodeSetImpl()
+        nodeSet.putNode(new NodeEntryImpl('monkey1'))
+        nodeSet.putNode(new NodeEntryImpl('monkey2'))
+        def authedNodes = new NodeSetImpl()
+        authedNodes.putNode(new NodeEntryImpl('monkey1'))
+        def projectName = 'testproj'
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getRundeckFramework()
+            1 * existsFrameworkProject(projectName) >> true
+
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+
+            1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+
+            1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
+                1 * getNodeSet() >> nodeSet
+            }
+            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _) >> true
+//            1 * requireVersion(_, _, 3) >> true
+
+            0 * _(*_)
+        }
+        def query = new ExtNodeFilters(project: projectName)
+        params.project = projectName
+        when:
+
+        def result = controller.apiResources(query)
+
+        then:
+        response.contentType == 'text/xml;charset=UTF-8'
+    }
+
+    def "get single resource filters checks acl"() {
+        setup:
+        def authCtx = Mock(UserAndRolesAuthContext)
+        def nodeSet = new NodeSetImpl()
+        nodeSet.putNode(new NodeEntryImpl('monkey1'))
+        nodeSet.putNode(new NodeEntryImpl('monkey2'))
+        def authedNodes = new NodeSetImpl()
+        authedNodes.putNode(new NodeEntryImpl('monkey1'))
+        def projectName = 'testproj'
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getRundeckFramework()
+            1 * existsFrameworkProject(projectName) >> true
+
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+
+            1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+
+            1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
+                1 * getNodeSet() >> nodeSet
+            }
+            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _) >> true
+
+            0 * _(*_)
+        }
+        def query = new ExtNodeFilters(project: projectName)
+        params.project = projectName
+        params.name = 'monkey1'
+        when:
+
+        def result = controller.apiResource()
+
+        then:
+        response.contentType == 'text/xml;charset=UTF-8'
+        response.status == 200
+    }
+
+    def "get single resource filters unauthorized"() {
+        setup:
+        def authCtx = Mock(UserAndRolesAuthContext)
+        def nodeSet = new NodeSetImpl()
+        nodeSet.putNode(new NodeEntryImpl('monkey1'))
+        nodeSet.putNode(new NodeEntryImpl('monkey2'))
+        def authedNodes = new NodeSetImpl()
+        //empty authorization result
+        def projectName = 'testproj'
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getRundeckFramework()
+            1 * existsFrameworkProject(projectName) >> true
+
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+
+            1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+
+            1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
+                1 * getNodeSet() >> nodeSet
+            }
+            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _) >> true
+            1 * renderErrorFormat(_, _) >> { it[0].status = it[1].status }
+            0 * _(*_)
+        }
+        def query = new ExtNodeFilters(project: projectName)
+        params.project = projectName
+        params.name = 'monkey1'
+        when:
+
+        def result = controller.apiResource()
+
+        then:
+        response.status == 404
     }
 
     protected void setupFormTokens(params) {
