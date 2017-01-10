@@ -17,10 +17,15 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.StorageParams
+import com.dtolabs.rundeck.core.storage.ResourceMeta
 import grails.converters.JSON
 import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
+import grails.test.mixin.web.GroovyPageUnitTestMixin
+import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.Resource
+import rundeck.UtilityTagLib
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
@@ -32,7 +37,134 @@ import spock.lang.Unroll
  * @since 11/28/16
  */
 @TestFor(StorageController)
+@TestMixin(GroovyPageUnitTestMixin)
 class StorageControllerSpec extends Specification {
+    protected void setupFormTokens(def sec) {
+        def token = SynchronizerTokensHolder.store(session)
+        sec.params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
+        sec.params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
+
+    def "key storage access no params"() {
+        given:
+
+        controller.storageService = Mock(StorageService)
+        controller.frameworkService = Mock(FrameworkService)
+        when:
+
+        def result = controller.keyStorageAccess()
+
+        then:
+        response.status == 200
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.storageService.hasPath(_, '/keys') >> true
+        1 * controller.storageService.getResource(_, '/keys') >> Mock(Resource) {
+            isDirectory() >> true
+            getPath() >> Mock(Path)
+        }
+        1 * controller.storageService.listDir(_, '/keys') >> ([] as Set)
+    }
+
+    def "key storage access with params"() {
+        given:
+
+        controller.storageService = Mock(StorageService)
+        controller.frameworkService = Mock(FrameworkService)
+        when:
+        params.relativePath = 'donuts/forgood'
+
+        def result = controller.keyStorageAccess()
+
+        then:
+        response.status == 200
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.storageService.hasPath(_, '/keys/donuts/forgood') >> true
+        1 * controller.storageService.getResource(_, '/keys/donuts/forgood') >> Mock(Resource) {
+            isDirectory() >> true
+            getPath() >> Mock(Path)
+        }
+        1 * controller.storageService.listDir(_, '/keys/donuts/forgood') >> ([] as Set)
+    }
+
+    def "key storage download with params"() {
+        given:
+
+        controller.storageService = Mock(StorageService)
+        controller.frameworkService = Mock(FrameworkService)
+        when:
+        params.relativePath = 'donuts/forgood'
+
+        def result = controller.keyStorageDownload()
+
+        then:
+        response.status == 200
+        response.text == 'abc'
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.storageService.hasPath(_, '/keys/donuts/forgood') >> true
+        1 * controller.storageService.getResource(_, '/keys/donuts/forgood') >> Mock(Resource) {
+            isDirectory() >> false
+            getPath() >> Mock(Path)
+            getContents() >> Mock(ResourceMeta) {
+                writeContent(_) >> { args ->
+                    args[0].write('abc'.bytes)
+                    3L
+                }
+            }
+        }
+        0 * controller.storageService._(*_)
+        0 * controller.apiService._(*_)
+    }
+
+    def "key storage delete with relativePath"() {
+        given:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+        def assetTaglib = mockTagLib(UtilityTagLib)
+        controller.storageService = Mock(StorageService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.apiService = Mock(ApiService)
+        when:
+        params.relativePath = 'monkey'
+        setupFormTokens(controller)
+        request.method = 'POST'
+        def result = controller.keyStorageDelete()
+
+        then:
+        response.status == 204
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.storageService.hasResource(_, '/keys/monkey') >> true
+        1 * controller.storageService.delResource(_, '/keys/monkey') >> true
+        0 * controller.storageService._(*_)
+        0 * controller.apiService._(*_)
+    }
+
+    def "key storage upload without relativePath"() {
+        given:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.security.useHMacRequestTokens = 'false'
+        def assetTaglib = mockTagLib(UtilityTagLib)
+        controller.storageService = Mock(StorageService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.apiService = Mock(ApiService)
+        when:
+        params.uploadKeyType = 'public'
+        params.inputType = 'text'
+        params.fileName = 'monkey'
+        params.uploadText = 'abc'
+        setupFormTokens(controller)
+        request.method = 'POST'
+        def result = controller.keyStorageUpload()
+
+        then:
+        response.status == 302
+        response.redirectedUrl=='/menu/storage?project=&resourcePath=keys%2Fmonkey'
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.storageService.hasResource(_, 'keys/monkey') >> false
+        1 * controller.storageService.hasPath(_, 'keys/monkey') >> false
+        1 * controller.storageService.createResource(_, 'keys/monkey',_,_) >> true
+        0 * controller.storageService._(*_)
+        0 * controller.apiService._(*_)
+    }
     @Unroll
     def "require sub path param for #method request"() {
         given:
