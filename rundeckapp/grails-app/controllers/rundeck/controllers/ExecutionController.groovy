@@ -1334,17 +1334,18 @@ class ExecutionController extends ControllerBase{
                 }
                 newstep[BuilderUtil.asAttributeName('stepctx')]= newstep.remove('stepctx')
                 BuilderUtil.makeAttribute(newstep,'id')
-                if(step.nodeStates){
-                    newstep.nodeStates=step['nodeStates'].collect {String node,Map nodestate->
-                        def nmap= [name: node] + nodestate
-                        BuilderUtil.makeAttribute(nmap,'name')
+                if (step.nodeStates) {
+                    newstep.nodeStates = step['nodeStates'].collect { String node, Map nodeState ->
+                        def nmap = [name: node] + nodeState
+                        BuilderUtil.makeAttribute(nmap, 'name')
                         nmap
                     }
-                    BuilderUtil.makePlural(newstep,'nodeStates')
+                    BuilderUtil.makePlural(newstep, 'nodeStates')
                 }
                 if (step.stepTargetNodes) {
                     newstep.stepTargetNodes = [(BuilderUtil.pluralize('nodes')):convertNodeList(step['stepTargetNodes'])]
                 }
+                newstep.remove('parameterStates')
                 newstep
             }
             if(newmap.steps){
