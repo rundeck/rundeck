@@ -170,3 +170,15 @@ getent passwd rundeck >/dev/null || useradd -d /var/lib/rundeck -m -g rundeck ru
 # SSL Configuration
 %dir /etc/rundeck/ssl
 %config /etc/rundeck/ssl/ssl.properties
+
+%post config
+# TODO: put hostname in framework.properties and rundeck-config.properties
+# generate server uuid
+DIR=/etc/rundeck
+if  ! grep -E '^\s*rundeck.server.uuid\s*=\s*.{8}-.{4}-.{4}-.{4}-.{12}\s*$' $DIR/framework.properties ; then
+    uuid=$(uuidgen)
+    echo -e "\n# ----------------------------------------------------------------" >> $DIR/framework.properties
+    echo "# Auto generated server UUID: $uuid" >> $DIR/framework.properties
+    echo "# ----------------------------------------------------------------" >> $DIR/framework.properties
+    echo "rundeck.server.uuid = $uuid" >> $DIR/framework.properties
+fi

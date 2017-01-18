@@ -81,6 +81,17 @@ case "$1" in
 
     # 6. set correct owner/permissions for service.log if it already exists
     [ -f /var/log/rundeck/service.log ] && setperm rundeck adm 0664 /var/log/rundeck/service.log
+
+    # 7. generate UUID for server if not present
+    DIR=/etc/rundeck
+    if  ! grep -E '^\s*rundeck.server.uuid\s*=\s*.{8}-.{4}-.{4}-.{4}-.{12}\s*$' $DIR/framework.properties ; then
+        uuid=$(uuidgen)
+        echo "\n# ----------------------------------------------------------------" >> $DIR/framework.properties
+        echo "# Auto generated server UUID: $uuid" >> $DIR/framework.properties
+        echo "# ----------------------------------------------------------------" >> $DIR/framework.properties
+        echo "rundeck.server.uuid = $uuid" >> $DIR/framework.properties
+    fi
+
     ;;
 
   abort-upgrade|abort-remove|abort-deconfigure)
