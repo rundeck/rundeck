@@ -74,7 +74,7 @@
 <div class="row row-space">
     <div class="col-sm-12">
 
-    &copy; Copyright 2016 <a href="http://simplifyops.com">
+    &copy; Copyright 2017 <a href="http://simplifyops.com">
         <span style="color:red;">#Simplify</span>Ops</a>.
 
     All rights reserved.
