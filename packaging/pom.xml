@@ -1,0 +1,40 @@
+<?xml version="1.0"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
+                             http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.dtolabs.rundeck</groupId>
+  <artifactId>rundeck-packaging</artifactId>
+  <packaging>pom</packaging>
+  <version>1.4.3</version>
+  <name>RunDeck Windows Installer project</name>
+  <url>http://rundeck.org</url>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.2.1</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>exec</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <executable>cmd.exe</executable>
+          <workingDirectory>.</workingDirectory>
+          <arguments>
+            <argument>/c</argument>
+            <argument>"rundeck-msi-installer.cmd ${project.version}"</argument>
+          </arguments>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
