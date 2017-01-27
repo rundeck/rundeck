@@ -18,7 +18,6 @@
 jQuery(function () {
     ko.bindingHandlers.datetimepicker = {
         init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
-            console.log("date ui init");
             var opts = {useCurrent: true, sideBySide: true};
             var val = valueAccessor();
             if (ko.isObservable(val)) {
@@ -27,10 +26,10 @@ jQuery(function () {
             if (typeof(val) == 'string') {
                 opts.defaultDate = val;
             }
+            var dateFormat = allBindings.get('dateFormat');
             if (typeof(dateFormat) == 'string') {
                 opts.format = dateFormat;
             }
-            var dateFormat = allBindings.get('dateFormat');
             if (ko.isObservable(dateFormat)) {
                 dateFormat = ko.unwrap(dateFormat);
             }
@@ -42,6 +41,9 @@ jQuery(function () {
                     var m = moment(opts.defaultDate, opts.format, true);
                     if (!m.isValid()) {
                         opts.defaultDate = null;
+                    } else {
+                        //use a moment obj, due to datetimepicker bug https://github.com/Eonasdan/bootstrap-datetimepicker/issues/1704
+                        opts.defaultDate = m;
                     }
                 } catch (e) {
                     opts.defaultDate = null;
