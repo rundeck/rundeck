@@ -218,6 +218,17 @@ function Option(data) {
 
     self.selectedOptionValue = ko.observable(self.value());
     self.defaultStoragePath = ko.observable(data.defaultStoragePath);
+    self.dateFormatErr = ko.computed(function () {
+        if (!self.isDate() || !self.value() || !self.dateFormat()) {
+            return false;
+        }
+        try {
+            var m = moment(self.value(), self.dateFormat(), true);
+            return !m.isValid();
+        } catch (e) {
+            return true;
+        }
+    });
     self.truncateDefaultValue = ko.computed(function () {
         var val = self.defaultValue();
         if (!val || val.length < 50) return val;
