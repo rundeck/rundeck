@@ -34,6 +34,10 @@ framework.ssh.user = @framework.ssh.user@
 # "0" value means wait forever.
 framework.ssh.timeout = 0
 
+# ----------------------------------------------------------------
+# Auto generated server UUID: @rundeck.server.uuid@
+# ----------------------------------------------------------------
+rundeck.server.uuid = @rundeck.server.uuid@
 
 # ----------------------------------------------------------------
 # System-wide global variables.
