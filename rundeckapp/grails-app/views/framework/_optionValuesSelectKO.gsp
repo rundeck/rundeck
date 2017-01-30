@@ -48,7 +48,7 @@
             <div data-bind="if: !secureInput()">
                 <div data-bind="if: isDate()">
 
-                    <div class='input-group date' data-bind="datetimepicker: value, dateFormat: dateFormat">
+                    <div class='input-group date' data-bind="datetimepicker: value, dateFormat: dateFormat, css: {'has-error': dateFormatErr}">
                         <span class="input-group-addon has_tooltip">
                             <span class="glyphicon glyphicon-calendar"></span>
                         </span>
