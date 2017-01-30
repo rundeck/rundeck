@@ -1331,6 +1331,55 @@ class ScheduledExecutionServiceSpec extends Specification {
         results.scheduledExecution.nodeThreadcount==1
     }
 
+    def "do update job remove retry/timeout"() {
+        given:
+        setupDoUpdate()
+
+        def se = new ScheduledExecution(createJobParams(doNodedispatch: true,
+                                                        nodeInclude: "hostname",
+                                                        retry: '3',
+                                                        timeout: '2h'
+        )
+        ).save()
+        def newJob = new ScheduledExecution(createJobParams(
+                doNodedispatch: true,
+                nodeInclude: "hostname",
+                nodeThreadcount: null,
+                retry: null,
+                timeout: null
+        )
+        )
+
+
+
+        when:
+        def results = service._doupdateJob(se.id, newJob, mockAuth())
+
+
+        then:
+        results.success
+
+        results.scheduledExecution.retry == null
+        results.scheduledExecution.timeout == null
+    }
+
+    def "do update  remove retry/timeout"() {
+        given:
+        setupDoUpdate()
+        def se = new ScheduledExecution(createJobParams([retry: '1', timeout: '2h'])).save()
+
+        when:
+        def results = service._doupdate([id: se.id.toString()], mockAuth())
+
+
+        then:
+        results.success
+        results.scheduledExecution.retry == null
+        results.scheduledExecution.timeout == null
+
+
+    }
+
     def "do update job add error handlers verify strategy matches"() {
         "in node-first strategy, node steps cannot have workflow step error handler"
         given:
