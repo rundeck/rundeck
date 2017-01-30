@@ -1671,6 +1671,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (nonopts.uuid != scheduledExecution.uuid) {
             changeinfo.extraInfo = " (internalID:${scheduledExecution.id})"
         }
+
+        //clear
+        scheduledExecution.retry = null
+        scheduledExecution.timeout = null
+
         def originalRef = jobEventRevRef(scheduledExecution)
 
         scheduledExecution.properties = nonopts
@@ -2303,6 +2308,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         //clear filter params
         scheduledExecution.clearFilterFields()
+        //clear
+        scheduledExecution.retry = null
+        scheduledExecution.timeout = null
+
         def originalRef=jobEventRevRef(scheduledExecution)
 
         scheduledExecution.properties = newprops
