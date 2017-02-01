@@ -148,7 +148,23 @@ class ProjectController extends ControllerBase{
      * @param token
      * @return
      */
-    public def exportWait(String token){
+    public def exportWait(){
+        def token = params.token
+        if (!token) {
+            return withFormat {
+                html {
+                    request.errorMessage = 'token is required'
+                    response.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+                    render(view: "/common/error", model: [:])
+                }
+                json {
+                    render(contentType: 'application/json') {
+                        delegate.'token' = token
+                        delegate.'errorMessage' = 'token is required'
+                    }
+                }
+            }
+        }
         if(!projectService.hasPromise(session.user,token)){
             return withFormat{
                 html{
@@ -198,7 +214,7 @@ class ProjectController extends ControllerBase{
             projectService.releasePromise(session.user,token)
         }else{
             def percentage = projectService.promiseSummary(session.user,token).percent()
-            withFormat{
+            return withFormat{
                 html{
                     render(view: "/menu/wait",model:[token:token,ready:null!=outfile,percentage:percentage])
                 }
