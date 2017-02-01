@@ -959,11 +959,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    def boolean existsJob(String jobName, String groupName){
+    /**
+     *
+     * @param jobName
+     * @param groupName
+     * @return true if the quartz job is executing
+     */
+    def boolean quartzJobIsExecuting(String jobName, String groupName){
         def exists = false
 
         quartzScheduler.getCurrentlyExecutingJobs().each{ def JobExecutionContext jexec ->
-            if (jexec.getJobDetail().getName() == jobName && jexec.getJobDetail().getGroup() == groupName) {
+            if (jexec.getJobDetail().key.getName() == jobName && jexec.getJobDetail().key.getGroup() == groupName) {
                 def job = jexec.getJobInstance()
                 if (job) {
                     exists = true
@@ -974,23 +980,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return exists
     }
 
-    def boolean interruptJob(String jobName, String groupName){
-        def didCancel = false
-
-        quartzScheduler.getCurrentlyExecutingJobs().each{ def JobExecutionContext jexec ->
-            if (jexec.getJobDetail().getName() == jobName && jexec.getJobDetail().getGroup() == groupName){
-                def job = jexec.getJobInstance()
-                if (job && job instanceof InterruptableJob) {
-                    job.interrupt()
-                    didCancel = true
-                }
-            }
-        }
+    /**
+     * Interrupt a running quartz job if present, and optionally deleted from scheduler
+     * @param jobName
+     * @param groupName
+     * @param deleteFromScheduler
+     * @return true if the job was interrupted or deleted
+     */
+    def boolean interruptJob(String jobName, String groupName, boolean deleteFromScheduler = false) {
+        def didCancel = quartzScheduler.interrupt(new JobKey(jobName, groupName))
 
         /** If the job has not started yet, it will not be included in currently executing jobs **/
-        JobKey jobKey = new JobKey(jobName, groupName)
-        if (quartzScheduler.deleteJob(jobKey)) {
-            didCancel = true
+        if (!didCancel && deleteFromScheduler) {
+            JobKey jobKey = new JobKey(jobName, groupName)
+            if (quartzScheduler.deleteJob(jobKey)) {
+                didCancel = true
+            }
         }
 
         return didCancel

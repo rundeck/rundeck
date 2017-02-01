@@ -1213,6 +1213,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def dateCompleted = e.dateCompleted
         e.discard()
         def ident = scheduledExecutionService.getJobIdent(se,e)
+        def isadhocschedule = se && e.status == "scheduled"
         def statusStr
         def abortstate
         def jobstate
@@ -1228,9 +1229,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             abortstate = ABORT_FAILED
             failedreason = "unauthorized"
             statusStr = jobstate
-        } else if (scheduledExecutionService.existsJob(ident.jobname, ident.groupname)) {
+        } else if (scheduledExecutionService.quartzJobIsExecuting(ident.jobname, ident.groupname)) {
             boolean success = false
             int repeat = 3;
+            //set abortedBy on the execution
             while (!success && repeat > 0) {
                 try {
                     Execution.withNewSession {
@@ -1254,13 +1256,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             def didCancel = false
             if (success) {
-                didCancel = scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
+                didCancel = scheduledExecutionService.interruptJob(ident.jobname, ident.groupname, isadhocschedule)
             }
             abortstate = didCancel ? ABORT_PENDING : ABORT_FAILED
             failedreason = didCancel ? '' : 'Unable to interrupt the running job'
             jobstate = EXECUTION_RUNNING
         } else if (null == dateCompleted) {
-            scheduledExecutionService.interruptJob(ident.jobname, ident.groupname)
+            scheduledExecutionService.interruptJob(ident.jobname, ident.groupname, isadhocschedule)
             saveExecutionState(
                 se ? se.id : null,
                 eid,
