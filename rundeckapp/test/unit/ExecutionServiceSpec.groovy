@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
 import org.springframework.context.MessageSource
@@ -1830,5 +1831,65 @@ class ExecutionServiceSpec extends Specification {
         "01/01/2001 10:11:12.000000 +0000" | true                | true            | true             | true        | true
         "0000-00-00 00:00:00.000+0000"     | true                | true            | true             | true        | true
         "2080-01-01T01:00:01.000"          | true                | true            | true             | true        | true
+    }
+
+    @Unroll
+    def "abort execution"() {
+        given:
+        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.metricService = Mock(MetricService)
+        service.frameworkService = Mock(FrameworkService)
+        service.reportService = Mock(ReportService)
+        service.notificationService = Mock(NotificationService)
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: false,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b'
+                )
+        ).save()
+
+        def e = new Execution(
+                scheduledExecution: job,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                user: 'userB',
+                project: 'AProject',
+                status: isadhocschedule ? 'scheduled' : null,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                ).save(),
+                ).save(flush: true)
+        def user = 'userB'
+        def auth = Mock(AuthContext)
+
+        when:
+        def result = service.abortExecution(job, e, user, auth)
+
+        then:
+        e.id != null
+        result.abortstate == eAbortstate
+        result.jobstate == eJobstate
+
+        1 * service.scheduledExecutionService.getJobIdent(job, e) >> [jobname: 'test', groupname: 'testgroup']
+        1 * service.frameworkService.authorizeProjectExecutionAll(auth, e, [AuthConstants.ACTION_KILL]) >> true
+        1 * service.scheduledExecutionService.quartzJobIsExecuting('test', 'testgroup') >> wasScheduledPreviously
+        1 * service.scheduledExecutionService.interruptJob('test', 'testgroup', isadhocschedule) >> didinterrupt
+        _ * service.reportService.reportExecutionResult(_) >> [:]
+
+
+        where:
+        isadhocschedule | wasScheduledPreviously | didinterrupt | eAbortstate | eJobstate
+        true            | true                   | true         | 'pending'   | 'running'
+        false           | true                   | true         | 'pending'   | 'running'
+        true            | false                  | true         | 'aborted'   | 'aborted'
+        false           | false                  | true         | 'aborted'   | 'aborted'
+        true            | true                   | false        | 'failed'    | 'running'
+        false           | true                   | false        | 'failed'    | 'running'
+        true            | false                  | false        | 'aborted'   | 'aborted'
+        false           | false                  | false        | 'aborted'   | 'aborted'
+
     }
 }

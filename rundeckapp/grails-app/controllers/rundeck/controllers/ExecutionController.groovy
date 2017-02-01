@@ -475,7 +475,7 @@ class ExecutionController extends ControllerBase{
             }
         }
     }
-    def cancelExecution = {
+    def cancelExecution () {
         boolean valid=false
         withForm{
             valid=true
