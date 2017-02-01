@@ -40,30 +40,34 @@
     ]}" id="requestdata"/>
     <g:jsMessages code="archive.request.please.wait.pagetitle.ready"/>
     <g:javascript>
-        var request = {
-            ready: ko.observable(false),
-            notFound: ko.observable(false),
-            errorMessage: ko.observable(null),
-            refresh: ko.observable(false),
-            percentage:ko.observable(0),
-            token: null,
-            timeout: null,
-            url: null,
-            refreshData: function () {
-                jQuery.ajax(request.url, {
+        function Wait() {
+            var self = this;
+            self.ready = ko.observable(false);
+            self.notFound = ko.observable(false);
+            self.errorMessage = ko.observable(null);
+            self.refresh = ko.observable(false);
+            self.percentage = ko.observable(0);
+            self.token = null;
+            self.timeout = null;
+            self.url = null;
+            self.refreshData = function () {
+                jQuery.ajax({
+                    url: self.url,
+                    dataType: 'json',
                     success: function (data, status, xhr) {
-                        ko.mapping.fromJS(data, {}, request);
+                        ko.mapping.fromJS(data, {}, self);
                         if (data.ready) {
-                            request.refresh(false);
+                            self.refresh(false);
                         }
                     },
                     error: function (data, jqxhr, err) {
-                        ko.mapping.fromJS({errorMessage: err},{},request);
-                        request.refresh(false);
+                        ko.mapping.fromJS({errorMessage: err},{},self);
+                        self.refresh(false);
                     }
                 });
             }
-        };
+        }
+        var request = new Wait();
         jQuery(function () {
             request.refresh.subscribe(function (newval) {
                 if (newval) {
