@@ -250,13 +250,13 @@ activedirectory {
 
 #### Communicating over secure ldap (ldaps://)
 
-The default port for communicating with active directory is 389, which is insecure.  The secure port is 686, but the LoginModule describe above requires that the AD certificate or organizations CA certificate be placed in a truststore.  The truststore provided with rundeck `/etc/rundeck/ssl/truststore` is used for the local communication between the cli tools and the rundeck server.
+The default port for communicating with active directory is 389, which is insecure.  The secure port is 636, but the LoginModule describe above requires that the AD certificate or organizations CA certificate be placed in a truststore.  The truststore provided with rundeck `/etc/rundeck/ssl/truststore` is used for the local communication between the cli tools and the rundeck server.
 
 Before you can establish trust, you need to get the CA certificate.  Typically, this would require a request to the organization's security officer to have them send you the certificate.  It's also often found publicly if your organization does secure transactions.
 
 Another option is to interrogate the secure ldap endpoint with openssl.  The example below shows a connection to paypal.com on port 443.  The first certificate is the machine and that last is the CA.  Pick the last certificate.  
 
-*note* that for Active Directory, the host would be the Active Directory server and port 686.  
+*note* that for Active Directory, the host would be the Active Directory server and port 636.
 *note* Certificates are PEM encoded and start with -----BEGIN CERTIFICATE----- end with -----END CERTIFICATE----- inclusive.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
