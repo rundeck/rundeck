@@ -386,20 +386,20 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
      * @return token string to identify the new request
      */
     def exportProjectToFileAsync(IRundeckProject project, Framework framework, String ident, boolean aclReadAuth){
-        final def summary=new ArchiveRequestProgress()
-        final String token = UUID.randomUUID().toString()
-        final def request=new ArchiveRequest(summary:summary,token:token)
+        String token = UUID.randomUUID().toString()
+        def summary=new ArchiveRequestProgress()
+        def request=new ArchiveRequest(summary:summary,token:token)
 
-        Promises.<File>task {
-            ScheduledExecution.withNewSession {
-                exportProjectToFile(project,framework,summary,aclReadAuth)
+        def p = Promises.task {
+            try {
+                ScheduledExecution.withNewSession {
+                    request.file = exportProjectToFile(project, framework, summary, aclReadAuth)
+                    log.debug("Async archive request with token ${token} finished successfully")
+                }
+            } catch (Throwable t) {
+                log.error("Async archive request with token ${token} failed: ${t}", t)
+                request.exception = t
             }
-        }.onComplete { File file->
-            log.debug("Async archive request with token ${token} finished successfully")
-            request.file=file
-        }.onError {Throwable t->
-            log.error("Async archive request with token ${token} failed: ${t}",t)
-            request.exception=t
         }
         //store in map
         asyncExportRequests.put(ident+'/'+token,request)
@@ -1158,9 +1158,9 @@ class ArchiveOptions{
 class ArchiveRequest {
     String token
     Date dateStarted=new Date()
-    Throwable exception
+    volatile Throwable exception
     ProgressSummary summary
-    File file
+    volatile File file
 }
 interface ProgressListener {
     void total(String key,long total)
