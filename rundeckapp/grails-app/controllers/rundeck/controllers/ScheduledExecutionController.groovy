@@ -2059,7 +2059,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
-                                      strategyPlugins: strategyPlugins,
+                strategyPlugins: strategyPlugins,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 orchestratorPlugins: orchestratorPluginService.listDescriptions()])
 
@@ -2394,7 +2394,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                        nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-                   strategyPlugins:strategyPlugins,
+                strategyPlugins:strategyPlugins,
                 orchestratorPlugins: orchestratorPluginService.listDescriptions(),
                 notificationValidation:params['notificationValidation']
         ])
