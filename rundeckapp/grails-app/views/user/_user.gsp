@@ -96,8 +96,13 @@
 
 </div>
 
-<g:if test="${session.user == user.login &&
-        (auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.ACTION_ADMIN], context: 'application'))}">
+<g:set var="tokenAdmin" value="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.ACTION_ADMIN],
+        context: 'application')}"/>
+<g:set var="generateToken"
+       value="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.GENERATE_SELF_TOKEN],
+               context: 'application') || tokenAdmin}"/>
+
+<g:if test="${session.user == user.login && generateToken}">
     <g:set var="rkeytok" value="${g.rkey()}"/>
     <div id="${enc(attr: rkeytok)}">
         <div class="row ">
