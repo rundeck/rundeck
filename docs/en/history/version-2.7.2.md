@@ -1,3 +1,7 @@
+% Version 2.7.2
+% greg
+% 02/02/2017
+
 Release 2.7.2
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: Teal"><span class="glyphicon glyphicon-music"></span> 
 
 ## Upgrading from 2.6
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 
