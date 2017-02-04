@@ -17,6 +17,7 @@ public interface WorkflowSystem {
      * @param operations operations
      * @param <T>        success result of an operation
      * @param <X>        operation class
+     * @param <D>        shared data type
      *
      * @return set of results for all processed operations
      */

@@ -349,7 +349,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                     controlBehavior = result.getControlBehavior();
                     statusString = result.getStatusString();
                 }
-                System.out.println("Step result data: "+result.getResultData());
+                System.out.println("Step result data: "+result.getResultData());//XXX
             } else {
                 workflowSuccess = false;
                 StepFailureReason reason = StepFailureReason.Unknown;
@@ -359,7 +359,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                         operation.stepNum,
                         failure.toString()
                 );
-                failure.printStackTrace(System.out);
+                failure.printStackTrace(System.out);//XXX
                 if (failure instanceof CancellationException) {
                     reason = StepFailureReason.Interrupted;
 
