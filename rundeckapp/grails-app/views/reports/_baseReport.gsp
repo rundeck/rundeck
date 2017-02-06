@@ -118,7 +118,7 @@
         </td>
             </g:if>
 
-            <td style="white-space:nowrap" class="right  date autoclickable">
+            <td style="white-space:nowrap;text-overflow: ellipsis; overflow: hidden" class="right  date autoclickable">
                 <g:if test="${it.dateCompleted}">
                     %{--<g:relativeDate elapsed="${it?.dateCompleted}" agoClass="timeago"/>--}%
                     <g:unless test="${hideDate}">
@@ -133,13 +133,13 @@
                 </g:if>
             </td>
 
-            <td class="  user autoclickable" style="white-space: nowrap">
+            <td class="  user autoclickable" style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden" title="by ${it?.author==session.user?'you':it.author}">
                 <em>by</em>
                 <g:username user="${it?.author}"/>
             </td>
 
 
-            <td class="  user autoclickable" style="white-space: nowrap">
+            <td class="  user autoclickable" style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden;">
                 <g:if test="${it?.filterApplied}">
                     <em><g:message code="activity.jobs.executed.node"/>:</em>
                     ${it?.filterApplied}
