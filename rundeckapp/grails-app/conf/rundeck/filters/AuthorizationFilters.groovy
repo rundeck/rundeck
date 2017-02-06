@@ -75,6 +75,7 @@ public class AuthorizationFilters implements ApplicationContextAware{
                     //allow authentication token to be used 
                     def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
                     String user = lookupToken(authtoken, servletContext)
+                    String roles = lookupTokenRoles(authtoken, servletContext)
 
                     if (user){
                         session.user = user
@@ -83,7 +84,7 @@ public class AuthorizationFilters implements ApplicationContextAware{
                         def subject = new Subject();
                         subject.principals << new Username(user)
 
-                        ['api_token_group'].each{role->
+                        roles.split(",").each{role->
                             subject.principals << new Group(role.trim());
                         }
 
@@ -211,6 +212,33 @@ public class AuthorizationFilters implements ApplicationContextAware{
             User user = tokenobj?.user
             log.debug("loginCheck found user ${user} via DB, token: ${authtoken}");
             return user.login
+        }
+        null
+    }
+
+    /**
+     * Look up the given authToken and return the associated roles, or null
+     * @param authtoken
+     * @param context
+     * @return
+     */
+    private String lookupTokenRoles(String authtoken, ServletContext context) {
+        if(!authtoken){
+            return null
+        }
+        if (context.getAttribute("TOKENS_FILE_PROPS")) {
+            Properties tokens = (Properties) context.getAttribute("TOKENS_FILE_PROPS")
+            if (tokens[authtoken]) {
+                def user = tokens[authtoken]
+                log.debug("loginCheck found user ${user} via tokens file, token: ${authtoken}");
+                return user
+            }
+        }
+        def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
+        if (tokenobj) {
+            String roles = tokenobj?.authRoles
+            log.debug("loginCheck found roles ${roles} via DB, token: ${authtoken}");
+            return roles
         }
         null
     }

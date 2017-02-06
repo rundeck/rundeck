@@ -39,6 +39,7 @@ class UserController extends ControllerBase{
             update:'POST',
             clearApiToken:'POST',
             generateApiToken:'POST',
+            generateUserToken:'POST',
     ]
 
     def index = {
@@ -243,8 +244,8 @@ class UserController extends ControllerBase{
         def login = params.login
         def result
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN)) {
+        if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN))) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error] 
@@ -278,6 +279,80 @@ class UserController extends ControllerBase{
         }
     }
 
+
+    def generateUserToken(User user) {
+        boolean valid=false
+        withForm{
+            valid=true
+            g.refreshFormTokensHeader()
+        }.invalidToken{
+            response.status=HttpServletResponse.SC_BAD_REQUEST
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            withFormat {
+                html {
+                    return render(view: 'profile', model: [user: user])
+                }
+                json {
+                    render([error: request.error] as JSON)
+                }
+            }
+        }
+        if(!valid){
+            return
+        }
+        if (user.hasErrors()) {
+            request.errors = user.errors
+            withFormat {
+                html {
+                    return render(view: 'profile', model: [user: user])
+                }
+                json {
+                    render([error: 'Invalid input'] as JSON)
+                }
+            }
+        }
+        //check auth to edit profile
+        //default to current user profile
+        def login = params.login
+        def result
+        def roles = request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }?.join(", ")
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN) || frameworkService.authorizeApplicationResourceType(authContext,
+                AuthConstants.TYPE_USER, AuthConstants.GENERATE_SELF_TOKEN))) {
+            def error = "Unauthorized: admin role required"
+            log.error error
+            result=[result: false, error: error]
+        }else{
+            def User u = userService.findOrCreateUser(login)
+            if (!u) {
+                def error = "Couldn't find user: ${login}"
+                log.error error
+                result=[result: false, error: error]
+            }else{
+                try{
+                    AuthToken token =apiService.generateAuthToken(u, roles)
+                    result = [result: true, apitoken: token.token]
+                }catch (Exception e){
+                    result = [result: false, error: e.message]
+                }
+            }
+        }
+        withFormat {
+            html{
+                if (result.error) {
+                    flash.error = result.error
+                }else{
+                    flash.newtoken=result.apitoken
+                }
+                redirect(controller: 'user', action: 'profile', params: [login: login])
+            }
+            json {
+                render(result as JSON)
+            }
+        }
+    }
+
     def renderApiToken = {
         //check auth to edit profile
         //default to current user profile
@@ -287,7 +362,9 @@ class UserController extends ControllerBase{
         def user
         def token
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN)) {
+        if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN) || frameworkService.authorizeApplicationResourceType(authContext,
+                AuthConstants.TYPE_USER, AuthConstants.GENERATE_SELF_TOKEN))) {
             def error = "Unauthorized: admin role required"
             log.error error
             result = [result: false, error: error]
@@ -351,7 +428,9 @@ class UserController extends ControllerBase{
         def login = user.login
         def result
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN)) {
+        if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN) || frameworkService.authorizeApplicationResourceType(authContext,
+                AuthConstants.TYPE_USER, AuthConstants.GENERATE_SELF_TOKEN))) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error]

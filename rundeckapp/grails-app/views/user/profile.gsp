@@ -54,6 +54,24 @@
             }
         }).success(_ajaxReceiveTokens.curry('api_req_tokens'));
     }
+    function generateUserToken(login,elem){
+        jQuery.ajax({
+            type:'POST',
+            dataType:'json',
+            url:_genUrl(appLinks.userGenerateUserToken,{login:login}),
+            beforeSend:_ajaxSendTokens.curry('api_req_tokens'),
+            success:function(data,status,jqxhr){
+                if( data.result){
+                    addTokenRow(elem,login,data.apitoken);
+                }else{
+                    tokenAjaxError(elem,data.error);
+                }
+            },
+            error:function(jqxhr,status,error){
+                tokenAjaxError(elem,jqxhr.responseJSON&&jqxhr.responseJSON.error?jqxhr.responseJSON.error:error);
+            }
+        }).success(_ajaxReceiveTokens.curry('api_req_tokens'));
+    }
     function clearToken(elem){
         var login=$(elem).down('input[name="login"]').value;
         var token=$(elem).down('input[name="token"]').value;
@@ -86,6 +104,10 @@
     }
     function addBehavior(elem,login){
         Event.observe($(elem).down('.gentokenbtn'),'click',mkhndlr(generateToken.curry(login,elem)));
+        $$(' .apitokenform').each(addRowBehavior);
+    }
+    function addUserBehavior(elem,login){
+        Event.observe($(elem).down('.genusertokenbtn'),'click',mkhndlr(generateUserToken.curry(login,elem)));
         $$(' .apitokenform').each(addRowBehavior);
     }
     function highlightNew(elem){
