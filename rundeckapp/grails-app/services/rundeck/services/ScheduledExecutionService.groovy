@@ -979,16 +979,45 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         return exists
     }
+    /**
+     *
+     * @param se job
+     * @param e execution
+     * @return quartz scheduler fire instance Id
+     */
+    def String findExecutingQuartzJob(ScheduledExecution se, Execution e) {
+        String found = null
+        def ident = getJobIdent(se, e)
+
+        quartzScheduler.getCurrentlyExecutingJobs().each { def JobExecutionContext jexec ->
+            if (jexec.getJobDetail().key.getName() == ident.jobname &&
+                    jexec.getJobDetail().key.getGroup() == ident.groupname) {
+                def job = jexec.getJobInstance()
+                if (job instanceof ExecutionJob && e.id == job.executionId) {
+                    found = jexec.fireInstanceId
+                }
+            }
+        }
+
+        return found
+    }
 
     /**
-     * Interrupt a running quartz job if present, and optionally deleted from scheduler
+     * Interrupt a running quartz job if present or optinoally delete from scheduler if not
+     * @param quartzIntanceId quartz fire instance Id
      * @param jobName
      * @param groupName
      * @param deleteFromScheduler
      * @return true if the job was interrupted or deleted
      */
-    def boolean interruptJob(String jobName, String groupName, boolean deleteFromScheduler = false) {
-        def didCancel = quartzScheduler.interrupt(new JobKey(jobName, groupName))
+    def boolean interruptJob(
+            String quartzIntanceId,
+            String jobName,
+            String groupName,
+            boolean deleteFromScheduler = false
+    )
+    {
+        def didCancel = quartzIntanceId ? quartzScheduler.interrupt(quartzIntanceId) : false
 
         /** If the job has not started yet, it will not be included in currently executing jobs **/
         if (!didCancel && deleteFromScheduler) {
@@ -1006,7 +1035,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if (!se) {
             ident = [jobname:"TEMP:"+e.user +":"+e.id, groupname:e.user+":run"]
-        } else if (se.scheduled && e.status != "scheduled") {
+        } else if (se.scheduled && e.executionType == "scheduled") {
             // For jobs which have fixed schedules
             ident = [jobname:se.generateJobScheduledName(),groupname:se.generateJobGroupName()]
         } else {
@@ -1022,9 +1051,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def long scheduleTempJob(ScheduledExecution se, String user, AuthContext authContext,
                              Execution e, Map secureOpts =null,
                              Map secureOptsExposed =null, int retryAttempt = 0) {
-
-        def quartzJobName="TEMP:" + user + ":" + se.id + ":" + e.id
-        def jobDetail = createJobDetail(se, quartzJobName,user + ":run:" + se.id)
+        def ident = getJobIdent(se, e)
+        def quartzJobName = ident.jobname//"TEMP:" + user + ":" + se.id + ":" + e.id
+        def jobDetail = createJobDetail(se, quartzJobName, ident.groupname /*user + ":run:" + se.id*/)
         jobDetail.getJobDataMap().put("user", user)
         jobDetail.getJobDataMap().put("authContext", authContext)
         jobDetail.getJobDataMap().put("executionId", e.id.toString())

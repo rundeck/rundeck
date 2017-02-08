@@ -1224,12 +1224,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             abortstate = ABORT_FAILED
             failedreason = "unauthorized"
             statusStr = jobstate
+            return [abortstate: abortstate, jobstate: jobstate, statusStr: statusStr, failedreason: failedreason]
         } else if (killAsUser && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILLAS])) {
             jobstate = getExecutionState(e)
             abortstate = ABORT_FAILED
             failedreason = "unauthorized"
             statusStr = jobstate
-        } else if (scheduledExecutionService.quartzJobIsExecuting(ident.jobname, ident.groupname)) {
+            return [abortstate: abortstate, jobstate: jobstate, statusStr: statusStr, failedreason: failedreason]
+        }
+        if (frameworkService.isClusterModeEnabled()) {
+            def serverUUID = frameworkService.serverUUID
+            if (e.serverNodeUUID != serverUUID) {
+                jobstate = getExecutionState(e)
+                abortstate = ABORT_FAILED
+                failedreason = "Cannot abort execution on different cluster server: " + e.serverNodeUUID
+                statusStr = jobstate
+                return [abortstate: abortstate, jobstate: jobstate, statusStr: statusStr, failedreason: failedreason]
+            }
+        }
+        def quartzJobInstanceId = scheduledExecutionService.findExecutingQuartzJob(se, e)
+        if (quartzJobInstanceId) {
             boolean success = false
             int repeat = 3;
             //set abortedBy on the execution
@@ -1253,16 +1267,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     repeat--
                 }
             }
-
-            def didCancel = false
+            abortstate = success ? ABORT_PENDING : ABORT_FAILED
+            failedreason = success ? '' : 'Unable to modify the execution'
             if (success) {
-                didCancel = scheduledExecutionService.interruptJob(ident.jobname, ident.groupname, isadhocschedule)
+                def didCancel = scheduledExecutionService.interruptJob(
+                        quartzJobInstanceId,
+                        ident.jobname,
+                        ident.groupname,
+                        isadhocschedule
+                )
+                abortstate = didCancel ? ABORT_PENDING : ABORT_FAILED
+                failedreason = didCancel ? '' : 'Unable to interrupt the running job'
             }
-            abortstate = didCancel ? ABORT_PENDING : ABORT_FAILED
-            failedreason = didCancel ? '' : 'Unable to interrupt the running job'
             jobstate = EXECUTION_RUNNING
         } else if (null == dateCompleted) {
-            scheduledExecutionService.interruptJob(ident.jobname, ident.groupname, isadhocschedule)
+            scheduledExecutionService.interruptJob(null, ident.jobname, ident.groupname, isadhocschedule)
             saveExecutionState(
                 se ? se.id : null,
                 eid,
