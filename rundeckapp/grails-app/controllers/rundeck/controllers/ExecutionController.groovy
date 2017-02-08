@@ -33,7 +33,6 @@ import grails.converters.JSON
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import rundeck.CommandExec
 import rundeck.Execution
-import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
@@ -515,17 +514,17 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         def ScheduledExecution se = e.scheduledExecution
-        def abortresult=executionService.abortExecution(se, e, session.user,authContext)
+        ExecutionService.AbortResult abortresult=executionService.abortExecution(se, e, session.user, authContext)
 
 
         def didcancel=abortresult.abortstate in [ExecutionService.ABORT_ABORTED, ExecutionService.ABORT_PENDING]
 
-        def reasonstr=abortresult.failedreason
+        def reasonstr=abortresult.reason
         withFormat{
             json{
                 render(contentType:"text/json"){
                     delegate.cancelled=didcancel
-                    delegate.status=(abortresult.statusStr?abortresult.statusStr:(didcancel?'killed':'failed'))
+                    delegate.status=(abortresult.status?:(didcancel?'killed':'failed'))
                     if(reasonstr){
                         delegate.'reason'=reasonstr
                     }
@@ -535,7 +534,7 @@ class ExecutionController extends ControllerBase{
                 render(contentType:"text/xml",encoding:"UTF-8"){
                     result(error:false,success:didcancel){
                         success{
-                            message("Job status: ${abortresult.statusStr?abortresult.statusStr:(didcancel?'killed': 'failed')}")
+                            message("Job status: ${abortresult.status?:(didcancel?'killed': 'failed')}")
                         }
                     }
                 }
@@ -1409,11 +1408,11 @@ class ExecutionController extends ControllerBase{
             //authorized within service call
             killas= params.asUser
         }
-        def abortresult = executionService.abortExecution(se, e, user, authContext, killas)
+        ExecutionService.AbortResult abortresult = executionService.abortExecution(se, e, user, authContext, killas)
 
         def reportstate=[status: abortresult.abortstate]
-        if(abortresult.failedreason){
-            reportstate.reason= abortresult.failedreason
+        if(abortresult.reason){
+            reportstate.reason= abortresult.reason
         }
 
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
@@ -1428,7 +1427,7 @@ class ExecutionController extends ControllerBase{
                 apiService.renderSuccessXml(request,response) {
                     if (apiService.doWrapXmlResponse(request)) {
                         success {
-                            message("Execution status: ${abortresult.statusStr ? abortresult.statusStr : abortresult.jobstate}")
+                            delegate.'message'("Execution status: ${abortresult.status ?: abortresult.jobstate}")
                         }
                     }
                     abort(reportstate) {

@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.events.Listener
+import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
@@ -1206,6 +1207,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return builder.build()
     }
 
+    @ToString(includeNames = true)
+    class AbortResult {
+        String abortstate
+        String jobstate
+        String status
+        String reason
+    }
+
     def abortExecution(ScheduledExecution se, Execution e, String user, AuthContext authContext, String killAsUser = null) {
 
         metricService.markMeter(this.class.name,'executionAbortMeter')
@@ -1214,34 +1223,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         e.discard()
         def ident = scheduledExecutionService.getJobIdent(se,e)
         def isadhocschedule = se && e.status == "scheduled"
-        def statusStr
-        def abortstate
-        def jobstate
-        def failedreason
         def userIdent=killAsUser?:user
         if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_KILL])) {
-            jobstate = getExecutionState(e)
-            abortstate = ABORT_FAILED
-            failedreason = "unauthorized"
-            statusStr = jobstate
-            return [abortstate: abortstate, jobstate: jobstate, statusStr: statusStr, failedreason: failedreason]
+            return new AbortResult(
+                    abortstate: ABORT_FAILED,
+                    jobstate: getExecutionState(e),
+                    status: getExecutionState(e),
+                    reason: "unauthorized"
+            )
         } else if (killAsUser && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILLAS])) {
-            jobstate = getExecutionState(e)
-            abortstate = ABORT_FAILED
-            failedreason = "unauthorized"
-            statusStr = jobstate
-            return [abortstate: abortstate, jobstate: jobstate, statusStr: statusStr, failedreason: failedreason]
+            return new AbortResult(
+                    abortstate: ABORT_FAILED,
+                    jobstate: getExecutionState(e),
+                    status: getExecutionState(e),
+                    reason: "unauthorized"
+            )
         }
         if (frameworkService.isClusterModeEnabled()) {
             def serverUUID = frameworkService.serverUUID
             if (e.serverNodeUUID != serverUUID) {
-                jobstate = getExecutionState(e)
-                abortstate = ABORT_FAILED
-                failedreason = "Cannot abort execution on different cluster server: " + e.serverNodeUUID
-                statusStr = jobstate
-                return [abortstate: abortstate, jobstate: jobstate, statusStr: statusStr, failedreason: failedreason]
+                return new AbortResult(
+                        abortstate: ABORT_FAILED,
+                        jobstate: getExecutionState(e),
+                        status: getExecutionState(e),
+                        failedreason: "Cannot abort execution on different cluster server: " + e.serverNodeUUID
+                )
             }
         }
+        def result = new AbortResult()
+
         def quartzJobInstanceId = scheduledExecutionService.findExecutingQuartzJob(se, e)
         if (quartzJobInstanceId) {
             boolean success = false
@@ -1267,8 +1277,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     repeat--
                 }
             }
-            abortstate = success ? ABORT_PENDING : ABORT_FAILED
-            failedreason = success ? '' : 'Unable to modify the execution'
+            result.abortstate = success ? ABORT_PENDING : ABORT_FAILED
+            result.reason = success ? '' : 'Unable to modify the execution'
             if (success) {
                 def didCancel = scheduledExecutionService.interruptJob(
                         quartzJobInstanceId,
@@ -1276,10 +1286,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         ident.groupname,
                         isadhocschedule
                 )
-                abortstate = didCancel ? ABORT_PENDING : ABORT_FAILED
-                failedreason = didCancel ? '' : 'Unable to interrupt the running job'
+                result.abortstate = didCancel ? ABORT_PENDING : ABORT_FAILED
+                result.reason = didCancel ? '' : 'Unable to interrupt the running job'
             }
-            jobstate = EXECUTION_RUNNING
+            result.jobstate = EXECUTION_RUNNING
         } else if (null == dateCompleted) {
             scheduledExecutionService.interruptJob(null, ident.jobname, ident.groupname, isadhocschedule)
             saveExecutionState(
@@ -1294,15 +1304,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     null,
                     null
                 )
-            abortstate = ABORT_ABORTED
-            jobstate = EXECUTION_ABORTED
+            result.abortstate = ABORT_ABORTED
+            result.jobstate = EXECUTION_ABORTED
         } else {
-            jobstate = getExecutionState(e)
-            statusStr = 'previously ' + jobstate
-            abortstate = ABORT_FAILED
-            failedreason = 'Job is not running'
+            result.jobstate = getExecutionState(e)
+            result.status = 'previously ' + result.jobstate
+            result.abortstate = ABORT_FAILED
+            result.reason = 'Job is not running'
         }
-        return [abortstate:abortstate,jobstate:jobstate,statusStr:statusStr, failedreason: failedreason]
+        result
     }
 
     /**
