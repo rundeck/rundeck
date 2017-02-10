@@ -1215,23 +1215,28 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         String reason
     }
 
+    /**
+     * Abort execution if authorized
+     * @param se job
+     * @param e execution
+     * @param user username
+     * @param authContext auth context
+     * @param killAsUser as username
+     * @return AbortResult
+     */
     def abortExecution(ScheduledExecution se, Execution e, String user, AuthContext authContext, String killAsUser = null) {
-
-        metricService.markMeter(this.class.name,'executionAbortMeter')
-        def eid=e.id
-        def dateCompleted = e.dateCompleted
-        e.discard()
-        def ident = scheduledExecutionService.getJobIdent(se,e)
-        def isadhocschedule = se && e.status == "scheduled"
-        def userIdent=killAsUser?:user
-        if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_KILL])) {
+        if (!frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILL])) {
             return new AbortResult(
                     abortstate: ABORT_FAILED,
                     jobstate: getExecutionState(e),
                     status: getExecutionState(e),
                     reason: "unauthorized"
             )
-        } else if (killAsUser && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILLAS])) {
+        } else if (killAsUser && !frameworkService.authorizeProjectExecutionAll(
+                authContext,
+                e,
+                [AuthConstants.ACTION_KILLAS]
+        )) {
             return new AbortResult(
                     abortstate: ABORT_FAILED,
                     jobstate: getExecutionState(e),
@@ -1239,6 +1244,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     reason: "unauthorized"
             )
         }
+        abortExecutionDirect(se, e, user, killAsUser)
+    }
+
+    /**
+     * Abort execution without testing authorization
+     * @param se job
+     * @param e execution
+     * @param user username
+     * @param killAsUser as username
+     * @return AbortResult
+     */
+    def abortExecutionDirect(ScheduledExecution se, Execution e, String user, String killAsUser = null) {
+        metricService.markMeter(this.class.name, 'executionAbortMeter')
+        def eid = e.id
+        def dateCompleted = e.dateCompleted
+        e.discard()
+        def ident = scheduledExecutionService.getJobIdent(se, e)
+        def isadhocschedule = se && e.status == "scheduled"
+        def userIdent = killAsUser?:user
         if (frameworkService.isClusterModeEnabled()) {
             def serverUUID = frameworkService.serverUUID
             if (e.serverNodeUUID != serverUUID) {
