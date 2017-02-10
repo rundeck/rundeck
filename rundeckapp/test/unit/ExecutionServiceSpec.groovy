@@ -1857,6 +1857,7 @@ class ExecutionServiceSpec extends Specification {
                 user: 'userB',
                 project: 'AProject',
                 status: isadhocschedule ? 'scheduled' : null,
+                serverNodeUUID: (cmatch ? null : UUID.randomUUID().toString()),
                 workflow: new Workflow(
                         keepgoing: true,
                         commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
@@ -1875,21 +1876,28 @@ class ExecutionServiceSpec extends Specification {
 
         1 * service.scheduledExecutionService.getJobIdent(job, e) >> [jobname: 'test', groupname: 'testgroup']
         1 * service.frameworkService.authorizeProjectExecutionAll(auth, e, [AuthConstants.ACTION_KILL]) >> true
-        1 * service.scheduledExecutionService.quartzJobIsExecuting('test', 'testgroup') >> wasScheduledPreviously
-        1 * service.scheduledExecutionService.interruptJob('test', 'testgroup', isadhocschedule) >> didinterrupt
-        _ * service.reportService.reportExecutionResult(_) >> [:]
+        1 * service.frameworkService.isClusterModeEnabled() >> iscluster
+        if(cmatch) {
+            1 * service.scheduledExecutionService.findExecutingQuartzJob(job, e) >>
+                    (wasScheduledPreviously ? 'unique-id' : null)
+            1 * service.scheduledExecutionService.interruptJob(_, 'test', 'testgroup', isadhocschedule) >>
+                    didinterrupt
+            _ * service.reportService.reportExecutionResult(_) >> [:]
+        }
 
 
         where:
-        isadhocschedule | wasScheduledPreviously | didinterrupt | eAbortstate | eJobstate
-        true            | true                   | true         | 'pending'   | 'running'
-        false           | true                   | true         | 'pending'   | 'running'
-        true            | false                  | true         | 'aborted'   | 'aborted'
-        false           | false                  | true         | 'aborted'   | 'aborted'
-        true            | true                   | false        | 'failed'    | 'running'
-        false           | true                   | false        | 'failed'    | 'running'
-        true            | false                  | false        | 'aborted'   | 'aborted'
-        false           | false                  | false        | 'aborted'   | 'aborted'
+        isadhocschedule | wasScheduledPreviously | didinterrupt | iscluster | cmatch | eAbortstate | eJobstate
+        true            | true                   | true         | false     | true   | 'pending'   | 'running'
+        false           | true                   | true         | false     | true   | 'pending'   | 'running'
+        true            | false                  | true         | false     | true   | 'aborted'   | 'aborted'
+        false           | false                  | true         | false     | true   | 'aborted'   | 'aborted'
+        true            | true                   | false        | false     | true   | 'failed'    | 'running'
+        false           | true                   | false        | false     | true   | 'failed'    | 'running'
+        true            | false                  | false        | false     | true   | 'aborted'   | 'aborted'
+        false           | false                  | false        | false     | true   | 'aborted'   | 'aborted'
+        true            | true                   | true         | true      | true   | 'pending'   | 'running'
+        true            | true                   | true         | true      | false  | 'failed'    | 'running'
 
     }
 }
