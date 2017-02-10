@@ -1266,12 +1266,30 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (frameworkService.isClusterModeEnabled()) {
             def serverUUID = frameworkService.serverUUID
             if (e.serverNodeUUID != serverUUID) {
-                return new AbortResult(
-                        abortstate: ABORT_FAILED,
-                        jobstate: getExecutionState(e),
-                        status: getExecutionState(e),
-                        failedreason: "Cannot abort execution on different cluster server: " + e.serverNodeUUID
+                def ereply = grailsEvents?.event(
+                        'cluster',
+                        'abortExecution',
+                        [
+                                jobId      : se?.extid,
+                                executionId: e.id,
+                                project    : e.project,
+                                user       : user,
+                                killAsUser : killAsUser,
+                                uuidSource : serverUUID,
+                                uuidTarget : e.serverNodeUUID
+                        ]
                 )
+                Map abortresult = [
+                        abortstate: ABORT_FAILED,
+                        jobstate  : getExecutionState(e),
+                        status    : getExecutionState(e),
+                        reason    : "Execution is running on a different cluster server: " + e.serverNodeUUID
+                ]
+                def resp = ereply?.value
+                if (resp && resp instanceof Map) {
+                    return new AbortResult(abortresult + resp)
+                }
+                return new AbortResult(abortresult)
             }
         }
         def result = new AbortResult()
