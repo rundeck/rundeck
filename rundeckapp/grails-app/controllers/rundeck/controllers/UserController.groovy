@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
+import groovy.time.TimeCategory
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.FrameworkService
@@ -280,8 +281,9 @@ class UserController extends ControllerBase{
     }
 
 
-    def generateUserToken(User user) {
+    def generateUserToken(User user, String tokenTime, String tokenTimeUnit, String tokenUser, String tokenRoles) {
         boolean valid=false
+
         withForm{
             valid=true
             g.refreshFormTokensHeader()
@@ -297,6 +299,17 @@ class UserController extends ControllerBase{
                 }
             }
         }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+
+        boolean isTokenTimeOk = tokenTime.isNumber() && (tokenTime.toInteger()>=0)
+        boolean isTimeUnitOk = (tokenTimeUnit=='m' || tokenTimeUnit=='h' || tokenTimeUnit=='d')
+        def tokenTimeNumber = 0
+        if(isTokenTimeOk){
+            tokenTimeNumber = tokenTime.toInteger()
+        }
+
         if(!valid){
             return
         }
@@ -315,8 +328,62 @@ class UserController extends ControllerBase{
         //default to current user profile
         def login = params.login
         def result
-        def roles = request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect { it.name }?.join(", ")
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def roles = tokenRoles
+
+        if(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN)){
+
+            login = tokenUser
+        }else {
+            isTokenTimeOk=true
+            isTimeUnitOk=true
+            String propertyDuration = servletContext.getAttribute("TOKEN_TIMEOUT")
+            tokenTimeUnit='m'
+            tokenTimeNumber=10
+            if(propertyDuration){
+                def tokenTimeUnitTmp=propertyDuration.substring(propertyDuration.length()-1)
+                def tokenTimeNumberTmp=propertyDuration.substring(0,propertyDuration.length()-1)
+                if((tokenTimeUnitTmp=='m' || tokenTimeUnitTmp=='h' || tokenTimeUnitTmp=='d') &&
+                        tokenTimeNumberTmp.isNumber()){
+                    tokenTimeNumber = tokenTimeNumberTmp.toInteger()
+                    tokenTimeUnit = tokenTimeUnitTmp
+                }
+
+            }
+
+            def rolesArr = request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect {
+                it.name
+            }
+            def tokenRolesArr = roles.split(",")
+            print(rolesArr)
+            print(tokenRolesArr)
+            def invalidGrp = false;
+            tokenRolesArr.each {
+                print(it)
+                if(!rolesArr.contains(it)){
+                    invalidGrp = true
+                }
+            }
+            if(invalidGrp){
+                def error = "Invalid Group"
+                log.error error
+                result=[result: false, error: error]
+                withFormat {
+                    html{
+                        if (result.error) {
+                            flash.error = result.error
+                        }else{
+                            flash.newtoken=result.apitoken
+                        }
+                        redirect(controller: 'user', action: 'profile', params: [login: login])
+                    }
+                    json {
+                        render(result as JSON)
+                    }
+                }
+            }
+        }
+
         if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN) || frameworkService.authorizeApplicationResourceType(authContext,
                 AuthConstants.TYPE_USER, AuthConstants.GENERATE_SELF_TOKEN))) {
@@ -329,9 +396,32 @@ class UserController extends ControllerBase{
                 def error = "Couldn't find user: ${login}"
                 log.error error
                 result=[result: false, error: error]
+            }
+            if(!(isTokenTimeOk && isTimeUnitOk && roles.length()>0)){
+                def error = "Wrong parameters"
+                log.error error
+                result=[result: false, error: error]
             }else{
                 try{
-                    AuthToken token =apiService.generateAuthToken(u, roles)
+                    def newDate  = null;
+                    if(tokenTimeNumber>0){
+                        def currentDate = new Date()
+                        use(TimeCategory){
+                            switch (tokenTimeUnit){
+                                case 'm':
+                                    newDate = currentDate + tokenTimeNumber.minutes
+                                    break
+                                case 'h':
+                                    newDate = currentDate + tokenTimeNumber.hours
+                                    break
+                                case 'd':
+                                    newDate = currentDate + tokenTimeNumber.days
+                                    break
+                            }
+                        }
+                    }
+
+                    AuthToken token =apiService.generateAuthToken(u, roles, newDate)
                     result = [result: true, apitoken: token.token]
                 }catch (Exception e){
                     result = [result: false, error: e.message]
@@ -375,7 +465,7 @@ class UserController extends ControllerBase{
                 log.error error
                 result = [result: false, error: error]
             } else {
-                def t= AuthToken.findByUserAndToken(user,params.token);
+                def t= AuthToken.findByToken(params.token);
                 if(t){
                     token=t
                 }else{
@@ -450,7 +540,7 @@ class UserController extends ControllerBase{
                 result=[result: false, error: error]
             }else{
                 def findtoken=params.token
-                def found=AuthToken.findByUserAndToken(u,findtoken)
+                def found=AuthToken.findByToken(findtoken)
                 if(!found){
                     def error = "Couldn't find token ${findtoken} for user ${login}"
                     log.error error

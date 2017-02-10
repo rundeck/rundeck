@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import groovy.time.TimeCategory
 import rundeck.AuthToken
 import rundeck.User
 
@@ -115,13 +116,15 @@ class ApiController extends ControllerBase{
         withFormat {
             xml {
                 apiService.renderSuccessXml(request, response) {
-                    delegate.token(id: oldtoken.token, user: oldtoken.user.login)
+                    delegate.token(id: oldtoken.token, user: oldtoken.user.login, roles:oldtoken.authRoles, expiration:oldtoken.expiration)
                 }
             }
             json {
                 render(contentType: 'application/json') {
                     delegate.id = oldtoken.token
                     delegate.user = oldtoken.user.login
+                    delegate.roles = oldtoken.authRoles
+                    delegate.expiration = oldtoken.expiration
                 }
 
             }
@@ -146,37 +149,99 @@ class ApiController extends ControllerBase{
         if(request.method=='POST'){
             //parse input json or xml
             def tokenuser=params.user
-            if (!params.user) {
+            def roles=""
+            def tokenDuration=""
+            //if (!params.user) {
                 def errormsg="Format was not valid."
                 def parsed=apiService.parseJsonXmlWith(request,response,[
                         json:{data->
-                            tokenuser=data.user
-                            if(!tokenuser) {
-                                errormsg += " json: expected 'user' property"
+                            if (!params.user) {
+                                tokenuser = data.user
+                                if (!tokenuser) {
+                                    errormsg += " json: expected 'user' property"
+                                }
+                            }
+                            roles = data.roles
+                            tokenDuration = data.duration
+                            if(!roles){
+                                errormsg += " json: expected 'roles' property"
                             }
                         },
                         xml:{xml->
-                            tokenuser=xml.'@user'.text()
-                            if (!tokenuser) {
-                                errormsg += " xml: expected 'user' attribute"
+                            if (!params.user) {
+                                tokenuser = xml.'@user'.text()
+                                if (!tokenuser) {
+                                    errormsg += " xml: expected 'user' attribute"
+                                }
+                            }
+                            roles = xml.'@roles'.text()
+                            tokenDuration = xml.'@duration'.text()
+                            if(!roles){
+                                errormsg += " xml: expected 'roles' attribute"
                             }
                         }
                 ])
                 if(!parsed){
                     return
                 }
-                if (!tokenuser) {
+                if (!tokenuser || !roles) {
                     return apiService.renderErrorFormat(response, [
                             status: HttpServletResponse.SC_BAD_REQUEST,
                             code: 'api.error.invalid.request',
                             args: [errormsg]
                     ])
                 }
+            //}
+            String propertyDuration = servletContext.getAttribute("TOKEN_TIMEOUT")
+            def tokenTimeUnit='m'
+            def tokenTimeNumber=10
+            if(tokenDuration){
+                def tokenTimeUnitTmp=tokenDuration.substring(tokenDuration.length()-1)
+                def tokenTimeNumberTmp=tokenDuration.substring(0,tokenDuration.length()-1)
+                if((tokenTimeUnitTmp=='m' || tokenTimeUnitTmp=='h' || tokenTimeUnitTmp=='d') &&
+                        tokenTimeNumberTmp.isNumber()){
+                    tokenTimeNumber = tokenTimeNumberTmp.toInteger()
+                    tokenTimeUnit = tokenTimeUnitTmp
+                }else{
+                    return apiService.renderErrorFormat(response, [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: 'api.error.invalid.request',
+                            args: ["Duration format was not valid"]
+                    ])
+                }
+            }else {
+                if (propertyDuration) {
+                    def tokenTimeUnitTmp = propertyDuration.substring(propertyDuration.length() - 1)
+                    def tokenTimeNumberTmp = propertyDuration.substring(0, propertyDuration.length() - 1)
+                    if ((tokenTimeUnitTmp == 'm' || tokenTimeUnitTmp == 'h' || tokenTimeUnitTmp == 'd') &&
+                            tokenTimeNumberTmp.isNumber()) {
+                        tokenTimeNumber = tokenTimeNumberTmp.toInteger()
+                        tokenTimeUnit = tokenTimeUnitTmp
+                    }
+
+                }
+            }
+            def newDate  = null;
+            if(tokenTimeNumber>0){
+                def currentDate = new Date()
+                use(TimeCategory){
+                    switch (tokenTimeUnit){
+                        case 'm':
+                            newDate = currentDate + tokenTimeNumber.minutes
+                            break
+                        case 'h':
+                            newDate = currentDate + tokenTimeNumber.hours
+                            break
+                        case 'd':
+                            newDate = currentDate + tokenTimeNumber.days
+                            break
+                    }
+                }
             }
 
             //create token for a user
             def User u = userService.findOrCreateUser(tokenuser)
-            def token = apiService.generateAuthToken(u)
+            def token = apiService.generateAuthToken(u, roles, newDate)
             response.status=HttpServletResponse.SC_CREATED
             return renderToken(token)
         }

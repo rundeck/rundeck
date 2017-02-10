@@ -216,6 +216,12 @@ class BootStrap {
                  }
              }
 
+             def defaultTokenTimeout=properties.getProperty("rundeck.user.tokens.duration")
+             if(defaultTokenTimeout){
+                 servletContext.setAttribute("TOKEN_TIMEOUT", defaultTokenTimeout)
+             }
+
+
             def result=timer("FrameworkService extractEmbeddedPlugins"){
                 frameworkService.extractEmbeddedPlugins(grailsApplication)
             }

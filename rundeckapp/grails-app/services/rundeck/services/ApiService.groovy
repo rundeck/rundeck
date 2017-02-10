@@ -77,13 +77,13 @@ class ApiService {
      * @param u
      * @return
      */
-    AuthToken generateAuthToken(User u, String roles){
+    AuthToken generateAuthToken(User u, String roles, Date expiration){
 
         String newtoken = genRandomString()
         while (AuthToken.findByToken(newtoken) != null) {
             newtoken = genRandomString()
         }
-        AuthToken token = new AuthToken(token: newtoken, authRoles: roles, user: u)
+        AuthToken token = new AuthToken(token: newtoken, authRoles: roles, user: u, expiration: expiration)
 
         if (token.save()) {
             log.debug("GENERATE TOKEN ${newtoken} for User ${u.login} with roles: ${token.authRoles}")

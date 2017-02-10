@@ -54,11 +54,35 @@
             }
         }).success(_ajaxReceiveTokens.curry('api_req_tokens'));
     }
-    function generateUserToken(login,elem){
+    function generateUserToken(admin,login,elem){
+        var tokenUser=login;
+        var tokenRoles='';
+        var tokenTime='';
+        var tokenTimeUnit='';
+        if(admin){
+            tokenUser=$(elem).down('input[name="tokenUser"]').value;
+            tokenRoles=$(elem).down('input[name="tokenRoles"]').value;
+            tokenTime=$(elem).down('input[name="tokenTime"]').value;
+            tokenTimeUnit=$(elem).down('select[name="tokenTimeUnit"]').value;
+        }else{
+            tokenRoles= "";
+            var arr= $$('select[name="tokenRoles"] option:selected');
+            for (var i = 0; i < arr.length; i++) {
+                if(tokenRoles.length == 0){
+                    tokenRoles= tokenRoles + arr[i].value;
+                }else{
+                    tokenRoles= tokenRoles + ',' + arr[i].value;
+                }
+
+            }
+        }
+
+
         jQuery.ajax({
             type:'POST',
             dataType:'json',
-            url:_genUrl(appLinks.userGenerateUserToken,{login:login}),
+            url:_genUrl(appLinks.userGenerateUserToken,{login:login, tokenTime:tokenTime, tokenTimeUnit:tokenTimeUnit,
+                            tokenUser:tokenUser, tokenRoles:tokenRoles}),
             beforeSend:_ajaxSendTokens.curry('api_req_tokens'),
             success:function(data,status,jqxhr){
                 if( data.result){
@@ -106,8 +130,8 @@
         Event.observe($(elem).down('.gentokenbtn'),'click',mkhndlr(generateToken.curry(login,elem)));
         $$(' .apitokenform').each(addRowBehavior);
     }
-    function addUserBehavior(elem,login){
-        Event.observe($(elem).down('.genusertokenbtn'),'click',mkhndlr(generateUserToken.curry(login,elem)));
+    function addUserBehavior(admin,elem,login){
+        Event.observe($(elem).down('.genusertokenbtn'),'click',mkhndlr(generateUserToken.curry(admin,login,elem)));
         $$(' .apitokenform').each(addRowBehavior);
     }
     function highlightNew(elem){

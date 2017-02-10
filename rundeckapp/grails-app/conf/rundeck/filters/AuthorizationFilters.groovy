@@ -202,13 +202,18 @@ public class AuthorizationFilters implements ApplicationContextAware{
         if (context.getAttribute("TOKENS_FILE_PROPS")) {
             Properties tokens = (Properties) context.getAttribute("TOKENS_FILE_PROPS")
             if (tokens[authtoken]) {
-                def user = tokens[authtoken]
+                def userLine = tokens[authtoken]
+                def user = userLine.toString().split(",")[0]
                 log.debug("loginCheck found user ${user} via tokens file, token: ${authtoken}");
                 return user
             }
         }
         def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
         if (tokenobj) {
+            def now = new Date()
+            if(tokenobj.expiration != null && tokenobj.expiration<now){
+                    return null
+            }
             User user = tokenobj?.user
             log.debug("loginCheck found user ${user} via DB, token: ${authtoken}");
             return user.login
@@ -229,14 +234,20 @@ public class AuthorizationFilters implements ApplicationContextAware{
         if (context.getAttribute("TOKENS_FILE_PROPS")) {
             Properties tokens = (Properties) context.getAttribute("TOKENS_FILE_PROPS")
             if (tokens[authtoken]) {
-                def user = tokens[authtoken]
-                log.debug("loginCheck found user ${user} via tokens file, token: ${authtoken}");
-                return user
+
+                def userLine = tokens[authtoken]
+                def groupList = []
+                if(userLine.toString().split(",").length>1){
+                    groupList = userLine.toString().split(",").drop(1)
+                }
+                def roles = groupList.join(',')
+                log.debug("loginCheck found roles ${roles} via tokens file, token: ${authtoken}");
+                return roles
             }
         }
         def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
         if (tokenobj) {
-            String roles = tokenobj?.authRoles
+            def roles = tokenobj?.authRoles
             log.debug("loginCheck found roles ${roles} via DB, token: ${authtoken}");
             return roles
         }
