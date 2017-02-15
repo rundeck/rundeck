@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.PluggableStoragePluginProviderService
@@ -270,6 +271,8 @@ beans={
     }
     dbStoragePluginFactory(DbStoragePluginFactory)
     pluginRegistry['db']='dbStoragePluginFactory'
+    storageTreeExecutionFileStoragePluginFactory(TreeExecutionFileStoragePluginFactory)
+    pluginRegistry['storage-tree'] = 'storageTreeExecutionFileStoragePluginFactory'
     /**
      * Registry bean contains both kinds of plugin
      */
