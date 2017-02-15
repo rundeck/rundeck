@@ -63,4 +63,28 @@ class OptionSpec extends Specification {
         'keys/abc' | _
         null       | _
     }
+
+    def "to map option type config"() {
+        given:
+        def opt = new Option(
+                name: 'bob',
+                optionType: 'atype',
+                configData: '{"key":"val","key2":"val2"}'
+        )
+        when:
+        def result = opt.toMap()
+        then:
+        result.type == 'atype'
+        result.config == [key: 'val', key2: 'val2']
+
+    }
+
+    def "from map option type config"() {
+        given:
+        def opt = Option.fromMap('test', [type: 'atype', config: [a: 'b', c: 'd']])
+        expect:
+        opt.optionType == 'atype'
+        opt.configMap == [a: 'b', c: 'd']
+
+    }
 }
