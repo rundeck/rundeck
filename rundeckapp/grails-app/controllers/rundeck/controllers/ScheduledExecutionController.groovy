@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
@@ -107,6 +106,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def UserService userService
     def ScmService scmService
     def PluginService pluginService
+    def FileUploadService fileUploadService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -2865,6 +2865,22 @@ class ScheduledExecutionController  extends ControllerBase{
             inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.')||it.key.startsWith('nodeInclude')|| it.key.startsWith('nodeExclude')}.findAll { it.value })
         }
         inputOpts['executionType'] = 'user'
+        //handle uploaded files
+        if (request instanceof MultipartRequest) {
+            ((MultipartRequest) request).fileMap.each { String name, file ->
+                if (name.startsWith('extra.option.')) {
+                    //process file option upload
+                    String optname = name.substring('extra.option.'.length())
+                    String ref = fileUploadService.receiveFile(
+                            file.inputStream,
+                            file.size,
+                            optname,
+                            scheduledExecution.extid
+                    )
+                    inputOpts["option.$optname"] = ref
+                }
+            }
+        }
         def result = executionService.executeJob(scheduledExecution, authContext,session.user, inputOpts)
 
         if (result.error){
@@ -3278,16 +3294,17 @@ class ScheduledExecutionController  extends ControllerBase{
             ((MultipartRequest) request).fileMap.each { String name, file ->
                 if (name.startsWith('option.')) {
                     //process file option upload
-                    String fuploadPlugin = 'filesystem' //TODO: from option config
-
-                    def plugin = pluginService.getPlugin(fuploadPlugin, ExecutionFileStoragePlugin)
-
-                    plugin.store(jobid + name + file.originalFilename + UUID.randomUUID().toString(),
-                                 file.inputStream,
-                                 file.size,
-                                 new Date()
-
-                    )
+                    //XXX
+//                    String fuploadPlugin = 'filesystem' //TODO: from option config
+//
+//                    def plugin = pluginService.getPlugin(fuploadPlugin, ExecutionFileStoragePlugin)
+//
+//                    plugin.store(jobid + name + file.originalFilename + UUID.randomUUID().toString(),
+//                                 file.inputStream,
+//                                 file.size,
+//                                 new Date()
+//
+//                    )
                 } else if (name == 'run' && file.contentType == 'application/json') {
                     //process job run json
                 }

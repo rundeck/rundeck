@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
@@ -172,6 +173,7 @@ beans={
      */
     executionFileStoragePluginProviderService(ExecutionFileStoragePluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+//        pluginRegistry=ref("rundeckPluginRegistry")
     }
     logFileTaskExecutor(SimpleAsyncTaskExecutor,"LogFileStorage"){
         concurrencyLimit= 2 + (application.config.rundeck?.execution?.logs?.fileStorage?.concurrencyLimit ?: 5)
@@ -273,6 +275,12 @@ beans={
     pluginRegistry['db']='dbStoragePluginFactory'
     storageTreeExecutionFileStoragePluginFactory(TreeExecutionFileStoragePluginFactory)
     pluginRegistry['storage-tree'] = 'storageTreeExecutionFileStoragePluginFactory'
+
+    def uploadsDir = new File(varDir, 'upload')
+    fsFileUploadPlugin(FSFileUploadPlugin) {
+        basePath = uploadsDir.absolutePath
+    }
+    pluginRegistry['filesystem-file-upload'] = 'fsFileUploadPlugin'
     /**
      * Registry bean contains both kinds of plugin
      */
