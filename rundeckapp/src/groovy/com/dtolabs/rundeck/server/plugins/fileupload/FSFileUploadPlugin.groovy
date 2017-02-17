@@ -62,8 +62,13 @@ class FSFileUploadPlugin implements FileUploadPlugin {
         String fileid = UUID.randomUUID().toString()
         File output = new File(basedir, fileid)
         System.err.println("uploadFile: $length, $inputName, $jobId -> $output.absolutePath")
+        long copied = -1
         output.withOutputStream { out ->
-            Streams.copy(content, out, false)
+            copied = Streams.copy(content, out, false)
+        }
+        if (copied != length) {
+            output.delete()
+            throw new IOException("Failed to copy file content ($copied of $length copied)")
         }
         return fileid
     }

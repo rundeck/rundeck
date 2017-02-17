@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
+import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
@@ -51,6 +52,7 @@ import org.codehaus.groovy.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.rundeck.util.Toposort
+import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.MultipartRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
@@ -114,42 +116,43 @@ class ScheduledExecutionController  extends ControllerBase{
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
-            delete: ['POST','GET'],
-            deleteBulk: 'POST',
-            flipExecutionDisabledBulk:'POST',
-            flipExecutionEnabledBulk:'POST',
-            flipScheduleDisabledBulk:'POST',
-            flipScheduleEnabledBulk:'POST',
-            flipScheduleEnabled:'POST',
-            flipExecutionEnabled: 'POST',
-            scheduleJobInline: 'POST',
-            runJobInline: 'POST',
-            runJobNow: 'POST',
-            runJobLater: 'POST',
-            runAdhocInline: 'POST',
-            save: 'POST',
-            saveAndExec: 'POST',
-            update: 'POST',
-            upload: 'GET',
-            uploadPost: ['POST'],
-            apiFlipExecutionEnabled: 'POST',
-            apiFlipExecutionEnabledBulk: 'POST',
-            apiFlipScheduleEnabled: 'POST',
-            apiFlipScheduleEnabledBulk: 'POST',
-            apiJobCreateSingle: 'POST',
-            apiJobRun: ['POST','GET'],
-            apiJobsImport: 'POST',
-            apiJobsImportv14: 'POST',
-            apiJobDelete: 'DELETE',
-            apiRunScript: 'POST',
-            apiRunScriptv14: 'POST',
-            apiRunScriptUrl: ['POST','GET'],
-            apiRunScriptUrlv14: ['POST','GET'],
-            apiRunCommand: ['POST','GET'],
-            apiRunCommandv14: ['POST','GET'],
-            apiJobDeleteBulk: ['DELETE', 'POST'],
+            delete                       : ['POST', 'GET'],
+            deleteBulk                   : 'POST',
+            flipExecutionDisabledBulk    : 'POST',
+            flipExecutionEnabledBulk     : 'POST',
+            flipScheduleDisabledBulk     : 'POST',
+            flipScheduleEnabledBulk      : 'POST',
+            flipScheduleEnabled          : 'POST',
+            flipExecutionEnabled         : 'POST',
+            scheduleJobInline            : 'POST',
+            runJobInline                 : 'POST',
+            runJobNow                    : 'POST',
+            runJobLater                  : 'POST',
+            runAdhocInline               : 'POST',
+            save                         : 'POST',
+            saveAndExec                  : 'POST',
+            update                       : 'POST',
+            upload                       : 'GET',
+            uploadPost                   : ['POST'],
+            apiFlipExecutionEnabled      : 'POST',
+            apiFlipExecutionEnabledBulk  : 'POST',
+            apiFlipScheduleEnabled       : 'POST',
+            apiFlipScheduleEnabledBulk   : 'POST',
+            apiJobCreateSingle           : 'POST',
+            apiJobRun                    : ['POST', 'GET'],
+            apiJobFileUpload             : 'POST',
+            apiJobsImport                : 'POST',
+            apiJobsImportv14             : 'POST',
+            apiJobDelete                 : 'DELETE',
+            apiRunScript                 : 'POST',
+            apiRunScriptv14              : 'POST',
+            apiRunScriptUrl              : ['POST', 'GET'],
+            apiRunScriptUrlv14           : ['POST', 'GET'],
+            apiRunCommand                : ['POST', 'GET'],
+            apiRunCommandv14             : ['POST', 'GET'],
+            apiJobDeleteBulk             : ['DELETE', 'POST'],
             apiJobClusterTakeoverSchedule: 'PUT',
-            apiJobUpdateSingle: 'PUT'
+            apiJobUpdateSingle           : 'PUT'
     ]
 
     def cancel (){
@@ -2866,11 +2869,12 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         inputOpts['executionType'] = 'user'
         //handle uploaded files
+        def optionParameterPrefix = "extra.option."
         if (request instanceof MultipartRequest) {
             ((MultipartRequest) request).fileMap.each { String name, file ->
-                if (name.startsWith('extra.option.')) {
+                if (name.startsWith(optionParameterPrefix)) {
                     //process file option upload
-                    String optname = name.substring('extra.option.'.length())
+                    String optname = name.substring(optionParameterPrefix.length())
                     String ref = fileUploadService.receiveFile(
                             file.inputStream,
                             file.size,
@@ -3393,6 +3397,110 @@ class ScheduledExecutionController  extends ControllerBase{
                 return executionService.respondExecutionsJson(request,response,[e],[single:true])
             }
         }
+    }
+
+    /**
+     * API v19, File upload input for job
+     * @return
+     */
+    def apiJobFileUpload() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+            return
+        }
+        String jobid = params.id
+
+        ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
+            return
+        }
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scheduledExecution.project
+        )
+
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+                                                     scheduledExecution.project
+        )) {
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                                                           code  : 'api.error.item.unauthorized', args: ['Run', 'Job ' +
+                    'ID', jobid]]
+            )
+        }
+        String optionParameterPrefix = 'option.'
+        def fileOptions = scheduledExecution.listFileOptions()
+
+        if (!fileOptions) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.job-upload.invalid',
+                    args  : [jobid]
+            ]
+            )
+        }
+        def fileOptionNames = fileOptions*.name
+        def uploadedFileRefs = [:]
+        if (request instanceof MultipartRequest) {
+            def invalid = []
+            Map<String,MultipartFile> optionRequestFiles = [:]
+            ((MultipartRequest) request).fileMap.each { String name, file ->
+                if (name.startsWith(optionParameterPrefix)) {
+                    //process file option upload
+                    String optname = name.substring(optionParameterPrefix.length())
+                    //require file option
+                    if (optname in fileOptionNames) {
+                        optionRequestFiles[optname] = file
+                    } else {
+                        invalid << name
+                    }
+                } else {
+                    invalid << name
+                }
+            }
+            if (invalid) {
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.job-upload.option.unexpected',
+                        args  : [invalid.join(', ')]
+                ]
+                )
+            }
+            optionRequestFiles.each { String optname, MultipartFile file ->
+                String ref = fileUploadService.receiveFile(
+                        file.inputStream,
+                        file.size,
+                        optname,
+                        scheduledExecution.extid
+                )
+                uploadedFileRefs[optname] = ref
+            }
+        } else {
+            //single option
+            if (!apiService.requireParameters(params, response, ['optionName'])) {
+                return
+            }
+            if (!(fileOptionNames.contains(params.optionName))) {
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.job-upload.option.unexpected',
+                        args  : [params.optionName]
+                ]
+                )
+            }
+            //request body is file
+            String ref = fileUploadService.receiveFile(
+                    request.getInputStream(),
+                    request.contentLength,
+                    params.optionName,
+                    scheduledExecution.extid
+            )
+            uploadedFileRefs[params.optionName] = ref
+        }
+        respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: ['xml', 'json']])
     }
 
     /**
