@@ -55,6 +55,11 @@ View the [Index](#index) listing API paths.
 
 Changes introduced by API Version number:
 
+**Version 19**:
+
+* New Endpoints.
+    - [`POST /api/19/job/[ID]/file/upload`][/api/V/job/[ID]/file/upload] - Upload a file as a job option value
+
 **Version 18**:
 
 * New Endpoints.
@@ -2347,6 +2352,92 @@ A single object:
     "averageDuration": long (milliseconds)
 }
 ~~~~~~~~~~~~
+
+### Upload a File for a Job Option
+
+Job Options of type `file` require a file input. You can upload multiple files individually, or en-masse.  
+Each uploaded file is assigned a unique "file key" identifier.
+You can then [Run the Job][/api/V/job/[ID]/run] using the "file key" as the option value.
+
+**Single File Upload Request:**
+
+    POST /api/19/job/[ID]/file/upload?optionName=[NAME]
+    POST /api/19/job/[ID]/file/upload/[NAME]
+    Content-Type: octet/stream
+
+    <file-contents>
+
+For a single file/option value, specify the option name either as a query parameter `optionName` or as part of the
+URL path.
+
+*Headers*: `Content-Type: octet/stream`
+
+*Body*: File contents
+
+**Multiple File Upload Request:**
+
+    POST /api/19/job/[ID]/file/upload
+    Content-Type: multipart/form-data
+    ...
+
+For multiple files, use a Multi-part request.  For each file, specify the field name as `option.NAME` where NAME
+is the option name.
+
+**Response:**
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<?xml version="1.0" encoding="utf-8"?>
+<jobFileUpload>
+  <total>$total</total>
+  <options>
+    <entry key="$optionName">$fileKey</entry>
+    <!-- ... -->
+  </options>
+</jobFileUpload>
+~~~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "total": $total,
+  "options": {
+    "$optionName": "$fileKey"
+  }
+}
+~~~~~~~~~~~~
+
+#### Example 
+
+To upload a file for an option `myfile` and run a job with the file:
+
+    POST /api/19/job/[ID]/file/upload/myfile
+    Accept: application/json
+    Content-Type: application/octet-stream
+    Content-Length: 10
+
+    test file
+
+Response:
+
+~~~~~~~~~~ {.json}
+{
+  "total": 1,
+  "options": {
+    "myfile": "bb704988-6467-4613-b961-13014f6a55cb"
+  }
+}
+~~~~~~~~~~~~
+
+Now run the job using the file key value for the `myfile` option:
+
+    POST /api/19/job/[ID]/run
+    Content-Type: application/json
+
+    {"options":{"myfile":"bb704988-6467-4613-b961-13014f6a55cb"}}
+
 
 ## Executions
 
@@ -5416,6 +5507,10 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `POST` [Disable Executions for a Job](#disable-executions-for-a-job)
 
+[/api/V/job/[ID]/file/upload][]
+
+* `POST` [Upload a File for a Job Option](#upload-a-file-for-a-job-option)
+
 [/api/V/job/[ID]/info][]
 
 * `GET` [Get Job Metadata](#get-job-metadata)
@@ -5708,6 +5803,8 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 [/api/V/job/[ID]/info]:#get-job-metadata
 [GET /api/V/job/[ID]/info]:#get-job-metadata
+[/api/V/job/[ID]/file/upload]:#upload-a-file-for-a-job-option
+[POST /api/V/job/[ID]/file/upload]:#upload-a-file-for-a-job-option
 
 [/api/V/job/[ID]/schedule/enable]:#enable-scheduling-for-a-job
 
