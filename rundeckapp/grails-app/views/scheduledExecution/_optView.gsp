@@ -23,7 +23,10 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 
 <span id="opt_${rkey}" class="optview">
-    <span class="optdetail ${edit?'autohilite autoedit':''}" ${edit?'title="Click to edit"':''} ${edit?'':''}>
+    <span class="optdetail ${edit?'autohilite autoedit':''}" title="${edit?'Click to edit':''}">
+        <g:if test="${option.optionType=='file'}">
+            <g:icon name="file"/>
+        </g:if>
         <span class=" ${option?.required ? 'required' : ''}" title="${enc(attr:option?.description)}${option?.required ? ' (Required)' : ''}"><g:enc>${option.name}</g:enc></span>
         <span class="">
             <g:truncate max="20" showtitle="true"><g:enc>${option.secureInput && option.defaultValue?'****':option.defaultValue}</g:enc></g:truncate><g:enc>${option.multivalued?'(+)':''}</g:enc>

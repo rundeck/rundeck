@@ -44,7 +44,37 @@
 
         <div class="form-group">
 
-            <label for="optname_${rkey}" class="col-sm-2 control-label    ${hasErrors(bean:option,field:'name','has-error')}"><g:message code="form.option.name.label" /></label>
+            <label for="opttype_${rkey}" class="col-sm-2 control-label    ${hasErrors(
+                    bean: option,
+                    field: 'optionType',
+                    'has-error'
+            )}">
+                <g:message code="form.option.type.label"/>
+            </label>
+
+            <div class="col-sm-10">
+                <g:select
+                        data-bind="value: optionType"
+                        name="optionType"
+                        class="form-control "
+                        value="${option?.optionType}"
+                        optionKey="key"
+                        optionValue="value"
+                    from="${[
+                    [key:'',value:message(code:'form.option.optionType.text.label')],
+                    [key:'file',value:message(code:'form.option.optionType.file.label')],
+                    ]
+                    }"
+                        id="opttype_${rkey}">
+                </g:select>
+            </div>
+        </div>
+        <div class="form-group">
+
+            <label for="optname_${rkey}"
+                   class="col-sm-2 control-label    ${hasErrors(bean: option, field: 'name', 'has-error')}"><g:message
+                    code="form.option.name.label"/></label>
+
             <div class="col-sm-10">
                 <g:textField
                         data-bind="value: name, valueUpdate: 'keyup'"
@@ -53,8 +83,7 @@
                         value="${option?.name}"
                         size="40"
                         placeholder="Option Name"
-                        id="optname_${rkey}"
-                />
+                        id="optname_${rkey}"/>
             </div>
         </div>
         <div class="form-group ${hasErrors(bean: option, field: 'description', 'has-error')}">
@@ -85,6 +114,7 @@
                 </g:javascript>
             </div>
         </div>
+        <!-- ko if: !isFileType() -->
         <div class="form-group ${hasErrors(bean: option, field: 'defaultValue', 'has-error')} opt_keystorage_disabled"
              style="${wdgt.styleVisible(unless:option?.defaultStoragePath||option?.isDate || option?.secureInput || option?.secureExposed)}">
             <label class="col-sm-2 control-label"><g:message code="form.option.defaultValue.label" /></label>
@@ -403,6 +433,7 @@
                 <wdgt:action target="vregex_${rkey}" visible="false"/>
             </wdgt:eventHandler>
         </div>
+        <!-- /ko -->
         <div class="form-group">
             <label class="col-sm-2 control-label"><g:message code="Option.required.label" /></label>
             <div class="col-sm-10">
@@ -423,6 +454,7 @@
                 </div>
             </div>
         </div>
+        <!-- ko if: !isFileType() -->
         <div class="row form-inline">
             <label class="col-sm-2 control-label ${hasErrors(bean: option, field: 'multivalued', 'has-error')}">
                 <g:message code="form.option.multivalued.label" />
@@ -485,7 +517,8 @@
                 </div>
             </div>
         </div>
-    <section id="preview_${enc(attr: rkey)}" style="${wdgt.styleVisible(if: option?.name)}" class="section-separator-solo" data-bind="visible: name">
+        <!-- /ko -->
+    <section id="preview_${enc(attr: rkey)}" style="${wdgt.styleVisible(if: option?.name)}" class="section-separator-solo" data-bind="visible: name() && !isFileType()">
         <div  class="row">
             <label class="col-sm-2 control-label"><g:message code="usage" /></label>
             <div class="col-sm-10 opt_sec_nexp_disabled" style="${wdgt.styleVisible(unless: option?.secureInput && !option?.secureExposed)}">
@@ -504,6 +537,24 @@
             <div class="col-sm-10 opt_sec_nexp_enabled" style="${wdgt.styleVisible(if: option?.secureInput && !option?.secureExposed)}">
                 <span class="warn note"><g:message code="form.option.usage.secureAuth.message"/></span>
             </div>
+        </div>
+    </section>
+    <section id="file_preview_${enc(attr: rkey)}" style="${wdgt.styleVisible(if: option?.name && option?.optionType=='file')}" class="section-separator-solo" data-bind="visible: name() && isFileType()">
+        <div  class="row">
+            <label class="col-sm-2 control-label"><g:message code="usage" /></label>
+            <div class="col-sm-10" >
+                <span class="text-muted"><g:message code="form.option.usage.file.preview.description" /></span>
+                <div>
+                    <g:message code="bash.prompt" /> <code>$<span data-bind="text: fileBashVarPreview"></span></code>
+                </div>
+                <div>
+                    <g:message code="commandline.arguments.prompt" /> <code>$<!-- -->{file.<span data-bind="text: name"></span>}</code>
+                </div>
+                <div>
+                    <g:message code="script.content.prompt" /> <code>@file.<span data-bind="text: name"></span>@</code>
+                </div>
+            </div>
+
         </div>
     </section>
 
@@ -536,7 +587,7 @@
     </div>
 <g:javascript>
                 fireWhenReady('optedit_${enc(js: rkey)}',function(){
-                    var editor=new OptionEditor({name:"${option?.name}",bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}'});
+                    var editor=new OptionEditor({name:"${option?.name}",bashVarPrefix:'${DataContextUtils.ENV_VAR_PREFIX}',optionType:"${option?.optionType}"});
                     ko.applyBindings(editor,jQuery('#optedit_${enc(js:rkey)}')[0]);
                 });
 </g:javascript>
