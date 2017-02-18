@@ -2871,18 +2871,31 @@ class ScheduledExecutionController  extends ControllerBase{
         //handle uploaded files
         def optionParameterPrefix = "extra.option."
         if (request instanceof MultipartRequest) {
+            def fileOptions = scheduledExecution.listFileOptions()
+            def fileOptionNames = fileOptions*.name
+            def invalid = []
             ((MultipartRequest) request).fileMap.each { String name, file ->
                 if (name.startsWith(optionParameterPrefix)) {
                     //process file option upload
                     String optname = name.substring(optionParameterPrefix.length())
-                    String ref = fileUploadService.receiveFile(
-                            file.inputStream,
-                            file.size,
-                            optname,
-                            scheduledExecution.extid
-                    )
-                    inputOpts["option.$optname"] = ref
+                    if(optname in fileOptionNames) {
+                        String ref = fileUploadService.receiveFile(
+                                file.inputStream,
+                                file.size,
+                                optname,
+                                scheduledExecution.extid
+                        )
+                        inputOpts["option.$optname"] = ref
+                    }else{
+                        invalid << optname
+                    }
+                }else{
+                    invalid << name
                 }
+            }
+            if(invalid){
+                def msg=g.message(code:'api.error.job-upload.option.unexpected',args:[invalid.join(',')])
+                return [success:false,failed:true,error:'input',message:msg]
             }
         }
         def result = executionService.executeJob(scheduledExecution, authContext,session.user, inputOpts)
