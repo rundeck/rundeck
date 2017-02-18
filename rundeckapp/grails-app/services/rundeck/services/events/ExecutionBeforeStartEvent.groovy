@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,11 +14,18 @@
  * limitations under the License.
  */
 
+package rundeck.services.events
 
-import rundeck.services.events.ExecutionBeforeStartEvent
-import rundeck.services.events.ExecutionCompleteEvent
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import rundeck.Execution
+import rundeck.ScheduledExecution
 
-events = {
-    executionComplete filter: ExecutionCompleteEvent, fork: true
-    executionBeforeStart filter: ExecutionBeforeStartEvent, fork: false
+/**
+ * @author greg
+ * @since 2/17/17
+ */
+class ExecutionBeforeStartEvent {
+    Execution execution
+    ScheduledExecution job
+    StepExecutionContext context
 }

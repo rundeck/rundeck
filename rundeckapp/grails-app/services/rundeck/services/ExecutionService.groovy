@@ -56,6 +56,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.filters.ApiRequestFilters
+import rundeck.services.events.ExecutionBeforeStartEvent
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
@@ -946,13 +947,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
                     execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed,inputCharset)
-            if (scheduledExecution) {
-                //handle uploaded files
-                Map fileinput = loadFileOptionInputs(scheduledExecution, executioncontext.dataContext['option'])
-                if (fileinput) {
-                    executioncontext.dataContext['file'] = fileinput
-                }
-            }
+
+            grailsEvents?.event(
+                    null,
+                    'executionBeforeStart',
+                    new ExecutionBeforeStartEvent(
+                            execution:execution,
+                            job:scheduledExecution,
+                            context: executioncontext
+                    )
+            )?.get()
+
 
             //ExecutionService handles Job reference steps
             final cis = StepExecutionService.getInstanceForFramework(framework);
@@ -1014,32 +1019,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
-    /**
-     * Return a map of option name to local file path, for file option types which have file references in the
-     * input options map
-     * @param scheduledExecution job
-     * @param options input options mape
-     * @return map of [optionName: filepath] for each loaded local file
-     */
-    Map<String, String> loadFileOptionInputs(
-            ScheduledExecution scheduledExecution,
-            Map<String, String> options
-    )
-    {
-        def loadedFiles = [:]
-        def fileopts = scheduledExecution.options?.findAll {
-            it.optionType == 'file'
-        }
-        fileopts?.each {
-            def key = options[it.name]
-            if (key) {
-                File file = fileUploadService.retrieveTempFileForExecution(key)
-                loadedFiles[it.name] = file.absolutePath
-            }
-        }
-
-        loadedFiles
-    }
     /**
      * Load stored password default values for secure options with defaultStoragePath, and no value set.
      *
