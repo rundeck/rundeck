@@ -56,12 +56,11 @@ class FSFileUploadPlugin implements FileUploadPlugin {
     }
 
     @Override
-    String uploadFile(final InputStream content, final long length, final String inputName, final String jobId)
+    String uploadFile(final InputStream content, final long length, final String refid)
             throws IOException
     {
-        String fileid = UUID.randomUUID().toString()
-        File output = new File(basedir, fileid)
-        System.err.println("uploadFile: $length, $inputName, $jobId -> $output.absolutePath")
+        File output = new File(basedir, refid)
+        System.err.println("uploadFile: $length, $refid -> $output.absolutePath")
         long copied = -1
         output.withOutputStream { out ->
             copied = Streams.copy(content, out, false)
@@ -70,7 +69,7 @@ class FSFileUploadPlugin implements FileUploadPlugin {
             output.delete()
             throw new IOException("Failed to copy file content ($copied of $length copied)")
         }
-        return fileid
+        return refid
     }
 
     @Override

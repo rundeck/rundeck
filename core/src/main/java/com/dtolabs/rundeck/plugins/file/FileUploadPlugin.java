@@ -40,14 +40,13 @@ public interface FileUploadPlugin {
      * Upload a file for the given job and file input name, and return an identifier to reference the
      * uploaded file.
      *
-     * @param content
-     * @param length
-     * @param inputName
-     * @param jobId
+     * @param content content
+     * @param length data length
+     * @param refid unique identifier for the file
      *
      * @return identifier
      */
-    public String uploadFile(InputStream content, long length, String inputName, String jobId) throws IOException;
+    public String uploadFile(final InputStream content, final long length, final String refid) throws IOException;
 
     /**
      * Retrieve the file by reference

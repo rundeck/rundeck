@@ -37,6 +37,7 @@ import rundeck.ScheduledExecution
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
+import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
 import rundeck.services.OrchestratorPluginService
@@ -62,6 +63,7 @@ class ExecutionController extends ControllerBase{
     OrchestratorPluginService orchestratorPluginService
     ApiService apiService
     WorkflowService workflowService
+    FileUploadService fileUploadService
 
     static allowedMethods = [
             delete:['POST','DELETE'],
@@ -227,6 +229,10 @@ class ExecutionController extends ControllerBase{
             pluginDescs['workflow'][desc.name]=desc
         }
         def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, 0)
+        def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
+        def inputFilesMap = inputFiles.collectEntries {
+            [it.storageReference, it]
+        }
         return [
                 scheduledExecution    : e.scheduledExecution ?: null,
                 execution             : e,
@@ -240,6 +246,7 @@ class ExecutionController extends ControllerBase{
                 enext                 : enext,
                 eprev                 : eprev,
                 stepPluginDescriptions: pluginDescs,
+                inputFilesMap         : inputFilesMap
         ]
     }
     def delete = {

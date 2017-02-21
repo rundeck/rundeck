@@ -2882,6 +2882,7 @@ class ScheduledExecutionController  extends ControllerBase{
                         String ref = fileUploadService.receiveFile(
                                 file.inputStream,
                                 file.size,
+                                authContext.username,
                                 optname,
                                 scheduledExecution.extid
                         )
@@ -3486,6 +3487,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 String ref = fileUploadService.receiveFile(
                         file.inputStream,
                         file.size,
+                        authContext.username,
                         optname,
                         scheduledExecution.extid
                 )
@@ -3508,6 +3510,7 @@ class ScheduledExecutionController  extends ControllerBase{
             String ref = fileUploadService.receiveFile(
                     request.getInputStream(),
                     request.contentLength,
+                    authContext.username,
                     params.optionName,
                     scheduledExecution.extid
             )

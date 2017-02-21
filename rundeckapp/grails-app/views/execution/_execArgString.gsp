@@ -18,7 +18,23 @@
 <g:if test="${parsed}">
     <g:each in="${parsed}" var="entry">
         <span class="optkey"><g:enc>${entry.key}</g:enc></span>:
-        <g:if test="${entry.value}"><span class="optvalue"><g:enc>${entry.value}</g:enc></span></g:if>
+        <g:if test="${entry.value}">
+            <g:if test="${inputFilesMap && inputFilesMap[entry.value]}">
+                <span class="optvalue" title="${entry.value}">
+                    <g:icon name="file"/>
+                    ${inputFilesMap[entry.value].size} bytes
+                    <g:if test="${inputFilesMap[entry.value].available}">
+                        <g:icon name="ok"/>
+                    </g:if>
+                    <g:else>
+                        <g:icon name="remove"/>
+                    </g:else>
+                </span>
+            </g:if>
+            <g:else>
+                <span class="optvalue"><g:enc>${entry.value}</g:enc></span>
+            </g:else>
+        </g:if>
     </g:each>
 </g:if>
 <g:else>

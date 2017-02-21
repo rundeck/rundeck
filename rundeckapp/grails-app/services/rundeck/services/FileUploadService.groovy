@@ -3,7 +3,9 @@ package rundeck.services
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import grails.events.Listener
+import grails.transaction.Transactional
 import rundeck.Execution
+import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.services.events.ExecutionBeforeStartEvent
 import rundeck.services.events.ExecutionCompleteEvent
@@ -16,15 +18,20 @@ import java.nio.file.Files
 class FileUploadService {
     static transactional = false
     public static final String FS_FILE_UPLOAD_PLUGIN = 'filesystem-file-upload'
+    public static final String RECORD_TYPE_OPTION_INPUT = 'option'
     PluginService pluginService
     ConfigurationService configurationService
 
     FileUploadPlugin getPlugin() {
-        String pluginType = configurationService.getString('fileupload.plugin.type', FS_FILE_UPLOAD_PLUGIN)
+        String pluginType = getPluginType()
 
         def plugin = pluginService.getPlugin(pluginType, FileUploadPlugin)
         plugin.initialize([:])
         plugin
+    }
+
+    private String getPluginType() {
+        configurationService.getString('fileupload.plugin.type', FS_FILE_UPLOAD_PLUGIN)
     }
 
     /**
@@ -35,17 +42,44 @@ class FileUploadService {
      * @param jobId
      * @return
      */
-    String receiveFile(InputStream input, long length, String inputName, String jobId) {
-        getPlugin().uploadFile(input, length, inputName, jobId)
+    @Transactional
+    String receiveFile(InputStream input, long length, String username, String inputName, String jobId) {
+        UUID uuid = UUID.randomUUID()
+        def refid = getPlugin().uploadFile(input, length, uuid.toString())
+        log.error("uploadedFile $uuid refid $refid")
+        def record = createRecord(refid, length, uuid, jobId, username)
+        log.error("record: $record")
+        refid
+    }
+
+    JobFileRecord createRecord(String refid, long length, UUID uuid, String jobId, String username) {
+        def jfr = new JobFileRecord(
+                fileName: refid,
+                size: length,
+                recordType: RECORD_TYPE_OPTION_INPUT,
+                expirationDate: null,//(new Date() + 1l),
+                retained: false,
+                available: true,
+                uuid: uuid.toString(),
+                jobId: jobId,
+                storageType: getPluginType(),
+                user: username,
+                storageReference: refid,
+                storageMeta: null//metadata
+        )
+        if(!jfr.validate()){
+            throw new RuntimeException("Could not validate record: $jfr.errors")
+        }
+        jfr.save(flush: true)
     }
 
     def retrieveFile(OutputStream output, String reference) {
         getPlugin().retrieveFile(reference, output)
     }
 
-    def removeFile(String reference) {
-        getPlugin().removeFile(reference)
-        removeReference(reference)
+    def removeFile(JobFileRecord record) {
+        getPlugin().removeFile(record.storageReference)
+        removeRecord(record)
     }
 
     /**
@@ -56,20 +90,34 @@ class FileUploadService {
      * @return
      */
     File attachFileForExecution(String reference, Execution execution) {
-        //TODO: domain object
+        JobFileRecord jfr = findRecord(reference)
         def file = retrieveTempFileForExecution(reference)
-        registerExecutionFile(execution, reference)
+        jfr.execution = execution
+        jfr.available = true
+        jfr.save(flush: true)
         file
     }
 
-    private void registerExecutionFile(Execution execution, String reference) {
-        if (!executionFiles[execution.id]) {
-            executionFiles[execution.id] = [reference]
-        } else {
-            executionFiles[execution.id] << reference
-        }
+    List<JobFileRecord> findRecords(final Execution execution) {
+        JobFileRecord.findAllByExecution(execution)
     }
-    Map<Long, List<String>> executionFiles = [:]
+
+    List<JobFileRecord> findRecords(final Execution execution, String recordType) {
+        JobFileRecord.findAllByExecutionAndRecordType(execution, recordType)
+    }
+
+    List<JobFileRecord> findRecords(final String jobid) {
+        JobFileRecord.findAllByJobId(jobid)
+    }
+
+    List<JobFileRecord> findRecords(final String jobid, String recordType) {
+        JobFileRecord.findAllByJobIdAndRecordType(jobid, recordType)
+    }
+
+    JobFileRecord findRecord(final String reference) {
+        JobFileRecord.findByStorageReference(reference)
+    }
+
     /**
      * Retrieve the file by reference, to a local temp file.  If the
      * file is already on local disk, it will be returned directly,
@@ -109,7 +157,7 @@ class FileUploadService {
         def loadedFiles = [:]
         def fileopts = scheduledExecution.listFileOptions()
         fileopts?.each {
-            def key = context.dataContext['options'][it.name]
+            def key = context.dataContext['option'][it.name]
             if (key) {
                 File file = attachFileForExecution(key, execution)
                 loadedFiles[it.name] = file.absolutePath
@@ -146,28 +194,26 @@ class FileUploadService {
      */
     @Listener
     def executionComplete(ExecutionCompleteEvent e) {
-        //TODO: don't necessarily auto-delete
-        List<String> files = unregisterExecutionFiles(e.execution)
-        log.error("remove files for execution $e.execution.id: $files")
-        files?.each {
+        findRecords(e.execution, RECORD_TYPE_OPTION_INPUT)?.each {
             removeFile(it)
         }
     }
 
-    private List<String> unregisterExecutionFiles(Execution e) {
-        def id = e.id
-        def files = executionFiles.remove(id)
-        files
+    private List<JobFileRecord> unregisterExecutionFiles(Execution e) {
+        findRecords(e, RECORD_TYPE_OPTION_INPUT)
     }
 
     //TODO:
     Map<String, File> localFileMap = [:]
 
-    private void removeReference(String reference) {
+    private void removeRecord(JobFileRecord record) {
+        def reference = record.storageReference
         if (localFileMap[reference]) {
             localFileMap[reference].delete()
             localFileMap.remove(reference)
         }
+        record.available = false
+        record.save(flush: true)
     }
 
     private void saveLocalReference(File file, String reference) {
