@@ -23,7 +23,7 @@
                 <span class="optvalue" title="${entry.value}">
                     <g:icon name="file"/>
                     ${inputFilesMap[entry.value].size} bytes
-                    <g:if test="${inputFilesMap[entry.value].available}">
+                    <g:if test="${inputFilesMap[entry.value].fileState == 'retained'}">
                         <g:icon name="ok"/>
                     </g:if>
                     <g:else>

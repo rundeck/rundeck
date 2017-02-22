@@ -19,9 +19,14 @@ class FileUploadService {
     static transactional = false
     public static final String FS_FILE_UPLOAD_PLUGIN = 'filesystem-file-upload'
     public static final String RECORD_TYPE_OPTION_INPUT = 'option'
+    public static final long DEFAULT_TEMP_EXPIRATION = 10 * 60 * 1000 //10 minutes
     PluginService pluginService
     ConfigurationService configurationService
+    TaskService taskService
 
+    long getTempfileExpirationDelay() {
+        configurationService.getLong "fileUploadService.tempfile.expiration", DEFAULT_TEMP_EXPIRATION
+    }
     FileUploadPlugin getPlugin() {
         String pluginType = getPluginType()
 
@@ -34,6 +39,10 @@ class FileUploadService {
         configurationService.getString('fileupload.plugin.type', FS_FILE_UPLOAD_PLUGIN)
     }
 
+    def listPlugins() {
+        pluginService.listPlugins(FileUploadPlugin)
+    }
+
     /**
      * Upload a file for a particular input for a job
      * @param input
@@ -43,23 +52,78 @@ class FileUploadService {
      * @return
      */
     @Transactional
-    String receiveFile(InputStream input, long length, String username, String inputName, String jobId) {
+    String receiveFile(
+            InputStream input,
+            long length,
+            String username,
+            String inputName,
+            String jobId,
+            Date expiryStart
+    )
+    {
         UUID uuid = UUID.randomUUID()
         def refid = getPlugin().uploadFile(input, length, uuid.toString())
         log.error("uploadedFile $uuid refid $refid")
-        def record = createRecord(refid, length, uuid, jobId, username)
+        def record = createRecord(refid, length, uuid, jobId, username, expiryStart)
         log.error("record: $record")
+        if (expiryStart) {
+            Long id = record.id
+            taskService.runAt(record.expirationDate) {
+                JobFileRecord.withNewSession {
+                    expireRecordIfNeeded(id)
+                }
+            }
+        }
         refid
     }
 
-    JobFileRecord createRecord(String refid, long length, UUID uuid, String jobId, String username) {
+    /**
+     * Find expired FileUploadRecords and remove them
+     */
+    @Transactional
+    def checkAndExpireAllRecords() {
+        def records = findExpiredRecords()
+        if (records) {
+            records.each { record ->
+                expireRecord(record)
+            }
+        }
+    }
+
+    private void expireRecordIfNeeded(long id) {
+        JobFileRecord record = JobFileRecord.get(id)
+        Date now = new Date()
+        if (record && record.expirationDate && now > record.expirationDate && record.stateIsTemp()) {
+            expireRecord(record)
+        }
+    }
+
+    private void expireRecord(JobFileRecord record) {
+        try {
+            def uuid = record.uuid
+            removeFile(record, JobFileRecord.STATE_EXPIRED)
+            log.debug("Job File Record Expired: $uuid")
+        } catch (Throwable t) {
+            log.error("Failed removing expired file with plugin: " + t, t)
+        }
+    }
+
+    JobFileRecord createRecord(
+            String refid,
+            long length,
+            UUID uuid,
+            String jobId,
+            String username,
+            Date expiryStart
+    )
+    {
+        def expirationDate = expiryStart ? (new Date(expiryStart.time + tempfileExpirationDelay)) : null
         def jfr = new JobFileRecord(
                 fileName: refid,
                 size: length,
                 recordType: RECORD_TYPE_OPTION_INPUT,
-                expirationDate: null,//(new Date() + 1l),
-                retained: false,
-                available: true,
+                expirationDate: expirationDate,
+                fileState: JobFileRecord.STATE_TEMP,
                 uuid: uuid.toString(),
                 jobId: jobId,
                 storageType: getPluginType(),
@@ -77,9 +141,11 @@ class FileUploadService {
         getPlugin().retrieveFile(reference, output)
     }
 
-    def removeFile(JobFileRecord record) {
+    def removeFile(JobFileRecord record, String toState) {
         getPlugin().removeFile(record.storageReference)
-        removeRecord(record)
+        record.state(toState)
+        record.save(flush: true)
+        removeLocalFile(record.storageReference)
     }
 
     /**
@@ -93,9 +159,13 @@ class FileUploadService {
         JobFileRecord jfr = findRecord(reference)
         def file = retrieveTempFileForExecution(reference)
         jfr.execution = execution
-        jfr.available = true
+        jfr.stateRetained()
         jfr.save(flush: true)
         file
+    }
+
+    List<JobFileRecord> findExpiredRecords(Date expiretime = new Date()) {
+        JobFileRecord.findAllByExpirationDateLessThanEqualsAndFileState(expiretime, 'temp')
     }
 
     List<JobFileRecord> findRecords(final Execution execution) {
@@ -195,25 +265,19 @@ class FileUploadService {
     @Listener
     def executionComplete(ExecutionCompleteEvent e) {
         findRecords(e.execution, RECORD_TYPE_OPTION_INPUT)?.each {
-            removeFile(it)
+            removeFile(it, JobFileRecord.STATE_DELETED)
         }
-    }
-
-    private List<JobFileRecord> unregisterExecutionFiles(Execution e) {
-        findRecords(e, RECORD_TYPE_OPTION_INPUT)
     }
 
     //TODO:
     Map<String, File> localFileMap = [:]
 
-    private void removeRecord(JobFileRecord record) {
-        def reference = record.storageReference
+
+    private void removeLocalFile(String reference) {
         if (localFileMap[reference]) {
             localFileMap[reference].delete()
             localFileMap.remove(reference)
         }
-        record.available = false
-        record.save(flush: true)
     }
 
     private void saveLocalReference(File file, String reference) {

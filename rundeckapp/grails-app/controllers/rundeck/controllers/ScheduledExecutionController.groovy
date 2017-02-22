@@ -2884,7 +2884,8 @@ class ScheduledExecutionController  extends ControllerBase{
                                 file.size,
                                 authContext.username,
                                 optname,
-                                scheduledExecution.extid
+                                scheduledExecution.extid,
+                                new Date()
                         )
                         inputOpts["option.$optname"] = ref
                     }else{
@@ -3489,7 +3490,8 @@ class ScheduledExecutionController  extends ControllerBase{
                         file.size,
                         authContext.username,
                         optname,
-                        scheduledExecution.extid
+                        scheduledExecution.extid,
+                        new Date()
                 )
                 uploadedFileRefs[optname] = ref
             }
@@ -3512,7 +3514,8 @@ class ScheduledExecutionController  extends ControllerBase{
                     request.contentLength,
                     authContext.username,
                     params.optionName,
-                    scheduledExecution.extid
+                    scheduledExecution.extid,
+                    new Date()
             )
             uploadedFileRefs[params.optionName] = ref
         }
