@@ -280,7 +280,7 @@ beans={
     fsFileUploadPlugin(FSFileUploadPlugin) {
         basePath = uploadsDir.absolutePath
     }
-    pluginRegistry['filesystem-file-upload'] = 'fsFileUploadPlugin'
+    pluginRegistry['filesystem-temp'] = 'fsFileUploadPlugin'
     /**
      * Registry bean contains both kinds of plugin
      */

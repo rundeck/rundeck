@@ -31,9 +31,9 @@ import java.nio.file.OpenOption
  * @author greg
  * @since 2/15/17
  */
-@Plugin(name = 'file', service = 'FileUploadPluginService')
-@PluginDescription(title = 'File system',
-        description = 'Uses the file system to store uploaded files')
+@Plugin(name = 'filesystem-temp', service = 'FileUploadPluginService')
+@PluginDescription(title = 'Temporary File',
+        description = 'Stores uploaded files temporarily on the file system for the duration of the execution.')
 @ToString(includeNames = true)
 class FSFileUploadPlugin implements FileUploadPlugin {
 

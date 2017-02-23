@@ -17,7 +17,7 @@ import java.nio.file.Files
  */
 class FileUploadService {
     static transactional = false
-    public static final String FS_FILE_UPLOAD_PLUGIN = 'filesystem-file-upload'
+    public static final String FS_FILE_UPLOAD_PLUGIN = 'filesystem-temp'
     public static final String RECORD_TYPE_OPTION_INPUT = 'option'
     public static final long DEFAULT_TEMP_EXPIRATION = 10 * 60 * 1000 //10 minutes
     PluginService pluginService
