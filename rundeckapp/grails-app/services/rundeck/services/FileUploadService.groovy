@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import grails.events.Listener
 import grails.transaction.Transactional
+import org.rundeck.util.SHAInputStream
 import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
@@ -62,9 +63,11 @@ class FileUploadService {
     )
     {
         UUID uuid = UUID.randomUUID()
-        def refid = getPlugin().uploadFile(input, length, uuid.toString())
-        log.error("uploadedFile $uuid refid $refid")
-        def record = createRecord(refid, length, uuid, jobId, username, expiryStart)
+        def shastream = new SHAInputStream(input)
+        def refid = getPlugin().uploadFile(shastream, length, uuid.toString())
+        def shaString = shastream.SHAString
+        log.error("uploadedFile $uuid refid $refid (sha $shaString)")
+        def record = createRecord(refid, length, uuid, shaString, jobId, username, expiryStart)
         log.error("record: $record")
         if (expiryStart) {
             Long id = record.id
@@ -112,6 +115,7 @@ class FileUploadService {
             String refid,
             long length,
             UUID uuid,
+            String shaString,
             String jobId,
             String username,
             Date expiryStart
@@ -125,6 +129,7 @@ class FileUploadService {
                 expirationDate: expirationDate,
                 fileState: JobFileRecord.STATE_TEMP,
                 uuid: uuid.toString(),
+                sha: shaString,
                 jobId: jobId,
                 storageType: getPluginType(),
                 user: username,

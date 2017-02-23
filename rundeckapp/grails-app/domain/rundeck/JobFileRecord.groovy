@@ -38,6 +38,7 @@ class JobFileRecord {
      */
     String fileState
     String uuid
+    String sha
     String jobId
     String storageType // storage plugin type "tmpdir", "storage"
     String storageReference // path in storage facility, or temp dir, depends on backend plugin
@@ -51,6 +52,7 @@ class JobFileRecord {
         user(nullable: false, maxSize: 255)
         expirationDate(nullable: true)
         uuid(nullable: false)
+        sha(nullable: false, size: 64..64)
         jobId(nullable: false)
         storageType(nullable: false, maxSize: 255)
         storageReference(nullable: false, maxSize: 255)
