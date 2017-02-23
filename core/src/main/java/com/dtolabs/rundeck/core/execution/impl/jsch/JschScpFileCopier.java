@@ -27,17 +27,22 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.DestinationFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.tasks.net.ExtSSHExec;
+import com.dtolabs.rundeck.core.tasks.net.ExtSSHSftp;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+import com.jcraft.jsch.ChannelSftp;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
@@ -146,13 +151,55 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
                                 script
                         );
 
-//        logger.debug("temp file for node " + node.getNodename() + ": " + temp.getAbsolutePath() + ",
-// datacontext: " + dataContext);
-        final Task scp;
+
+        final ExtSSHSftp sshSftp;
+
         final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(
                 node,
                 framework,
                 context);
+
+        try {
+
+            sshSftp = SSHTaskBuilder.build(node, localTempfile,remotefile, project, context.getDataContext(),
+                    nodeAuthentication, context.getLoglevel(),context.getExecutionListener());
+
+        } catch (SSHTaskBuilder.BuilderException e) {
+            throw new FileCopierException("Configuration error: " + e.getMessage(),
+                    StepFailureReason.ConfigurationFailure, e);
+        }
+
+
+        /**
+         * copy the file
+         */
+        context.getExecutionListener().log(3,"copying file: '" + localTempfile.getAbsolutePath()
+                + "' to: '" + node.getNodename() + ":" + remotefile + "'");
+        try {
+            sshSftp.copy();
+        } catch (BuildException e) {
+            JschNodeExecutor.ExtractFailure failure = JschNodeExecutor.extractFailure(e,
+                    node,
+                    nodeAuthentication.getSSHTimeout(),
+                    framework);
+            String errormsg = failure.getErrormsg();
+            FailureReason failureReason = failure.getReason();
+            context.getExecutionListener().log(0, errormsg);
+            throw new FileCopierException("[jsch-scp] Failed copying the file: " + errormsg, failureReason, e);
+        }finally {
+            if(null == scriptfile) {
+                if (!ScriptfileUtils.releaseTempFile(localTempfile)) {
+                    context.getExecutionListener().log(
+                            Constants.WARN_LEVEL,
+                            "Unable to remove local temp file: " + localTempfile.getAbsolutePath()
+                    );
+                }
+            }
+        }
+
+        /**
+        final Task scp;
+
         try {
 
             scp = SSHTaskBuilder.buildScp(node, project, remotefile, localTempfile, nodeAuthentication,
@@ -160,13 +207,12 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
         } catch (SSHTaskBuilder.BuilderException e) {
             throw new FileCopierException("Configuration error: " + e.getMessage(),
                     StepFailureReason.ConfigurationFailure, e);
-        }
+        }*/
 
         /**
          * Copy the file over
          */
-        context.getExecutionListener().log(3,"copying file: '" + localTempfile.getAbsolutePath()
-                + "' to: '" + node.getNodename() + ":" + remotefile + "'");
+        /**
 
         String errormsg = null;
         try {
@@ -189,7 +235,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
                     );
                 }
             }
-        }
+        }*/
         return remotefile;
     }
 

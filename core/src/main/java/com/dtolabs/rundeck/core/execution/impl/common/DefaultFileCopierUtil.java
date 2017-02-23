@@ -29,6 +29,7 @@ import com.dtolabs.utils.Streams;
 import org.apache.commons.lang.RandomStringUtils;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -453,6 +454,10 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
         try {
 
             if (null != original) {
+                File destinationFolder = destinationFile.getParentFile();
+                if(null != destinationFolder && !destinationFolder.exists()){
+                    destinationFolder.mkdirs();
+                }
                 try (InputStream in = new FileInputStream(original)) {
                     try (FileOutputStream out = new FileOutputStream(destinationFile)) {
                         Streams.copyStream(in, out);
@@ -473,6 +478,9 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
         } catch (IOException e) {
             throw new FileCopierException("error writing to tempfile: " + e.getMessage(),
                                           StepFailureReason.IOFailure, e);
+        } catch (SecurityException e) {
+            throw new FileCopierException("error writing to tempfile: " + e.getMessage(),
+                    StepFailureReason.IOFailure, e);
         }
 
     }

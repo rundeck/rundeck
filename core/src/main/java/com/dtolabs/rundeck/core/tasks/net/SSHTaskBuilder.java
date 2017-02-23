@@ -288,6 +288,13 @@ public class SSHTaskBuilder {
         void setOutputproperty(String s);
     }
 
+    static interface SSHSftpInterface extends SSHBaseInterface, DataContextUtils.EnvironmentConfigurable {
+
+        void setLocalFile(File file);
+
+        void setRemoteFile(String remotePath);
+    }
+
     static interface SCPInterface extends SSHBaseInterface {
 
         void setLocalFile(String absolutePath);
@@ -518,6 +525,37 @@ public class SSHTaskBuilder {
 
     }
 
+    /**
+     * Build a Task that performs SFTP command
+     *
+     * @param loglevel  level
+     * @param nodeentry   target node
+     * @param localFile        local file
+     * @param remoteFile        remote file
+     * @param project     ant project
+     * @param dataContext data
+     * @param logger logger
+     * @param sshConnectionInfo connection info
+     *
+     * @return task
+     * @throws BuilderException on error
+     */
+    public static ExtSSHSftp build(final INodeEntry nodeentry, final File localFile,final String remoteFile,
+                                   final Project project,
+                                   final Map<String, Map<String, String>> dataContext,
+                                   final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
+            BuilderException {
+
+
+        final ExtSSHSftp extSSHSftp = new ExtSSHSftp();
+        build(extSSHSftp, nodeentry, localFile, remoteFile, project, dataContext, sshConnectionInfo,
+                loglevel, logger);
+
+        extSSHSftp.setAntLogLevel(loglevel);
+        return extSSHSftp;
+
+    }
+
     static void build(final SSHExecInterface sshexecTask,
             final INodeEntry nodeentry,
             final String[] args, final Project project,
@@ -530,6 +568,22 @@ public class SSHTaskBuilder {
         //nb: args are already quoted as necessary
         final String commandString = StringUtils.join(args, " ");
         sshexecTask.setCommand(commandString);
+        sshexecTask.setTimeout(sshConnectionInfo.getSSHTimeout());
+
+        DataContextUtils.addEnvVars(sshexecTask, dataContext);
+    }
+
+    static void build(final SSHSftpInterface sshexecTask,
+                      final INodeEntry nodeentry,
+                      final File localFile,final String remoteFile, final Project project,
+                      final Map<String, Map<String, String>> dataContext,
+                      final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
+            BuilderException {
+
+        configureSSHBase(nodeentry, project, sshConnectionInfo, sshexecTask, loglevel, logger);
+
+        sshexecTask.setLocalFile(localFile);
+        sshexecTask.setRemoteFile(remoteFile);
         sshexecTask.setTimeout(sshConnectionInfo.getSSHTimeout());
 
         DataContextUtils.addEnvVars(sshexecTask, dataContext);
@@ -764,7 +818,7 @@ public class SSHTaskBuilder {
 
 
         /**
-         * @return the private key passphrase if set, or null.
+         * @return the private key passphrase if set, or null.4
          */
         public String getPrivateKeyPassphrase();
         public String getPrivateKeyPassphraseStoragePath();
