@@ -2874,30 +2874,56 @@ class ScheduledExecutionController  extends ControllerBase{
             def fileOptions = scheduledExecution.listFileOptions()
             def fileOptionNames = fileOptions*.name
             def invalid = []
+            long maxsize = fileUploadService.optionUploadMaxSize
+            if (maxsize > 0) {
+                def find = ((MultipartRequest) request).fileMap.find { String name, file -> file.size > maxsize }
+                if (find) {
+                    def msg = g.message(
+                            code: 'api.error.job-upload.filesize',
+                            args: [find.value.size, find.key.substring(optionParameterPrefix.length()), maxsize]
+                    )
+                    return [success: false, failed: true, error: 'filesize', message: msg]
+                }
+            }
             ((MultipartRequest) request).fileMap.each { String name, file ->
                 if (name.startsWith(optionParameterPrefix)) {
                     //process file option upload
                     String optname = name.substring(optionParameterPrefix.length())
-                    if(optname in fileOptionNames) {
-                        String ref = fileUploadService.receiveFile(
-                                file.inputStream,
-                                file.size,
-                                authContext.username,
-                                optname,
-                                scheduledExecution.extid,
-                                new Date()
-                        )
-                        inputOpts["option.$optname"] = ref
-                    }else{
+                    if (!(optname in fileOptionNames)) {
                         invalid << optname
                     }
-                }else{
+                } else {
                     invalid << name
                 }
             }
-            if(invalid){
-                def msg=g.message(code:'api.error.job-upload.option.unexpected',args:[invalid.join(',')])
-                return [success:false,failed:true,error:'input',message:msg]
+            if (invalid) {
+                def msg = g.message(code: 'api.error.job-upload.option.unexpected', args: [invalid.join(',')])
+                return [success: false, failed: true, error: 'input', message: msg]
+            }
+
+            for (def entry : ((MultipartRequest) request).fileMap) {
+                String name = entry.key
+                MultipartFile file = entry.value
+                if (name.startsWith(optionParameterPrefix)) {
+                    //process file option upload
+                    String optname = name.substring(optionParameterPrefix.length())
+                    if (optname in fileOptionNames) {
+                        try {
+                            String ref = fileUploadService.receiveFile(
+                                    file.inputStream,
+                                    file.size,
+                                    authContext.username,
+                                    optname,
+                                    scheduledExecution.extid,
+                                    new Date()
+                            )
+                            inputOpts["option.$optname"] = ref
+                        } catch (FileUploadServiceException e) {
+                            def msg = g.message(code: 'api.error.job-upload.error', args: [e.message])
+                            return [success: false, failed: true, error: 'input', message: msg]
+                        }
+                    }
+                }
             }
         }
         def result = executionService.executeJob(scheduledExecution, authContext,session.user, inputOpts)
@@ -3459,6 +3485,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def fileOptionNames = fileOptions*.name
         def uploadedFileRefs = [:]
+        def uploadError
         if (request instanceof MultipartRequest) {
             def invalid = []
             Map<String,MultipartFile> optionRequestFiles = [:]
@@ -3484,16 +3511,36 @@ class ScheduledExecutionController  extends ControllerBase{
                 ]
                 )
             }
-            optionRequestFiles.each { String optname, MultipartFile file ->
-                String ref = fileUploadService.receiveFile(
-                        file.inputStream,
-                        file.size,
-                        authContext.username,
-                        optname,
-                        scheduledExecution.extid,
-                        new Date()
-                )
-                uploadedFileRefs[optname] = ref
+
+            long maxsize = fileUploadService.optionUploadMaxSize
+            if (maxsize > 0) {
+                def find = ((MultipartRequest) request).fileMap.find { String name, file -> file.size > maxsize }
+                if (find) {
+                    return apiService.renderErrorFormat(response, [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'api.error.job-upload.filesize',
+                            args  : [find.value.size, find.key.substring(optionParameterPrefix.length()), maxsize]
+                    ]
+                    )
+                }
+            }
+            for (def entry : optionRequestFiles) {
+                String optname = entry.key
+                MultipartFile file = entry.value
+                try {
+                    String ref = fileUploadService.receiveFile(
+                            file.inputStream,
+                            file.size,
+                            authContext.username,
+                            optname,
+                            scheduledExecution.extid,
+                            new Date()
+                    )
+                    uploadedFileRefs[optname] = ref
+                } catch (FileUploadServiceException e) {
+                    uploadError = e
+                    break
+                }
             }
         } else {
             //single option
@@ -3508,16 +3555,38 @@ class ScheduledExecutionController  extends ControllerBase{
                 ]
                 )
             }
-            //request body is file
-            String ref = fileUploadService.receiveFile(
-                    request.getInputStream(),
-                    request.contentLength,
-                    authContext.username,
-                    params.optionName,
-                    scheduledExecution.extid,
-                    new Date()
+            long maxsize = fileUploadService.optionUploadMaxSize
+
+            if (maxsize > 0 && request.contentLength > maxsize) {
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.job-upload.filesize',
+                        args  : [request.contentLength, params.optionName, maxsize]
+                ]
+                )
+            }
+            try {
+                //request body is file
+                String ref = fileUploadService.receiveFile(
+                        request.getInputStream(),
+                        request.contentLength,
+                        authContext.username,
+                        params.optionName,
+                        scheduledExecution.extid,
+                        new Date()
+                )
+                uploadedFileRefs[params.optionName] = ref
+            } catch (FileUploadServiceException e) {
+                uploadError = e
+            }
+        }
+        if (uploadError) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.job-upload.error',
+                    args  : [uploadError.message]
+            ]
             )
-            uploadedFileRefs[params.optionName] = ref
         }
         respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: ['xml', 'json']])
     }

@@ -62,8 +62,15 @@ class FSFileUploadPlugin implements FileUploadPlugin {
         File output = new File(basedir, refid)
         System.err.println("uploadFile: $length, $refid -> $output.absolutePath")
         long copied = -1
-        output.withOutputStream { out ->
-            copied = Streams.copy(content, out, false)
+        try {
+            output.withOutputStream { out ->
+                copied = Streams.copy(content, out, false)
+            }
+        } catch (IOException e) {
+            if (output.exists()) {
+                output.delete()
+            }
+            throw e
         }
         if (copied != length) {
             output.delete()

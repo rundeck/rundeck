@@ -5,6 +5,8 @@ import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import grails.events.Listener
 import grails.transaction.Transactional
 import org.rundeck.util.SHAInputStream
+import org.rundeck.util.Sizes
+import org.rundeck.util.ThresholdInputStream
 import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
@@ -21,6 +23,7 @@ class FileUploadService {
     public static final String FS_FILE_UPLOAD_PLUGIN = 'filesystem-temp'
     public static final String RECORD_TYPE_OPTION_INPUT = 'option'
     public static final long DEFAULT_TEMP_EXPIRATION = 10 * 60 * 1000 //10 minutes
+    public static final String DEFAULT_MAX_SIZE = '200MB'
     PluginService pluginService
     ConfigurationService configurationService
     TaskService taskService
@@ -29,9 +32,25 @@ class FileUploadService {
     long getTempfileExpirationDelay() {
         configurationService.getLong "fileUploadService.tempfile.expiration", DEFAULT_TEMP_EXPIRATION
     }
-    FileUploadPlugin getPlugin() {
-        String pluginType = getPluginType()
 
+    String getOptionUploadMaxSizeString() {
+        String max = configurationService.getString "fileUploadService.tempfile.maxsize", DEFAULT_MAX_SIZE
+        Long val = Sizes.parseFileSize(max)
+        if (val == null) {
+            log.warn(
+                    "Invalid value for: rundeck.fileUploadService.tempfile.maxsize ($max), using default " +
+                            "$DEFAULT_MAX_SIZE"
+            )
+            DEFAULT_MAX_SIZE
+        }
+        max
+    }
+
+    long getOptionUploadMaxSize() {
+        Sizes.parseFileSize(optionUploadMaxSizeString)
+    }
+
+    FileUploadPlugin getPlugin() {
         def plugin = pluginService.getPlugin(pluginType, FileUploadPlugin)
         plugin.initialize([:])
         plugin
@@ -51,7 +70,10 @@ class FileUploadService {
      * @param length
      * @param inputName
      * @param jobId
-     * @return
+     * @return refid
+     * @throws FileUploadServiceException if the uploaded file exceeds the maximum size
+     * @throws IOException if there is an error copying the uploaded file
+     *
      */
     @Transactional
     String receiveFile(
@@ -63,13 +85,35 @@ class FileUploadService {
             Date expiryStart
     )
     {
-        UUID uuid = UUID.randomUUID()
+
         def shastream = new SHAInputStream(input)
-        def refid = getPlugin().uploadFile(shastream, length, uuid.toString())
+        def readstream = shastream
+        long max = optionUploadMaxSize
+        if (max > 0) {
+            if (length > max) {
+                throw new FileUploadServiceException(
+                        "Uploaded file size ($length) is larger than configured maximum file size: " +
+                                "$optionUploadMaxSizeString"
+                )
+            }
+            readstream = new ThresholdInputStream(readstream, max)
+        }
+        UUID uuid = UUID.randomUUID()
+        def refid
+        try {
+            refid = getPlugin().uploadFile(readstream, length, uuid.toString())
+        } catch (ThresholdInputStream.Threshold e) {
+            throw new FileUploadServiceException(
+                    "Uploaded file data size ($e.breach) is larger than configured maximum file size: " +
+                            "$optionUploadMaxSizeString"
+            )
+        } catch (IOException e) {
+            throw new FileUploadServiceException("Error receiving file: " + e.message, e)
+        }
         def shaString = shastream.SHAString
-        log.error("uploadedFile $uuid refid $refid (sha $shaString)")
+        log.debug("uploadedFile $uuid refid $refid (sha $shaString)")
         def record = createRecord(refid, length, uuid, shaString, jobId, username, expiryStart)
-        log.error("record: $record")
+        log.debug("record: $record")
         if (expiryStart) {
             Long id = record.id
             taskService.runAt(record.expirationDate) {
@@ -291,5 +335,26 @@ class FileUploadService {
 
     private void saveLocalReference(File file, String reference) {
         localFileMap[reference] = file
+    }
+}
+
+class FileUploadServiceException extends Exception {
+    FileUploadServiceException() {
+    }
+
+    FileUploadServiceException(final String var1) {
+        super(var1)
+    }
+
+    FileUploadServiceException(final String var1, final Throwable var2) {
+        super(var1, var2)
+    }
+
+    FileUploadServiceException(final Throwable var1) {
+        super(var1)
+    }
+
+    FileUploadServiceException(final String var1, final Throwable var2, final boolean var3, final boolean var4) {
+        super(var1, var2, var3, var4)
     }
 }
