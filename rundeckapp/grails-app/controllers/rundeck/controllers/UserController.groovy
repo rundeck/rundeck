@@ -335,19 +335,61 @@ class UserController extends ControllerBase{
 
             login = tokenUser
         }else {
-            isTokenTimeOk=true
-            isTimeUnitOk=true
+
             String propertyDuration = servletContext.getAttribute("TOKEN_TIMEOUT")
-            tokenTimeUnit='m'
-            tokenTimeNumber=10
+            def propTokenTimeUnit=''
+            def propTokenTimeNumber=0
             if(propertyDuration){
                 def tokenTimeUnitTmp=propertyDuration.substring(propertyDuration.length()-1)
                 def tokenTimeNumberTmp=propertyDuration.substring(0,propertyDuration.length()-1)
                 if((tokenTimeUnitTmp=='m' || tokenTimeUnitTmp=='h' || tokenTimeUnitTmp=='d') &&
                         tokenTimeNumberTmp.isNumber()){
-                    tokenTimeNumber = tokenTimeNumberTmp.toInteger()
-                    tokenTimeUnit = tokenTimeUnitTmp
+                    propTokenTimeNumber = tokenTimeNumberTmp.toInteger()
+                    propTokenTimeUnit = tokenTimeUnitTmp
+                    def propMax
+                    def userTime
+                    use(TimeCategory) {
+                        switch (propTokenTimeUnit) {
+                            case 'm':
+                                propMax = propTokenTimeNumber.minutes
+                                break
+                            case 'h':
+                                propMax = propTokenTimeNumber.hours
+                                break
+                            case 'd':
+                                propMax = propTokenTimeNumber.days
+                                break
+                        }
+                        switch (tokenTimeUnit){
+                            case 'm':
+                                userTime = tokenTimeNumber.minutes
+                                break
+                            case 'h':
+                                userTime = tokenTimeNumber.hours
+                                break
+                            case 'd':
+                                userTime = tokenTimeNumber.days
+                                break
+                        }
+                        if(userTime>propMax){
+                            def error = "Max duration of token is: "+propTokenTimeNumber+propTokenTimeUnit
+                            log.error error
+                            result=[result: false, error: error]
+                            withFormat {
+                                html{
+                                    flash.error = result.error
+                                    redirect(controller: 'user', action: 'profile', params: [login: login])
+                                }
+                                json {
+                                    render(result as JSON)
+                                }
+                            }
+                        }
+                    }
                 }
+
+                //check user time is minor to the prop
+
 
             }
 
@@ -355,11 +397,8 @@ class UserController extends ControllerBase{
                 it.name
             }
             def tokenRolesArr = roles.split(",")
-            print(rolesArr)
-            print(tokenRolesArr)
             def invalidGrp = false;
             tokenRolesArr.each {
-                print(it)
                 if(!rolesArr.contains(it)){
                     invalidGrp = true
                 }
@@ -370,11 +409,7 @@ class UserController extends ControllerBase{
                 result=[result: false, error: error]
                 withFormat {
                     html{
-                        if (result.error) {
-                            flash.error = result.error
-                        }else{
-                            flash.newtoken=result.apitoken
-                        }
+                        flash.error = result.error
                         redirect(controller: 'user', action: 'profile', params: [login: login])
                     }
                     json {

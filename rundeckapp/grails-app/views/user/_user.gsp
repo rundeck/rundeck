@@ -214,6 +214,15 @@
                                 </g:each>
                             </select>
                         </td>
+                        <td><g:message code="expiration.in"/>:<g:helpTooltip code="expiration.token.help" css="text-muted"/></td>
+                        <td> <input type="number" min="0" max="360" name="tokenTime"/> </td>
+                        <td>
+                            <select class="form-control" name="tokenTimeUnit">
+                                <option value="m"><g:message code="time.unit.minute.plural"/></option>
+                                <option value="h"><g:message code="time.unit.hour.plural"/></option>
+                                <option value="d"><g:message code="time.unit.day.plural"/></option>
+                            </select>
+                        </td>
                         <td>
                             <a class="genusertokenbtn small btn btn-link btn-xs"
                                href="${createLink(

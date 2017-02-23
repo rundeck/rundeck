@@ -57,13 +57,11 @@
     function generateUserToken(admin,login,elem){
         var tokenUser=login;
         var tokenRoles='';
-        var tokenTime='';
-        var tokenTimeUnit='';
+        var tokenTime=$(elem).down('input[name="tokenTime"]').value;
+        var tokenTimeUnit=$(elem).down('select[name="tokenTimeUnit"]').value;
         if(admin){
             tokenUser=$(elem).down('input[name="tokenUser"]').value;
             tokenRoles=$(elem).down('input[name="tokenRoles"]').value;
-            tokenTime=$(elem).down('input[name="tokenTime"]').value;
-            tokenTimeUnit=$(elem).down('select[name="tokenTimeUnit"]').value;
         }else{
             tokenRoles= "";
             var arr= $$('select[name="tokenRoles"] option:selected');
