@@ -24,6 +24,7 @@ class FileUploadService {
     PluginService pluginService
     ConfigurationService configurationService
     TaskService taskService
+    FrameworkService frameworkService
 
     long getTempfileExpirationDelay() {
         configurationService.getLong "fileUploadService.tempfile.expiration", DEFAULT_TEMP_EXPIRATION
@@ -85,11 +86,13 @@ class FileUploadService {
      */
     @Transactional
     def checkAndExpireAllRecords() {
-        def records = findExpiredRecords()
-        if (records) {
-            records.each { record ->
-                expireRecord(record)
-            }
+        findExpiredRecords(frameworkService.serverUUID)?.each(this.&expireRecord)
+    }
+
+    @Transactional
+    def onBootstrap() {
+        callAsync {
+            checkAndExpireAllRecords()
         }
     }
 
@@ -129,6 +132,7 @@ class FileUploadService {
                 expirationDate: expirationDate,
                 fileState: JobFileRecord.STATE_TEMP,
                 uuid: uuid.toString(),
+                serverNodeUUID: frameworkService.serverUUID,
                 sha: shaString,
                 jobId: jobId,
                 storageType: getPluginType(),
@@ -169,8 +173,8 @@ class FileUploadService {
         file
     }
 
-    List<JobFileRecord> findExpiredRecords(Date expiretime = new Date()) {
-        JobFileRecord.findAllByExpirationDateLessThanEqualsAndFileState(expiretime, 'temp')
+    List<JobFileRecord> findExpiredRecords(String serverUUID, Date expiretime = new Date()) {
+        JobFileRecord.findAllByExpirationDateLessThanEqualsAndFileStateAndServerNodeUUID expiretime, 'temp', serverUUID
     }
 
     List<JobFileRecord> findRecords(final Execution execution) {

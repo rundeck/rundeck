@@ -38,6 +38,7 @@ class JobFileRecord {
      */
     String fileState
     String uuid
+    String serverNodeUUID
     String sha
     String jobId
     String storageType // storage plugin type "tmpdir", "storage"
@@ -52,6 +53,7 @@ class JobFileRecord {
         user(nullable: false, maxSize: 255)
         expirationDate(nullable: true)
         uuid(nullable: false)
+        serverNodeUUID(nullable: true)
         sha(nullable: false, size: 64..64)
         jobId(nullable: false)
         storageType(nullable: false, maxSize: 255)
@@ -62,6 +64,7 @@ class JobFileRecord {
 
     static mapping = {
         storageMeta(type: 'text')
+        serverNodeUUID(type: 'text')
     }
 
     boolean stateIsExpired() {
