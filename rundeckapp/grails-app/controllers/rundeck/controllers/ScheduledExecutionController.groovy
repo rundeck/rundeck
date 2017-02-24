@@ -3455,6 +3455,10 @@ class ScheduledExecutionController  extends ControllerBase{
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
             return
         }
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
         String jobid = params.id
 
         ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
