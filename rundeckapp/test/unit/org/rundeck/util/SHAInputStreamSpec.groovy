@@ -37,7 +37,7 @@ class SHAInputStreamSpec extends Specification {
         def len = sha.read(buff)
         digest.update(data)
         def other = digest.digest()
-        def osha = String.format("%064X", new BigInteger(1, other))
+        def osha = String.format("%064x", new BigInteger(1, other))
 
         then:
         len == 4
@@ -58,7 +58,7 @@ class SHAInputStreamSpec extends Specification {
         def len = sha.read(buff, 1, 5)
         digest.update(data, 0, 5)
         def other = digest.digest()
-        def osha = String.format("%064X", new BigInteger(1, other))
+        def osha = String.format("%064x", new BigInteger(1, other))
 
         then:
         len == 5
@@ -77,7 +77,7 @@ class SHAInputStreamSpec extends Specification {
         def abyte = sha.read()
         digest.update((byte) val)
         def other = digest.digest()
-        def osha = String.format("%064X", new BigInteger(1, other))
+        def osha = String.format("%064x", new BigInteger(1, other))
 
         then:
         abyte == val

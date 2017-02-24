@@ -16,6 +16,9 @@
 
 package org.rundeck.util
 
+import org.apache.commons.fileupload.util.Streams
+
+import java.security.DigestInputStream
 import java.security.MessageDigest
 
 /**
@@ -23,14 +26,10 @@ import java.security.MessageDigest
  * @author greg
  * @since 2/22/17
  */
-class SHAInputStream extends FilterInputStream {
-    MessageDigest digest
-    byte[] complete
+class SHAInputStream extends DigestInputStream {
 
     SHAInputStream(final InputStream var1) {
-        super(var1)
-        digest = MessageDigest.getInstance("SHA-256")
-
+        super(var1, MessageDigest.getInstance("SHA-256"))
     }
 
     /**
@@ -46,26 +45,24 @@ class SHAInputStream extends FilterInputStream {
      * @return
      */
     String getSHAString() {
-        String.format("%064X", new BigInteger(1, getSHABytes()))
+        String.format("%064x", new BigInteger(1, getSHABytes()))
     }
 
-    @Override
-    int read() throws IOException {
-        int read = super.read()
-        if (read < 0) {
-            return read
-        }
-        digest.update((byte) read)
-        read
+    /**
+     * Consume all data from the underlying input stream and calculate SHA
+     * @return
+     */
+    String consumeAndGetSHAString() {
+        Streams.copy(this, null, false)
+        return getSHAString()
     }
 
-    @Override
-    int read(final byte[] b, final int off, final int len) throws IOException {
-        int read = super.read(b, off, len)
-        if (read < 0) {
-            return read
-        }
-        digest.update(b, off, read)
-        read
+    /**
+     * Utility method to consume all data from an input stream in and return the SHA
+     * @param input
+     * @return
+     */
+    static String getSHAString(InputStream input) {
+        new SHAInputStream(input).consumeAndGetSHAString()
     }
 }
