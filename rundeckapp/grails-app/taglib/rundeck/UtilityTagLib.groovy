@@ -1696,4 +1696,53 @@ ansi-bg-default'''))
             }
         }
     }
+    /**
+     * Output a basic table with headers and rows of data
+     *
+     * @attr classes additional css classes for the table
+     * @attr columTitle map of column name to title
+     * @attr columns required list of column names in order
+     * @attr data required list of data points in order
+     */
+    def basicTable = { attrs, body ->
+        out << "<table class=\"table ${attrs.classes}\">"
+
+        out << "<tr>"
+        attrs.columns.each {
+            out << "<th>${attrs.columnTitle?.get(it) ?: it}</th>"
+        }
+        out << "</tr>"
+
+        attrs.data.each { row ->
+            attrs.columns.each {
+                out << "<td>${row.hasProperty(it) || row.properties[it] ? row[it] : ''}</td>"
+            }
+        }
+        out << '</table>'
+    }
+    /**
+     * Output a basic table for a single datapoint, with field names on the left, values on the right
+     *
+     * @attr classes additional css classes for the table
+     * @attr fields required list of fields to output in order
+     * @attr fieldTitle map of field name to display title (optional)
+     * @attr data required single data object with fields
+     * @attr dataTitles tooltip titles for data fields
+     */
+    def basicData = { attrs, body ->
+        def data = attrs.data
+        out << "<table class=\"table ${attrs.classes}\">"
+
+        attrs.fields.each {
+            out << "<tr>"
+            out << "<td>${attrs.fieldTitle?.get(it) ?: it}</td>"
+            def val = (data.hasProperty(it) || data[it]) ? data[it] : ''
+            def title = (attrs.dataTitles?.hasProperty(it) || attrs.dataTitles.get(it)) ? attrs.dataTitles[it] : ''
+            out << "<td title=\"${title}\">${val}</td>"
+            out << "</tr>"
+        }
+
+        out << '</table>'
+
+    }
 }
