@@ -2513,7 +2513,7 @@ Query Parameters:
 <jobFiles>
   <paging offset="0" max="20" total="1" count="1" />
   <files>
-    <jobFile id="023057ee-418f-4da7-9ae5-e065ac91eb5a">
+    <file id="023057ee-418f-4da7-9ae5-e065ac91eb5a">
       <user>admin</user>
       <fileState>temp</fileState>
       <sha>
@@ -2526,7 +2526,7 @@ Query Parameters:
       <size>12</size>
       <expirationDate>2017-02-24 14:58:02.655 PST</expirationDate>
       <execId />
-    </jobFile>
+    </file>
   </files>
 </jobFiles>
 ~~~
@@ -2558,7 +2558,7 @@ Get info about an uploaded file given its ID.
 ~~~
 
 ~~~{.xml}
-<jobFile id="f985864b-fa1b-4e09-af7a-4315e9908372">
+<file id="f985864b-fa1b-4e09-af7a-4315e9908372">
   <user>admin</user>
   <fileState>deleted</fileState>
   <sha>9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad</sha>
@@ -2569,7 +2569,7 @@ Get info about an uploaded file given its ID.
   <size>12</size>
   <expirationDate>2017-02-24 11:11:03.741 PST</expirationDate>
   <execId>2741</execId>
-</jobFile>
+</file>
 ~~~
 
 ## Executions
