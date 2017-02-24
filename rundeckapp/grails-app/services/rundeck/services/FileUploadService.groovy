@@ -4,7 +4,9 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import grails.events.Listener
 import grails.transaction.Transactional
+import org.apache.commons.fileupload.util.Streams
 import org.rundeck.util.SHAInputStream
+import org.rundeck.util.SHAOutputStream
 import org.rundeck.util.Sizes
 import org.rundeck.util.ThresholdInputStream
 import rundeck.Execution
@@ -205,17 +207,29 @@ class FileUploadService {
     /**
      * Retrieve the file by reference, to a local temp file.  If the
      * file is already on local disk, it will be returned directly,
-     * otherwise it will be retrieved from the plugin
+     * otherwise it will be retrieved from the plugin.
+     * The file SHA will be compared to expected SHA
      * @param reference
      * @return
      */
     def attachFileForExecution(String reference, Execution execution) {
         JobFileRecord jfr = findRecord(reference)
-        def file = retrieveTempFileForExecution(reference)
+        File file
+        String shastring
+        (file, shastring) = retrieveTempFileForExecution(reference)
+        if (jfr.sha != shastring) {
+            throw new FileUploadServiceException("SHA check failed for $reference, expected $jfr.sha, saw $shastring")
+        }
         jfr.execution = execution
         jfr.stateRetained()
         jfr.save(flush: true)
         [file, jfr]
+    }
+
+    String getFileSHA(final File file) {
+        file.withInputStream { is ->
+            SHAInputStream.getSHAString(is)
+        }
     }
 
     List<JobFileRecord> findExpiredRecords(String serverUUID, Date expiretime = new Date()) {
@@ -247,22 +261,44 @@ class FileUploadService {
      * file is already on local disk, it will be returned directly,
      * otherwise it will be retrieved from the plugin
      * @param reference
-     * @return
+     * @return [file , "sha"]
      */
-    File retrieveTempFileForExecution(String reference) {
+    def retrieveTempFileForExecution(String reference) {
         def plugin = getPlugin()
-        File file = plugin.retrieveLocalFile(reference)
-        if (file) {
-            return file
+        File file
+        try {
+            file = plugin.retrieveLocalFile(reference)
+            if (file) {
+                return [file, getFileSHA(file)]
+            }
+        } catch (IOException e) {
+            if (file?.exists()) {
+                file.delete()
+            }
+            throw new FileUploadServiceException("Failed to retrieve file $reference: " + e, e)
         }
         //copy locally
-        file = Files.createTempFile(reference, "tmp").toFile()
-        file.withOutputStream {
-            plugin.retrieveFile(reference, it)
+        //TODO: rundeck tmp dir
+        if (!plugin.hasFile(reference)) {
+            throw new FileUploadServiceException("File is not available: $reference")
         }
+        file = Files.createTempFile(reference, "tmp").toFile()
         file.deleteOnExit()
+        String shastring
+        try {
+            file.withOutputStream {
+                def shastream = new SHAOutputStream(it)
+                plugin.retrieveFile(reference, shastream)
+                shastring = shastream.SHAString
+            }
+        } catch (IOException e) {
+            if (file.exists()) {
+                file.delete()
+            }
+            throw new FileUploadServiceException("Failed to retrieve file $reference: " + e, e)
+        }
         saveLocalReference(file, reference)
-        file
+        [file, shastring]
     }
 
     /**
