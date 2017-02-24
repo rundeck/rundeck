@@ -551,7 +551,6 @@ public class SSHTaskBuilder {
         build(extSSHSftp, nodeentry, localFile, remoteFile, project, dataContext, sshConnectionInfo,
                 loglevel, logger);
 
-        extSSHSftp.setAntLogLevel(loglevel);
         return extSSHSftp;
 
     }
