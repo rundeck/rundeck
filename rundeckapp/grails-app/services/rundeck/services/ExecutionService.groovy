@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.events.EventException
 import grails.events.Listener
 import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
@@ -948,7 +949,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
                     execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed,inputCharset)
 
-            grailsEvents?.event(
+            def evt = grailsEvents?.event(
                     null,
                     'executionBeforeStart',
                     new ExecutionBeforeStartEvent(
@@ -956,7 +957,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             job:scheduledExecution,
                             context: executioncontext
                     )
-            )?.get()
+            )
+            evt?.get()
+            def errs = evt?.getErrors()
+            if (errs) {
+                def err=(errs[0] instanceof EventException)? errs[0].cause : errs[0]
+                throw new ExecutionServiceException(err.message, err)
+            }
 
 
             //ExecutionService handles Job reference steps
