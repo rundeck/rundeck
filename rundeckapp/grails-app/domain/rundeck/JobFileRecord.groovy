@@ -57,13 +57,14 @@ class JobFileRecord {
         sha(nullable: false, size: 64..64)
         jobId(nullable: false)
         storageType(nullable: false, maxSize: 255)
-        storageReference(nullable: false, maxSize: 255)
+        storageReference(nullable: false)
         storageMeta(nullable: true)
         execution(nullable: true)
     }
 
     static mapping = {
         storageMeta(type: 'text')
+        storageReference(type: 'text')
         serverNodeUUID(type: 'text')
     }
 
