@@ -128,24 +128,22 @@ class JobFileRecord {
     /**
      * Exported form for api
      */
-    def exportInfo() {
-        new JobFileInfo([
-                                id    : uuid,
-                                execId: execution?.id
-                        ]
-                                +
-                                properties.subMap([
-                                        'jobId',
-                                        'fileName',
-                                        'sha',
-                                        'size',
-                                        'dateCreated',
-                                        'expirationDate',
-                                        'user',
-                                        'fileState',
-                                        'serverNodeUUID',
-                                ]
-                                )
+
+    Map exportMap() {
+        [
+                id    : uuid,
+                execId: execution?.id
+        ] + properties.subMap([
+                'jobId',
+                'fileName',
+                'sha',
+                'size',
+                'dateCreated',
+                'expirationDate',
+                'user',
+                'fileState',
+                'serverNodeUUID',
+        ]
         )
     }
 }

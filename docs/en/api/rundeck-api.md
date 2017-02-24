@@ -2531,7 +2531,6 @@ Query Parameters:
 </jobFiles>
 ~~~
 
-
 ### Get Upload File Info
 
 Get info about an uploaded file given its ID.
@@ -2831,6 +2830,56 @@ With `Content-Type: application/json`, a single object:
   ]
 }
 ~~~~~
+
+### List Input Files for an Execution
+
+List input files used for an execution.
+
+**Request:**
+
+    GET /api/19/execution/[ID]/input/files
+
+**Response:**
+
+~~~{.json}
+{
+  "files": [
+    {
+      "id": "382c7596-435b-4103-8781-6b32fbd629b2",
+      "user": "admin",
+      "fileState": "deleted",
+      "sha": "9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad",
+      "jobId": "7b3fff59-7a2d-4a31-a5b2-dd26177c823c",
+      "dateCreated": "2017-02-24T23:26:48Z",
+      "serverNodeUUID": "3425B691-7319-4EEE-8425-F053C628B4BA",
+      "fileName": null,
+      "size": 12,
+      "expirationDate": "2017-02-24T23:27:18Z",
+      "execId": 2837
+    }
+  ]
+}
+~~~
+~~~{.xml}
+<executionFiles>
+  <files>
+    <file id="382c7596-435b-4103-8781-6b32fbd629b2">
+      <user>admin</user>
+      <fileState>deleted</fileState>
+      <sha>
+      9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad</sha>
+      <jobId>7b3fff59-7a2d-4a31-a5b2-dd26177c823c</jobId>
+      <dateCreated>2017-02-24 15:26:48.197 PST</dateCreated>
+      <serverNodeUUID>
+      3425B691-7319-4EEE-8425-F053C628B4BA</serverNodeUUID>
+      <fileName />
+      <size>12</size>
+      <expirationDate>2017-02-24 15:27:18.65 PST</expirationDate>
+      <execId>2837</execId>
+    </file>
+  </files>
+</executionFiles>
+~~~
 
 ### Delete an Execution
 

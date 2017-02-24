@@ -3626,7 +3626,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return apiService.renderUnauthorized(response, ['Read', 'Job File Record', params.id])
         }
 
-        respond(jobFileRecord.exportInfo(), [formats: ['xml', 'json']])
+        respond(new JobFileInfo(jobFileRecord.exportMap()), [formats: ['xml', 'json']])
     }
     /**
      * API v19, File upload input for job
@@ -3674,7 +3674,10 @@ class ScheduledExecutionController  extends ControllerBase{
                 fileState
         )
         respond(
-                new JobFileInfoList(records*.exportInfo(), paging + [total:total, count: records.size()]),
+                new JobFileInfoList(
+                        records.collect{new JobFileInfo(it.exportMap())},
+                        paging + [total:total, count: records.size()]
+                ),
                 [formats: ['xml', 'json']]
         )
     }

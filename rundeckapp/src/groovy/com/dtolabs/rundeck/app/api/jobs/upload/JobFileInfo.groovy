@@ -26,7 +26,7 @@ import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
  */
 
 @ApiResource
-@ElementName('jobFile')
+@ElementName('file')
 class JobFileInfo {
     @XmlAttribute
     String id

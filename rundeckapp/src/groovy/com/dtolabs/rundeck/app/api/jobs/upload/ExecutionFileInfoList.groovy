@@ -20,18 +20,15 @@ import com.dtolabs.rundeck.app.api.Paging
 import com.dtolabs.rundeck.app.api.marshall.ApiResource
 import com.dtolabs.rundeck.app.api.marshall.ElementName
 import com.dtolabs.rundeck.app.api.marshall.Ignore
-import com.dtolabs.rundeck.app.api.marshall.SubElement
-import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
 
 /**
  * @author greg
  * @since 2/24/17
  */
-
 @ApiResource
-@ElementName('jobFiles')
-class JobFileInfoList {
-    JobFileInfoList(final List<JobFileInfo> files, Map params) {
+@ElementName('executionFiles')
+class ExecutionFileInfoList  {
+    ExecutionFileInfoList(final List<JobFileInfo> files, final Map params) {
         this.files = files
         if (params) {
             this.paging = Paging.fromMap(params)
