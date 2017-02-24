@@ -50,7 +50,8 @@ class UtilityTagLib{
             'textRemainingLines',
             'textBeforeLine',
             'textAfterLine',
-            'textHasMarker'
+            'textHasMarker',
+            'humanizeValue'
     ]
 
     private static Random rand=new java.util.Random()
@@ -741,40 +742,56 @@ class UtilityTagLib{
      * Humanize data value, based on unit attribute
      */
     def humanize={attrs,body->
-        if(attrs.unit && null!=attrs.value){
-            if(attrs.unit=='byte' || attrs.unit=='hbyte'){
-                long val=attrs.value instanceof String?Long.parseLong(attrs.value):attrs.value
-                def testmap=[
-                        byte:[
-                            [value: 0, name: 'B'],
-                            [value: 1024L, name: 'KiB'],
-                            [value: 1024L * 1024, name: 'MiB'],
-                            [value: 1024L * 1024 * 1024, name: 'GiB'],
-                            [value: 1024L * 1024 * 1024 * 1024, name: 'TiB'],
+        def result = humanizeValue(attrs, body)
+        if (result) {
+            out << result
+        }
+    }
+    /**
+     * Humanize data value, based on unit attribute
+     * @attrs unit required unit of data, 'byte','hbyte','ms','%' will be formatted specially
+     * @attrs value required value convert
+     */
+    def humanizeValue = { attrs, body ->
+        if (attrs.unit && null != attrs.value) {
+            if (attrs.unit == 'byte' || attrs.unit == 'hbyte') {
+                long val = attrs.value instanceof String ? Long.parseLong(attrs.value) : attrs.value
+                def testmap = [
+                        byte: [
+                                [value: 0, name: 'B'],
+                                [value: 1024L, name: 'KiB'],
+                                [value: 1024L * 1024, name: 'MiB'],
+                                [value: 1024L * 1024 * 1024, name: 'GiB'],
+                                [value: 1024L * 1024 * 1024 * 1024, name: 'TiB'],
                         ],
                         hbyte: [
-                            [value: 0, name: 'B'],
-                            [value: 1000L, name: 'KB'],
-                            [value: 1000L * 1000, name: 'MB'],
-                            [value: 1000L * 1000 * 1000, name: 'GB'],
-                            [value: 1000L * 1000 * 1000 * 1000, name: 'TB'],
+                                [value: 0, name: 'B'],
+                                [value: 1000L, name: 'KB'],
+                                [value: 1000L * 1000, name: 'MB'],
+                                [value: 1000L * 1000 * 1000, name: 'GB'],
+                                [value: 1000L * 1000 * 1000 * 1000, name: 'TB'],
                         ]
-                    ]
-                def testset=testmap[attrs.unit]
+                ]
+                def testset = testmap[attrs.unit]
                 def found
-                testset.eachWithIndex  {lvl, x -> if (!found && val < lvl.value) {found = testset[x-1]} }
-                if(!found){
-                    found=testset[-1]
+                testset.eachWithIndex { lvl, x ->
+                    if (!found && val < lvl.value) {
+                        found = testset[x - 1]
+                    }
+                }
+                if (!found) {
+                    found = testset[-1]
                 }
                 def outputNumber = found.value > 0 ? (val / found.value) : val
-                out<<g.formatNumber([number : outputNumber, type : "number", maxFractionDigits: "2"],body)+' '+found.name
-            }else if(attrs.unit=='ms'){
-                attrs.time=attrs.value
-                out<<timeDuration(attrs,body)
-            }else if(attrs.unit=='%'){
+                return g.formatNumber([number: outputNumber, type: "number", maxFractionDigits: "2"], body) + ' ' +
+                        found.name
+            } else if (attrs.unit == 'ms') {
+                attrs.time = attrs.value
+                return timeDuration(attrs, body)
+            } else if (attrs.unit == '%') {
                 out << g.formatNumber([number: attrs.value, type: "number", maxFractionDigits: "2"], body) + '%'
-            }else{
-                out<<attrs.value+' ('+attrs.unit+')'
+            } else {
+                return attrs.value + ' (' + attrs.unit + ')'
             }
         }
     }
