@@ -349,8 +349,9 @@ class FileUploadService {
             if (loadedFilePaths) {
                 evt.context.dataContext['file'] = loadedFilePaths
             }
+            return evt.context
         }
-        evt.context
+        null
     }
     /**
      * Remove temp files
