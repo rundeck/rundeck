@@ -60,7 +60,6 @@ class FSFileUploadPlugin implements FileUploadPlugin {
             throws IOException
     {
         File output = new File(basedir, refid)
-        System.err.println("uploadFile: $length, $refid -> $output.absolutePath")
         long copied = -1
         try {
             output.withOutputStream { out ->
@@ -86,7 +85,6 @@ class FSFileUploadPlugin implements FileUploadPlugin {
 
     @Override
     void retrieveFile(final String ref, final OutputStream out) throws IOException {
-        System.err.println("retrieveFile: $ref, $out")
         File output = new File(basedir, ref)
         output.withInputStream { ins ->
             Streams.copy(ins, out, false)
@@ -101,14 +99,12 @@ class FSFileUploadPlugin implements FileUploadPlugin {
 
     @Override
     InputStream retrieveFile(final String ref) {
-        System.err.println("retrieveFile: $ref")
         File output = new File(basedir, ref)
         return Files.newInputStream(output.toPath())
     }
 
     @Override
     boolean removeFile(final String reference) {
-        System.err.println("removeFile: $reference")
         File output = new File(basedir, reference)
         return Files.deleteIfExists(output.toPath())
     }
