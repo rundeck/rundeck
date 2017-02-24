@@ -93,6 +93,8 @@ class UrlMappings {
         "/api/$api_version/jobs/execution/disable"(controller: 'scheduledExecution',action: 'apiFlipExecutionEnabledBulk'){
             status = false
         }
+        "/api/$api_version/jobs/file/$id"(controller: 'scheduledExecution',action: 'apiJobFileInfo')
+
 
 
         "/api/$api_version/project/$project/executions/running"(controller: 'menu', action: 'apiExecutionsRunningv14')

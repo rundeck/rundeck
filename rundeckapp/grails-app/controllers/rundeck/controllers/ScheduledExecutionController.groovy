@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
+import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
@@ -3594,6 +3595,38 @@ class ScheduledExecutionController  extends ControllerBase{
         respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: ['xml', 'json']])
     }
 
+    /**
+     * API v19, File upload input for job
+     * @return
+     */
+    def apiJobFileInfo() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+            return
+        }
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def jobFileRecord = fileUploadService.findUuid(params.id)
+        if (!apiService.requireExists(response, jobFileRecord, ['Job File Record', params.id])) {
+            return
+        }
+        def job = scheduledExecutionService.getByIDorUUID(jobFileRecord.jobId)
+        if (!apiService.requireExists(response, job, ['Job File Record', params.id])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, job.project)
+        if (!frameworkService.authorizeProjectJobAll(authContext, job, [AuthConstants.ACTION_READ], job.project)) {
+            return apiService.renderUnauthorized(response, ['Read', 'Job File Record', params.id])
+        }
+
+        respond(jobFileRecord.exportInfo(), [formats: ['xml', 'json']])
+    }
     /**
      * API: DELETE job definition: /job/{id}, version 1
      */

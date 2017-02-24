@@ -2463,6 +2463,47 @@ The result:
 }
 ~~~
 
+### Get Upload File Info
+
+Get info about an uploaded file given its ID.
+
+**Request:**
+
+    GET /api/19/jobs/file/[ID]
+
+**Response:**
+
+~~~{.json}
+{
+  "dateCreated": "2017-02-24T19:10:33Z",
+  "execId": 2741,
+  "expirationDate": "2017-02-24T19:11:03Z",
+  "fileName": null,
+  "fileState": "deleted",
+  "id": "f985864b-fa1b-4e09-af7a-4315e9908372",
+  "jobId": "7b3fff59-7a2d-4a31-a5b2-dd26177c823c",
+  "serverNodeUUID": "3425B691-7319-4EEE-8425-F053C628B4BA",
+  "sha": "9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad",
+  "size": 12,
+  "user": "admin"
+}
+~~~
+
+~~~{.xml}
+<jobFile id="f985864b-fa1b-4e09-af7a-4315e9908372">
+  <user>admin</user>
+  <fileState>deleted</fileState>
+  <sha>9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad</sha>
+  <jobId>7b3fff59-7a2d-4a31-a5b2-dd26177c823c</jobId>
+  <dateCreated>2017-02-24 11:10:33.829 PST</dateCreated>
+  <serverNodeUUID>3425B691-7319-4EEE-8425-F053C628B4BA</serverNodeUUID>
+  <fileName />
+  <size>12</size>
+  <expirationDate>2017-02-24 11:11:03.741 PST</expirationDate>
+  <execId>2741</execId>
+</jobFile>
+~~~
+
 ## Executions
 
 ### Getting Executions for a Job

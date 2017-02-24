@@ -256,6 +256,10 @@ class FileUploadService {
         JobFileRecord.findByStorageReference(reference)
     }
 
+    JobFileRecord findUuid(final String uuid) {
+        JobFileRecord.findByUuid(uuid)
+    }
+
     /**
      * Retrieve the file by reference, to a local temp file.  If the
      * file is already on local disk, it will be returned directly,

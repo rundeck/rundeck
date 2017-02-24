@@ -1,5 +1,7 @@
 package rundeck
 
+import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
+
 class JobFileRecord {
     /**
      * Original file name
@@ -121,5 +123,29 @@ class JobFileRecord {
                 ", storageType='" + storageType + '\'' +
                 ", storageReference='" + storageReference + '\'' +
                 "} " + super.toString();
+    }
+
+    /**
+     * Exported form for api
+     */
+    def exportInfo() {
+        new JobFileInfo([
+                                id    : uuid,
+                                execId: execution?.id
+                        ]
+                                +
+                                properties.subMap([
+                                        'jobId',
+                                        'fileName',
+                                        'sha',
+                                        'size',
+                                        'dateCreated',
+                                        'expirationDate',
+                                        'user',
+                                        'fileState',
+                                        'serverNodeUUID',
+                                ]
+                                )
+        )
     }
 }
