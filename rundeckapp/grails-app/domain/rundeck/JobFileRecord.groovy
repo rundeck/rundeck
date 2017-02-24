@@ -46,7 +46,7 @@ class JobFileRecord {
     String storageMeta // metadata...?
     Execution execution
     static constraints = {
-        fileName(nullable: false, maxSize: 1024)
+        fileName(nullable: true, maxSize: 1024)
         size(nullable: false)
         recordType(nullable: false, maxSize: 255)
         fileState(nullable: false, maxSize: 255, inList: [STATE_TEMP, STATE_DELETED, STATE_EXPIRED, STATE_RETAINED])

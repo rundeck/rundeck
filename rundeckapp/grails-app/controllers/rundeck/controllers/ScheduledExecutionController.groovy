@@ -2913,6 +2913,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                     file.inputStream,
                                     file.size,
                                     authContext.username,
+                                    file.originalFilename,
                                     optname,
                                     scheduledExecution.extid,
                                     new Date()
@@ -3532,6 +3533,7 @@ class ScheduledExecutionController  extends ControllerBase{
                             file.inputStream,
                             file.size,
                             authContext.username,
+                            file.originalFilename,
                             optname,
                             scheduledExecution.extid,
                             new Date()
@@ -3571,6 +3573,7 @@ class ScheduledExecutionController  extends ControllerBase{
                         request.getInputStream(),
                         request.contentLength,
                         authContext.username,
+                        params.fileName,
                         params.optionName,
                         scheduledExecution.extid,
                         new Date()

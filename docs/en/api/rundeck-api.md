@@ -2361,14 +2361,16 @@ You can then [Run the Job][/api/V/job/[ID]/run] using the "file key" as the opti
 
 **Single File Upload Request:**
 
-    POST /api/19/job/[ID]/file/upload?optionName=[NAME]
-    POST /api/19/job/[ID]/file/upload/[NAME]
+    POST /api/19/job/[ID]/file/upload?optionName=[NAME]&fileName=[FILENAME]
+    POST /api/19/job/[ID]/file/upload/[NAME]&fileName=[FILENAME]
     Content-Type: octet/stream
 
     <file-contents>
 
-For a single file/option value, specify the option name either as a query parameter `optionName` or as part of the
-URL path.
+*Query Parameters*:
+
+`optionName`: For a single file/option value, specify the option name either as a query parameter or as part of the URL path.
+`fileName`: Specify the original file name (optional)
 
 *Headers*: `Content-Type: octet/stream`
 
@@ -2381,7 +2383,7 @@ URL path.
     ...
 
 For multiple files, use a Multi-part request.  For each file, specify the field name as `option.NAME` where NAME
-is the option name.
+is the option name. The filename is specified normally within the multi-part request.
 
 **Response:**
 
@@ -2438,6 +2440,28 @@ Now run the job using the file key value for the `myfile` option:
 
     {"options":{"myfile":"bb704988-6467-4613-b961-13014f6a55cb"}}
 
+**Multiple file example using curl:**
+
+    curl -X POST -H x-rundeck-auth-token:$RD_TOKEN \
+        -H accept:application/json \
+        -F option.csvfile=@data.csv \
+        -F option.xmlfile=@data.xml \
+        $RD_URL/job/47d71672-9aa0-49f3-96d0-39f02daf80b9/file/upload
+
+This uploads two files, one for option `csvfile` and with filename `data.csv`, and the other for option `xmlfile` and filename `data.xml`.
+
+The result:
+
+
+~~~ {.json}
+{
+  "options": {
+    "csvfile": "34ba3064-28c6-447e-aafb-b73db8ee9f6f",
+    "xmlfile": "a71c4cc7-71f6-4b3c-b53d-2aa89882a4cf"
+  },
+  "total": 2
+}
+~~~
 
 ## Executions
 

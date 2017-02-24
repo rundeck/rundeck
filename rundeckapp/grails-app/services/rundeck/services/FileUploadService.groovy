@@ -70,7 +70,7 @@ class FileUploadService {
      * @param length
      * @param inputName
      * @param jobId
-     * @return refid
+     * @return unique file id
      * @throws FileUploadServiceException if the uploaded file exceeds the maximum size
      * @throws IOException if there is an error copying the uploaded file
      *
@@ -80,6 +80,7 @@ class FileUploadService {
             InputStream input,
             long length,
             String username,
+            String origName,
             String inputName,
             String jobId,
             Date expiryStart
@@ -112,7 +113,7 @@ class FileUploadService {
         }
         def shaString = shastream.SHAString
         log.debug("uploadedFile $uuid refid $refid (sha $shaString)")
-        def record = createRecord(refid, length, uuid, shaString, jobId, username, expiryStart)
+        def record = createRecord(refid, length, uuid, shaString, origName, jobId, username, expiryStart)
         log.debug("record: $record")
         if (expiryStart) {
             Long id = record.id
@@ -122,7 +123,7 @@ class FileUploadService {
                 }
             }
         }
-        refid
+        uuid.toString()
     }
 
     /**
@@ -163,6 +164,7 @@ class FileUploadService {
             long length,
             UUID uuid,
             String shaString,
+            String origName,
             String jobId,
             String username,
             Date expiryStart
@@ -170,7 +172,7 @@ class FileUploadService {
     {
         def expirationDate = expiryStart ? (new Date(expiryStart.time + tempfileExpirationDelay)) : null
         def jfr = new JobFileRecord(
-                fileName: refid,
+                fileName: origName,
                 size: length,
                 recordType: RECORD_TYPE_OPTION_INPUT,
                 expirationDate: expirationDate,
@@ -181,8 +183,7 @@ class FileUploadService {
                 jobId: jobId,
                 storageType: getPluginType(),
                 user: username,
-                storageReference: refid,
-                storageMeta: null//metadata
+                storageReference: refid
         )
         if(!jfr.validate()){
             throw new RuntimeException("Could not validate record: $jfr.errors")
@@ -208,13 +209,13 @@ class FileUploadService {
      * @param reference
      * @return
      */
-    File attachFileForExecution(String reference, Execution execution) {
+    def attachFileForExecution(String reference, Execution execution) {
         JobFileRecord jfr = findRecord(reference)
         def file = retrieveTempFileForExecution(reference)
         jfr.execution = execution
         jfr.stateRetained()
         jfr.save(flush: true)
-        file
+        [file, jfr]
     }
 
     List<JobFileRecord> findExpiredRecords(String serverUUID, Date expiretime = new Date()) {
@@ -282,8 +283,12 @@ class FileUploadService {
         fileopts?.each {
             def key = context.dataContext['option'][it.name]
             if (key) {
-                File file = attachFileForExecution(key, execution)
+                File file
+                JobFileRecord jfr
+                (file, jfr) = attachFileForExecution(key, execution)
                 loadedFiles[it.name] = file.absolutePath
+                loadedFiles[it.name + '.fileName'] = jfr.fileName
+                loadedFiles[it.name + '.sha'] = jfr.sha
                 context.executionListener.log(3, "Retrieved file $key for option ${it.name} to $file.absolutePath")
             }
         }
