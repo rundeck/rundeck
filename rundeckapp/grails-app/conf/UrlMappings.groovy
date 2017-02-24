@@ -67,7 +67,7 @@ class UrlMappings {
         }
 
         "/api/$api_version/job/$id/run"(controller: 'scheduledExecution', action: 'apiJobRun')
-        "/api/$api_version/job/$id/file/upload/$optionName?"(
+        "/api/$api_version/job/$id/input/file/$optionName?"(
                 controller: 'scheduledExecution',
                 action: 'apiJobFileUpload'
         )

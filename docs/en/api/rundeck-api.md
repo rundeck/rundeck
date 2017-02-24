@@ -2361,8 +2361,8 @@ You can then [Run the Job][/api/V/job/[ID]/run] using the "file key" as the opti
 
 **Single File Upload Request:**
 
-    POST /api/19/job/[ID]/file/upload?optionName=[NAME]&fileName=[FILENAME]
-    POST /api/19/job/[ID]/file/upload/[NAME]&fileName=[FILENAME]
+    POST /api/19/job/[ID]/input/file?optionName=[NAME]&fileName=[FILENAME]
+    POST /api/19/job/[ID]/input/file/[NAME]&fileName=[FILENAME]
     Content-Type: octet/stream
 
     <file-contents>
@@ -2378,7 +2378,7 @@ You can then [Run the Job][/api/V/job/[ID]/run] using the "file key" as the opti
 
 **Multiple File Upload Request:**
 
-    POST /api/19/job/[ID]/file/upload
+    POST /api/19/job/[ID]/input/file
     Content-Type: multipart/form-data
     ...
 
@@ -2415,7 +2415,7 @@ is the option name. The filename is specified normally within the multi-part req
 
 To upload a file for an option `myfile` and run a job with the file:
 
-    POST /api/19/job/[ID]/file/upload/myfile
+    POST /api/19/job/[ID]/input/file/myfile
     Accept: application/json
     Content-Type: application/octet-stream
     Content-Length: 10
