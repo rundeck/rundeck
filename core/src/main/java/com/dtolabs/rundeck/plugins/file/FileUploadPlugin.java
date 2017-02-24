@@ -57,6 +57,16 @@ public interface FileUploadPlugin {
     public void retrieveFile(String ref, OutputStream out) throws IOException;
 
     /**
+     * Return true if the file can be retrieved via {@link #retrieveFile(String, OutputStream)} or {@link
+     * #retrieveFile(String)}
+     *
+     * @param ref ref
+     *
+     * @return true if the file can be retrieved, false if the retrieve call will fail
+     */
+    public boolean hasFile(String ref);
+
+    /**
      * Retrieve the file if iti si available locally, otherwise return null
      *
      * @param ref ref

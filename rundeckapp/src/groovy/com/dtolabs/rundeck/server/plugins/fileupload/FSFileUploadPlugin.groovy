@@ -80,6 +80,11 @@ class FSFileUploadPlugin implements FileUploadPlugin {
     }
 
     @Override
+    boolean hasFile(final String ref) {
+        new File(basedir, ref).exists()
+    }
+
+    @Override
     void retrieveFile(final String ref, final OutputStream out) throws IOException {
         System.err.println("retrieveFile: $ref, $out")
         File output = new File(basedir, ref)
