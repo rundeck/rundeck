@@ -2463,6 +2463,75 @@ The result:
 }
 ~~~
 
+### List Files Uploaded for a Job
+
+List files that have been uploaded for a Job. Files with fileState `temp` can be used for for a new execution of the job.
+
+**Request:**
+
+    GET /api/19/job/[ID]/input/files
+
+Query Parameters:
+
+* Paging: `max` (maximum results, default: 20), `offset` (offset of first result)
+* Filter:
+    * `fileState`: state of file upload record (default: `temp`), can be one of:
+        * `temp`: file was uploaded and is not yet used, may become expired and removed
+        * `deleted`: file was used for an execution and then deleted
+        * `expired`: temp file was not used for an execution and expired
+        * `retained`: file was retained
+
+**Response:**
+
+~~~{.json}
+{
+  "paging": {
+    "offset": 0,
+    "max": 20,
+    "total": 1,
+    "count": 1
+  },
+  "files": [
+    {
+      "id": "023057ee-418f-4da7-9ae5-e065ac91eb5a",
+      "user": "admin",
+      "fileState": "temp",
+      "sha": "9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad",
+      "jobId": "7b3fff59-7a2d-4a31-a5b2-dd26177c823c",
+      "dateCreated": "2017-02-24T22:57:32Z",
+      "serverNodeUUID": "3425B691-7319-4EEE-8425-F053C628B4BA",
+      "fileName": null,
+      "size": 12,
+      "expirationDate": "2017-02-24T22:58:02Z",
+      "execId": null
+    }
+  ]
+}
+~~~
+
+~~~{.xml}
+<jobFiles>
+  <paging offset="0" max="20" total="1" count="1" />
+  <files>
+    <jobFile id="023057ee-418f-4da7-9ae5-e065ac91eb5a">
+      <user>admin</user>
+      <fileState>temp</fileState>
+      <sha>
+      9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad</sha>
+      <jobId>7b3fff59-7a2d-4a31-a5b2-dd26177c823c</jobId>
+      <dateCreated>2017-02-24 14:57:32.746 PST</dateCreated>
+      <serverNodeUUID>
+      3425B691-7319-4EEE-8425-F053C628B4BA</serverNodeUUID>
+      <fileName />
+      <size>12</size>
+      <expirationDate>2017-02-24 14:58:02.655 PST</expirationDate>
+      <execId />
+    </jobFile>
+  </files>
+</jobFiles>
+~~~
+
+
 ### Get Upload File Info
 
 Get info about an uploaded file given its ID.

@@ -20,6 +20,7 @@ import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
+import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfoList
 import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
@@ -3626,6 +3627,56 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         respond(jobFileRecord.exportInfo(), [formats: ['xml', 'json']])
+    }
+    /**
+     * API v19, File upload input for job
+     * @return
+     */
+    def apiJobFilesList() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+            return
+        }
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def job = scheduledExecutionService.getByIDorUUID(params.id)
+        if (!apiService.requireExists(response, job, ['Job ID', params.id])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, job.project)
+        if (!frameworkService.authorizeProjectJobAll(authContext, job, [AuthConstants.ACTION_READ], job.project)) {
+            return apiService.renderUnauthorized(response, ['Read', 'Job ID', params.id])
+        }
+
+        def paging = [offset: 0, max: 20, sort: 'dateCreated', order: 'desc']
+        if (params.max) {
+            paging.max = params.int('max')
+        }
+        if (params.offset) {
+            paging.offset = params.int('offset')
+        }
+        String fileState = params.fileState ?: JobFileRecord.STATE_TEMP
+        def records = fileUploadService.findRecords(
+                job.extid,
+                FileUploadService.RECORD_TYPE_OPTION_INPUT,
+                fileState,
+                paging
+        )
+        int total = fileUploadService.countRecords(
+                job.extid,
+                FileUploadService.RECORD_TYPE_OPTION_INPUT,
+                fileState
+        )
+        respond(
+                new JobFileInfoList(records*.exportInfo(), paging + [total:total, count: records.size()]),
+                [formats: ['xml', 'json']]
+        )
     }
     /**
      * API: DELETE job definition: /job/{id}, version 1

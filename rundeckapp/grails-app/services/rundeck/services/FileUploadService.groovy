@@ -248,8 +248,16 @@ class FileUploadService {
         JobFileRecord.findAllByJobId(jobid)
     }
 
-    List<JobFileRecord> findRecords(final String jobid, String recordType) {
-        JobFileRecord.findAllByJobIdAndRecordType(jobid, recordType)
+    List<JobFileRecord> findRecords(final String jobid, String recordType, Map params = null) {
+        JobFileRecord.findAllByJobIdAndRecordType(jobid, recordType, params)
+    }
+
+    List<JobFileRecord> findRecords(final String jobid, String recordType, String fileState, Map params = null) {
+        JobFileRecord.findAllByJobIdAndRecordTypeAndFileState(jobid, recordType, fileState, params)
+    }
+
+    int countRecords(final String jobid, String recordType, String fileState) {
+        JobFileRecord.countByJobIdAndRecordTypeAndFileState(jobid, recordType, fileState)
     }
 
     JobFileRecord findRecord(final String reference) {
