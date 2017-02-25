@@ -115,7 +115,7 @@ class FileUploadService {
         }
         def shaString = shastream.SHAString
         log.debug("uploadedFile $uuid refid $refid (sha $shaString)")
-        def record = createRecord(refid, length, uuid, shaString, origName, jobId, username, expiryStart)
+        def record = createRecord(refid, length, uuid, shaString, origName, jobId, inputName, username, expiryStart)
         log.debug("record: $record")
         if (expiryStart) {
             Long id = record.id
@@ -168,6 +168,7 @@ class FileUploadService {
             String shaString,
             String origName,
             String jobId,
+            String inputName,
             String username,
             Date expiryStart
     )
@@ -183,6 +184,7 @@ class FileUploadService {
                 serverNodeUUID: frameworkService.serverUUID,
                 sha: shaString,
                 jobId: jobId,
+                recordName: inputName,
                 storageType: getPluginType(),
                 user: username,
                 storageReference: refid

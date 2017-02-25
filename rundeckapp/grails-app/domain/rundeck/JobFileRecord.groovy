@@ -1,7 +1,5 @@
 package rundeck
 
-import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
-
 class JobFileRecord {
     /**
      * Original file name
@@ -27,6 +25,10 @@ class JobFileRecord {
      * The type of file record
      */
     String recordType
+    /**
+     * Name used for the file record (e.g. option name)
+     */
+    String recordName
     String user
     Date dateCreated
     Date lastUpdated
@@ -58,6 +60,7 @@ class JobFileRecord {
         serverNodeUUID(nullable: true)
         sha(nullable: false, size: 64..64)
         jobId(nullable: false)
+        recordName(nullable: true, maxSize: 255)
         storageType(nullable: false, maxSize: 255)
         storageReference(nullable: false)
         storageMeta(nullable: true)
@@ -116,12 +119,15 @@ class JobFileRecord {
                 ", fileName='" + fileName + '\'' +
                 ", size=" + size +
                 ", recordType='" + recordType + '\'' +
+                ", recordName='" + recordName + '\'' +
                 ", user='" + user + '\'' +
                 ", dateCreated=" + dateCreated +
+                ", expirationDate=" + expirationDate +
+                ", fileState='" + fileState + '\'' +
                 ", uuid='" + uuid + '\'' +
+                ", serverNodeUUID='" + serverNodeUUID + '\'' +
                 ", jobId='" + jobId + '\'' +
-                ", storageType='" + storageType + '\'' +
-                ", storageReference='" + storageReference + '\'' +
+                ", execution.id=" + execution?.id +
                 "} " + super.toString();
     }
 
@@ -131,8 +137,9 @@ class JobFileRecord {
 
     Map exportMap() {
         [
-                id    : uuid,
-                execId: execution?.id
+                id        : uuid,
+                execId    : execution?.id,
+                optionName: recordName
         ] + properties.subMap([
                 'jobId',
                 'fileName',

@@ -32,6 +32,7 @@ class JobFileInfo {
     String id
     String jobId
     Long execId
+    String optionName
     String fileName
     String sha
     Long size
