@@ -58,7 +58,10 @@ Changes introduced by API Version number:
 **Version 19**:
 
 * New Endpoints.
-    - [`POST /api/19/job/[ID]/file/upload`][/api/V/job/[ID]/file/upload] - Upload a file as a job option value
+    - [`POST /api/19/job/[ID]/input/file`][/api/V/job/[ID]/input/file] - Upload file(s) to use for job option values
+    - [`GET /api/19/job/[ID]/input/files`][/api/V/job/[ID]/input/files] - List uploaded files for a job
+    - [`GET /api/19/execution/[ID]/input/files`][/api/V/execution/[ID]/input/files] - List input files used for an execution
+    - [`GET /api/19/jobs/file/[ID]`][/api/V/jobs/file/[ID]] - Get info for an uploaded file
 
 **Version 18**:
 
@@ -2369,8 +2372,8 @@ You can then [Run the Job][/api/V/job/[ID]/run] using the "file key" as the opti
 
 *Query Parameters*:
 
-`optionName`: For a single file/option value, specify the option name either as a query parameter or as part of the URL path.
-`fileName`: Specify the original file name (optional)
+* `optionName`: For a single file/option value, specify the option name either as a query parameter or as part of the URL path.
+* `fileName`: Specify the original file name (optional)
 
 *Headers*: `Content-Type: octet/stream`
 
@@ -2390,7 +2393,6 @@ is the option name. The filename is specified normally within the multi-part req
 `Content-Type: application/xml`:
 
 ~~~~~~~~~~ {.xml}
-<?xml version="1.0" encoding="utf-8"?>
 <jobFileUpload>
   <total>$total</total>
   <options>
@@ -2446,7 +2448,7 @@ Now run the job using the file key value for the `myfile` option:
         -H accept:application/json \
         -F option.csvfile=@data.csv \
         -F option.xmlfile=@data.xml \
-        $RD_URL/job/47d71672-9aa0-49f3-96d0-39f02daf80b9/file/upload
+        $RD_URL/job/47d71672-9aa0-49f3-96d0-39f02daf80b9/input/file
 
 This uploads two files, one for option `csvfile` and with filename `data.csv`, and the other for option `xmlfile` and filename `data.xml`.
 
@@ -2531,7 +2533,7 @@ Query Parameters:
 </jobFiles>
 ~~~
 
-### Get Upload File Info
+### Get Info About an Uploaded File
 
 Get info about an uploaded file given its ID.
 
@@ -5690,9 +5692,22 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `POST` [Disable Executions for a Job](#disable-executions-for-a-job)
 
-[/api/V/job/[ID]/file/upload][]
+[/api/V/job/[ID]/input/file][]
 
 * `POST` [Upload a File for a Job Option](#upload-a-file-for-a-job-option)
+
+[/api/V/job/[ID]/input/files][]
+
+* `GET` [List Files Uploaded for a Job](#list-files-uploaded-for-a-job)
+
+
+[/api/V/execution/[ID]/input/files][]
+
+* `GET` [List Input Files for an Execution](#list-input-files-for-an-execution)
+    
+[/api/V/jobs/file/[ID]][]
+
+* `GET` [Get Info About an Uploaded File](#get-info-about-an-uploaded-file)
 
 [/api/V/job/[ID]/info][]
 
@@ -5956,6 +5971,8 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 [/api/V/execution/[ID]/abort]:#aborting-executions
 
+[/api/V/execution/[ID]/input/files]:#list-input-files-for-an-execution
+
 [/api/V/execution/[ID]/output/state]:#execution-output-with-state
 
 [/api/V/execution/[ID]/output/step/[STEPCTX]]:#execution-output
@@ -5986,8 +6003,9 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 [/api/V/job/[ID]/info]:#get-job-metadata
 [GET /api/V/job/[ID]/info]:#get-job-metadata
-[/api/V/job/[ID]/file/upload]:#upload-a-file-for-a-job-option
-[POST /api/V/job/[ID]/file/upload]:#upload-a-file-for-a-job-option
+[/api/V/job/[ID]/input/file]:#upload-a-file-for-a-job-option
+[POST /api/V/job/[ID]/input/file]:#upload-a-file-for-a-job-option
+[/api/V/job/[ID]/input/files]:#list-files-uploaded-for-a-job
 
 [/api/V/job/[ID]/schedule/enable]:#enable-scheduling-for-a-job
 
@@ -5999,6 +6017,7 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/jobs/delete]:#bulk-job-delete
 [/api/V/jobs/execution/enable]:#bulk-toggle-job-execution
 [/api/V/jobs/execution/disable]:#bulk-toggle-job-execution
+[/api/V/jobs/file/[ID]]:#get-info-about-an-uploaded-file
 [/api/V/jobs/schedule/enable]:#bulk-toggle-job-schedules
 [/api/V/jobs/schedule/disable]:#bulk-toggle-job-schedules
 
