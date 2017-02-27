@@ -28,9 +28,15 @@ class FileUploadServiceSpec extends Specification {
             getString('fileupload.plugin.type', _) >> { it[1] }
             getLong('fileUploadService.tempfile.expiration', _) >> 0l
         }
+        service.frameworkService=Mock(FrameworkService){
+
+        }
         Date expireDate = new Date()
+        String origName = 'afile'
+        String optionName = 'myopt'
+        String sha = 'z'*64
         when:
-        def result = service.createRecord('abcd', 123, uuid, jobid, user, expireDate)
+        def result = service.createRecord('abcd', 123, uuid, sha, origName, jobid, optionName, user, expireDate)
         then:
         result.storageReference == 'abcd'
         result.uuid == uuid.toString()
@@ -38,9 +44,11 @@ class FileUploadServiceSpec extends Specification {
         result.user == user
         result.size == 123L
         result.recordType == FileUploadService.RECORD_TYPE_OPTION_INPUT
+        result.recordName == 'myopt'
         result.expirationDate == expireDate
         result.execution == null
         result.fileState == 'temp'
-        result.storageType == 'filesystem-file-upload'
+        result.storageType == 'filesystem-temp'
+        result.fileName == 'afile'
     }
 }
