@@ -137,6 +137,11 @@ class PluginServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
+        def <T> PluggableProviderService<T> createPluggableService(final Class<T> type) {
+            throw new IllegalArgumentException("test not implemented")
+        }
+
+        @Override
         def <T> ConfiguredPlugin<T> configurePluginByName(
                 final String name,
                 final PluggableProviderService<T> service,
