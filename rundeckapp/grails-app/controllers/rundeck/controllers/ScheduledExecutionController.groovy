@@ -2851,7 +2851,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * @params runAtTime if scheduling in the future, the time to run the job, otherwise it will be run immediately
      * @return  the result in JSON
      */
-    private Map scheduleJob(runAtTime = null) {
+    private Map scheduleJob(String runAtTime = null) {
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (!scheduledExecution) {
             return [error: "No Job found for id: " + params.id, code: 404]
@@ -2884,8 +2884,10 @@ class ScheduledExecutionController  extends ControllerBase{
                     it.key.startsWith('nodeExclude')}.findAll { it.value })
         }
 
+        Date expirationStart = runAtTime != null ? executionService.parseRunAtTime(runAtTime) : null
+
         //handle uploaded files
-        def fcopy = handleUploadFiles(scheduledExecution, authContext, inputOpts)
+        def fcopy = handleUploadFiles(scheduledExecution, authContext, inputOpts, expirationStart)
         if (!fcopy.success) {
             return fcopy
         }
@@ -2927,7 +2929,8 @@ class ScheduledExecutionController  extends ControllerBase{
     private def handleUploadFiles(
             ScheduledExecution scheduledExecution,
             UserAndRolesAuthContext authContext,
-            Map inputOpts
+            Map inputOpts,
+            Date expirationStart = null
     )
     {
         def optionParameterPrefix = "extra.option."
@@ -2977,7 +2980,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                     file.originalFilename,
                                     optname,
                                     scheduledExecution.extid,
-                                    new Date()
+                                    expirationStart ?: new Date()
                             )
                             inputOpts["option.$optname"] = ref
                         } catch (FileUploadServiceException e) {

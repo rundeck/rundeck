@@ -1748,21 +1748,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             // Try and parse schedule time
 
-            Date now        = java.util.Calendar.getInstance().getTime()
-            Date startTime
-            try {
-                try{
-                    startTime   = ISO_8601_DATE_FORMAT.get().parse(input.runAtTime)
-                }catch (ParseException e1){
-                    startTime	= ISO_8601_DATE_FORMAT_WITH_MS.get().parse(input.runAtTime)
-                }
-            } catch (ParseException | IllegalArgumentException z) {
+            Date startTime = parseRunAtTime(input.runAtTime)
+            if (null == startTime) {
                 return [success: false, failed: true, error: 'failed',
                         message: 'Invalid date/time format, only ISO 8601 is supported',
                         options: input.option]
             }
 
-            if (startTime.before(now)) {
+
+            if (startTime.before(new Date())) {
                 return [success: false, failed: true, error: 'failed',
                         message: 'A job cannot be scheduled for a time in the past',
                         options: input.option]
@@ -1802,6 +1796,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    /**
+     * Parse the Date from the time input
+     * @param runAtTime
+     * @return valid Date, or null if it cannot be parsed
+     */
+    def Date parseRunAtTime(String runAtTime) {
+        try {
+            return ISO_8601_DATE_FORMAT.get().parse(runAtTime)
+        } catch (ParseException e1) {
+
+        }
+        try {
+            return ISO_8601_DATE_FORMAT_WITH_MS.get().parse(runAtTime)
+        } catch (ParseException e1) {
+
+        }
+        null
+    }
     /**
      * Create execution
      * @param se job
