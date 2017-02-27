@@ -36,6 +36,7 @@ import org.springframework.mock.web.MockMultipartFile
 import org.springframework.mock.web.MockMultipartHttpServletRequest
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.ApiService
+import rundeck.services.FileUploadService
 import rundeck.services.NotificationService
 import rundeck.services.OrchestratorPluginService
 
@@ -737,6 +738,9 @@ class ScheduledExecutionControllerTests  {
                 [executionId:exec.id]
             }
         }
+        controller.fileUploadService=mockWith(FileUploadService){
+            getOptionUploadMaxSize{->0}
+        }
 
 
         controller.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
@@ -802,6 +806,9 @@ class ScheduledExecutionControllerTests  {
         }
         controller.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
+        }
+        controller.fileUploadService=mockWith(FileUploadService){
+            getOptionUploadMaxSize{->0}
         }
 
 

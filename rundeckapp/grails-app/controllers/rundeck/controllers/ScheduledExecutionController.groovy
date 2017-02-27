@@ -2728,7 +2728,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     delegate.message = "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
                 }
             }
-            results = runJob()
+            results = scheduleJob(null)
 
             if(results.error=='invalid'){
                 session.jobexecOptionErrors=results.errors
@@ -2789,10 +2789,10 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     public def runJobNow(RunJobCommand runParams, ExtraCommand extra) {
-        return prepareJobRun(runParams, extra, true)
+        return runOrScheduleJob(runParams, extra, true)
     }
 
-    public def prepareJobRun(RunJobCommand runParams, ExtraCommand extra, boolean runNow) {
+    public def runOrScheduleJob(RunJobCommand runParams, ExtraCommand extra, boolean runNow) {
         if ([runParams, extra].any{it.hasErrors()}) {
             request.errors= [runParams, extra].find { it.hasErrors() }.errors
             def model = show()
@@ -2800,11 +2800,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def results=[:]
         withForm{
-            if (runNow) {
-				results = runJob()
-            } else {
-                results = scheduleJob()
-            }
+            results = scheduleJob(runNow ? null : params.runAtTime)
         }.invalidToken{
             results.error = "Invalid request token"
             results.code = HttpServletResponse.SC_BAD_REQUEST
@@ -2836,15 +2832,34 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    private Map runJob () {
+
+    /**
+     * Run a job at a later time.
+     *
+     * @param   runParams
+     * @param   extra
+     * @return  success or failure result in JSON
+     */
+    public def runJobLater(RunJobCommand runParams, ExtraCommand extra) {
+        // Prepare and schedule
+        return runOrScheduleJob(runParams, extra, false)
+    }
+
+    /**
+     * Schedule a job for a later time
+     *
+     * @params runAtTime if scheduling in the future, the time to run the job, otherwise it will be run immediately
+     * @return  the result in JSON
+     */
+    private Map scheduleJob(runAtTime = null) {
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
         if (!scheduledExecution) {
             return [error: "No Job found for id: " + params.id, code: 404]
         }
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
-            scheduledExecution.project)) {
-            return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
+                                                     scheduledExecution.project)) {
+            return [success: false, failed: true, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
 
         if(!executionService.executionsAreActive){
@@ -2853,21 +2868,68 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         if (!scheduledExecution.hasExecutionEnabled()) {
-            def msg=g.message(code:'scheduleExecution.execution.disabled')
-            return [success:false,failed:true,error:'disabled',message:msg]
+            def msg = g.message(code: 'scheduleExecution.execution.disabled')
+            return [success: false, failed: true, error: 'disabled', message: msg]
         }
 
-        if(params.extra?.debug=='true'){
+        if (params.extra?.debug == 'true') {
             params.extra.loglevel='DEBUG'
         }
         Map inputOpts=[:]
         //add any option.* values, or nodeInclude/nodeExclude filters
-        if(params.extra){
-            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters', 'filter', 'nodeoverride','nodefilter']).findAll { it.value })
-            inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.')||it.key.startsWith('nodeInclude')|| it.key.startsWith('nodeExclude')}.findAll { it.value })
+        if (params.extra) {
+            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters',
+                                                  'filter', 'nodeoverride', 'nodefilter']).findAll { it.value })
+            inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
+                    it.key.startsWith('nodeExclude')}.findAll { it.value })
         }
-        inputOpts['executionType'] = 'user'
+
         //handle uploaded files
+        def fcopy = handleUploadFiles(scheduledExecution, authContext, inputOpts)
+        if (!fcopy.success) {
+            return fcopy
+        }
+
+        if (runAtTime) {
+            inputOpts['runAtTime'] = runAtTime
+            inputOpts['executionType'] = 'user-scheduled'
+
+            def scheduleResult = executionService.scheduleAdHocJob(
+                    scheduledExecution,
+                    authContext,
+                    session.user,
+                    inputOpts
+            )
+            if (null == scheduleResult) {
+                return [success: false, failed: true, error: 'error', message: "Unable to schedule job"]
+            }
+
+            log.debug("ScheduledExecutionController: deferred execution scheduled for ${scheduleResult.nextRun}")
+
+            return scheduleResult
+        } else {
+            inputOpts['executionType'] = 'user'
+
+            def result = executionService.executeJob(scheduledExecution, authContext, session.user, inputOpts)
+
+            if (result.error) {
+                result.failed = true
+                return result
+            } else {
+                log.debug("ExecutionController: immediate execution scheduled")
+                return [success: true, message: "immediate execution scheduled", id: result.executionId]
+            }
+        }
+
+    }
+
+
+    private def handleUploadFiles(
+            ScheduledExecution scheduledExecution,
+            UserAndRolesAuthContext authContext,
+            Map inputOpts
+    )
+    {
         def optionParameterPrefix = "extra.option."
         if (request instanceof MultipartRequest) {
             def fileOptions = scheduledExecution.listFileOptions()
@@ -2926,85 +2988,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 }
             }
         }
-        def result = executionService.executeJob(scheduledExecution, authContext,session.user, inputOpts)
-
-        if (result.error){
-            result.failed=true
-            return result
-        }else{
-            log.debug("ExecutionController: immediate execution scheduled")
-//            redirect(controller:"execution", action:"follow",id:result.executionId)
-            return [success:true, message:"immediate execution scheduled", id:result.executionId]
-        }
+        [success: true]
     }
-
-    /**
-     * Run a job at a later time.
-     *
-     * @param   runParams
-     * @param   extra
-     * @return  success or failure result in JSON
-     */
-    public def runJobLater(RunJobCommand runParams, ExtraCommand extra) {
-        // Prepare and schedule
-        return prepareJobRun(runParams, extra, false)
-    }
-
-    /**
-     * Schedule a job for a later time
-     *
-     * @return  the result in JSON
-     */
-    private Map scheduleJob() {
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        def UserAndRolesAuthContext authContext =
-                frameworkService.getAuthContextForSubjectAndProject(session.subject,
-                                                scheduledExecution.project)
-        if (!scheduledExecution) {
-            return [error: "Unable to find job with id: " + params.id, code: 404]
-        }
-
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
-                [AuthConstants.ACTION_RUN], scheduledExecution.project)) {
-            return [success: false, failed: true, error: 'unauthorized',
-                    message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
-        }
-
-        if (params.extra?.debug == 'true') {
-            params.extra.loglevel='DEBUG'
-        }
-
-        Map inputOpts = [:]
-        // Add any option.* values, or nodeInclude/nodxclude filters
-        if (params.extra) {
-            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option',
-                                                  '_replaceNodeFilters', 'filter', 'nodeoverride','nodefilter']).findAll { it.value })
-            inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
-                    it.key.startsWith('nodeExclude')}.findAll { it.value })
-        }
-
-        if (params.extra.nodeInclude) {
-            scheduledExecution.nodeInclude = params.extra.nodeInclude
-        }
-        if (params.extra.nodeExclude) {
-            scheduledExecution.nodeExclude = params.extra.nodeExclude
-        }
-        if (params.runAtTime) {
-            inputOpts['runAtTime']  = params.runAtTime
-        }
-
-        inputOpts['executionType'] = 'user-scheduled'
-        def scheduleResult = executionService.scheduleAdHocJob(scheduledExecution, authContext, session.user, inputOpts)
-        if (null == scheduleResult) {
-            return [success: false, failed: true, error: 'error',
-                    message: "Unable to schedule job"]
-        }
-
-        log.debug("ScheduledExecutionController: deferred execution scheduled for ${scheduleResult.nextRun}")
-
-        return scheduleResult
-    }
-
 
     /**
     * API Actions
