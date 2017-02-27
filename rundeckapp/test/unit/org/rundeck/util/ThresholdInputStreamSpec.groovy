@@ -36,7 +36,7 @@ class ThresholdInputStreamSpec extends Specification {
 
         then:
         ThresholdInputStream.Threshold e = thrown()
-        e.max == max
+        e.breach == total
         data.length == total
 
         where:
