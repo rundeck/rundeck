@@ -515,7 +515,134 @@ class ScheduledExecutionControllerSpec extends Specification {
         response.status == 302
         response.redirectedUrl == '/scheduledExecution/show'
     }
+    def "run job now inline"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.save()
 
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        ).save()
+
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getAuthContextForSubjectAndProject(*_) >> testcontext
+            authorizeProjectJobAll(*_) >> true
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * getByIDorUUID(_) >> se
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            1 * getExecutionsAreActive() >> true
+            1 * executeJob(se, testcontext, _,  {opts->
+                opts['runAtTime']==null && opts['executionType']=='user'
+            }) >> [executionId: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+        setupFormTokens(params)
+        when:
+        request.method = 'POST'
+        controller.runJobInline(command, extra)
+
+        then:
+        response.status == 200
+        response.contentType.contains 'application/json'
+        response.json == [
+                href   : "/execution/follow/${exec.id}",
+                success: true,
+                id     : exec.id,
+                follow : false
+        ]
+
+    }
+
+    def "schedule job inline"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.save()
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        exec.save()
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getAuthContextForSubjectAndProject(*_) >> testcontext
+            authorizeProjectJobAll(*_) >> true
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * getByIDorUUID(_) >> se
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            1 * getExecutionsAreActive() >> true
+            0 * executeJob(*_)
+            1 * scheduleAdHocJob(se, testcontext, _, { opts ->
+                opts['runAtTime'] == 'dummy' && opts['executionType'] == 'user-scheduled'
+            }
+            ) >> [executionId: exec.id, id: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+        setupFormTokens(params)
+
+        params.runAtTime = 'dummy'
+        when:
+        request.method = 'POST'
+        controller.scheduleJobInline(command, extra)
+
+        then:
+        response.status == 200
+        response.contentType.contains 'application/json'
+        response.json == [
+                href   : "/execution/follow/${exec.id}",
+                success: true,
+                id     : exec.id,
+                follow : false
+        ]
+    }
     def "run job later at time"() {
         given:
         def se = new ScheduledExecution(

@@ -2764,7 +2764,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     delegate.message = "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
                 }
             }
-            results = scheduleJob()
+            results = scheduleJob(params.runAtTime)
 
             if (results.error == 'invalid') {
                 session.jobexecOptionErrors = results.errors
@@ -2908,6 +2908,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
             log.debug("ScheduledExecutionController: deferred execution scheduled for ${scheduleResult.nextRun}")
 
+            if (scheduleResult.error) {
+                scheduleResult.failed = true
+            }
             return scheduleResult
         } else {
             inputOpts['executionType'] = 'user'
