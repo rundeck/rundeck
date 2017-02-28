@@ -15,10 +15,11 @@
  */
 
 
-import rundeck.services.events.ExecutionBeforeStartEvent
+import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.events.ExecutionCompleteEvent
 
 events = {
     executionComplete filter: ExecutionCompleteEvent, fork: true
-    executionBeforeStart filter: ExecutionBeforeStartEvent, fork: false
+    executionBeforeStart filter: ExecutionPrepareEvent, fork: false
+    executionBeforeSchedule filter: ExecutionPrepareEvent, fork: false
 }

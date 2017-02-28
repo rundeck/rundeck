@@ -12,7 +12,7 @@ import org.rundeck.util.ThresholdInputStream
 import rundeck.Execution
 import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
-import rundeck.services.events.ExecutionBeforeStartEvent
+import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.events.ExecutionCompleteEvent
 
 import java.nio.file.Files
@@ -358,7 +358,7 @@ class FileUploadService {
      * @return
      */
     @Listener
-    def executionBeforeStart(ExecutionBeforeStartEvent evt) {
+    def executionBeforeStart(ExecutionPrepareEvent evt) {
         if (evt.job) {
             //handle uploaded files
             Map loadedFilePaths = loadFileOptionInputs(
