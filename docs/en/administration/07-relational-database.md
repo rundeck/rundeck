@@ -37,7 +37,7 @@ NB: for Mysql, the `autoReconnect=true` will fix a common problem where the Rund
 See the [Mysql Setup Guide](#mysql-setup-guide) for 
 instructions on creating the rundeck database and granting access.
 
-See more about [configuring the Mysql JDBC Connector/J URL](http://dev.mysql.com/doc/refman/5.1/en/connector-j-reference-configuration-properties.html).
+See more about [configuring the Mysql JDBC Connector/J URL](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-reference-configuration-properties.html).
 
 ## Add the JDBC Driver
 
