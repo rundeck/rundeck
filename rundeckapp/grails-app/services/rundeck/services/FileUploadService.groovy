@@ -211,16 +211,22 @@ class FileUploadService {
      * file is already on local disk, it will be returned directly,
      * otherwise it will be retrieved from the plugin.
      * The file SHA will be compared to expected SHA
-     * @param reference
+     * @param fileuuid
      * @return
      */
-    def attachFileForExecution(String reference, Execution execution) {
-        JobFileRecord jfr = findRecord(reference)
+    def attachFileForExecution(String fileuuid, Execution execution, String option) {
+        JobFileRecord jfr = findUuid(fileuuid)
+        if (jfr.jobId != execution.scheduledExecution.extid || jfr.recordName != option) {
+            throw new FileUploadServiceException(
+                    "File ref \"$fileuuid\" is not a valid for job ${execution.scheduledExecution.extid}, option " +
+                            option
+            )
+        }
         File file
         String shastring
-        (file, shastring) = retrieveTempFileForExecution(reference)
+        (file, shastring) = retrieveTempFileForExecution(fileuuid)
         if (jfr.sha != shastring) {
-            throw new FileUploadServiceException("SHA check failed for $reference, expected $jfr.sha, saw $shastring")
+            throw new FileUploadServiceException("SHA check failed for $fileuuid, expected $jfr.sha, saw $shastring")
         }
         jfr.execution = execution
         jfr.stateRetained()
@@ -335,7 +341,7 @@ class FileUploadService {
             if (key) {
                 File file
                 JobFileRecord jfr
-                (file, jfr) = attachFileForExecution(key, execution)
+                (file, jfr) = attachFileForExecution(key, execution, it.name)
                 loadedFiles[it.name] = file.absolutePath
                 loadedFiles[it.name + '.fileName'] = jfr.fileName
                 loadedFiles[it.name + '.sha'] = jfr.sha
