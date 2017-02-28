@@ -58,7 +58,7 @@ class JobFileRecordSpec extends Specification {
         jfr.fileState = JobFileRecord.STATE_TEMP
         jfr.stateRetained()
         then:
-        jfr.stateIsAvailable()
+        jfr.stateIsRetained()
 
         when:
         jfr.fileState = JobFileRecord.STATE_TEMP

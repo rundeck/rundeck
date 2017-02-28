@@ -81,7 +81,7 @@ class JobFileRecord {
         fileState == STATE_TEMP
     }
 
-    boolean stateIsAvailable() {
+    boolean stateIsRetained() {
         fileState == STATE_RETAINED
     }
 
