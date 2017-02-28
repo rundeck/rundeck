@@ -106,7 +106,7 @@ class JobFileRecord {
     }
 
     private void changeState(List<String> fromStates, String toState) {
-        if (!fromStates || !fromStates.contains(fileState)) {
+        if (!(fromStates && fromStates.contains(fileState) || fileState == toState)) {
             throw new IllegalStateException("Cannot change to '$toState' state from $fileState")
         }
         fileState = toState

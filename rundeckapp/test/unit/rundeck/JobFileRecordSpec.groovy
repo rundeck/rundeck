@@ -56,6 +56,12 @@ class JobFileRecordSpec extends Specification {
 
         when:
         jfr.fileState = JobFileRecord.STATE_TEMP
+        jfr.state(JobFileRecord.STATE_TEMP)
+        then:
+        jfr.stateIsTemp()
+
+        when:
+        jfr.fileState = JobFileRecord.STATE_TEMP
         jfr.stateRetained()
         then:
         jfr.stateIsRetained()
@@ -68,6 +74,12 @@ class JobFileRecordSpec extends Specification {
 
         when:
         jfr.fileState = JobFileRecord.STATE_RETAINED
+        jfr.stateRetained()
+        then:
+        jfr.stateIsRetained()
+
+        when:
+        jfr.fileState = JobFileRecord.STATE_RETAINED
         jfr.stateDeleted()
         then:
         jfr.stateIsDeleted()
@@ -77,5 +89,16 @@ class JobFileRecordSpec extends Specification {
         jfr.stateDeleted()
         then:
         jfr.stateIsDeleted()
+
+        when:
+        jfr.fileState = JobFileRecord.STATE_DELETED
+        jfr.stateDeleted()
+        then:
+        jfr.stateIsDeleted()
+        when:
+        jfr.fileState = JobFileRecord.STATE_EXPIRED
+        jfr.stateExpired()
+        then:
+        jfr.stateIsExpired()
     }
 }
