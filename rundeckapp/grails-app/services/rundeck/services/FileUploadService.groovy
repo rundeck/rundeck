@@ -103,8 +103,9 @@ class FileUploadService {
         }
         UUID uuid = UUID.randomUUID()
         def refid
+        def uuidstring = uuid.toString()
         try {
-            refid = getPlugin().uploadFile(readstream, length, uuid.toString())
+            refid = getPlugin().uploadFile(readstream, length, uuidstring)
         } catch (ThresholdInputStream.Threshold e) {
             throw new FileUploadServiceException(
                     "Uploaded file data size ($e.breach) is larger than configured maximum file size: " +
@@ -119,13 +120,13 @@ class FileUploadService {
         log.debug("record: $record")
         if (expiryStart) {
             Long id = record.id
-            taskService.runAt(record.expirationDate) {
+            taskService.runAt(record.expirationDate, "expire:$uuidstring") {
                 JobFileRecord.withNewSession {
                     expireRecordIfNeeded(id)
                 }
             }
         }
-        uuid.toString()
+        uuidstring
     }
 
     /**
