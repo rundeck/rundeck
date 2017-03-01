@@ -1,5 +1,7 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.execution.ExecutionListener
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -76,6 +78,7 @@ class FileUploadServiceSpec extends Specification {
 
         }
         service.pluginService = Mock(PluginService)
+        service.taskService = Mock(TaskService)
 
         String origName = 'afile'
         String optionName = 'myopt'
@@ -105,18 +108,76 @@ class FileUploadServiceSpec extends Specification {
         def result = service.attachFileForExecution(ref, exec, optionName)
         then:
         result != null
+        result.id == jfr.id
+        result.stateIsRetained()
+        result.execution == exec
+
+
+    }
+
+    def "loadFileOptionInputs"() {
+        given:
+        UUID uuid = UUID.randomUUID()
+        String ref = uuid.toString()
+        String storageRef = 'astorageref'
+        String jobid = 'abjobid'
+        String user = 'auser'
+        service.configurationService = Mock(ConfigurationService) {
+            getString('fileupload.plugin.type', _) >> { it[1] }
+            getLong('fileUploadService.tempfile.expiration', _) >> 30000L
+        }
+        service.frameworkService = Mock(FrameworkService) {
+
+        }
+        service.pluginService = Mock(PluginService)
+        service.taskService = Mock(TaskService)
+
+        String origName = 'afile'
+        String optionName = 'myopt'
+        String sha = 'fc4b5fd6816f75a7c81fc8eaa9499d6a299bd803397166e8c4cf9280b801d62c'
+        def jfr = new JobFileRecord(
+                fileName: origName,
+                size: 123,
+                recordType: 'option',
+                expirationDate: new Date(),
+                fileState: JobFileRecord.STATE_TEMP,
+                uuid: uuid.toString(),
+                serverNodeUUID: null,
+                sha: sha,
+                jobId: jobid,
+                recordName: optionName,
+                storageType: 'filesystem-temp',
+                user: user,
+                storageReference: storageRef
+        ).save()
+
+        ScheduledExecution job = mkjob(jobid)
+        job.validate()
+        Execution exec = mkexec(job)
+        exec.validate()
+        StepExecutionContext context = Mock(StepExecutionContext)
+
+        when:
+        def result = service.loadFileOptionInputs(exec, job, context)
+        then:
+        result != null
         1 * service.pluginService.getPlugin('filesystem-temp', FileUploadPlugin) >> Mock(FileUploadPlugin) {
-            1 * hasFile(ref) >> true
-            1 * retrieveLocalFile(ref) >> null
-            1 * retrieveFile(ref, _) >> {
+            1 * hasFile(storageRef) >> true
+            1 * retrieveLocalFile(storageRef) >> null
+            1 * retrieveFile(storageRef, _) >> {
                 it[1].write('abcd\n'.bytes)
                 5L
             }
         }
-        result[0].text == 'abcd\n'
-        result[1].id == jfr.id
-        result[1].stateIsRetained()
-        result[1].execution == exec
+        1 * context.getDataContext() >> [
+                option: [
+                        (optionName): ref
+                ]
+        ]
+        1 * context.getExecutionListener() >> Mock(ExecutionListener)
+        result[optionName] != null
+        result[optionName + '.fileName'] != null
+        result[optionName + '.sha'] == jfr.sha
 
 
     }

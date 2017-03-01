@@ -215,24 +215,54 @@ class FileUploadService {
      * @param fileuuid
      * @return
      */
-    def attachFileForExecution(String fileuuid, Execution execution, String option) {
+    JobFileRecord attachFileForExecution(String fileuuid, Execution execution, String option) {
         JobFileRecord jfr = findUuid(fileuuid)
-        if (jfr.jobId != execution.scheduledExecution.extid || jfr.recordName != option) {
+        if (!jfr || jfr.jobId != execution.scheduledExecution.extid || jfr.recordName != option) {
             throw new FileUploadServiceException(
                     "File ref \"$fileuuid\" is not a valid for job ${execution.scheduledExecution.extid}, option " +
                             option
             )
         }
-        File file
-        String shastring
-        (file, shastring) = retrieveTempFileForExecution(fileuuid)
-        if (jfr.sha != shastring) {
-            throw new FileUploadServiceException("SHA check failed for $fileuuid, expected $jfr.sha, saw $shastring")
+        if (jfr.execution != null && jfr.execution.id != execution.id) {
+            throw new FileUploadServiceException(
+                    "File ref \"$fileuuid\" cannot be used because it was used for execution ${jfr.execution.id}"
+            )
+        }
+
+        try {
+            jfr.stateRetained()
+        } catch (IllegalStateException e) {
+            throw new FileUploadServiceException(
+                    "File ref \"$fileuuid\" cannot be used because it is in state: " + jfr.fileState
+            )
         }
         jfr.execution = execution
-        jfr.stateRetained()
-        jfr.save(flush: true)
-        [file, jfr]
+        jfr.save()
+        taskService.cancel("expire:$jfr.uuid")
+        jfr
+    }
+
+    /**
+     * Retrieve the file by reference, to a local temp file.  If the
+     * file is already on local disk, it will be returned directly,
+     * otherwise it will be retrieved from the plugin.
+     * The file SHA will be compared to expected SHA
+     * @param fileuuid
+     * @return
+     */
+    File retrieveFileForExecution(JobFileRecord record) {
+        File file
+        String shastring
+        (file, shastring) = retrieveTempFileForExecution(record.storageReference)
+        if (record.sha != shastring) {
+            if (file.exists()) {
+                file.delete()
+            }
+            throw new FileUploadServiceException(
+                    "SHA check failed for $record.uuid, expected $record.sha, saw $shastring"
+            )
+        }
+        file
     }
 
     String getFileSHA(final File file) {
@@ -340,9 +370,8 @@ class FileUploadService {
         fileopts?.each {
             def key = context.dataContext['option'][it.name]
             if (key) {
-                File file
-                JobFileRecord jfr
-                (file, jfr) = attachFileForExecution(key, execution, it.name)
+                JobFileRecord jfr = attachFileForExecution(key, execution, it.name)
+                File file = retrieveFileForExecution(jfr)
                 loadedFiles[it.name] = file.absolutePath
                 loadedFiles[it.name + '.fileName'] = jfr.fileName
                 loadedFiles[it.name + '.sha'] = jfr.sha
@@ -351,6 +380,29 @@ class FileUploadService {
         }
 
         loadedFiles
+    }
+
+    /**
+     * Attach file records to the execution for matching option values
+     * @param execution execution
+     * @param scheduledExecution job
+     * @param optionInput input options mape
+     * @return map of [optionName: filepath] for each loaded local file
+     */
+    void attachFileOptionInputs(
+            Execution execution,
+            ScheduledExecution scheduledExecution,
+            Map<String, String> optionInput
+    )
+    {
+        def fileopts = scheduledExecution.listFileOptions()
+        fileopts?.each {
+            def key = optionInput[it.name]
+            if (key) {
+                JobFileRecord jfr = attachFileForExecution(key, execution, it.name)
+            }
+        }
+
     }
 
     /**
@@ -373,6 +425,20 @@ class FileUploadService {
             return evt.context
         }
         null
+    }
+
+    /**
+     * Before adhoc execution is scheduled in scheduler,
+     * attach any declared files for the execution so that they will not be expired
+     * @param evt
+     * @return
+     */
+    def executionBeforeSchedule(ExecutionPrepareEvent evt) {
+        if (evt.job && evt.execution && evt.options) {
+            log.debug("executionBeforeSchedule($evt)")
+            //handle uploaded files
+            attachFileOptionInputs(evt.execution, evt.job, evt.options)
+        }
     }
     /**
      * Remove temp files
