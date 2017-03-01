@@ -36,6 +36,7 @@ import org.springframework.transaction.TransactionStatus
 import rundeck.BaseReport
 import rundeck.ExecReport
 import rundeck.Execution
+import rundeck.JobFileRecord
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.controllers.JobXMLException
@@ -99,6 +100,22 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
         zip.file("$name"){ Writer writer ->
             def xml = new MarkupBuilder(writer)
             builder.objToDom("report", map, xml)
+        }
+    }
+
+    def exportFileRecord(ZipBuilder zip, JobFileRecord record, String name) throws ProjectServiceException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT"));
+        def dateConvert = {
+            sdf.format(it)
+        }
+        BuilderUtil builder = new BuilderUtil(converters: [(Date): dateConvert, (java.sql.Timestamp): dateConvert])
+        def map = record.toMap()
+
+        //convert map to xml
+        zip.file("$name") { Writer writer ->
+            def xml = new MarkupBuilder(writer)
+            builder.objToDom("jobFileRecord", map, xml)
         }
     }
 
@@ -221,6 +238,66 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
             return report
         } else {
             throw new ProjectServiceException("Unexpected data type for Report: " + object.class.name)
+        }
+    }
+    /**
+     * Parse XML and return a JobFileRecord object
+     * @param xmlinput xml source
+     * @param execIdMap map of old execution IDs to new Ids
+     * @param jobIdMap map of old Job IDs to new Job Ids
+     * @return Report object with remapped exec/job ID values
+     * @throws ProjectServiceException
+     */
+    JobFileRecord loadJobFileRecord(xmlinput, Map execIdMap = null, Map jobIdMap = null, identity = null)
+            throws ProjectServiceException
+    {
+        Node doc = parseXml(xmlinput)
+        if (!doc) {
+            throw new ProjectServiceException("XML Document could not be parsed.")
+        }
+        if (doc.name() != 'jobFileRecord') {
+            throw new ProjectServiceException("Document root tag was not 'jobFileRecord': '${doc.name()}'")
+        }
+
+        //load doc as report
+        def object = XmlParserUtil.toObject(doc)
+        if (object instanceof Map) {
+            //remap job id if necessary
+            if (object.jobId && jobIdMap && jobIdMap[object.jobId]) {
+                object.jobId = jobIdMap[object.jobId]
+            }
+            //remap exec id if necessary
+
+            if (!(object.execId && execIdMap && execIdMap[object.execId])) {
+                //skip report for exec id that cannot be found
+                return null
+            }
+            def newid = execIdMap[object.execId]
+            def eid = (newid instanceof Long) ? newid : Long.parseLong(newid)
+            Execution exec = Execution.get(eid)
+            object.execution = exec
+            //convert dates
+            convertStringsToDates(object, ['dateCreated', 'lastUpdated', 'expirationDate'], "JobFileRecord ${identity}")
+            //remap uuid
+            def newuuid = UUID.randomUUID().toString()
+            def olduuid = object.uuid
+            object.uuid = newuuid
+            def report
+            try {
+                report = JobFileRecord.fromMap(object)
+            } catch (Throwable e) {
+                throw new ProjectServiceException("Unable to create JobFileRecord: " + e.getMessage(), e)
+            }
+            def oldargstring = exec.argString
+            exec.argString = oldargstring.replaceAll(
+                    Pattern.quote(olduuid),
+                    Matcher.quoteReplacement(newuuid)
+            )
+            log.error("Replace execution argstring $oldargstring, new $exec.argString for $exec.id")
+            //modify argstring of execution
+            return report
+        } else {
+            throw new ProjectServiceException("Unexpected data type for JobFileRecord: " + object.class.name)
         }
     }
 
@@ -587,13 +664,22 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
                 execs = Execution.findAllByProjectAndIdInList(projectName,execIds)
                 reports=ExecReport.findAllByCtxProjectAndJcExecIdInList(projectName,execIdStrings)
             }
+            List<JobFileRecord> jobfilerecords = []
 
             dir('executions/') {
                 //export executions
                 //export execution logs
                 execs.each { Execution exec ->
                     exportExecution zip, exec, "execution-${exec.id}.xml"
+
+                    jobfilerecords.addAll JobFileRecord.findAllByExecution(exec)
+
                     listener?.inc('export',3)
+                }
+            }
+            dir('jobfiles/') {
+                jobfilerecords.each { JobFileRecord record ->
+                    exportFileRecord zip, record, "filerecord-${record.id}.xml"
                 }
             }
             //export history
@@ -729,6 +815,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
         def Map<String, File> execout = [:]
         def reportxml = []
         def reportxmlnames = [:]
+        List<File> jfrecords = []
+        Map<File, String> jfrecordnames = [:]
         boolean importExecutions = options.importExecutions
         boolean importConfig = options.importConfig
         boolean importACL = options.importACL
@@ -752,6 +840,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
                         }
                         'output-.*\\.(txt|rdlog)|state-.*\\.state.json' { path, name, inputs ->
                             execout[name] = copyToTemp()
+                        }
+                    }
+                    'jobfiles/' {
+                        'filerecord-.*\\.xml' { path, name, inputs ->
+                            jfrecords << copyToTemp()
+                            jfrecordnames[jfrecords[-1]] = name
                         }
                     }
                     'reports/' {
@@ -784,7 +878,13 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
             }
         }
         //have files in dir
-        (jobxml + execxml + execout.values() + reportxml + [configtemp] + mdfilestemp.values() + aclfilestemp.values()).
+        (jobxml + execxml +
+                execout.values() +
+                reportxml +
+                jfrecords +
+                [configtemp] +
+                mdfilestemp.values() +
+                aclfilestemp.values()).
                 each { it?.deleteOnExit() }
 
         def loadjobresults = []
@@ -874,6 +974,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
             )
             //load reports
             importReportsToProject(reportxml, jobsByOldId, reportxmlnames, execidmap, projectName, execerrors)
+            importFileRecordsToProject(jfrecords, jobIdMap, jfrecordnames, execidmap, execerrors)
         }
 
         if (importConfig && configtemp) {
@@ -983,6 +1084,47 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
             loadedreports << report
         }
         log.info("Loaded ${loadedreports.size()} reports")
+    }
+    /**
+     * Import job file records.
+     * @param recordfiles
+     * @param jobIdMap
+     * @param recordfilenames
+     * @param execidmap
+     * @param projectName
+     */
+    private List<JobFileRecord> importFileRecordsToProject(
+            ArrayList recordfiles,
+            jobIdMap,
+            recordfilenames,
+            Map execidmap,
+            loadjoberrors
+    )
+    {
+        def loadedreports = []
+        recordfiles.each { rxml ->
+            def report
+            try {
+                report = loadJobFileRecord(rxml, execidmap, jobIdMap, recordfilenames[rxml])
+            } catch (ProjectServiceException e) {
+                loadjoberrors << "[${recordfilenames[rxml]}] ${e.message}"
+                log.debug("[${recordfilenames[rxml]}] ${e.message}", e)
+                log.error("[${recordfilenames[rxml]}] ${e.message}")
+                return
+            }
+            if (!report) {
+                log.debug("[${recordfilenames[rxml]}] File Record skipped: no matching execution imported.")
+                return
+            }
+            if (!report.save()) {
+                log.error("[${recordfilenames[rxml]}] Unable to save job file record: ${report.errors}")
+                return
+            }
+            loadedreports << report
+        }
+
+        log.info("Loaded ${loadedreports.size()} file records: " + recordfilenames.values())
+        loadedreports
     }
 
     /**

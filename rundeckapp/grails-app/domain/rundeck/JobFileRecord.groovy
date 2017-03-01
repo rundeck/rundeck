@@ -153,4 +153,49 @@ class JobFileRecord {
         ]
         )
     }
+
+    def toMap() {
+        [execId: execution?.id] + properties.subMap(
+                [
+                        'uuid',
+                        'recordName',
+                        'jobId',
+                        'fileName',
+                        'sha',
+                        'size',
+                        'dateCreated',
+                        'lastUpdated',
+                        'expirationDate',
+                        'user',
+                        'fileState',
+                        'storageReference',
+                        'storageType',
+                        'storageMeta',
+                        'serverNodeUUID',
+                        'recordType'
+                ]
+        )
+    }
+
+    static JobFileRecord fromMap(Map map) {
+        new JobFileRecord(
+                uuid: map.uuid,
+                recordName: map.recordName,
+                jobId: map.jobId,
+                fileName: map.fileName,
+                sha: map.sha,
+                size: map.size,
+                dateCreated: map.dateCreated,
+                lastUpdated: map.lastUpdated,
+                expirationDate: map.expirationDate,
+                user: map.user,
+                fileState: map.fileState,
+                storageReference: map.storageReference,
+                storageType: map.storageType,
+                storageMeta: map.storageMeta,
+                serverNodeUUID: map.serverNodeUUID,
+                execution: map.execution,
+                recordType: map.recordType
+        )
+    }
 }
