@@ -4,7 +4,6 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import grails.events.Listener
 import grails.transaction.Transactional
-import org.apache.commons.fileupload.util.Streams
 import org.rundeck.util.SHAInputStream
 import org.rundeck.util.SHAOutputStream
 import org.rundeck.util.Sizes
