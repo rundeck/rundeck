@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
+import com.dtolabs.rundeck.core.utils.Pair;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.utils.Streams;
 
@@ -186,6 +187,7 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
         return copyFile(executionContext, file, null, null, node,null);
     }
 
+
     /**
      * Copy string content
      */
@@ -210,10 +212,31 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
     }
 
     @Override
+    public String[] copyFiles(ExecutionContext context, List<File> file, String remotePath, INodeEntry node) throws FileCopierException {
+        return copyMultipleFiles(context, file, remotePath, node);
+    }
+
+    @Override
     public String copyScriptContent(ExecutionContext context, String script, INodeEntry node, String destination) throws FileCopierException {
         return copyFile(context, null, null, script, node, destination);
     }
 
+
+    String[] copyMultipleFiles(
+            final ExecutionContext executionContext,
+            final List<File> files,
+            final String remotePath,
+            final INodeEntry node
+    ) throws
+            FileCopierException
+    {
+        ArrayList<String> ret = new ArrayList<String>();
+        for(File file: files){
+            String tmp = copyFile(executionContext,file,null,null,node,remotePath+file.getName());
+            ret.add(tmp);
+        }
+        return ret.toArray(new String[0]);
+    }
     /**
      * Internal copy method accepting file, inputstream or string
      */

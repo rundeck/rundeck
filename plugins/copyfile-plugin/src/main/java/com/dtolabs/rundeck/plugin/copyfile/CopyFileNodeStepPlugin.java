@@ -21,13 +21,18 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.utils.Pair;
+import com.dtolabs.rundeck.core.utils.PairImpl;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
+import org.apache.tools.ant.DirectoryScanner;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -43,20 +48,88 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
     @PluginProperty(title = "Destination Path", description = "Path on the remote node for the file destination. If " +
             "the path ends with a /, the same filename as the source will be used.", required = true)
     private String destinationPath;
+    @PluginProperty(title = "Recursive copy", description = "If this is set the plugin is going to copy a folder with his content.", defaultValue = "false")
+    private boolean recursive;
+    @PluginProperty(title = "Allow wildcard", description = "If this is set the plugin is going to search any file that match the wildcard(*) and copy it in the destination Path. Exclusive with recursive copy.", defaultValue = "false")
+    private boolean wildcards;
     @PluginProperty(title = "Print transfer information", description = "Log information about the file copy", defaultValue = "true")
     private boolean echo;
 
     public static enum Reason implements FailureReason {
         CopyFileFailed,
-
+        WrongParameter
     }
+
+    private List<File> fileList;
+
+    private String separator = "/";
 
     @Override
     public void executeNodeStep(PluginStepContext context, Map<String, Object> configuration,
-            INodeEntry entry) throws NodeStepException {
+                                INodeEntry entry) throws NodeStepException {
+        separator = System.getProperty("file.separator");
+        fileList = new ArrayList<>();
+
+        if(recursive){
+            File folder = new File(sourcePath);
+            if(!folder.isDirectory()){
+                throw new NodeStepException("sourcePath has to be a directory", Reason.WrongParameter, entry.getNodename());
+            }
+            if (!destinationPath.endsWith("/")) {
+                destinationPath = destinationPath + "/";
+            }
+            copyFile(sourcePath,destinationPath,context, entry);
+        }else if(wildcards) {
+            System.out.println("wildcards");
+            String basefolder = "";
+            String search = "";
+            String family = ("/".equals(separator) ? "unix" : "\\".equals(separator) ? "windows" : "");
+            // determine base folder for search
+            if(family.equals("unix")){
+                System.out.println("unix");
+                basefolder = "/";
+                search = sourcePath.substring(1);
+            }else{
+                System.out.println("windows");
+                int index=sourcePath.indexOf(":\\");
+                basefolder=sourcePath.substring(0,index+2);
+                search = sourcePath.substring(index+2);
+            }
+            System.out.println(basefolder);
+            DirectoryScanner scanner = new DirectoryScanner();
+            scanner.setBasedir(basefolder);
+            scanner.setIncludes(new String[]{search});
+            scanner.setFollowSymlinks(false);
+            scanner.scan();
+            String[] files = scanner.getIncludedFiles();
+            String customDestinationPath = destinationPath;
+            if (!destinationPath.endsWith("/")) {
+                //always copy to a folder
+                destinationPath = customDestinationPath + "/";
+            }
+            for(String file : files){
+                String toCopyFile = basefolder+file;
+                if(echo) {
+                    context.getLogger().log(2, "To copy file: " + toCopyFile);
+                }
+                File source = new File(toCopyFile);
+
+                fileList.add(source);
+            }
+            copyFileList(context, entry);
+
+        }else{
+            copyFile(sourcePath, destinationPath, context, entry);
+        }
+
+    }
+
+
+    private void copyFile(String sourcePath, String destinationPath, PluginStepContext context, INodeEntry entry )
+            throws NodeStepException{
         File file = new File(sourcePath);
         String customDestinationPath = destinationPath;
-        if (destinationPath.endsWith("/")) {
+        if (destinationPath.endsWith("/") && !file.isDirectory()) {
             customDestinationPath = customDestinationPath + file.getName();
         }
         try {
@@ -69,6 +142,25 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
                     customDestinationPath);
             if (echo) {
                 context.getLogger().log(2, "Copied: " + path);
+            }
+        } catch (FileCopierException e) {
+            context.getLogger().log(0, "failed: " + e.getMessage());
+            throw new NodeStepException(e, Reason.CopyFileFailed, entry.getNodename());
+        }
+    }
+
+    private void copyFileList(PluginStepContext context, INodeEntry entry )
+            throws NodeStepException{
+        try {
+            if(echo) {
+                context.getLogger().log(2, "Begin copy " + fileList.size() + " files  to node " + entry
+                        .getNodename() );
+            }
+            String[] paths = context.getFramework().getExecutionService().fileCopyFiles(context.getExecutionContext(), fileList, destinationPath, entry);
+            if (echo) {
+                for(String path:paths) {
+                    context.getLogger().log(2, "Copied: " + path);
+                }
             }
         } catch (FileCopierException e) {
             context.getLogger().log(0, "failed: " + e.getMessage());

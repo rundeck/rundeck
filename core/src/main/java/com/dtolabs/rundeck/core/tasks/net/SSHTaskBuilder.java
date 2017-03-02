@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.tasks.net;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.utils.Pair;
 import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.utils.Streams;
@@ -41,6 +42,7 @@ import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
 import org.apache.tools.ant.types.Environment;
+import org.apache.tools.ant.types.FileSet;
 import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.api.StorageException;
 
@@ -48,10 +50,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 
 /**
  * SSHTaskFactory constructs a ExtSSHExec task
@@ -300,6 +299,10 @@ public class SSHTaskBuilder {
         void setLocalFile(String absolutePath);
 
         void setRemoteTofile(String s);
+
+        void addFileset(FileSet set);
+
+        void setTodir(String aToUri);
     }
 
     private static abstract class SSHBaseImpl implements SSHBaseInterface {
@@ -493,6 +496,10 @@ public class SSHTaskBuilder {
             instance.setRemoteTofile(s);
         }
 
+        public void addFileset(FileSet set) { instance.addFileset(set);}
+
+        public void setTodir(String uri){instance.setTodir(uri);}
+
     }
 
     /**
@@ -522,36 +529,6 @@ public class SSHTaskBuilder {
 
         extSSHExec.setAntLogLevel(loglevel);
         return extSSHExec;
-
-    }
-
-    /**
-     * Build a Task that performs SFTP command
-     *
-     * @param loglevel  level
-     * @param nodeentry   target node
-     * @param localFile        local file
-     * @param remoteFile        remote file
-     * @param project     ant project
-     * @param dataContext data
-     * @param logger logger
-     * @param sshConnectionInfo connection info
-     *
-     * @return task
-     * @throws BuilderException on error
-     */
-    public static ExtSSHSftp build(final INodeEntry nodeentry, final File localFile,final String remoteFile,
-                                   final Project project,
-                                   final Map<String, Map<String, String>> dataContext,
-                                   final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
-            BuilderException {
-
-
-        final ExtSSHSftp extSSHSftp = new ExtSSHSftp();
-        build(extSSHSftp, nodeentry, localFile, remoteFile, project, dataContext, sshConnectionInfo,
-                loglevel, logger);
-
-        return extSSHSftp;
 
     }
 
@@ -736,13 +713,34 @@ public class SSHTaskBuilder {
     }
 
     public static Scp buildScp(final INodeEntry nodeentry, final Project project,
-            final String remotepath, final File sourceFile,
-            final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
+                                final String remotepath, final File sourceFile,
+                                final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
             BuilderException {
 
 
         final ExtScp scp = new ExtScp();
         buildScp(scp, nodeentry, project, remotepath, sourceFile, sshConnectionInfo, loglevel, logger);
+        return scp;
+    }
+
+    public static Scp buildMultiScp(final INodeEntry nodeentry, final Project project, final List<File> files, final String remotePath,
+                               final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
+            BuilderException {
+
+
+        final ExtScp scp = new ExtScp();
+        buildMultiScp(scp, nodeentry, project, files, remotePath, sshConnectionInfo, loglevel, logger);
+        return scp;
+    }
+
+    public static Scp buildRecursiveScp(final INodeEntry nodeentry, final Project project,
+                                        final String remotepath, final File sourceFile,
+                                        final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
+            BuilderException {
+
+
+        final ExtScp scp = new ExtScp();
+        buildRecursiveScp(scp, nodeentry, project, remotepath, sourceFile, sshConnectionInfo, loglevel, logger);
         return scp;
     }
 
@@ -769,6 +767,65 @@ public class SSHTaskBuilder {
         scp.setLocalFile(sourceFile.getAbsolutePath());
         final String sshUriPrefix = username + "@" + nodeentry.extractHostname() + ":";
         scp.setRemoteTofile(sshUriPrefix + remotepath);
+    }
+
+
+    static void buildRecursiveScp(final SCPInterface scp, final INodeEntry nodeentry,
+                         final Project project, final String remotePath, final File sourceFolder,
+                         final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
+            BuilderException {
+
+        if (null == sourceFolder) {
+            throw new BuilderException("sourceFolder was not set");
+        }
+        final String username = sshConnectionInfo.getUsername();
+        if (null == username) {
+            throw new BuilderException("username was not set");
+        }
+
+        configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
+
+        //Set the local and remote file paths
+
+        //scp.setLocalFile(sourceFolder.getAbsolutePath());
+
+            FileSet set = new FileSet();
+            set.setDir(sourceFolder);
+            scp.addFileset(set);
+
+
+        final String sshUriPrefix = username + "@" + nodeentry.extractHostname() + ":";
+        scp.setTodir(sshUriPrefix + remotePath);
+
+    }
+    static void buildMultiScp(final SCPInterface scp, final INodeEntry nodeentry,
+                         final Project project, final List<File> files, final String remotePath,
+                         final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
+            BuilderException {
+
+        if (null == files) {
+            throw new BuilderException("files was not set");
+        }
+        final String username = sshConnectionInfo.getUsername();
+        if (null == username) {
+            throw new BuilderException("username was not set");
+        }
+
+        configureSSHBase(nodeentry, project, sshConnectionInfo, scp, loglevel, logger);
+
+        //Set the local and remote file paths
+
+        //scp.setLocalFile(sourceFile.getAbsolutePath());
+
+        for(File source: files ){
+            FileSet set = new FileSet();
+            set.setDir(source.getParentFile());
+            set.setIncludes(source.getName());
+            scp.addFileset(set);
+        }
+
+        final String sshUriPrefix = username + "@" + nodeentry.extractHostname() + ":";
+        scp.setTodir(sshUriPrefix + remotePath);
     }
 
     public static class BuilderException extends Exception {

@@ -30,9 +30,12 @@ import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.DestinationFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.utils.Pair;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * LocalFileCopier is ...
@@ -61,13 +64,40 @@ public class LocalFileCopier extends BaseFileCopier implements FileCopier, Desti
     }
 
     public String copyFile(final ExecutionContext context, File scriptfile, INodeEntry node) throws
-        FileCopierException {
+            FileCopierException {
         return copyFile(context, scriptfile, null, null, node);
     }
+
+    public String[] copyFiles(final ExecutionContext context, List<File> files, String remotePath, INodeEntry node) throws
+            FileCopierException {
+        return copyMultipleFiles(context, files, remotePath, node);
+    }
+
 
     private String copyFile(final ExecutionContext context, File scriptfile, InputStream input, String script,
                             INodeEntry node) throws FileCopierException {
         return copyFile(context, scriptfile, input, script, node, null);
+    }
+
+
+    private String[] copyMultipleFiles(
+            final ExecutionContext context,
+            List<File> files,
+            String remotePath,
+            INodeEntry node
+    ) throws FileCopierException
+    {
+        ArrayList<String> ret = new ArrayList<String>();
+        for(File file: files) {
+            String tmp = BaseFileCopier.writeLocalFile(
+                    file,
+                    null,
+                    null,
+                    null !=  remotePath ? new File(remotePath+file.getName()) : null
+            ).getAbsolutePath();
+            ret.add(tmp);
+        }
+        return ret.toArray(new String[0]);
     }
 
     private String copyFile(

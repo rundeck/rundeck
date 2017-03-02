@@ -29,10 +29,12 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.utils.Pair;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -136,6 +138,14 @@ public interface ExecutionListener extends PluginLogger {
     public void beginFileCopyFile(final ExecutionContext context, File input, INodeEntry node);
 
     /**
+     * Begin file copy of file
+     * @param context context
+     * @param files files
+     * @param node node
+     */
+    public void beginFileCopyFile(final ExecutionContext context, List<File> files, INodeEntry node);
+
+    /**
      * Begin file copy of string
      * @param context context
      * @param input string
@@ -150,6 +160,14 @@ public interface ExecutionListener extends PluginLogger {
      * @param node node
      */
     public void finishFileCopy(String result, ExecutionContext context, INodeEntry node);
+
+    /**
+     * Finish file copy
+     * @param result result
+     * @param context context
+     * @param node node
+     */
+    public void finishMultiFileCopy(String[] result, ExecutionContext context, INodeEntry node);
 
 
     /**

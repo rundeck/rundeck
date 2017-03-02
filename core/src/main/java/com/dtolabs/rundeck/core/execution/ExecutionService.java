@@ -37,9 +37,11 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
+import com.dtolabs.rundeck.core.utils.Pair;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * ExecutionService provides interface to all dispatcher and command execution services.
@@ -146,6 +148,17 @@ public interface ExecutionService extends FrameworkSupportService {
      */
     public String fileCopyFile(final ExecutionContext context, File file, INodeEntry node,
             String destinationPath) throws FileCopierException;
+
+    /**
+     * Copy file to the node to a specific path
+
+     * @param context context
+     * @param files array of input files
+     * @param node node
+     * @throws FileCopierException on error
+     * @return filepath
+     */
+    public String[] fileCopyFiles(final ExecutionContext context, List<File> files, String remotePath, INodeEntry node) throws FileCopierException;
 
     /**
      * Copy string as a file to the node,

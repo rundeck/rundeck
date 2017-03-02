@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
+import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.utils.Streams;
 import org.apache.commons.lang.RandomStringUtils;
 
@@ -454,13 +455,18 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
         try {
 
             if (null != original) {
-                File destinationFolder = destinationFile.getParentFile();
-                if(null != destinationFolder && !destinationFolder.exists()){
-                    destinationFolder.mkdirs();
-                }
-                try (InputStream in = new FileInputStream(original)) {
-                    try (FileOutputStream out = new FileOutputStream(destinationFile)) {
-                        Streams.copyStream(in, out);
+                //recursive folder copy
+                if(original.isDirectory()){
+                    FileUtils.copyDirectory(original,destinationFile);
+                }else {
+                    File destinationFolder = destinationFile.getParentFile();
+                    if (null != destinationFolder && !destinationFolder.exists()) {
+                        destinationFolder.mkdirs();
+                    }
+                    try (InputStream in = new FileInputStream(original)) {
+                        try (FileOutputStream out = new FileOutputStream(destinationFile)) {
+                            Streams.copyStream(in, out);
+                        }
                     }
                 }
             } else if (null != input) {
