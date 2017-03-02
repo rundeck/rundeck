@@ -190,6 +190,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
         given:
         def project                     = 'testProject'
         service.executionServiceBean    = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
         service.quartzScheduler         = Mock(Scheduler)
         service.frameworkService = Stub(FrameworkService) {
             existsFrameworkProject(project) >> true
