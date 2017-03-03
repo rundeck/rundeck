@@ -25,7 +25,9 @@
 
 <div class="row" data-bind="if: option">
     <!-- ko if: isFileType -->
-    <input type="file" name="" id="" data-bind="attr: {name: fieldName, id: fieldId}" class="optionvaluesfield  form-control">
+        <div class="col-sm-12">
+            <input type="file" name="" id="" data-bind="attr: {name: fieldName, id: fieldId}" class="optionvaluesfield  form-control">
+        </div>
     <!-- /ko -->
     <!-- ko if: !isFileType() -->
     <%-- Print out the input box for random input --%>
