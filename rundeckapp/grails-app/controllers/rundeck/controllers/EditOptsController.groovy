@@ -25,6 +25,7 @@ import rundeck.ScheduledExecution
  * Controller for manipulating the session-stored set of Options during job edit
  */
 class EditOptsController {
+    def fileUploadService
     def static allowedMethods = [
             redo: 'POST',
             remove: 'POST',
@@ -62,7 +63,16 @@ class EditOptsController {
 
             outparams = _validateOption(editopts[params.name], null,params.jobWasScheduled=='true')
         }
-        return render(template: "/scheduledExecution/optEdit", model: [option: null != params.name ? editopts[params.name] : null, name: params.name, scheduledExecutionId: params.scheduledExecutionId, newoption: params['newoption'], edit: true] + outparams)
+
+        def model = [
+                option                     : null != params.name ? editopts[params.name] : null,
+                name                       : params.name,
+                scheduledExecutionId       : params.scheduledExecutionId,
+                newoption                  : params['newoption'],
+                edit                       : true,
+                fileUploadPluginDescription: fileUploadService.pluginDescription
+        ]
+        return render(template: "/scheduledExecution/optEdit", model: model + outparams)
     }
 
     /**
@@ -138,7 +148,19 @@ class EditOptsController {
         def result = _applyOptionAction(editopts, [action: 'true' == params.newoption ? 'insert' : 'modify', name: origName ? origName : name, params: params])
         if (result.error) {
             log.error(result.error)
-            return render(template: "/scheduledExecution/optEdit", model: [option: result.option, name: params.num, scheduledExecutionId: params.scheduledExecutionId, origName: params.origName, newoption: params['newoption'], edit: true, regexError: result.regexError])
+
+            def model = [
+                    option                     : result.option,
+                    name                       : params.num,
+                    scheduledExecutionId       : params.scheduledExecutionId,
+                    origName                   : params.origName,
+                    newoption                  : params['newoption'],
+                    edit                       : true,
+                    regexError                 : result.regexError,
+                    fileUploadPluginDescription: fileUploadService.pluginDescription
+            ]
+            return render(template: "/scheduledExecution/optEdit", model: model
+            )
         }
         _pushUndoAction(params.scheduledExecutionId, result.undo)
         if (result.undo) {

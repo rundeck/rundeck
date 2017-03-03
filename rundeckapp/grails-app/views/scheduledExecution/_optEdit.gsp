@@ -69,6 +69,35 @@
                 </g:select>
             </div>
         </div>
+        <!-- ko if: isFileType()-->
+        <div class="form-group">
+            <div class="col-sm-10 col-sm-offset-2">
+                <g:if test="${fileUploadPluginDescription}">
+                    <stepplugin:pluginIcon service="FileUploadPluginService"
+                                           name="${fileUploadPluginDescription.name}"
+                                           width="16px"
+                                           height="16px">
+                        <i class="rdicon icon-small plugin"></i>
+                    </stepplugin:pluginIcon>
+                    <stepplugin:message
+                            service="FileUploadPluginService"
+                            name="${fileUploadPluginDescription.name}"
+                            code="plugin.title"
+                            default="${fileUploadPluginDescription.title ?: fileUploadPluginDescription.name}"/>
+                    <span class="text-muted"><g:render template="/scheduledExecution/description"
+                                                       model="[description:
+                                                                       stepplugin.messageText(
+                                                                               service: 'FileUploadPluginService',
+                                                                               name: fileUploadPluginDescription.name,
+                                                                               code: 'plugin.description',
+                                                                               default: fileUploadPluginDescription.description
+                                                                       ),
+                                                               textCss    : '',
+                                                               mode       : 'hidden', rkey: g.rkey()]"/></span>
+                </g:if>
+            </div>
+        </div>
+        <!-- /ko -->
         <div class="form-group">
 
             <label for="optname_${rkey}"

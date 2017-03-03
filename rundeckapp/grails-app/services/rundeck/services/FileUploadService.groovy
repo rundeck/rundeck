@@ -51,6 +51,10 @@ class FileUploadService {
         Sizes.parseFileSize(optionUploadMaxSizeString)
     }
 
+    def getPluginDescription(){
+        pluginService.getPluginDescriptor(pluginType, FileUploadPlugin)?.description
+    }
+
     FileUploadPlugin getPlugin() {
         def plugin = pluginService.getPlugin(pluginType, FileUploadPlugin)
         plugin.initialize([:])
