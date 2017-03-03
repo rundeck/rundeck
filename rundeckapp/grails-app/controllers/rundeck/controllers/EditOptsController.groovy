@@ -440,6 +440,10 @@ class EditOptsController {
     public static _validateOption(Option opt, Map params = null, boolean jobWasScheduled=false) {
         opt.validate()
         def result = [:]
+        if (jobWasScheduled && opt.required && opt.optionType == 'file') {
+            opt.errors.rejectValue('required', 'option.file.required.message')
+            return result
+        }
         if (opt.enforced && (opt.values || opt.valuesList) && opt.defaultValue) {
             opt.convertValuesList()
             if(!opt.multivalued && !opt.values.contains(opt.defaultValue)) {

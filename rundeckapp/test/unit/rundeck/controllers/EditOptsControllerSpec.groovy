@@ -29,7 +29,7 @@ import spock.lang.Specification
 class EditOptsControllerSpec extends Specification {
     def "validate opt required scheduled job with default storage path"() {
         given:
-        Option opt = new Option(required: true, defaultValue: defval, defaultStoragePath: defstorageval)
+        Option opt = new Option(required: true, defaultValue: defval, defaultStoragePath: defstorageval, enforced: false)
 
         when:
         EditOptsController._validateOption(opt, params, true)
@@ -42,6 +42,21 @@ class EditOptsControllerSpec extends Specification {
         false | 'abc'  | null
         false | null   | 'abc'
 
+    }
+
+    def "validate file opt required with scheduled job"() {
+        given:
+        Option opt = new Option(required: true, optionType: 'file', name: 'abc',enforced: false)
+
+        when:
+        EditOptsController._validateOption(opt, params, isched)
+        then:
+        iserr == opt.errors.hasFieldErrors('required')
+
+        where:
+        iserr | isched
+        true  | true
+        false | false
     }
 
     def "reorder option relative position"() {
