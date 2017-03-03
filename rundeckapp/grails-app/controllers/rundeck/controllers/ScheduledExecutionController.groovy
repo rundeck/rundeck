@@ -2118,7 +2118,8 @@ class ScheduledExecutionController  extends ControllerBase{
         def model=create.call()
         render(view:'create',model:model)
     }
-    def create = {
+
+    def create() {
 
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         //authorize

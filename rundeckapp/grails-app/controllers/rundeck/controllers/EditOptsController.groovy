@@ -34,11 +34,12 @@ class EditOptsController {
             save: 'POST',
             undo: 'POST',
     ]
-    def index = {
+
+    def index() {
         redirect(controller: 'menu', action: 'index')
     }
 
-    def error = {
+    def error() {
         return render(template: "/common/messages")
     }
 
@@ -46,7 +47,7 @@ class EditOptsController {
      * render edit form for an option.  params.name= name of existing option to edit, otherwise params.newoption is
      * required to create a new option
      */
-    def edit = {
+    def edit() {
         if (!params.name && !params.newoption) {
             log.error("name parameter required")
             flash.error = "name parameter required"
@@ -111,7 +112,7 @@ class EditOptsController {
     /**
      * Render all options
      */
-    def renderAll = {
+    def renderAll() {
         def Map editopts = _getSessionOptions()
         //configure sorted list
         def options = new TreeSet()
@@ -123,7 +124,7 @@ class EditOptsController {
     /**
      * Render all options in summary view
      */
-    def renderSummary = {
+    def renderSummary() {
         def Map editopts = _getSessionOptions()
         //configure sorted list
         def options = new TreeSet()
@@ -134,7 +135,7 @@ class EditOptsController {
     /**
      * Save new option or existing option definition. params.name= name of existing option, or params.newoption is required
      */
-    def save = {
+    def save() {
         withForm{
         if (!params.name && !params.newoption) {
             log.error("name parameter is required")
@@ -187,7 +188,7 @@ class EditOptsController {
     /**
      * Remove an option by name.  params.name required
      */
-    def remove = {
+    def remove() {
         withForm {
         if (!params.name) {
             log.error("name parameter is required")
@@ -262,7 +263,7 @@ class EditOptsController {
     /**
      * Show undo/redo buttons
      */
-    def renderUndo = {
+    def renderUndo() {
         final String id = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
         render(template: "/common/undoRedoControls", model: [undo: session.undoOPTS ? session.undoOPTS[id]?.size() : 0, redo: session.redoOPTS ? session.redoOPTS[id]?.size() : 0, key: 'opts', revertConfirm: 'all Options'])
     }
@@ -271,7 +272,7 @@ class EditOptsController {
     /**
      * Undo action, renders full options list after performing undo
      */
-    def undo = {
+    def undo() {
         withForm{
         def editopts = _getSessionOptions()
         def action = _popUndoAction(params.scheduledExecutionId)
@@ -303,7 +304,7 @@ class EditOptsController {
     /**
      * redo action, renders full options list after performing redo
      */
-    def redo = {
+    def redo() {
         withForm{
         def editopts = _getSessionOptions()
         def action = _popRedoAction(params.scheduledExecutionId)
@@ -334,7 +335,7 @@ class EditOptsController {
     /**
      * revert action, reloads options from stored ScheduledExecution, clears undo/redo stack, and renders full options list
      */
-    def revert = {
+    def revert() {
         withForm{
         final String uid = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
         session.editOPTS?.remove(uid)
