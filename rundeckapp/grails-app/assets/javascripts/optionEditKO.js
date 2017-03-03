@@ -37,6 +37,13 @@ function OptionEditor(data) {
         return self.tofilebashvar(self.name());
     });
 
+    self.fileFileNameBashVarPreview = ko.computed(function () {
+        return self.tofilebashvar(self.name()+'.fileName');
+    });
+    self.fileShaBashVarPreview = ko.computed(function () {
+        return self.tofilebashvar(self.name()+'.sha');
+    });
+
     self.isFileType = ko.computed(function () {
         return "file" === self.optionType();
     });

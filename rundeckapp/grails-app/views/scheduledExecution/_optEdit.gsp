@@ -572,7 +572,7 @@
         <div  class="row">
             <label class="col-sm-2 control-label"><g:message code="usage" /></label>
             <div class="col-sm-10" >
-                <span class="text-muted"><g:message code="form.option.usage.file.preview.description" /></span>
+                <span class="text-info"><g:message code="form.option.usage.file.preview.description" /></span>
                 <div>
                     <g:message code="bash.prompt" /> <code>$<span data-bind="text: fileBashVarPreview"></span></code>
                 </div>
@@ -581,6 +581,27 @@
                 </div>
                 <div>
                     <g:message code="script.content.prompt" /> <code>@file.<span data-bind="text: name"></span>@</code>
+                </div>
+
+                <span class="text-info"><g:message code="form.option.usage.file.fileName.preview.description" /></span>
+                <div>
+                    <g:message code="bash.prompt" /> <code>$<span data-bind="text: fileFileNameBashVarPreview"></span></code>
+                </div>
+                <div>
+                    <g:message code="commandline.arguments.prompt" /> <code>$<!-- -->{file.<span data-bind="text: name"></span>.fileName}</code>
+                </div>
+                <div>
+                    <g:message code="script.content.prompt" /> <code>@file.<span data-bind="text: name"></span>.fileName@</code>
+                </div>
+                <span class="text-info"><g:message code="form.option.usage.file.sha.preview.description" /></span>
+                <div>
+                    <g:message code="bash.prompt" /> <code>$<span data-bind="text: fileShaBashVarPreview"></span></code>
+                </div>
+                <div>
+                    <g:message code="commandline.arguments.prompt" /> <code>$<!-- -->{file.<span data-bind="text: name"></span>.sha}</code>
+                </div>
+                <div>
+                    <g:message code="script.content.prompt" /> <code>@file.<span data-bind="text: name"></span>.sha@</code>
                 </div>
             </div>
 
