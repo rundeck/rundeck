@@ -206,6 +206,19 @@ class FileUploadService {
         removeLocalFile(record.storageReference)
     }
 
+    def deleteRecord(JobFileRecord record) {
+        def plugin = getPlugin()
+        if (plugin.hasFile(record.storageReference)) {
+            plugin.removeFile(record.storageReference)
+        }
+        removeLocalFile(record.storageReference)
+        record.delete()
+    }
+
+    def deleteRecordsForExecution(Execution e) {
+        JobFileRecord.findAllByExecution(e).each this.&deleteRecord
+    }
+
     /**
      * Validate whether the file ref uuid can be used for the jobid and option
      * @param fileuuid

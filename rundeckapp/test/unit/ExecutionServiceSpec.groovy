@@ -923,6 +923,7 @@ class ExecutionServiceSpec extends Specification {
         file2.deleteOnExit()
 
 
+        service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
             1 * getFileForExecutionFiletype(execution, 'rdlog', true) >> file1
             1 * getFileForExecutionFiletype(execution, 'state.json', true) >> file2
@@ -971,7 +972,7 @@ class ExecutionServiceSpec extends Specification {
             delete() >> false
             isDirectory() >> false
         }
-
+        service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
             1 * getFileForExecutionFiletype(execution, 'rdlog', true) >> file1
             1 * getFileForExecutionFiletype(execution, 'state.json', true)
@@ -993,6 +994,46 @@ class ExecutionServiceSpec extends Specification {
         result.success
     }
 
+    def "delete execution job file records"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService)
+        service.fileUploadService = Mock(FileUploadService)
+        def auth = Mock(AuthContext)
+        def execution = new Execution(
+                user: 'userB',
+                project: 'AProject',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                )
+        execution.dateStarted = new Date()
+        execution.dateCompleted = new Date()
+        execution.status = 'succeeded'
+
+
+
+        service.logFileStorageService = Mock(LogFileStorageService)
+
+
+        when:
+        def result = service.deleteExecution(execution, auth, 'bob')
+
+        then:
+        1 * service.frameworkService.authResourceForProject(_)
+        1 * service.frameworkService.authorizeApplicationResourceAny(
+                auth,
+                _,
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+        ) >> true
+        1 * service.fileUploadService.deleteRecordsForExecution(execution)
+
+        result.success
+
+    }
     def "loadSecureOptionStorageDefaults"() {
         given:
         ScheduledExecution job = new ScheduledExecution(

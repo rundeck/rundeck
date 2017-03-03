@@ -1440,6 +1440,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     files << file
                 }
             }
+            //delete all job file records
+            fileUploadService.deleteRecordsForExecution(e)
+
             log.debug("${files.size()} files from execution will be deleted")
             logExecutionLog4j(e, "delete", username)
             //delete execution
