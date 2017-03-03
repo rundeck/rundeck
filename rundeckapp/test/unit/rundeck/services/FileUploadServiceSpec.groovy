@@ -12,6 +12,7 @@ import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * See the API for {@link grails.test.mixin.services.ServiceUnitTestMixin} for usage instructions
@@ -234,6 +235,77 @@ class FileUploadServiceSpec extends Specification {
         'wrongjobid' | 'myopt'
         'ajobid'     | 'wrongopt'
         'wronglgle'  | 'wrongopt'
+
+    }
+
+    @Unroll
+    def "validate uuid for job option incorrect option/job"() {
+        given:
+        String jobid = 'ajobid'
+        String user = 'auser'
+//        service.configurationService = Mock(ConfigurationService) {
+//            getString('fileupload.plugin.type', _) >> { it[1] }
+//            getLong('fileUploadService.tempfile.expiration', _) >> 30000L
+//        }
+//        service.frameworkService = Mock(FrameworkService) {
+//
+//        }
+//        service.pluginService = Mock(PluginService)
+
+        String origName = 'afile'
+        String optionName = 'myopt'
+        String sha = 'fc4b5fd6816f75a7c81fc8eaa9499d6a299bd803397166e8c4cf9280b801d62c'
+        def jfr = new JobFileRecord(
+                fileName: origName,
+                size: 123,
+                recordType: 'option',
+                expirationDate: new Date(),
+                fileState: state,
+                uuid: '44a26bb3-5013-4906-9997-286306005408',
+                serverNodeUUID: null,
+                sha: sha,
+                jobId: jobid,
+                recordName: optionName,
+                storageType: 'filesystem-temp',
+                user: user,
+                storageReference: 'abcd'
+        ).save()
+
+        ScheduledExecution job = mkjob(jobid)
+        job.validate()
+
+        when:
+        def result = service.validateFileRefForJobOption(ref, inputjobid, inputoptname)
+        then:
+        result.valid == false
+        result.error == errorCode
+        result.args == errorArgs
+
+
+        where:
+        state     | ref                                    | inputjobid   | inputoptname | errorCode | errorArgs
+        'deleted' | '44a26bb3-5013-4906-9997-286306005408' |
+                'ajobid'                                                  |
+                'myopt'                                                                  |
+                'state'                                                                              |
+                ['44a26bb3-5013-4906-9997-286306005408', 'deleted']
+        'temp'    | 'wrong'                                |
+                'blah'                                                    |
+                'blah2'                                                                  |
+                'notfound'                                                                           |
+                ['wrong', 'blah', 'blah2']
+        'temp'    | '44a26bb3-5013-4906-9997-286306005408' | 'wrongjobid' |
+                'myopt'                                                                  |
+                'invalid'                                                                            |
+                ['44a26bb3-5013-4906-9997-286306005408', 'wrongjobid', 'myopt']
+        'temp'    | '44a26bb3-5013-4906-9997-286306005408' | 'ajobid'     |
+                'wrongopt'                                                               |
+                'invalid'                                                                            |
+                ['44a26bb3-5013-4906-9997-286306005408', 'ajobid', 'wrongopt']
+        'temp'    | '44a26bb3-5013-4906-9997-286306005408' | 'wronglgle'  |
+                'wrongopt'                                                               |
+                'invalid'                                                                            |
+                ['44a26bb3-5013-4906-9997-286306005408', 'wronglgle', 'wrongopt']
 
     }
 

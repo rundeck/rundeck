@@ -2937,6 +2937,7 @@ class ScheduledExecutionController  extends ControllerBase{
     )
     {
         def optionParameterPrefix = "extra.option."
+        def fileresults = [:]
         if (request instanceof MultipartRequest) {
             def fileOptions = scheduledExecution.listFileOptions()
             def fileOptionNames = fileOptions*.name
@@ -2974,7 +2975,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 if (name.startsWith(optionParameterPrefix)) {
                     //process file option upload
                     String optname = name.substring(optionParameterPrefix.length())
-                    if (optname in fileOptionNames) {
+                    if (optname in fileOptionNames && !file.empty) {
                         try {
                             String ref = fileUploadService.receiveFile(
                                     file.inputStream,
@@ -2985,7 +2986,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                     scheduledExecution.extid,
                                     expirationStart ?: new Date()
                             )
-                            inputOpts["option.$optname"] = ref
+                            fileresults[optname] = ref
                         } catch (FileUploadServiceException e) {
                             def msg = g.message(code: 'api.error.job-upload.error', args: [e.message])
                             return [success: false, failed: true, error: 'input', message: msg]
@@ -2993,8 +2994,17 @@ class ScheduledExecutionController  extends ControllerBase{
                     }
                 }
             }
+            fileOptionNames.each { optname ->
+                if(fileresults[optname]) {
+                    inputOpts["option.$optname".toString()] = fileresults[optname]
+                    inputOpts.get('option')?.put(optname, fileresults[optname])
+                }else{
+                    inputOpts.remove("option.$optname".toString())
+                    inputOpts.get('option')?.remove(optname)
+                }
+            }
         }
-        [success: true]
+        [success: true, files: fileresults]
     }
 
     /**

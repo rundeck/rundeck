@@ -68,12 +68,21 @@ class JobFileRecordSpec extends Specification {
         jfr.stateRetained()
         then:
         jfr.stateIsRetained()
+        when:
+        jfr.fileState = JobFileRecord.STATE_TEMP
+        then:
+        jfr.canBecomeRetained()
 
         when:
         jfr.fileState = JobFileRecord.STATE_TEMP
         jfr.stateExpired()
         then:
         jfr.stateIsExpired()
+
+        when:
+        jfr.fileState = JobFileRecord.STATE_RETAINED
+        then:
+        jfr.canBecomeRetained()
 
         when:
         jfr.fileState = JobFileRecord.STATE_RETAINED
@@ -99,10 +108,20 @@ class JobFileRecordSpec extends Specification {
         then:
         jfr.stateIsDeleted()
         when:
+        jfr.fileState = JobFileRecord.STATE_DELETED
+        then:
+        !jfr.canBecomeRetained()
+
+        when:
         jfr.fileState = JobFileRecord.STATE_EXPIRED
         jfr.stateExpired()
         then:
         jfr.stateIsExpired()
+
+        when:
+        jfr.fileState = JobFileRecord.STATE_EXPIRED
+        then:
+        !jfr.canBecomeRetained()
     }
 
     def "tomap"() {

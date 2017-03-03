@@ -96,20 +96,30 @@ class JobFileRecord {
     public void stateRetained() {
         state(STATE_RETAINED)
     }
+    public boolean canBecomeRetained() {
+        state(STATE_RETAINED,true)
+    }
 
     public void stateDeleted() {
         state(STATE_DELETED)
     }
 
-    public void state(String toState) {
-        changeState(STATES[toState], toState)
+    public boolean state(String toState, boolean test=false) {
+        changeState(STATES[toState], toState,test)
     }
 
-    private void changeState(List<String> fromStates, String toState) {
+    private boolean changeState(List<String> fromStates, String toState, boolean test=false) {
         if (!(fromStates && fromStates.contains(fileState) || fileState == toState)) {
+            if(test){
+                return false
+            }
             throw new IllegalStateException("Cannot change to '$toState' state from $fileState")
         }
+        if(test){
+            return true
+        }
         fileState = toState
+        true
     }
 
     @Override

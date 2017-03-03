@@ -207,6 +207,37 @@ class FileUploadService {
     }
 
     /**
+     * Validate whether the file ref uuid can be used for the jobid and option
+     * @param fileuuid
+     * @param jobid
+     * @param option
+     * @return [valid: true/false, error: 'code', args: [...]]
+     */
+    def validateFileRefForJobOption(String fileuuid, String jobid, String option) {
+        JobFileRecord jfr = findUuid(fileuuid)
+        if (!jfr) {
+            return [valid: false, error: 'notfound', args: [fileuuid, jobid, option]]
+        }
+        return validateJobFileRecordForJobOption(jfr, jobid, option)
+    }
+
+    def validateJobFileRecordForJobOption(JobFileRecord jfr, String jobid, String option) {
+        if (!jfr) {
+            return [valid: false, error: 'notfound', args: [null, jobid, option]]
+        }
+        if (jfr.jobId != jobid || jfr.recordName != option) {
+            return [valid: false, error: 'invalid', args: [jfr.uuid, jobid, option]]
+        }
+        if (jfr.execution != null) {
+            return [valid: false, error: 'inuse', args: [jfr.uuid, jfr.execution.id]]
+        }
+        if (!jfr.canBecomeRetained()) {
+            return [valid: false, error: 'state', args: [jfr.uuid, jfr.fileState]]
+        }
+        [valid: true]
+    }
+
+    /**
      * Retrieve the file by reference, to a local temp file.  If the
      * file is already on local disk, it will be returned directly,
      * otherwise it will be retrieved from the plugin.
@@ -216,16 +247,25 @@ class FileUploadService {
      */
     JobFileRecord attachFileForExecution(String fileuuid, Execution execution, String option) {
         JobFileRecord jfr = findUuid(fileuuid)
-        if (!jfr || jfr.jobId != execution.scheduledExecution.extid || jfr.recordName != option) {
-            throw new FileUploadServiceException(
-                    "File ref \"$fileuuid\" is not a valid for job ${execution.scheduledExecution.extid}, option " +
-                            option
-            )
-        }
-        if (jfr.execution != null && jfr.execution.id != execution.id) {
-            throw new FileUploadServiceException(
-                    "File ref \"$fileuuid\" cannot be used because it was used for execution ${jfr.execution.id}"
-            )
+        def validate = validateJobFileRecordForJobOption(jfr, execution.scheduledExecution.extid, option)
+
+        if (!validate.valid) {
+            if (validate.error in ['notfound', 'invalid']) {
+                throw new FileUploadServiceException(
+                        "File ref \"$fileuuid\" is not a valid for job ${execution.scheduledExecution.extid}, option " +
+                                option
+                )
+            }
+            if (validate.error in ['inuse']) {
+                throw new FileUploadServiceException(
+                        "File ref \"$fileuuid\" cannot be used because it was used for execution ${jfr.execution.id}"
+                )
+            }
+            if (validate.error in ['state']) {
+                throw new FileUploadServiceException(
+                        "File ref \"$fileuuid\" cannot be used because it is in state: " + jfr.fileState
+                )
+            }
         }
 
         try {

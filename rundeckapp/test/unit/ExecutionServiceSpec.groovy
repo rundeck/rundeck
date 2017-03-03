@@ -1423,6 +1423,67 @@ class ExecutionServiceSpec extends Specification {
         ['test1': 'a'] | 'test2'
     }
 
+    def "validate option values, file type required"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(uuid: 'asdf')
+        final Option option = new Option(name: 'test1', required: true, optionType: 'file')
+        se.addToOptions(option)
+
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> {
+                it[0]
+            }
+        }
+        service.fileUploadService = Mock(FileUploadService) {
+            0 * validateFileRefForJobOption('aref', 'asdf', 'test1') >> [
+                    valid: false
+            ]
+        }
+        when:
+
+        def validation = service.validateOptionValues(se, opts)
+
+        then:
+        ExecutionServiceException e = thrown()
+        e.message == message
+
+
+        where:
+        opts           | message
+        ['test2': 'a'] | 'domain.Option.validation.required'
+    }
+
+    def "validate option values, file type not valid"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(uuid: 'asdf')
+        final Option option = new Option(name: 'test1', required: true, optionType: 'file')
+        se.addToOptions(option)
+
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> {
+                it[0]
+            }
+        }
+        service.fileUploadService = Mock(FileUploadService) {
+            1 * validateFileRefForJobOption('aref', 'asdf', 'test1') >> [
+                    valid: false, error: ecode, args: []
+            ]
+        }
+        when:
+
+        def validation = service.validateOptionValues(se, opts)
+
+        then:
+        ExecutionServiceException e = thrown()
+        e.message == message
+
+
+        where:
+        opts              | ecode       | message
+        ['test1': 'aref'] | 'fileerror' | 'domain.Option.validation.file.fileerror'
+        ['test1': 'aref'] | 'invalid'   | 'domain.Option.validation.file.invalid'
+    }
+
     def "filter opts params string"() {
         given:
         def params = [
