@@ -78,7 +78,7 @@ class EditOptsController {
     /**
      * Render view of an option definition. params.name= name of option to render, required.
      */
-    def render = {
+    def renderOpt() {
         if (!params.name) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
