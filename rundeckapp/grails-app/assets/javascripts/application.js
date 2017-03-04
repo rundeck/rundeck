@@ -378,7 +378,7 @@ function _setupMarkdeepPreviewTab(tabid,id,getter){
         });
     });
 }
-function _setupAceTextareaEditor(textarea,callback){
+function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
     if (_isIe(8)||_isIe(7)||_isIe(6)) {
         return;
     }
@@ -509,6 +509,29 @@ function _setupAceTextareaEditor(textarea,callback){
             .addClass('ace_text_controls form-inline')
             .append(label)
             .insertBefore(_shadow);
+    }
+    if (autoCompleter) {
+        var langTools = ace.require("ace/ext/language_tools");
+        var lang = ace.require("ace/lib/lang");
+        editor.setOptions({enableBasicAutocompletion: true, enableLiveAutocompletion: true});
+        var extCompleter = {
+            getCompletions: function (editor, session, pos, prefix, callback) {
+                if (prefix.length === 0) {
+                    callback(null, []);
+                    return
+                }
+                callback(null, autoCompleter());
+            },
+            getDocTooltip: function (item) {
+                if (item.type == "rdvar" && !item.docHTML && item.title) {
+                    item.docHTML = [
+                        "<b>", lang.escapeHTML(item.title || ''), "</b>", "<hr></hr>",
+                        lang.escapeHTML(item.desc || '')
+                    ].join("");
+                }
+            }
+        };
+        langTools.addCompleter(extCompleter);
     }
     return editor;
 }

@@ -52,12 +52,15 @@
         <g:render template="/scheduledExecution/optlistContent" model="${[options:options,edit:edit]}"/>
     </ul>
     <div id="optionDropFinal" class="dragdropfinal" data-abs-index="${options?.size()?:1}" data-is-final="true" style="display:none"></div>
+    <g:embedJSON id="optDataList" data="${options.collect{[name:it.name]}}"/>
     <g:javascript>
     jQuery(function(){
         "use strict";
         _enableOptDragDrop();
+        _optionData(loadJsonData('optDataList'));
     });
 </g:javascript>
+
     <div class="empty note ${error?'error':''}" id="optempty" style="${wdgt.styleVisible(unless:options && options.size()>0)}">
         No Options
     </div>

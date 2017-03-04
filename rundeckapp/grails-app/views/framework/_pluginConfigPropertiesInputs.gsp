@@ -77,7 +77,8 @@
                       origfieldname: (origfieldnamePrefix ?: '') + prop.name,
                       service      : service,
                       provider     : provider,
-                      messagePrefix:messagePrefix
+                      messagePrefix:messagePrefix,
+                      extraInputCss:extraInputCss
             ]}"/>
 </g:each>
 <g:set var="defaultGroupName" value="${g.message(code:'plugin.property.secondary.groupName',default:'More')}"/>
@@ -120,7 +121,8 @@
                               origfieldname: (origfieldnamePrefix ?: '') + prop.name,
                               service      : service,
                               provider     : provider,
-                              messagePrefix:messagePrefix
+                              messagePrefix:messagePrefix,
+                              extraInputCss:extraInputCss
                     ]}"/>
         </g:each>
     </div>

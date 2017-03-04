@@ -41,12 +41,29 @@ function jobWasEdited(){
         jobEdittedHandler();
     }
 }
-
+var _jobOptionData = [];
+function _optionData(data) {
+    _jobOptionData = data || [];
+}
+function _addOption(data) {
+    "use strict";
+    _jobOptionData.push(data);
+}
+function _removeOptionName(name) {
+    "use strict";
+    var findname = function (e) {
+        return e.name == name;
+    };
+    var found = _jobOptionData.find(findName);
+    if (found >= 0) {
+        _jobOptionData.splice(found, 1);
+    }
+}
 /**
  * After loading WF item edit form in the list, update input and apply ACE editor
  * @param item
  */
-function postLoadItemEdit(item){
+function postLoadItemEdit(item, iseh) {
     var liitem = jQuery(item);
     liitem.find('input[type=text]').each(function (ndx,elem) {
         elem.observe('keypress', noenter);
@@ -54,7 +71,138 @@ function postLoadItemEdit(item){
     if(liitem.find('input[type=text]').length>0){
         liitem.find('input[type=text]')[0].focus();
     }
-    liitem.find('textarea.apply_ace').each(function(ndx,elem){_addAceTextarea(elem)});
+
+    var baseVarData = [];
+    var jobdata = {
+        'id': {title: 'Job ID'},
+        'execid': {title: 'Execution ID'},
+        'name': {title: 'Job Name'},
+        'group': {title: 'Job Group'},
+        'username': {title: 'Name of user executing the job'},
+        'project': {title: 'Project name'},
+        'loglevel': {title: 'Execution log level', desc: 'Logging level, one of: INFO, DEBUG'},
+        'user.email': {title: 'Email of user executing the job'},
+        'retryAttempt': {title: 'Retry attempt number'},
+        'wasRetry': {title: 'True if execution is a retry'}
+    };
+    ['id', 'execid', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry'].each(function (e) {
+        baseVarData.push({key: 'job.' + e, category: 'Job', title: jobdata[e].title, desc: jobdata[e].desc});
+    });
+    var nodedata = {
+        'name': {title: 'Node Name'},
+        'hostname': {title: 'Node Hostname'},
+        'username': {title: 'Node username'},
+        'description': {title: 'Node description'},
+        'tags': {title: 'Node tags'},
+        'os-name': {title: 'OS Name'},
+        'os-family': {title: 'OS Family'},
+        'os-arch': {title: 'OS Architecture'},
+        'os-version': {title: 'OS Version'}
+    };
+    ['name', 'hostname', 'username', 'description', 'tags', 'os-name', 'os-family', 'os-arch', 'os-version'].each(function (e) {
+        baseVarData.push({
+            key: 'node.' + e,
+            category: 'Node',
+            title: nodedata[e].title,
+            desc: '(only available in node step context)'
+        });
+    });
+    //special error-handler vars
+
+    if (iseh) {
+        var ehdata = {
+            'message': {title: 'Error Message'},
+            'resultCode': {title: 'Result Code', desc: 'Exit code from an execution (if available)'},
+            'failedNodes': {title: 'Failed Nodes List'},
+            'reason': {title: 'Error Reason', desc: 'A code indicating the reason the step failed'}
+        };
+        ['message', 'resultCode', 'failedNodes', 'reason'].each(function (e) {
+            baseVarData.push({
+                key: 'result.' + e,
+                category: 'Error Handler',
+                title: ehdata[e].title,
+                desc: ehdata[e].desc
+            });
+        });
+    }
+
+    var autovarfunc = function (prefix, suffix, bashvar) {
+        prefix = prefix || '${';
+        suffix = suffix || '}';
+        var mkvar = function (name) {
+            return prefix + name + suffix;
+        };
+        var mkbash = function (name) {
+            return '$' + ('RD_' + name ).toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
+        };
+        var expvars = [];
+
+        for (var i = 0; i < baseVarData.length; i++) {
+            expvars.push({value: mkvar(baseVarData[i].key), data: baseVarData[i]});
+            if (bashvar) {
+                expvars.push({value: mkbash(baseVarData[i].key), data: baseVarData[i]});
+            }
+        }
+        for (var x = 0; x < _jobOptionData.length; x++) {
+            expvars.push({
+                value: mkvar('option.' + _jobOptionData[x].name),
+                data: {
+                    category: 'Options',
+                    title: 'Option value',
+                    desc: 'For option: ' + _jobOptionData[x].name
+                }
+            });
+            if (bashvar) {
+                expvars.push({
+                    value: mkbash('option.' + _jobOptionData[x].name),
+                    data: {
+                        category: 'Options',
+                        title: 'Option value',
+                        desc: 'For option: ' + _jobOptionData[x].name
+                    }
+                });
+            }
+        }
+        return expvars;
+    };
+    liitem.find('textarea.apply_ace').each(function (ndx, elem) {
+        _addAceTextarea(elem, null, function () {
+            "use strict";
+            var vals = jQuery(elem).hasClass('_wfscriptitem') ? autovarfunc('@', '@', true) : autovarfunc();
+            return vals.map(function (ea) {
+                "use strict";
+                //ace text editor lang tools completer format
+                return {
+                    name: ea.value,
+                    value: ea.value,
+                    score: 1,
+                    meta: ea.data && ea.data.category || null,
+                    title: ea.data && ea.data.title || null,
+                    desc: ea.data && ea.data.desc || null,
+                    type: 'rdvar'
+                };
+            });
+        })
+    });
+    liitem.find('.context_var_autocomplete').devbridgeAutocomplete({
+        delimiter: ' ',
+        lookup: function (q, callback) {
+            var query = q.toLowerCase();
+            var results = jQuery.grep(autovarfunc(), function (suggestion) {
+                "use strict";
+                return suggestion.value.toLowerCase().indexOf(query) !== -1
+            });
+            callback({suggestions: results});
+        },
+        groupBy: 'category',
+        formatResult: function (suggestion, currentValue) {
+            "use strict";
+            if (suggestion.data.title) {
+                return jQuery.Autocomplete.formatResult(suggestion, currentValue) + ' - ' + suggestion.data.title;
+            }
+            return jQuery.Autocomplete.formatResult(suggestion, currentValue)
+        }
+    });
 }
 var _iseditting=null;
 function _wfiedit(key,num,isErrorHandler) {
@@ -68,7 +216,7 @@ function _wfiedit(key,num,isErrorHandler) {
     }
     jQuery('#wfli_' + key).load(_genUrl(appLinks.workflowEdit, params),function(resp,status,jqxhr){
         _hideWFItemControls(key);
-        postLoadItemEdit('#wfli_' + key);
+        postLoadItemEdit('#wfli_' + key, isErrorHandler);
     });
 }
 
@@ -139,13 +287,13 @@ function _wfiaddnew(type,nodestep) {
     });
 }
 
-function _addAceTextarea(textarea,callback){
+function _addAceTextarea(textarea, callback, ext) {
     return _setupAceTextareaEditor(textarea, function (e) {
         jobWasEdited();
         if (callback) {
             callback(e);
         }
-    });
+    }, ext);
 }
 function _wfisavenew(formelem) {
     jobWasEdited();
@@ -299,7 +447,7 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
     _hideAddNewEH();
 
     wfiehli.load(_genUrl(appLinks.workflowEdit,params),function(){
-        postLoadItemEdit(wfiehli);
+        postLoadItemEdit(wfiehli, true);
     });
 }
 
@@ -608,6 +756,7 @@ function _summarizeOpts() {
 function _optsavenew(formelem,tokendataid) {
     jobWasEdited();
     var params = jQuery('#'+formelem+' :input').serialize();
+    var optname = jQuery('#' + formelem + ' :input[name=name]').val();
     $('optsload').loading();
     jQuery.ajax({
         type: "POST",
@@ -616,6 +765,7 @@ function _optsavenew(formelem,tokendataid) {
         beforeSend: _ajaxSendTokens.curry(tokendataid),
         success: function (data, status, xhr) {
             jQuery(newoptli).html(data);
+            _addOption({name: optname});
             if (!newoptli.down('div.optEditForm')) {
                 $(newoptli).highlight();
                 newoptli = null;
@@ -645,6 +795,7 @@ function _doRemoveOption(name, elem,tokendataid) {
                 data:params,
                 beforeSend:_ajaxSendTokens.curry(tokendataid),
                 success:function(data,status,jqxhr){
+                    _removeOptionName(name);
                     jQuery('#optionsContent').find('ul').html(data);
                     _showOptControls();
                 }
