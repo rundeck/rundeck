@@ -201,7 +201,8 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         })
     });
     liitem.find('.context_var_autocomplete').devbridgeAutocomplete({
-        delimiter: ' ',
+        delimiter: /( |(?=\$))/,
+        tabDisabled: true,
         lookup: function (q, callback) {
             var query = q.toLowerCase();
             var results = jQuery.grep(autovarfunc(), function (suggestion) {
