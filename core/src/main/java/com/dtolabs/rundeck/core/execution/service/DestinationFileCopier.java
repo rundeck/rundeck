@@ -18,7 +18,6 @@ package com.dtolabs.rundeck.core.execution.service;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.utils.Pair;
 
 import java.io.File;
 import java.io.InputStream;

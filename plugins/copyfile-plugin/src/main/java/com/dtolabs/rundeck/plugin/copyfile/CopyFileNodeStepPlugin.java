@@ -21,8 +21,6 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.utils.Pair;
-import com.dtolabs.rundeck.core.utils.PairImpl;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
@@ -70,7 +68,7 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
         separator = System.getProperty("file.separator");
         fileList = new ArrayList<>();
 
-        if(recursive){
+        if(recursive && !wildcards){
             File folder = new File(sourcePath);
             if(!folder.isDirectory()){
                 throw new NodeStepException("sourcePath has to be a directory", Reason.WrongParameter, entry.getNodename());
@@ -80,22 +78,18 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
             }
             copyFile(sourcePath,destinationPath,context, entry);
         }else if(wildcards) {
-            System.out.println("wildcards");
             String basefolder = "";
             String search = "";
             String family = ("/".equals(separator) ? "unix" : "\\".equals(separator) ? "windows" : "");
             // determine base folder for search
             if(family.equals("unix")){
-                System.out.println("unix");
                 basefolder = "/";
                 search = sourcePath.substring(1);
             }else{
-                System.out.println("windows");
                 int index=sourcePath.indexOf(":\\");
                 basefolder=sourcePath.substring(0,index+2);
                 search = sourcePath.substring(index+2);
             }
-            System.out.println(basefolder);
             DirectoryScanner scanner = new DirectoryScanner();
             scanner.setBasedir(basefolder);
             scanner.setIncludes(new String[]{search});
@@ -115,6 +109,18 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
                 File source = new File(toCopyFile);
 
                 fileList.add(source);
+            }
+            if(recursive){
+                String[] folders = scanner.getIncludedDirectories();
+                for(String folder : folders){
+                    String toCopyFolder = basefolder+folder;
+                    if(echo) {
+                        context.getLogger().log(2, "To copy complete folder: " + toCopyFolder);
+                    }
+                    File source = new File(toCopyFolder);
+
+                    fileList.add(source);
+                }
             }
             copyFileList(context, entry);
 

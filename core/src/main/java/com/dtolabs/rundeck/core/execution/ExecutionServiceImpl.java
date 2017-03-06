@@ -36,16 +36,11 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
-import com.dtolabs.rundeck.core.utils.*;
-import org.apache.commons.collections.Predicate;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * NewExecutionServiceImpl is ...

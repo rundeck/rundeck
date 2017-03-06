@@ -41,7 +41,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
-import com.dtolabs.rundeck.core.utils.Pair;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.utils.Streams;
 

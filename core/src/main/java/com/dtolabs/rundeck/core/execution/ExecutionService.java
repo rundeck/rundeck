@@ -37,7 +37,6 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
-import com.dtolabs.rundeck.core.utils.Pair;
 
 import java.io.File;
 import java.io.InputStream;

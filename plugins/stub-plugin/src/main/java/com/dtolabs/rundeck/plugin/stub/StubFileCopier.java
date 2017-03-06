@@ -33,8 +33,6 @@ import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.Property;
-import com.dtolabs.rundeck.core.utils.Pair;
 
 import java.io.File;
 import java.io.InputStream;

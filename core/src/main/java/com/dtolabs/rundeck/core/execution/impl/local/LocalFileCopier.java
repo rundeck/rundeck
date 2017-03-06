@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.DestinationFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
-import com.dtolabs.rundeck.core.utils.Pair;
 
 import java.io.File;
 import java.io.InputStream;

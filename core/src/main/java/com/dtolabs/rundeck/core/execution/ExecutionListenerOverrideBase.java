@@ -31,8 +31,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
-import com.dtolabs.rundeck.core.utils.Pair;
-
 import java.io.File;
 import java.io.InputStream;
 import java.util.*;
