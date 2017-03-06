@@ -63,7 +63,7 @@ function _removeOptionName(name) {
  * After loading WF item edit form in the list, update input and apply ACE editor
  * @param item
  */
-function postLoadItemEdit(item, iseh) {
+function postLoadItemEdit(item, iseh, isnodestep) {
     var liitem = jQuery(item);
     liitem.find('input[type=text]').each(function (ndx,elem) {
         elem.observe('keypress', noenter);
@@ -71,6 +71,15 @@ function postLoadItemEdit(item, iseh) {
     if(liitem.find('input[type=text]').length>0){
         liitem.find('input[type=text]')[0].focus();
     }
+    isnodestep = isnodestep || liitem.data('wfitemnodestep');
+    var calcnodestep = function () {
+        //look for radio button for nodeStep
+        var find = liitem.find('input[name=nodeStep][type=radio]:checked');
+        if (find.length) {
+            return find.val() == 'true';
+        }
+        return isnodestep;
+    };
 
     var baseVarData = [];
     var jobdata = {
@@ -88,6 +97,8 @@ function postLoadItemEdit(item, iseh) {
     ['id', 'execid', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry'].each(function (e) {
         baseVarData.push({key: 'job.' + e, category: 'Job', title: jobdata[e].title, desc: jobdata[e].desc});
     });
+
+    var baseNodeData = [];
     var nodedata = {
         'name': {title: 'Node Name'},
         'hostname': {title: 'Node Hostname'},
@@ -100,7 +111,7 @@ function postLoadItemEdit(item, iseh) {
         'os-version': {title: 'OS Version'}
     };
     ['name', 'hostname', 'username', 'description', 'tags', 'os-name', 'os-family', 'os-arch', 'os-version'].each(function (e) {
-        baseVarData.push({
+        baseNodeData.push({
             key: 'node.' + e,
             category: 'Node',
             title: nodedata[e].title,
@@ -136,11 +147,16 @@ function postLoadItemEdit(item, iseh) {
             return '$' + ('RD_' + name ).toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
         };
         var expvars = [];
+        var data = [].concat(baseVarData);
 
-        for (var i = 0; i < baseVarData.length; i++) {
-            expvars.push({value: mkvar(baseVarData[i].key), data: baseVarData[i]});
+        if (calcnodestep()) {
+            data = data.concat(baseNodeData);
+        }
+
+        for (var i = 0; i < data.length; i++) {
+            expvars.push({value: mkvar(data[i].key), data: data[i]});
             if (bashvar) {
-                expvars.push({value: mkbash(baseVarData[i].key), data: baseVarData[i]});
+                expvars.push({value: mkbash(data[i].key), data: data[i]});
             }
         }
         for (var x = 0; x < _jobOptionData.length; x++) {
@@ -244,7 +260,7 @@ function _wfisave(key,num, formelem,iseh) {
                     _hideWFItemControlsAddEH(num);
                 }
             }else{
-                postLoadItemEdit('#wfli_' + key);
+                postLoadItemEdit('#wfli_' + key, iseh);
             }
         }
     }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
@@ -282,8 +298,9 @@ function _wfiaddnew(type,nodestep) {
     olist.append(parentli);
     newitemElem = parentli.find('span').first()[0];
     jQuery(newitemElem).attr('id', 'wfli_' + num);
+    jQuery(newitemElem).data('wfitemnodestep', nodestep);
     jQuery(newitemElem).load(_genUrl(appLinks.workflowEdit,params),function(){
-        postLoadItemEdit('#wfli_' + num);
+        postLoadItemEdit('#wfli_' + num, false, nodestep ? true : false);
     });
 }
 
@@ -445,9 +462,10 @@ function _wfiaddNewErrorHandler(elem,type,num,nodestep){
     }
     var wfiehli = jQuery('#wfli_' + key);
     _hideAddNewEH();
+    wfiehli.data('wfitemnodestep', nodestep);
 
     wfiehli.load(_genUrl(appLinks.workflowEdit,params),function(){
-        postLoadItemEdit(wfiehli, true);
+        postLoadItemEdit(wfiehli, true, nodestep);
     });
 }
 
