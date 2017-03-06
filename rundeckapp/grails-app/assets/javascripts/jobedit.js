@@ -214,6 +214,59 @@ function postLoadItemEdit(item, iseh, isnodestep) {
                     }
                 });
             }
+            if (_jobOptionData[x].type == 'file') {
+                expvars.push({
+                    value: mkvar('file.' + _jobOptionData[x].name),
+                    data: {
+                        category: 'File Option',
+                        title: 'The local file path',
+                        desc: 'For file option: ' + _jobOptionData[x].name
+                    }
+                });
+                expvars.push({
+                    value: mkvar('file.' + _jobOptionData[x].name + '.fileName'),
+                    data: {
+                        category: 'File Option',
+                        title: 'The original File name',
+                        desc: 'For file option: ' + _jobOptionData[x].name
+                    }
+                });
+                expvars.push({
+                    value: mkvar('file.' + _jobOptionData[x].name + '.sha'),
+                    data: {
+                        category: 'File Option',
+                        title: 'The file contents SHA256 value',
+                        desc: 'For file option: ' + _jobOptionData[x].name
+                    }
+                });
+
+                if (bashvar) {
+                    expvars.push({
+                        value: mkbash('file.' + _jobOptionData[x].name),
+                        data: {
+                            category: 'File Option',
+                            title: 'The local file path',
+                            desc: 'For file option: ' + _jobOptionData[x].name
+                        }
+                    });
+                    expvars.push({
+                        value: mkbash('file.' + _jobOptionData[x].name + '.fileName'),
+                        data: {
+                            category: 'File Option',
+                            title: 'The original File name',
+                            desc: 'For file option:' + _jobOptionData[x].name
+                        }
+                    });
+                    expvars.push({
+                        value: mkbash('file.' + _jobOptionData[x].name + '.sha'),
+                        data: {
+                            category: 'File Option',
+                            title: 'The file contents SHA256 value',
+                            desc: 'For file option: ' + _jobOptionData[x].name
+                        }
+                    });
+                }
+            }
         }
         return expvars;
     };
@@ -829,6 +882,7 @@ function _optsavenew(formelem,tokendataid) {
     jobWasEdited();
     var params = jQuery('#'+formelem+' :input').serialize();
     var optname = jQuery('#' + formelem + ' :input[name=name]').val();
+    var opttype = jQuery('#' + formelem + ' :input[name=type]').val();
     $('optsload').loading();
     jQuery.ajax({
         type: "POST",
@@ -837,7 +891,7 @@ function _optsavenew(formelem,tokendataid) {
         beforeSend: _ajaxSendTokens.curry(tokendataid),
         success: function (data, status, xhr) {
             jQuery(newoptli).html(data);
-            _addOption({name: optname});
+            _addOption({name: optname, type: opttype});
             if (!newoptli.down('div.optEditForm')) {
                 $(newoptli).highlight();
                 newoptli = null;

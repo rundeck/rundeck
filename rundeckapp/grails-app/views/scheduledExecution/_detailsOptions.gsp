@@ -52,7 +52,7 @@
         <g:render template="/scheduledExecution/optlistContent" model="${[options:options,edit:edit]}"/>
     </ul>
     <div id="optionDropFinal" class="dragdropfinal" data-abs-index="${options?.size()?:1}" data-is-final="true" style="display:none"></div>
-    <g:embedJSON id="optDataList" data="${options.collect{[name:it.name]}}"/>
+    <g:embedJSON id="optDataList" data="${options.collect{[name:it.name,type:it.optionType]}}"/>
     <g:javascript>
     jQuery(function(){
         "use strict";
