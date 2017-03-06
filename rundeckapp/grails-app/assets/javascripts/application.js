@@ -515,6 +515,9 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
         var lang = ace.require("ace/lib/lang");
         editor.setOptions({enableBasicAutocompletion: true, enableLiveAutocompletion: true});
         var extCompleter = {
+            identifierRegexps: [
+                /[@a-zA-Z_0-9\$\-\u00A2-\uFFFF]/
+            ],
             getCompletions: function (editor, session, pos, prefix, callback) {
                 if (prefix.length === 0) {
                     callback(null, []);
