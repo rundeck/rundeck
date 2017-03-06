@@ -359,7 +359,7 @@
                     type='text'
                     name="adhocRemoteString"
                     value="${enc(attr:item?.adhocRemoteString)}"
-                    class="form-control context_var_autocomplete"
+                    class="form-control context_var_autocomplete _wfcommanditem"
                     placeholder="${g.enc(code:'Workflow.Step.adhocRemoteString.description',encodeAs:'HTMLAttribute')}"
                     id="adhocRemoteStringField"
                     autofocus/>

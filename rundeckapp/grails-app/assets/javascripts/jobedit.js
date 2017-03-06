@@ -200,25 +200,29 @@ function postLoadItemEdit(item, iseh, isnodestep) {
             });
         })
     });
-    liitem.find('.context_var_autocomplete').devbridgeAutocomplete({
-        delimiter: /( |(?=\$))/,
-        tabDisabled: true,
-        lookup: function (q, callback) {
-            var query = q.toLowerCase();
-            var results = jQuery.grep(autovarfunc(), function (suggestion) {
+    liitem.find('.context_var_autocomplete').each(function (i,elem) {
+        var obj = jQuery(elem);
+        var iscmd = obj.hasClass('_wfcommanditem');
+        obj.devbridgeAutocomplete({
+            delimiter: /( |(?=\$))/,
+            tabDisabled: true,
+            lookup: function (q, callback) {
+                var query = q.toLowerCase();
+                var results = jQuery.grep(autovarfunc(null,null,iscmd), function (suggestion) {
+                    "use strict";
+                    return suggestion.value.toLowerCase().indexOf(query) !== -1
+                });
+                callback({suggestions: results});
+            },
+            groupBy: 'category',
+            formatResult: function (suggestion, currentValue) {
                 "use strict";
-                return suggestion.value.toLowerCase().indexOf(query) !== -1
-            });
-            callback({suggestions: results});
-        },
-        groupBy: 'category',
-        formatResult: function (suggestion, currentValue) {
-            "use strict";
-            if (suggestion.data.title) {
-                return jQuery.Autocomplete.formatResult(suggestion, currentValue) + ' - ' + suggestion.data.title;
+                if (suggestion.data.title) {
+                    return jQuery.Autocomplete.formatResult(suggestion, currentValue) + ' - ' + suggestion.data.title;
+                }
+                return jQuery.Autocomplete.formatResult(suggestion, currentValue)
             }
-            return jQuery.Autocomplete.formatResult(suggestion, currentValue)
-        }
+        })
     });
 }
 var _iseditting=null;
