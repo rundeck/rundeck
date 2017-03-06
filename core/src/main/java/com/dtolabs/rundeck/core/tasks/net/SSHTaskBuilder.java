@@ -25,7 +25,6 @@ package com.dtolabs.rundeck.core.tasks.net;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.utils.Pair;
 import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.utils.Streams;
@@ -819,8 +818,14 @@ public class SSHTaskBuilder {
 
         for(File source: files ){
             FileSet set = new FileSet();
-            set.setDir(source.getParentFile());
-            set.setIncludes(source.getName());
+            if(source.isDirectory()){
+                System.out.println("directory");
+                set.setDir(source);
+            }else {
+                set.setDir(source.getParentFile());
+                set.setIncludes(source.getName());
+
+            }
             scp.addFileset(set);
         }
 

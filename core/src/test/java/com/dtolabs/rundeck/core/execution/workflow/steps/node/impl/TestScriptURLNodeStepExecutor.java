@@ -160,6 +160,23 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
             testResult = copyScriptContent(context, script, node);
             return destination;
         }
+
+        @Override
+        public String[] copyFiles(
+                final ExecutionContext context,
+                final List<File> files,
+                final String destination,
+                final INodeEntry node
+        )
+                throws FileCopierException
+        {
+            for(File file: files) {
+                testResult = copyFile(context, file, node);
+            }
+            String[] ret = {destination};
+            return ret;
+        }
+
     }
 
     public static class multiTestNodeExecutor implements NodeExecutor {

@@ -157,6 +157,39 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             testResult = copyScriptContent(context, script, node);
             return destination;
         }
+
+        @Override
+        public String[] copyFiles(
+                final ExecutionContext context,
+                final List<File> file,
+                final String destination,
+                final INodeEntry node
+        )
+                throws FileCopierException
+        {
+            testResult = copyMultiFiles(context, file, node);
+            String[] ret = {destination};
+            return ret;
+        }
+
+        public String copyMultiFiles(ExecutionContext context, List<File> files, INodeEntry node)
+                throws FileCopierException {
+            testContext = context;
+            testNode = node;
+            for(File file: files){
+                testFile = file;
+                try {
+                    testFileContents=getContentString(testFile);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                if (throwException) {
+                    throw new FileCopierException("copyFile test", TestReason.Test);
+                }
+            }
+            return testResult;
+        }
+
     }
 
     public static class multiTestNodeExecutor implements NodeExecutor {
