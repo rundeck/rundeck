@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.apache.log4j.Logger
 import org.springframework.beans.factory.BeanNotOfRequiredTypeException
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -49,7 +50,7 @@ import org.springframework.context.ApplicationContextAware
  * Date: 4/11/13
  * Time: 7:07 PM
  */
-class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
+class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, InitializingBean {
     public static Logger log = Logger.getLogger(RundeckPluginRegistry.class.name)
     /**
      * Registry of spring bean plugin providers, "providername"->"beanname"
@@ -63,7 +64,23 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
     def ServiceProviderLoader rundeckServerServiceProviderLoader
     def File pluginDirectory
     def File pluginCacheDirectory
+    def RundeckEmbeddedPluginExtractor rundeckEmbeddedPluginExtractor
 
+    @Override
+    void afterPropertiesSet() throws Exception {
+        rundeckEmbeddedPluginExtractor.rundeckPluginRegistry = this
+        def result = rundeckEmbeddedPluginExtractor.extractEmbeddedPlugins()
+        if (!result.success) {
+            log.error("Failed extracting embedded plugins: " + result.message)
+            result?.errors?.each {
+                log.error(it)
+            }
+        }
+        result?.logs?.each {
+            log.debug(it)
+        }
+    }
+    
     /**
      * Create and configure a plugin instance with the given bean or provider name
      * @param name name of bean or provider

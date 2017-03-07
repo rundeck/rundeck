@@ -216,19 +216,6 @@ class BootStrap {
                  }
              }
 
-            def result=timer("FrameworkService extractEmbeddedPlugins"){
-                frameworkService.extractEmbeddedPlugins(grailsApplication)
-            }
-            if(!result.success){
-                log.error("Failed extracting embedded plugins: "+result.message)
-                result?.logs?.each {
-                    log.error(it)
-                }
-            }else{
-                result?.logs?.each {
-                    log.debug(it)
-                }
-            }
 
             //import filesystem projects if using DB storage
             if((grailsApplication.config.rundeck?.projectsStorageType?:'db') == 'db'){
