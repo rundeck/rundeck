@@ -182,7 +182,8 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         return expvars;
     };
     liitem.find('textarea.apply_ace').each(function (ndx, elem) {
-        _addAceTextarea(elem, null, function () {
+        var isscriptStep = jQuery(elem).hasClass('_wfscriptitem');
+        var editor = _addAceTextarea(elem, null, function (editor, session, pos, prefix) {
             "use strict";
             var vals = jQuery(elem).hasClass('_wfscriptitem') ? autovarfunc('@', '@', true) : autovarfunc();
             return vals.map(function (ea) {
@@ -198,7 +199,15 @@ function postLoadItemEdit(item, iseh, isnodestep) {
                     type: 'rdvar'
                 };
             });
-        })
+        });
+        if (isscriptStep) {
+            var key = liitem.find('._wfiedit').data('rkey');
+            if (key) {
+                workflowEditor.steps()[key].guessAceMode.subscribe(function (val) {
+                    setAceSyntaxMode(val, editor);
+                });
+            }
+        }
     });
     liitem.find('.context_var_autocomplete').each(function (i,elem) {
         var obj = jQuery(elem);

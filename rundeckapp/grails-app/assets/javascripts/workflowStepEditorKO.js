@@ -97,6 +97,16 @@ function ScriptStep(data) {
             + isq;
     });
 
+    self.guessAceMode = ko.computed(function () {
+        if (self.invocationString().startsWith('powershell') || self.fileExtensionDotted() === '.ps') {
+            return 'powershell'
+        }
+        if (self.invocationString().startsWith('cmd.exe') || self.fileExtensionDotted() === '.bat') {
+            return 'batchfile'
+        }
+        return 'sh';
+    });
+
     /**
      * Return the preview HTML for the script invocation.
      * @type {*}

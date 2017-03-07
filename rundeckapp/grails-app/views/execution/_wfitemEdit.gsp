@@ -30,7 +30,7 @@
     </div>
 </g:hasErrors>
 <g:render template="/common/messages"/>
-<div id="wfiedit_${rkey}">
+<div id="wfiedit_${rkey}" class="_wfiedit" data-rkey="${rkey}">
     <g:if test="${isErrorHandler}">
         <span class="text-info"><g:message code="Workflow.stepErrorHandler.description" /></span>
     </g:if>
