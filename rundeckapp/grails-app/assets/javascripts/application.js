@@ -528,7 +528,7 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
                     callback(null, []);
                     return
                 }
-                callback(null, autoCompleter());
+                callback(null, autoCompleter(editor, session, pos, prefix));
             },
             getDocTooltip: function (item) {
                 if (item.type == "rdvar" && !item.docHTML && item.title) {

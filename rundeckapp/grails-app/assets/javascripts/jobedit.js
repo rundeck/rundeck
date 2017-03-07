@@ -59,16 +59,86 @@ function _removeOptionName(name) {
         _jobOptionData.splice(found, 1);
     }
 }
+var _VAR_DATA = {
+    job: [],
+    node: [],
+    eh: []
+};
+function _jobVarData() {
+    if (_VAR_DATA['job'].length < 1) {
+        var jobdata = {
+            'id': {title: 'Job ID'},
+            'execid': {title: 'Execution ID'},
+            'name': {title: 'Job Name'},
+            'group': {title: 'Job Group'},
+            'username': {title: 'Name of user executing the job'},
+            'project': {title: 'Project name'},
+            'loglevel': {title: 'Execution log level', desc: 'Logging level, one of: INFO, DEBUG'},
+            'user.email': {title: 'Email of user executing the job'},
+            'retryAttempt': {title: 'Retry attempt number'},
+            'wasRetry': {title: 'True if execution is a retry'}
+        };
+        ['id', 'execid', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry'].each(function (e) {
+            _VAR_DATA['job'].push({key: 'job.' + e, category: 'Job', title: jobdata[e].title, desc: jobdata[e].desc});
+        });
+    }
+    return _VAR_DATA['job'];
+}
+function _jobNodeData() {
+    "use strict";
+    if (_VAR_DATA['node'].length < 1) {
+        var nodedata = {
+            'name': {title: 'Node Name'},
+            'hostname': {title: 'Node Hostname'},
+            'username': {title: 'Node username'},
+            'description': {title: 'Node description'},
+            'tags': {title: 'Node tags'},
+            'os-name': {title: 'OS Name'},
+            'os-family': {title: 'OS Family'},
+            'os-arch': {title: 'OS Architecture'},
+            'os-version': {title: 'OS Version'}
+        };
+        ['name', 'hostname', 'username', 'description', 'tags', 'os-name', 'os-family', 'os-arch', 'os-version'].each(function (e) {
+            _VAR_DATA['node'].push({
+                key: 'node.' + e,
+                category: 'Node',
+                title: nodedata[e].title,
+                desc: '(only available in node step context)'
+            });
+        });
+    }
+    return _VAR_DATA['node'];
+}
+function _jobEhData() {
+    "use strict";
+    if (_VAR_DATA['eh'].length < 1) {
+        var ehdata = {
+            'message': {title: 'Error Message'},
+            'resultCode': {title: 'Result Code', desc: 'Exit code from an execution (if available)'},
+            'failedNodes': {title: 'Failed Nodes List'},
+            'reason': {title: 'Error Reason', desc: 'A code indicating the reason the step failed'}
+        };
+        ['message', 'resultCode', 'failedNodes', 'reason'].each(function (e) {
+            _VAR_DATA['eh'].push({
+                key: 'result.' + e,
+                category: 'Error Handler',
+                title: ehdata[e].title,
+                desc: ehdata[e].desc
+            });
+        });
+    }
+    return _VAR_DATA['eh'];
+}
 /**
  * After loading WF item edit form in the list, update input and apply ACE editor
  * @param item
  */
 function postLoadItemEdit(item, iseh, isnodestep) {
     var liitem = jQuery(item);
-    liitem.find('input[type=text]').each(function (ndx,elem) {
+    liitem.find('input[type=text]').each(function (ndx, elem) {
         elem.observe('keypress', noenter);
     });
-    if(liitem.find('input[type=text]').length>0){
+    if (liitem.find('input[type=text]').length > 0) {
         liitem.find('input[type=text]')[0].focus();
     }
     isnodestep = isnodestep || liitem.data('wfitemnodestep');
@@ -81,82 +151,48 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         return isnodestep;
     };
 
-    var baseVarData = [];
-    var jobdata = {
-        'id': {title: 'Job ID'},
-        'execid': {title: 'Execution ID'},
-        'name': {title: 'Job Name'},
-        'group': {title: 'Job Group'},
-        'username': {title: 'Name of user executing the job'},
-        'project': {title: 'Project name'},
-        'loglevel': {title: 'Execution log level', desc: 'Logging level, one of: INFO, DEBUG'},
-        'user.email': {title: 'Email of user executing the job'},
-        'retryAttempt': {title: 'Retry attempt number'},
-        'wasRetry': {title: 'True if execution is a retry'}
-    };
-    ['id', 'execid', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry'].each(function (e) {
-        baseVarData.push({key: 'job.' + e, category: 'Job', title: jobdata[e].title, desc: jobdata[e].desc});
-    });
+    var baseVarData = [].concat(_jobVarData());
+
 
     var baseNodeData = [];
-    var nodedata = {
-        'name': {title: 'Node Name'},
-        'hostname': {title: 'Node Hostname'},
-        'username': {title: 'Node username'},
-        'description': {title: 'Node description'},
-        'tags': {title: 'Node tags'},
-        'os-name': {title: 'OS Name'},
-        'os-family': {title: 'OS Family'},
-        'os-arch': {title: 'OS Architecture'},
-        'os-version': {title: 'OS Version'}
-    };
-    ['name', 'hostname', 'username', 'description', 'tags', 'os-name', 'os-family', 'os-arch', 'os-version'].each(function (e) {
-        baseNodeData.push({
-            key: 'node.' + e,
-            category: 'Node',
-            title: nodedata[e].title,
-            desc: '(only available in node step context)'
-        });
-    });
+
     //special error-handler vars
 
     if (iseh) {
-        var ehdata = {
-            'message': {title: 'Error Message'},
-            'resultCode': {title: 'Result Code', desc: 'Exit code from an execution (if available)'},
-            'failedNodes': {title: 'Failed Nodes List'},
-            'reason': {title: 'Error Reason', desc: 'A code indicating the reason the step failed'}
-        };
-        ['message', 'resultCode', 'failedNodes', 'reason'].each(function (e) {
-            baseVarData.push({
-                key: 'result.' + e,
-                category: 'Error Handler',
-                title: ehdata[e].title,
-                desc: ehdata[e].desc
-            });
-        });
+        baseVarData.concat(_jobEhData());
     }
 
-    var autovarfunc = function (prefix, suffix, bashvar) {
+    var mkenv = function (name) {
+        return ('RD_' + name ).toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
+    };
+    var varmodes = {
+        sh: function (name) {
+            return '$' + mkenv(name);
+        },
+        powershell: function (name) {
+            return '$env:' + mkenv(name);
+        },
+        batchfile: function (name) {
+            return '%' + mkenv(name) + '%';
+        }
+    };
+    var autovarfunc = function (prefix, suffix, mode) {
         prefix = prefix || '${';
         suffix = suffix || '}';
         var mkvar = function (name) {
             return prefix + name + suffix;
         };
-        var mkbash = function (name) {
-            return '$' + ('RD_' + name ).toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
-        };
         var expvars = [];
         var data = [].concat(baseVarData);
 
         if (calcnodestep()) {
-            data = data.concat(baseNodeData);
+            data = data.concat(_jobNodeData());
         }
 
         for (var i = 0; i < data.length; i++) {
             expvars.push({value: mkvar(data[i].key), data: data[i]});
-            if (bashvar) {
-                expvars.push({value: mkbash(data[i].key), data: data[i]});
+            if (mode) {
+                expvars.push({value: (varmodes[mode] || varmodes['sh'])(data[i].key), data: data[i]});
             }
         }
         for (var x = 0; x < _jobOptionData.length; x++) {
@@ -168,9 +204,9 @@ function postLoadItemEdit(item, iseh, isnodestep) {
                     desc: 'For option: ' + _jobOptionData[x].name
                 }
             });
-            if (bashvar) {
+            if (mode) {
                 expvars.push({
-                    value: mkbash('option.' + _jobOptionData[x].name),
+                    value: (varmodes[mode] || varmodes['sh'])('option.' + _jobOptionData[x].name),
                     data: {
                         category: 'Options',
                         title: 'Option value',
@@ -185,7 +221,8 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         var isscriptStep = jQuery(elem).hasClass('_wfscriptitem');
         var editor = _addAceTextarea(elem, null, function (editor, session, pos, prefix) {
             "use strict";
-            var vals = jQuery(elem).hasClass('_wfscriptitem') ? autovarfunc('@', '@', true) : autovarfunc();
+            var aceSyntaxMode = getAceSyntaxMode(editor);
+            var vals = isscriptStep ? autovarfunc('@', '@', aceSyntaxMode) : autovarfunc(null, null, aceSyntaxMode);
             return vals.map(function (ea) {
                 "use strict";
                 //ace text editor lang tools completer format
@@ -209,15 +246,18 @@ function postLoadItemEdit(item, iseh, isnodestep) {
             }
         }
     });
-    liitem.find('.context_var_autocomplete').each(function (i,elem) {
+    liitem.find('.context_env_autocomplete,.context_var_autocomplete').each(function (i,elem) {
         var obj = jQuery(elem);
         var iscmd = obj.hasClass('_wfcommanditem');
+        var autoenv = obj.hasClass('context_env_autocomplete');
+        var key = liitem.find('._wfiedit').data('rkey');
         obj.devbridgeAutocomplete({
             delimiter: /( |(?=\$))/,
             tabDisabled: true,
             lookup: function (q, callback) {
                 var query = q.toLowerCase();
-                var results = jQuery.grep(autovarfunc(null,null,iscmd), function (suggestion) {
+                var acemode = autoenv ? (key && workflowEditor.steps()[key] && workflowEditor.steps()[key].guessAceMode() || 'sh') : null;
+                var results = jQuery.grep(autovarfunc(null, null, acemode), function (suggestion) {
                     "use strict";
                     return suggestion.value.toLowerCase().indexOf(query) !== -1
                 });

@@ -331,7 +331,9 @@
                 <g:message code="Workflow.Step.adhocLocalString.description" />
             </label>
             <div class="col-sm-12">
-                <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField${rkey}" class="form-control code apply_ace _wfscriptitem" data-ace-autofocus='true' ><g:enc>${item?.adhocLocalString}</g:enc></textarea>
+                <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField${rkey}"
+                               class="form-control code apply_ace _wfscriptitem"
+                               data-ace-autofocus='true'><g:enc>${item?.adhocLocalString}</g:enc></textarea>
             </div>
         </div>
     </g:if>
@@ -343,7 +345,7 @@
                     type='text'
                     name="adhocFilepath"
                     value="${enc(attr:item?.adhocFilepath)}"
-                    class="form-control context_var_autocomplete"
+                    class="form-control context_env_autocomplete"
                     id="adhocFilepathField"
                     placeholder="${g.enc(code:'Workflow.Step.adhocFilepath.description',encodeAs:'HTMLAttribute')}"
                     autofocus
@@ -359,7 +361,7 @@
                     type='text'
                     name="adhocRemoteString"
                     value="${enc(attr:item?.adhocRemoteString)}"
-                    class="form-control context_var_autocomplete _wfcommanditem"
+                    class="form-control context_env_autocomplete _wfcommanditem"
                     placeholder="${g.enc(code:'Workflow.Step.adhocRemoteString.description',encodeAs:'HTMLAttribute')}"
                     id="adhocRemoteStringField"
                     autofocus/>
@@ -375,7 +377,7 @@
             <input type='text'
                    name="argString"
                    value="${enc(attr:item?.argString)}"
-                   class="form-control context_var_autocomplete"
+                   class="form-control context_env_autocomplete"
                    id="argStringField"
                    placeholder="${enc(code:'Workflow.Step.argString.description',encodeAs:'HTMLAttribute')}"
                    data-bind="value: args, valueUpdate: 'keyup'"
@@ -411,7 +413,7 @@
                         <input type='text' name="scriptInterpreter"
                                placeholder="${enc(attr:g.message(code: 'Workflow.Step.scriptInterpreter.prompt'))}"
                                value="${enc(attr:item?.scriptInterpreter)}" size="100"
-                            class="form-control context_var_autocomplete"
+                            class="form-control context_env_autocomplete"
                             data-bind="value: invocationString, valueUpdate: 'keyup'"
                                id="scriptInterpreterField${rkey}" autofocus/>
 
