@@ -80,7 +80,7 @@
     <g:if test="${prop.type.toString()=='FreeSelect'}">
         <div class="${valueColTypeSplitA}">
         <g:textField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
-                     id="${fieldid}" size="100" class="${formControlType}"/>
+                     id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}"/>
         </div>
         <div class="${valueColTypeSplitB}">
         <g:set var="propSelectValues" value="${prop.selectValues.collect{[key:it.encodeAsHTML(),value:it]}}"/>
@@ -127,7 +127,7 @@
         <g:textArea name="${fieldname}" value="${valueText}"
             data-ace-session-mode="${syntax}"
             data-ace-control-syntax="${syntaxSelectable?true:false}"
-                    id="${fieldid}" rows="10" cols="100" class="${formControlCodeType}"/>
+                    id="${fieldid}" rows="10" cols="100" class="${formControlCodeType} ${extraInputCss}"/>
     </g:elseif>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.PASSWORD, 'PASSWORD']}">
        <g:passwordField name="${fieldname}" value="${valueText}"
@@ -159,7 +159,7 @@
     </g:elseif>
     <g:else>
         <g:textField name="${fieldname}" value="${valueText}"
-                 id="${fieldid}" size="100" class="${formControlType}"/>
+                 id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}"/>
     </g:else>
     </div>
     <g:if test="${hasStorageSelector}">
