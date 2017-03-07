@@ -802,7 +802,7 @@ public class SSHTaskBuilder {
                          final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
             BuilderException {
 
-        if (null == files) {
+        if (null == files || files.size()==0) {
             throw new BuilderException("files was not set");
         }
         final String username = sshConnectionInfo.getUsername();

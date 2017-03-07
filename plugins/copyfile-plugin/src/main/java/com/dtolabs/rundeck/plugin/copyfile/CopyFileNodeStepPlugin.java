@@ -46,9 +46,9 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
     @PluginProperty(title = "Destination Path", description = "Path on the remote node for the file destination. If " +
             "the path ends with a /, the same filename as the source will be used.", required = true)
     private String destinationPath;
-    @PluginProperty(title = "Recursive copy", description = "If this is set the plugin is going to copy a folder with his content.", defaultValue = "false")
+    @PluginProperty(title = "Recursive copy", description = "If this is set the plugin is going to copy a folder with his content on the destintion path.", defaultValue = "false")
     private boolean recursive;
-    @PluginProperty(title = "Allow wildcard", description = "If this is set the plugin is going to search any file that match the wildcard(*) and copy it in the destination Path. Exclusive with recursive copy.", defaultValue = "false")
+    @PluginProperty(title = "Allow wildcard", description = "If this is set the plugin is going to search any file that match the wildcard(*) and copy it in the destination Path.", defaultValue = "false")
     private boolean wildcards;
     @PluginProperty(title = "Print transfer information", description = "Log information about the file copy", defaultValue = "true")
     private boolean echo;
@@ -90,10 +90,13 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
                 basefolder=sourcePath.substring(0,index+2);
                 search = sourcePath.substring(index+2);
             }
+            if(echo) {
+                context.getLogger().log(2, "Searching : '" + search + "' on:'"+basefolder+"'");
+            }
             DirectoryScanner scanner = new DirectoryScanner();
             scanner.setBasedir(basefolder);
             scanner.setIncludes(new String[]{search});
-            scanner.setFollowSymlinks(false);
+            scanner.setFollowSymlinks(true);
             scanner.scan();
             String[] files = scanner.getIncludedFiles();
             String customDestinationPath = destinationPath;
@@ -157,20 +160,26 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
 
     private void copyFileList(PluginStepContext context, INodeEntry entry )
             throws NodeStepException{
-        try {
+        if(fileList.size() == 0){
             if(echo) {
-                context.getLogger().log(2, "Begin copy " + fileList.size() + " files  to node " + entry
-                        .getNodename() );
+                context.getLogger().log(2, "No matching files" );
             }
-            String[] paths = context.getFramework().getExecutionService().fileCopyFiles(context.getExecutionContext(), fileList, destinationPath, entry);
-            if (echo) {
-                for(String path:paths) {
-                    context.getLogger().log(2, "Copied: " + path);
+        }else {
+            try {
+                if (echo) {
+                    context.getLogger().log(2, "Begin copy " + fileList.size() + " files  to node " + entry
+                            .getNodename());
                 }
+                String[] paths = context.getFramework().getExecutionService().fileCopyFiles(context.getExecutionContext(), fileList, destinationPath, entry);
+                if (echo) {
+                    for (String path : paths) {
+                        context.getLogger().log(2, "Copied: " + path);
+                    }
+                }
+            } catch (FileCopierException e) {
+                context.getLogger().log(0, "failed: " + e.getMessage());
+                throw new NodeStepException(e, Reason.CopyFileFailed, entry.getNodename());
             }
-        } catch (FileCopierException e) {
-            context.getLogger().log(0, "failed: " + e.getMessage());
-            throw new NodeStepException(e, Reason.CopyFileFailed, entry.getNodename());
         }
     }
 }
