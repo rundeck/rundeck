@@ -64,6 +64,29 @@ public abstract class ChainedProviderService<T> implements ProviderService<T> {
     }
 
     @Override
+    public CloseableProvider<T> closeableProviderOfType(final String providerName) throws ExecutionServiceException {
+        CloseableProvider<T> t = null;
+        MissingProviderException caught = null;
+        for (final ProviderService<T> service : getServiceList()) {
+            try {
+                t = service.closeableProviderOfType(providerName);
+            } catch (MissingProviderException e) {
+                //ignore and attempt to load from the secondary service
+                caught = e;
+            }
+            if (null != t) {
+                return t;
+            }
+
+        }
+        if (null != caught) {
+            throw caught;
+        } else {
+            throw new MissingProviderException("Provider not found", getName(), providerName);
+        }
+    }
+
+    @Override
     public List<ProviderIdent> listProviders() {
         final HashSet<ProviderIdent> providers = new HashSet<ProviderIdent>();
         for (final ProviderService<T> service : getServiceList()) {

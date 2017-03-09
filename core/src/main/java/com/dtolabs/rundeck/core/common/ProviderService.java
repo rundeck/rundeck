@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.plugins.CloseableProvider;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 
 import java.util.List;
@@ -43,5 +44,7 @@ public interface ProviderService<T> extends FrameworkSupportService {
      * @throws ExecutionServiceException on error
      */
     public T providerOfType(final String providerName) throws ExecutionServiceException;
+
+    public CloseableProvider<T> closeableProviderOfType(final String providerName) throws ExecutionServiceException;
     public List<ProviderIdent> listProviders();
 }

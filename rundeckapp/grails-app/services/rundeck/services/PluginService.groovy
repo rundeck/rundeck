@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -34,10 +35,31 @@ class PluginService {
     def frameworkService
     static transactional = false
 
+    /**
+     * Get a plugin
+     * @param name
+     * @param service
+     * @return
+     */
     def <T> T getPlugin(String name, PluggableProviderService<T> service) {
         def bean = rundeckPluginRegistry?.loadPluginByName(name, service)
         if (bean != null) {
             return (T) bean
+        }
+        log.error("${service.name} plugin not found: ${name}")
+        return bean
+    }
+
+    /**
+     * Load a plugin which can be closed when no longer in use
+     * @param name
+     * @param service
+     * @return
+     */
+    def <T> CloseableProvider<T> retainPlugin(String name, PluggableProviderService<T> service) {
+        def bean = rundeckPluginRegistry?.retainPluginByName(name, service)
+        if (bean != null) {
+            return (CloseableProvider<T>) bean
         }
         log.error("${service.name} plugin not found: ${name}")
         return bean

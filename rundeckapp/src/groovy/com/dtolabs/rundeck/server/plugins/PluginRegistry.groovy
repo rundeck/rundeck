@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.server.plugins
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
+import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
@@ -134,6 +135,8 @@ public interface PluginRegistry {
      * @return
      */
     public <T> T loadPluginByName(String name, PluggableProviderService<T> service) ;
+
+    public <T> CloseableProvider<T> retainPluginByName(String name, PluggableProviderService<T> service);
     /**
      * Load a plugin instance with the given bean or provider name
      * @param name name of bean or provider

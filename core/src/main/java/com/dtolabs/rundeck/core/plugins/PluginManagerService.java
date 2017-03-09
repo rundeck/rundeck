@@ -120,6 +120,29 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
         return getCache().listProviders();
     }
 
+    @Override
+    public <T> CloseableProvider<T> loadCloseableProvider(
+            final PluggableService<T> service,
+            final String providerName
+    ) throws ProviderLoaderException
+    {
+        final ProviderIdent ident = new ProviderIdent(service.getName(), providerName);
+        final ProviderLoader loaderForIdent = getCache().getLoaderForIdent(ident);
+        if (null == loaderForIdent) {
+            throw new MissingProviderException("No matching plugin found", service.getName(), providerName);
+        }
+        final CloseableProvider<T> load = loaderForIdent.loadCloseable(service, providerName);
+        if (null != load) {
+            return load;
+        } else {
+            throw new ProviderLoaderException(
+                    "Unable to load provider: " + providerName + ", for service: " + service.getName(),
+                    service.getName(),
+                    providerName
+            );
+        }
+    }
+
     public synchronized <T> T loadProvider(final PluggableService<T> service, final String providerName) throws ProviderLoaderException {
         final ProviderIdent ident = new ProviderIdent(service.getName(), providerName);
         final ProviderLoader loaderForIdent = getCache().getLoaderForIdent(ident);

@@ -51,6 +51,15 @@ public class AdapterService<S,T> implements ProviderService<T> {
     }
 
     @Override
+    public CloseableProvider<T> closeableProviderOfType(final String providerName) throws ExecutionServiceException {
+        final T t = providerOfType(providerName);
+        if (null == t) {
+            return null;
+        }
+        return Closeables.closeableProvider(t);
+    }
+
+    @Override
     public List<ProviderIdent> listProviders() {
         return sourceService.listProviders();
     }

@@ -47,4 +47,14 @@ interface ProviderLoader extends FileCache.Cacheable {
      * List providers available
      */
     public List<ProviderIdent> listProviders();
+
+    /**
+     * Return a closeable provider instance
+     * @param service service
+     * @param providerName provider name
+     * @param <T> type
+     * @return closeable provider
+     * @throws ProviderLoaderException
+     */
+    <T> CloseableProvider<T> loadCloseable(PluggableService<T> service, String providerName) throws ProviderLoaderException;
 }
