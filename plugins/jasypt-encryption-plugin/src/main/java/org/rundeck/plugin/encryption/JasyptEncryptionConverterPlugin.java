@@ -26,6 +26,7 @@ import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.utils.Streams;
 import org.apache.log4j.Logger;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.jasypt.encryption.pbe.PBEByteEncryptor;
 import org.jasypt.encryption.pbe.StandardPBEByteEncryptor;
 import org.jasypt.encryption.pbe.config.EnvironmentPBEConfig;
@@ -35,6 +36,7 @@ import org.rundeck.storage.api.Path;
 import org.rundeck.storage.data.DataUtil;
 
 import java.io.*;
+import java.security.Security;
 
 /**
  * JasyptEncryptionConverterPlugin is ...
@@ -55,6 +57,9 @@ import java.io.*;
 
 
 public class JasyptEncryptionConverterPlugin implements StorageConverterPlugin {
+    static {
+        Security.addProvider(new BouncyCastleProvider());
+    }
     public static final String PROVIDER_NAME = "jasypt-encryption";
     public static final Logger logger = Logger.getLogger(JasyptEncryptionConverterPlugin.class);
 
