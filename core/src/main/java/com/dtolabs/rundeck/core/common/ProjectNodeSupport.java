@@ -397,38 +397,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return null;
     }
 
-    /**
-     * @param origin origin source
-     * @param ident  unique identity for this cached source, used in filename
-     * @param descr  description of the source, used in logging
-     *
-     * @return new source
-     */
-    private ResourceModelSource createCacheLoadingSource(
-            ResourceModelSource origin,
-            String ident,
-            String descr
-    )
-    {
-        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.LOAD_ONLY, true);
-    }
-
-    /**
-     * @param origin origin source
-     * @param ident  unique identity for this cached source, used in filename
-     * @param descr  description of the source, used in logging
-     *
-     * @return new source
-     */
-    private ResourceModelSource createCacheWritingSource(
-            ResourceModelSource origin,
-            String ident,
-            String descr
-    )
-    {
-        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.STORE_ONLY, true);
-    }
-
     private ResourceFormatGeneratorService getResourceFormatGeneratorService() {
         return resourceFormatGeneratorService;
     }
