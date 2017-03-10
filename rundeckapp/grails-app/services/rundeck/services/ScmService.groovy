@@ -451,7 +451,7 @@ class ScmService {
             loadedImportPlugins[context.frameworkProject] = loaded
             loadedImportListeners[context.frameworkProject] = changeListener
         }
-        loaded
+        loaded.provider
     }
 
     private JobChangeListener listenerForImportPlugin(
