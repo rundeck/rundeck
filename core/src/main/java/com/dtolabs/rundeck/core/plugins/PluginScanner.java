@@ -55,8 +55,4 @@ interface PluginScanner extends FileCache.ItemCreator<ProviderLoader> {
      */
     public boolean isExpired(final ProviderIdent ident, final File file) ;
 
-    /**
-     * Return true if the scanner determines need to rescan
-     */
-    public boolean shouldRescan();
 }

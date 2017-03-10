@@ -127,10 +127,10 @@ beans={
     }
 
     //scan for jar plugins
-    jarPluginScanner(JarPluginScanner, pluginDir, cacheDir, ref('providerFileCache'), 5000)
+    jarPluginScanner(JarPluginScanner, pluginDir, cacheDir, ref('providerFileCache'))
 
     //scan for script-based plugins
-    scriptPluginScanner(ScriptPluginScanner, pluginDir, cacheDir, ref('providerFileCache'), 5000)
+    scriptPluginScanner(ScriptPluginScanner, pluginDir, cacheDir, ref('providerFileCache'))
 
     //cache for plugins loaded via scanners
     filePluginCache(FilePluginCache, ref('providerFileCache')) {

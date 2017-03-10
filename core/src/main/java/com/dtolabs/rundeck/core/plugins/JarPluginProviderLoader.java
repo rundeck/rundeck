@@ -390,7 +390,6 @@ class JarPluginProviderLoader implements ProviderLoader,
             throw new IllegalArgumentException("A null java class name was specified.");
         }
         if (null != classCache.get(classname)) {
-            debug("(loadClass) " + classname + ": " + pluginJar);
             return classCache.get(classname);
         }
         CachedJar cachedJar1 = getCachedJar();
@@ -616,10 +615,6 @@ class JarPluginProviderLoader implements ProviderLoader,
      * Expire the loader cache item
      */
     public void expire() {
-
-//        if ("true".equals(System.getProperty("JarPluginProviderLoader.debugExpire", "false"))) {
-//            new Exception().printStackTrace(System.err);
-//        }
         synchronized (this) {
             expired = true;
         }
@@ -854,22 +849,17 @@ class JarPluginProviderLoader implements ProviderLoader,
         public void close() throws IOException {
             debug(String.format("Jar plugin closing cached jar: %s", cachedJar));
             //close loaders
-            if ("true".equals(System.getProperty("JarPluginProviderLoader.closeLoaders", "true"))) {
-                if (null != classLoader) {
-                    try {
-                        debug("expire classLoaders for: " + cachedJar);
-                        classLoader.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
+            if (null != classLoader) {
+                try {
+                    debug("expire classLoaders for: " + cachedJar);
+                    classLoader.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
-            } else {
-                debug("DON'T expire classLoaders for: " + cachedJar);
             }
             //remove cache files
             debug("remove cache dir on exit: " + dir);
             FileUtils.deleteDir(dir);
-//            FileUtils.deleteDirOnExit(dir);
         }
     }
 

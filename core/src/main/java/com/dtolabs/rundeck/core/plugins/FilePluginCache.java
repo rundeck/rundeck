@@ -111,7 +111,7 @@ public class FilePluginCache implements PluginCache {
         }
 
         final File file = cacheItem.getFirst();
-        if (cacheItem.getSecond().isExpired(ident, file) || shouldRescan()) {
+        if (cacheItem.getSecond().isExpired(ident, file)) {
             remove(ident);
             log.debug("getLoaderForIdent(expired): " + ident);
             return rescanForItem(ident);
@@ -129,14 +129,6 @@ public class FilePluginCache implements PluginCache {
         return providerIdents;
     }
 
-    private boolean shouldRescan() {
-        for (final PluginScanner scanner : getScanners()) {
-            if (scanner.shouldRescan()) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     /**
      * return the loader stored in filecache for the file and scanner
