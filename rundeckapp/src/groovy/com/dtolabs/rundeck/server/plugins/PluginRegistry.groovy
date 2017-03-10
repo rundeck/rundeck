@@ -76,6 +76,19 @@ public interface PluginRegistry {
     public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
                                                          PropertyResolver resolver, PropertyScope defaultScope);
     /**
+     * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
+     * default property scope, retain the instance to prevent unloading it
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @return ConfiguredPlugin with a closeable reference to release the plugin
+     */
+    public <T> ConfiguredPlugin<T> retainConfigurePluginByName(
+            String name, PluggableProviderService<T> service,
+            PropertyResolver resolver, PropertyScope defaultScope
+    )
+    /**
      * Return the mapped configuration properties for the plugin
      * @param name name of bean or provider
      * @param service provider service

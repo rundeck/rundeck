@@ -130,6 +130,11 @@ class PluginServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
+        def <T> CloseableProvider<T> retainPluginByName(final String name, final PluggableProviderService<T> service) {
+            return null
+        }
+
+        @Override
         <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
         Framework framework, String project, Map instanceConfiguration) {
             cpWithFrameworkCalled=true
@@ -141,6 +146,17 @@ class PluginServiceTests extends GrailsUnitTestCase {
         PropertyResolver resolver, PropertyScope defaultScope) {
             cpWithResolverCalled=true
             return new ConfiguredPlugin<T>( plugin,  extraConfiguration)
+        }
+
+        @Override
+        def <T> ConfiguredPlugin<T> retainConfigurePluginByName(
+                final String name,
+                final PluggableProviderService<T> service,
+                final PropertyResolver resolver,
+                final PropertyScope defaultScope
+        )
+        {
+            return null
         }
 
         @Override

@@ -159,6 +159,32 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         }
         new ConfiguredPlugin<T>(plugin, config)
     }
+    /**
+     * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
+     * default property scope, retain the instance to prevent unloading it
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @return ConfiguredPlugin with a closeable reference to release the plugin
+     */
+    public <T> ConfiguredPlugin<T> retainConfigurePluginByName(
+            String name, PluggableProviderService<T> service,
+            PropertyResolver resolver, PropertyScope defaultScope
+    )
+    {
+        CloseableDescribedPlugin<T> pluginDesc = retainPluginDescriptorByName(name, service)
+        if (null == pluginDesc) {
+            return null
+        }
+        T plugin = pluginDesc.instance
+        def description = pluginDesc.description
+        Map<String, Object> config = null
+        if (description) {
+            config = PluginAdapterUtility.configureProperties(resolver, description, plugin, defaultScope);
+        }
+        new ConfiguredPlugin<T>(plugin, config, pluginDesc.closeable)
+    }
 
     public <T> Map<String,Object> getPluginConfigurationByName(String name, PluggableProviderService<T> service,
                                                PropertyResolver resolver, PropertyScope defaultScope) {
@@ -413,8 +439,6 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                         desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
                     }
                     list[k] = new DescribedPlugin(bean, desc, k, file)
-                } else {
-                    log.debug("bean not right type: ${bean}, class: ${bean.class.name}, assignable: ${groovyPluginType.isAssignableFrom(bean.class)}")
                 }
             } catch (NoSuchBeanDefinitionException e) {
                 log.error("No such bean: ${v}")
