@@ -373,7 +373,7 @@ public class StorageTreeFactory implements FactoryBean<StorageTree>, Initializin
     private <T> T loadPlugin(String pluginType, Map<String, String> config,
             PluggableProviderService<T> service)
     {
-        ConfiguredPlugin<T> configured = getPluginRegistry().configurePluginByName(
+        ConfiguredPlugin<T> configured = getPluginRegistry().retainConfigurePluginByName(
                 pluginType,
                 service,
                 PropertyResolverFactory.createResolver(
