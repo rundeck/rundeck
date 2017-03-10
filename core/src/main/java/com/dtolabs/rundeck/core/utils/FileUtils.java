@@ -87,6 +87,23 @@ public class FileUtils {
         // The directory is now empty so delete it
         return dir.delete();
     }
+    /**
+     * Delete a directory recursively. This method will delete all files and subdirectories.
+     *
+     * @param dir Directory to delete
+     * @return If no error occurs, true is returned. false otherwise.
+     */
+    public static void deleteDirOnExit(final File dir) {
+        if (dir.isDirectory()) {
+            final String[] children = dir.list();
+            for (int i = 0; i < children.length; i++) {
+                deleteDirOnExit(new File(dir, children[i]));
+            }
+        }
+
+        // The directory is now empty so delete it
+        dir.deleteOnExit();
+    }
 
     /**
      * Rename a file.

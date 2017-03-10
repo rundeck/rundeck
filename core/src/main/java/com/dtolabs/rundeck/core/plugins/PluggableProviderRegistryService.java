@@ -66,6 +66,29 @@ public abstract class PluggableProviderRegistryService<T> extends BaseProviderRe
     }
 
     @Override
+    public CloseableProvider<T> closeableProviderOfType(final String providerName) throws ExecutionServiceException {
+        CloseableProvider<T> t = null;
+        MissingProviderException caught = null;
+        try {
+            t = super.closeableProviderOfType(providerName);
+        } catch (MissingProviderException e) {
+            //ignore and attempt to load from the plugin manager
+            caught = e;
+        }
+        if (null != t) {
+            return t;
+        }
+        final ServiceProviderLoader pluginManager = framework.getPluginManager();
+        if (null != pluginManager) {
+            return pluginManager.loadCloseableProvider(this, providerName);
+        } else if (null != caught) {
+            throw caught;
+        }else {
+            throw new MissingProviderException("Provider not found", getName(), providerName);
+        }
+    }
+
+    @Override
     public List<ProviderIdent> listProviders() {
         final ArrayList<ProviderIdent> providerIdents = new ArrayList<ProviderIdent>(super.listProviders());
 

@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
+import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
@@ -38,6 +39,7 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
 import org.apache.log4j.Logger
 import org.springframework.beans.factory.BeanNotOfRequiredTypeException
+import org.springframework.beans.factory.InitializingBean
 import org.springframework.beans.factory.NoSuchBeanDefinitionException
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -49,7 +51,7 @@ import org.springframework.context.ApplicationContextAware
  * Date: 4/11/13
  * Time: 7:07 PM
  */
-class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
+class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, InitializingBean {
     public static Logger log = Logger.getLogger(RundeckPluginRegistry.class.name)
     /**
      * Registry of spring bean plugin providers, "providername"->"beanname"
@@ -63,7 +65,23 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
     def ServiceProviderLoader rundeckServerServiceProviderLoader
     def File pluginDirectory
     def File pluginCacheDirectory
+    def RundeckEmbeddedPluginExtractor rundeckEmbeddedPluginExtractor
 
+    @Override
+    void afterPropertiesSet() throws Exception {
+        rundeckEmbeddedPluginExtractor.rundeckPluginRegistry = this
+        def result = rundeckEmbeddedPluginExtractor.extractEmbeddedPlugins()
+        if (!result.success) {
+            log.error("Failed extracting embedded plugins: " + result.message)
+            result?.errors?.each {
+                log.error(it)
+            }
+        }
+        result?.logs?.each {
+            log.debug(it)
+        }
+    }
+    
     /**
      * Create and configure a plugin instance with the given bean or provider name
      * @param name name of bean or provider
@@ -140,6 +158,32 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
             config = PluginAdapterUtility.configureProperties(resolver, description, plugin, defaultScope);
         }
         new ConfiguredPlugin<T>(plugin, config)
+    }
+    /**
+     * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
+     * default property scope, retain the instance to prevent unloading it
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @return ConfiguredPlugin with a closeable reference to release the plugin
+     */
+    public <T> ConfiguredPlugin<T> retainConfigurePluginByName(
+            String name, PluggableProviderService<T> service,
+            PropertyResolver resolver, PropertyScope defaultScope
+    )
+    {
+        CloseableDescribedPlugin<T> pluginDesc = retainPluginDescriptorByName(name, service)
+        if (null == pluginDesc) {
+            return null
+        }
+        T plugin = pluginDesc.instance
+        def description = pluginDesc.description
+        Map<String, Object> config = null
+        if (description) {
+            config = PluginAdapterUtility.configureProperties(resolver, description, plugin, defaultScope);
+        }
+        new ConfiguredPlugin<T>(plugin, config, pluginDesc.closeable)
     }
 
     public <T> Map<String,Object> getPluginConfigurationByName(String name, PluggableProviderService<T> service,
@@ -232,6 +276,54 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
     public <T> T loadPluginByName(String name, PluggableProviderService<T> service) {
         return loadPluginDescriptorByName(name, service)?.instance
     }
+
+    @Override
+    def <T> CloseableProvider<T> retainPluginByName(final String name, final PluggableProviderService<T> service) {
+        return retainPluginDescriptorByName(name, service)?.closeable
+    }
+
+    /**
+     * Load a closeable plugin instance with the given bean or provider name,
+     * should be used when the plugin instance will be retained for use over a period of time
+     * @param name name of bean or provider
+     * @param service provider service
+     * @return CloseableDescribedPlugin , or null if it cannot be loaded
+     */
+    public <T> CloseableDescribedPlugin<T> retainPluginDescriptorByName(
+            String name,
+            PluggableProviderService<T> service
+    )
+    {
+        DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name)
+        if (null != beanPlugin) {
+            return new CloseableDescribedPlugin<T>(beanPlugin)
+        }
+        //try loading via ServiceProviderLoader
+        if (rundeckServerServiceProviderLoader && service) {
+            //attempt to load directly
+            CloseableProvider<T> instance
+            try {
+                instance = service.closeableProviderOfType(name);
+            } catch (ExecutionServiceException ignored) {
+                //not already loaded, attempt to load...
+            }
+            if (null == instance) {
+                try {
+                    instance = rundeckServerServiceProviderLoader.loadCloseableProvider(service, name)
+                } catch (MissingProviderException exception) {
+                    log.error("Plugin ${name} for service: ${service.name} was not found")
+                    log.debug("Plugin ${name} for service: ${service.name} was not found", exception)
+                } catch (ProviderLoaderException exception) {
+                    log.error("Failure loading Rundeck plugin: ${name} for service: : ${service.name}", exception)
+                }
+            }
+            if (null != instance) {
+                def d = service.listDescriptions().find { it.name == name }
+                return new CloseableDescribedPlugin<T>(instance, d, name)
+            }
+        }
+        null
+    }
     /**
      * Load a plugin instance with the given bean or provider name
      * @param name name of bean or provider
@@ -239,6 +331,38 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
      * @return DescribedPlugin, or null if it cannot be loaded
      */
     public <T> DescribedPlugin<T> loadPluginDescriptorByName(String name, PluggableProviderService<T> service) {
+        DescribedPlugin<T> beanPlugin = loadBeanDescriptor(name)
+        if (null != beanPlugin) {
+            return beanPlugin
+        }
+        //try loading via ServiceProviderLoader
+        if (rundeckServerServiceProviderLoader && service) {
+            //attempt to load directly
+            T instance
+            try {
+                instance = service.providerOfType(name);
+            } catch (ExecutionServiceException ignored) {
+                //not already loaded, attempt to load...
+            }
+            if (null == instance) {
+                try {
+                    instance = rundeckServerServiceProviderLoader.loadProvider(service, name)
+                } catch (MissingProviderException exception) {
+                    log.error("Plugin ${name} for service: ${service.name} was not found")
+                    log.debug("Plugin ${name} for service: ${service.name} was not found", exception)
+                } catch (ProviderLoaderException exception) {
+                    log.error("Failure loading Rundeck plugin: ${name} for service: : ${service.name}", exception)
+                }
+            }
+            if (null != instance) {
+                def d = service.listDescriptions().find { it.name == name }
+                return new DescribedPlugin<T>(instance, d, name)
+            }
+        }
+        null
+    }
+
+    private <T> DescribedPlugin<T> loadBeanDescriptor(String name) {
         try {
             def beanName = pluginRegistryMap[name]
             if (beanName) {
@@ -247,7 +371,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
                     bean = ((PluginBuilder) bean).buildPlugin()
                 }
                 //try to check annotations
-                Description desc=null
+                Description desc = null
                 if (bean instanceof Describable) {
                     desc = ((Describable) bean).description
                 } else if (PluginAdapterUtility.canBuildDescription(bean)) {
@@ -257,30 +381,6 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
             }
         } catch (NoSuchBeanDefinitionException e) {
             log.error("plugin Spring bean does not exist: ${name}")
-        }
-        //try loading via ServiceProviderLoader
-        if (rundeckServerServiceProviderLoader && service) {
-            //attempt to load directly
-            T instance
-            try {
-                instance=service.providerOfType(name);
-            } catch (ExecutionServiceException ignored) {
-                //not already loaded, attempt to load...
-            }
-            if(null==instance){
-                try {
-                    instance = rundeckServerServiceProviderLoader.loadProvider(service, name)
-                } catch (MissingProviderException exception) {
-                    log.error("Plugin ${name} for service: ${service.name} was not found")
-                    log.debug("Plugin ${name} for service: ${service.name} was not found",exception)
-                } catch (ProviderLoaderException exception) {
-                    log.error("Failure loading Rundeck plugin: ${name} for service: : ${service.name}", exception)
-                }
-            }
-            if(null!=instance){
-                def d = service.listDescriptions().find { it.name == name }
-                return new DescribedPlugin<T>( instance, d, name)
-            }
         }
         null
     }
@@ -339,8 +439,6 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry {
                         desc = PluginAdapterUtility.buildDescription(bean, DescriptionBuilder.builder())
                     }
                     list[k] = new DescribedPlugin(bean, desc, k, file)
-                } else {
-                    log.debug("bean not right type: ${bean}, class: ${bean.class.name}, assignable: ${groovyPluginType.isAssignableFrom(bean.class)}")
                 }
             } catch (NoSuchBeanDefinitionException e) {
                 log.error("No such bean: ${v}")

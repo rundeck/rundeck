@@ -17,6 +17,8 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.plugins.CloseableProvider
+import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
@@ -48,7 +50,14 @@ import spock.lang.Specification
 @Mock([ScheduledExecution, User])
 class ScmServiceSpec extends Specification {
 
+    class TestCloseable implements Closeable {
+        boolean closed
 
+        @Override
+        void close() throws IOException {
+            closed = true
+        }
+    }
     def "disablePlugin"() {
         given:
         service.frameworkService = Mock(FrameworkService)
@@ -57,8 +66,10 @@ class ScmServiceSpec extends Specification {
         ScmPluginConfigData config = Mock(ScmPluginConfigData)
         ScmExportPlugin exportPlugin = Mock(ScmExportPlugin)
         ScmImportPlugin importPlugin = Mock(ScmImportPlugin)
-        service.loadedExportPlugins['test1'] = exportPlugin
-        service.loadedImportPlugins['test1'] = importPlugin
+        TestCloseable exportCloser = new TestCloseable()
+        TestCloseable importCloser = new TestCloseable()
+        service.loadedExportPlugins['test1'] = Closeables.closeableProvider(exportPlugin, exportCloser)
+        service.loadedImportPlugins['test1'] = Closeables.closeableProvider(importPlugin, importCloser)
         def dummyListener = Mock(JobChangeListener)
         service.loadedExportListeners['test1'] = dummyListener
         service.loadedImportListeners['test1'] = dummyListener
@@ -79,12 +90,16 @@ class ScmServiceSpec extends Specification {
         1 * service.jobEventsService.removeListener(dummyListener)
 
         if (integration == ScmService.EXPORT) {
+            exportCloser.closed
+            !importCloser.closed
             service.loadedExportPlugins['test1'] == null
             service.loadedExportListeners['test1'] == null
             service.renamedJobsCache['test1'] == null
             service.deletedJobsCache['test1'] == null
             1 * exportPlugin.cleanup()
         } else {
+            !exportCloser.closed
+            importCloser.closed
             service.loadedImportPlugins['test1'] == null
             service.loadedImportListeners['test1'] == null
             1 * importPlugin.cleanup()
@@ -104,8 +119,10 @@ class ScmServiceSpec extends Specification {
         service.jobEventsService = Mock(JobEventsService)
         ScmExportPlugin exportPlugin = Mock(ScmExportPlugin)
         ScmImportPlugin importPlugin = Mock(ScmImportPlugin)
-        service.loadedExportPlugins['test1'] = exportPlugin
-        service.loadedImportPlugins['test1'] = importPlugin
+        TestCloseable exportCloser = new TestCloseable()
+        TestCloseable importCloser = new TestCloseable()
+        service.loadedExportPlugins['test1'] = Closeables.closeableProvider(exportPlugin, exportCloser)
+        service.loadedImportPlugins['test1'] = Closeables.closeableProvider(importPlugin, importCloser)
         def dummyListener = Mock(JobChangeListener)
         service.loadedExportListeners['test1'] = dummyListener
         service.loadedImportListeners['test1'] = dummyListener
@@ -281,6 +298,7 @@ class ScmServiceSpec extends Specification {
         service.jobEventsService = Mock(JobEventsService)
         service.frameworkService = Mock(FrameworkService)
 
+        def testCloser = new TestCloseable()
         def validated = new ValidatedPlugin(valid: true)
 
         when:
@@ -289,7 +307,7 @@ class ScmServiceSpec extends Specification {
         then:
         1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
-        1 * service.pluginService.getPlugin('atype', _) >> importFactory
+        1 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(importFactory, testCloser)
         1 * service.pluginConfigService.loadScmConfig(*_) >> configobj
         1 * configobj.getSettingList('trackedItems') >> ['a', 'b']
         1 * importFactory.createPlugin(ctx, config, ['a', 'b']) >> plugin
@@ -318,6 +336,7 @@ class ScmServiceSpec extends Specification {
         service.pluginConfigService = Mock(PluginConfigService)
         service.jobEventsService = Mock(JobEventsService)
         service.frameworkService = Mock(FrameworkService)
+        def exportCloser = new TestCloseable()
 
         def validated = new ValidatedPlugin(valid: true)
 
@@ -327,7 +346,7 @@ class ScmServiceSpec extends Specification {
         then:
         1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
-        1 * service.pluginService.getPlugin('atype', _) >> exportFactory
+        1 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
         1 * exportFactory.createPlugin(ctx, config) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'testProject')
 
@@ -350,6 +369,7 @@ class ScmServiceSpec extends Specification {
 
         ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
         ScmExportPlugin plugin = Mock(ScmExportPlugin)
+        TestCloseable exportCloser = new TestCloseable()
 
         service.pluginService = Mock(PluginService)
         service.pluginConfigService = Mock(PluginConfigService)
@@ -376,7 +396,7 @@ class ScmServiceSpec extends Specification {
         }
         1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
-        1 * service.pluginService.getPlugin('atype', _) >> exportFactory
+        1 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
         1 * exportFactory.createPlugin(_, config) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'testProject')
         1 * plugin.getStatus(_)>>Mock(ScmExportSynchState)
@@ -395,6 +415,8 @@ class ScmServiceSpec extends Specification {
         ScmExportPluginFactory exportFactory = Mock(ScmExportPluginFactory)
         ScmExportPlugin plugin = Mock(ScmExportPlugin)
 
+        TestCloseable exportCloser = new TestCloseable()
+
         service.pluginService = Mock(PluginService)
         service.pluginConfigService = Mock(PluginConfigService)
         service.jobEventsService = Mock(JobEventsService)
@@ -420,7 +442,7 @@ class ScmServiceSpec extends Specification {
         }
         1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
-        1 * service.pluginService.getPlugin('atype', _) >> exportFactory
+        1 * service.pluginService.retainPlugin('atype', _) >> Closeables.closeableProvider(exportFactory, exportCloser)
         1 * exportFactory.createPlugin(_, config) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'testProject')
         1 * plugin.getStatus(_)>>{
@@ -436,7 +458,8 @@ class ScmServiceSpec extends Specification {
         service.frameworkService = Mock(FrameworkService)
 
         ScmExportPlugin plugin = Mock(ScmExportPlugin)
-        service.loadedExportPlugins['test1'] = plugin
+        TestCloseable exportCloser = new TestCloseable()
+        service.loadedExportPlugins['test1'] = Closeables.closeableProvider(plugin, exportCloser)
         service.initedProjects.add('test1')
 
         def input = [:]
@@ -525,7 +548,7 @@ class ScmServiceSpec extends Specification {
         }
         1 * service.frameworkService.getFrameworkPropertyResolver(*_)
         1 * service.pluginService.validatePlugin(*_) >> validated
-        1 * service.pluginService.getPlugin('pluginType', _) >> importFactory
+        1 * service.pluginService.retainPlugin('pluginType', _) >> Closeables.closeableProvider(importFactory)
         1 * importFactory.createPlugin(_, [plugin: 'config'], ['a', 'b']) >> plugin
         1 * service.jobEventsService.addListenerForProject(_, 'projectA')
 

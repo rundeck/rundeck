@@ -53,10 +53,10 @@ public class TestDirPluginScanner extends TestCase {
         FileUtils.deleteDir(testdir);
     }
 
-    static class test extends DirPluginScanner {
+    public static class test extends DirPluginScanner {
         Map<File, String> versions;
         test(File extdir, FileCache<ProviderLoader> filecache, long rescanIntervalMs) {
-            super(extdir, filecache, rescanIntervalMs);
+            super(extdir, filecache);
         }
 
         @Override
@@ -112,6 +112,13 @@ public class TestDirPluginScanner extends TestCase {
         }
 
         public <T> T load(PluggableService<T> service, String providerName) throws ProviderLoaderException {
+            return null;
+        }
+
+        @Override
+        public <T> CloseableProvider<T> loadCloseable(final PluggableService<T> service, final String providerName)
+                throws ProviderLoaderException
+        {
             return null;
         }
 
@@ -255,99 +262,9 @@ public class TestDirPluginScanner extends TestCase {
         assertFalse(scanner.isExpired(ident2, testfile2));
     }
 
-    public void testshouldRescan() throws Exception {
-        //test rescan should return true if any file has been modified, and we are over the rescan interval
-        File basedir = new File(testdir, "testshouldRescan");
-        basedir.mkdirs();
-        final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
-        test scanner = new test(basedir, loaderFileCache, 0);
-
-        File testfile1 = new File(basedir, "service_provider");
-        assertTrue(testfile1.createNewFile());
-        File testfile2 = new File(basedir, "service2_provider");
-        assertTrue(testfile2.createNewFile());
-
-        final ProviderIdent ident = new ProviderIdent("service", "provider");
-        final ProviderIdent ident2 = new ProviderIdent("service2", "provider");
-
-        //initial pass should require scan
-        assertTrue(scanner.shouldRescan());
-
-        //cause initial scan
-        assertEquals(testfile1, scanner.scanForFile(ident));
-
-        assertFalse(scanner.shouldRescan());
-
-        //modify a file
-        final FileOutputStream fileOutputStream = new FileOutputStream(testfile2);
-        fileOutputStream.write("blah".getBytes());
-        fileOutputStream.close();
-        assertTrue(scanner.shouldRescan());
 
 
-        //rescan
-        assertEquals(testfile2, scanner.scanForFile(ident2));
 
-        assertFalse(scanner.shouldRescan());
-
-        //delete a file
-        testfile1.delete();
-
-        assertTrue(scanner.shouldRescan());
-
-        //rescan
-        assertNull(scanner.scanForFile(ident));
-
-        assertFalse(scanner.shouldRescan());
-    }
-
-    public void testshouldRescanInterval() throws Exception {
-        //set scan interval to 60 seconds, shouldRescan should now return false
-        File basedir = new File(testdir, "testshouldRescan");
-        basedir.mkdirs();
-        final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
-
-        //scan interval set to 60 seconds
-        test scanner = new test(basedir, loaderFileCache, 60*1000);
-
-        File testfile1 = new File(basedir, "service_provider");
-        assertTrue(testfile1.createNewFile());
-        File testfile2 = new File(basedir, "service2_provider");
-        assertTrue(testfile2.createNewFile());
-
-        final ProviderIdent ident = new ProviderIdent("service", "provider");
-        final ProviderIdent ident2 = new ProviderIdent("service2", "provider");
-
-        //initial pass should require scan
-        assertTrue(scanner.shouldRescan());
-
-        //cause initial scan
-        assertEquals(testfile1, scanner.scanForFile(ident));
-
-        assertFalse(scanner.shouldRescan());
-
-        //modify a file
-        final FileOutputStream fileOutputStream = new FileOutputStream(testfile2);
-        fileOutputStream.write("blah".getBytes());
-        fileOutputStream.close();
-        assertFalse(scanner.shouldRescan());
-
-
-        //rescan
-        assertEquals(testfile2, scanner.scanForFile(ident2));
-
-        assertFalse(scanner.shouldRescan());
-
-        //delete a file
-        testfile1.delete();
-
-        assertFalse(scanner.shouldRescan());
-
-        //rescan
-        assertNull(scanner.scanForFile(ident));
-
-        assertFalse(scanner.shouldRescan());
-    }
 
     public void testScanForResolveConflict() throws Exception {
 
@@ -412,135 +329,4 @@ public class TestDirPluginScanner extends TestCase {
         return file;
     }
 
-    public void testResolveProviderConflict() throws Exception {
-        //set scan interval to 60 seconds, shouldRescan should now return false
-        File basedir = new File(testdir, "testResolveProviderConflict");
-        basedir.mkdirs();
-        final FileCache<ProviderLoader> loaderFileCache = new FileCache<ProviderLoader>();
-
-        //scan interval set to 60 seconds
-        test scanner = new test(basedir, loaderFileCache, 60 * 1000);
-        {
-            final Map<File, String> versions = new HashMap<File, String>();
-            File testfile1 = new File(basedir, "test1");
-            File testfile2 = new File(basedir, "test2");
-
-            ArrayList<File> arr = new ArrayList<File>();
-            arr.add(testfile1);
-            arr.add(testfile2);
-            scanner.versions = versions;
-
-            final File file = scanner.resolveProviderConflict(arr);
-            assertNull(file);
-        }
-        {
-
-            File testfile1 = new File(basedir, "test1");
-            File testfile2 = new File(basedir, "test2");
-
-            ArrayList<File> arr = new ArrayList<File>();
-            arr.add(testfile1);
-            arr.add(testfile2);
-            final Map<File, String> versions = new HashMap<File, String>();
-            versions.put(testfile2, "1.0");
-            scanner.versions = versions;
-
-            final File file = scanner.resolveProviderConflict(arr);
-            assertEquals(testfile2, file);
-        }
-        {
-            File testfile1 = new File(basedir, "test1");
-            File testfile2 = new File(basedir, "test2");
-
-            ArrayList<File> arr = new ArrayList<File>();
-            arr.add(testfile1);
-            arr.add(testfile2);
-            final Map<File, String> versions = new HashMap<File, String>();
-            versions.put(testfile1, "1.1");
-            versions.put(testfile2, "1.0");
-            scanner.versions = versions;
-
-            final File file = scanner.resolveProviderConflict(arr);
-            assertEquals(testfile1, file);
-        }
-        {
-            File testfile1 = new File(basedir, "test1");
-            File testfile2 = new File(basedir, "test2");
-
-            ArrayList<File> arr = new ArrayList<File>();
-            arr.add(testfile1);
-            arr.add(testfile2);
-            final Map<File, String> versions = new HashMap<File, String>();
-            versions.put(testfile1, "1.1");
-            scanner.versions = versions;
-
-            final File file = scanner.resolveProviderConflict(arr);
-            assertEquals(testfile1, file);
-        }
-        {
-            File testfile1 = new File(basedir, "test1");
-            File testfile2 = new File(basedir, "test2");
-
-            ArrayList<File> arr = new ArrayList<File>();
-            arr.add(testfile1);
-            arr.add(testfile2);
-            final Map<File, String> versions = new HashMap<File, String>();
-            versions.put(testfile1, "1.1");
-            versions.put(testfile2, "1.1");
-            scanner.versions = versions;
-
-            final File file = scanner.resolveProviderConflict(arr);
-            assertNotNull(file);
-            assertEquals(testfile2, file);
-        }
-        {
-            File testfile1 = new File(basedir, "test3");
-            File testfile2 = new File(basedir, "test2");
-
-            ArrayList<File> arr = new ArrayList<File>();
-            arr.add(testfile1);
-            arr.add(testfile2);
-            final Map<File, String> versions = new HashMap<File, String>();
-            versions.put(testfile1, "1.1");
-            versions.put(testfile2, "1.1");
-            scanner.versions = versions;
-
-            final File file = scanner.resolveProviderConflict(arr);
-            assertNotNull(file);
-            assertEquals(testfile1, file);
-        }
-        {
-
-            File testfile1 = new File(basedir, "test1");
-            File testfile2 = new File(basedir, "test2");
-
-            ArrayList<File> arr = new ArrayList<File>();
-            arr.add(testfile1);
-            arr.add(testfile2);
-            final Map<File, String> versions = new HashMap<File, String>();
-            versions.put(testfile1, "1.1-abc");
-            versions.put(testfile2, "1.1-def");
-            scanner.versions = versions;
-
-            final File file = scanner.resolveProviderConflict(arr);
-            assertNotNull(file);
-            assertEquals(testfile2, file);
-        }
-        {
-            File testfile1 = new File(basedir, "test2");
-            File testfile2 = new File(basedir, "test1");
-
-            ArrayList<File> arr = new ArrayList<File>();
-            arr.add(testfile1);
-            arr.add(testfile2);
-            final Map<File, String> versions = new HashMap<File, String>();
-            versions.put(testfile1, "1.1-abc");
-            versions.put(testfile2, "1.1-def");
-            scanner.versions = versions;
-
-            final File file = scanner.resolveProviderConflict(arr);
-            assertNotNull(file);
-            assertEquals(testfile1, file);
-        }
-    }
 }

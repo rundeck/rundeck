@@ -175,6 +175,17 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
         return null;
     }
 
+    @Override
+    public <T> CloseableProvider<T> loadCloseable(final PluggableService<T> service, final String providerName)
+            throws ProviderLoaderException
+    {
+        final T load = load(service, providerName);
+        if (null == load) {
+            return null;
+        }
+        return Closeables.closeableProvider(load);
+    }
+
     private Date dateLoaded = null;
 
     /**

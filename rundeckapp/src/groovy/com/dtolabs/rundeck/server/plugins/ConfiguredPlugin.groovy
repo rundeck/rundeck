@@ -27,6 +27,12 @@ class ConfiguredPlugin<T> {
         this.configuration = configuration
     }
 
+    ConfiguredPlugin(final T instance, final Map<String, Object> configuration, final Closeable closeable) {
+        this.instance = instance
+        this.configuration = configuration
+        this.closeable = closeable
+    }
     T instance
     Map<String,Object> configuration
+    Closeable closeable
 }

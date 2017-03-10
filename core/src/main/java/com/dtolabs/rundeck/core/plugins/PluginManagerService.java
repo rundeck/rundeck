@@ -43,7 +43,6 @@ import java.util.Map;
 public class PluginManagerService implements FrameworkSupportService, ServiceProviderLoader {
     private static final Logger log = Logger.getLogger(PluginManagerService.class.getName());
     public static final String SERVICE_NAME = "PluginManager";
-    private static final Map<File, PluginManagerService> managerRegistry = new HashMap<File, PluginManagerService>();
 
     private File extdir;
     private File cachedir;
@@ -55,26 +54,6 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     public PluginManagerService() {
 
     }
-
-    /**
-     * Create a PluginManagerService for the given directory and cache directory
-     * @param extdir plugin dir
-     * @param cachedir cache dir
-     */
-    public PluginManagerService(final File extdir, final File cachedir) {
-        this(extdir, cachedir, createDefaultCache(extdir, cachedir));
-        log.debug("Create PluginManagerService");
-    }
-
-    public static PluginCache createDefaultCache(final File extdir, final File cachedir) {
-        final FileCache<ProviderLoader> filecache = createProviderLoaderFileCache();
-        PluginCache cache = new FilePluginCache(filecache);
-        final int rescanInterval = 5000;//TODO: use framework property to set interval
-        cache.addScanner(new JarPluginScanner(extdir, cachedir, filecache, rescanInterval));
-        cache.addScanner(new ScriptPluginScanner(extdir, cachedir, filecache, rescanInterval));
-        return cache;
-    }
-
     /**
      * Create a PluginManagerService for the given directory and cache directory
      * @param extdir plugin dir
@@ -97,27 +76,34 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     }
 
     public static PluginManagerService getInstanceForFramework(final Framework framework) {
-        if (null == framework.getService(SERVICE_NAME)) {
-
-            final PluginManagerService instanceForExtDir = getInstanceForExtDir(framework.getFilesystemFramework().getLibextDir(framework),
-                                                                                framework.getFilesystemFramework().getLibextCacheDir(framework));
-            framework.setService(SERVICE_NAME, instanceForExtDir);
-            return instanceForExtDir;
-        }
         return (PluginManagerService) framework.getService(SERVICE_NAME);
-    }
-
-    public synchronized static PluginManagerService getInstanceForExtDir(final File libextDir, final File cachedir) {
-        if (null == managerRegistry.get(libextDir)) {
-            final PluginManagerService service = new PluginManagerService(libextDir, cachedir);
-            managerRegistry.put(libextDir, service);
-        }
-
-        return managerRegistry.get(libextDir);
     }
 
     public synchronized List<ProviderIdent> listProviders() {
         return getCache().listProviders();
+    }
+
+    @Override
+    public <T> CloseableProvider<T> loadCloseableProvider(
+            final PluggableService<T> service,
+            final String providerName
+    ) throws ProviderLoaderException
+    {
+        final ProviderIdent ident = new ProviderIdent(service.getName(), providerName);
+        final ProviderLoader loaderForIdent = getCache().getLoaderForIdent(ident);
+        if (null == loaderForIdent) {
+            throw new MissingProviderException("No matching plugin found", service.getName(), providerName);
+        }
+        final CloseableProvider<T> load = loaderForIdent.loadCloseable(service, providerName);
+        if (null != load) {
+            return load;
+        } else {
+            throw new ProviderLoaderException(
+                    "Unable to load provider: " + providerName + ", for service: " + service.getName(),
+                    service.getName(),
+                    providerName
+            );
+        }
     }
 
     public synchronized <T> T loadProvider(final PluggableService<T> service, final String providerName) throws ProviderLoaderException {

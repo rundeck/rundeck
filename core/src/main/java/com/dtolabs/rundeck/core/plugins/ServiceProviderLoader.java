@@ -47,6 +47,18 @@ public interface ServiceProviderLoader {
     public <T> T loadProvider(PluggableService<T> service, String providerName) throws
         ProviderLoaderException;
 
+    /**
+     * Create a provider instance for the service
+     *
+     * @param service      service
+     * @param providerName provider
+     * @param <T>          service type
+     *
+     * @return closeable provider which can close loaded resources at completion
+     */
+    <T> CloseableProvider<T> loadCloseableProvider(PluggableService<T> service, String providerName) throws
+            ProviderLoaderException;
+
     public PluginResourceLoader getResourceLoader(String service, String provider) throws ProviderLoaderException;
 
     public PluginMetadata getPluginMetadata(String service, String provider) throws ProviderLoaderException;

@@ -78,6 +78,16 @@ public abstract class BaseProviderRegistryService<T> implements ProviderService<
         }
         return instanceregistry.get(providerName);
     }
+
+    @Override
+    public CloseableProvider<T> closeableProviderOfType(final String providerName) throws ExecutionServiceException {
+        final T t = providerOfType(providerName);
+        if (t == null) {
+            return null;
+        }
+        return Closeables.closeableProvider(t);
+    }
+
     public List<ProviderIdent> listProviders() {
 
         final HashSet<ProviderIdent> providers = new HashSet<ProviderIdent>();

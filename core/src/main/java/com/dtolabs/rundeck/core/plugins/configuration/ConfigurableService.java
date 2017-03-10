@@ -25,6 +25,8 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.FrameworkSupportService;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.plugins.CloseableProvider;
+import com.dtolabs.rundeck.core.resources.ResourceModelSource;
 
 import java.util.Properties;
 
@@ -44,5 +46,17 @@ public interface ConfigurableService<T> extends FrameworkSupportService {
      */
     public T getProviderForConfiguration(final String type, final Properties configuration) throws
         ExecutionServiceException;
+
+    /**
+     * Return a provider of type T which can be closed
+     * @param type plugin type
+     * @param configuration configuration properties
+     * @return closeable provider of T
+     * @throws ExecutionServiceException
+     */
+    public CloseableProvider<T> getCloseableProviderForConfiguration(
+            final String type,
+            final Properties configuration
+    ) throws ExecutionServiceException;
 
 }
