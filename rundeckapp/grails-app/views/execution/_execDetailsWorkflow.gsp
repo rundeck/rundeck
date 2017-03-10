@@ -60,7 +60,7 @@
         <g:set var="pluginName" value="${pluginDescription.name}"/>
         <g:set var="prefix" value="${('workflow.strategyPlugin.'+ pluginName + '.config.')}"/>
         <g:set var="definedConfig"
-               value="${params.workflow?.strategyPlugin?.get(pluginName)?.config ?: wfstrat == pluginName?workflow?.getPluginConfigData('WorkflowStrategy',pluginName):null}"/>
+               value="${((params.workflow instanceof Map)?(params.workflow?.strategyPlugin?.get(pluginName)?.config):null) ?: wfstrat == pluginName?workflow?.getPluginConfigData('WorkflowStrategy',pluginName):null}"/>
         <div id="strategyPlugin${pluginName}" style="${wdgt.styleVisible(if: wfstrat == pluginName ? true : false)}"
               class="strategyPlugin">
             <span class="text-info">
