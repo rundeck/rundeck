@@ -21,12 +21,15 @@ import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IProjectNodesFactory
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
+import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.resources.SourceFactory
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.CacheLoader
 import com.google.common.cache.LoadingCache
+import com.google.common.cache.RemovalListener
+import com.google.common.cache.RemovalNotification
 import com.google.common.util.concurrent.Futures
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.ListenableFutureTask
@@ -98,6 +101,14 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
 
         nodeCache = CacheBuilder.from(spec)
                                 .recordStats()
+                                .removalListener(
+                new RemovalListener<String, CachedProjectNodes>() {
+                    @Override
+                    void onRemoval(final RemovalNotification<String, CachedProjectNodes> notification) {
+                        Closeables.closeQuietly(notification.getValue()?.nodeSupport)
+                    }
+                }
+        )
                                 .build(
                 new CacheLoader<String, CachedProjectNodes>() {
                     public CachedProjectNodes load(String key) {

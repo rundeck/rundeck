@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.resources.ResourceModelSource
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
@@ -87,7 +88,7 @@ class NodeServiceSpec extends Specification {
                 loadProjectConfig('test1') >> projConfig
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
-                1 * getSourceForConfiguration('file', _) >> modelSource
+                1 * getCloseableSourceForConfiguration('file', _) >> Closeables.closeableProvider(modelSource)
             }
         }
         _ * modelSource.getNodes() >> nodeSet
@@ -144,12 +145,13 @@ class NodeServiceSpec extends Specification {
                 1 * loadProjectConfig('test1') >> projConfig
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
-                _ * getSourceForConfiguration('file', {args->
+
+                _ * getCloseableSourceForConfiguration('file', {args->
                     args['file']=='/tmp/test.xml'
-                }) >> modelSource
-                _ * getSourceForConfiguration('file', {args->
+                }) >> Closeables.closeableProvider(modelSource)
+                _ * getCloseableSourceForConfiguration('file', {args->
                     args['file']!='/tmp/test.xml'
-                }) >> cacheModelsource
+                }) >> Closeables.closeableProvider(cacheModelsource)
             }
             getResourceFormatGeneratorService()>>Mock(ResourceFormatGeneratorService){
                 _ * getGeneratorForFormat('xml')>>Mock(ResourceFormatGenerator){
@@ -277,9 +279,9 @@ class NodeServiceSpec extends Specification {
                 1 * loadProjectConfig('test1') >> projConfig
             }
             getResourceModelSourceService() >> Mock(ResourceModelSourceService) {
-                _ * getSourceForConfiguration('file', {args->
+                _ * getCloseableSourceForConfiguration('file', {args->
                     args['file']=='/tmp/test.xml'
-                }) >> modelSource
+                }) >> Closeables.closeableProvider(modelSource)
                 _ * getSourceForConfiguration('file', {args->
                     args['file']!='/tmp/test.xml'
                 }) >> cacheModelsource
