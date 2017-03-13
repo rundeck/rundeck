@@ -7,8 +7,8 @@ apply plugin: 'maven';
 apply plugin: 'eclipse';
 apply plugin: 'idea';
 
-sourceCompatibility = 1.7
-targetCompatibility = 1.7
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 // add static analysis support when running on build servers (-Penvironment=build)
 if (project.hasProperty('environment') && environment == 'build') {
