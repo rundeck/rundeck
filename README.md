@@ -24,8 +24,6 @@ Artifacts:
 * `rundeckapp/target/rundeck-X.Y.war`
 * `rundeck-launcher/launcher/build/libs/rundeck-launcher-X.Y.jar`
 
-Note: some pom.xml files exist, but the Maven build is not currently working.
-
 
 Other builds
 ======
@@ -108,7 +106,7 @@ Do you have changes to contribute? Please see the [Development](https://github.c
 License
 ======
 
-Copyright 2015 SimplifyOps
+Copyright 2017 Rundeck, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
