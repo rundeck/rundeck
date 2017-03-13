@@ -68,6 +68,7 @@ echo "starting tests"
 
 set +e
 chmod -w /tests/run-tests.sh
+sync
 
 /tests/run-tests.sh \
 	--rdeck-base $HOME \
