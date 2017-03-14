@@ -34,6 +34,8 @@ import static com.dtolabs.rundeck.core.plugins.configuration.Validator.*
  */
 public interface PluginRegistry {
 
+    public <T> PluggableProviderService<T> createPluggableService(Class<T> type);
+
     /**
      * Create and configure a plugin instance with the given bean or provider name
      * @param name name of bean or provider

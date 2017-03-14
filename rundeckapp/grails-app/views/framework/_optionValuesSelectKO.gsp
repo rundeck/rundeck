@@ -24,6 +24,12 @@
  --%>
 
 <div class="row" data-bind="if: option">
+    <!-- ko if: isFileType -->
+        <div class="col-sm-12">
+            <input type="file" name="" id="" data-bind="attr: {name: fieldName, id: fieldId}" class="optionvaluesfield  form-control">
+        </div>
+    <!-- /ko -->
+    <!-- ko if: !isFileType() -->
     <%-- Print out the input box for random input --%>
     <div data-bind="if: hasTextfield">
         <div data-bind="css: {'col-sm-8': hasExtended(), 'col-sm-12': !hasExtended() }">
@@ -157,7 +163,7 @@
             </span>
         </div>
     </div>
-
+    <!-- /ko -->
 </div>
 
 <div data-bind="if: hasRemote() && remoteValues().length<1 && !remoteError()">

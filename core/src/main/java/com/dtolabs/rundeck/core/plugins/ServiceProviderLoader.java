@@ -64,6 +64,15 @@ public interface ServiceProviderLoader {
     public PluginMetadata getPluginMetadata(String service, String provider) throws ProviderLoaderException;
 
     /**
+     * Create a plugin service for the given type
+     * @param type base interface class for the service
+     * @param serviceName name of the service
+     * @param <T> base type
+     * @return service
+     */
+    <T> PluggableProviderService<T> createPluginService(Class<T> type, final String serviceName);
+
+    /**
      * @return the available providers
      */
     public List<ProviderIdent> listProviders();

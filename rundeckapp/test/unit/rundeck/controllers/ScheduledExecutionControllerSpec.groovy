@@ -16,6 +16,9 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.support.ExtraCommand
+import com.dtolabs.rundeck.app.support.RunJobCommand
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
@@ -456,5 +459,368 @@ class ScheduledExecutionControllerSpec extends Specification {
         null == model.optionordering
         [:] == model.remoteOptionData
 
+    }
+
+    def "run job now"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.save()
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getAuthContextForSubjectAndProject(*_) >> testcontext
+            authorizeProjectJobAll(*_) >> true
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * getByIDorUUID(_) >> se
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            1 * getExecutionsAreActive() >> true
+            1 * executeJob(se, testcontext, _,  {opts->
+                opts['runAtTime']==null && opts['executionType']=='user'
+            }) >> [executionId: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+        setupFormTokens(params)
+        when:
+        request.method = 'POST'
+        controller.runJobNow(command, extra)
+
+        then:
+        response.status == 302
+        response.redirectedUrl == '/scheduledExecution/show'
+    }
+    def "run job now inline"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.save()
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        ).save()
+
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getAuthContextForSubjectAndProject(*_) >> testcontext
+            authorizeProjectJobAll(*_) >> true
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * getByIDorUUID(_) >> se
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            1 * getExecutionsAreActive() >> true
+            1 * executeJob(se, testcontext, _,  {opts->
+                opts['runAtTime']==null && opts['executionType']=='user'
+            }) >> [executionId: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+        setupFormTokens(params)
+        when:
+        request.method = 'POST'
+        controller.runJobInline(command, extra)
+
+        then:
+        response.status == 200
+        response.contentType.contains 'application/json'
+        response.json == [
+                href   : "/execution/follow/${exec.id}",
+                success: true,
+                id     : exec.id,
+                follow : false
+        ]
+
+    }
+
+    def "schedule job inline"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.save()
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        exec.save()
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getAuthContextForSubjectAndProject(*_) >> testcontext
+            authorizeProjectJobAll(*_) >> true
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * getByIDorUUID(_) >> se
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            1 * getExecutionsAreActive() >> true
+            0 * executeJob(*_)
+            1 * scheduleAdHocJob(se, testcontext, _, { opts ->
+                opts['runAtTime'] == 'dummy' && opts['executionType'] == 'user-scheduled'
+            }
+            ) >> [executionId: exec.id, id: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+        setupFormTokens(params)
+
+        params.runAtTime = 'dummy'
+        when:
+        request.method = 'POST'
+        controller.scheduleJobInline(command, extra)
+
+        then:
+        response.status == 200
+        response.contentType.contains 'application/json'
+        response.json == [
+                href   : "/execution/follow/${exec.id}",
+                success: true,
+                id     : exec.id,
+                follow : false
+        ]
+    }
+    def "run job later at time"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.save()
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getAuthContextForSubjectAndProject(*_) >> testcontext
+            authorizeProjectJobAll(*_) >> true
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            1 * getByIDorUUID(_) >> se
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            1 * getExecutionsAreActive() >> true
+            0 * executeJob(*_)
+            1 * scheduleAdHocJob(se, testcontext, _, {opts->
+                opts['runAtTime']=='dummy' && opts['executionType']=='user-scheduled'
+            }) >> [executionId: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+        setupFormTokens(params)
+
+        params.runAtTime = 'dummy'
+        when:
+        request.method = 'POST'
+        controller.runJobLater(command, extra)
+
+        then:
+        response.status == 302
+        response.redirectedUrl == '/scheduledExecution/show'
+    }
+
+    def "run job now missing form token"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.save()
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getAuthContextForSubjectAndProject(*_) >> testcontext
+            authorizeProjectJobAll(*_) >> true
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            0 * getByIDorUUID(_) >> se
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            0 * getExecutionsAreActive() >> true
+            0 * executeJob(se, testcontext, _, _) >> [executionId: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+//        setupFormTokens(params)
+        when:
+        request.method = 'POST'
+        controller.runJobNow(command, extra)
+
+        then:
+        response.status == 400
+        response.redirectedUrl == null
+        model.error == 'Invalid request token'
+        request.errorCode == 'request.error.invalidtoken.message'
+    }
+
+    def "run job now passive mode"() {
+        given:
+        def executionModeActive = false
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.save()
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getAuthContextForSubjectAndProject(*_) >> testcontext
+            authorizeProjectJobAll(*_) >> true
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            2 * getByIDorUUID(_) >> se
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            1 * getExecutionsAreActive() >> executionModeActive
+            0 * executeJob(se, testcontext, _, _) >> [executionId: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+        setupFormTokens(params)
+        //called by show()
+        controller.notificationService = Mock(NotificationService) {
+            1 * listNotificationPlugins() >> [:]
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
+            1 * listOrchestratorPlugins()
+        }
+        when:
+        params.project = 'testProject'
+        request.method = 'POST'
+        def resp = controller.runJobNow(command, extra)
+
+        then:
+        response.status == 200
+        response.redirectedUrl == null
+        !model.success
+        model.failed
+        model.error == 'disabled.execution.run'
     }
 }

@@ -49,6 +49,7 @@ class BootStrap {
     def filesystemProjectManager
     def reportService
     def configurationService
+    def fileUploadService
     def filterInterceptor
     Scheduler quartzScheduler
     MetricRegistry metricRegistry
@@ -412,6 +413,7 @@ class BootStrap {
              }else{
                  log.debug("logFileStorageService.resumeIncompleteLogStorage: skipping per configuration")
              }
+             fileUploadService.onBootstrap()
          }
          log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")
      }

@@ -1740,6 +1740,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler)
         service.frameworkService = Mock(FrameworkService)
+        service.fileUploadService = Mock(FileUploadService)
         when:
         def result = service.rescheduleJobs(null)
 

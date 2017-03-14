@@ -54,6 +54,25 @@ public class PluginManagerService implements FrameworkSupportService, ServicePro
     public PluginManagerService() {
 
     }
+
+    /**
+     * Create
+     * @param type
+     * @param serviceName
+     * @param <T>
+     * @return
+     */
+    @Override
+    public <T> PluggableProviderService<T> createPluginService(Class<T> type, final String serviceName) {
+        BasePluginProviderService<T> basePluginProviderService = new BasePluginProviderService<T>(
+                serviceName,
+                type
+        );
+        basePluginProviderService.setRundeckServerServiceProviderLoader(this);
+        return basePluginProviderService;
+    }
+
+
     /**
      * Create a PluginManagerService for the given directory and cache directory
      * @param extdir plugin dir

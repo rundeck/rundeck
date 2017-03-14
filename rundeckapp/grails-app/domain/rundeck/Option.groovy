@@ -16,6 +16,9 @@
 
 package rundeck
 
+import com.fasterxml.jackson.core.JsonParseException
+import com.fasterxml.jackson.databind.ObjectMapper
+
 import java.util.regex.Pattern
 
 /*
@@ -61,9 +64,11 @@ public class Option implements Comparable{
     String delimiter
     Boolean secureInput
     Boolean secureExposed
+    String optionType
+    String configData
 
     static belongsTo=[scheduledExecution:ScheduledExecution]
-    static transients=['valuesList','realValuesUrl']
+    static transients = ['valuesList', 'realValuesUrl', 'configMap']
 
     static constraints={
         name(nullable:false,blank:false,matches: '[a-zA-Z_0-9.-]+')
@@ -84,6 +89,33 @@ public class Option implements Comparable{
         secureInput(nullable:true)
         secureExposed(nullable:true)
         sortIndex(nullable:true)
+        optionType(nullable: true, maxSize: 255)
+        configData(nullable: true)
+    }
+
+
+    public Map getConfigMap() {
+        //de-serialize the json
+        if (null != configData) {
+            final ObjectMapper mapper = new ObjectMapper()
+            try {
+                return mapper.readValue(configData, Map.class)
+            } catch (JsonParseException e) {
+                return null
+            }
+        } else {
+            return null
+        }
+    }
+
+    public void setConfigMap(Map obj) {
+        //serialize json and store into field
+        if (null != obj) {
+            final ObjectMapper mapper = new ObjectMapper()
+            configData = mapper.writeValueAsString(obj)
+        } else {
+            configData = null
+        }
     }
 
     static mapping = {
@@ -93,12 +125,21 @@ public class Option implements Comparable{
         description type: 'text'
         defaultValue type: 'text'
         regex type: 'text'
+        optionType type: 'text'
+        configData type: 'text'
     }
     /**
      * Return canonical map representation
      */
     public Map toMap(){
         final Map map = [:]
+        if (null != optionType) {
+            map.type = optionType
+            def config = getConfigMap()
+            if (config) {
+                map.config = config
+            }
+        }
         if (null!=sortIndex) {
             map.sortIndex = sortIndex
         }
@@ -151,6 +192,13 @@ public class Option implements Comparable{
         opt.isDate=data.isDate?true:false
         if(opt.isDate){
             opt.dateFormat=data.dateFormat
+        }
+        if (data.type) {
+            opt.optionType = data.type
+            def config = data.config
+            if (config && config instanceof Map) {
+                opt.configMap = config
+            }
         }
         if(data.description){
             opt.description=data.description
@@ -270,7 +318,10 @@ public class Option implements Comparable{
      */
     public Option createClone(){
         Option opt = new Option()
-        ['name','description','defaultValue','defaultStoragePath','sortIndex','enforced','required', 'isDate','dateFormat', 'values','valuesList','valuesUrl','valuesUrlLong','regex','multivalued','delimiter','secureInput','secureExposed'].each{k->
+        ['name', 'description', 'defaultValue', 'defaultStoragePath', 'sortIndex', 'enforced', 'required', 'isDate',
+         'dateFormat', 'values', 'valuesList', 'valuesUrl', 'valuesUrlLong', 'regex', 'multivalued', 'delimiter',
+         'secureInput', 'secureExposed', 'optionType', 'configData'].
+                each { k ->
             opt[k]=this[k]
         }
         if(!opt.valuesList && values){
@@ -297,6 +348,8 @@ public class Option implements Comparable{
         ", secureInput='" + secureInput + '\'' +
         ", secureExposed='" + secureExposed + '\'' +
         ", delimiter='" + delimiter + '\'' +
+                ", optionType='" + optionType + '\'' +
+                ", configData='" + configData + '\'' +
         '}' ;
     }
 

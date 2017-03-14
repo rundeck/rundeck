@@ -41,6 +41,9 @@ class PluginService {
      * @param service
      * @return
      */
+    def <T> T getPlugin(String name, Class<T> type) {
+        getPlugin(name, rundeckPluginRegistry?.createPluggableService(type))
+    }
     def <T> T getPlugin(String name, PluggableProviderService<T> service) {
         def bean = rundeckPluginRegistry?.loadPluginByName(name, service)
         if (bean != null) {
@@ -78,6 +81,14 @@ class PluginService {
         log.error("${service.name} not found: ${name}")
         return null
     }
+    /**
+     *
+     * @param name
+     * @return map containing [instance:(plugin instance), description: (map or Description), ]
+     */
+    def DescribedPlugin getPluginDescriptor(String name, Class type) {
+        getPluginDescriptor(name, rundeckPluginRegistry?.createPluggableService(type))
+    }
 
     /**
      * Configure a plugin given only instance configuration
@@ -98,6 +109,16 @@ class PluginService {
         }
         log.error("${service.name} not found: ${name}")
         return null
+    }
+    /**
+     * Configure a plugin given only instance configuration
+     * @param name name
+     * @param configuration instance configuration
+     * @param service service
+     * @return plugin , or null if configuration or plugin loading failed
+     */
+    def <T> ConfiguredPlugin<T> configurePlugin(String name, Map configuration, Class<T> type) {
+        configurePlugin(name, configuration, rundeckPluginRegistry?.createPluggableService(type))
     }
 
     /**
@@ -122,6 +143,27 @@ class PluginService {
         log.error("${service.name} not found: ${name}")
         return null
     }
+    /**
+     * Configure a new plugin using only instance-scope configuration values
+     * @param name provider name
+     * @param configuration map of instance configuration values
+     * @param service service
+     * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
+     */
+    def <T> ConfiguredPlugin<T> configurePlugin(
+            String name, Map configuration, String projectName,
+            Framework framework,
+            Class<T> type
+    )
+    {
+        configurePlugin(
+                name,
+                configuration,
+                projectName,
+                framework,
+                rundeckPluginRegistry?.createPluggableService(type)
+        )
+    }
 
     /**
      * Configure a new plugin using a specific property resolver for configuration
@@ -131,9 +173,13 @@ class PluginService {
      * @param defaultScope default plugin property scope
      * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
      */
-    def <T> ConfiguredPlugin<T> configurePlugin(String name, PluggableProviderService<T> service,
-    PropertyResolver resolver,
-                              PropertyScope defaultScope) {
+    def <T> ConfiguredPlugin<T> configurePlugin(
+            String name,
+            PluggableProviderService<T> service,
+            PropertyResolver resolver,
+            PropertyScope defaultScope
+    )
+    {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service,
                 PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
         if(null==validation){
@@ -152,6 +198,16 @@ class PluginService {
         log.error("${service.name} not found: ${name}")
         return null
     }
+
+    def <T> ConfiguredPlugin<T> configurePlugin(
+            String name,
+            Class<T> type,
+            PropertyResolver resolver,
+            PropertyScope defaultScope
+    )
+    {
+        configurePlugin(name, rundeckPluginRegistry?.createPluggableService(type), resolver, defaultScope)
+    }
     /**
      * Return the configured values for a plugin
      * @param name provider name
@@ -161,7 +217,20 @@ class PluginService {
      * @return Map of [instance: plugin instance, configuration: Map of resolved configuration properties], or null
      */
     def <T> Map getPluginConfiguration(String name, PluggableProviderService<T> service, PropertyResolver resolver, PropertyScope defaultScope) {
-        return rundeckPluginRegistry?.getPluginConfigurationByName(name, service, PropertyResolverFactory.createPrefixedResolver(resolver, name, service.name), defaultScope)
+
+        return rundeckPluginRegistry?.getPluginConfigurationByName(name, service, PropertyResolverFactory
+                .createPrefixedResolver(resolver, name, service.name), defaultScope
+        )
+    }
+
+    def <T> Map getPluginConfiguration(
+            String name,
+            Class<T> type,
+            PropertyResolver resolver,
+            PropertyScope defaultScope
+    )
+    {
+        getPluginConfiguration(name, rundeckPluginRegistry?.createPluggableService(type), resolver, defaultScope)
     }
 
     private void logValidationErrors(String svcName, String pluginName,Validator.Report report) {
