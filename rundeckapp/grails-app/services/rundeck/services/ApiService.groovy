@@ -326,6 +326,24 @@ class ApiService {
     }
 
     /**
+     * Return an unauthorized response
+     * @param response
+     * @param code api code, default: 'api.error.item.unauthorized'
+     * @param args args to message code
+     * @return
+     */
+    def renderUnauthorized(HttpServletResponse response, List args, String code = 'api.error.item.unauthorized') {
+        renderErrorFormat(
+                response,
+                [
+                        status: HttpServletResponse.SC_FORBIDDEN,
+                        code  : code,
+                        args  : args
+                ]
+        )
+    }
+
+    /**
      * Render error in either JSON or XML format, depending on expected response
      * @param response
      * @param error

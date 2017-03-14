@@ -19,6 +19,9 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
+import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
+import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfoList
+import com.dtolabs.rundeck.app.api.jobs.upload.JobFileUpload
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authentication.Group
@@ -26,10 +29,8 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
-import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
@@ -50,7 +51,9 @@ import org.codehaus.groovy.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.rundeck.util.Toposort
+import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.MultipartHttpServletRequest
+import org.springframework.web.multipart.MultipartRequest
 import org.springframework.web.multipart.commons.CommonsMultipartFile
 import rundeck.*
 import rundeck.codecs.JobsXMLCodec
@@ -104,6 +107,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def UserService userService
     def ScmService scmService
     def PluginService pluginService
+    def FileUploadService fileUploadService
 
 
     def index = { redirect(controller:'menu',action:'jobs',params:params) }
@@ -111,42 +115,43 @@ class ScheduledExecutionController  extends ControllerBase{
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
-            delete: ['POST','GET'],
-            deleteBulk: 'POST',
-            flipExecutionDisabledBulk:'POST',
-            flipExecutionEnabledBulk:'POST',
-            flipScheduleDisabledBulk:'POST',
-            flipScheduleEnabledBulk:'POST',
-            flipScheduleEnabled:'POST',
-            flipExecutionEnabled: 'POST',
-            scheduleJobInline: 'POST',
-            runJobInline: 'POST',
-            runJobNow: 'POST',
-            runJobLater: 'POST',
-            runAdhocInline: 'POST',
-            save: 'POST',
-            saveAndExec: 'POST',
-            update: 'POST',
-            upload: 'GET',
-            uploadPost: ['POST'],
-            apiFlipExecutionEnabled: 'POST',
-            apiFlipExecutionEnabledBulk: 'POST',
-            apiFlipScheduleEnabled: 'POST',
-            apiFlipScheduleEnabledBulk: 'POST',
-            apiJobCreateSingle: 'POST',
-            apiJobRun: ['POST','GET'],
-            apiJobsImport: 'POST',
-            apiJobsImportv14: 'POST',
-            apiJobDelete: 'DELETE',
-            apiRunScript: 'POST',
-            apiRunScriptv14: 'POST',
-            apiRunScriptUrl: ['POST','GET'],
-            apiRunScriptUrlv14: ['POST','GET'],
-            apiRunCommand: ['POST','GET'],
-            apiRunCommandv14: ['POST','GET'],
-            apiJobDeleteBulk: ['DELETE', 'POST'],
+            delete                       : ['POST', 'GET'],
+            deleteBulk                   : 'POST',
+            flipExecutionDisabledBulk    : 'POST',
+            flipExecutionEnabledBulk     : 'POST',
+            flipScheduleDisabledBulk     : 'POST',
+            flipScheduleEnabledBulk      : 'POST',
+            flipScheduleEnabled          : 'POST',
+            flipExecutionEnabled         : 'POST',
+            scheduleJobInline            : 'POST',
+            runJobInline                 : 'POST',
+            runJobNow                    : 'POST',
+            runJobLater                  : 'POST',
+            runAdhocInline               : 'POST',
+            save                         : 'POST',
+            saveAndExec                  : 'POST',
+            update                       : 'POST',
+            upload                       : 'GET',
+            uploadPost                   : ['POST'],
+            apiFlipExecutionEnabled      : 'POST',
+            apiFlipExecutionEnabledBulk  : 'POST',
+            apiFlipScheduleEnabled       : 'POST',
+            apiFlipScheduleEnabledBulk   : 'POST',
+            apiJobCreateSingle           : 'POST',
+            apiJobRun                    : ['POST', 'GET'],
+            apiJobFileUpload             : 'POST',
+            apiJobsImport                : 'POST',
+            apiJobsImportv14             : 'POST',
+            apiJobDelete                 : 'DELETE',
+            apiRunScript                 : 'POST',
+            apiRunScriptv14              : 'POST',
+            apiRunScriptUrl              : ['POST', 'GET'],
+            apiRunScriptUrlv14           : ['POST', 'GET'],
+            apiRunCommand                : ['POST', 'GET'],
+            apiRunCommandv14             : ['POST', 'GET'],
+            apiJobDeleteBulk             : ['DELETE', 'POST'],
             apiJobClusterTakeoverSchedule: 'PUT',
-            apiJobUpdateSingle: 'PUT'
+            apiJobUpdateSingle           : 'PUT'
     ]
 
     def cancel (){
@@ -2113,7 +2118,8 @@ class ScheduledExecutionController  extends ControllerBase{
         def model=create.call()
         render(view:'create',model:model)
     }
-    def create = {
+
+    def create() {
 
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
         //authorize
@@ -2723,7 +2729,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     delegate.message = "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
                 }
             }
-            results = runJob()
+            results = scheduleJob(null)
 
             if(results.error=='invalid'){
                 session.jobexecOptionErrors=results.errors
@@ -2759,7 +2765,7 @@ class ScheduledExecutionController  extends ControllerBase{
                     delegate.message = "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
                 }
             }
-            results = scheduleJob()
+            results = scheduleJob(params.runAtTime)
 
             if (results.error == 'invalid') {
                 session.jobexecOptionErrors = results.errors
@@ -2784,10 +2790,10 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     public def runJobNow(RunJobCommand runParams, ExtraCommand extra) {
-        return prepareJobRun(runParams, extra, true)
+        return runOrScheduleJob(runParams, extra, true)
     }
 
-    public def prepareJobRun(RunJobCommand runParams, ExtraCommand extra, boolean runNow) {
+    public def runOrScheduleJob(RunJobCommand runParams, ExtraCommand extra, boolean runNow) {
         if ([runParams, extra].any{it.hasErrors()}) {
             request.errors= [runParams, extra].find { it.hasErrors() }.errors
             def model = show()
@@ -2795,11 +2801,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def results=[:]
         withForm{
-            if (runNow) {
-				results = runJob()
-            } else {
-                results = scheduleJob()
-            }
+            results = scheduleJob(runNow ? null : params.runAtTime)
         }.invalidToken{
             results.error = "Invalid request token"
             results.code = HttpServletResponse.SC_BAD_REQUEST
@@ -2831,48 +2833,6 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    private Map runJob () {
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        if (!scheduledExecution) {
-            return [error: "No Job found for id: " + params.id, code: 404]
-        }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
-            scheduledExecution.project)) {
-            return [success:false,failed:true,error:'unauthorized',message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
-        }
-
-        if(!executionService.executionsAreActive){
-            def msg=g.message(code:'disabled.execution.run')
-            return [success:false,failed:true,error:'disabled',message: msg]
-        }
-
-        if (!scheduledExecution.hasExecutionEnabled()) {
-            def msg=g.message(code:'scheduleExecution.execution.disabled')
-            return [success:false,failed:true,error:'disabled',message:msg]
-        }
-
-        if(params.extra?.debug=='true'){
-            params.extra.loglevel='DEBUG'
-        }
-        Map inputOpts=[:]
-        //add any option.* values, or nodeInclude/nodeExclude filters
-        if(params.extra){
-            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters', 'filter', 'nodeoverride','nodefilter']).findAll { it.value })
-            inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.')||it.key.startsWith('nodeInclude')|| it.key.startsWith('nodeExclude')}.findAll { it.value })
-        }
-        inputOpts['executionType'] = 'user'
-        def result = executionService.executeJob(scheduledExecution, authContext,session.user, inputOpts)
-
-        if (result.error){
-            result.failed=true
-            return result
-        }else{
-            log.debug("ExecutionController: immediate execution scheduled")
-//            redirect(controller:"execution", action:"follow",id:result.executionId)
-            return [success:true, message:"immediate execution scheduled", id:result.executionId]
-        }
-    }
 
     /**
      * Run a job at a later time.
@@ -2883,64 +2843,170 @@ class ScheduledExecutionController  extends ControllerBase{
      */
     public def runJobLater(RunJobCommand runParams, ExtraCommand extra) {
         // Prepare and schedule
-        return prepareJobRun(runParams, extra, false)
+        return runOrScheduleJob(runParams, extra, false)
     }
 
     /**
      * Schedule a job for a later time
      *
+     * @params runAtTime if scheduling in the future, the time to run the job, otherwise it will be run immediately
      * @return  the result in JSON
      */
-    private Map scheduleJob() {
+    private Map scheduleJob(String runAtTime = null) {
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(params.id)
-        def UserAndRolesAuthContext authContext =
-                frameworkService.getAuthContextForSubjectAndProject(session.subject,
-                                                scheduledExecution.project)
         if (!scheduledExecution) {
-            return [error: "Unable to find job with id: " + params.id, code: 404]
+            return [error: "No Job found for id: " + params.id, code: 404]
+        }
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+                                                     scheduledExecution.project)) {
+            return [success: false, failed: true, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
         }
 
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
-                [AuthConstants.ACTION_RUN], scheduledExecution.project)) {
-            return [success: false, failed: true, error: 'unauthorized',
-                    message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
+        if(!executionService.executionsAreActive){
+            def msg=g.message(code:'disabled.execution.run')
+            return [success:false,failed:true,error:'disabled',message: msg]
+        }
+
+        if (!scheduledExecution.hasExecutionEnabled()) {
+            def msg = g.message(code: 'scheduleExecution.execution.disabled')
+            return [success: false, failed: true, error: 'disabled', message: msg]
         }
 
         if (params.extra?.debug == 'true') {
             params.extra.loglevel='DEBUG'
         }
-
-        Map inputOpts = [:]
-        // Add any option.* values, or nodeInclude/nodxclude filters
+        Map inputOpts=[:]
+        //add any option.* values, or nodeInclude/nodeExclude filters
         if (params.extra) {
-            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option',
-                                                  '_replaceNodeFilters', 'filter', 'nodeoverride','nodefilter']).findAll { it.value })
+            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters',
+                                                  'filter', 'nodeoverride', 'nodefilter']).findAll { it.value })
             inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
                     it.key.startsWith('nodeExclude')}.findAll { it.value })
         }
 
-        if (params.extra.nodeInclude) {
-            scheduledExecution.nodeInclude = params.extra.nodeInclude
-        }
-        if (params.extra.nodeExclude) {
-            scheduledExecution.nodeExclude = params.extra.nodeExclude
-        }
-        if (params.runAtTime) {
-            inputOpts['runAtTime']  = params.runAtTime
+        Date expirationStart = runAtTime != null ? executionService.parseRunAtTime(runAtTime) : null
+
+        //handle uploaded files
+        def fcopy = handleUploadFiles(scheduledExecution, authContext, inputOpts, expirationStart)
+        if (!fcopy.success) {
+            return fcopy
         }
 
-        inputOpts['executionType'] = 'user-scheduled'
-        def scheduleResult = executionService.scheduleAdHocJob(scheduledExecution, authContext, session.user, inputOpts)
-        if (null == scheduleResult) {
-            return [success: false, failed: true, error: 'error',
-                    message: "Unable to schedule job"]
+        if (runAtTime) {
+            inputOpts['runAtTime'] = runAtTime
+            inputOpts['executionType'] = 'user-scheduled'
+
+            def scheduleResult = executionService.scheduleAdHocJob(
+                    scheduledExecution,
+                    authContext,
+                    session.user,
+                    inputOpts
+            )
+            if (null == scheduleResult) {
+                return [success: false, failed: true, error: 'error', message: "Unable to schedule job"]
+            }
+
+            log.debug("ScheduledExecutionController: deferred execution scheduled for ${scheduleResult.nextRun}")
+
+            if (scheduleResult.error) {
+                scheduleResult.failed = true
+            }
+            return scheduleResult
+        } else {
+            inputOpts['executionType'] = 'user'
+
+            def result = executionService.executeJob(scheduledExecution, authContext, session.user, inputOpts)
+
+            if (result.error) {
+                result.failed = true
+                return result
+            } else {
+                log.debug("ExecutionController: immediate execution scheduled")
+                return [success: true, message: "immediate execution scheduled", id: result.executionId]
+            }
         }
 
-        log.debug("ScheduledExecutionController: deferred execution scheduled for ${scheduleResult.nextRun}")
-
-        return scheduleResult
     }
 
+
+    private def handleUploadFiles(
+            ScheduledExecution scheduledExecution,
+            UserAndRolesAuthContext authContext,
+            Map inputOpts,
+            Date expirationStart = null
+    )
+    {
+        def optionParameterPrefix = "extra.option."
+        def fileresults = [:]
+        if (request instanceof MultipartRequest) {
+            def fileOptions = scheduledExecution.listFileOptions()
+            def fileOptionNames = fileOptions*.name
+            def invalid = []
+            long maxsize = fileUploadService.optionUploadMaxSize
+            if (maxsize > 0) {
+                def find = ((MultipartRequest) request).fileMap.find { String name, file -> file.size > maxsize }
+                if (find) {
+                    def msg = g.message(
+                            code: 'api.error.job-upload.filesize',
+                            args: [find.value.size, find.key.substring(optionParameterPrefix.length()), maxsize]
+                    )
+                    return [success: false, failed: true, error: 'filesize', message: msg]
+                }
+            }
+            ((MultipartRequest) request).fileMap.each { String name, file ->
+                if (name.startsWith(optionParameterPrefix)) {
+                    //process file option upload
+                    String optname = name.substring(optionParameterPrefix.length())
+                    if (!(optname in fileOptionNames)) {
+                        invalid << optname
+                    }
+                } else {
+                    invalid << name
+                }
+            }
+            if (invalid) {
+                def msg = g.message(code: 'api.error.job-upload.option.unexpected', args: [invalid.join(',')])
+                return [success: false, failed: true, error: 'input', message: msg]
+            }
+
+            for (def entry : ((MultipartRequest) request).fileMap) {
+                String name = entry.key
+                MultipartFile file = entry.value
+                if (name.startsWith(optionParameterPrefix)) {
+                    //process file option upload
+                    String optname = name.substring(optionParameterPrefix.length())
+                    if (optname in fileOptionNames && !file.empty) {
+                        try {
+                            String ref = fileUploadService.receiveFile(
+                                    file.inputStream,
+                                    file.size,
+                                    authContext.username,
+                                    file.originalFilename,
+                                    optname,
+                                    scheduledExecution.extid,
+                                    expirationStart ?: new Date()
+                            )
+                            fileresults[optname] = ref
+                        } catch (FileUploadServiceException e) {
+                            def msg = g.message(code: 'api.error.job-upload.error', args: [e.message])
+                            return [success: false, failed: true, error: 'input', message: msg]
+                        }
+                    }
+                }
+            }
+            fileOptionNames.each { optname ->
+                if(fileresults[optname]) {
+                    inputOpts["option.$optname".toString()] = fileresults[optname]
+                    inputOpts.get('option')?.put(optname, fileresults[optname])
+                }else{
+                    inputOpts.remove("option.$optname".toString())
+                    inputOpts.get('option')?.remove(optname)
+                }
+            }
+        }
+        [success: true, files: fileresults]
+    }
 
     /**
     * API Actions
@@ -3232,7 +3298,28 @@ class ScheduledExecutionController  extends ControllerBase{
             response.sendError(HttpServletResponse.SC_METHOD_NOT_ALLOWED)
             return
         }
-        def jobid = params.id
+        String jobid = params.id
+
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
+            return
+        }
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scheduledExecution.project
+        )
+
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+                                                     scheduledExecution.project
+        )) {
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                                                           code  : 'api.error.item.unauthorized', args: ['Run', 'Job ' +
+                    'ID', jobid]]
+            )
+        }
+        def username = session.user
+
         def jobAsUser, jobArgString, jobLoglevel, jobFilter, jobRunAtTime, jobOptions
         if (request.format == 'json') {
             def data= request.JSON
@@ -3249,29 +3336,39 @@ class ScheduledExecutionController  extends ControllerBase{
             jobRunAtTime = params.runAtTime
             jobOptions = params.option
         }
-
-        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
-
-        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
-            return
+        if (request instanceof MultipartRequest) {
+            //process file uploads
+            ((MultipartRequest) request).fileMap.each { String name, file ->
+                if (name.startsWith('option.')) {
+                    //process file option upload
+                    //XXX
+//                    String fuploadPlugin = 'filesystem' //TODO: from option config
+//
+//                    def plugin = pluginService.getPlugin(fuploadPlugin, ExecutionFileStoragePlugin)
+//
+//                    plugin.store(jobid + name + file.originalFilename + UUID.randomUUID().toString(),
+//                                 file.inputStream,
+//                                 file.size,
+//                                 new Date()
+//
+//                    )
+                } else if (name == 'run' && file.contentType == 'application/json') {
+                    //process job run json
+                }
+            }
         }
-        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-
-        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
-            scheduledExecution.project)) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Run', 'Job ID', jobid]])
-        }
-        def username = session.user
         if(jobAsUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
             // authorize RunAs User
             if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUNAS],
-                    scheduledExecution.project)) {
+                                                         scheduledExecution.project
+            )) {
                 return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                        code: 'api.error.item.unauthorized', args: ['Run as User', 'Job ID', jobid]])
+                                                               code  : 'api.error.item.unauthorized', args: ['Run as User', 'Job ID', jobid]]
+                )
             }
             username = jobAsUser
         }
+
         def inputOpts = [:]
 
         if (request.api_version >= ApiRequestFilters.V18 && jobOptions && jobOptions instanceof Map) {
@@ -3345,6 +3442,248 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
+    /**
+     * API v19, File upload input for job
+     * @return
+     */
+    def apiJobFileUpload() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+            return
+        }
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+        String jobid = params.id
+
+        ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(jobid)
+
+        if (!apiService.requireExists(response, scheduledExecution, ['Job ID', jobid])) {
+            return
+        }
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                scheduledExecution.project
+        )
+
+        if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
+                                                     scheduledExecution.project
+        )) {
+            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
+                                                           code  : 'api.error.item.unauthorized', args: ['Run', 'Job ' +
+                    'ID', jobid]]
+            )
+        }
+        String optionParameterPrefix = 'option.'
+        def fileOptions = scheduledExecution.listFileOptions()
+
+        if (!fileOptions) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.job-upload.invalid',
+                    args  : [jobid]
+            ]
+            )
+        }
+        def fileOptionNames = fileOptions*.name
+        def uploadedFileRefs = [:]
+        def uploadError
+        if (request instanceof MultipartRequest) {
+            def invalid = []
+            Map<String,MultipartFile> optionRequestFiles = [:]
+            ((MultipartRequest) request).fileMap.each { String name, file ->
+                if (name.startsWith(optionParameterPrefix)) {
+                    //process file option upload
+                    String optname = name.substring(optionParameterPrefix.length())
+                    //require file option
+                    if (optname in fileOptionNames) {
+                        optionRequestFiles[optname] = file
+                    } else {
+                        invalid << name
+                    }
+                } else {
+                    invalid << name
+                }
+            }
+            if (invalid) {
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.job-upload.option.unexpected',
+                        args  : [invalid.join(', ')]
+                ]
+                )
+            }
+
+            long maxsize = fileUploadService.optionUploadMaxSize
+            if (maxsize > 0) {
+                def find = ((MultipartRequest) request).fileMap.find { String name, file -> file.size > maxsize }
+                if (find) {
+                    return apiService.renderErrorFormat(response, [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code  : 'api.error.job-upload.filesize',
+                            args  : [find.value.size, find.key.substring(optionParameterPrefix.length()), maxsize]
+                    ]
+                    )
+                }
+            }
+            for (def entry : optionRequestFiles) {
+                String optname = entry.key
+                MultipartFile file = entry.value
+                try {
+                    String ref = fileUploadService.receiveFile(
+                            file.inputStream,
+                            file.size,
+                            authContext.username,
+                            file.originalFilename,
+                            optname,
+                            scheduledExecution.extid,
+                            new Date()
+                    )
+                    uploadedFileRefs[optname] = ref
+                } catch (FileUploadServiceException e) {
+                    uploadError = e
+                    break
+                }
+            }
+        } else {
+            //single option
+            if (!apiService.requireParameters(params, response, ['optionName'])) {
+                return
+            }
+            if (!(fileOptionNames.contains(params.optionName))) {
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.job-upload.option.unexpected',
+                        args  : [params.optionName]
+                ]
+                )
+            }
+            long maxsize = fileUploadService.optionUploadMaxSize
+
+            if (maxsize > 0 && request.contentLength > maxsize) {
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.job-upload.filesize',
+                        args  : [request.contentLength, params.optionName, maxsize]
+                ]
+                )
+            }
+            try {
+                //request body is file
+                String ref = fileUploadService.receiveFile(
+                        request.getInputStream(),
+                        request.contentLength,
+                        authContext.username,
+                        params.fileName,
+                        params.optionName,
+                        scheduledExecution.extid,
+                        new Date()
+                )
+                uploadedFileRefs[params.optionName] = ref
+            } catch (FileUploadServiceException e) {
+                uploadError = e
+            }
+        }
+        if (uploadError) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.job-upload.error',
+                    args  : [uploadError.message]
+            ]
+            )
+        }
+        respond(new JobFileUpload(total: uploadedFileRefs.size(), options: uploadedFileRefs), [formats: ['xml', 'json']])
+    }
+
+    /**
+     * API v19, File upload input for job
+     * @return
+     */
+    def apiJobFileInfo() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+            return
+        }
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def jobFileRecord = fileUploadService.findUuid(params.id)
+        if (!apiService.requireExists(response, jobFileRecord, ['Job File Record', params.id])) {
+            return
+        }
+        def job = scheduledExecutionService.getByIDorUUID(jobFileRecord.jobId)
+        if (!apiService.requireExists(response, job, ['Job File Record', params.id])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, job.project)
+        if (!frameworkService.authorizeProjectJobAll(authContext, job, [AuthConstants.ACTION_READ], job.project)) {
+            return apiService.renderUnauthorized(response, ['Read', 'Job File Record', params.id])
+        }
+
+        respond(new JobFileInfo(jobFileRecord.exportMap()), [formats: ['xml', 'json']])
+    }
+    /**
+     * API v19, File upload input for job
+     * @return
+     */
+    def apiJobFilesList() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+            return
+        }
+
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def job = scheduledExecutionService.getByIDorUUID(params.id)
+        if (!apiService.requireExists(response, job, ['Job ID', params.id])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, job.project)
+        if (!frameworkService.authorizeProjectJobAll(authContext, job, [AuthConstants.ACTION_READ], job.project)) {
+            return apiService.renderUnauthorized(response, ['Read', 'Job ID', params.id])
+        }
+
+        def paging = [offset: 0, max: 20, sort: 'dateCreated', order: 'desc']
+        if (params.max) {
+            paging.max = params.int('max')
+        }
+        if (params.offset) {
+            paging.offset = params.int('offset')
+        }
+        String fileState = params.fileState ?: JobFileRecord.STATE_TEMP
+        def records = fileUploadService.findRecords(
+                job.extid,
+                FileUploadService.RECORD_TYPE_OPTION_INPUT,
+                fileState,
+                paging
+        )
+        int total = fileUploadService.countRecords(
+                job.extid,
+                FileUploadService.RECORD_TYPE_OPTION_INPUT,
+                fileState
+        )
+        respond(
+                new JobFileInfoList(
+                        records.collect{new JobFileInfo(it.exportMap())},
+                        paging + [total:total, count: records.size()]
+                ),
+                [formats: ['xml', 'json']]
+        )
+    }
     /**
      * API: DELETE job definition: /job/{id}, version 1
      */

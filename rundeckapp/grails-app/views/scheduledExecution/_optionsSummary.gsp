@@ -24,7 +24,12 @@
 <span class="argstring">
 <g:each in="${options}" var="optionsel" status="i">
         <span class=" ${optionsel.secureInput?'secure':''}"
-              title="${enc(attr:optionsel.description)}"><g:enc>${optionsel.name}</g:enc></span><g:if
+              title="${enc(attr: optionsel.description)}">
+            <g:if test="${'file' == optionsel.optionType}">
+                <g:icon name="file"></g:icon>
+            </g:if>
+            <g:enc>${optionsel.name}</g:enc></span>
+    <g:if
         test="${optionsel.defaultValue}">: <code class="optvalue"><g:enc>${optionsel.secureInput?'*****':optionsel.defaultValue}</g:enc></code></g:if><g:if
         test="${i <options.size()-1}">,</g:if>
 </g:each>

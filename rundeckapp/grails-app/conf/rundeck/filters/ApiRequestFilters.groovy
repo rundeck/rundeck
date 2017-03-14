@@ -62,15 +62,16 @@ public class ApiRequestFilters {
     public static final int V16 = 16
     public static final int V17 = 17
     public static final int V18 = 18
+    public static final int V19 = 19
     public static final Map VersionMap = [:]
-    public static final List Versions = [V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18]
+    public static final List Versions = [V1, V2, V3, V4, V5, V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19]
     static {
         Versions.each { VersionMap[it.toString()] = it }
     }
     public static final Set VersionStrings = new HashSet(VersionMap.values())
 
     public final static int API_EARLIEST_VERSION = V1
-    public final static int API_CURRENT_VERSION = V18
+    public final static int API_CURRENT_VERSION = V19
     public final static int API_MIN_VERSION = API_EARLIEST_VERSION
     public final static int API_MAX_VERSION = API_CURRENT_VERSION
 

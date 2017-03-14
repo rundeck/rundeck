@@ -24,13 +24,12 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
-import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.events.EventException
 import grails.plugins.quartz.listeners.SessionBinderJobListener
 import grails.transaction.Transactional
 import org.apache.log4j.Logger
@@ -51,6 +50,7 @@ import rundeck.controllers.JobXMLException
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.controllers.WorkflowController
 import rundeck.quartzjobs.ExecutionJob
+import rundeck.services.events.ExecutionPrepareEvent
 
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
@@ -78,6 +78,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def grailsEvents
     def pluginService
     def executionUtilService
+    def fileUploadService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -945,6 +946,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 .withIdentity(identity.jobname, identity.groupname)
                 .startAt(startTime)
                 .build()
+
+        try {
+            fileUploadService.executionBeforeSchedule(new ExecutionPrepareEvent(
+                    execution: e,
+                    job: se,
+                    options: executionService.parseJobOptsFromString(se, e.argString)
+            )
+            )
+        } catch (FileUploadServiceException exc) {
+            log.warn("Failed uploaded file preparation for scheduled job: $exc", exc)
+        }
 
         if (quartzScheduler.checkExists(jobDetail.getKey())) {
             log.info("rescheduling existing ad-hoc job in project ${se.project} ${se.extid} ${e.id}")

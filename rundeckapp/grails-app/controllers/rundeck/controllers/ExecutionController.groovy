@@ -17,6 +17,9 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+
+import com.dtolabs.rundeck.app.api.jobs.upload.ExecutionFileInfoList
+import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -37,6 +40,7 @@ import rundeck.ScheduledExecution
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
+import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
 import rundeck.services.OrchestratorPluginService
@@ -62,6 +66,7 @@ class ExecutionController extends ControllerBase{
     OrchestratorPluginService orchestratorPluginService
     ApiService apiService
     WorkflowService workflowService
+    FileUploadService fileUploadService
 
     static allowedMethods = [
             delete:['POST','DELETE'],
@@ -227,6 +232,8 @@ class ExecutionController extends ControllerBase{
             pluginDescs['workflow'][desc.name]=desc
         }
         def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, 0)
+        def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
+        def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
         return [
                 scheduledExecution    : e.scheduledExecution ?: null,
                 execution             : e,
@@ -240,6 +247,7 @@ class ExecutionController extends ControllerBase{
                 enext                 : enext,
                 eprev                 : eprev,
                 stepPluginDescriptions: pluginDescs,
+                inputFilesMap         : inputFilesMap
         ]
     }
     def delete = {
@@ -1723,6 +1731,38 @@ class ExecutionController extends ControllerBase{
                 }
             }
         }
+    }
+
+    /**
+     * List input files for an execution
+     */
+    def apiExecutionInputFiles() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+            return
+        }
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def Execution e = Execution.get(params.id)
+        if (!apiService.requireExists(response, e, ['Execution ID', params.id])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, e.project)
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ]),
+                response,
+                [AuthConstants.ACTION_READ, "Execution", params.id] as Object[]
+        )) {
+            return
+        }
+
+        def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
+
+        respond(
+                new ExecutionFileInfoList(inputFiles.collect { new JobFileInfo(it.exportMap()) }, [:]),
+                [format: ['xml', 'json']]
+        )
     }
 }
 

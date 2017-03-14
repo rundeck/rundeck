@@ -927,5 +927,21 @@ class ScheduledExecution extends ExecutionContext {
         }
     }
 
+    /**
+     * Return the defined option with the given name, if available
+     * @param name
+     * @return
+     */
+    Option findOption(String name) {
+        options.find { it.name == name }
+    }
+    /**
+     * Return the defined option with the given name, if available
+     * @param name
+     * @return
+     */
+    List<Option> listFileOptions() {
+        options.findAll { it.optionType == 'file' } as List
+    }
 }
 

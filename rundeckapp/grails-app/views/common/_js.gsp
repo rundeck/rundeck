@@ -78,7 +78,7 @@
 
         editOptsRenderUndo: '${createLink(controller:"editOpts",action:"renderUndo",params:projParams)}',
         editOptsEdit: '${createLink(controller:"editOpts",action:"edit",params:projParams)}',
-        editOptsRender: '${createLink(controller:"editOpts",action:"render",params:projParams)}',
+        editOptsRender: '${createLink(controller:"editOpts",action:"renderOpt",params:projParams)}',
         editOptsSave: '${createLink(controller:"editOpts",action:"save",params:projParams)}',
         editOptsRenderAll: '${createLink(controller:"editOpts",action:"renderAll",params:projParams)}',
         editOptsRenderSummary: '${createLink(controller:"editOpts",action:"renderSummary",params:projParams)}',

@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.events.EventException
 import grails.events.Listener
 import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
@@ -56,6 +57,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.filters.ApiRequestFilters
+import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
@@ -102,6 +104,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def configurationService
     def grailsEvents
     def executionUtilService
+    def fileUploadService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS =
         new ThreadLocal<DateFormat>() {
@@ -946,6 +949,23 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
                     execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed,inputCharset)
 
+            def evt = grailsEvents?.event(
+                    null,
+                    'executionBeforeStart',
+                    new ExecutionPrepareEvent(
+                            execution:execution,
+                            job:scheduledExecution,
+                            context: executioncontext
+                    )
+            )
+            evt?.get()
+            def errs = evt?.getErrors()
+            if (errs) {
+                def err=(errs[0] instanceof EventException)? errs[0].cause : errs[0]
+                throw new ExecutionServiceException(err.message, err)
+            }
+
+
             //ExecutionService handles Job reference steps
             final cis = StepExecutionService.getInstanceForFramework(framework);
             cis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
@@ -1420,6 +1440,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     files << file
                 }
             }
+            //delete all job file records
+            fileUploadService.deleteRecordsForExecution(e)
+
             log.debug("${files.size()} files from execution will be deleted")
             logExecutionLog4j(e, "delete", username)
             //delete execution
@@ -1728,21 +1751,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             // Try and parse schedule time
 
-            Date now        = java.util.Calendar.getInstance().getTime()
-            Date startTime
-            try {
-                try{
-                    startTime   = ISO_8601_DATE_FORMAT.get().parse(input.runAtTime)
-                }catch (ParseException e1){
-                    startTime	= ISO_8601_DATE_FORMAT_WITH_MS.get().parse(input.runAtTime)
-                }
-            } catch (ParseException | IllegalArgumentException z) {
+            Date startTime = parseRunAtTime(input.runAtTime)
+            if (null == startTime) {
                 return [success: false, failed: true, error: 'failed',
                         message: 'Invalid date/time format, only ISO 8601 is supported',
                         options: input.option]
             }
 
-            if (startTime.before(now)) {
+
+            if (startTime.before(new Date())) {
                 return [success: false, failed: true, error: 'failed',
                         message: 'A job cannot be scheduled for a time in the past',
                         options: input.option]
@@ -1782,6 +1799,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    /**
+     * Parse the Date from the time input
+     * @param runAtTime
+     * @return valid Date, or null if it cannot be parsed
+     */
+    def Date parseRunAtTime(String runAtTime) {
+        try {
+            return ISO_8601_DATE_FORMAT.get().parse(runAtTime)
+        } catch (ParseException e1) {
+
+        }
+        try {
+            return ISO_8601_DATE_FORMAT_WITH_MS.get().parse(runAtTime)
+        } catch (ParseException e1) {
+
+        }
+        null
+    }
     /**
      * Create execution
      * @param se job
@@ -2104,7 +2139,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     return
                 }
 
-
+                if (opt.optionType == 'file' && optparams[opt.name]) {
+                    def validate = fileUploadService.validateFileRefForJobOption(
+                            optparams[opt.name],
+                            scheduledExecution.extid,
+                            opt.name
+                    )
+                    if (!validate.valid) {
+                        invalidOpt opt, lookupMessage('domain.Option.validation.file.' + validate.error, validate.args)
+                    }
+                }
                 if (opt.required && !optparams[opt.name]) {
 
                     if (!opt.defaultStoragePath) {

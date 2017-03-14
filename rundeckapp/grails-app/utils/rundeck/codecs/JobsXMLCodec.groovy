@@ -196,6 +196,18 @@ class JobsXMLCodec {
                 if (opts && opts instanceof Map) {
                     opts = [opts]
                 }
+                def convertOptionConfig={Map oconfig->
+                    def e=oconfig.remove('entry')
+                    def confMap=[:]
+                    if(e instanceof Map){
+                        confMap[e['key']]=e['value']
+                    }else if(e instanceof Collection){
+                        e.each{
+                            confMap[it['key']] = it['value']
+                        }
+                    }
+                    confMap
+                }
                 //if preserveOrder is true, include sortIndex information
                 if (opts && opts instanceof Collection) {
                     opts.each { optm ->
@@ -213,6 +225,9 @@ class JobsXMLCodec {
                         }
                         if (ndx > -1) {
                             optm.sortIndex = ndx++;
+                        }
+                        if(optm.config && optm.config instanceof Map){
+                            optm.config=convertOptionConfig(optm.remove('config'))
                         }
                     }
                 }
@@ -488,6 +503,21 @@ class JobsXMLCodec {
                 }else{
                     x.remove('multivalued')
                     x.remove('delimiter')
+                }
+                if(x.type) {
+                    BuilderUtil.addAttribute(x, 'type', x.remove('type'))
+                    if(x.config){
+                        def config = x.remove('config')
+                        config.each { k, v ->
+                            if (!x['config']) {
+                                x['config'] = [entry: []]
+                            }
+                            def entryMap= [key: k, value: v]
+                            BuilderUtil.makeAttribute(entryMap,'key')
+                            BuilderUtil.makeAttribute(entryMap,'value')
+                            x['config']['entry'] <<  entryMap
+                        }
+                    }
                 }
                 optslist<<x
             }

@@ -25,10 +25,12 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import groovy.mock.interceptor.MockFor
 import rundeck.BaseReport
+import rundeck.CommandExec
 import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.Project
 import rundeck.ScheduledExecution
+import rundeck.Workflow
 import spock.lang.Specification
 
 /**
@@ -37,6 +39,73 @@ import spock.lang.Specification
 @TestFor(ProjectService)
 @Mock([Project,BaseReport,ExecReport,ScheduledExecution,Execution])
 class ProjectServiceSpec extends Specification {
+    def "loadJobFileRecord"() {
+        given:
+        def ofileuuid = UUID.randomUUID().toString()
+        def ojobid = UUID.randomUUID().toString()
+        def newjobid = UUID.randomUUID().toString()
+        def oldexecid = '123'
+
+        ScheduledExecution se = new ScheduledExecution(jobName: 'blue', project: 'AProject', adhocExecution: true,
+                                                       uuid: newjobid,
+                                                       adhocFilepath: '/this/is/a/path', groupPath: 'some/where',
+                                                       description: 'a job', argString: '-a b -c d',
+                                                       workflow: new Workflow(
+                                                               keepgoing: true,
+                                                               commands: [new CommandExec(
+                                                                       [adhocRemoteString: 'test buddy', argString:
+                                                                               '-delay 12 -monkey cheese -particle']
+                                                               )]
+                                                       ),
+                                                       ).save()
+
+        Execution exec = new Execution(
+                scheduledExecution: se,
+                argString: "-ftest1 $ofileuuid",
+                user: "testuser",
+                project: "AProject",
+                loglevel: 'WARN',
+                doNodedispatch: true,
+                dateStarted: new Date(0),
+                dateCompleted: new Date(3600000),
+                nodeInclude: 'test1',
+                nodeExcludeTags: 'monkey',
+                status: 'true',
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')])
+        ).save()
+
+        def xml = """
+<jobFileRecord>
+  <execId>$oldexecid</execId>
+  <uuid>$ofileuuid</uuid>
+  <recordName>ftest1</recordName>
+  <jobId>$ojobid</jobId>
+  <fileName>resource.yaml</fileName>
+  <sha>071bbe64581d4c33737af25b61ac3d612c3dcdf9d3e869fde77e66e16112daba</sha>
+  <size>352</size>
+  <dateCreated>2017-02-28T00:17:41Z</dateCreated>
+  <lastUpdated>2017-02-28T00:17:42Z</lastUpdated>
+  <expirationDate>2017-02-28T00:18:11Z</expirationDate>
+  <user>admin</user>
+  <fileState>deleted</fileState>
+  <storageReference>211ace71-df1c-4b3d-b351-40b8ac007cb9</storageReference>
+  <storageType>filesystem-temp</storageType>
+  <storageMeta />
+  <serverNodeUUID>3425B691-7319-4EEE-8425-F053C628B4BA</serverNodeUUID>
+  <recordType>option</recordType>
+</jobFileRecord>"""
+
+        when:
+        def result = service.loadJobFileRecord(xml.toString(), [123: exec.id], [(ojobid): se.extid])
+        def newfileid = result.uuid
+        then:
+        result != null
+        result.jobId == newjobid
+        result.execution.id == exec.id
+        newfileid != ofileuuid
+        result.execution.argString == "-ftest1 $newfileid".toString()
+
+    }
     def "importProjectConfig"(){
         given:
         def tempfile = File.createTempFile("test-importProjectConfig",".properties")
