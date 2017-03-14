@@ -77,21 +77,6 @@ class ScheduledExecution extends ExecutionContext {
         nextExecution(nullable:true)
         nodeKeepgoing(nullable:true)
         doNodedispatch(nullable:true)
-        nodeInclude(nullable:true)
-        nodeExclude(nullable:true)
-        nodeIncludeName(nullable:true)
-        nodeExcludeName(nullable:true)
-        nodeIncludeTags(nullable:true)
-        nodeExcludeTags(nullable:true)
-        nodeIncludeOsName(nullable:true)
-        nodeExcludeOsName(nullable:true)
-        nodeIncludeOsFamily(nullable:true)
-        nodeExcludeOsFamily(nullable:true)
-        nodeIncludeOsArch(nullable:true)
-        nodeExcludeOsArch(nullable:true)
-        nodeIncludeOsVersion(nullable:true)
-        nodeExcludeOsVersion(nullable:true)
-        nodeExcludePrecedence(nullable:true)
         filter(nullable:true)
         user(nullable:true)
         userRoleList(nullable:true)
@@ -141,20 +126,6 @@ class ScheduledExecution extends ExecutionContext {
 
     static mapping = {
         user column: "rduser"
-        nodeInclude(type: 'text')
-        nodeExclude(type: 'text')
-        nodeIncludeName(type: 'text')
-        nodeExcludeName(type: 'text')
-        nodeIncludeTags(type: 'text')
-        nodeExcludeTags(type: 'text')
-        nodeIncludeOsName(type: 'text')
-        nodeExcludeOsName(type: 'text')
-        nodeIncludeOsFamily(type: 'text')
-        nodeExcludeOsFamily(type: 'text')
-        nodeIncludeOsArch(type: 'text')
-        nodeExcludeOsArch(type: 'text')
-        nodeIncludeOsVersion(type: 'text')
-        nodeExcludeOsVersion(type: 'text')
         filter(type: 'text')
         userRoleList(type: 'text')
         jobName type: 'string'
@@ -251,16 +222,12 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(doNodedispatch){
             map.nodesSelectedByDefault = hasNodesSelectedByDefault()
-            map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,keepgoing:nodeKeepgoing?true:false,excludePrecedence:nodeExcludePrecedence?true:false]]
+            map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,keepgoing:nodeKeepgoing?true:false]]
             if(nodeRankAttribute){
                 map.nodefilters.dispatch.rankAttribute= nodeRankAttribute
             }
             map.nodefilters.dispatch.rankOrder= (null== nodeRankOrderAscending || nodeRankOrderAscending)?'ascending':'descending'
-            if(this.filter){
-                map.nodefilters.filter = this.filter
-            }else{
-                map.nodefilters.filter = asFilter()
-            }
+            map.nodefilters.filter = this.filter
         }
         if(notifications){
             map.notification=[:]
@@ -386,9 +353,6 @@ class ScheduledExecution extends ExecutionContext {
                 if(data.nodefilters.dispatch.containsKey('keepgoing')){
                     se.nodeKeepgoing = data.nodefilters.dispatch.keepgoing
                 }
-                if(data.nodefilters.dispatch.containsKey('excludePrecedence')){
-                    se.nodeExcludePrecedence = data.nodefilters.dispatch.excludePrecedence
-                }
                 if(data.nodefilters.dispatch.containsKey('rankAttribute')){
                     se.nodeRankAttribute = data.nodefilters.dispatch.rankAttribute
                 }
@@ -500,12 +464,7 @@ class ScheduledExecution extends ExecutionContext {
 
     public clearFilterFields(){
         this.doNodedispatch = false
-        filterKeys.keySet().each{ k->
-            this["nodeInclude${filterKeys[k]}"]=null
-        }
-        filterKeys.keySet().each{ k->
-            this["nodeExclude${filterKeys[k]}"]=null
-        }
+        this.filter=null
     }
 
     public setUserRoles(List l){

@@ -28,69 +28,24 @@ import com.dtolabs.rundeck.app.support.ExtNodeFilters
 public class NodeFilter {
 
     String name
-    String nodeInclude
-    String nodeExclude
-    String nodeIncludeName
-    String nodeExcludeName
-    String nodeIncludeTags
-    String nodeExcludeTags
-    String nodeIncludeOsName
-    String nodeExcludeOsName
-    String nodeIncludeOsFamily
-    String nodeExcludeOsFamily
-    String nodeIncludeOsArch
-    String nodeExcludeOsArch
-    String nodeIncludeOsVersion
-    String nodeExcludeOsVersion
-    Boolean nodeExcludePrecedence=true
     String project
     String filter
 
     static belongsTo = [user:User]
     static constraints={
         name(blank:false, matches: /^[^<>&'"\/]+$/)
-        nodeInclude(nullable: true)
-        nodeExclude(nullable: true)
-        nodeIncludeName(nullable: true)
-        nodeExcludeName(nullable: true)
-        nodeIncludeTags(nullable: true)
-        nodeExcludeTags(nullable: true)
-        nodeIncludeOsName(nullable: true)
-        nodeExcludeOsName(nullable: true)
-        nodeIncludeOsFamily(nullable: true)
-        nodeExcludeOsFamily(nullable: true)
-        nodeIncludeOsArch(nullable: true)
-        nodeExcludeOsArch(nullable: true)
-        nodeIncludeOsVersion(nullable: true)
-        nodeExcludeOsVersion(nullable: true)
-        nodeExcludePrecedence(nullable: true)
         project(nullable: true)
         filter(nullable: true)
     }
     static mapping = {
-
-        nodeInclude(type: 'text')
-        nodeExclude(type: 'text')
-        nodeIncludeName(type: 'text')
-        nodeExcludeName(type: 'text')
-        nodeIncludeTags(type: 'text')
-        nodeExcludeTags(type: 'text')
-        nodeIncludeOsName(type: 'text')
-        nodeExcludeOsName(type: 'text')
-        nodeIncludeOsFamily(type: 'text')
-        nodeExcludeOsFamily(type: 'text')
-        nodeIncludeOsArch(type: 'text')
-        nodeExcludeOsArch(type: 'text')
-        nodeIncludeOsVersion(type: 'text')
-        nodeExcludeOsVersion(type: 'text')
         filter(type: 'text')
     }
 
     public ExtNodeFilters createExtNodeFilters(){
-        ExtNodeFilters query = new ExtNodeFilters(this.properties.findAll{it.key=~/^(filter|project|node(Include|Exclude).*)$/})
+        ExtNodeFilters query = new ExtNodeFilters(this.properties.subMap(['filter','project']))
         return query
     }
     public String asFilter(){
-        return createExtNodeFilters().asFilter()
+        return filter
     }
 }

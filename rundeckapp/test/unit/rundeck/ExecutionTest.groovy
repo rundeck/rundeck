@@ -157,7 +157,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(1, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
         assertEquals(false, exec.nodeKeepgoing)
     }
     void testFromMapNullThreadcount(){
@@ -190,7 +189,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(1, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
         assertEquals(false, exec.nodeKeepgoing)
     }
     void testFromMapThreadcountString(){
@@ -223,7 +221,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(2, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
         assertEquals(false, exec.nodeKeepgoing)
     }
     void testFromMapBlankKeepgoing(){
@@ -257,7 +254,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(1, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
         assertEquals(false, exec.nodeKeepgoing)
     }
     void testFromMapKeepgoingString(){
@@ -291,7 +287,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(1, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
         assertEquals(true, exec.nodeKeepgoing)
     }
     void testFromExcludePrecedenceBlank(){
@@ -326,7 +321,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(1, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
         assertEquals(true, exec.nodeKeepgoing)
     }
     void testFromExcludePrecedenceNull(){
@@ -361,7 +355,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(1, exec.nodeThreadcount)
-        assertEquals(true, exec.nodeExcludePrecedence)
         assertEquals(true, exec.nodeKeepgoing)
     }
     void testFromExcludePrecedenceString(){
@@ -396,7 +389,6 @@ class ExecutionTest {
         assertEquals("true", exec.status)
         assertEquals(true, exec.doNodedispatch)
         assertEquals(1, exec.nodeThreadcount)
-        assertEquals(false, exec.nodeExcludePrecedence)
         assertEquals(true, exec.nodeKeepgoing)
     }
     void testFromMapFilter(){
@@ -426,7 +418,6 @@ class ExecutionTest {
                 ]
         ], null)
         assertNotNull(exec)
-        assertNull(exec.nodeIncludeName)
         assertEquals('name: test1', exec.filter)
     }
     void testFromMapDoNodedispatch_stringTrue(){
@@ -509,7 +500,6 @@ class ExecutionTest {
                 ]
         ], null)
         assertNotNull(exec)
-        assertNull(exec.nodeIncludeName)
         assertEquals('name: test1', exec.filter)
     }
     void testFromMapRetry(){

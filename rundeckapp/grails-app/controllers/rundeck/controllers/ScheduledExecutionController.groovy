@@ -2091,8 +2091,7 @@ class ScheduledExecutionController  extends ControllerBase{
         props.workflow=new Workflow(execution.workflow)
         if(params.failedNodes && 'true'==params.failedNodes){
             //replace the node filter with the failedNodeList from the execution
-            props = props.findAll{!(it.key=~/^node(In|Ex)clude.*$/)}
-            props.nodeIncludeName=execution.failedNodeList
+            props.filter=execution.failedNodeList
         }
         params.putAll(props)
         //clear session workflow
@@ -2858,8 +2857,8 @@ class ScheduledExecutionController  extends ControllerBase{
         Map inputOpts=[:]
         //add any option.* values, or nodeInclude/nodeExclude filters
         if(params.extra){
-            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters', 'filter', 'nodeoverride','nodefilter']).findAll { it.value })
-            inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.')||it.key.startsWith('nodeInclude')|| it.key.startsWith('nodeExclude')}.findAll { it.value })
+            inputOpts.putAll(params.extra.subMap(['loglevel',/*'argString',*/ 'optparams', 'option', '_replaceNodeFilters', 'filter', 'nodeoverride','nodefilter']).findAll { it.value })
+            inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.')}.findAll { it.value })
         }
         inputOpts['executionType'] = 'user'
         def result = executionService.executeJob(scheduledExecution, authContext,session.user, inputOpts)
@@ -2913,18 +2912,11 @@ class ScheduledExecutionController  extends ControllerBase{
         Map inputOpts = [:]
         // Add any option.* values, or nodeInclude/nodxclude filters
         if (params.extra) {
-            inputOpts.putAll(params.extra.subMap(['nodeIncludeName', 'loglevel',/*'argString',*/ 'optparams', 'option',
+            inputOpts.putAll(params.extra.subMap(['loglevel',/*'argString',*/ 'optparams', 'option',
                                                   '_replaceNodeFilters', 'filter', 'nodeoverride','nodefilter']).findAll { it.value })
-            inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.') || it.key.startsWith('nodeInclude') ||
-                    it.key.startsWith('nodeExclude')}.findAll { it.value })
+            inputOpts.putAll(params.extra.findAll{it.key.startsWith('option.')}.findAll { it.value })
         }
 
-        if (params.extra.nodeInclude) {
-            scheduledExecution.nodeInclude = params.extra.nodeInclude
-        }
-        if (params.extra.nodeExclude) {
-            scheduledExecution.nodeExclude = params.extra.nodeExclude
-        }
         if (params.runAtTime) {
             inputOpts['runAtTime']  = params.runAtTime
         }

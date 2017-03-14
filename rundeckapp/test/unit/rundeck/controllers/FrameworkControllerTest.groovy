@@ -188,8 +188,7 @@ class FrameworkControllerTest {
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true,
                         adhocRemoteString: 'a remote string')]).save(),
                 doNodedispatch: true,
-                nodeIncludeName: "abc",
-                nodeIncludeTags: "xyz"
+                filter: "name: abc tags: xyz"
         )
         assertNotNull exec.save()
         params.fromExecId=exec.id
@@ -227,6 +226,10 @@ class FrameworkControllerTest {
                         adhocRemoteString: 'a remote string')]).save(),
                 doNodedispatch: false,
         )
+        exec.validate()
+        if(exec.hasErrors()){
+            System.err.println(exec.errors.allErrors.collect{it.defaultMessage})
+        }
         assertNotNull exec.save()
         params.fromExecId=exec.id
 

@@ -59,21 +59,6 @@ class Execution extends ExecutionContext {
         outputfilepath(nullable:true)
         scheduledExecution(nullable:true)
         loglevel(nullable:true)
-        nodeInclude(nullable:true)
-        nodeExclude(nullable:true)
-        nodeIncludeName(nullable:true)
-        nodeExcludeName(nullable:true)
-        nodeIncludeTags(nullable:true)
-        nodeExcludeTags(nullable:true)
-        nodeIncludeOsName(nullable:true)
-        nodeExcludeOsName(nullable:true)
-        nodeIncludeOsFamily(nullable:true)
-        nodeExcludeOsFamily(nullable:true)
-        nodeIncludeOsArch(nullable:true)
-        nodeExcludeOsArch(nullable:true)
-        nodeIncludeOsVersion(nullable:true)
-        nodeExcludeOsVersion(nullable:true)
-        nodeExcludePrecedence(nullable:true)
         nodeKeepgoing(nullable:true)
         doNodedispatch(nullable:true)
         nodeThreadcount(nullable:true)
@@ -109,20 +94,6 @@ class Execution extends ExecutionContext {
         failedNodeList type: 'text'
         succeededNodeList type: 'text'
         outputfilepath type: 'text'
-        nodeInclude(type: 'text')
-        nodeExclude(type: 'text')
-        nodeIncludeName(type: 'text')
-        nodeExcludeName(type: 'text')
-        nodeIncludeTags(type: 'text')
-        nodeExcludeTags(type: 'text')
-        nodeIncludeOsName(type: 'text')
-        nodeExcludeOsName(type: 'text')
-        nodeIncludeOsFamily(type: 'text')
-        nodeExcludeOsFamily(type: 'text')
-        nodeIncludeOsArch(type: 'text')
-        nodeExcludeOsArch(type: 'text')
-        nodeIncludeOsVersion(type: 'text')
-        nodeExcludeOsVersion(type: 'text')
         filter(type: 'text')
         timeout( type: 'text')
         retry( type: 'text')
@@ -241,16 +212,12 @@ class Execution extends ExecutionContext {
             map.willRetry=true
         }
         if(doNodedispatch){
-            map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing, excludePrecedence: nodeExcludePrecedence]]
+            map.nodefilters = [dispatch: [threadcount: nodeThreadcount?:1, keepgoing: nodeKeepgoing]]
             if (nodeRankAttribute) {
                 map.nodefilters.dispatch.rankAttribute = nodeRankAttribute
             }
             map.nodefilters.dispatch.rankOrder = (null == nodeRankOrderAscending || nodeRankOrderAscending) ? 'ascending' : 'descending'
-            if (filter) {
-                map.nodefilters.filter = filter
-            } else {
-                map.nodefilters.filter = asFilter()
-            }
+            map.nodefilters.filter = filter
         }
         map.project= this.project
         map.user= this.user
@@ -297,9 +264,6 @@ class Execution extends ExecutionContext {
             exec.nodeThreadcount = XmlParserUtil.stringToInt(data.nodefilters.dispatch?.threadcount,1)
             if (data.nodefilters.dispatch?.containsKey('keepgoing')) {
                 exec.nodeKeepgoing = XmlParserUtil.stringToBool(data.nodefilters.dispatch.keepgoing, false)
-            }
-            if (data.nodefilters.dispatch?.containsKey('excludePrecedence')) {
-                exec.nodeExcludePrecedence = XmlParserUtil.stringToBool(data.nodefilters.dispatch.excludePrecedence, true)
             }
             if (data.nodefilters.dispatch?.containsKey('rankAttribute')) {
                 exec.nodeRankAttribute = data.nodefilters.dispatch.rankAttribute

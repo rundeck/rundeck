@@ -1034,9 +1034,7 @@ void testDecodeBasic__no_group(){
             def jobs = JobsXMLCodec.decode(example1)
             assertNotNull jobs
             assertNull "incorrect groupPath",jobs[0].groupPath
-            assertEquals "incorrect nodeExcludePrecedence","true",jobs[0].nodeExcludePrecedence.toString()
-            assertEquals "incorrect nodeInclude",null,jobs[0].nodeInclude
-            assertEquals "incorrect nodeInclude","hostname: cypress.hill.com",jobs[0].filter
+            assertEquals "incorrect filter","hostname: cypress.hill.com",jobs[0].filter
             assertEquals "incorrect project",'demo',jobs[0].project
     }
 
@@ -1087,9 +1085,7 @@ void testDecodeBasic__no_group(){
         assertEquals "false",jobs[0].jobName
         assertEquals  "false",jobs[0].groupPath
         assertEquals  "false",jobs[0].description
-        assertEquals  false, jobs[0].nodeExcludePrecedence
         assertEquals  false, jobs[0].nodeKeepgoing
-        assertEquals  null, jobs[0].nodeInclude
         assertEquals  "hostname: false", jobs[0].filter
         assertEquals  'proj1',jobs[0].project
         assertEquals  1, jobs[0].workflow.commands.size()
@@ -1138,23 +1134,8 @@ void testDecodeBasic__no_group(){
         def jobs = JobsXMLCodec.decode(filter1)
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
-        assertEquals "incorrect nodefilter nodeInclude", "hostname: centos5", jobs[0].filter
-        assertEquals "incorrect nodefilter nodeInclude", null, jobs[0].nodeInclude
-        assertEquals "incorrect nodefilter nodeIncludeTags", null, jobs[0].nodeIncludeTags
-        assertEquals "incorrect nodefilter nodeIncludeOsName", null, jobs[0].nodeIncludeOsName
-        assertEquals "incorrect nodefilter nodeIncludeOsFamily", null, jobs[0].nodeIncludeOsFamily
-        assertEquals "incorrect nodefilter nodeIncludeOsArch", null, jobs[0].nodeIncludeOsArch
-        assertEquals "incorrect nodefilter nodeIncludeOsVersion", null, jobs[0].nodeIncludeOsVersion
-        assertEquals "incorrect nodefilter nodeIncludeName", null, jobs[0].nodeIncludeName
+        assertEquals "incorrect nodefilter filter", "hostname: centos5", jobs[0].filter
 
-        assertEquals "incorrect nodefilter nodeExclude", null, jobs[0].nodeExclude
-        assertEquals "incorrect nodefilter nodeExcludeTags", null, jobs[0].nodeExcludeTags
-        assertEquals "incorrect nodefilter nodeExcludeOsName", null, jobs[0].nodeExcludeOsName
-        assertEquals "incorrect nodefilter nodeExcludeOsFamily", null, jobs[0].nodeExcludeOsFamily
-        assertEquals "incorrect nodefilter nodeExcludeOsArch", null, jobs[0].nodeExcludeOsArch
-        assertEquals "incorrect nodefilter nodeExcludeOsVersion", null, jobs[0].nodeExcludeOsVersion
-        assertEquals "incorrect nodefilter nodeExcludeName", null, jobs[0].nodeExcludeName
-        assertTrue "incorrect nodefilter nodeExcludePrecedence ", jobs[0].nodeExcludePrecedence
         assertTrue "incorrect nodefilter doNodedispatch", jobs[0].doNodedispatch
         assertTrue "incorrect nodefilter nodesSelectedByDefault", jobs[0].nodesSelectedByDefault
     }
@@ -1195,23 +1176,8 @@ void testDecodeBasic__no_group(){
             def jobs = JobsXMLCodec.decode(filter2)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
-            assertEquals "incorrect nodefilter nodeInclude","hostname: centos5 tags: a+b,c os-name: Win.* os-family: windows os-arch: x86,sparc os-version: 4\\..* name: mynodename",jobs[0].filter
-            assertEquals "incorrect nodefilter nodeInclude",null,jobs[0].nodeInclude
-            assertEquals "incorrect nodefilter nodeIncludeTags", null,jobs[0].nodeIncludeTags
-            assertEquals "incorrect nodefilter nodeIncludeOsName", null,jobs[0].nodeIncludeOsName
-            assertEquals "incorrect nodefilter nodeIncludeOsFamily", null,jobs[0].nodeIncludeOsFamily
-            assertEquals "incorrect nodefilter nodeIncludeOsArch", null,jobs[0].nodeIncludeOsArch
-            assertEquals "incorrect nodefilter nodeIncludeOsVersion", null,jobs[0].nodeIncludeOsVersion
-            assertEquals "incorrect nodefilter nodeIncludeName", null,jobs[0].nodeIncludeName
+            assertEquals "incorrect filter","hostname: centos5 tags: a+b,c os-name: Win.* os-family: windows os-arch: x86,sparc os-version: 4\\..* name: mynodename",jobs[0].filter
 
-            assertEquals "incorrect nodefilter nodeExclude",null,jobs[0].nodeExclude
-            assertEquals "incorrect nodefilter nodeExcludeTags",null,jobs[0].nodeExcludeTags
-            assertEquals "incorrect nodefilter nodeExcludeOsName",null,jobs[0].nodeExcludeOsName
-            assertEquals "incorrect nodefilter nodeExcludeOsFamily",null,jobs[0].nodeExcludeOsFamily
-            assertEquals "incorrect nodefilter nodeExcludeOsArch",null,jobs[0].nodeExcludeOsArch
-            assertEquals "incorrect nodefilter nodeExcludeOsVersion",null,jobs[0].nodeExcludeOsVersion
-            assertEquals "incorrect nodefilter nodeExcludeName",null,jobs[0].nodeExcludeName
-            assertTrue "incorrect nodefilter nodeExcludePrecedence ",jobs[0].nodeExcludePrecedence
             assertTrue "incorrect nodefilter doNodedispatch",jobs[0].doNodedispatch
             assertTrue "incorrect nodefilter doNodedispatch",jobs[0].nodesSelectedByDefault
 
@@ -1253,23 +1219,8 @@ void testDecodeBasic__no_group(){
             def jobs = JobsXMLCodec.decode(filter3)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
-        assertEquals "incorrect nodefilter nodeInclude", "!hostname: centos5 !tags: a+b,c !os-name: Win.* !os-family: windows !os-arch: x86,sparc !os-version: 4\\..* !name: mynodename", jobs[0].filter
-            assertEquals "incorrect nodefilter nodeInclude",null,jobs[0].nodeInclude
-            assertEquals "incorrect nodefilter nodeIncludeTags",null,jobs[0].nodeIncludeTags
-            assertEquals "incorrect nodefilter nodeIncludeOsName",null,jobs[0].nodeIncludeOsName
-            assertEquals "incorrect nodefilter nodeIncludeOsFamily",null,jobs[0].nodeIncludeOsFamily
-            assertEquals "incorrect nodefilter nodeIncludeOsArch",null,jobs[0].nodeIncludeOsArch
-            assertEquals "incorrect nodefilter nodeIncludeOsVersion",null,jobs[0].nodeIncludeOsVersion
-            assertEquals "incorrect nodefilter nodeIncludeName",null,jobs[0].nodeIncludeName
+        assertEquals "incorrect nodefilter filter", "!hostname: centos5 !tags: a+b,c !os-name: Win.* !os-family: windows !os-arch: x86,sparc !os-version: 4\\..* !name: mynodename", jobs[0].filter
 
-            assertEquals "incorrect nodefilter nodeExclude", null,jobs[0].nodeExclude
-            assertEquals "incorrect nodefilter nodeExcludeTags", null,jobs[0].nodeExcludeTags
-            assertEquals "incorrect nodefilter nodeExcludeOsName", null,jobs[0].nodeExcludeOsName
-            assertEquals "incorrect nodefilter nodeExcludeOsFamily", null,jobs[0].nodeExcludeOsFamily
-            assertEquals "incorrect nodefilter nodeExcludeOsArch", null,jobs[0].nodeExcludeOsArch
-            assertEquals "incorrect nodefilter nodeExcludeOsVersion", null,jobs[0].nodeExcludeOsVersion
-            assertEquals "incorrect nodefilter nodeExcludeName", null,jobs[0].nodeExcludeName
-            assertFalse "incorrect nodefilter nodeExcludePrecedence",jobs[0].nodeExcludePrecedence
             assertTrue "incorrect nodefilter doNodedispatch",jobs[0].doNodedispatch
         assertTrue "incorrect nodefilter doNodedispatch",jobs[0].nodesSelectedByDefault
     }
@@ -1311,23 +1262,8 @@ void testDecodeBasic__no_group(){
             def jobs = JobsXMLCodec.decode(filter3)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
-        assertEquals "incorrect nodefilter nodeInclude", "!hostname: centos5 !tags: a+b,c !os-name: Win.* !os-family: windows !os-arch: x86,sparc !os-version: 4\\..* !name: mynodename", jobs[0].filter
-            assertEquals "incorrect nodefilter nodeInclude",null,jobs[0].nodeInclude
-            assertEquals "incorrect nodefilter nodeIncludeTags",null,jobs[0].nodeIncludeTags
-            assertEquals "incorrect nodefilter nodeIncludeOsName",null,jobs[0].nodeIncludeOsName
-            assertEquals "incorrect nodefilter nodeIncludeOsFamily",null,jobs[0].nodeIncludeOsFamily
-            assertEquals "incorrect nodefilter nodeIncludeOsArch",null,jobs[0].nodeIncludeOsArch
-            assertEquals "incorrect nodefilter nodeIncludeOsVersion",null,jobs[0].nodeIncludeOsVersion
-            assertEquals "incorrect nodefilter nodeIncludeName",null,jobs[0].nodeIncludeName
+        assertEquals "incorrect nodefilter filter", "!hostname: centos5 !tags: a+b,c !os-name: Win.* !os-family: windows !os-arch: x86,sparc !os-version: 4\\..* !name: mynodename", jobs[0].filter
 
-            assertEquals "incorrect nodefilter nodeExclude", null,jobs[0].nodeExclude
-            assertEquals "incorrect nodefilter nodeExcludeTags", null,jobs[0].nodeExcludeTags
-            assertEquals "incorrect nodefilter nodeExcludeOsName", null,jobs[0].nodeExcludeOsName
-            assertEquals "incorrect nodefilter nodeExcludeOsFamily", null,jobs[0].nodeExcludeOsFamily
-            assertEquals "incorrect nodefilter nodeExcludeOsArch", null,jobs[0].nodeExcludeOsArch
-            assertEquals "incorrect nodefilter nodeExcludeOsVersion", null,jobs[0].nodeExcludeOsVersion
-            assertEquals "incorrect nodefilter nodeExcludeName", null,jobs[0].nodeExcludeName
-            assertFalse "incorrect nodefilter nodeExcludePrecedence",jobs[0].nodeExcludePrecedence
             assertTrue "incorrect nodefilter doNodedispatch",jobs[0].doNodedispatch
             assertTrue "incorrect nodefilter nodesSelectedByDefault",jobs[0].nodesSelectedByDefault
     }
@@ -1369,23 +1305,8 @@ void testDecodeBasic__no_group(){
         def jobs = JobsXMLCodec.decode(filter3)
         assertNotNull jobs
         assertEquals "incorrect size",1,jobs.size()
-        assertEquals "incorrect nodefilter nodeInclude", "!hostname: centos5 !tags: a+b,c !os-name: Win.* !os-family: windows !os-arch: x86,sparc !os-version: 4\\..* !name: mynodename", jobs[0].filter
-        assertEquals "incorrect nodefilter nodeInclude",null,jobs[0].nodeInclude
-        assertEquals "incorrect nodefilter nodeIncludeTags",null,jobs[0].nodeIncludeTags
-        assertEquals "incorrect nodefilter nodeIncludeOsName",null,jobs[0].nodeIncludeOsName
-        assertEquals "incorrect nodefilter nodeIncludeOsFamily",null,jobs[0].nodeIncludeOsFamily
-        assertEquals "incorrect nodefilter nodeIncludeOsArch",null,jobs[0].nodeIncludeOsArch
-        assertEquals "incorrect nodefilter nodeIncludeOsVersion",null,jobs[0].nodeIncludeOsVersion
-        assertEquals "incorrect nodefilter nodeIncludeName",null,jobs[0].nodeIncludeName
+        assertEquals "incorrect nodefilter filter", "!hostname: centos5 !tags: a+b,c !os-name: Win.* !os-family: windows !os-arch: x86,sparc !os-version: 4\\..* !name: mynodename", jobs[0].filter
 
-        assertEquals "incorrect nodefilter nodeExclude", null,jobs[0].nodeExclude
-        assertEquals "incorrect nodefilter nodeExcludeTags", null,jobs[0].nodeExcludeTags
-        assertEquals "incorrect nodefilter nodeExcludeOsName", null,jobs[0].nodeExcludeOsName
-        assertEquals "incorrect nodefilter nodeExcludeOsFamily", null,jobs[0].nodeExcludeOsFamily
-        assertEquals "incorrect nodefilter nodeExcludeOsArch", null,jobs[0].nodeExcludeOsArch
-        assertEquals "incorrect nodefilter nodeExcludeOsVersion", null,jobs[0].nodeExcludeOsVersion
-        assertEquals "incorrect nodefilter nodeExcludeName", null,jobs[0].nodeExcludeName
-        assertFalse "incorrect nodefilter nodeExcludePrecedence",jobs[0].nodeExcludePrecedence
         assertTrue "incorrect nodefilter doNodedispatch",jobs[0].doNodedispatch
         assertFalse "incorrect nodefilter nodesSelectedByDefault",jobs[0].nodesSelectedByDefault
     }
@@ -4561,177 +4482,8 @@ void testDecodeBasic__no_group(){
         assertEquals "missing logging/@limitAction", 'halt', doc.job[0].logging[0].'@limitAction'
         assertEquals "missing logging/@status", 'mystatus', doc.job[0].logging[0].'@status'
     }
-    void testEncodeNodefilter(){
-        def XmlParser parser = new XmlParser()
-
-        //set node dispatch to false, and assert no nodefilters are generated
-        def jobs1 = [
-                new ScheduledExecution(
-                        jobName: 'test job 1',
-                        description: 'test descrip',
-                        loglevel: 'INFO',
-                        project: 'test1',
-                        workflow: new Workflow(
-                                keepgoing: true,
-                                commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test',)]
-                        ),
-                        nodeThreadcount: 1,
-                        nodeKeepgoing: true,
-                        doNodedispatch: false,
-                        nodeInclude: 'myhostname',
-                        nodeIncludeTags: 'a+b,c',
-                        nodeIncludeOsName: 'Windows.*',
-                        nodeIncludeOsFamily: 'windows',
-                        nodeIncludeOsArch: 'x86,sparc',
-                        nodeIncludeOsVersion: '4\\..*',
-                        nodeIncludeName: 'mynode'
-                )
-        ]
-
-        def xmlstr = JobsXMLCodec.encode(jobs1)
-        assertNotNull xmlstr
-        assertTrue xmlstr instanceof String
 
 
-        def doc = parser.parse(new StringReader(xmlstr))
-        assertNotNull doc
-        assertEquals "missing nodefilters", 0, doc.job[0].nodefilters.size()
-    }
-
-    void testEncodeNodefilter2() {
-        def XmlParser parser = new XmlParser()
-        //set node dispatch to true, and assert 'include' nodefilters are generated
-        def jobs2 = [
-                new ScheduledExecution(
-                        jobName: 'test job 1',
-                        description: 'test descrip',
-                        loglevel: 'INFO',
-                        project: 'test1',
-                        workflow: new Workflow(
-                                keepgoing: true,
-                                commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test',)]
-                        ),
-                        nodeThreadcount: 1,
-                        nodeKeepgoing: true,
-                        doNodedispatch: true,
-                        nodeInclude: 'myhostname',
-                        nodeIncludeTags: 'a+b,c',
-                        nodeIncludeOsName: 'Windows.*',
-                        nodeIncludeOsFamily: 'windows',
-                        nodeIncludeOsArch: 'x86,sparc',
-                        nodeIncludeOsVersion: '4\\..*',
-                        nodeIncludeName: 'mynode'
-                )
-        ]
-
-        def xmlstr = JobsXMLCodec.encode(jobs2)
-        assertNotNull xmlstr
-        assertTrue xmlstr instanceof String
-
-
-        def doc = parser.parse(new StringReader(xmlstr))
-        assertNotNull doc
-        assertEquals "missing nodefilters", 1, doc.job[0].nodefilters.size()
-        assertEquals "unexpected nodefilters exclude", 0, doc.job[0].nodefilters[0].exclude.size()
-        assertEquals "missing nodefilters include", 0, doc.job[0].nodefilters[0].include.size()
-        assertEquals "incorrect nodefilters include hostname",
-                     'hostname: myhostname name: mynode tags: a+b,c os-name: Windows.* ' +
-                             'os-family: windows os-arch: x86,sparc os-version: 4\\..*',
-                     doc.job[0].nodefilters[0].filter[0].text()
-
-    }
-
-    void testEncodeNodefilter3() {
-        def XmlParser parser = new XmlParser()
-
-        //set node dispatch to true, and assert 'exclude' nodefilters are generated
-        def jobs3 = [
-                new ScheduledExecution(
-                        jobName: 'test job 1',
-                        description: 'test descrip',
-                        loglevel: 'INFO',
-                        project: 'test1',
-                        workflow: new Workflow(
-                                keepgoing: true,
-                                commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test',)]
-                        ),
-                        nodeThreadcount: 1,
-                        nodeKeepgoing: true,
-                        doNodedispatch: true,
-                        nodeExclude: 'myhostname',
-                        nodeExcludeTags: 'a+b,c',
-                        nodeExcludeOsName: 'Windows.*',
-                        nodeExcludeOsFamily: 'windows',
-                        nodeExcludeOsArch: 'x86,sparc',
-                        nodeExcludeOsVersion: '4\\..*',
-                        nodeExcludeName: 'mynode'
-                )
-        ]
-
-        def xmlstr = JobsXMLCodec.encode(jobs3)
-        assertNotNull xmlstr
-        assertTrue xmlstr instanceof String
-
-
-        def doc = parser.parse(new StringReader(xmlstr))
-        assertNotNull doc
-        assertEquals "missing nodefilters", 1, doc.job[0].nodefilters.size()
-        assertEquals "unexpected nodefilters include", 0, doc.job[0].nodefilters[0].include.size()
-        assertEquals "missing nodefilters exclude", 0, doc.job[0].nodefilters[0].exclude.size()
-        assertEquals "incorrect nodefilters string", '!hostname: myhostname !name: mynode !tags: a+b,' +
-                'c !os-name: Windows.* ' +
-                '!os-family: windows !os-arch: x86,sparc !os-version: 4\\..*',
-                     doc.job[0].nodefilters[0].filter[0].text()
-
-    }
-    void testEncodeNodefilter4(){
-        def XmlParser parser = new XmlParser()
-
-        //set node dispatch to true, and assert both 'include' and 'exclude' nodefilters are generated
-        def jobs4 = [
-                new ScheduledExecution(
-                        jobName:'test job 1',
-                        description:'test descrip',
-                        loglevel: 'INFO',
-                        project:'test1',
-                      workflow: new Workflow(keepgoing: true, commands: [new CommandExec(adhocExecution: true, adhocLocalString: 'test',)]),
-                        nodeThreadcount:1,
-                        nodeKeepgoing:true,
-                        doNodedispatch:true,
-                        nodeExclude:'myhostname',
-                            nodeExcludeTags:'a+b,c',
-                        nodeExcludeOsName:'Windows.*',
-                        nodeExcludeOsFamily:'windows',
-                        nodeExcludeOsArch:'x86,sparc',
-                        nodeExcludeOsVersion:'4\\..*',
-                        nodeExcludeName:'mynode',
-
-                        nodeInclude:'anotherhost',
-                        nodeIncludeTags:'prod',
-                        nodeIncludeOsName:'Mac.*',
-                        nodeIncludeOsFamily:'unix',
-                        nodeIncludeOsArch:'686',
-                        nodeIncludeOsVersion:'10\\..*',
-                        nodeIncludeName:'annode'
-                )
-        ]
-
-        def xmlstr = JobsXMLCodec.encode(jobs4)
-        assertNotNull xmlstr
-        assertTrue xmlstr instanceof String
-
-
-        def doc = parser.parse(new StringReader(xmlstr))
-        assertNotNull doc
-        assertEquals "missing nodefilters",1,doc.job[0].nodefilters.size()
-        assertEquals "missing nodefilters exclude",0,doc.job[0].nodefilters[0].exclude.size()
-        assertEquals "missing nodefilters exclude",0,doc.job[0].nodefilters[0].include.size()
-        assertEquals "incorrect nodefilters include hostname", 'hostname: anotherhost name: annode tags: prod os-name: Mac.* os-family: unix os-arch: 686 os-version: 10\\..* ' +
-                '!hostname: myhostname !name: mynode !tags: a+b,c !os-name: Windows.* !os-family: windows !os-arch: x86,' +
-                'sparc !os-version: 4\\..*', doc.job[0].nodefilters[0].filter[0].text()
-
-
-    }
     void testEncodeNodefilter_filterstring(){
         def XmlParser parser = new XmlParser()
 
