@@ -207,12 +207,14 @@ class BootStrap {
                      log.error("Unable to load static tokens file: "+e.getMessage())
                  }
                  Properties tokens = new Properties()
+                 def splitRegex = " *, *"
                  userTokens.each { k, v ->
                      def roles='api_token_group'
                      def tokenTmp=v
-                     if(v.toString().split(",").length>1){
-                         tokenTmp = v.toString().split(",")[0]
-                         def groupList = v.toString().split(",").drop(1)
+                     def split = v.toString().split(splitRegex)
+                     if (split.length > 1) {
+                         tokenTmp = split[0]
+                         def groupList = split.drop(1)
                          roles = groupList.join(',')
                      }
                     tokens[tokenTmp]=k+','+roles
