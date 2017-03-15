@@ -57,6 +57,7 @@ class ApiService {
      * @return
      */
     AuthToken generateAuthToken(User u){
+
         String newtoken = genRandomString()
         while (AuthToken.findByToken(newtoken) != null) {
             newtoken = genRandomString()
@@ -70,6 +71,28 @@ class ApiService {
             throw new Exception("Failed to save token for User ${u.login}")
         }
     }
+
+    /**
+     * Generate a new unique auth token for the user and specific groups and return it
+     * @param u
+     * @return
+     */
+    AuthToken generateAuthToken(User u, String roles, Date expiration){
+
+        String newtoken = genRandomString()
+        while (AuthToken.findByToken(newtoken) != null) {
+            newtoken = genRandomString()
+        }
+        AuthToken token = new AuthToken(token: newtoken, authRoles: roles, user: u, expiration: expiration)
+
+        if (token.save()) {
+            log.debug("GENERATE TOKEN ${newtoken} for User ${u.login} with roles: ${token.authRoles}")
+            return token
+        } else {
+            throw new Exception("Failed to save token for User ${u.login}")
+        }
+    }
+
     def respondOutput(HttpServletResponse response, String contentType, String output) {
         response.setContentType(contentType)
         response.setCharacterEncoding('UTF-8')

@@ -96,24 +96,146 @@
 
 </div>
 
-<g:if test="${session.user == user.login &&
-        (auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.ACTION_ADMIN], context: 'application'))}">
+<g:set var="tokenAdmin" value="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.ACTION_ADMIN],
+        context: 'application')}"/>
+<g:set var="selfToken"
+       value="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.GENERATE_SELF_TOKEN],
+               context: 'application')}"/>
+<g:set var="serviceToken"
+       value="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.GENERATE_SERVICE_TOKEN],
+               context: 'application')}"/>
+
+<g:if test="${session.user == user.login && (tokenAdmin || serviceToken)}">
     <g:set var="rkeytok" value="${g.rkey()}"/>
     <div id="${enc(attr: rkeytok)}">
         <div class="row ">
             <div class="col-sm-12">
                 <h3>
-                    <g:message code="userController.page.profile.heading.apiTokens.label"/>
-                    <a class="gentokenbtn small btn btn-link btn-xs"
-                       href="${createLink(
-                               controller: 'user',
-                               action: 'generateApiToken',
-                               params: [login: user.login]
-                       )}">
+                    <g:message code="userController.page.profile.heading.userTokens.label"/>
+                    <a class="small btn btn-link btn-xs"
+                       href="#">
                         <g:icon name="plus"/>
-                        <g:message code="button.GenerateNewToken.label" />
                     </a>
                 </h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <table>
+                    <tr>
+                        <td><g:message code="jobquery.title.userFilter"/>:</td>
+                        <td><input type="text" maxlength="256" name="tokenUser" value="${user.login}"/></td>
+                        <td><g:message code="roles"/>:<g:helpTooltip code="roles.token.help" css="text-muted"/></td>
+                        <td><input type="text" maxlength="256"  name="tokenRoles" value="${request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).
+                                collect { it.name }.
+                                join(", ")}"/></td>
+                        <td><g:message code="expiration.in"/>:<g:helpTooltip code="expiration.token.help" css="text-muted"/></td>
+                        <td> <input type="number" min="0" max="360" name="tokenTime"/> </td>
+                        <td>
+                            <select class="form-control" name="tokenTimeUnit">
+                                <option value="m"><g:message code="time.unit.minute.plural"/></option>
+                                <option value="h"><g:message code="time.unit.hour.plural"/></option>
+                                <option value="d"><g:message code="time.unit.day.plural"/></option>
+                            </select>
+                        </td>
+                        <td>
+                            <a class="genusertokenbtn small btn btn-link btn-xs"
+                               href="${createLink(
+                                       controller: 'user',
+                                       action: 'generateUserToken',
+                                       params: [login: user.login]
+                               )}">
+                                <g:icon name="plus"/>
+                                <g:message code="button.GenerateNewToken.label" />
+                            </a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+
+        <div class="row userapitoken">
+            <div class="col-sm-12">
+                <g:set var="tokens" value="${rundeck.AuthToken.findAll()}"/>
+
+
+                <ul class="apitokentable list-unstyled">
+                    <g:if test="${tokens}">
+                        <g:each var="tokenobj" in="${tokens}">
+                            <li class="apitokenform ${tokenobj.token == flash.newtoken ? 'newtoken' : ''}"
+                                style="${tokenobj.token == flash.newtoken ? 'opacity:0;' : ''}">
+                                <g:render template="token" model="${[user: user, token: tokenobj]}"/>
+                            </li>
+                        </g:each>
+                    </g:if>
+                </ul>
+
+
+                <div style="display:none" class="gentokenerror alert alert-danger alert-dismissable">
+                    <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+                    <span class="gentokenerror-text"></span>
+                </div>
+
+                <g:javascript>
+                    fireWhenReady('${enc(js: rkeytok)}',function(){addUserBehavior(true,'${enc(js: rkeytok)}',"${enc(
+                        js: user.login
+                )}");});
+                    fireWhenReady('${enc(js: rkeytok)}',function(){highlightNew('${enc(js: rkeytok)}');});
+                    fireWhenReady('${enc(js: rkeytok)}',function(){setLanguage('${enc(js: rkeytok)}');});
+                </g:javascript>
+            </div>
+        </div></div>
+</g:if>
+
+<g:if test="${session.user == user.login && (selfToken && !tokenAdmin)}">
+    <g:set var="rkeytok" value="${g.rkey()}"/>
+    <div id="${enc(attr: rkeytok)}">
+        <div class="row ">
+            <div class="col-sm-12">
+                <h3>
+                    <g:message code="userController.page.profile.heading.userTokens.label"/>
+                    <a class="small btn btn-link btn-xs"
+                       href="#">
+                        <g:icon name="plus"/>
+                    </a>
+                </h3>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12">
+                <table>
+                    <tr>
+                        <td><g:message code="roles"/>:</td>
+                        <td>
+
+                            <select class="form-control tokenRoles" name="tokenRoles" multiple>
+                                <g:each var="group" in="${request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)}" status="index">
+                                    <option value="${group.name}">${group.name}</option>
+                                </g:each>
+                            </select>
+                        </td>
+                        <td><g:message code="expiration.in"/>:<g:helpTooltip code="expiration.token.help" css="text-muted"/></td>
+                        <td> <input type="number" min="0" max="360" name="tokenTime"/> </td>
+                        <td>
+                            <select class="form-control" name="tokenTimeUnit">
+                                <option value="m"><g:message code="time.unit.minute.plural"/></option>
+                                <option value="h"><g:message code="time.unit.hour.plural"/></option>
+                                <option value="d"><g:message code="time.unit.day.plural"/></option>
+                            </select>
+                        </td>
+                        <td>
+                            <a class="genusertokenbtn small btn btn-link btn-xs"
+                               href="${createLink(
+                                       controller: 'user',
+                                       action: 'generateUserToken',
+                                       params: [login: user.login]
+                               )}">
+                                <g:icon name="plus"/>
+                                <g:message code="button.GenerateNewToken.label" />
+                            </a>
+                        </td>
+                    </tr>
+                </table>
             </div>
         </div>
 
@@ -140,7 +262,7 @@
                 </div>
 
                 <g:javascript>
-                    fireWhenReady('${enc(js: rkeytok)}',function(){addBehavior('${enc(js: rkeytok)}',"${enc(
+                    fireWhenReady('${enc(js: rkeytok)}',function(){addUserBehavior(false,'${enc(js: rkeytok)}',"${enc(
                         js: user.login
                 )}");});
                     fireWhenReady('${enc(js: rkeytok)}',function(){highlightNew('${enc(js: rkeytok)}');});

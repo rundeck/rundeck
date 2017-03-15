@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
+import groovy.time.TimeCategory
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.FrameworkService
@@ -39,6 +40,7 @@ class UserController extends ControllerBase{
             update:'POST',
             clearApiToken:'POST',
             generateApiToken:'POST',
+            generateUserToken:'POST',
     ]
 
     def index = {
@@ -243,8 +245,8 @@ class UserController extends ControllerBase{
         def login = params.login
         def result
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN)) {
+        if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN))) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error] 
@@ -278,6 +280,204 @@ class UserController extends ControllerBase{
         }
     }
 
+
+    def generateUserToken(User user, String tokenTime, String tokenTimeUnit, String tokenUser, String tokenRoles) {
+        boolean valid=false
+
+        withForm{
+            valid=true
+            g.refreshFormTokensHeader()
+        }.invalidToken{
+            response.status=HttpServletResponse.SC_BAD_REQUEST
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            withFormat {
+                html {
+                    return render(view: 'profile', model: [user: user])
+                }
+                json {
+                    render([error: request.error] as JSON)
+                }
+            }
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+
+        boolean isTokenTimeOk = tokenTime.isNumber() && (tokenTime.toInteger()>=0)
+        boolean isTimeUnitOk = (tokenTimeUnit=='m' || tokenTimeUnit=='h' || tokenTimeUnit=='d')
+        def tokenTimeNumber = 0
+        if(isTokenTimeOk){
+            tokenTimeNumber = tokenTime.toInteger()
+        }
+
+        if(!valid){
+            return
+        }
+        if (user.hasErrors()) {
+            request.errors = user.errors
+            withFormat {
+                html {
+                    return render(view: 'profile', model: [user: user])
+                }
+                json {
+                    render([error: 'Invalid input'] as JSON)
+                }
+            }
+        }
+        //check auth to edit profile
+        //default to current user profile
+        def login = params.login
+        def result
+        def roles = tokenRoles
+
+        if(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN)){
+
+            login = tokenUser
+        }else {
+
+            String propertyDuration = servletContext.getAttribute("TOKEN_TIMEOUT")
+            def propTokenTimeUnit=''
+            def propTokenTimeNumber=0
+            if(propertyDuration){
+                def tokenTimeUnitTmp=propertyDuration.substring(propertyDuration.length()-1)
+                def tokenTimeNumberTmp=propertyDuration.substring(0,propertyDuration.length()-1)
+                if((tokenTimeUnitTmp=='m' || tokenTimeUnitTmp=='h' || tokenTimeUnitTmp=='d') &&
+                        tokenTimeNumberTmp.isNumber()){
+                    propTokenTimeNumber = tokenTimeNumberTmp.toInteger()
+                    propTokenTimeUnit = tokenTimeUnitTmp
+                    def propMax
+                    def userTime
+                    use(TimeCategory) {
+                        switch (propTokenTimeUnit) {
+                            case 'm':
+                                propMax = propTokenTimeNumber.minutes
+                                break
+                            case 'h':
+                                propMax = propTokenTimeNumber.hours
+                                break
+                            case 'd':
+                                propMax = propTokenTimeNumber.days
+                                break
+                        }
+                        switch (tokenTimeUnit){
+                            case 'm':
+                                userTime = tokenTimeNumber.minutes
+                                break
+                            case 'h':
+                                userTime = tokenTimeNumber.hours
+                                break
+                            case 'd':
+                                userTime = tokenTimeNumber.days
+                                break
+                        }
+                        if(userTime>propMax){
+                            def error = "Max duration of token is: "+propTokenTimeNumber+propTokenTimeUnit
+                            log.error error
+                            result=[result: false, error: error]
+                            withFormat {
+                                html{
+                                    flash.error = result.error
+                                    redirect(controller: 'user', action: 'profile', params: [login: login])
+                                }
+                                json {
+                                    render(result as JSON)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                //check user time is minor to the prop
+
+
+            }
+
+            def rolesArr = request.subject?.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)?.collect {
+                it.name
+            }
+            def tokenRolesArr = roles.split(",")
+            def invalidGrp = false;
+            tokenRolesArr.each {
+                if(!rolesArr.contains(it)){
+                    invalidGrp = true
+                }
+            }
+            if(invalidGrp){
+                def error = "Invalid Group"
+                log.error error
+                result=[result: false, error: error]
+                withFormat {
+                    html{
+                        flash.error = result.error
+                        redirect(controller: 'user', action: 'profile', params: [login: login])
+                    }
+                    json {
+                        render(result as JSON)
+                    }
+                }
+            }
+        }
+
+        if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN) || frameworkService.authorizeApplicationResourceType(authContext,
+                AuthConstants.TYPE_USER, AuthConstants.GENERATE_SELF_TOKEN))) {
+            def error = "Unauthorized: admin role required"
+            log.error error
+            result=[result: false, error: error]
+        }else{
+            def User u = userService.findOrCreateUser(login)
+            if (!u) {
+                def error = "Couldn't find user: ${login}"
+                log.error error
+                result=[result: false, error: error]
+            }
+            if(!(isTokenTimeOk && isTimeUnitOk && roles.length()>0)){
+                def error = "Wrong parameters"
+                log.error error
+                result=[result: false, error: error]
+            }else{
+                try{
+                    def newDate  = null;
+                    if(tokenTimeNumber>0){
+                        def currentDate = new Date()
+                        use(TimeCategory){
+                            switch (tokenTimeUnit){
+                                case 'm':
+                                    newDate = currentDate + tokenTimeNumber.minutes
+                                    break
+                                case 'h':
+                                    newDate = currentDate + tokenTimeNumber.hours
+                                    break
+                                case 'd':
+                                    newDate = currentDate + tokenTimeNumber.days
+                                    break
+                            }
+                        }
+                    }
+
+                    AuthToken token =apiService.generateAuthToken(u, roles, newDate)
+                    result = [result: true, apitoken: token.token]
+                }catch (Exception e){
+                    result = [result: false, error: e.message]
+                }
+            }
+        }
+        withFormat {
+            html{
+                if (result.error) {
+                    flash.error = result.error
+                }else{
+                    flash.newtoken=result.apitoken
+                }
+                redirect(controller: 'user', action: 'profile', params: [login: login])
+            }
+            json {
+                render(result as JSON)
+            }
+        }
+    }
+
     def renderApiToken = {
         //check auth to edit profile
         //default to current user profile
@@ -287,7 +487,9 @@ class UserController extends ControllerBase{
         def user
         def token
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN)) {
+        if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN) || frameworkService.authorizeApplicationResourceType(authContext,
+                AuthConstants.TYPE_USER, AuthConstants.GENERATE_SELF_TOKEN))) {
             def error = "Unauthorized: admin role required"
             log.error error
             result = [result: false, error: error]
@@ -298,7 +500,7 @@ class UserController extends ControllerBase{
                 log.error error
                 result = [result: false, error: error]
             } else {
-                def t= AuthToken.findByUserAndToken(user,params.token);
+                def t= AuthToken.findByToken(params.token);
                 if(t){
                     token=t
                 }else{
@@ -351,7 +553,9 @@ class UserController extends ControllerBase{
         def login = user.login
         def result
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN)) {
+        if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN) || frameworkService.authorizeApplicationResourceType(authContext,
+                AuthConstants.TYPE_USER, AuthConstants.GENERATE_SELF_TOKEN))) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error]
@@ -371,7 +575,7 @@ class UserController extends ControllerBase{
                 result=[result: false, error: error]
             }else{
                 def findtoken=params.token
-                def found=AuthToken.findByUserAndToken(u,findtoken)
+                def found=AuthToken.findByToken(findtoken)
                 if(!found){
                     def error = "Couldn't find token ${findtoken} for user ${login}"
                     log.error error

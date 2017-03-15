@@ -54,6 +54,46 @@
             }
         }).success(_ajaxReceiveTokens.curry('api_req_tokens'));
     }
+    function generateUserToken(admin,login,elem){
+        var tokenUser=login;
+        var tokenRoles='';
+        var tokenTime=$(elem).down('input[name="tokenTime"]').value;
+        var tokenTimeUnit=$(elem).down('select[name="tokenTimeUnit"]').value;
+        if(admin){
+            tokenUser=$(elem).down('input[name="tokenUser"]').value;
+            tokenRoles=$(elem).down('input[name="tokenRoles"]').value;
+        }else{
+            tokenRoles= "";
+            var arr= $$('select[name="tokenRoles"] option:selected');
+            for (var i = 0; i < arr.length; i++) {
+                if(tokenRoles.length == 0){
+                    tokenRoles= tokenRoles + arr[i].value;
+                }else{
+                    tokenRoles= tokenRoles + ',' + arr[i].value;
+                }
+
+            }
+        }
+
+
+        jQuery.ajax({
+            type:'POST',
+            dataType:'json',
+            url:_genUrl(appLinks.userGenerateUserToken,{login:login, tokenTime:tokenTime, tokenTimeUnit:tokenTimeUnit,
+                            tokenUser:tokenUser, tokenRoles:tokenRoles}),
+            beforeSend:_ajaxSendTokens.curry('api_req_tokens'),
+            success:function(data,status,jqxhr){
+                if( data.result){
+                    addTokenRow(elem,login,data.apitoken);
+                }else{
+                    tokenAjaxError(elem,data.error);
+                }
+            },
+            error:function(jqxhr,status,error){
+                tokenAjaxError(elem,jqxhr.responseJSON&&jqxhr.responseJSON.error?jqxhr.responseJSON.error:error);
+            }
+        }).success(_ajaxReceiveTokens.curry('api_req_tokens'));
+    }
     function clearToken(elem){
         var login=$(elem).down('input[name="login"]').value;
         var token=$(elem).down('input[name="token"]').value;
@@ -86,6 +126,10 @@
     }
     function addBehavior(elem,login){
         Event.observe($(elem).down('.gentokenbtn'),'click',mkhndlr(generateToken.curry(login,elem)));
+        $$(' .apitokenform').each(addRowBehavior);
+    }
+    function addUserBehavior(admin,elem,login){
+        Event.observe($(elem).down('.genusertokenbtn'),'click',mkhndlr(generateUserToken.curry(admin,login,elem)));
         $$(' .apitokenform').each(addRowBehavior);
     }
     function highlightNew(elem){

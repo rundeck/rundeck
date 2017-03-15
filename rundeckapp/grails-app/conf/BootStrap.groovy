@@ -208,7 +208,14 @@ class BootStrap {
                  }
                  Properties tokens = new Properties()
                  userTokens.each { k, v ->
-                    tokens[v]=k
+                     def roles='api_token_group'
+                     def tokenTmp=v
+                     if(v.toString().split(",").length>1){
+                         tokenTmp = v.toString().split(",")[0]
+                         def groupList = v.toString().split(",").drop(1)
+                         roles = groupList.join(',')
+                     }
+                    tokens[tokenTmp]=k+','+roles
                  }
                  servletContext.setAttribute("TOKENS_FILE_PATH", new File(tokensfile).absolutePath)
                  servletContext.setAttribute("TOKENS_FILE_PROPS", tokens)
@@ -217,6 +224,10 @@ class BootStrap {
                  }
              }
 
+             def defaultTokenTimeout=properties.getProperty("rundeck.user.tokens.duration")
+             if(defaultTokenTimeout){
+                 servletContext.setAttribute("TOKEN_TIMEOUT", defaultTokenTimeout)
+             }
 
             //import filesystem projects if using DB storage
             if((grailsApplication.config.rundeck?.projectsStorageType?:'db') == 'db'){

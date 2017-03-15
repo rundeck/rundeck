@@ -18,12 +18,14 @@ package rundeck
 class AuthToken {
     String token
     String authRoles
+    Date expiration
     static belongsTo = [user:User]
 
     static constraints = {
         token(nullable:false,unique:true)
         authRoles(nullable:false)
         user(nullable:false)
+        expiration(nullable: true)
     }
     static mapping = {
         authRoles type: 'text'

@@ -21,11 +21,21 @@
  --%>
 
 <g:set var="ukey" value="${g.rkey()}"/>
-    <span>
-        <code><g:enc>${token.token}</g:enc></code>
-    </span>
-    <span>
-
+<table width="100%">
+    <tr>
+        <td width="20%"><g:enc>${token.token}</g:enc></td>
+        <td width="20%">
+            <g:if test="${token.expiration}">
+                <g:message code="expiration" />: ${token.expiration}
+            </g:if>
+        </td>
+        <td width="10%">
+            <g:message code="user" />: <g:enc>${token.user.login}</g:enc>
+        </td>
+        <td width="40%">
+            <g:message code="roles" />: <g:enc>${token.authRoles}</g:enc>
+        </td>
+        <td width="10%">
         <a style="${wdgt.styleVisible(if: token.token && !(params.showConfirm && params.token==token.token))}"
            class=" textbtn textbtn-danger"
            data-toggle="modal"
@@ -59,5 +69,7 @@
                 </div><!-- /.modal-content -->
             </div><!-- /.modal-dialog -->
         </div><!-- /.modal -->
+        </td>
 
-    </span>
+    </tr>
+</table>
