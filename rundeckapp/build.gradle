@@ -108,9 +108,9 @@ task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
         Properties fileProps = new Properties()
         fileProps[  'plugin.name']= pluginProps['Rundeck-Plugin-Name']?:f
         fileProps[  'plugin.description']= pluginProps['Rundeck-Plugin-Description'] ?:'Rundeck bundled plugin'
-        fileProps[  'plugin.author']= pluginProps['Rundeck-Plugin-Author'] ?:'SimplifyOps, Inc.'
+        fileProps[  'plugin.author']= pluginProps['Rundeck-Plugin-Author'] ?:'Rundeck, Inc.'
         fileProps[  'plugin.version']= pluginProps['Rundeck-Plugin-File-Version'] ?:version
-        fileProps[  'plugin.url']= pluginProps['Rundeck-Plugin-URL'] ?:'http://rundeck.org'
+        fileProps[  'plugin.url']= pluginProps['Rundeck-Plugin-URL'] ?:'http://rundeck.com'
         fileProps[  'plugin.date']= pluginProps['Rundeck-Plugin-BuildDate'] ?:(new Date().toString())
         fileProps[  'plugin.filename']= f
 

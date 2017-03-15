@@ -42,10 +42,10 @@ Adds auth filter to web.xml
     def license = "APACHE"
 
     // Details of company behind the plugin (if there is one)
-    def organization = [ name: "SimplifyOps", url: "http://www.simplifyops.com/" ]
+    def organization = [ name: "Rundeck", url: "http://rundeck.com/" ]
 
     // Any additional developers beyond the author specified above.
-    def developers = [ [ name: "Greg Schueler", email: "greg@simplifyops.com" ]]
+    def developers = [ [ name: "Greg Schueler", email: "greg@rundeck.com" ]]
 
     // Location of the plugin's issue tracker.
     def issueManagement = [ system: "Github", url: "http://github.com/dtolabs/rundeck/issues" ]

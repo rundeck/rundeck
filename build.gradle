@@ -155,7 +155,7 @@ exportedProjects.each {
                     developer {
                         id('gschueler')
                         name('Greg Schueler')
-                        email('greg@simplifyops.com')
+                        email('greg@rundeck.com')
                     }
                 }
                 parent {
