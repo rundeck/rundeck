@@ -74,8 +74,7 @@
 <div class="row row-space">
     <div class="col-sm-12">
 
-    &copy; Copyright 2017 <a href="http://simplifyops.com">
-        <span style="color:red;">#Simplify</span>Ops</a>.
+    &copy; Copyright 2017 <a href="http://rundeck.com">Rundeck, Inc.</a>
 
     All rights reserved.
 
