@@ -75,7 +75,7 @@ public class AuthorizationFilters implements ApplicationContextAware{
                     //allow authentication token to be used 
                     def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
                     String user = lookupToken(authtoken, servletContext)
-                    String roles = lookupTokenRoles(authtoken, servletContext)
+                    List<String> roles = lookupTokenRoles(authtoken, servletContext)
 
                     if (user){
                         session.user = user
@@ -84,7 +84,7 @@ public class AuthorizationFilters implements ApplicationContextAware{
                         def subject = new Subject();
                         subject.principals << new Username(user)
 
-                        roles.split(",").each{role->
+                        roles.each{role->
                             subject.principals << new Group(role.trim());
                         }
 
@@ -227,27 +227,25 @@ public class AuthorizationFilters implements ApplicationContextAware{
      * @param context
      * @return
      */
-    private String lookupTokenRoles(String authtoken, ServletContext context) {
+    private List<String> lookupTokenRoles(String authtoken, ServletContext context) {
         if(!authtoken){
             return null
         }
+        List<String> roles = []
         if (context.getAttribute("TOKENS_FILE_PROPS")) {
             Properties tokens = (Properties) context.getAttribute("TOKENS_FILE_PROPS")
             if (tokens[authtoken]) {
-
                 def userLine = tokens[authtoken]
-                def groupList = []
                 if(userLine.toString().split(",").length>1){
-                    groupList = userLine.toString().split(",").drop(1)
+                    roles = userLine.toString().split(",").drop(1) as List
                 }
-                def roles = groupList.join(',')
                 log.debug("loginCheck found roles ${roles} via tokens file, token: ${authtoken}");
                 return roles
             }
         }
         def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
         if (tokenobj) {
-            def roles = tokenobj?.authRoles
+            roles = tokenobj?.authRoles?.split(",") as List
             log.debug("loginCheck found roles ${roles} via DB, token: ${authtoken}");
             return roles
         }
