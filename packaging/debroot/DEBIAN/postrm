@@ -22,7 +22,7 @@ case "$1" in
           esac
     done
     # Remove system account if necessary
-    CREATEDUSER="server_user"
+    CREATEDUSER="rundeck"
     if [ -n "$FIST_SYSTEM_UID" ] && [ -n "$LAST_SYSTEM_UID" ]; then
       if USERID=`getent passwd $CREATEDUSER | cut -f 3 -d ':'`; then
         if [ -n "$USERID" ]; then
@@ -36,12 +36,12 @@ case "$1" in
       fi
     fi
     # Remove system group if necessary
-    CREATEDGROUP=server_group
+    CREATEDGROUP="rundeck"
     FIRST_USER_GID=`grep ^USERS_GID /etc/adduser.conf | cut -f2 -d '='`
-    if [ -n "$FIST_USER_GID" ]; then
+    if [ -n "$FIRST_USER_GID" ]; then
       if GROUPGID=`getent group $CREATEDGROUP | cut -f 3 -d ':'`; then
         if [ -n "$GROUPGID" ]; then
-          if [ "$FIST_USER_GID" -gt "$GROUPGID" ]; then
+          if [ "$FIRST_USER_GID" -gt "$GROUPGID" ]; then
             echo -n "Removing $CREATEDGROUP group.."
             delgroup --only-if-empty $CREATEDGROUP || true
             echo "..done"
