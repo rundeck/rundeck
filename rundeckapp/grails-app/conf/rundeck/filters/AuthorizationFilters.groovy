@@ -32,6 +32,7 @@ import rundeck.services.FrameworkService
 
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
+import java.time.Clock
 
 /*
 * AuthorizationFilters.groovy
@@ -210,9 +211,12 @@ public class AuthorizationFilters implements ApplicationContextAware{
         }
         def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
         if (tokenobj) {
-            def now = new Date()
-            if(tokenobj.expiration != null && tokenobj.expiration<now){
+            if (tokenobj.expiration != null) {
+                def now = Clock.systemUTC().instant()
+                def tokenexpire = tokenobj.expiration.toInstant()
+                if (tokenexpire < now) {
                     return null
+                }
             }
             User user = tokenobj?.user
             log.debug("loginCheck found user ${user} via DB, token: ${authtoken}");
