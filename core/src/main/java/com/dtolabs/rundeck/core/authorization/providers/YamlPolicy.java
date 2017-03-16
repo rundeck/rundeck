@@ -791,20 +791,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             return patternCache.get(regex);
         }
 
-        /**
-         * @deprecated
-         * @param resource
-         * @param action
-         * @return
-         */
-        public MatchedContext includes(final Map<String, String> resource, final String action) {
-            final List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
 
-            if (!matchesRuleSections(resource, evaluations)) {
-                return new MatchedContext(false, new ContextDecision(Explanation.Code.REJECTED, false, evaluations));
-            }
-            return new MatchedContext(true, evaluateActions(action, evaluations));
-        }
         public AclRule createRule(AclRuleBuilder prototype) {
             AclRuleBuilder ruleBuilder = AclRuleBuilder.builder(prototype);
 
@@ -841,61 +828,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             return ruleBuilder.build();
         }
 
-        ContextDecision evaluateActions(final String action, final List<ContextEvaluation> evaluations) {
-            //evaluate actions
-            boolean denied = false;
 
-            if (ruleSection.containsKey(DENY_ACTIONS)) {
-                final HashSet<String> actions = getDenyActions();
-                if(null==actions){
-                    evaluations.add(new ContextEvaluation(
-                                            Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                                            "Invalid action type."));
-                }else {
-                    if (0 == actions.size()) {
-                        logger.warn(identify() + ": No actions defined in Deny section");
-                    } else if (actions.contains("*") || actions.contains(action)) {
-                        evaluations.add(
-                                new ContextEvaluation(
-                                        Explanation.Code.REJECTED_DENIED,
-                                        this + " for actions: " + actions
-                                )
-                        );
-                        denied = true;
-                    }
-                }
-            }
-            if (denied) {
-                return new ContextDecision(Explanation.Code.REJECTED_DENIED, false, evaluations);
-            }
-            boolean allowed = false;
-            if (ruleSection.containsKey(ALLOW_ACTIONS)) {
-                final HashSet<String> actions = getAllowActions();
-                if(null==actions){
-                    evaluations.add(new ContextEvaluation(
-                                            Explanation.Code.REJECTED_CONTEXT_EVALUATION_ERROR,
-                                            "Invalid action type."));
-                }else {
-                    if (0 == actions.size()) {
-                        logger.warn(identify() + ": No actions defined in Allow section");
-                    } else if (actions.contains("*") || actions.contains(action)) {
-                        evaluations.add(
-                                new ContextEvaluation(
-                                        Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED,
-                                        this + " for actions: " + actions
-                                )
-                        );
-                        allowed = true;
-                    }
-                }
-            }
-
-            if (allowed) {
-                return new ContextDecision(Explanation.Code.GRANTED_ACTIONS_AND_COMMANDS_MATCHED, true, evaluations);
-            } else {
-                return new ContextDecision(Explanation.Code.REJECTED, false, evaluations);
-            }
-        }
 
         private HashSet<String> getAllowActions() {
             final HashSet<String> actions = new HashSet<String>();
@@ -925,46 +858,6 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             return actions;
         }
 
-        /**
-         * Return true if all of the defined rule sections match for the specified resource. If no rule sections exist,
-         * then the result is true.
-         */
-        boolean matchesRuleSections(final Map<String, String> resource, final List<ContextEvaluation> evaluations) {
-            int matchesRequired = 0;
-            int matchesMet = 0;
-            //evaluate match:
-            if (isRuleSectionMatch()) {
-                matchesRequired++;
-                if (ruleMatchesMatchSection(resource, this.ruleSection)) {
-                    matchesMet++;
-                } else {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED,
-                            MATCH_SECTION + " section did not match"));
-                }
-            }
-            //evaluate equals:
-            if (isRuleSectionEquals()) {
-                matchesRequired++;
-                if (ruleMatchesEqualsSection(resource, this.ruleSection)) {
-                    matchesMet++;
-                } else {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED,
-                            EQUALS_SECTION + " section did not match"));
-                }
-            }
-
-            //evaluate contains:
-            if (isRuleSectionContains()) {
-                matchesRequired++;
-                if (ruleMatchesContainsSection(resource, this.ruleSection)) {
-                    matchesMet++;
-                } else {
-                    evaluations.add(new ContextEvaluation(Explanation.Code.REJECTED,
-                            CONTAINS_SECTION + " section did not match"));
-                }
-            }
-            return matchesMet == matchesRequired;
-        }
 
         private boolean isRuleSectionContains() {
             return ruleSection.containsKey(CONTAINS_SECTION);
