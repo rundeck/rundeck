@@ -618,6 +618,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
         public static final String MATCH_SECTION = "match";
         public static final String EQUALS_SECTION = "equals";
         public static final String CONTAINS_SECTION = "contains";
+        public static final String SUBSET_SECTION = "subset";
         public static final String ALLOW_ACTIONS = "allow";
         public static final String DENY_ACTIONS = "deny";
         Map ruleSection;
@@ -704,6 +705,9 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             if (isRuleSectionContains()) {
                 sectionName=CONTAINS_SECTION;
                 matchBody = (Map) ruleSection.get(CONTAINS_SECTION);
+            } else if (isRuleSectionSubset()) {
+                sectionName = SUBSET_SECTION;
+                matchBody = (Map) ruleSection.get(SUBSET_SECTION);
             }else if(isRuleSectionMatch()){
                 sectionName=MATCH_SECTION;
                 matchBody = (Map) ruleSection.get(MATCH_SECTION);
@@ -787,6 +791,12 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             return patternCache.get(regex);
         }
 
+        /**
+         * @deprecated
+         * @param resource
+         * @param action
+         * @return
+         */
         public MatchedContext includes(final Map<String, String> resource, final String action) {
             final List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
 
@@ -816,6 +826,9 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             }else if(isRuleSectionContains()) {
                 ruleBuilder.containsMatch(true);
                 resourceMap = (Map)ruleSection.get(CONTAINS_SECTION);
+            } else if (isRuleSectionSubset()) {
+                ruleBuilder.subsetMatch(true);
+                resourceMap = (Map) ruleSection.get(SUBSET_SECTION);
             }else if(isRuleSectionEquals()){
                 ruleBuilder.equalsMatch(true);
                 resourceMap = (Map)ruleSection.get(EQUALS_SECTION);
@@ -955,6 +968,10 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
 
         private boolean isRuleSectionContains() {
             return ruleSection.containsKey(CONTAINS_SECTION);
+        }
+
+        private boolean isRuleSectionSubset() {
+            return ruleSection.containsKey(SUBSET_SECTION);
         }
 
         private boolean isRuleSectionEquals() {

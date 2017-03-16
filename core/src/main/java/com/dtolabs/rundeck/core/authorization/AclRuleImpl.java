@@ -32,6 +32,7 @@ public class AclRuleImpl implements AclRule {
     private String resourceType;
     private boolean regexMatch;
     private boolean containsMatch;
+    private boolean subsetMatch;
     private boolean equalsMatch;
     private String username;
     private String group;
@@ -46,6 +47,7 @@ public class AclRuleImpl implements AclRule {
             final String resourceType,
             final boolean regexMatch,
             final boolean containsMatch,
+            final boolean subsetMatch,
             final boolean equalsMatch,
             final String username,
             final String group,
@@ -60,6 +62,7 @@ public class AclRuleImpl implements AclRule {
         this.resourceType = resourceType;
         this.regexMatch = regexMatch;
         this.containsMatch = containsMatch;
+        this.subsetMatch = subsetMatch;
         this.equalsMatch = equalsMatch;
         this.username = username;
         this.group = group;
@@ -96,6 +99,11 @@ public class AclRuleImpl implements AclRule {
     @Override
     public boolean isContainsMatch() {
         return containsMatch;
+    }
+
+    @Override
+    public boolean isSubsetMatch() {
+        return subsetMatch;
     }
 
     @Override

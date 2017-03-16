@@ -532,6 +532,10 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
             return ruleMatchesContainsSection(resource, rule)
                    ? allowOrDenyAction(rule, action)
                    : Explanation.Code.REJECTED;
+        } else if (rule.isSubsetMatch()) {
+            return ruleMatchesSubsetSection(resource, rule)
+                   ? allowOrDenyAction(rule, action)
+                   : Explanation.Code.REJECTED;
         } else {
             //no resource matching defined, matches all resources of this type.
             return allowOrDenyAction(rule, action);
@@ -600,6 +604,24 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         }
     }
 
+    /**
+     * Evaluates to true if the input is a string or collection of strings, and they are a subset of this object's
+     * collection.
+     */
+    static class SetSubsetPredicate extends SetContainsPredicate implements Predicate<String> {
+        SetSubsetPredicate(final List<String> item) {
+            super(item);
+        }
+
+        SetSubsetPredicate(final String item) {
+            super(item);
+        }
+
+        public boolean test(final String o) {
+            return isSubset(o, items);
+        }
+    }
+
     boolean ruleMatchesContainsSection(final Map<String, String> resource, final AclRule rule) {
         return validRuleSection(rule.getResource())
                &&
@@ -608,6 +630,17 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
                        resource,
                        SetContainsPredicate::new,
                        SetContainsPredicate::new
+               );
+    }
+
+    boolean ruleMatchesSubsetSection(final Map<String, String> resource, final AclRule rule) {
+        return validRuleSection(rule.getResource())
+               &&
+               predicateMatchRules(
+                       rule,
+                       resource,
+                       SetSubsetPredicate::new,
+                       SetSubsetPredicate::new
                );
     }
 

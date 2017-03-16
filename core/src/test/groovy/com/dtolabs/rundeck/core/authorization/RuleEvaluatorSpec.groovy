@@ -201,6 +201,7 @@ class RuleEvaluatorSpec extends Specification {
         Authorization eval = new RuleEvaluator(basicRules([
                 regexMatch   : testType == 'match',
                 containsMatch: testType == 'contains',
+                subsetMatch  : testType == 'subset',
                 equalsMatch  : testType == 'equals',
                 resource     : [
                         jobName: testRule
@@ -244,6 +245,14 @@ class RuleEvaluatorSpec extends Specification {
         'val1,val2'     | ['val3', 'val1']  | 'contains' | false
         'val1,val3'     | ['val12', 'val1'] | 'contains' | false
 
+        'val1'          | 'val1'            | 'subset'   | true
+        'val1'          | ['val1']          | 'subset'   | true
+        'val1,val2'     | 'val1'            | 'subset'   | false
+        'val1,val2'     | 'val2'            | 'subset'   | false
+        'val1,val2'     | ['val1', 'val2']  | 'subset'   | true
+        'val1,val2'     | ['val2', 'val1']  | 'subset'   | true
+        'val1,val2'     | ['val3', 'val1']  | 'subset'   | false
+        'val1,val3'     | ['val12', 'val1'] | 'subset'   | false
 
     }
 
@@ -371,6 +380,7 @@ class RuleEvaluatorSpec extends Specification {
         boolean regexMatch;
 
         boolean containsMatch;
+        boolean subsetMatch;
         boolean equalsMatch;
 
         String username;

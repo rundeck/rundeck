@@ -28,6 +28,7 @@ public class AclRuleBuilder {
     private String resourceType;
     private boolean regexMatch;
     private boolean containsMatch;
+    private boolean subsetMatch;
     private boolean equalsMatch;
     private String username;
     private String group;
@@ -48,6 +49,7 @@ public class AclRuleBuilder {
         resourceType(fromRule.getResourceType());
         regexMatch(fromRule.isRegexMatch());
         containsMatch(fromRule.isContainsMatch());
+        subsetMatch(fromRule.isSubsetMatch());
         equalsMatch(fromRule.isEqualsMatch());
         username(fromRule.getUsername());
         group(fromRule.getGroup());
@@ -101,6 +103,11 @@ public class AclRuleBuilder {
         return this;
     }
 
+    public AclRuleBuilder subsetMatch(final boolean subsetMatch) {
+        this.subsetMatch = subsetMatch;
+        return this;
+    }
+
     public AclRuleBuilder equalsMatch(final boolean equalsMatch) {
         this.equalsMatch = equalsMatch;
         return this;
@@ -139,6 +146,7 @@ public class AclRuleBuilder {
                 resourceType,
                 regexMatch,
                 containsMatch,
+                subsetMatch,
                 equalsMatch,
                 username,
                 group,

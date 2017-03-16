@@ -38,6 +38,7 @@ public interface AclRule {
     public boolean isRegexMatch();
 
     public boolean isContainsMatch();
+    public boolean isSubsetMatch();
     public boolean isEqualsMatch();
 
     //    public Subject getSubject();
