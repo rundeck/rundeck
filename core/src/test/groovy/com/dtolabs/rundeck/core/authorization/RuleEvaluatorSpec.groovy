@@ -196,6 +196,79 @@ class RuleEvaluatorSpec extends Specification {
     }
 
     @Unroll
+    def "evaluate actions"() {
+        when:
+        def rules = allowed.collect {
+            [
+                    resource    : [
+                            jobName: 'bob'
+                    ],
+                    resourceType: 'job',
+                    allowActions: it as Set,
+                    denyActions : [] as Set,
+            ]
+        }
+        def rules2 = denied.collect {
+            [
+                    resource    : [
+                            jobName: 'bob'
+                    ],
+                    resourceType: 'job',
+                    allowActions: [] as Set,
+                    denyActions : it as Set,
+            ]
+        }
+        def ruleset = rules + rules2
+        Authorization eval = new RuleEvaluator(basicRulesFromList(ruleset))
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("bob", "admin", "user"),
+                tested,
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result != null
+        result.explain().code == code
+        result.isAuthorized() == isauthorized
+        result.action == tested
+
+        where:
+        allowed                 | denied                  | tested    | isauthorized | code
+        []                      | []                      |
+                'EXECUTE'                                             |
+                false                                                                |
+                Explanation.Code.REJECTED_NO_SUBJECT_OR_ENV_FOUND
+        [['*']]                 | []                      | 'EXECUTE' | true         | Explanation.Code.GRANTED
+        [['*']]                 | []                      | 'HALLO'   | true         | Explanation.Code.GRANTED
+        [['EXECUTE']]           | []                      | 'EXECUTE' | true         | Explanation.Code.GRANTED
+        [['EXECUTE', 'MINGLE']] | []                      | 'EXECUTE' | true         | Explanation.Code.GRANTED
+        [['*', 'MINGLE']]       | []                      | 'EXECUTE' | true         | Explanation.Code.GRANTED
+        [['BREXECUTE']]         | []                      | 'EXECUTE' | false        | Explanation.Code.REJECTED
+        [['EXECUTE']]           | [['EXECUTE']]           | 'EXECUTE' | false        | Explanation.Code.REJECTED_DENIED
+        [['EXECUTE']]           | [['*']]                 | 'EXECUTE' | false        | Explanation.Code.REJECTED_DENIED
+        [['EXECUTE', 'FLIM']]   | [['*']]                 | 'FLIM'    | false        | Explanation.Code.REJECTED_DENIED
+        [['EXECUTE', 'FLIM']]   | [['*']]                 | 'FLAM'    | false        | Explanation.Code.REJECTED_DENIED
+        [['MINGLE']]            | [['BREXCUTE']]          | 'EXECUTE' | false        | Explanation.Code.REJECTED
+        [['MINGLE']]            | [['EXECUTE', 'MINGLE']] | 'EXECUTE' | false        | Explanation.Code.REJECTED_DENIED
+        [['MINGLE']]            | [['EXECUTE', 'MINGLE']] | 'MINGLE'  | false        | Explanation.Code.REJECTED_DENIED
+        [['MINGLE']]            | [['EXECUTE', '*']]      | 'MINGLE'  | false        | Explanation.Code.REJECTED_DENIED
+        [['MINGLE']]            | [['*', 'MINGLE']]       | 'MINGLE'  | false        | Explanation.Code.REJECTED_DENIED
+        [['*', 'MINGLE']]       | [['*', 'MINGLE']]       | 'MINGLE'  | false        | Explanation.Code.REJECTED_DENIED
+        [['*', 'MINGLE']]       | [['*', 'MINGLE']]       | 'BLABLA'  | false        | Explanation.Code.REJECTED_DENIED
+        [['*']]                 | [['*']]                 | 'MINGLE'  | false        | Explanation.Code.REJECTED_DENIED
+        [['*']]                 | [['EXECUTE']]           | 'MINGLE'  | true         | Explanation.Code.GRANTED
+        [['*']]                 | [['EXECUTE']]           | 'ZINGLE'  | true         | Explanation.Code.GRANTED
+        [['*']]                 | [['EXECUTE']]           | 'EXECUTE' | false        | Explanation.Code.REJECTED_DENIED
+        [['MINGLE']]            | [['EXECUTE']]           | 'MINGLE'  | true         | Explanation.Code.GRANTED
+        [['MINGLE']]            | [['EXECUTE']]           | 'SHINGLE' | false        | Explanation.Code.REJECTED
+        [['MINGLE']]            | [['EXECUTE']]           | 'EXECUTE' | false        | Explanation.Code.REJECTED_DENIED
+
+    }
+
+    @Unroll
     def "evaluate rule #testRule - #testType - #testValue"() {
         when:
         Authorization eval = new RuleEvaluator(basicRules([
@@ -263,6 +336,29 @@ class RuleEvaluatorSpec extends Specification {
         subject
     }
 
+    AclRuleSet basicRulesFromList(List input) {
+        def rules = input.collect { detail ->
+            new Rule(
+                    [
+                            sourceIdentity: "test1",
+                            description   : "bob job allow exec, deny delete for admin group",
+                            resource      : [
+                                    jobName: 'bob'
+                            ],
+                            resourceType  : 'job',
+                            regexMatch    : false,
+                            containsMatch : false,
+                            equalsMatch   : true,
+                            username      : null,
+                            group         : 'admin',
+                            allowActions  : ['EXECUTE'] as Set,
+                            denyActions   : ['DELETE'] as Set,
+                            environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                    ] + detail
+            )
+        } as Set
+        new AclRuleSetImpl(rules)
+    }
     AclRuleSet basicRules(Map detail) {
         def rules = [
                 new Rule(
