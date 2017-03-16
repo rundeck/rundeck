@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
@@ -23,15 +25,16 @@ import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
 import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
+import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.Execution
-import rundeck.ScheduledExecution
 import rundeck.User
 import rundeck.filters.ApiRequestFilters
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
+import java.time.Clock
 
 class ApiService {
     static transactional = false
@@ -41,6 +44,9 @@ class ApiService {
     public static final String XML_API_RESPONSE_WRAPPER_HEADER = "X-Rundeck-API-XML-Response-Wrapper"
     def messageSource
     def grailsLinkGenerator
+    def frameworkService
+    def configurationService
+    def userService
 
     public static final Map<String,String> HTTP_METHOD_ACTIONS = Collections.unmodifiableMap (
             POST: AuthConstants.ACTION_CREATE,
@@ -71,19 +77,50 @@ class ApiService {
             throw new Exception("Failed to save token for User ${u.login}")
         }
     }
-
+    Clock systemClock = Clock.systemUTC()
+    /**
+     * Generate the expiration date for a token given the duration string, and
+     * duration max string
+     * @param tokenDuration duration string
+     * @param maxDuration optional maximum duration time, if null then no maximum
+     * @return [date:Date] date is UTC time, or [error:'format'] if the input duration is not valid or [error:'max']
+     * if it exceeds the
+     * maximum
+     */
+    Map generateTokenExpirationDate(Integer tokenDuration, Integer maxDuration = null) {
+        int useTokenTime = maxDuration ?: 0
+        boolean max = false
+        if (tokenDuration) {
+            if (tokenDuration <= useTokenTime || useTokenTime < 1) {
+                useTokenTime = tokenDuration
+            } else {
+                max = true
+            }
+        }
+        def newDate = null;
+        if (useTokenTime > 0) {
+            def currentDate = systemClock.instant()
+            newDate = Date.from(currentDate.plusSeconds(useTokenTime))
+        }
+        [date: newDate, max: max]
+    }
     /**
      * Generate a new unique auth token for the user and specific groups and return it
      * @param u
      * @return
      */
-    AuthToken generateAuthToken(User u, String roles, Date expiration){
+    AuthToken generateAuthToken(User u, Set<String> roles, Date expiration) {
 
         String newtoken = genRandomString()
         while (AuthToken.findByToken(newtoken) != null) {
             newtoken = genRandomString()
         }
-        AuthToken token = new AuthToken(token: newtoken, authRoles: roles, user: u, expiration: expiration)
+        AuthToken token = new AuthToken(
+                token: newtoken,
+                authRoles: AuthToken.generateAuthRoles(roles),
+                user: u,
+                expiration: expiration
+        )
 
         if (token.save()) {
             log.debug("GENERATE TOKEN ${newtoken} for User ${u.login} with roles: ${token.authRoles}")
@@ -91,6 +128,96 @@ class ApiService {
         } else {
             throw new Exception("Failed to save token for User ${u.login}")
         }
+    }
+
+    /**
+     * Generate an auth token
+     * @param authContext user's own auth context
+     * @param tokenTime time value for token expiration
+     * @param tokenTimeUnit time unit for token expiration (h,m,s)
+     * @param tokenUser owner name of token
+     * @param tokenRoles role list for token
+     * @return
+     */
+    AuthToken generateUserToken(
+            UserAndRolesAuthContext authContext,
+            Integer tokenTimeSeconds,
+            String tokenUser,
+            Set<String> roles
+    )
+    {
+        //check auth to edit profile
+        //default to current user profile
+        def login = authContext.username
+
+        def selfAuth = false
+        def serviceAuth = false
+        //admin auth allows generate of any user token with anhy roles
+        def adminAuth = frameworkService.authorizeApplicationResourceType(
+                authContext,
+                AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN
+        )
+        if (!adminAuth) {
+            //service auth allows generate of any user token with additional service roles
+            serviceAuth = frameworkService.authorizeApplicationResourceType(
+                    authContext,
+                    AuthConstants.TYPE_USER,
+                    AuthConstants.GENERATE_SERVICE_TOKEN
+            )
+        }
+        if (!serviceAuth) {
+            //self auth allows generate of self-owned token with any subset of self-owned roles
+            selfAuth = frameworkService.authorizeApplicationResourceType(
+                    authContext,
+                    AuthConstants.TYPE_USER,
+                    AuthConstants.GENERATE_SELF_TOKEN
+            )
+        }
+        if (!(adminAuth || serviceAuth || selfAuth)) {
+            throw new Exception("Unauthorized: generate API token")
+        }
+        if (adminAuth || serviceAuth) {
+            login = tokenUser
+        } else if (tokenUser != authContext.username) {
+            throw new Exception("Unauthorized: generate API token")
+        }
+
+        Integer maxTokenDuration = configurationService.getInteger("api.tokens.duration.max", 0)
+        def generate = generateTokenExpirationDate(tokenTimeSeconds, maxTokenDuration)
+        if (generate.max) {
+            throw new Exception("Duration exceeds maximum allowed: " + maxTokenDuration)
+        }
+        Date newDate = generate.date
+
+        def userRoles = authContext.roles
+        if (serviceAuth) {
+            //allow configured service roles
+            def val = configurationService.getString('api.tokens.allowed.service.roles', null)
+            if (val) {
+                userRoles.addAll(AuthToken.parseAuthRoles(val))
+            }
+        }
+        if (!adminAuth) {
+            if (!userRoles.containsAll(roles)) {
+                throw new Exception("Invalid Group")
+            }
+        }
+        if (!roles) {
+
+            if (tokenUser != authContext.username) {
+                throw new Exception("Roles are required")
+            } else if (tokenUser == authContext.username) {
+                //default to user's own roles
+                roles = authContext.roles
+            }
+        }
+
+        User u = userService.findOrCreateUser(login)
+        if (!u) {
+            throw new Exception("Couldn't find user: ${login}")
+        }
+        return generateAuthToken(u, roles, newDate)
     }
 
     def respondOutput(HttpServletResponse response, String contentType, String output) {
