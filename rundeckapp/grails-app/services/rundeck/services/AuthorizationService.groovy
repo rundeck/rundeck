@@ -82,9 +82,7 @@ class AuthorizationService implements InitializingBean{
         AclsUtil.getGroups(AclsUtil.merge(getFilesystemRules(), getStoredPolicies()))
     }
     def AclRuleSetSource getFilesystemRules(){
-        if(rundeckFilesystemPolicyAuthorization instanceof SAREAuthorization){
-            return rundeckFilesystemPolicyAuthorization.policies
-        }else if(rundeckFilesystemPolicyAuthorization instanceof RuleEvaluator){
+        if(rundeckFilesystemPolicyAuthorization instanceof RuleEvaluator){
             return rundeckFilesystemPolicyAuthorization
         }
     }
