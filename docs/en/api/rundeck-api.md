@@ -62,6 +62,8 @@ Changes introduced by API Version number:
     - [`GET /api/19/job/[ID]/input/files`][/api/V/job/[ID]/input/files] - List uploaded files for a job
     - [`GET /api/19/execution/[ID]/input/files`][/api/V/execution/[ID]/input/files] - List input files used for an execution
     - [`GET /api/19/jobs/file/[ID]`][/api/V/jobs/file/[ID]] - Get info for an uploaded file
+* Updated Endpoints.
+    - [`POST /api/19/tokens/[USER]`][/api/V/tokens/[USER]] - Specify token roles
 
 **Version 18**:
 
@@ -589,7 +591,7 @@ Response:
 
 ### Create a Token ####
 
-Create a new token for a specific user.
+Create a new token for a specific user.  Specify custom roles and duration if authorized.
 
 **Request:**
 
@@ -598,16 +600,50 @@ Create a new token for a specific user.
 
 The user specified must either be part of the URL, or be part of the request content. If used in the URL, then the request content is ignored and can be empty.
 
+**For API v18 and earlier**: by default the role `api_token_group` is set for the generated token,
+and the duration will be the maximum allowed token duration.
+
+**For API v19 and later**: `roles` must be specified, and `duration` is optional.  
+
+If unset, duration will be the maximum allowed token duration.
+
+If the `roles` value is the string `*` (asterisk), and the token is generated for oneself (i.e. the authenticated user),
+then the generated token will have all roles as the authenticated user.
+
+
 `Content-type: application/xml`
 
 ~~~~ {.xml}
-<user user="alice"/>
+<user user="alice" roles="sre,dev" duration="120d"/>
+~~~~
+
+Requesting all available roles for the same user:
+
+~~~~ {.xml}
+<user user="alice" roles="*" duration="120d"/>
 ~~~~
 
 `Content-type: application/json`
 
 ~~~~ {.json}
-{ "user" : "alice" }
+{
+  "user": "alice",
+  "roles": [
+    "sre",
+    "dev"
+  ],
+  "duration": "120d"
+}
+~~~~
+
+`roles` can be a comma-separated string:
+
+~~~~ {.json}
+{
+  "user": "alice",
+  "roles": "sre,dev",
+  "duration": "120d"
+}
 ~~~~
 
 Response:
@@ -616,7 +652,12 @@ Response:
 `application/xml`
 
 ~~~~ {.xml}
-<token id='DuV0UoDUDkoR38Evd786cdRsed6uSNdP' user='alice' />
+<token 
+    id='DuV0UoDUDkoR38Evd786cdRsed6uSNdP' 
+    user='alice' 
+    roles="sre,dev"
+    expiration="" 
+/>
 ~~~~
 
 `application/json`
@@ -624,7 +665,12 @@ Response:
 ~~~~ {.json}
 {
   "user": "alice",
-  "id": "DuV0UoDUDkoR38Evd786cdRsed6uSNdP"
+  "id": "DuV0UoDUDkoR38Evd786cdRsed6uSNdP",
+  "roles": [
+    "sre",
+    "dev"
+  ],
+  "expiration": ""
 }
 ~~~~
 
