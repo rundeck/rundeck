@@ -23,12 +23,11 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
-import java.util.Collections;
 import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Policy is contains a set of {@link AclContext} with corresponding usernames and/or groups
+ * Policy is contains a set of {@link RuleSetConstructor} with corresponding usernames and/or groups
  * associated with the each Acl.
  * 
  * The policy is a reference to a phycial policy stored on persistantly.
@@ -38,11 +37,11 @@ import java.util.regex.Pattern;
 public interface Policy {
     
     /**
-     * Return the {@link AclContext} for this policy representation.
+     * Return the {@link RuleSetConstructor} for this policy representation.
      * 
      * @return context
      */
-    AclContext getContext();
+    RuleSetConstructor getContext();
 
     /**
      * Return a list of usernames as strings associated with this policy.

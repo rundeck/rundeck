@@ -138,7 +138,7 @@ public class YamlPolicyCollection implements PolicyCollection {
         return all.size();
     }
 
-    public Collection<AclContext> matchedContexts(final Subject subject, final Set<Attribute> environment) {
+    public Collection<RuleSetConstructor> matchedContexts(final Subject subject, final Set<Attribute> environment) {
         return policyMatcher(subject, all, environment, source.getIdentity());
     }
 
@@ -150,14 +150,14 @@ public class YamlPolicyCollection implements PolicyCollection {
      *
      * @return contexts
      */
-    static Collection<AclContext> policyMatcher(
+    static Collection<RuleSetConstructor> policyMatcher(
             final Subject subject,
             final Collection<? extends Policy> policyLister,
             final Set<Attribute> environment,
             final String sourceIdentity
     )
     {
-        final ArrayList<AclContext> matchedContexts = new ArrayList<AclContext>();
+        final ArrayList<RuleSetConstructor> matchedContexts = new ArrayList<RuleSetConstructor>();
         int i = 0;
         Set<Username> userPrincipals = subject.getPrincipals(Username.class);
         Set<String> usernamePrincipals = new HashSet<String>();

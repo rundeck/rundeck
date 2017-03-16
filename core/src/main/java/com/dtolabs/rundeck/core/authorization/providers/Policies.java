@@ -91,14 +91,6 @@ public class Policies implements AclRuleSetSource{
         return new Policies(PoliciesCache.fromFile(singleFile));
     }
 
-    public List<AclContext> narrowContext(final Subject subject, final Set<Attribute> environment) {
-
-        List<AclContext> matchedContexts = new ArrayList<AclContext>();
-        for (final PolicyCollection f : cache) {
-            matchedContexts.addAll(f.matchedContexts(subject, environment));
-        }
-        return matchedContexts;
-    }
 
     /**
      * @return all roles list

@@ -64,7 +64,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
     private Set<String> groups = new HashSet<String>();
     private Set<Pattern> usernamePatterns = new HashSet<Pattern>();
     private Set<Pattern> groupPatterns = new HashSet<Pattern>();
-    YamlAclContext aclContext;
+    YamlRuleSetConstructor constructor;
     private YamlEnvironmentalContext environment;
     private Set<AclRule> rules = new HashSet<>();
 
@@ -78,7 +78,11 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
         this.sourceIndex = sourceIndex;
         this.validation = validation;
         parseByClause();
-        createAclContext();
+        constructor = new YamlRuleSetConstructor(
+                this.policyInput,
+                this.validation,
+                (type, typeSection) -> (builder) -> createRules(type, typeSection, builder)
+        );
         parseEnvironment(context);
         validate();
         enumerateRules();
@@ -138,11 +142,11 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
 
         for (String username : usernames) {
             AclRuleBuilder ruleBuilder = AclRuleBuilder.builder(envProto).username(username);
-            rules.addAll(aclContext.createRules(ruleBuilder));
+            rules.addAll(constructor.createRules(ruleBuilder));
         }
         for (String group : groups) {
             AclRuleBuilder ruleBuilder = AclRuleBuilder.builder(envProto).group(group);
-            rules.addAll(aclContext.createRules(ruleBuilder));
+            rules.addAll(constructor.createRules(ruleBuilder));
         }
     }
 
@@ -417,27 +421,28 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
         return groups;
     }
 
-    public AclContext getContext() {
+    public RuleSetConstructor getContext() {
 
-        return aclContext;
+        return constructor;
     }
 
-    private void createAclContext() {
-        aclContext = new YamlAclContext(policyInput, validation, new TypeContextFactory() {
-            public AclContext createAclContext(String type, List typeSection) {
-                return new TypeContext(createTypeRules(type,typeSection));
-            }
+    static interface TypeRuleSetConstructorFactory {
+        public RuleSetConstructor createRuleSetConstructor(final String type, final List typeSection);
+    }
+
+    public Set<AclRule> createRules(String type, final List typeSection, final AclRuleBuilder prototype) {
+        HashSet<AclRule> aclRules = new HashSet<>();
+        for (RuleConstructor ruleConstructor : createTypeRules(type, typeSection)) {
+            AclRuleBuilder builder = AclRuleBuilder.builder(
+                    prototype
+            );
+            aclRules.add(ruleConstructor.createRule(builder));
         }
-        );
+        return aclRules;
     }
 
-    static interface TypeContextFactory {
-        public AclContext createAclContext(final String type, final List typeSection);
-    }
-
-
-    List<ContextMatcher> createTypeRules(String type, final List typeSection) {
-        final ArrayList<ContextMatcher> rules = new ArrayList<ContextMatcher>();
+    List<RuleConstructor> createTypeRules(String type, final List typeSection) {
+        final ArrayList<RuleConstructor> rules = new ArrayList<>();
         int i = 1;
         for (final Object o : typeSection) {
             if(!(o instanceof Map)) {
@@ -449,17 +454,10 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
                 );
             }
             final Map section = (Map) o;
-            rules.add(createTypeRuleContext(type, section, i));
+            rules.add(new TypeRuleConstructor(type, section, validation, i, this));
             i++;
         }
         return rules;
-    }
-
-    /**
-     * Create acl context  for specific rule in a type context
-     */
-    ContextMatcher createTypeRuleContext(final String type, final Map section, final int i) {
-        return new TypeRuleContextMatcher(type, section, validation, i, this);
     }
 
 
@@ -568,69 +566,6 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
         return sb.toString();
     }
 
-    /**
-     * Produces decision for a resource, from a list of context matcher rules. if any matching rule produces a
-     * REJECTED_DENIED result, then the decision is REJECTED_DENIED.  Otherwise if any rule produces a GRANTED decision,
-     * the decision is GRANTED. Otherwise the decision is REJECTED.
-     */
-    static class TypeContext implements AclContext {
-        private final List<ContextMatcher> typeRules;
-
-        public TypeContext(final List<ContextMatcher> typeRules) {
-            this.typeRules = typeRules;
-        }
-
-        public ContextDecision includes(final Map<String, String> resource, final String action) {
-            final ArrayList<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
-            boolean allowed = false;
-            boolean denied = false;
-            ContextEvaluation deniedEvaluation;
-            for (final ContextMatcher matcher : getTypeRules()) {
-                final MatchedContext matched = matcher.includes(resource, action);
-                if (!matched.isMatched()) {
-                    //indicates the section did not match
-                    continue;
-                }
-                final ContextDecision decision = matched.getDecision();
-                if (decision.granted()) {
-                    allowed = true;
-                }
-                if (Explanation.Code.REJECTED_DENIED == decision.getCode()) {
-                    denied = true;
-                }
-                evaluations.addAll(decision.getEvaluations());
-                if (!denied) {
-                    for (final ContextEvaluation contextEvaluation : decision.getEvaluations()) {
-                        if (Explanation.Code.REJECTED_DENIED == contextEvaluation.id) {
-                            deniedEvaluation = contextEvaluation;
-                            denied = true;
-                            break;
-                        }
-                    }
-                }
-            }
-            return new ContextDecision(denied ? Explanation.Code.REJECTED_DENIED
-                    : allowed ? Explanation.Code.GRANTED : Explanation.Code.REJECTED,
-                    allowed && !denied, evaluations);
-
-        }
-
-        public List<ContextMatcher> getTypeRules() {
-            return typeRules;
-        }
-
-        @Override
-        public Set<AclRule> createRules(final AclRuleBuilder prototype) {
-            HashSet<AclRule> aclRules = new HashSet<>();
-            for (ContextMatcher typeRule : typeRules) {
-                AclRuleBuilder builder = AclRuleBuilder.builder(
-                        prototype
-                );
-                aclRules.add(typeRule.createRule(builder));
-            }
-            return aclRules;
-        }
-    }
 
     /**
      * Represents a match result with a decision result,
@@ -655,8 +590,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
         }
     }
 
-    static interface ContextMatcher {
-        public MatchedContext includes(Map<String, String> resource, String action);
+    static interface RuleConstructor {
         AclRule createRule(AclRuleBuilder prototype);
     }
 
@@ -680,7 +614,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
      *     deny: [action1,action2]
      * </pre>
      */
-    static class TypeRuleContextMatcher implements ContextMatcher {
+    static class TypeRuleConstructor implements RuleConstructor {
         public static final String MATCH_SECTION = "match";
         public static final String EQUALS_SECTION = "equals";
         public static final String CONTAINS_SECTION = "contains";
@@ -693,7 +627,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
         String type;
 
 
-        TypeRuleContextMatcher(
+        TypeRuleConstructor(
                 final String type,
                 final Map ruleSection,
                 ValidationSet validation,
@@ -1202,24 +1136,27 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
      * Returns decision for a resource and action, based on the "type" of the resource, and the rules defined in the
      * for: type: section of the policy def.
      */
-    static class YamlAclContext implements AclContext {
+    static class YamlRuleSetConstructor implements RuleSetConstructor {
         private String description = "Not Evaluated: ";
         Map policyDef;
-        private final ConcurrentHashMap<String, AclContext> typeContexts = new ConcurrentHashMap<String, AclContext>();
-        TypeContextFactory typeContextFactory;
+        private final ConcurrentHashMap<String, RuleSetConstructor> typeContexts = new ConcurrentHashMap<>();
+        TypeRuleSetConstructorFactory typeRuleSetConstructorFactory;
         private Map forsection;
         private ValidationSet validation;
 
-        YamlAclContext(final Map policyDef, final ValidationSet validation, final TypeContextFactory typeContextFactory) {
+        YamlRuleSetConstructor(
+                final Map policyDef,
+                final ValidationSet validation,
+                final TypeRuleSetConstructorFactory typeRuleSetConstructorFactory
+        )
+        {
             this.policyDef = policyDef;
-            this.typeContextFactory = typeContextFactory;
+            this.typeRuleSetConstructorFactory = typeRuleSetConstructorFactory;
             this.validation=validation;
             initialize();
         }
 
         private void initialize() {
-            final List<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
-
             //require description
             final Object descriptionValue = policyDef.get(DESCRIPTION_KEY);
             if (descriptionValue == null || !(descriptionValue instanceof String)) {
@@ -1252,7 +1189,13 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
                     if(typeSectionList.size()<1){
                         throw new AclPolicySyntaxException("Section '" + FOR_SECTION + ": { " + key + ": [...] }' list should not be empty.");
                     }
-                    typeContexts.putIfAbsent(type, createTypeContext(type, typeSectionList));
+                    typeContexts.putIfAbsent(
+                            type,
+                            typeRuleSetConstructorFactory.createRuleSetConstructor(
+                                    type,
+                                    typeSectionList
+                            )
+                    );
                 }else{
                     throw new AclPolicySyntaxException("Section '" + FOR_SECTION + ":' key '"+key+":' was not a string.");
                 }
@@ -1266,51 +1209,19 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             return "Context: " + description;
         }
 
-        private AclContext createTypeContext(final String type,final List typeSection) {
-            return typeContextFactory.createAclContext(type, typeSection);
-        }
-
         @Override
         public Set<AclRule> createRules(final AclRuleBuilder prototype) {
             HashSet<AclRule> aclRules = new HashSet<>();
-            for (Map.Entry<String, AclContext> stringAclContextEntry : typeContexts.entrySet()) {
+            for (Map.Entry<String, RuleSetConstructor> typeRules : typeContexts.entrySet()) {
                 AclRuleBuilder builder = AclRuleBuilder.builder(prototype);
 
-                String key = stringAclContextEntry.getKey();
-                builder.sourceIdentityAppend(
-                        "[type:" + key + "]"
-                );
-                builder.resourceType(key);
-                AclContext value = stringAclContextEntry.getValue();
+                String type = typeRules.getKey();
+                builder.sourceIdentityAppend("[type:" + type + "]");
+                builder.resourceType(type);
+                RuleSetConstructor value = typeRules.getValue();
                 aclRules.addAll(value.createRules(builder));
             }
             return aclRules;
-        }
-
-        static final ContextDecision NO_RESOURCE_TYPE_DECISION = new ContextDecision(
-                Explanation.Code.REJECTED_NO_RESOURCE_TYPE, false,
-                Collections.singletonList(new ContextEvaluation(Explanation.Code.REJECTED_NO_RESOURCE_TYPE,
-                        "Resource has no '" + TYPE_PROPERTY + "'.")));
-
-        private static ContextDecision createNoRulesDecision(String type) {
-            return new ContextDecision(Explanation.Code.REJECTED_NO_RULES_DECLARED, false,
-                    Collections.singletonList(new ContextEvaluation(Explanation.Code.REJECTED_NO_RULES_DECLARED,
-                            "Section for type '" + type + "' was not declared in " + FOR_SECTION + " section")));
-        }
-
-        @SuppressWarnings("rawtypes")
-        public ContextDecision includes(final Map<String, String> resourceMap, final String action) {
-            //require the resource to have a "type" value
-            final String type = resourceMap.get(TYPE_PROPERTY);
-            if (null == type) {
-                return NO_RESOURCE_TYPE_DECISION;
-            }
-
-            final AclContext typeContext = typeContexts.get(type);
-            if (null == typeContext) {
-                return createNoRulesDecision(type);
-            }
-            return typeContext.includes(resourceMap, action);
         }
     }
 }

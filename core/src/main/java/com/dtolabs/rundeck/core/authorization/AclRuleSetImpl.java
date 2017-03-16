@@ -16,12 +16,6 @@
 
 package com.dtolabs.rundeck.core.authorization;
 
-import com.dtolabs.rundeck.core.authorization.providers.AclContext;
-import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 /**

@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.core.authorization.AclRuleBuilder;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Explanation;
 import com.dtolabs.rundeck.core.utils.Converter;
-import junit.framework.TestCase;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
 import org.junit.Assert;
@@ -76,9 +75,9 @@ public class TestYamlPolicy  {
 
         //test "description" is required
             final Map map = new HashMap();
-            final YamlPolicy.TypeContextFactory typeContextFactory = null;
-        final YamlPolicy.YamlAclContext yamlAclContext;
-        yamlAclContext = new YamlPolicy.YamlAclContext(map,null, typeContextFactory);
+            final YamlPolicy.TypeRuleSetConstructorFactory typeRuleSetConstructorFactory = null;
+        final YamlPolicy.YamlRuleSetConstructor yamlRuleSetConstructor;
+        yamlRuleSetConstructor = new YamlPolicy.YamlRuleSetConstructor(map, null, typeRuleSetConstructorFactory);
     }
 
     @Test(expected = YamlPolicy.AclPolicySyntaxException.class)
@@ -87,8 +86,12 @@ public class TestYamlPolicy  {
         final Map map = new HashMap();
         map.put("description", "test1");
         map.put("for", new HashMap());
-        final YamlPolicy.TypeContextFactory typeContextFactory = null;
-        final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map,null, typeContextFactory);
+        final YamlPolicy.TypeRuleSetConstructorFactory typeRuleSetConstructorFactory = null;
+        final YamlPolicy.YamlRuleSetConstructor yamlRuleSetConstructor = new YamlPolicy.YamlRuleSetConstructor(map, null,
+
+
+                                                                                                               typeRuleSetConstructorFactory
+        );
 
     }
 
@@ -98,9 +101,9 @@ public class TestYamlPolicy  {
         final Map map = new HashMap();
         map.put("description", "test1");
         map.put("for", "test1");
-        final YamlPolicy.TypeContextFactory typeContextFactory = null;
-        final YamlPolicy.YamlAclContext yamlAclContext;
-        yamlAclContext = new YamlPolicy.YamlAclContext(map,null, typeContextFactory);
+        final YamlPolicy.TypeRuleSetConstructorFactory typeRuleSetConstructorFactory = null;
+        final YamlPolicy.YamlRuleSetConstructor yamlRuleSetConstructor;
+        yamlRuleSetConstructor = new YamlPolicy.YamlRuleSetConstructor(map, null, typeRuleSetConstructorFactory);
         Assert.fail("Expected syntax error");
     }
 
@@ -110,8 +113,10 @@ public class TestYamlPolicy  {
         final Map map = new HashMap();
         map.put("description", "test1");
         map.put("for", new ArrayList());
-        final YamlPolicy.TypeContextFactory typeContextFactory = null;
-        final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, null,typeContextFactory);
+        final YamlPolicy.TypeRuleSetConstructorFactory typeRuleSetConstructorFactory = null;
+        final YamlPolicy.YamlRuleSetConstructor yamlRuleSetConstructor = new YamlPolicy.YamlRuleSetConstructor(map, null,
+                                                                                                               typeRuleSetConstructorFactory
+        );
     }
     @Test(expected = YamlPolicy.AclPolicySyntaxException.class)
     public void testYamlAclContext_for_must_exist() {
@@ -119,8 +124,10 @@ public class TestYamlPolicy  {
         final Map map = new HashMap();
         map.put("description", "test1");
 //            map.put("for", new ArrayList());
-        final YamlPolicy.TypeContextFactory typeContextFactory = null;
-        final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map,null, typeContextFactory);
+        final YamlPolicy.TypeRuleSetConstructorFactory typeRuleSetConstructorFactory = null;
+        final YamlPolicy.YamlRuleSetConstructor yamlRuleSetConstructor = new YamlPolicy.YamlRuleSetConstructor(map, null,
+                                                                                                               typeRuleSetConstructorFactory
+        );
     }
 
     @Test(expected = YamlPolicy.AclPolicySyntaxException.class)
@@ -129,278 +136,26 @@ public class TestYamlPolicy  {
         final Map map = new HashMap();
         map.put("description", "test1");
         map.put("for", new HashMap());
-        final YamlPolicy.TypeContextFactory typeContextFactory = null;
-        final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map,null, typeContextFactory);
+        final YamlPolicy.TypeRuleSetConstructorFactory typeRuleSetConstructorFactory = null;
+        final YamlPolicy.YamlRuleSetConstructor yamlRuleSetConstructor = new YamlPolicy.YamlRuleSetConstructor(map, null,
+                                                                                                               typeRuleSetConstructorFactory
+        );
     }
 
 
 
 
-    @Test public void testYamlAclContext_no_rules() {
-        //if type!='job' and rules: exists, it does not use legacy
-        final Map map = new HashMap();
-        map.put("description", "test1");
-        final HashMap forRules = new HashMap();
-        ArrayList value = new ArrayList();
-        value.add(new HashMap<>());
-        forRules.put("testtype", value);
-        map.put("for", forRules);
-        map.put("rules", new HashMap());
-        final TestTypeContextFactory typeContextFactory = new TestTypeContextFactory();
-        typeContextFactory.context = new AclContext() {
-            public ContextDecision includes(Map<String, String> resource, String action) {
-                return new ContextDecision(Explanation.Code.REJECTED, false);
-            }
-
-            @Override
-            public Set<AclRule> createRules(final AclRuleBuilder prototype) {
-                return null;
-            }
-        };
-        final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map, null, typeContextFactory);
-        final HashMap<String, String> resmap = new HashMap<String, String>();
-        resmap.put("type", "bob");
-
-        final ContextDecision includes = yamlAclContext.includes(resmap, null);
-        Assert.assertFalse(includes.granted());
-        Assert.assertEquals(Explanation.Code.REJECTED_NO_RULES_DECLARED, includes.getCode());
-    }
 
 
-
-    @Test public void testYamlAclContext() {
-            //otherwise, uses TypeContext
-            final HashMap<String, String> resmap = new HashMap<String, String>();
-            resmap.put("type", "testtype");
-            final Map map = new HashMap();
-            map.put("description", "test1");
-            final HashMap forRules = new HashMap();
-            forRules.put("testtype", Arrays.asList(new HashMap()));
-            map.put("for", forRules);
-            map.put("rules", new HashMap());
-            final TestTypeContextFactory typeContextFactory = new TestTypeContextFactory();
-            final ContextDecision res2 = new ContextDecision(Explanation.Code.REJECTED, false);
-            typeContextFactory.context = new AclContext() {
-                public ContextDecision includes(Map<String, String> resource, String action) {
-                    return res2;
-                }
-
-                @Override
-                public Set<AclRule> createRules(final AclRuleBuilder prototype) {
-                    return null;
-                }
-            };
-            final ContextDecision res1 = new ContextDecision(Explanation.Code.REJECTED, false);
-            final YamlPolicy.YamlAclContext yamlAclContext = new YamlPolicy.YamlAclContext(map,null, typeContextFactory
-            );
-
-            final ContextDecision includes = yamlAclContext.includes(resmap, null);
-            Assert.assertNotNull(typeContextFactory.called);
-            Assert.assertNotNull(typeContextFactory.typeSection);
-            Assert.assertEquals(res2, includes);
-        }
-
-    /**
-     * test evaluation of rules within a type
-     */
-    @Test public void testTypeContext_single() {
-
-            //test a single allow results in granted decision
-            final List<YamlPolicy.ContextMatcher> contextMatchers = new ArrayList<YamlPolicy.ContextMatcher>();
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.GRANTED, true));
-            final YamlPolicy.TypeContext typeContext = new YamlPolicy.TypeContext(contextMatchers);
-
-            final ContextDecision includes = typeContext.includes(null, null);
-            Assert.assertNotNull(includes.granted());
-            Assert.assertEquals(Explanation.Code.GRANTED,includes.getCode());
-
-        }
-    /**
-     * test evaluation of rules within a type
-     */
-    @Test public void testTypeContext_deny() {
-            //test a single deny results in deny decision
-            final List<YamlPolicy.ContextMatcher> contextMatchers = new ArrayList<YamlPolicy.ContextMatcher>();
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED_DENIED, false));
-            final YamlPolicy.TypeContext typeContext = new YamlPolicy.TypeContext(contextMatchers);
-
-            final ContextDecision includes = typeContext.includes(null, null);
-            Assert.assertFalse(includes.granted());
-            Assert.assertEquals(Explanation.Code.REJECTED_DENIED,includes.getCode());
-
-        }
-    /**
-     * test evaluation of rules within a type
-     */
-    @Test public void testTypeContext_reject() {
-            //test a single reject results in reject decision
-            final List<YamlPolicy.ContextMatcher> contextMatchers = new ArrayList<YamlPolicy.ContextMatcher>();
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            final YamlPolicy.TypeContext typeContext = new YamlPolicy.TypeContext(contextMatchers);
-
-            final ContextDecision includes = typeContext.includes(null, null);
-            Assert.assertFalse(includes.granted());
-            Assert.assertEquals(Explanation.Code.REJECTED, includes.getCode());
-
-        }
-
-        //test multiple results
-
-
-    /**
-     * test evaluation of rules within a type
-     */
-    @Test public void testTypeContext_reject_grant() {
-            //test a [REJECT*,GRANT] results in GRANT
-            final List<YamlPolicy.ContextMatcher> contextMatchers = new ArrayList<YamlPolicy.ContextMatcher>();
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.GRANTED, true));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            final YamlPolicy.TypeContext typeContext = new YamlPolicy.TypeContext(contextMatchers);
-
-            final ContextDecision includes = typeContext.includes(null, null);
-            Assert.assertNotNull(includes.granted());
-            Assert.assertEquals(Explanation.Code.GRANTED, includes.getCode());
-
-        }
-    /**
-     * test evaluation of rules within a type
-     */
-    @Test public void testTypeContext_multiple_with_deny() {
-            //test a [REJECT*,GRANT*,DENY] results in DENY
-            final List<YamlPolicy.ContextMatcher> contextMatchers = new ArrayList<YamlPolicy.ContextMatcher>();
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.GRANTED, true));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED_DENIED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.GRANTED, true));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            final YamlPolicy.TypeContext typeContext = new YamlPolicy.TypeContext(contextMatchers);
-
-            final ContextDecision includes = typeContext.includes(null, null);
-            Assert.assertFalse(includes.granted());
-            Assert.assertEquals(Explanation.Code.REJECTED_DENIED, includes.getCode());
-
-        }
-    /**
-     * test evaluation of rules within a type
-     */
-    @Test public void testTypeContext_grant_deny() {
-            //test a [GRANT*,DENY] results in DENY
-            final List<YamlPolicy.ContextMatcher> contextMatchers = new ArrayList<YamlPolicy.ContextMatcher>();
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED_DENIED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.GRANTED, true));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.GRANTED, true));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.GRANTED, true));
-            final YamlPolicy.TypeContext typeContext = new YamlPolicy.TypeContext(contextMatchers);
-
-            final ContextDecision includes = typeContext.includes(null, null);
-            Assert.assertFalse(includes.granted());
-            Assert.assertEquals(Explanation.Code.REJECTED_DENIED, includes.getCode());
-
-        }
-    /**
-     * test evaluation of rules within a type
-     */
-    @Test public void testTypeContext_reject_deny() {
-            //test a [REJECT*,DENY] results in DENY
-            final List<YamlPolicy.ContextMatcher> contextMatchers = new ArrayList<YamlPolicy.ContextMatcher>();
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED_DENIED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            final YamlPolicy.TypeContext typeContext = new YamlPolicy.TypeContext(contextMatchers);
-
-            final ContextDecision includes = typeContext.includes(null, null);
-            Assert.assertFalse(includes.granted());
-            Assert.assertEquals(Explanation.Code.REJECTED_DENIED, includes.getCode());
-
-        }
-
-        //test subevaluations will expose a DENY result
-
-    /**
-     * test evaluation of rules within a type
-     */
-    @Test public void testTypeContext_multi_with_deny() {
-            //test a [GRANT,REJECT] with DENY evaluation results in DENY
-            final List<YamlPolicy.ContextMatcher> contextMatchers = new ArrayList<YamlPolicy.ContextMatcher>();
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.GRANTED, true));
-            final List<ContextEvaluation> evals = new ArrayList<ContextEvaluation>();
-            evals.add(new ContextEvaluation(Explanation.Code.REJECTED, "reject"));
-            evals.add(new ContextEvaluation(Explanation.Code.REJECTED, "reject"));
-            evals.add(new ContextEvaluation(Explanation.Code.GRANTED, "granted"));
-            evals.add(new ContextEvaluation(Explanation.Code.REJECTED_DENIED, "denied"));
-            evals.add(new ContextEvaluation(Explanation.Code.REJECTED, "reject"));
-            evals.add(new ContextEvaluation(Explanation.Code.REJECTED, "reject"));
-            evals.add(new ContextEvaluation(Explanation.Code.GRANTED, "granted"));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false, evals));
-            final YamlPolicy.TypeContext typeContext = new YamlPolicy.TypeContext(contextMatchers);
-
-            final ContextDecision includes = typeContext.includes(null, null);
-            Assert.assertFalse(includes.granted());
-            Assert.assertEquals(Explanation.Code.REJECTED_DENIED, includes.getCode());
-
-        }
-
-
-        //test matcher that do not match are ignored
-
-
-    /**
-     * test evaluation of rules within a type
-     */
-    @Test public void testTypeContext_only_matches() {
-            //only matches apply
-            final List<YamlPolicy.ContextMatcher> contextMatchers = new ArrayList<YamlPolicy.ContextMatcher>();
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(false, Explanation.Code.REJECTED_DENIED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            final YamlPolicy.TypeContext typeContext = new YamlPolicy.TypeContext(contextMatchers);
-
-            final ContextDecision includes = typeContext.includes(null, null);
-            Assert.assertFalse(includes.granted());
-            Assert.assertEquals(Explanation.Code.REJECTED, includes.getCode());
-
-        }
-
-    /**
-     * test evaluation of rules within a type
-     */
-    @Test public void testTypeContext_only_matches_granted() {
-            //only matches apply
-            final List<YamlPolicy.ContextMatcher> contextMatchers = new ArrayList<YamlPolicy.ContextMatcher>();
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.GRANTED, true));
-            contextMatchers.add(createTestMatcher(false, Explanation.Code.REJECTED_DENIED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            contextMatchers.add(createTestMatcher(true, Explanation.Code.REJECTED, false));
-            final YamlPolicy.TypeContext typeContext = new YamlPolicy.TypeContext(contextMatchers);
-
-            final ContextDecision includes = typeContext.includes(null, null);
-            Assert.assertNotNull(includes.granted());
-            Assert.assertEquals(Explanation.Code.GRANTED, includes.getCode());
-
-
-    }
-
-    private YamlPolicy.ContextMatcher createTestMatcher(final boolean matched, final Explanation.Code code,
-                                                        final boolean granted) {
+    private YamlPolicy.RuleConstructor createTestMatcher(final boolean matched, final Explanation.Code code,
+                                                         final boolean granted) {
         return createTestMatcher(matched, code, granted, new ArrayList<ContextEvaluation>());
     }
 
-    private YamlPolicy.ContextMatcher createTestMatcher(final boolean matched, final Explanation.Code code,
-                                                        final boolean granted,
-                                                        final List<ContextEvaluation> contextEvaluations) {
-        return new YamlPolicy.ContextMatcher() {
+    private YamlPolicy.RuleConstructor createTestMatcher(final boolean matched, final Explanation.Code code,
+                                                         final boolean granted,
+                                                         final List<ContextEvaluation> contextEvaluations) {
+        return new YamlPolicy.RuleConstructor() {
             public YamlPolicy.MatchedContext includes(Map<String, String> resource, String action) {
                 return new YamlPolicy.MatchedContext(matched, new ContextDecision(code, granted, contextEvaluations));
             }
@@ -419,8 +174,8 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher("x",
-                ruleSection,null, 1,null);
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor("x",
+                                                                                                      ruleSection, null, 1, null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("name", "blah");
@@ -440,8 +195,8 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher("x",
-                                                                                                            ruleSection,null, 1,null);
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor("x",
+                                                                                                      ruleSection, null, 1, null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("name", "blah");
@@ -468,8 +223,8 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher("x",
-                                                                                                            ruleSection,null, 1,null);
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor("x",
+                                                                                                      ruleSection, null, 1, null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("name", "blah");
@@ -496,8 +251,8 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher("x",
-                                                                                                            ruleSection,null, 1,null);
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor("x",
+                                                                                                      ruleSection, null, 1, null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("name", "blah");
@@ -538,8 +293,8 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher("x",
-                                                                                                            ruleSection,null, 1,null);
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor("x",
+                                                                                                      ruleSection, null, 1, null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("name", "blah");
@@ -583,8 +338,8 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher("x",
-                                                                                                            ruleSection,null, 1,null);
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor("x",
+                                                                                                      ruleSection, null, 1, null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("name", "blah");
@@ -611,8 +366,8 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher("x",
-                                                                                                            ruleSection,null, 1,null);
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor("x",
+                                                                                                      ruleSection, null, 1, null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("name", "blah");
@@ -639,8 +394,8 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher("x",
-                                                                                                            ruleSection,null, 1,null);
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor("x",
+                                                                                                      ruleSection, null, 1, null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("name", "blah");
@@ -681,8 +436,8 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher("x",
-                                                                                                            ruleSection,null, 1,null);
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor("x",
+                                                                                                      ruleSection, null, 1, null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("name", "blah");
@@ -726,8 +481,8 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher("x",
-                                                                                                            ruleSection,null, 1,null);
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor("x",
+                                                                                                      ruleSection, null, 1, null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("name", "blah");
@@ -755,8 +510,8 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher("x",
-                                                                                                            ruleSection,null, 1,null);
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor("x",
+                                                                                                      ruleSection, null, 1, null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("name", "blah");
@@ -784,7 +539,7 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -820,7 +575,7 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -863,7 +618,7 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -906,7 +661,7 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -949,7 +704,7 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -992,7 +747,7 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1044,7 +799,7 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1103,7 +858,7 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1162,7 +917,7 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1221,7 +976,7 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1271,7 +1026,7 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1321,7 +1076,7 @@ public class TestYamlPolicy  {
             );
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1370,7 +1125,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
             final HashMap<String, String> resmap = new HashMap<String, String>();
             resmap.put("name", "blah");
@@ -1405,7 +1160,7 @@ public class TestYamlPolicy  {
                                       + "allow: '*'");
         Assert.assertNotNull(load instanceof Map);
         final Map ruleSection = (Map) load;
-        final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+        final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
         "x",                 ruleSection,null, 1,null);
         final HashMap<String, String> resmap = new HashMap<String, String>();
         resmap.put("name", "blah");
@@ -1477,7 +1232,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1500,7 +1255,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1528,7 +1283,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1565,7 +1320,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1599,7 +1354,7 @@ public class TestYamlPolicy  {
                 + "allow: '*'");
         Assert.assertNotNull(load instanceof Map);
         final Map ruleSection = (Map) load;
-        final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+        final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
         final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1624,7 +1379,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1647,7 +1402,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1682,7 +1437,7 @@ public class TestYamlPolicy  {
                 + "allow: '*'");
         Assert.assertNotNull(load instanceof Map);
         final Map ruleSection = (Map) load;
-        final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+        final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
         final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1705,7 +1460,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1729,7 +1484,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1764,7 +1519,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1808,7 +1563,7 @@ public class TestYamlPolicy  {
                     + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
                 "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1832,7 +1587,7 @@ public class TestYamlPolicy  {
             final Object load = yaml.load("allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1859,7 +1614,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1888,7 +1643,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -1925,7 +1680,7 @@ public class TestYamlPolicy  {
                                           + "allow: '*'");
             Assert.assertNotNull(load instanceof Map);
             final Map ruleSection = (Map) load;
-            final YamlPolicy.TypeRuleContextMatcher typeRuleContext = new YamlPolicy.TypeRuleContextMatcher(
+            final YamlPolicy.TypeRuleConstructor typeRuleContext = new YamlPolicy.TypeRuleConstructor(
             "x",                 ruleSection,null, 1,null);
 
             final HashMap<String, String> resmap = new HashMap<String, String>();
@@ -2123,22 +1878,6 @@ public class TestYamlPolicy  {
             Assert.assertFalse(test.matches(env));
             env.add(new Attribute(new URI("test://application"), "bloo"));
             Assert.assertFalse(test.matches(env));
-        }
-    }
-
-
-
-    private static class TestTypeContextFactory implements YamlPolicy.TypeContextFactory {
-        boolean called;
-        AclContext context;
-        List typeSection;
-        String type;
-
-        public AclContext createAclContext(String type, List typeSection) {
-            called=true;
-            this.type=type;
-            this.typeSection=typeSection;
-            return context;
         }
     }
 }

@@ -23,9 +23,7 @@ import java.util.Map;
 import java.util.Set;
 
 
-public interface AclContext {
-
-    public ContextDecision includes(Map<String, String> resource, String action);
+public interface RuleSetConstructor {
 
     Set<AclRule> createRules(AclRuleBuilder prototype);
 }
