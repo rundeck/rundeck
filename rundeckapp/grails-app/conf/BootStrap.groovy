@@ -226,11 +226,6 @@ class BootStrap {
                  }
              }
 
-             def defaultTokenTimeout=properties.getProperty("rundeck.user.tokens.duration")
-             if(defaultTokenTimeout){
-                 servletContext.setAttribute("TOKEN_TIMEOUT", defaultTokenTimeout)
-             }
-
             //import filesystem projects if using DB storage
             if((grailsApplication.config.rundeck?.projectsStorageType?:'db') == 'db'){
                 log.debug("importing existing filesystem projects")
