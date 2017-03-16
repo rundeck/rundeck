@@ -66,6 +66,7 @@
         userClearApiToken: "${g.createLink(controller: 'user', action: 'clearApiToken',params:[format:'json'])}",
         userGenerateApiToken: "${g.createLink(controller: 'user', action: 'generateApiToken',params:[format:'json'])}",
         userGenerateUserToken: "${g.createLink(controller: 'user', action: 'generateUserToken',params:[format:'json'])}",
+        userRenderApiToken: "${g.createLink(controller: 'user', action: 'renderApiToken')}",
 
         workflowEdit: '${createLink(controller:"workflow",action:"edit",params:projParams)}',
         workflowRender: '${createLink(controller:"workflow",action:"render",params:projParams)}',

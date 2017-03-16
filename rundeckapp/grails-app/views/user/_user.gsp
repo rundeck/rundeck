@@ -16,22 +16,6 @@
 
 <%@ page import="rundeck.AuthToken; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <%--
- Copyright 2010 DTO Labs, Inc. (http://dtolabs.com)
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
-      http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
-
- --%>
-<%--
    _user.gsp
 
    Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
@@ -44,17 +28,17 @@
     <div class="col-sm-12">
         <table class="table table-condensed  table-striped">
             <tr>
-                <th>
+                <th class="table-header">
                     <g:message code="domain.User.email.label"/>
                 </th>
-                <th>
+                <th class="table-header">
                     <g:message code="domain.User.firstName.label"/>
                 </th>
-                <th>
+                <th class="table-header">
                     <g:message code="domain.User.lastName.label"/>
                 </th>
                 <g:if test="${selfprofile}">
-                    <th>
+                    <th class="table-header">
                         <g:message code="security.groups.label"/>
 
                         <g:helpTooltip code="security.groups.description" css="text-muted"/>
@@ -84,9 +68,7 @@
                 </td>
                 <g:if test="${selfprofile}">
                     <td>
-                        ${request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).
-                                collect { it.name }.
-                                join(", ")}
+                        ${authRoles?.join(", ")}
                     </td>
                 </g:if>
 
@@ -121,36 +103,52 @@
         </div>
         <div class="row">
             <div class="col-sm-12">
-                <table>
-                    <tr>
-                        <td><g:message code="jobquery.title.userFilter"/>:</td>
-                        <td><input type="text" maxlength="256" name="tokenUser" value="${user.login}"/></td>
-                        <td><g:message code="roles"/>:<g:helpTooltip code="roles.token.help" css="text-muted"/></td>
-                        <td><input type="text" maxlength="256"  name="tokenRoles" value="${request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class).
-                                collect { it.name }.
-                                join(", ")}"/></td>
-                        <td><g:message code="expiration.in"/>:<g:helpTooltip code="expiration.token.help" css="text-muted"/></td>
-                        <td> <input type="number" min="0" max="360" name="tokenTime"/> </td>
-                        <td>
-                            <select class="form-control" name="tokenTimeUnit">
-                                <option value="m"><g:message code="time.unit.minute.plural"/></option>
-                                <option value="h"><g:message code="time.unit.hour.plural"/></option>
-                                <option value="d"><g:message code="time.unit.day.plural"/></option>
-                            </select>
-                        </td>
-                        <td>
-                            <a class="genusertokenbtn small btn btn-link btn-xs"
-                               href="${createLink(
-                                       controller: 'user',
-                                       action: 'generateUserToken',
-                                       params: [login: user.login]
-                               )}">
-                                <g:icon name="plus"/>
-                                <g:message code="button.GenerateNewToken.label" />
-                            </a>
-                        </td>
-                    </tr>
-                </table>
+                <div class="form-inline">
+
+                    <label>
+                        <g:message code="jobquery.title.userFilter"/>:
+                        <input type="text" maxlength="256" name="tokenUser" value="${user.login}"
+                               class="form-control"/>
+                    </label>
+                    <label>
+                        <g:message code="roles"/>:
+                        <div class="input-group">
+                            <g:textField type="text" maxlength="256" name="tokenRoles"
+                                         class="form-control"
+                                         value="${authRoles?.join(", ")}"/>
+                            <div class="input-group-addon">
+                                <g:helpTooltip code="roles.token.help" css="text-muted"/>
+                            </div>
+                        </div>
+                    </label>
+                    <label>
+                        <g:message code="expiration.in"/>:
+                        <div class="input-group">
+                            <input type="number" min="0" max="360" name="tokenTime" class="form-control"
+                                   placeholder="10"
+                                   value="10"/>
+
+                            <div class="input-group-addon">
+                                <g:helpTooltip code="expiration.token.help" css="text-muted"/>
+                            </div>
+                        </div>
+
+                    </label>
+                    <select class="form-control" name="tokenTimeUnit">
+                        <option value="m"><g:message code="time.unit.minute.plural"/></option>
+                        <option value="h"><g:message code="time.unit.hour.plural"/></option>
+                        <option value="d"><g:message code="time.unit.day.plural"/></option>
+                    </select>
+                    <a class="genusertokenbtn small btn btn-link btn-xs"
+                       href="${createLink(
+                               controller: 'user',
+                               action: 'generateUserToken',
+                               params: [login: user.login]
+                       )}">
+                        <g:icon name="plus"/>
+                        <g:message code="button.GenerateNewToken.label"/>
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -158,17 +156,9 @@
             <div class="col-sm-12">
                 <g:set var="tokens" value="${rundeck.AuthToken.findAll()}"/>
 
-
-                <ul class="apitokentable list-unstyled">
-                    <g:if test="${tokens}">
-                        <g:each var="tokenobj" in="${tokens}">
-                            <li class="apitokenform ${tokenobj.token == flash.newtoken ? 'newtoken' : ''}"
-                                style="${tokenobj.token == flash.newtoken ? 'opacity:0;' : ''}">
-                                <g:render template="token" model="${[user: user, token: tokenobj]}"/>
-                            </li>
-                        </g:each>
-                    </g:if>
-                </ul>
+                <g:if test="${tokens}">
+                    <g:render template="tokenList" model="${[user:user, tokenList:tokens,flashToken:flash.newtoken]}"/>
+                </g:if>
 
 
                 <div style="display:none" class="gentokenerror alert alert-danger alert-dismissable">
@@ -244,16 +234,9 @@
                 <g:set var="tokens" value="${rundeck.AuthToken.findAllByUser(user)}"/>
 
 
-                <ul class="apitokentable list-unstyled">
-                    <g:if test="${tokens}">
-                        <g:each var="tokenobj" in="${tokens}">
-                            <li class="apitokenform ${tokenobj.token == flash.newtoken ? 'newtoken' : ''}"
-                                style="${tokenobj.token == flash.newtoken ? 'opacity:0;' : ''}">
-                                <g:render template="token" model="${[user: user, token: tokenobj]}"/>
-                            </li>
-                        </g:each>
-                    </g:if>
-                </ul>
+                <g:if test="${tokens}">
+                    <g:render template="tokenList" model="${[user:user, tokenList:tokens,flashToken:flash.newtoken]}"/>
+                </g:if>
 
 
                 <div style="display:none" class="gentokenerror alert alert-danger alert-dismissable">

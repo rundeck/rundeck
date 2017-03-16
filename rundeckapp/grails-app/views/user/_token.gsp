@@ -21,19 +21,24 @@
  --%>
 
 <g:set var="ukey" value="${g.rkey()}"/>
-<table width="100%">
-    <tr>
-        <td width="20%"><g:enc>${token.token}</g:enc></td>
-        <td width="20%">
+<tr class="apitokenform ${token.token == flashToken ? 'newtoken' : ''}"
+    style="${token.token == flashToken ? 'opacity:0;' : ''}">
+    <td width="20%"><code>${token.token}</code></td>
+        <td width="8%">
             <g:if test="${token.expiration}">
-                <g:message code="expiration" />: ${token.expiration}
+                <g:relativeDate elapsed="${token.expiration}" untilClass="timeuntil" agoClass="text-warning"/>
+            </g:if>
+        </td>
+        <td width="12%">
+            <g:if test="${token.expiration}">
+                <span class="text-muted"><g:formatDate date="${token.expiration}"/></span>
             </g:if>
         </td>
         <td width="10%">
-            <g:message code="user" />: <g:enc>${token.user.login}</g:enc>
+            <g:enc>${token.user.login}</g:enc>
         </td>
         <td width="40%">
-            <g:message code="roles" />: <g:enc>${token.authRoles}</g:enc>
+            <g:enc>${token.authRoles}</g:enc>
         </td>
         <td width="10%">
         <a style="${wdgt.styleVisible(if: token.token && !(params.showConfirm && params.token==token.token))}"
@@ -72,4 +77,3 @@
         </td>
 
     </tr>
-</table>

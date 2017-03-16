@@ -20,17 +20,20 @@
 
 <g:appTitle/> - <g:message code="userController.page.profile.title" />: ${user.login}</title>
     <g:javascript library="prototype/effects"/>
-    <g:javascript>
+    <script type="text/javascript">
     function addTokenRow(elem,login,token){
         var table=$(elem).down('.apitokentable');
-        var row=new Element('li');
+        var row = new Element('tbody');
         table.insert(row);
         $(row).addClassName('apitokenform');
         $(row).style.opacity=0;
-        jQuery(row).load(_genUrl('${g.createLink(controller: 'user', action: 'renderApiToken')}',{login:login,token:token}),function(resp,status,jqxhr){
+        jQuery(row).load(
+            _genUrl(appLinks.userRenderApiToken, {login: login, token: token}),
+            function (resp, status, jqxhr) {
                     addRowBehavior($(row));
                     jQuery($(row)).fadeTo("slow",1);
-        });
+            }
+        );
     }
     function tokenAjaxError(elem,msg){
         setText($(elem).down('.gentokenerror-text'),"Error: "+msg);
@@ -144,7 +147,7 @@
         var selectedLanguage = '${session[org.springframework.web.servlet.i18n.SessionLocaleResolver.LOCALE_SESSION_ATTRIBUTE_NAME]}';
         jQuery("#language").val(selectedLanguage);
     }
-    </g:javascript>
+    </script>
 </head>
 <body>
 

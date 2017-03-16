@@ -92,13 +92,13 @@ class UserController extends ControllerBase{
         [users:User.listOrderByLogin()]
     }
 
-    def profile={
+    def profile() {
         //check auth to view profile
         //default to current user profile
         if(!params.login){
             params.login=session.user
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(unauthorizedResponse(params.login == session.user || frameworkService.authorizeApplicationResourceType
                 (authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN,'Users',
                 params.login)){
@@ -113,7 +113,10 @@ class UserController extends ControllerBase{
         if(notFoundResponse(u, 'User', params['login'])){
             return
         }
-        [user:u]
+        [
+                user     : u,
+                authRoles: authContext.getRoles()
+        ]
     }
     def create={
         render(view:'register',model:[user:new User(),newuser:true])
