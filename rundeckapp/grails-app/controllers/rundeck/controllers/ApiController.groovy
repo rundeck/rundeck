@@ -17,7 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
-import groovy.time.TimeCategory
+import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.User
 
@@ -38,6 +38,10 @@ class ApiController extends ControllerBase{
     def userService
     def configurationService
 
+    static allowedMethods = [
+            apiTokenList  : ['GET'],
+            apiTokenCreate: ['GET']
+    ]
     def invalid = {
         return apiService.renderErrorXml(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
     }
@@ -123,127 +127,28 @@ class ApiController extends ControllerBase{
                 render(contentType: 'application/json') {
                     delegate.id = oldtoken.token
                     delegate.user = oldtoken.user.login
-                    delegate.roles = oldtoken.authRoles
+                    delegate.roles = oldtoken.authRolesSet()
                     delegate.expiration = oldtoken.expiration
                 }
 
             }
         }
     }
-    /*
-     * /api/11/tokens/$user?
+    /**
+     * GET /api/11/tokens/$user?
      */
     def apiTokenList() {
         if (!apiService.requireApi(request, response)) {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if(!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN)){
-            return apiService.renderErrorFormat(response,[
-                    status:HttpServletResponse.SC_FORBIDDEN,
-                    code:'api.error.item.unauthorized',
-                    args:[AuthConstants.ACTION_ADMIN,'Rundeck','User account']
-            ])
-        }
-        if(request.method=='POST'){
-            //parse input json or xml
-            def tokenuser=params.user
-            def roles=""
-            def tokenDuration=""
-            //if (!params.user) {
-                def errormsg="Format was not valid."
-                def parsed=apiService.parseJsonXmlWith(request,response,[
-                        json:{data->
-                            if (!params.user) {
-                                tokenuser = data.user
-                                if (!tokenuser) {
-                                    errormsg += " json: expected 'user' property"
-                                }
-                            }
-                            roles = data.roles
-                            tokenDuration = data.duration
-                            if(!roles){
-                                errormsg += " json: expected 'roles' property"
-                            }
-                        },
-                        xml:{xml->
-                            if (!params.user) {
-                                tokenuser = xml.'@user'.text()
-                                if (!tokenuser) {
-                                    errormsg += " xml: expected 'user' attribute"
-                                }
-                            }
-                            roles = xml.'@roles'.text()
-                            tokenDuration = xml.'@duration'.text()
-                            if(!roles){
-                                errormsg += " xml: expected 'roles' attribute"
-                            }
-                        }
-                ])
-                if(!parsed){
-                    return
-                }
-                if (!tokenuser || !roles) {
-                    return apiService.renderErrorFormat(response, [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code: 'api.error.invalid.request',
-                            args: [errormsg]
-                    ])
-                }
-            //}
-            String propertyDuration = servletContext.getAttribute("TOKEN_TIMEOUT")
-            def tokenTimeUnit='m'
-            def tokenTimeNumber=10
-            if(tokenDuration){
-                def tokenTimeUnitTmp=tokenDuration.substring(tokenDuration.length()-1)
-                def tokenTimeNumberTmp=tokenDuration.substring(0,tokenDuration.length()-1)
-                if((tokenTimeUnitTmp=='m' || tokenTimeUnitTmp=='h' || tokenTimeUnitTmp=='d') &&
-                        tokenTimeNumberTmp.isNumber()){
-                    tokenTimeNumber = tokenTimeNumberTmp.toInteger()
-                    tokenTimeUnit = tokenTimeUnitTmp
-                }else{
-                    return apiService.renderErrorFormat(response, [
-                            status: HttpServletResponse.SC_BAD_REQUEST,
-                            code: 'api.error.invalid.request',
-                            args: ["Duration format was not valid"]
-                    ])
-                }
-            }else {
-                if (propertyDuration) {
-                    def tokenTimeUnitTmp = propertyDuration.substring(propertyDuration.length() - 1)
-                    def tokenTimeNumberTmp = propertyDuration.substring(0, propertyDuration.length() - 1)
-                    if ((tokenTimeUnitTmp == 'm' || tokenTimeUnitTmp == 'h' || tokenTimeUnitTmp == 'd') &&
-                            tokenTimeNumberTmp.isNumber()) {
-                        tokenTimeNumber = tokenTimeNumberTmp.toInteger()
-                        tokenTimeUnit = tokenTimeUnitTmp
-                    }
 
-                }
-            }
-            def newDate  = null;
-            if(tokenTimeNumber>0){
-                def currentDate = new Date()
-                use(TimeCategory){
-                    switch (tokenTimeUnit){
-                        case 'm':
-                            newDate = currentDate + tokenTimeNumber.minutes
-                            break
-                        case 'h':
-                            newDate = currentDate + tokenTimeNumber.hours
-                            break
-                        case 'd':
-                            newDate = currentDate + tokenTimeNumber.days
-                            break
-                    }
-                }
-            }
-
-            //create token for a user
-            def User u = userService.findOrCreateUser(tokenuser)
-            def token = apiService.generateAuthToken(u, roles, newDate)
-            response.status=HttpServletResponse.SC_CREATED
-            return renderToken(token)
+        if (!frameworkService.authorizeApplicationResourceType(
+                authContext,
+                AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN
+        )) {
+            return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'Rundeck', 'User account'])
         }
         def tokenlist
         if (params.user) {
@@ -256,15 +161,20 @@ class ApiController extends ControllerBase{
         withFormat {
             xml {
                 apiService.renderSuccessXml(request, response) {
-                    def attrs=[count: tokenlist.size()]
-                    if(params.user){
-                        attrs.user=params.user
-                    }else{
-                        attrs.allusers='true'
+                    def attrs = [count: tokenlist.size()]
+                    if (params.user) {
+                        attrs.user = params.user
+                    } else {
+                        attrs.allusers = 'true'
                     }
                     tokens(attrs) {
                         tokenlist.each { AuthToken token ->
-                            delegate.token(id: token.token, user: token.user.login)
+                            delegate.token(
+                                    id: token.token,
+                                    user: token.user.login,
+                                    roles: token.authRoles,
+                                    expiration: token.expiration
+                            )
                         }
                     }
                 }
@@ -273,7 +183,12 @@ class ApiController extends ControllerBase{
                 render(contentType: 'application/json') {
                     array {
                         tokenlist.each { AuthToken token ->
-                            delegate.element(id: token.token, user: token.user.login)
+                            delegate.element(
+                                    id: token.token,
+                                    user: token.user.login,
+                                    roles: token.authRolesSet(),
+                                    expiration: token.expiration
+                            )
                         }
                     }
                 }
@@ -281,6 +196,102 @@ class ApiController extends ControllerBase{
             }
         }
     }
+
+    /**
+     * POST /api/11/tokens/$user?
+     * @return
+     */
+    def apiTokenCreate() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+            //parse input json or xml
+        String tokenuser = params.user
+        def roles = null
+        def tokenDuration = null
+        def errors = []
+        boolean tokenRolesV19Enabled = request.api_version > ApiRequestFilters.V18
+
+        def parsed = apiService.parseJsonXmlWith(request, response, [
+                json: { data ->
+                    if (!params.user) {
+                        tokenuser = data.user
+                        if (!tokenuser) {
+                            errors << " json: expected 'user' property"
+                        }
+                    }
+                    roles = data.roles
+                    tokenDuration = data.duration
+                    if (!roles && tokenRolesV19Enabled) {
+                        errors << " json: expected 'roles' property"
+                    }
+                },
+                xml : { xml ->
+                    if (!params.user) {
+                        tokenuser = xml.'@user'.text()
+                        if (!tokenuser) {
+                            errors << " xml: expected 'user' attribute"
+                        }
+                    }
+                    roles = xml.'@roles'.text()
+                    tokenDuration = xml.'@duration'.text()
+                    if (!roles && tokenRolesV19Enabled) {
+                        errors << " xml: expected 'roles' attribute"
+                    }
+                }
+        ]
+        )
+        if (!parsed) {
+            return
+        }
+        if (errors) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.invalid.request',
+                    args  : ["Format was not valid." + errors.join(" ")]
+            ]
+            )
+        }
+        if (request.api_version <= ApiRequestFilters.V18) {
+            roles = 'api_token_group'
+            tokenDuration = null
+        }
+        if (roles instanceof String) {
+            roles = AuthToken.parseAuthRoles(roles)
+        } else if (roles instanceof Collection) {
+            roles = new HashSet(roles)
+        }
+        AuthToken token
+
+        Integer tokenDurationSeconds = tokenDuration ? Sizes.parseTimeDuration(tokenDuration) : 0
+        if (tokenDuration && !Sizes.validTimeDuration(tokenDuration)) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.parameter.invalid',
+                    args  : [tokenDuration, "duration", "Format was not valid"]
+            ]
+            )
+        }
+        try {
+            token = apiService.generateUserToken(
+                    authContext,
+                    tokenDurationSeconds ?: null,
+                    tokenuser,
+                    roles
+            )
+        } catch (Exception e) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.invalid.request',
+                    args  : [e.message]
+            ]
+            )
+        }
+        response.status = HttpServletResponse.SC_CREATED
+        renderToken(token)
+    }
+
     /**
      * /api/11/token/$token
      */
