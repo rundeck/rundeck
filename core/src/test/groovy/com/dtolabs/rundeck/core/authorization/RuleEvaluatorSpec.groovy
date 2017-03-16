@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import javax.security.auth.Subject
 
@@ -155,7 +156,8 @@ class RuleEvaluatorSpec extends Specification {
         !result.isAuthorized()
         "DELETE"==result.action
     }
-    def "test allow with deny"(){
+
+    def "test deny with other rules"() {
         given:
         Authorization eval = new RuleEvaluator(basicRules2())
         when:
@@ -174,6 +176,77 @@ class RuleEvaluatorSpec extends Specification {
         "DELETE"==result.action
     }
 
+    def "test allow with deny"() {
+        given:
+        Authorization eval = new RuleEvaluator(basicRules3())
+        when:
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("bob", "admin", "user"),
+                "DELETE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result != null
+        !result.isAuthorized()
+        "DELETE" == result.action
+    }
+
+    @Unroll
+    def "evaluate rule #testRule - #testType - #testValue"() {
+        when:
+        Authorization eval = new RuleEvaluator(basicRules([
+                regexMatch   : testType == 'match',
+                containsMatch: testType == 'contains',
+                equalsMatch  : testType == 'equals',
+                resource     : [
+                        jobName: testRule
+                ],
+                resourceType : 'job',
+                allowActions : ['EXECUTE'] as Set,
+                denyActions  : [] as Set,
+        ]
+        )
+        )
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: testValue
+                ],
+                basicSubject("bob", "admin", "user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result != null
+        result.isAuthorized() == isauthorized
+        result.action == "EXECUTE"
+
+        where:
+        testValue       | testRule          | testType   | isauthorized
+        'bob'           | 'bob'             | 'match'    | true
+        'boblinkious'   | 'bob.*'           | 'match'    | true
+        'abboblinkious' | 'bob.*'           | 'match'    | false
+
+        'bob'           | 'bob'             | 'equals'   | true
+        'bob'           | 'bobasdf'         | 'equals'   | false
+        'asdfbob'       | 'bob'             | 'equals'   | false
+
+        'val1'          | 'val1'            | 'contains' | true
+        'val1'          | ['val1']          | 'contains' | true
+        'val1,val2'     | 'val1'            | 'contains' | true
+        'val1,val2'     | 'val2'            | 'contains' | true
+        'val1,val2'     | ['val1', 'val2']  | 'contains' | true
+        'val1,val2'     | ['val2', 'val1']  | 'contains' | true
+        'val1,val2'     | ['val3', 'val1']  | 'contains' | false
+        'val1,val3'     | ['val12', 'val1'] | 'contains' | false
+
+
+    }
+
     Subject basicSubject(final String user, final String... groups) {
         def subject = new Subject()
         subject.principals<< new Username(user)
@@ -181,23 +254,47 @@ class RuleEvaluatorSpec extends Specification {
         subject
     }
 
+    AclRuleSet basicRules(Map detail) {
+        def rules = [
+                new Rule(
+                        [
+                                sourceIdentity: "test1",
+                                description   : "bob job allow exec, deny delete for admin group",
+                                resource      : [
+                                        jobName: 'bob'
+                                ],
+                                resourceType  : 'job',
+                                regexMatch    : false,
+                                containsMatch : false,
+                                equalsMatch   : true,
+                                username      : null,
+                                group         : 'admin',
+                                allowActions  : ['EXECUTE'] as Set,
+                                denyActions   : ['DELETE'] as Set,
+                                environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                        ] + detail
+                ),
+        ] as Set
+        new AclRuleSetImpl(rules)
+    }
+
     AclRuleSet basicRules() {
         def rules = [
                 new Rule(
                         sourceIdentity: "test1",
-                        description   : "bob job allow exec, deny delete for admin group",
-                        resource      : [
+                        description: "bob job allow exec, deny delete for admin group",
+                        resource: [
                                 jobName: 'bob'
                         ],
-                        resourceType  : 'job',
-                        regexMatch    : false,
-                        containsMatch : false,
-                        equalsMatch : true,
-                        username      : null,
-                        group         : 'admin',
-                        allowActions  : ['EXECUTE'] as Set,
-                        denyActions   : ['DELETE'] as Set,
-                        environment   : BasicEnvironmentalContext.staticContextFor("application","rundeck")
+                        resourceType: 'job',
+                        regexMatch: false,
+                        containsMatch: false,
+                        equalsMatch: true,
+                        username: null,
+                        group: 'admin',
+                        allowActions: ['EXECUTE'] as Set,
+                        denyActions: ['DELETE'] as Set,
+                        environment: BasicEnvironmentalContext.staticContextFor("application", "rundeck")
                 ),
         ] as Set
         new AclRuleSetImpl(rules)
@@ -238,6 +335,26 @@ class RuleEvaluatorSpec extends Specification {
                         group         : 'admin',
                         allowActions  : ['READ'] as Set,
                         environment   : BasicEnvironmentalContext.staticContextFor("application","rundeck")
+        ),
+        ] as Set
+        new AclRuleSetImpl(basicRules().rules + rules)
+    }
+
+    AclRuleSet basicRules3() {
+        def rules = [new Rule(
+                sourceIdentity: "test2",
+                description: "bob job allow delete for admin group",
+                resource: [
+                        jobName: 'bob'
+                ],
+                resourceType: 'job',
+                regexMatch: false,
+                containsMatch: false,
+                equalsMatch: true,
+                username: null,
+                group: 'admin',
+                allowActions: ['DELETE'] as Set,
+                environment: BasicEnvironmentalContext.staticContextFor("application", "rundeck")
         ),
         ] as Set
         new AclRuleSetImpl(basicRules().rules + rules)
