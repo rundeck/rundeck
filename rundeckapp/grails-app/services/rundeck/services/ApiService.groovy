@@ -135,20 +135,20 @@ class ApiService {
      * @param authContext user's own auth context
      * @param tokenTime time value for token expiration
      * @param tokenTimeUnit time unit for token expiration (h,m,s)
-     * @param tokenUser owner name of token
+     * @param username owner name of token
      * @param tokenRoles role list for token
      * @return
      */
     AuthToken generateUserToken(
             UserAndRolesAuthContext authContext,
             Integer tokenTimeSeconds,
-            String tokenUser,
+            String username,
             Set<String> roles
     )
     {
         //check auth to edit profile
         //default to current user profile
-        def login = authContext.username
+        def createTokenUser = authContext.username
 
         def selfAuth = false
         def serviceAuth = false
@@ -177,10 +177,18 @@ class ApiService {
         if (!(adminAuth || serviceAuth || selfAuth)) {
             throw new Exception("Unauthorized: generate API token")
         }
-        if (adminAuth || serviceAuth) {
-            login = tokenUser
-        } else if (tokenUser != authContext.username) {
-            throw new Exception("Unauthorized: generate API token")
+        if (username) {
+            if (serviceAuth && username != authContext.username) {
+                def names = configurationService.getString('api.tokens.allowed.service.names', null)
+                if (!AuthToken.parseAuthRoles(names).contains(username)) {
+                    throw new Exception("Invalid Token Username")
+                }
+            }
+            if (adminAuth || serviceAuth) {
+                createTokenUser = username
+            } else if (username != authContext.username) {
+                throw new Exception("Unauthorized: generate API token")
+            }
         }
 
         Integer maxTokenDuration = configurationService.getInteger("api.tokens.duration.max", 0)
@@ -198,24 +206,24 @@ class ApiService {
                 userRoles.addAll(AuthToken.parseAuthRoles(val))
             }
         }
+
         if (!adminAuth) {
             if (!userRoles.containsAll(roles)) {
                 throw new Exception("Invalid Group")
             }
         }
         if (!roles) {
-
-            if (tokenUser != authContext.username) {
+            if (username != authContext.username) {
                 throw new Exception("Roles are required")
-            } else if (tokenUser == authContext.username) {
+            } else if (username == authContext.username) {
                 //default to user's own roles
                 roles = authContext.roles
             }
         }
 
-        User u = userService.findOrCreateUser(login)
+        User u = userService.findOrCreateUser(createTokenUser)
         if (!u) {
-            throw new Exception("Couldn't find user: ${login}")
+            throw new Exception("Couldn't find user: ${createTokenUser}")
         }
         return generateAuthToken(u, roles, newDate)
     }

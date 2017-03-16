@@ -367,6 +367,70 @@ class ApiServiceSpec extends Specification {
         'generate_service_token' | _
     }
 
+    def "generate service token service username service/admin auth"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenRoles = ['role1', 'svc_roleA'] as Set
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService) {
+            findOrCreateUser(tokenUser) >> new User(login: tokenUser)
+        }
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        result != null
+        result.user.login == tokenUser
+        result.authRoles == 'role1,svc_roleA'
+        result.authRolesSet() == tokenRoles
+        result.expiration != null
+        service.frameworkService.authorizeApplicationResourceType(auth, 'user', authrole) >> true
+        service.configurationService.getString('api.tokens.allowed.service.roles', null) >> 'svc_roleA,svc_roleB'
+        service.configurationService.getString('api.tokens.allowed.service.names', null) >> allowedUsers
+
+        where:
+        authrole                 | tokenUser  | allowedUsers | _
+        'admin'                  | 'someuser' | 'someuser'   | _
+        'generate_service_token' | 'someuser' | 'someuser'   | _
+    }
+
+    def "generate service token service username not allowed username"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenRoles = ['role1', 'svc_roleA'] as Set
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService) {
+            findOrCreateUser(tokenUser) >> new User(login: tokenUser)
+        }
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        service.frameworkService.authorizeApplicationResourceType(auth, 'user', authrole) >> true
+        service.configurationService.getString('api.tokens.allowed.service.roles', null) >> 'svc_roleA,svc_roleB'
+        service.configurationService.getString('api.tokens.allowed.service.names', null) >> allowedUsers
+        Exception e = thrown()
+        e.message =~ /Invalid Token Username/
+
+        where:
+        authrole                 | tokenUser   | allowedUsers | _
+        'generate_service_token' | 'someBuser' | 'someuser'   | _
+    }
+
     def "generate user token service groups no service auth"() {
         given:
         def auth = Mock(UserAndRolesAuthContext) {
@@ -403,7 +467,6 @@ class ApiServiceSpec extends Specification {
             getUsername() >> 'auser'
             getRoles() >> (['role1', 'role2'] as Set)
         }
-        def tokenUser = 'auser'
         def tokenRoles = ['role1', 'svc_roleA', 'any_role'] as Set
 
         def tokenTime = 3600
@@ -411,7 +474,7 @@ class ApiServiceSpec extends Specification {
         service.frameworkService = Mock(FrameworkService)
         service.configurationService = Mock(ConfigurationService)
         service.userService = Mock(UserService)
-        def user = new User(login: 'auser')
+        def user = new User(login: tokenUser)
 
         when:
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
@@ -421,12 +484,13 @@ class ApiServiceSpec extends Specification {
         result.authRolesSet() == tokenRoles
         result.expiration != null
         service.frameworkService.authorizeApplicationResourceType(auth, 'user', authrole) >> true
-        service.userService.findOrCreateUser('auser') >> user
+        service.userService.findOrCreateUser(tokenUser) >> user
         service.configurationService.getString('api.tokens.allowed.service.roles', null) >> 'svc_roleA,svc_roleB'
 
         where:
-        authrole                 | _
-        'admin'                  | _
+        authrole | tokenUser | _
+        'admin'  | 'auser'   | _
+        'admin'  | 'anyuser' | _
     }
     def "generate user token any groups no admin auth"() {
         given:
