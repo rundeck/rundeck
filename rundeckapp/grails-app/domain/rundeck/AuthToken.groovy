@@ -30,4 +30,19 @@ class AuthToken {
     static mapping = {
         authRoles type: 'text'
     }
+
+    Set<String> authRolesSet() {
+        return parseAuthRoles(authRoles)
+    }
+
+    static String generateAuthRoles(Collection<String> roles) {
+        new HashSet(roles.collect { it.trim() }.findAll { it }).join(',')
+    }
+
+    static Set<String> parseAuthRoles(String authRoles) {
+        if (!authRoles) {
+            return []
+        }
+        new HashSet(authRoles.split(' *, *').collect { it.trim() }.findAll { it } as List)
+    }
 }
