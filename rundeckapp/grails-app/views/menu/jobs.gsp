@@ -145,7 +145,10 @@
             //setup option edit
             var joboptiondata = loadJsonData('jobOptionData');
             var joboptions = new JobOptions(joboptiondata);
-            ko.applyBindings(joboptions, document.getElementById('optionSelect'));
+
+            if (document.getElementById('optionSelect')) {
+                ko.applyBindings(joboptions, document.getElementById('optionSelect'));
+            }
 
             var remoteoptionloader = new RemoteOptionLoader({
                 url: "${createLink(controller:'scheduledExecution',action:'loadRemoteOptionValues',params:[format:'json'])}",
