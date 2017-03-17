@@ -81,8 +81,8 @@
 <g:set var="tokenAdmin" value="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.ACTION_ADMIN],
         context: 'application')}"/>
 <g:set var="selfToken"
-       value="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.GENERATE_SELF_TOKEN],
-               context: 'application')}"/>
+       value="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.GENERATE_USER_TOKEN],
+                                         context: 'application')}"/>
 <g:set var="serviceToken"
        value="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.GENERATE_SERVICE_TOKEN],
                context: 'application')}"/>

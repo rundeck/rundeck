@@ -171,7 +171,7 @@ class ApiService {
             selfAuth = frameworkService.authorizeApplicationResourceType(
                     authContext,
                     AuthConstants.TYPE_USER,
-                    AuthConstants.GENERATE_SELF_TOKEN
+                    AuthConstants.GENERATE_USER_TOKEN
             )
         }
         if (!(adminAuth || serviceAuth || selfAuth)) {

@@ -16,7 +16,6 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -364,7 +363,7 @@ class UserController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN) || frameworkService.authorizeApplicationResourceType(authContext,
-                AuthConstants.TYPE_USER, AuthConstants.GENERATE_SELF_TOKEN))) {
+                AuthConstants.TYPE_USER, AuthConstants.GENERATE_USER_TOKEN))) {
             def error = "Unauthorized: admin role required"
             log.error error
             result = [result: false, error: error]
@@ -430,7 +429,7 @@ class UserController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
                 AuthConstants.ACTION_ADMIN) || frameworkService.authorizeApplicationResourceType(authContext,
-                AuthConstants.TYPE_USER, AuthConstants.GENERATE_SELF_TOKEN))) {
+                AuthConstants.TYPE_USER, AuthConstants.GENERATE_USER_TOKEN))) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error]

@@ -879,7 +879,7 @@ public class AclTool extends BaseTool {
     static final List<String> appUserKindActions =
             Arrays.asList(
                     ACLConstants.ACTION_ADMIN,
-                    ACLConstants.ACTION_GENERATE_SELF_TOKEN,
+                    ACLConstants.ACTION_GENERATE_USER_TOKEN,
                     ACLConstants.ACTION_GENERATE_SERVICE_TOKEN
             );
     static final List<String> appJobKindActions =
@@ -1912,7 +1912,7 @@ public class AclTool extends BaseTool {
         public static final String ACTION_RUN = "run";
         public static final String ACTION_KILL = "kill";
         public static final String ACTION_ADMIN = "admin";
-        public static final String ACTION_GENERATE_SELF_TOKEN = "generate_self_token";
+        public static final String ACTION_GENERATE_USER_TOKEN = "generate_user_token";
         public static final String ACTION_GENERATE_SERVICE_TOKEN = "generate_service_token";
         public static final String ACTION_REFRESH = "refresh";
         public static final String ACTION_RUNAS = "runAs";
