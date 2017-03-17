@@ -16,7 +16,7 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -25,7 +25,6 @@ import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
 import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
-import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.User
@@ -131,6 +130,17 @@ class ApiService {
     }
 
     /**
+     * Return the resource definition for a job for use by authorization checks, using parameters as input
+     * @param se
+     * @return
+     */
+    def Map authResourceForUserToken(String username, Set<String> roles) {
+        return AuthorizationUtil.resource(
+                AuthConstants.TYPE_APITOKEN,
+                [username: username, roles: AuthToken.generateAuthRoles(roles)]
+        )
+    }
+    /**
      * Generate an auth token
      * @param authContext user's own auth context
      * @param tokenTime time value for token expiration
@@ -155,39 +165,62 @@ class ApiService {
         //admin auth allows generate of any user token with anhy roles
         def adminAuth = frameworkService.authorizeApplicationResourceType(
                 authContext,
-                AuthConstants.TYPE_USER,
+                AuthConstants.TYPE_APITOKEN,
                 AuthConstants.ACTION_ADMIN
         )
         if (!adminAuth) {
             //service auth allows generate of any user token with additional service roles
             serviceAuth = frameworkService.authorizeApplicationResourceType(
                     authContext,
-                    AuthConstants.TYPE_USER,
+                    AuthConstants.TYPE_APITOKEN,
                     AuthConstants.GENERATE_SERVICE_TOKEN
             )
-        }
-        if (!serviceAuth) {
-            //self auth allows generate of self-owned token with any subset of self-owned roles
-            selfAuth = frameworkService.authorizeApplicationResourceType(
-                    authContext,
-                    AuthConstants.TYPE_USER,
-                    AuthConstants.GENERATE_USER_TOKEN
-            )
+            if (!serviceAuth) {
+                //self auth allows generate of self-owned token with any subset of self-owned roles
+                selfAuth = frameworkService.authorizeApplicationResourceType(
+                        authContext,
+                        AuthConstants.TYPE_APITOKEN,
+                        AuthConstants.GENERATE_USER_TOKEN
+                )
+            }
         }
         if (!(adminAuth || serviceAuth || selfAuth)) {
             throw new Exception("Unauthorized: generate API token")
         }
         if (username) {
-            if (serviceAuth && username != authContext.username) {
-                def names = configurationService.getString('api.tokens.allowed.service.names', null)
-                if (!AuthToken.parseAuthRoles(names).contains(username)) {
-                    throw new Exception("Invalid Token Username")
-                }
-            }
             if (adminAuth || serviceAuth) {
                 createTokenUser = username
             } else if (username != authContext.username) {
                 throw new Exception("Unauthorized: generate API token")
+            }
+        }
+        def userRoles = authContext.roles
+
+
+        if (serviceAuth && roles) {
+            //any roles not implicitly allowed by user's access level
+            def extraRoles = roles - userRoles
+            //authorize any extra roles
+            if (extraRoles) {
+                if (!frameworkService.authorizeApplicationResource(
+                        authContext,
+                        authResourceForUserToken(createTokenUser, extraRoles),
+                        AuthConstants.ACTION_CREATE
+                )) {
+                    throw new Exception("Unauthorized: create API token for $createTokenUser with roles: $roles")
+                }
+            }
+        } else if (!adminAuth) {
+            if (roles && !userRoles.containsAll(roles)) {
+                throw new Exception("Unauthorized: create API token for $createTokenUser with roles: $roles")
+            }
+        }
+        if (!roles) {
+            if (username != authContext.username) {
+                throw new Exception("Cannot create API token for $username: Roles are required")
+            } else if (username == authContext.username) {
+                //default to user's own roles
+                roles = authContext.roles
             }
         }
 
@@ -197,29 +230,6 @@ class ApiService {
             throw new Exception("Duration exceeds maximum allowed: " + maxTokenDuration)
         }
         Date newDate = generate.date
-
-        def userRoles = authContext.roles
-        if (serviceAuth) {
-            //allow configured service roles
-            def val = configurationService.getString('api.tokens.allowed.service.roles', null)
-            if (val) {
-                userRoles.addAll(AuthToken.parseAuthRoles(val))
-            }
-        }
-
-        if (!adminAuth) {
-            if (!userRoles.containsAll(roles)) {
-                throw new Exception("Invalid Group")
-            }
-        }
-        if (!roles) {
-            if (username != authContext.username) {
-                throw new Exception("Roles are required")
-            } else if (username == authContext.username) {
-                //default to user's own roles
-                roles = authContext.roles
-            }
-        }
 
         User u = userService.findOrCreateUser(createTokenUser)
         if (!u) {
