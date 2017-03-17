@@ -397,8 +397,16 @@ Note that in either case, **it is recommended that you enable SSL Support for th
 Token Authentication consists of including a string known as an "API Token" with every
 request to the Rundeck API.
 
-To obtain an API Token, you must first log in to the Rundeck GUI using a user account
-that has "admin" credentials. Click on your username in the header of the page, and you will be shown your User Profile page.  From this page you can manage your API Tokens.  Click "Generate API Token" to create a new one.  The unique string that is shown is the API Token.
+To obtain an API Token, you must first log in to the Rundeck GUI using a user account.
+Click on your username in the header of the page, and you will be shown your User Profile page.
+From this page you can manage your API Tokens.
+
+**Note**: You must have appropriate authorization to generate a token. See [API Token Authorization][].
+
+Depending on what authorization level you have, you can generate a token with a certain set of *Authorization Roles*
+and an *Expiration Period*.
+
+Click "Generate API Token" to create a new one. The unique string that is shown is the API Token.
 
 Alternately you can define tokens in static file, by setting the `rundeck.tokens.file` in [framework.properties](../administration/configuration-file-reference.html#framework.properties).
 
@@ -425,6 +433,8 @@ Using the HTTP Header:
     GET /api/1/projects HTTP/1.1
     X-Rundeck-Auth-Token: E4rNvVRV378knO9dp3d73O0cs1kd0kCd
     ...
+
+[API Token Authorization]: ../administration/access-control-policy.html#api-token-authorization
 
 ### Password Authentication
 
