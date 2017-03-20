@@ -80,7 +80,8 @@ dependencies {
             project(':plugins:flow-control-plugin'),
             project(':plugins:jasypt-encryption-plugin'),
             project(':plugins:orchestrator-plugin'),
-            project(':plugins:git-plugin')
+            project(':plugins:git-plugin'),
+            project(':plugins:source-refresh-plugin')
 }
 
 task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
