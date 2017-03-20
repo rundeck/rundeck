@@ -1,6 +1,7 @@
 RDECK_INSTALL="${RDECK_INSTALL:-/var/lib/rundeck}"
 RDECK_BASE="${RDECK_BASE:-/var/lib/rundeck}"
 RDECK_CONFIG="${RDECK_CONFIG:-/etc/rundeck}"
+RDECK_CONFIG_FILE="${RDECK_CONFIG_FILE:-$RDECK_CONFIG/rundeck-config.properties}"
 RDECK_SERVER_BASE="${RDECK_SERVER_BASE:-$RDECK_BASE}"
 RDECK_SERVER_CONFIG="${RDECK_SERVER_CONFIG:-$RDECK_CONFIG}"
 RDECK_SERVER_DATA="${RDECK_SERVER_DATA:-$RDECK_BASE/data}"
@@ -42,7 +43,7 @@ RDECK_JVM="-Djava.security.auth.login.config=$JAAS_CONF \
            -Drundeck.server.serverDir=$RDECK_INSTALL \
            -Drdeck.projects=$RDECK_PROJECTS \
            -Drdeck.runlogs=$RUNDECK_LOGDIR \
-           -Drundeck.config.location=$RDECK_CONFIG/rundeck-config.properties \
+           -Drundeck.config.location=$RDECK_CONFIG_FILE \
            -Djava.io.tmpdir=$RUNDECK_TEMPDIR \
            -Drundeck.server.workDir=$RUNDECK_WORKDIR \
            -Dserver.http.port=$RDECK_HTTP_PORT"
