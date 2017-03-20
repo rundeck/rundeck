@@ -12,7 +12,7 @@ case "$1" in
     for LINE in `grep SYSTEM_UID /etc/adduser.conf | grep -v "^#"`; do
        case $LINE in
           FIRST_SYSTEM_UID*)
-            FIST_SYSTEM_UID=`echo $LINE | cut -f2 -d '='`
+            FIRST_SYSTEM_UID=`echo $LINE | cut -f2 -d '='`
             ;;
           LAST_SYSTEM_UID*)
             LAST_SYSTEM_UID=`echo $LINE | cut -f2 -d '='`
@@ -23,10 +23,10 @@ case "$1" in
     done
     # Remove system account if necessary
     CREATEDUSER="rundeck"
-    if [ -n "$FIST_SYSTEM_UID" ] && [ -n "$LAST_SYSTEM_UID" ]; then
+    if [ -n "$FIRST_SYSTEM_UID" ] && [ -n "$LAST_SYSTEM_UID" ]; then
       if USERID=`getent passwd $CREATEDUSER | cut -f 3 -d ':'`; then
         if [ -n "$USERID" ]; then
-          if [ "$FIST_SYSTEM_UID" -le "$USERID" ] && \
+          if [ "$FIRST_SYSTEM_UID" -le "$USERID" ] && \
             [ "$USERID" -le "$LAST_SYSTEM_UID" ]; then
                echo -n "Removing $CREATEDUSER system user.."
                deluser --quiet $CREATEDUSER || true
