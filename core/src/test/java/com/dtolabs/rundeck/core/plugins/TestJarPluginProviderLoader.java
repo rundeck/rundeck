@@ -53,8 +53,6 @@ import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 public class TestJarPluginProviderLoader extends AbstractBaseTest {
     public static final String CURRENT_PLUGIN_VERSION = "1.1";
     public static final String TOO_LOW_PLUGIN_VERSION = "1.0";
-    Framework testFramework;
-    String testnode;
     private File testDir = new File("src/test/resources/com/dtolabs/rundeck/core/plugins");
     private File testJarDNE = new File("src/test/resources/com/dtolabs/rundeck/core/plugins/DNE-plugin.jar");
     private File testCachedir;
@@ -490,8 +488,9 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
         test2=null;
         jarPluginProviderLoader.expire();
 
+        File testcachedir=jarPluginProviderLoader.getFileCacheDir();
         //all files should be removed
-        files = testCachedir.listFiles();
+        files = testcachedir.listFiles();
         Assert.assertEquals("Expected single cached jar in plugin jar cache", 0, files.length);
     }
     public void testExpireRemovesExistingCachedJarsAndLibs() throws Exception {
@@ -570,9 +569,10 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
         test2=null;
         jarPluginProviderLoader.expire();
+        File testcachedir=jarPluginProviderLoader.getFileCacheDir();
 
         //all files should be removed
-        files = testCachedir.listFiles();
+        files = testcachedir.listFiles();
         Assert.assertEquals("Expected single cached jar in plugin jar cache", 0, files.length);
     }
 
@@ -793,7 +793,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
     /**
      * Create test jar file with manifest entries
      */
-    static File createTestJar(final Map<String, String> entries, final File test, final Class[] classes, final File[] libs) throws
+    public static File createTestJar(final Map<String, String> entries, final File test, final Class[] classes, final File[] libs) throws
         IOException {
         final File file = null != test ? test : File.createTempFile("createTestJar", ".jar");
         if (null == test) {
@@ -845,7 +845,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
     }
 
     public static class testService1 implements PluggableService<JarTestType1> {
-        boolean isvalid;
+        private boolean isvalid;
         JarTestType1 createScriptInstance;
         private String name;
 
@@ -853,7 +853,7 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
             return isvalid;
         }
 
-        JarTestType1 createInstance;
+        private JarTestType1 createInstance;
 
         public <X extends JarTestType1> JarTestType1 createProviderInstance(Class<X> clazz, String name) throws PluginException,
             ProviderCreationException {
@@ -872,6 +872,26 @@ public class TestJarPluginProviderLoader extends AbstractBaseTest {
 
         public String getName() {
             return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public boolean isIsvalid() {
+            return isvalid;
+        }
+
+        public void setIsvalid(boolean isvalid) {
+            this.isvalid = isvalid;
+        }
+
+        public JarTestType1 getCreateInstance() {
+            return createInstance;
+        }
+
+        public void setCreateInstance(JarTestType1 createInstance) {
+            this.createInstance = createInstance;
         }
     }
 

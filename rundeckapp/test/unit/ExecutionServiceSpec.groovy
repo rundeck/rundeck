@@ -923,6 +923,7 @@ class ExecutionServiceSpec extends Specification {
         file2.deleteOnExit()
 
 
+        service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
             1 * getFileForExecutionFiletype(execution, 'rdlog', true) >> file1
             1 * getFileForExecutionFiletype(execution, 'state.json', true) >> file2
@@ -971,7 +972,7 @@ class ExecutionServiceSpec extends Specification {
             delete() >> false
             isDirectory() >> false
         }
-
+        service.fileUploadService = Mock(FileUploadService)
         service.logFileStorageService = Mock(LogFileStorageService) {
             1 * getFileForExecutionFiletype(execution, 'rdlog', true) >> file1
             1 * getFileForExecutionFiletype(execution, 'state.json', true)
@@ -993,6 +994,46 @@ class ExecutionServiceSpec extends Specification {
         result.success
     }
 
+    def "delete execution job file records"() {
+        given:
+
+        service.frameworkService = Mock(FrameworkService)
+        service.fileUploadService = Mock(FileUploadService)
+        def auth = Mock(AuthContext)
+        def execution = new Execution(
+                user: 'userB',
+                project: 'AProject',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                )
+        execution.dateStarted = new Date()
+        execution.dateCompleted = new Date()
+        execution.status = 'succeeded'
+
+
+
+        service.logFileStorageService = Mock(LogFileStorageService)
+
+
+        when:
+        def result = service.deleteExecution(execution, auth, 'bob')
+
+        then:
+        1 * service.frameworkService.authResourceForProject(_)
+        1 * service.frameworkService.authorizeApplicationResourceAny(
+                auth,
+                _,
+                [AuthConstants.ACTION_DELETE_EXECUTION, AuthConstants.ACTION_ADMIN]
+        ) >> true
+        1 * service.fileUploadService.deleteRecordsForExecution(execution)
+
+        result.success
+
+    }
     def "loadSecureOptionStorageDefaults"() {
         given:
         ScheduledExecution job = new ScheduledExecution(
@@ -1421,6 +1462,67 @@ class ExecutionServiceSpec extends Specification {
         opts           | missingkey
         ['test2': 'a'] | 'test1'
         ['test1': 'a'] | 'test2'
+    }
+
+    def "validate option values, file type required"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(uuid: 'asdf')
+        final Option option = new Option(name: 'test1', required: true, optionType: 'file')
+        se.addToOptions(option)
+
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> {
+                it[0]
+            }
+        }
+        service.fileUploadService = Mock(FileUploadService) {
+            0 * validateFileRefForJobOption('aref', 'asdf', 'test1') >> [
+                    valid: false
+            ]
+        }
+        when:
+
+        def validation = service.validateOptionValues(se, opts)
+
+        then:
+        ExecutionServiceException e = thrown()
+        e.message == message
+
+
+        where:
+        opts           | message
+        ['test2': 'a'] | 'domain.Option.validation.required'
+    }
+
+    def "validate option values, file type not valid"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(uuid: 'asdf')
+        final Option option = new Option(name: 'test1', required: true, optionType: 'file')
+        se.addToOptions(option)
+
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _, _) >> {
+                it[0]
+            }
+        }
+        service.fileUploadService = Mock(FileUploadService) {
+            1 * validateFileRefForJobOption('aref', 'asdf', 'test1') >> [
+                    valid: false, error: ecode, args: []
+            ]
+        }
+        when:
+
+        def validation = service.validateOptionValues(se, opts)
+
+        then:
+        ExecutionServiceException e = thrown()
+        e.message == message
+
+
+        where:
+        opts              | ecode       | message
+        ['test1': 'aref'] | 'fileerror' | 'domain.Option.validation.file.fileerror'
+        ['test1': 'aref'] | 'invalid'   | 'domain.Option.validation.file.invalid'
     }
 
     def "filter opts params string"() {
@@ -1857,6 +1959,7 @@ class ExecutionServiceSpec extends Specification {
                 user: 'userB',
                 project: 'AProject',
                 status: isadhocschedule ? 'scheduled' : null,
+                serverNodeUUID: (cmatch ? null : UUID.randomUUID().toString()),
                 workflow: new Workflow(
                         keepgoing: true,
                         commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
@@ -1875,21 +1978,28 @@ class ExecutionServiceSpec extends Specification {
 
         1 * service.scheduledExecutionService.getJobIdent(job, e) >> [jobname: 'test', groupname: 'testgroup']
         1 * service.frameworkService.authorizeProjectExecutionAll(auth, e, [AuthConstants.ACTION_KILL]) >> true
-        1 * service.scheduledExecutionService.quartzJobIsExecuting('test', 'testgroup') >> wasScheduledPreviously
-        1 * service.scheduledExecutionService.interruptJob('test', 'testgroup', isadhocschedule) >> didinterrupt
-        _ * service.reportService.reportExecutionResult(_) >> [:]
+        1 * service.frameworkService.isClusterModeEnabled() >> iscluster
+        if(cmatch) {
+            1 * service.scheduledExecutionService.findExecutingQuartzJob(job, e) >>
+                    (wasScheduledPreviously ? 'unique-id' : null)
+            1 * service.scheduledExecutionService.interruptJob(_, 'test', 'testgroup', isadhocschedule) >>
+                    didinterrupt
+            _ * service.reportService.reportExecutionResult(_) >> [:]
+        }
 
 
         where:
-        isadhocschedule | wasScheduledPreviously | didinterrupt | eAbortstate | eJobstate
-        true            | true                   | true         | 'pending'   | 'running'
-        false           | true                   | true         | 'pending'   | 'running'
-        true            | false                  | true         | 'aborted'   | 'aborted'
-        false           | false                  | true         | 'aborted'   | 'aborted'
-        true            | true                   | false        | 'failed'    | 'running'
-        false           | true                   | false        | 'failed'    | 'running'
-        true            | false                  | false        | 'aborted'   | 'aborted'
-        false           | false                  | false        | 'aborted'   | 'aborted'
+        isadhocschedule | wasScheduledPreviously | didinterrupt | iscluster | cmatch | eAbortstate | eJobstate
+        true            | true                   | true         | false     | true   | 'pending'   | 'running'
+        false           | true                   | true         | false     | true   | 'pending'   | 'running'
+        true            | false                  | true         | false     | true   | 'aborted'   | 'aborted'
+        false           | false                  | true         | false     | true   | 'aborted'   | 'aborted'
+        true            | true                   | false        | false     | true   | 'failed'    | 'running'
+        false           | true                   | false        | false     | true   | 'failed'    | 'running'
+        true            | false                  | false        | false     | true   | 'aborted'   | 'aborted'
+        false           | false                  | false        | false     | true   | 'aborted'   | 'aborted'
+        true            | true                   | true         | true      | true   | 'pending'   | 'running'
+        true            | true                   | true         | true      | false  | 'failed'    | 'running'
 
     }
 }

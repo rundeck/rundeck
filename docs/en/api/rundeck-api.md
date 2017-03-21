@@ -55,6 +55,14 @@ View the [Index](#index) listing API paths.
 
 Changes introduced by API Version number:
 
+**Version 19**:
+
+* New Endpoints.
+    - [`POST /api/19/job/[ID]/input/file`][/api/V/job/[ID]/input/file] - Upload file(s) to use for job option values
+    - [`GET /api/19/job/[ID]/input/files`][/api/V/job/[ID]/input/files] - List uploaded files for a job
+    - [`GET /api/19/execution/[ID]/input/files`][/api/V/execution/[ID]/input/files] - List input files used for an execution
+    - [`GET /api/19/jobs/file/[ID]`][/api/V/jobs/file/[ID]] - Get info for an uploaded file
+
 **Version 18**:
 
 * New Endpoints.
@@ -2348,6 +2356,224 @@ A single object:
 }
 ~~~~~~~~~~~~
 
+### Upload a File for a Job Option
+
+Job Options of type `file` require a file input. You can upload multiple files individually, or en-masse.  
+Each uploaded file is assigned a unique "file key" identifier.
+You can then [Run the Job][/api/V/job/[ID]/run] using the "file key" as the option value.
+
+**Single File Upload Request:**
+
+    POST /api/19/job/[ID]/input/file?optionName=[NAME]&fileName=[FILENAME]
+    POST /api/19/job/[ID]/input/file/[NAME]&fileName=[FILENAME]
+    Content-Type: octet/stream
+
+    <file-contents>
+
+*Query Parameters*:
+
+* `optionName`: For a single file/option value, specify the option name either as a query parameter or as part of the URL path.
+* `fileName`: Specify the original file name (optional)
+
+*Headers*: `Content-Type: octet/stream`
+
+*Body*: File contents
+
+**Multiple File Upload Request:**
+
+    POST /api/19/job/[ID]/input/file
+    Content-Type: multipart/form-data
+    ...
+
+For multiple files, use a Multi-part request.  For each file, specify the field name as `option.NAME` where NAME
+is the option name. The filename is specified normally within the multi-part request.
+
+**Response:**
+
+`Content-Type: application/xml`:
+
+~~~~~~~~~~ {.xml}
+<jobFileUpload>
+  <total>$total</total>
+  <options>
+    <entry key="$optionName">$fileKey</entry>
+    <!-- ... -->
+  </options>
+</jobFileUpload>
+~~~~~~~~~~~~
+
+`Content-Type: application/json`:
+
+~~~~~~~~~~ {.json}
+{
+  "total": $total,
+  "options": {
+    "$optionName": "$fileKey"
+  }
+}
+~~~~~~~~~~~~
+
+#### Example 
+
+To upload a file for an option `myfile` and run a job with the file:
+
+    POST /api/19/job/[ID]/input/file/myfile
+    Accept: application/json
+    Content-Type: application/octet-stream
+    Content-Length: 10
+
+    test file
+
+Response:
+
+~~~~~~~~~~ {.json}
+{
+  "total": 1,
+  "options": {
+    "myfile": "bb704988-6467-4613-b961-13014f6a55cb"
+  }
+}
+~~~~~~~~~~~~
+
+Now run the job using the file key value for the `myfile` option:
+
+    POST /api/19/job/[ID]/run
+    Content-Type: application/json
+
+    {"options":{"myfile":"bb704988-6467-4613-b961-13014f6a55cb"}}
+
+**Multiple file example using curl:**
+
+    curl -X POST -H x-rundeck-auth-token:$RD_TOKEN \
+        -H accept:application/json \
+        -F option.csvfile=@data.csv \
+        -F option.xmlfile=@data.xml \
+        $RD_URL/job/47d71672-9aa0-49f3-96d0-39f02daf80b9/input/file
+
+This uploads two files, one for option `csvfile` and with filename `data.csv`, and the other for option `xmlfile` and filename `data.xml`.
+
+The result:
+
+
+~~~ {.json}
+{
+  "options": {
+    "csvfile": "34ba3064-28c6-447e-aafb-b73db8ee9f6f",
+    "xmlfile": "a71c4cc7-71f6-4b3c-b53d-2aa89882a4cf"
+  },
+  "total": 2
+}
+~~~
+
+### List Files Uploaded for a Job
+
+List files that have been uploaded for a Job. Files with fileState `temp` can be used for for a new execution of the job.
+
+**Request:**
+
+    GET /api/19/job/[ID]/input/files
+
+Query Parameters:
+
+* Paging: `max` (maximum results, default: 20), `offset` (offset of first result)
+* Filter:
+    * `fileState`: state of file upload record (default: `temp`), can be one of:
+        * `temp`: file was uploaded and is not yet used, may become expired and removed
+        * `deleted`: file was used for an execution and then deleted
+        * `expired`: temp file was not used for an execution and expired
+        * `retained`: file was retained
+
+**Response:**
+
+~~~{.json}
+{
+  "paging": {
+    "offset": 0,
+    "max": 20,
+    "total": 1,
+    "count": 1
+  },
+  "files": [
+    {
+      "id": "023057ee-418f-4da7-9ae5-e065ac91eb5a",
+      "user": "admin",
+      "fileState": "temp",
+      "sha": "9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad",
+      "jobId": "7b3fff59-7a2d-4a31-a5b2-dd26177c823c",
+      "dateCreated": "2017-02-24T22:57:32Z",
+      "serverNodeUUID": "3425B691-7319-4EEE-8425-F053C628B4BA",
+      "fileName": null,
+      "size": 12,
+      "expirationDate": "2017-02-24T22:58:02Z",
+      "execId": null
+    }
+  ]
+}
+~~~
+
+~~~{.xml}
+<jobFiles>
+  <paging offset="0" max="20" total="1" count="1" />
+  <files>
+    <file id="023057ee-418f-4da7-9ae5-e065ac91eb5a">
+      <user>admin</user>
+      <fileState>temp</fileState>
+      <sha>
+      9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad</sha>
+      <jobId>7b3fff59-7a2d-4a31-a5b2-dd26177c823c</jobId>
+      <dateCreated>2017-02-24 14:57:32.746 PST</dateCreated>
+      <serverNodeUUID>
+      3425B691-7319-4EEE-8425-F053C628B4BA</serverNodeUUID>
+      <fileName />
+      <size>12</size>
+      <expirationDate>2017-02-24 14:58:02.655 PST</expirationDate>
+      <execId />
+    </file>
+  </files>
+</jobFiles>
+~~~
+
+### Get Info About an Uploaded File
+
+Get info about an uploaded file given its ID.
+
+**Request:**
+
+    GET /api/19/jobs/file/[ID]
+
+**Response:**
+
+~~~{.json}
+{
+  "dateCreated": "2017-02-24T19:10:33Z",
+  "execId": 2741,
+  "expirationDate": "2017-02-24T19:11:03Z",
+  "fileName": null,
+  "fileState": "deleted",
+  "id": "f985864b-fa1b-4e09-af7a-4315e9908372",
+  "jobId": "7b3fff59-7a2d-4a31-a5b2-dd26177c823c",
+  "serverNodeUUID": "3425B691-7319-4EEE-8425-F053C628B4BA",
+  "sha": "9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad",
+  "size": 12,
+  "user": "admin"
+}
+~~~
+
+~~~{.xml}
+<file id="f985864b-fa1b-4e09-af7a-4315e9908372">
+  <user>admin</user>
+  <fileState>deleted</fileState>
+  <sha>9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad</sha>
+  <jobId>7b3fff59-7a2d-4a31-a5b2-dd26177c823c</jobId>
+  <dateCreated>2017-02-24 11:10:33.829 PST</dateCreated>
+  <serverNodeUUID>3425B691-7319-4EEE-8425-F053C628B4BA</serverNodeUUID>
+  <fileName />
+  <size>12</size>
+  <expirationDate>2017-02-24 11:11:03.741 PST</expirationDate>
+  <execId>2741</execId>
+</file>
+~~~
+
 ## Executions
 
 ### Getting Executions for a Job
@@ -2606,6 +2832,56 @@ With `Content-Type: application/json`, a single object:
   ]
 }
 ~~~~~
+
+### List Input Files for an Execution
+
+List input files used for an execution.
+
+**Request:**
+
+    GET /api/19/execution/[ID]/input/files
+
+**Response:**
+
+~~~{.json}
+{
+  "files": [
+    {
+      "id": "382c7596-435b-4103-8781-6b32fbd629b2",
+      "user": "admin",
+      "fileState": "deleted",
+      "sha": "9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad",
+      "jobId": "7b3fff59-7a2d-4a31-a5b2-dd26177c823c",
+      "dateCreated": "2017-02-24T23:26:48Z",
+      "serverNodeUUID": "3425B691-7319-4EEE-8425-F053C628B4BA",
+      "fileName": null,
+      "size": 12,
+      "expirationDate": "2017-02-24T23:27:18Z",
+      "execId": 2837
+    }
+  ]
+}
+~~~
+~~~{.xml}
+<executionFiles>
+  <files>
+    <file id="382c7596-435b-4103-8781-6b32fbd629b2">
+      <user>admin</user>
+      <fileState>deleted</fileState>
+      <sha>
+      9284ed4fd7fe1346904656f329db6cc49c0e7ae5b8279bff37f96bc6eb59baad</sha>
+      <jobId>7b3fff59-7a2d-4a31-a5b2-dd26177c823c</jobId>
+      <dateCreated>2017-02-24 15:26:48.197 PST</dateCreated>
+      <serverNodeUUID>
+      3425B691-7319-4EEE-8425-F053C628B4BA</serverNodeUUID>
+      <fileName />
+      <size>12</size>
+      <expirationDate>2017-02-24 15:27:18.65 PST</expirationDate>
+      <execId>2837</execId>
+    </file>
+  </files>
+</executionFiles>
+~~~
 
 ### Delete an Execution
 
@@ -5416,6 +5692,23 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `POST` [Disable Executions for a Job](#disable-executions-for-a-job)
 
+[/api/V/job/[ID]/input/file][]
+
+* `POST` [Upload a File for a Job Option](#upload-a-file-for-a-job-option)
+
+[/api/V/job/[ID]/input/files][]
+
+* `GET` [List Files Uploaded for a Job](#list-files-uploaded-for-a-job)
+
+
+[/api/V/execution/[ID]/input/files][]
+
+* `GET` [List Input Files for an Execution](#list-input-files-for-an-execution)
+    
+[/api/V/jobs/file/[ID]][]
+
+* `GET` [Get Info About an Uploaded File](#get-info-about-an-uploaded-file)
+
 [/api/V/job/[ID]/info][]
 
 * `GET` [Get Job Metadata](#get-job-metadata)
@@ -5678,6 +5971,8 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 [/api/V/execution/[ID]/abort]:#aborting-executions
 
+[/api/V/execution/[ID]/input/files]:#list-input-files-for-an-execution
+
 [/api/V/execution/[ID]/output/state]:#execution-output-with-state
 
 [/api/V/execution/[ID]/output/step/[STEPCTX]]:#execution-output
@@ -5708,6 +6003,9 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 [/api/V/job/[ID]/info]:#get-job-metadata
 [GET /api/V/job/[ID]/info]:#get-job-metadata
+[/api/V/job/[ID]/input/file]:#upload-a-file-for-a-job-option
+[POST /api/V/job/[ID]/input/file]:#upload-a-file-for-a-job-option
+[/api/V/job/[ID]/input/files]:#list-files-uploaded-for-a-job
 
 [/api/V/job/[ID]/schedule/enable]:#enable-scheduling-for-a-job
 
@@ -5719,6 +6017,7 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/jobs/delete]:#bulk-job-delete
 [/api/V/jobs/execution/enable]:#bulk-toggle-job-execution
 [/api/V/jobs/execution/disable]:#bulk-toggle-job-execution
+[/api/V/jobs/file/[ID]]:#get-info-about-an-uploaded-file
 [/api/V/jobs/schedule/enable]:#bulk-toggle-job-schedules
 [/api/V/jobs/schedule/disable]:#bulk-toggle-job-schedules
 

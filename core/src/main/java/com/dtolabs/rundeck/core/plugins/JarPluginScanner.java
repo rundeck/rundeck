@@ -48,8 +48,12 @@ public class JarPluginScanner extends DirPluginScanner {
     final File cachedir;
     final File pluginJarCacheDirectory;
 
-    JarPluginScanner(final File extdir, final File cachedir, final FileCache<ProviderLoader> filecache, final int rescanInterval) {
-        super(extdir, filecache, rescanInterval);
+    JarPluginScanner(
+            final File extdir,
+            final File cachedir,
+            final FileCache<ProviderLoader> filecache
+    ) {
+        super(extdir, filecache);
         this.cachedir = cachedir;
         this.pluginJarCacheDirectory = new File(Constants.getBaseTempDirectory() + Constants.FILE_SEP + JAR_SCRATCH_DIRECTORY);
         

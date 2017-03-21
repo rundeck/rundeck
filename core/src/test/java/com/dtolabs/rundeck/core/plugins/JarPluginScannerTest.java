@@ -61,7 +61,7 @@ public class JarPluginScannerTest {
 
     @Test
     public void testIntialization() throws IOException {
-        scanner = new JarPluginScanner(null, cacheDir, null, Integer.MAX_VALUE);
+        scanner = new JarPluginScanner(null, cacheDir, null);
         Assert.assertSame("Expected cache directory to be the same as provided", cacheDir, scanner.cachedir);
         Assert.assertNotNull("Expected pluginJarCacheDirectory to be set", scanner.pluginJarCacheDirectory);
         String canonicalTempDirectory = new File(Constants.getBaseTempDirectory()).getCanonicalPath();
@@ -72,7 +72,7 @@ public class JarPluginScannerTest {
 
     @Test
     public void testCreatesCacheDirectoriesIfNotExisting() {
-        scanner = new JarPluginScanner(null, cacheDir, null, Integer.MAX_VALUE);
+        scanner = new JarPluginScanner(null, cacheDir, null);
         Assert.assertTrue("Expected cache dir to be created", cacheDir.exists() && cacheDir.isDirectory());
         Assert.assertEquals("Expected cache dir to be empty", 0, cacheDir.listFiles().length);
         Assert.assertTrue("Expected pluginJarCacheDirectory to be created", scanner.pluginJarCacheDirectory.exists()
@@ -93,7 +93,7 @@ public class JarPluginScannerTest {
         File dependency = File.createTempFile("some", "jar", cacheDir);
         dependency.deleteOnExit();
 
-        scanner = new JarPluginScanner(null, cacheDir, null, Integer.MAX_VALUE);
+        scanner = new JarPluginScanner(null, cacheDir, null);
 
         Assert.assertFalse("Expected dependency to be deleted", dependency.exists());
         Assert.assertTrue("Expected cache dir to be created", cacheDir.exists() && cacheDir.isDirectory());

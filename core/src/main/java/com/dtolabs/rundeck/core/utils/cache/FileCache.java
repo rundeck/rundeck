@@ -67,7 +67,75 @@ public class FileCache<T extends FileCache.Cacheable> {
         }
     }
 
+    public Set<File> cachedFiles(){
+        return Collections.unmodifiableSet(cache.keySet());
+    }
 
+    public static interface MemoFile {
+        public File getFile();
+
+        public String getMemo();
+    }
+
+    public static class MemoFileImpl implements MemoFile {
+        private File file;
+        private String memo;
+
+        public MemoFileImpl(final File file, final String memo) {
+            this.file = file;
+            this.memo = memo;
+        }
+
+        @Override
+        public File getFile() {
+            return file;
+        }
+
+        public void setFile(File file) {
+            this.file = file;
+        }
+
+        @Override
+        public String getMemo() {
+            return memo;
+        }
+
+        public void setMemo(String memo) {
+            this.memo = memo;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            final MemoFileImpl memoFile = (MemoFileImpl) o;
+
+            if (!file.equals(memoFile.file)) {
+                return false;
+            }
+            return memo.equals(memoFile.memo);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = file.hashCode();
+            result = 31 * result + memo.hashCode();
+            return result;
+        }
+    }
+
+    public static String memoFile(final File file) {
+        return file.getName() + ":" + file.lastModified() + ":" + file.length();
+    }
+
+    public static MemoFile memoize(File file) {
+        return new MemoFileImpl(file, memoFile(file));
+    }
     /**
      * Get entry for a file, and use the creator if necessary to create it. The creator will be called if the cache is
      * out of date for the file. If the created item is equals to any existing cached item for the file then the old

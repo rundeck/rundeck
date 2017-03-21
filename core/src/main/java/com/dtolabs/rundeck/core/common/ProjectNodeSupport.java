@@ -18,13 +18,14 @@ package com.dtolabs.rundeck.core.common;
 
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.plugins.configuration.Describable;
-import com.dtolabs.rundeck.core.plugins.configuration.Description;
+import com.dtolabs.rundeck.core.plugins.CloseableProvider;
+import com.dtolabs.rundeck.core.plugins.Closeables;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.core.utils.TextUtils;
 import org.apache.log4j.Logger;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -37,7 +38,7 @@ import java.util.regex.Pattern;
 /**
  * Manage node source loading for a project
  */
-public class ProjectNodeSupport implements IProjectNodes {
+public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private static final Logger logger = Logger.getLogger(ProjectNodeSupport.class);
     public static final String NODES_XML = "resources.xml";
     public static final String PROJECT_RESOURCES_URL_PROPERTY = "project.resources.url";
@@ -52,6 +53,10 @@ public class ProjectNodeSupport implements IProjectNodes {
     private Map<String,Exception> nodesSourceExceptions;
     private long nodesSourcesLastReload = -1L;
     private List<ResourceModelSource> nodesSourceList;
+    /**
+     * Closeables for releasing plugin loaders when sources are disposed
+     */
+    private Set<Closeable> nodeSourceReferences = new HashSet<>();
     private ResourceFormatGeneratorService resourceFormatGeneratorService;
     private ResourceModelSourceService resourceModelSourceService;
 
@@ -189,10 +194,24 @@ public class ProjectNodeSupport implements IProjectNodes {
         //determine if sources need to be reloaded
         final long lastMod = projectConfig.getConfigLastModifiedTime()!=null? projectConfig.getConfigLastModifiedTime().getTime():0;
         if (lastMod > nodesSourcesLastReload) {
-            nodesSourceList = new ArrayList<>();
+            unloadSources();
             loadResourceModelSources();
         }
         return nodesSourceList;
+    }
+
+    @Override
+    public void close() throws IOException {
+        unloadSources();
+    }
+
+    /**
+     * Clear the sources list and close all plugin loader references
+     */
+    private synchronized void unloadSources() {
+        nodesSourceList = new ArrayList<>();
+        Closeables.closeQuietly(nodeSourceReferences);
+        nodeSourceReferences = new HashSet<>();
     }
 
     private void loadResourceModelSources() {
@@ -378,38 +397,6 @@ public class ProjectNodeSupport implements IProjectNodes {
         return null;
     }
 
-    /**
-     * @param origin origin source
-     * @param ident  unique identity for this cached source, used in filename
-     * @param descr  description of the source, used in logging
-     *
-     * @return new source
-     */
-    private ResourceModelSource createCacheLoadingSource(
-            ResourceModelSource origin,
-            String ident,
-            String descr
-    )
-    {
-        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.LOAD_ONLY, true);
-    }
-
-    /**
-     * @param origin origin source
-     * @param ident  unique identity for this cached source, used in filename
-     * @param descr  description of the source, used in logging
-     *
-     * @return new source
-     */
-    private ResourceModelSource createCacheWritingSource(
-            ResourceModelSource origin,
-            String ident,
-            String descr
-    )
-    {
-        return createCachingSource(origin, ident, descr, SourceFactory.CacheType.STORE_ONLY, true);
-    }
-
     private ResourceFormatGeneratorService getResourceFormatGeneratorService() {
         return resourceFormatGeneratorService;
     }
@@ -427,19 +414,18 @@ public class ProjectNodeSupport implements IProjectNodes {
         final ResourceModelSourceService nodesSourceService =
                 getResourceModelSourceService();
         configuration.put("project", projectConfig.getName());
-        ResourceModelSource sourceForConfiguration = nodesSourceService.getSourceForConfiguration(type, configuration);
 
+        CloseableProvider<ResourceModelSource> sourceForConfiguration =
+                nodesSourceService.getCloseableSourceForConfiguration(
+                        type,
+                        configuration
+                );
+
+        nodeSourceReferences.add(sourceForConfiguration);
         if (useCache) {
-            ResourceModelSourceFactory provider = nodesSourceService.providerOfType(type);
-            String name = ident;
-            if (provider instanceof Describable) {
-                Describable desc = (Describable) provider;
-                Description description = desc.getDescription();
-                name = ident + " (" + description.getTitle() + ")";
-            }
-            return createCachingSource(sourceForConfiguration, ident, name);
+            return createCachingSource(sourceForConfiguration.getProvider(), ident, ident + " (" + type + ")");
         } else {
-            return sourceForConfiguration;
+            return sourceForConfiguration.getProvider();
         }
     }
 

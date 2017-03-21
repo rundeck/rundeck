@@ -65,6 +65,7 @@ class ExecutionJob implements InterruptableJob {
     def boolean wasThreshold
     def boolean wasTimeout
     def grailsApplication
+    Long executionId
     static triggers = {
         /** define no triggers here */
     }
@@ -113,6 +114,7 @@ class ExecutionJob implements InterruptableJob {
             log.error("Unable to start Job execution: ${t.message?t.message:'no message'}",t)
             throw t
         }
+        executionId = initMap.executionId ? Long.parseLong(initMap.executionId) : initMap.execution?.id
         if(initMap.jobShouldNotRun){
             log.info(initMap.jobShouldNotRun)
             return

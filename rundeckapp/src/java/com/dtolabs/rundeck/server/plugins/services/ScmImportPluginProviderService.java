@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.server.plugins.services;
 
+import com.dtolabs.rundeck.core.plugins.BasePluginProviderService;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.scm.ScmImportPluginFactory;
 

@@ -1740,6 +1740,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler)
         service.frameworkService = Mock(FrameworkService)
+        service.fileUploadService = Mock(FileUploadService)
         when:
         def result = service.rescheduleJobs(null)
 
@@ -1831,4 +1832,76 @@ class ScheduledExecutionServiceSpec extends Specification {
         true            | null
         null            | null
     }
+
+    def 'getJobIdent'() {
+        given:
+        def job = isjob ? new ScheduledExecution(createJobParams(jobName: 'ajobname',
+                                                                 project: 'AProject',
+                                                                 groupPath: 'some/path',
+                                                                 scheduled: jobscheduled
+        )
+        ).save() : null
+        def exec = new Execution(
+                scheduledExecution: job,
+                status: estatus,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                project: job?.project ?: 'testproject',
+                user: 'bob',
+                executionType: etype,
+                workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: "test exec")])
+        ).save(flush: true)
+        def id = exec.id
+        when:
+        def result = service.getJobIdent(job, exec)
+
+        then:
+        result.jobname == jobname.replaceAll('_ID_', "$id").replaceAll('_JID_', "${job?.id}")
+        result.groupname == groupname.replaceAll('_ID_', "$id").replaceAll('_JID_', "${job?.id}")
+
+        where:
+        isjob | estatus     | jobscheduled | etype            | jobname               | groupname
+        false | null        | null         | 'user'           | 'TEMP:bob:_ID_'       | 'bob:run'
+        true  | null        | false        | 'user'           | 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
+        true  | null        | true         | 'user'           | 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
+        true  | 'scheduled' | true         | 'user'           | 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
+        true  | 'running'   | true         | 'user'           | 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
+        true  | null        | true         | 'scheduled'      | '_JID_:ajobname'      | 'AProject:ajobname:some/path'
+        true  | 'scheduled' | true         | 'scheduled'      | '_JID_:ajobname'      | 'AProject:ajobname:some/path'
+        true  | 'running'   | true         | 'scheduled'      | '_JID_:ajobname'      | 'AProject:ajobname:some/path'
+        true  | 'scheduled' | true         | 'user-scheduled' | 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
+        true  | 'running'   | true         | 'user-scheduled' | 'TEMP:bob:_JID_:_ID_' | 'bob:run:_JID_'
+
+    }
+
+    @Unroll
+    def "interrupt job"() {
+        given:
+        def name = 'a'
+        def group = 'b'
+        service.quartzScheduler = Mock(Scheduler)
+
+        when:
+        def result = service.interruptJob(instanceId, name, group, unschedule)
+
+        then:
+        result == expect
+        if (instanceId) {
+            1 * service.quartzScheduler.interrupt(instanceId) >> success
+        }
+        if (unschedule && !success) {
+            1 * service.quartzScheduler.deleteJob(_) >> diddelete
+        }
+
+        where:
+        instanceId | unschedule | success | diddelete | expect
+        null       | true       | false   | true      | true
+        null       | true       | false   | false     | false
+        null       | false      | _       | _         | false
+        'xyz'      | true       | true    | true      | true
+        'xyz'      | true       | false   | false     | false
+        'xyz'      | false      | true    | true      | true
+        'xyz'      | false      | false   | false     | false
+    }
+
 }

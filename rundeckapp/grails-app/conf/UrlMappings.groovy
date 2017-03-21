@@ -32,6 +32,7 @@ class UrlMappings {
         }
         "/api/$api_version/execution/$id/state"(controller: 'execution', action: 'apiExecutionState')
         "/api/$api_version/execution/$id/abort"(controller: 'execution', action: 'apiExecutionAbort')
+        "/api/$api_version/execution/$id/input/files"(controller: 'execution', action: 'apiExecutionInputFiles')
         "/api/$api_version/execution/$id/output(.$format)?"(controller: 'execution', action: 'apiExecutionOutput')
         "/api/$api_version/execution/$id/output/state"(controller: 'execution', action: 'apiExecutionStateOutput')
         "/api/$api_version/execution/$id/output/node/$nodename"(controller: 'execution', action: 'apiExecutionOutput')
@@ -67,6 +68,11 @@ class UrlMappings {
         }
 
         "/api/$api_version/job/$id/run"(controller: 'scheduledExecution', action: 'apiJobRun')
+        "/api/$api_version/job/$id/input/file/$optionName?"(
+                controller: 'scheduledExecution',
+                action: 'apiJobFileUpload'
+        )
+        "/api/$api_version/job/$id/input/files"(controller: 'scheduledExecution', action: 'apiJobFilesList')
         "/api/$api_version/job/$id/executions"(controller: 'scheduledExecution') {
             action = [GET: 'apiJobExecutions', DELETE: 'apiJobExecutionsDelete', POST: 'apiJobRun']
         }
@@ -89,6 +95,8 @@ class UrlMappings {
         "/api/$api_version/jobs/execution/disable"(controller: 'scheduledExecution',action: 'apiFlipExecutionEnabledBulk'){
             status = false
         }
+        "/api/$api_version/jobs/file/$id"(controller: 'scheduledExecution',action: 'apiJobFileInfo')
+
 
 
         "/api/$api_version/project/$project/executions/running"(controller: 'menu', action: 'apiExecutionsRunningv14')

@@ -28,7 +28,11 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginScanner
 import com.dtolabs.rundeck.core.storage.AuthRundeckStorageTree
 import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
+import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
+import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
+import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
+import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.PluggableStoragePluginProviderService
@@ -125,10 +129,10 @@ beans={
     }
 
     //scan for jar plugins
-    jarPluginScanner(JarPluginScanner, pluginDir, cacheDir, ref('providerFileCache'), 5000)
+    jarPluginScanner(JarPluginScanner, pluginDir, cacheDir, ref('providerFileCache'))
 
     //scan for script-based plugins
-    scriptPluginScanner(ScriptPluginScanner, pluginDir, cacheDir, ref('providerFileCache'), 5000)
+    scriptPluginScanner(ScriptPluginScanner, pluginDir, cacheDir, ref('providerFileCache'))
 
     //cache for plugins loaded via scanners
     filePluginCache(FilePluginCache, ref('providerFileCache')) {
@@ -171,6 +175,7 @@ beans={
      */
     executionFileStoragePluginProviderService(ExecutionFileStoragePluginProviderService) {
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
+//        pluginRegistry=ref("rundeckPluginRegistry")
     }
     logFileTaskExecutor(SimpleAsyncTaskExecutor,"LogFileStorage"){
         concurrencyLimit= 2 + (application.config.rundeck?.execution?.logs?.fileStorage?.concurrencyLimit ?: 5)
@@ -257,6 +262,12 @@ beans={
     pluginCustomizer(PluginCustomizer)
     xmlns lang: 'http://www.springframework.org/schema/lang'
 
+    appContextEmbeddedPluginFileSource(ApplicationContextPluginFileSource, '/WEB-INF/rundeck/plugins/')
+
+    rundeckEmbeddedPluginExtractor(RundeckEmbeddedPluginExtractor) {
+        pluginTargetDir = pluginDir
+    }
+
     def pluginRegistry=[:]
     if (pluginDir.exists()) {
         pluginDir.eachFileMatch(FileType.FILES, ~/.*\.groovy/) { File plugin ->
@@ -270,10 +281,19 @@ beans={
     }
     dbStoragePluginFactory(DbStoragePluginFactory)
     pluginRegistry['db']='dbStoragePluginFactory'
+    storageTreeExecutionFileStoragePluginFactory(TreeExecutionFileStoragePluginFactory)
+    pluginRegistry['storage-tree'] = 'storageTreeExecutionFileStoragePluginFactory'
+
+    def uploadsDir = new File(varDir, 'upload')
+    fsFileUploadPlugin(FSFileUploadPlugin) {
+        basePath = uploadsDir.absolutePath
+    }
+    pluginRegistry['filesystem-temp'] = 'fsFileUploadPlugin'
     /**
      * Registry bean contains both kinds of plugin
      */
     rundeckPluginRegistry(RundeckPluginRegistry){
+        rundeckEmbeddedPluginExtractor = ref('rundeckEmbeddedPluginExtractor')
         pluginRegistryMap=pluginRegistry
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
         pluginDirectory=pluginDir

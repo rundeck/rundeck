@@ -20,12 +20,31 @@
 
 function OptionEditor(data) {
     var self = this;
+    self.optionType = ko.observable(data.optionType);
     self.name=ko.observable(data.name);
     self.bashVarPrefix= data.bashVarPrefix? data.bashVarPrefix:'';
+    self.tofilebashvar = function (str) {
+        return self.bashVarPrefix + "FILE_" + str.toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
+    };
     self.tobashvar = function (str) {
-        return self.bashVarPrefix+"OPTION_" + str.toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
+        return self.bashVarPrefix + "OPTION_" + str.toUpperCase().replace(/[^a-zA-Z0-9_]/g, '_').replace(/[{}$]/, '');
     };
     self.bashVarPreview=ko.computed(function(){
        return self.tobashvar(self.name());
+    });
+
+    self.fileBashVarPreview = ko.computed(function () {
+        return self.tofilebashvar(self.name());
+    });
+
+    self.fileFileNameBashVarPreview = ko.computed(function () {
+        return self.tofilebashvar(self.name()+'.fileName');
+    });
+    self.fileShaBashVarPreview = ko.computed(function () {
+        return self.tofilebashvar(self.name()+'.sha');
+    });
+
+    self.isFileType = ko.computed(function () {
+        return "file" === self.optionType();
     });
 }

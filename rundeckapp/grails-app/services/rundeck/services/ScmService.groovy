@@ -18,6 +18,8 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.plugins.CloseableProvider
+import com.dtolabs.rundeck.core.plugins.Closeables
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.scm.JobExportReference
 import com.dtolabs.rundeck.core.jobs.JobRevReference
@@ -86,8 +88,8 @@ class ScmService {
     PluginConfigService pluginConfigService
     def StorageService storageService
     final Set<String> initedProjects = Collections.synchronizedSet(new HashSet())
-    Map<String, ScmExportPlugin> loadedExportPlugins = Collections.synchronizedMap([:])
-    Map<String, ScmImportPlugin> loadedImportPlugins = Collections.synchronizedMap([:])
+    Map<String, CloseableProvider<ScmExportPlugin>> loadedExportPlugins = Collections.synchronizedMap([:])
+    Map<String, CloseableProvider<ScmImportPlugin>> loadedImportPlugins = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedExportListeners = Collections.synchronizedMap([:])
     Map<String, JobChangeListener> loadedImportListeners = Collections.synchronizedMap([:])
 
@@ -151,11 +153,11 @@ class ScmService {
     }
     ScmExportPlugin getLoadedExportPluginFor(String project){
         initProject(project)
-        loadedExportPlugins[project]
+        loadedExportPlugins[project]?.provider
     }
     ScmImportPlugin getLoadedImportPluginFor(String project){
         initProject(project)
-        loadedImportPlugins[project]
+        loadedImportPlugins[project]?.provider
     }
 
     def listPlugins(String integration) {
@@ -434,10 +436,10 @@ class ScmService {
 
         JobChangeListener changeListener
         if (integration == EXPORT) {
-            ScmExportPlugin plugin = loaded
+            ScmExportPlugin plugin = loaded.provider
             changeListener = listenerForExportPlugin(plugin, context)
         } else {
-            ScmImportPlugin plugin = loaded
+            ScmImportPlugin plugin = loaded.provider
             changeListener = listenerForImportPlugin(plugin)
         }
         changeListener = jobEventsService.addListenerForProject changeListener, context.frameworkProject
@@ -449,7 +451,7 @@ class ScmService {
             loadedImportPlugins[context.frameworkProject] = loaded
             loadedImportListeners[context.frameworkProject] = changeListener
         }
-        loaded
+        loaded.provider
     }
 
     private JobChangeListener listenerForImportPlugin(
@@ -609,6 +611,7 @@ class ScmService {
         def loaded
         if (integration == EXPORT) {
             loaded = loadedExportPlugins.remove(project)
+            loaded?.close()
             def changeListener = loadedExportListeners.remove(project)
             jobEventsService.removeListener(changeListener)
             //clear cached rename/delete info
@@ -616,10 +619,11 @@ class ScmService {
             deletedJobsCache.remove(project)
         } else {
             loaded = loadedImportPlugins.remove(project)
+            loaded?.close()
             def changeListener = loadedImportListeners.remove(project)
             jobEventsService.removeListener(changeListener)
         }
-        loaded?.cleanup()
+        loaded?.provider?.cleanup()
 
     }
 
@@ -704,21 +708,35 @@ class ScmService {
 
     }
 
-    ScmExportPlugin loadExportPluginWithConfig(ScmOperationContext context, String type, Map config) {
-        ScmExportPluginFactory plugin = pluginService.getPlugin(
+    CloseableProvider<ScmExportPlugin> loadExportPluginWithConfig(
+            ScmOperationContext context,
+            String type,
+            Map config
+    )
+    {
+        CloseableProvider<ScmExportPluginFactory> providerReference = pluginService.retainPlugin(
                 type,
                 scmExportPluginProviderService
         )
-        return plugin.createPlugin(context, config)
+        def plugin = providerReference.provider.createPlugin(context, config)
+        return Closeables.closeableProvider(plugin, providerReference)
     }
 
-    ScmImportPlugin loadImportPluginWithConfig(ScmOperationContext context, String type, Map config) {
-        ScmImportPluginFactory plugin = pluginService.getPlugin(
+    CloseableProvider<ScmImportPlugin> loadImportPluginWithConfig(
+            ScmOperationContext context,
+            String type,
+            Map config
+    )
+    {
+        CloseableProvider<ScmImportPluginFactory> providerReference = pluginService.retainPlugin(
                 type,
                 scmImportPluginProviderService
         )
+
         def list = loadInputTrackingItems(context.frameworkProject)
-        return plugin.createPlugin(context, config, list)
+
+        def plugin = providerReference.provider.createPlugin(context, config, list)
+        return Closeables.closeableProvider(plugin, providerReference)
     }
 
     /**

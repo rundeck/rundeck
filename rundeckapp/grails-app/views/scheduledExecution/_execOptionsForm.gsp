@@ -17,7 +17,7 @@
 <div class="row">
 <div class="col-sm-12 ">
 
-<g:form controller="scheduledExecution" method="post" useToken="true"
+<g:uploadForm controller="scheduledExecution" method="post" useToken="true"
         params="[project:scheduledExecution.project]" class="form-horizontal" role="form">
     <!-- BEGIN: firefox hack https://bugzilla.mozilla.org/show_bug.cgi?id=1119063 -->
     <input type="text" style="display:none" class="ixnay">
@@ -597,7 +597,7 @@
 </div>
 </g:if>
 </div>%{--/.panel--}%
-</g:form>
+</g:uploadForm>
 </div> %{--/.col--}%
 </div> %{--/.row--}%
 

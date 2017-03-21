@@ -2,8 +2,6 @@ language: java
 env: MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=192m" GRADLE_OPTS="-Xmx1024m -XX:MaxPermSize=192m" TERM="dumb"
 jdk:
   - oraclejdk8
-  - oraclejdk7
-  - openjdk7
 #sudo: false
 # can uncomment above after resolution of https://github.com/travis-ci/travis-ci/issues/3120
 sudo: required
@@ -30,7 +28,7 @@ addons:
 branches:
   only:
     - master
-    - '2.6.x'
+    - '2.7.x'
 
 notifications:
   irc:

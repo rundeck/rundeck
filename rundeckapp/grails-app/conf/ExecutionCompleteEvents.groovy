@@ -14,8 +14,11 @@
  * limitations under the License.
  */
 
+
+import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.events.ExecutionCompleteEvent
 
 events = {
     executionComplete filter: ExecutionCompleteEvent, fork: true
+    executionBeforeStart filter: ExecutionPrepareEvent, fork: false
 }

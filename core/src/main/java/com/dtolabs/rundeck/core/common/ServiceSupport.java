@@ -42,7 +42,6 @@ import java.util.HashMap;
  * Created by greg on 2/20/15.
  */
 public class ServiceSupport implements IFrameworkServices {
-    public static final String FRAMEWORK_PLUGINS_ENABLED = "framework.plugins.enabled";
 
     final HashMap<String,FrameworkSupportService> services = new HashMap<String, FrameworkSupportService>();
 
@@ -59,10 +58,6 @@ public class ServiceSupport implements IFrameworkServices {
         setFramework(framework);
         //plugin manager service inited first.  any pluggable services will then be
         //able to try to load providers via the plugin manager
-        if(!framework.hasProperty(FRAMEWORK_PLUGINS_ENABLED) || "true".equals(framework.getProperty(FRAMEWORK_PLUGINS_ENABLED))){
-            //enable plugin service only if framework property does not disable them
-            PluginManagerService.getInstanceForFramework(getFramework());
-        }
         NodeStepExecutionService.getInstanceForFramework(getFramework());
         NodeExecutorService.getInstanceForFramework(getFramework());
         FileCopierService.getInstanceForFramework(getFramework());

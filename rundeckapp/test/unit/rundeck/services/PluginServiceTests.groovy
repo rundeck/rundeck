@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
+import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
@@ -93,6 +94,12 @@ class PluginServiceTests extends GrailsUnitTestCase {
             return null
         }
 
+        @Override
+        CloseableProvider<String> closeableProviderOfType(final String providerName)
+                throws com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
+        {
+            return null
+        }
     }
 
     class TestRegistry implements PluginRegistry{
@@ -123,6 +130,11 @@ class PluginServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
+        def <T> CloseableProvider<T> retainPluginByName(final String name, final PluggableProviderService<T> service) {
+            return null
+        }
+
+        @Override
         <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
         Framework framework, String project, Map instanceConfiguration) {
             cpWithFrameworkCalled=true
@@ -134,6 +146,20 @@ class PluginServiceTests extends GrailsUnitTestCase {
         PropertyResolver resolver, PropertyScope defaultScope) {
             cpWithResolverCalled=true
             return new ConfiguredPlugin<T>( plugin,  extraConfiguration)
+        }
+
+        @Override
+        def <T> ConfiguredPlugin<T> retainConfigurePluginByName(
+                final String name,
+                final PluggableProviderService<T> service,
+                final PropertyResolver resolver,
+                final PropertyScope defaultScope
+        )
+        {
+            return null
+        }
+        def <T> PluggableProviderService<T> createPluggableService(final Class<T> type) {
+            throw new IllegalArgumentException("test not implemented")
         }
 
         @Override

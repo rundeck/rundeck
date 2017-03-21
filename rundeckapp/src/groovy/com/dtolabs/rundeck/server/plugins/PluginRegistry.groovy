@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.server.plugins
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
+import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
@@ -32,6 +33,8 @@ import static com.dtolabs.rundeck.core.plugins.configuration.Validator.*
  * Interface for getting and configuring plugins
  */
 public interface PluginRegistry {
+
+    public <T> PluggableProviderService<T> createPluggableService(Class<T> type);
 
     /**
      * Create and configure a plugin instance with the given bean or provider name
@@ -74,6 +77,19 @@ public interface PluginRegistry {
 
     public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
                                                          PropertyResolver resolver, PropertyScope defaultScope);
+    /**
+     * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
+     * default property scope, retain the instance to prevent unloading it
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @return ConfiguredPlugin with a closeable reference to release the plugin
+     */
+    public <T> ConfiguredPlugin<T> retainConfigurePluginByName(
+            String name, PluggableProviderService<T> service,
+            PropertyResolver resolver, PropertyScope defaultScope
+    )
     /**
      * Return the mapped configuration properties for the plugin
      * @param name name of bean or provider
@@ -134,6 +150,8 @@ public interface PluginRegistry {
      * @return
      */
     public <T> T loadPluginByName(String name, PluggableProviderService<T> service) ;
+
+    public <T> CloseableProvider<T> retainPluginByName(String name, PluggableProviderService<T> service);
     /**
      * Load a plugin instance with the given bean or provider name
      * @param name name of bean or provider

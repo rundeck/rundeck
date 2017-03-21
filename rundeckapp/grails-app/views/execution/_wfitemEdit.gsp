@@ -30,7 +30,7 @@
     </div>
 </g:hasErrors>
 <g:render template="/common/messages"/>
-<div id="wfiedit_${rkey}">
+<div id="wfiedit_${rkey}" class="_wfiedit" data-rkey="${rkey}">
     <g:if test="${isErrorHandler}">
         <span class="text-info"><g:message code="Workflow.stepErrorHandler.description" /></span>
     </g:if>
@@ -70,7 +70,7 @@
             <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100"
                 placeholder="${message(code:"Workflow.Step.jobreference.argString.placeholder")}"
                    id="jobArgStringField"
-                   class="form-control"/>
+                   class="form-control context_var_autocomplete"/>
         </div>
     </div>
 
@@ -331,7 +331,9 @@
                 <g:message code="Workflow.Step.adhocLocalString.description" />
             </label>
             <div class="col-sm-12">
-                <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField${rkey}" class="form-control code apply_ace" data-ace-autofocus='true' ><g:enc>${item?.adhocLocalString}</g:enc></textarea>
+                <textarea rows="10" cols="60" name="adhocLocalString" id="adhocLocalStringField${rkey}"
+                               class="form-control code apply_ace _wfscriptitem"
+                               data-ace-autofocus='true'><g:enc>${item?.adhocLocalString}</g:enc></textarea>
             </div>
         </div>
     </g:if>
@@ -343,7 +345,7 @@
                     type='text'
                     name="adhocFilepath"
                     value="${enc(attr:item?.adhocFilepath)}"
-                    class="form-control"
+                    class="form-control context_env_autocomplete"
                     id="adhocFilepathField"
                     placeholder="${g.enc(code:'Workflow.Step.adhocFilepath.description',encodeAs:'HTMLAttribute')}"
                     autofocus
@@ -359,7 +361,7 @@
                     type='text'
                     name="adhocRemoteString"
                     value="${enc(attr:item?.adhocRemoteString)}"
-                    class="form-control"
+                    class="form-control context_env_autocomplete _wfcommanditem"
                     placeholder="${g.enc(code:'Workflow.Step.adhocRemoteString.description',encodeAs:'HTMLAttribute')}"
                     id="adhocRemoteStringField"
                     autofocus/>
@@ -375,7 +377,7 @@
             <input type='text'
                    name="argString"
                    value="${enc(attr:item?.argString)}"
-                   class="form-control"
+                   class="form-control context_env_autocomplete"
                    id="argStringField"
                    placeholder="${enc(code:'Workflow.Step.argString.description',encodeAs:'HTMLAttribute')}"
                    data-bind="value: args, valueUpdate: 'keyup'"
@@ -411,7 +413,7 @@
                         <input type='text' name="scriptInterpreter"
                                placeholder="${enc(attr:g.message(code: 'Workflow.Step.scriptInterpreter.prompt'))}"
                                value="${enc(attr:item?.scriptInterpreter)}" size="100"
-                            class="form-control"
+                            class="form-control context_env_autocomplete"
                             data-bind="value: invocationString, valueUpdate: 'keyup'"
                                id="scriptInterpreterField${rkey}" autofocus/>
 
@@ -553,6 +555,7 @@
         <div>
             <g:set var="pluginprefix" value="pluginConfig."/>
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                    extraInputCss: 'context_var_autocomplete',
                     service            : serviceName,
                     provider           : newitemDescription.name,
                     properties         : newitemDescription.properties,

@@ -76,16 +76,15 @@
             });
         }
         function execSubmit(elem, target) {
-            var params = Form.serialize(elem);
-            new Ajax.Request(
-                target, {
-                parameters: params,
-                evalScripts: true,
-                onComplete: function(trans) {
-                    var result = {};
-                    if (trans.responseJSON) {
-                        result = trans.responseJSON;
-                    }
+            var data = new FormData(jQuery('#' + elem + ' form')[0]);
+            jQuery.ajax({
+                url: target,
+                type: 'POST',
+                data: data,
+                contentType: false,
+                dataType: 'json',
+                processData: false,
+                success: function (result) {
                     if (result.id) {
                         if (result.follow && result.href) {
                             document.location = result.href;
@@ -97,13 +96,15 @@
                         }
                     } else if (result.error === 'invalid') {
                         // reload form for validation
-                        loadExec(null,params+"&dovalidate=true");
+                        loadExec(null, Form.serialize(elem) + "&dovalidate=true");
                     } else {
                         unloadExec();
                         showError(result.message ? result.message : result.error ? result.error : "Failed request");
                     }
                 },
-                onFailure: requestError.curry("runJobInline")
+                error: function (x) {
+                    requestError("runJobInline", x);
+                }
             });
         }
         function loadedFormSuccess(doShow,id){
@@ -144,7 +145,10 @@
             //setup option edit
             var joboptiondata = loadJsonData('jobOptionData');
             var joboptions = new JobOptions(joboptiondata);
-            ko.applyBindings(joboptions, document.getElementById('optionSelect'));
+
+            if (document.getElementById('optionSelect')) {
+                ko.applyBindings(joboptions, document.getElementById('optionSelect'));
+            }
 
             var remoteoptionloader = new RemoteOptionLoader({
                 url: "${createLink(controller:'scheduledExecution',action:'loadRemoteOptionValues',params:[format:'json'])}",

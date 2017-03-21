@@ -270,7 +270,7 @@
                                         <div class="col-sm-12" >
                                             <div class="argstring-scrollable">
                                             <span class="text-muted"><g:message code="options.prompt"/></span>
-                                            <g:render template="/execution/execArgString" model="[argString:execution.argString]"/>
+                                            <g:render template="/execution/execArgString" model="[argString:execution.argString,inputFilesMap:inputFilesMap]"/>
                                             </div>
                                         </div>
                                     </div>

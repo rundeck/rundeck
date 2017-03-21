@@ -8,3 +8,4 @@
 /etc/rundeck/realm.properties
 /etc/rundeck/rundeck-config.properties
 /etc/rundeck/ssl/ssl.properties
+/etc/rundeck/apitoken.aclpolicy

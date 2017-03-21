@@ -39,8 +39,8 @@ subprojects{
             attributes 'Rundeck-Plugin-Version': rundeckPluginVersion, 
                        'Rundeck-Plugin-Archive': 'true', 
                        'Rundeck-Plugin-File-Version': version,
-                       'Rundeck-Plugin-Author': 'SimplifyOps, Inc.',
-                       'Rundeck-Plugin-URL': 'http://rundeck.org',
+                       'Rundeck-Plugin-Author': 'Rundeck, Inc.',
+                       'Rundeck-Plugin-URL': 'http://rundeck.com',
                        'Rundeck-Plugin-Date': new Date().format("yyyy-MM-dd'T'HH:mm:ssX")
         }
     }

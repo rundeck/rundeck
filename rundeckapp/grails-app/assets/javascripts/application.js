@@ -378,7 +378,38 @@ function _setupMarkdeepPreviewTab(tabid,id,getter){
         });
     });
 }
-function _setupAceTextareaEditor(textarea,callback){
+var _ace_modes = [
+    //add more mode files in rundeckapp/web-app/js/ace
+    "batchfile",
+    "diff",
+    "dockerfile",
+    "golang",
+    "groovy",
+    "html",
+    "java",
+    "javscript",
+    "json",
+    "markdown",
+    "perl",
+    "php",
+    "powershell",
+    "properties",
+    "python",
+    "ruby",
+    "sh",
+    "sql",
+    "xml",
+    "yaml"
+];
+function getAceSyntaxMode(aceeditor) {
+    "use strict";
+    return aceeditor.getSession().getMode().$id.split('/')[2];
+}
+function setAceSyntaxMode(mode, aceeditor) {
+    var allowedMode = _ace_modes.indexOf(mode) >= 0 ? mode : null;
+    aceeditor.getSession().setMode("ace/mode/" + (allowedMode || 'sh'));
+}
+function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
     if (_isIe(8)||_isIe(7)||_isIe(6)) {
         return;
     }
@@ -396,33 +427,7 @@ function _setupAceTextareaEditor(textarea,callback){
     //create editor
     var editor = ace.edit(generateId(_shadow));
     editor.$blockScrolling = Infinity;
-    var modes = [
-        //add more mode files in rundeckapp/web-app/js/ace
-        "batchfile",
-        "diff",
-        "dockerfile",
-        "golang",
-        "groovy",
-        "html",
-        "java",
-        "javscript",
-        "json",
-        "markdown",
-        "perl",
-        "php",
-        "powershell",
-        "properties",
-        "python",
-        "ruby",
-        "sh",
-        "sql",
-        "xml",
-        "yaml"
-    ];
-    function setAceSyntaxMode(mode, aceeditor) {
-        var allowedMode = modes.indexOf(mode) >= 0 ? mode : null;
-        aceeditor.getSession().setMode("ace/mode/" + (allowedMode || 'sh'));
-    }
+
     var checkResize;
     if(data.aceResizeMax){
         var heightPx=parseInt(height.replace(/px$/,''));
@@ -485,7 +490,7 @@ function _setupAceTextareaEditor(textarea,callback){
     }
 
     //add syntax dropdown
-    var addSyntaxSelect=data.aceControlSyntax?data.aceControlSyntax:false
+    var addSyntaxSelect = data.aceControlSyntax ? data.aceControlSyntax : false;
     if(addSyntaxSelect){
         var sel = jQuery('<select/>')
             .addClass('form-control')
@@ -493,8 +498,8 @@ function _setupAceTextareaEditor(textarea,callback){
                 setAceSyntaxMode(jQuery(this).val(), editor);
             });
         sel.append(jQuery('<option/>').attr('value','-').text('-None-'));
-        for(var i=0;i<modes.length;i++ ) {
-            var mode=modes[i];
+        for (var i = 0; i < _ace_modes.length; i++) {
+            var mode = _ace_modes[i];
             var option = jQuery('<option/>').attr('value',mode).text(mode);
             sel.append(option);
             if(mode==data.aceSessionMode){
@@ -509,6 +514,32 @@ function _setupAceTextareaEditor(textarea,callback){
             .addClass('ace_text_controls form-inline')
             .append(label)
             .insertBefore(_shadow);
+    }
+    if (autoCompleter) {
+        var langTools = ace.require("ace/ext/language_tools");
+        var lang = ace.require("ace/lib/lang");
+        editor.setOptions({enableBasicAutocompletion: true, enableLiveAutocompletion: true});
+        var extCompleter = {
+            identifierRegexps: [
+                /[@a-zA-Z_0-9\$\-\u00A2-\uFFFF]/
+            ],
+            getCompletions: function (editor, session, pos, prefix, callback) {
+                if (prefix.length === 0) {
+                    callback(null, []);
+                    return
+                }
+                callback(null, autoCompleter(editor, session, pos, prefix));
+            },
+            getDocTooltip: function (item) {
+                if (item.type == "rdvar" && !item.docHTML && item.title) {
+                    item.docHTML = [
+                        "<b>", lang.escapeHTML(item.title || ''), "</b>", "<hr></hr>",
+                        lang.escapeHTML(item.desc || '')
+                    ].join("");
+                }
+            }
+        };
+        langTools.addCompleter(extCompleter);
     }
     return editor;
 }

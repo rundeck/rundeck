@@ -25,6 +25,7 @@ import rundeck.ScheduledExecution
  * Controller for manipulating the session-stored set of Options during job edit
  */
 class EditOptsController {
+    def fileUploadService
     def static allowedMethods = [
             redo: 'POST',
             remove: 'POST',
@@ -33,11 +34,12 @@ class EditOptsController {
             save: 'POST',
             undo: 'POST',
     ]
-    def index = {
+
+    def index() {
         redirect(controller: 'menu', action: 'index')
     }
 
-    def error = {
+    def error() {
         return render(template: "/common/messages")
     }
 
@@ -45,7 +47,7 @@ class EditOptsController {
      * render edit form for an option.  params.name= name of existing option to edit, otherwise params.newoption is
      * required to create a new option
      */
-    def edit = {
+    def edit() {
         if (!params.name && !params.newoption) {
             log.error("name parameter required")
             flash.error = "name parameter required"
@@ -62,13 +64,22 @@ class EditOptsController {
 
             outparams = _validateOption(editopts[params.name], null,params.jobWasScheduled=='true')
         }
-        return render(template: "/scheduledExecution/optEdit", model: [option: null != params.name ? editopts[params.name] : null, name: params.name, scheduledExecutionId: params.scheduledExecutionId, newoption: params['newoption'], edit: true] + outparams)
+
+        def model = [
+                option                     : null != params.name ? editopts[params.name] : null,
+                name                       : params.name,
+                scheduledExecutionId       : params.scheduledExecutionId,
+                newoption                  : params['newoption'],
+                edit                       : true,
+                fileUploadPluginDescription: fileUploadService.pluginDescription
+        ]
+        return render(template: "/scheduledExecution/optEdit", model: model + outparams)
     }
 
     /**
      * Render view of an option definition. params.name= name of option to render, required.
      */
-    def render = {
+    def renderOpt() {
         if (!params.name) {
             log.error("name parameter is required")
             flash.error = "name parameter is required"
@@ -101,7 +112,7 @@ class EditOptsController {
     /**
      * Render all options
      */
-    def renderAll = {
+    def renderAll() {
         def Map editopts = _getSessionOptions()
         //configure sorted list
         def options = new TreeSet()
@@ -113,7 +124,7 @@ class EditOptsController {
     /**
      * Render all options in summary view
      */
-    def renderSummary = {
+    def renderSummary() {
         def Map editopts = _getSessionOptions()
         //configure sorted list
         def options = new TreeSet()
@@ -124,7 +135,7 @@ class EditOptsController {
     /**
      * Save new option or existing option definition. params.name= name of existing option, or params.newoption is required
      */
-    def save = {
+    def save() {
         withForm{
         if (!params.name && !params.newoption) {
             log.error("name parameter is required")
@@ -138,7 +149,19 @@ class EditOptsController {
         def result = _applyOptionAction(editopts, [action: 'true' == params.newoption ? 'insert' : 'modify', name: origName ? origName : name, params: params])
         if (result.error) {
             log.error(result.error)
-            return render(template: "/scheduledExecution/optEdit", model: [option: result.option, name: params.num, scheduledExecutionId: params.scheduledExecutionId, origName: params.origName, newoption: params['newoption'], edit: true, regexError: result.regexError])
+
+            def model = [
+                    option                     : result.option,
+                    name                       : params.num,
+                    scheduledExecutionId       : params.scheduledExecutionId,
+                    origName                   : params.origName,
+                    newoption                  : params['newoption'],
+                    edit                       : true,
+                    regexError                 : result.regexError,
+                    fileUploadPluginDescription: fileUploadService.pluginDescription
+            ]
+            return render(template: "/scheduledExecution/optEdit", model: model
+            )
         }
         _pushUndoAction(params.scheduledExecutionId, result.undo)
         if (result.undo) {
@@ -165,7 +188,7 @@ class EditOptsController {
     /**
      * Remove an option by name.  params.name required
      */
-    def remove = {
+    def remove() {
         withForm {
         if (!params.name) {
             log.error("name parameter is required")
@@ -240,7 +263,7 @@ class EditOptsController {
     /**
      * Show undo/redo buttons
      */
-    def renderUndo = {
+    def renderUndo() {
         final String id = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
         render(template: "/common/undoRedoControls", model: [undo: session.undoOPTS ? session.undoOPTS[id]?.size() : 0, redo: session.redoOPTS ? session.redoOPTS[id]?.size() : 0, key: 'opts', revertConfirm: 'all Options'])
     }
@@ -249,7 +272,7 @@ class EditOptsController {
     /**
      * Undo action, renders full options list after performing undo
      */
-    def undo = {
+    def undo() {
         withForm{
         def editopts = _getSessionOptions()
         def action = _popUndoAction(params.scheduledExecutionId)
@@ -281,7 +304,7 @@ class EditOptsController {
     /**
      * redo action, renders full options list after performing redo
      */
-    def redo = {
+    def redo() {
         withForm{
         def editopts = _getSessionOptions()
         def action = _popRedoAction(params.scheduledExecutionId)
@@ -312,7 +335,7 @@ class EditOptsController {
     /**
      * revert action, reloads options from stored ScheduledExecution, clears undo/redo stack, and renders full options list
      */
-    def revert = {
+    def revert() {
         withForm{
         final String uid = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
         session.editOPTS?.remove(uid)
@@ -440,6 +463,10 @@ class EditOptsController {
     public static _validateOption(Option opt, Map params = null, boolean jobWasScheduled=false) {
         opt.validate()
         def result = [:]
+        if (jobWasScheduled && opt.required && opt.optionType == 'file') {
+            opt.errors.rejectValue('required', 'option.file.required.message')
+            return result
+        }
         if (opt.enforced && (opt.values || opt.valuesList) && opt.defaultValue) {
             opt.convertValuesList()
             if(!opt.multivalued && !opt.values.contains(opt.defaultValue)) {

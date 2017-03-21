@@ -57,6 +57,8 @@ used by _editOptions.gsp template
                                               enforced           : optionSelect.enforced,
                                               isDate             : !!optionSelect.isDate,
                                               dateFormat         : optionSelect.dateFormat,
+                                              optionType         : optionSelect.optionType,
+//                                              config             : optionSelect.configMap,
                                               values             : optionSelect.values,
                                               defaultValue       : optionSelect.defaultValue,
                                               defaultStoragePath : optionSelect.defaultStoragePath,

@@ -58,6 +58,16 @@ public abstract class BasePluggableProviderService<T> implements PluggableProvid
         return createProviderInstanceFromType(clazz, name);
     }
 
+    @Override
+    public CloseableProvider<T> closeableProviderOfType(final String providerName) throws ExecutionServiceException {
+        final ServiceProviderLoader pluginManager = getPluginManager();
+        if (null != pluginManager) {
+            return pluginManager.loadCloseableProvider(this, providerName);
+        } else {
+            throw new MissingProviderException("Provider not found", getName(), providerName);
+        }
+    }
+
     public T providerOfType(final String providerName) throws ExecutionServiceException {
         final ServiceProviderLoader pluginManager = getPluginManager();
         if (null != pluginManager) {

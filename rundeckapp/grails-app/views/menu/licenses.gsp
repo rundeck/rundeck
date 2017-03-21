@@ -33,9 +33,9 @@
 <div class="pageBody solo licenses">
 <g:markdown>
 
-**[Rundeck](http://rundeck.org)**
+**[Rundeck](http://rundeck.com)**
 
-    Copyright 2017 SimplifyOps, Inc.
+    Copyright 2017 Rundeck, Inc.
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.

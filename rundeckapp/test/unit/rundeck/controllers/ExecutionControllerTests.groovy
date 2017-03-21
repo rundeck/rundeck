@@ -414,7 +414,7 @@ class ExecutionControllerTests  {
         def execControl = mockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert null == killas
-            [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', failedreason: null]
+            [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
         fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return true }
 
@@ -449,7 +449,7 @@ class ExecutionControllerTests  {
         def execControl = mockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert null == killas
-            [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', failedreason: null]
+            [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', reason: null]
         }
         fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return false }
 
@@ -481,7 +481,7 @@ class ExecutionControllerTests  {
         def execControl = mockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert killas == 'testuser'
-            [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', failedreason: null]
+            [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', reason: null]
         }
 
         fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return false }
@@ -515,7 +515,7 @@ class ExecutionControllerTests  {
         def execControl = mockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert killas == 'testuser'
-            [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', failedreason: null]
+            [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
 
         fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return true }
@@ -555,7 +555,7 @@ class ExecutionControllerTests  {
         def execControl = mockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert killas == 'testuser'
-            [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', failedreason: null]
+            [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
 
         fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return !('killAs' in privs) }

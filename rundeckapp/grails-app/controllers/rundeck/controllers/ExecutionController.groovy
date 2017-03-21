@@ -17,6 +17,9 @@
 package rundeck.controllers
 
 import com.dtolabs.client.utils.Constants
+
+import com.dtolabs.rundeck.app.api.jobs.upload.ExecutionFileInfoList
+import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
@@ -33,11 +36,11 @@ import grails.converters.JSON
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import rundeck.CommandExec
 import rundeck.Execution
-import rundeck.PluginStep
 import rundeck.ScheduledExecution
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
+import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
 import rundeck.services.OrchestratorPluginService
@@ -63,6 +66,7 @@ class ExecutionController extends ControllerBase{
     OrchestratorPluginService orchestratorPluginService
     ApiService apiService
     WorkflowService workflowService
+    FileUploadService fileUploadService
 
     static allowedMethods = [
             delete:['POST','DELETE'],
@@ -228,6 +232,8 @@ class ExecutionController extends ControllerBase{
             pluginDescs['workflow'][desc.name]=desc
         }
         def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, 0)
+        def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
+        def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
         return [
                 scheduledExecution    : e.scheduledExecution ?: null,
                 execution             : e,
@@ -241,6 +247,7 @@ class ExecutionController extends ControllerBase{
                 enext                 : enext,
                 eprev                 : eprev,
                 stepPluginDescriptions: pluginDescs,
+                inputFilesMap         : inputFilesMap
         ]
     }
     def delete = {
@@ -515,17 +522,17 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         def ScheduledExecution se = e.scheduledExecution
-        def abortresult=executionService.abortExecution(se, e, session.user,authContext)
+        ExecutionService.AbortResult abortresult=executionService.abortExecution(se, e, session.user, authContext)
 
 
         def didcancel=abortresult.abortstate in [ExecutionService.ABORT_ABORTED, ExecutionService.ABORT_PENDING]
 
-        def reasonstr=abortresult.failedreason
+        def reasonstr=abortresult.reason
         withFormat{
             json{
                 render(contentType:"text/json"){
                     delegate.cancelled=didcancel
-                    delegate.status=(abortresult.statusStr?abortresult.statusStr:(didcancel?'killed':'failed'))
+                    delegate.status=(abortresult.status?:(didcancel?'killed':'failed'))
                     if(reasonstr){
                         delegate.'reason'=reasonstr
                     }
@@ -535,7 +542,7 @@ class ExecutionController extends ControllerBase{
                 render(contentType:"text/xml",encoding:"UTF-8"){
                     result(error:false,success:didcancel){
                         success{
-                            message("Job status: ${abortresult.statusStr?abortresult.statusStr:(didcancel?'killed': 'failed')}")
+                            message("Job status: ${abortresult.status?:(didcancel?'killed': 'failed')}")
                         }
                     }
                 }
@@ -1409,11 +1416,11 @@ class ExecutionController extends ControllerBase{
             //authorized within service call
             killas= params.asUser
         }
-        def abortresult = executionService.abortExecution(se, e, user, authContext, killas)
+        ExecutionService.AbortResult abortresult = executionService.abortExecution(se, e, user, authContext, killas)
 
         def reportstate=[status: abortresult.abortstate]
-        if(abortresult.failedreason){
-            reportstate.reason= abortresult.failedreason
+        if(abortresult.reason){
+            reportstate.reason= abortresult.reason
         }
 
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
@@ -1428,7 +1435,7 @@ class ExecutionController extends ControllerBase{
                 apiService.renderSuccessXml(request,response) {
                     if (apiService.doWrapXmlResponse(request)) {
                         success {
-                            message("Execution status: ${abortresult.statusStr ? abortresult.statusStr : abortresult.jobstate}")
+                            delegate.'message'("Execution status: ${abortresult.status ?: abortresult.jobstate}")
                         }
                     }
                     abort(reportstate) {
@@ -1724,6 +1731,38 @@ class ExecutionController extends ControllerBase{
                 }
             }
         }
+    }
+
+    /**
+     * List input files for an execution
+     */
+    def apiExecutionInputFiles() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+            return
+        }
+        if (!apiService.requireParameters(params, response, ['id'])) {
+            return
+        }
+
+        def Execution e = Execution.get(params.id)
+        if (!apiService.requireExists(response, e, ['Execution ID', params.id])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, e.project)
+        if (!apiService.requireAuthorized(
+                frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ]),
+                response,
+                [AuthConstants.ACTION_READ, "Execution", params.id] as Object[]
+        )) {
+            return
+        }
+
+        def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
+
+        respond(
+                new ExecutionFileInfoList(inputFiles.collect { new JobFileInfo(it.exportMap()) }, [:]),
+                [format: ['xml', 'json']]
+        )
     }
 }
 

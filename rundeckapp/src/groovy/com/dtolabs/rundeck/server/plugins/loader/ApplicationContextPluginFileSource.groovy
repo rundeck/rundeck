@@ -17,19 +17,24 @@
 package com.dtolabs.rundeck.server.plugins.loader
 
 import org.springframework.context.ApplicationContext
+import org.springframework.context.ApplicationContextAware
 
 /**
  * ApplicationContextPluginFileSource reads a list of plugin files embedded in the application resources
  * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-07-18
  */
-class ApplicationContextPluginFileSource implements PluginFileSource{
+class ApplicationContextPluginFileSource implements PluginFileSource, ApplicationContextAware {
     public static final String PLUGIN_FILE_LIST = 'pluginFileList'
     public static final String MANIFEST_PROPERTIES_FILE = 'manifest.properties'
     public static final String FILE_PREFIX = 'pluginFile.'
     ApplicationContext applicationContext
     String basePath
     Properties pluginsProperties
+
+    ApplicationContextPluginFileSource(String basePath) {
+        this.basePath = basePath
+    }
 
     ApplicationContextPluginFileSource(ApplicationContext applicationContext, String basePath) {
         this.applicationContext = applicationContext

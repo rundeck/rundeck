@@ -40,7 +40,9 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.events.EventException
 import grails.events.Listener
+import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
@@ -55,6 +57,7 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
 import rundeck.filters.ApiRequestFilters
+import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.logging.ExecutionLogWriter
 import rundeck.services.logging.LoggingThreshold
@@ -102,6 +105,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def configurationService
     def grailsEvents
     def executionUtilService
+    def fileUploadService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS =
         new ThreadLocal<DateFormat>() {
@@ -946,6 +950,23 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
                     execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed,inputCharset)
 
+            def evt = grailsEvents?.event(
+                    null,
+                    'executionBeforeStart',
+                    new ExecutionPrepareEvent(
+                            execution:execution,
+                            job:scheduledExecution,
+                            context: executioncontext
+                    )
+            )
+            evt?.get()
+            def errs = evt?.getErrors()
+            if (errs) {
+                def err=(errs[0] instanceof EventException)? errs[0].cause : errs[0]
+                throw new ExecutionServiceException(err.message, err)
+            }
+
+
             //ExecutionService handles Job reference steps
             final cis = StepExecutionService.getInstanceForFramework(framework);
             cis.registerInstance(JobExecutionItem.STEP_EXECUTION_TYPE, this)
@@ -1208,30 +1229,95 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return builder.build()
     }
 
-    def abortExecution(ScheduledExecution se, Execution e, String user, AuthContext authContext, String killAsUser = null) {
+    @ToString(includeNames = true)
+    class AbortResult {
+        String abortstate
+        String jobstate
+        String status
+        String reason
+    }
 
-        metricService.markMeter(this.class.name,'executionAbortMeter')
-        def eid=e.id
+    /**
+     * Abort execution if authorized
+     * @param se job
+     * @param e execution
+     * @param user username
+     * @param authContext auth context
+     * @param killAsUser as username
+     * @return AbortResult
+     */
+    def abortExecution(ScheduledExecution se, Execution e, String user, AuthContext authContext, String killAsUser = null) {
+        if (!frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILL])) {
+            return new AbortResult(
+                    abortstate: ABORT_FAILED,
+                    jobstate: getExecutionState(e),
+                    status: getExecutionState(e),
+                    reason: "unauthorized"
+            )
+        } else if (killAsUser && !frameworkService.authorizeProjectExecutionAll(
+                authContext,
+                e,
+                [AuthConstants.ACTION_KILLAS]
+        )) {
+            return new AbortResult(
+                    abortstate: ABORT_FAILED,
+                    jobstate: getExecutionState(e),
+                    status: getExecutionState(e),
+                    reason: "unauthorized"
+            )
+        }
+        abortExecutionDirect(se, e, user, killAsUser)
+    }
+
+    /**
+     * Abort execution without testing authorization
+     * @param se job
+     * @param e execution
+     * @param user username
+     * @param killAsUser as username
+     * @return AbortResult
+     */
+    def abortExecutionDirect(ScheduledExecution se, Execution e, String user, String killAsUser = null) {
+        metricService.markMeter(this.class.name, 'executionAbortMeter')
+        def eid = e.id
         def dateCompleted = e.dateCompleted
         e.discard()
-        def ident = scheduledExecutionService.getJobIdent(se,e)
+        def ident = scheduledExecutionService.getJobIdent(se, e)
         def isadhocschedule = se && e.status == "scheduled"
-        def statusStr
-        def abortstate
-        def jobstate
-        def failedreason
-        def userIdent=killAsUser?:user
-        if (!frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_KILL])) {
-            jobstate = getExecutionState(e)
-            abortstate = ABORT_FAILED
-            failedreason = "unauthorized"
-            statusStr = jobstate
-        } else if (killAsUser && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILLAS])) {
-            jobstate = getExecutionState(e)
-            abortstate = ABORT_FAILED
-            failedreason = "unauthorized"
-            statusStr = jobstate
-        } else if (scheduledExecutionService.quartzJobIsExecuting(ident.jobname, ident.groupname)) {
+        def userIdent = killAsUser?:user
+        if (frameworkService.isClusterModeEnabled()) {
+            def serverUUID = frameworkService.serverUUID
+            if (e.serverNodeUUID != serverUUID) {
+                def ereply = grailsEvents?.event(
+                        'cluster',
+                        'abortExecution',
+                        [
+                                jobId      : se?.extid,
+                                executionId: e.id,
+                                project    : e.project,
+                                user       : user,
+                                killAsUser : killAsUser,
+                                uuidSource : serverUUID,
+                                uuidTarget : e.serverNodeUUID
+                        ]
+                )
+                Map abortresult = [
+                        abortstate: ABORT_FAILED,
+                        jobstate  : getExecutionState(e),
+                        status    : getExecutionState(e),
+                        reason    : "Execution is running on a different cluster server: " + e.serverNodeUUID
+                ]
+                def resp = ereply?.value
+                if (resp && resp instanceof Map) {
+                    return new AbortResult(abortresult + resp)
+                }
+                return new AbortResult(abortresult)
+            }
+        }
+        def result = new AbortResult()
+
+        def quartzJobInstanceId = scheduledExecutionService.findExecutingQuartzJob(se, e)
+        if (quartzJobInstanceId) {
             boolean success = false
             int repeat = 3;
             //set abortedBy on the execution
@@ -1255,16 +1341,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     repeat--
                 }
             }
-
-            def didCancel = false
+            result.abortstate = success ? ABORT_PENDING : ABORT_FAILED
+            result.reason = success ? '' : 'Unable to modify the execution'
             if (success) {
-                didCancel = scheduledExecutionService.interruptJob(ident.jobname, ident.groupname, isadhocschedule)
+                def didCancel = scheduledExecutionService.interruptJob(
+                        quartzJobInstanceId,
+                        ident.jobname,
+                        ident.groupname,
+                        isadhocschedule
+                )
+                result.abortstate = didCancel ? ABORT_PENDING : ABORT_FAILED
+                result.reason = didCancel ? '' : 'Unable to interrupt the running job'
             }
-            abortstate = didCancel ? ABORT_PENDING : ABORT_FAILED
-            failedreason = didCancel ? '' : 'Unable to interrupt the running job'
-            jobstate = EXECUTION_RUNNING
+            result.jobstate = EXECUTION_RUNNING
         } else if (null == dateCompleted) {
-            scheduledExecutionService.interruptJob(ident.jobname, ident.groupname, isadhocschedule)
+            scheduledExecutionService.interruptJob(null, ident.jobname, ident.groupname, isadhocschedule)
             saveExecutionState(
                 se ? se.id : null,
                 eid,
@@ -1277,15 +1368,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     null,
                     null
                 )
-            abortstate = ABORT_ABORTED
-            jobstate = EXECUTION_ABORTED
+            result.abortstate = ABORT_ABORTED
+            result.jobstate = EXECUTION_ABORTED
         } else {
-            jobstate = getExecutionState(e)
-            statusStr = 'previously ' + jobstate
-            abortstate = ABORT_FAILED
-            failedreason = 'Job is not running'
+            result.jobstate = getExecutionState(e)
+            result.status = 'previously ' + result.jobstate
+            result.abortstate = ABORT_FAILED
+            result.reason = 'Job is not running'
         }
-        return [abortstate:abortstate,jobstate:jobstate,statusStr:statusStr, failedreason: failedreason]
+        result
     }
 
     /**
@@ -1351,6 +1442,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     files << file
                 }
             }
+            //delete all job file records
+            fileUploadService.deleteRecordsForExecution(e)
+
             log.debug("${files.size()} files from execution will be deleted")
             logExecutionLog4j(e, "delete", username)
             //delete execution
@@ -1659,21 +1753,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             // Try and parse schedule time
 
-            Date now        = java.util.Calendar.getInstance().getTime()
-            Date startTime
-            try {
-                try{
-                    startTime   = ISO_8601_DATE_FORMAT.get().parse(input.runAtTime)
-                }catch (ParseException e1){
-                    startTime	= ISO_8601_DATE_FORMAT_WITH_MS.get().parse(input.runAtTime)
-                }
-            } catch (ParseException | IllegalArgumentException z) {
+            Date startTime = parseRunAtTime(input.runAtTime)
+            if (null == startTime) {
                 return [success: false, failed: true, error: 'failed',
                         message: 'Invalid date/time format, only ISO 8601 is supported',
                         options: input.option]
             }
 
-            if (startTime.before(now)) {
+
+            if (startTime.before(new Date())) {
                 return [success: false, failed: true, error: 'failed',
                         message: 'A job cannot be scheduled for a time in the past',
                         options: input.option]
@@ -1713,6 +1801,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    /**
+     * Parse the Date from the time input
+     * @param runAtTime
+     * @return valid Date, or null if it cannot be parsed
+     */
+    def Date parseRunAtTime(String runAtTime) {
+        try {
+            return ISO_8601_DATE_FORMAT.get().parse(runAtTime)
+        } catch (ParseException e1) {
+
+        }
+        try {
+            return ISO_8601_DATE_FORMAT_WITH_MS.get().parse(runAtTime)
+        } catch (ParseException e1) {
+
+        }
+        null
+    }
     /**
      * Create execution
      * @param se job
@@ -2035,7 +2141,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     return
                 }
 
-
+                if (opt.optionType == 'file' && optparams[opt.name]) {
+                    def validate = fileUploadService.validateFileRefForJobOption(
+                            optparams[opt.name],
+                            scheduledExecution.extid,
+                            opt.name
+                    )
+                    if (!validate.valid) {
+                        invalidOpt opt, lookupMessage('domain.Option.validation.file.' + validate.error, validate.args)
+                    }
+                }
                 if (opt.required && !optparams[opt.name]) {
 
                     if (!opt.defaultStoragePath) {

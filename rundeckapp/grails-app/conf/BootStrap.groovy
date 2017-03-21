@@ -49,6 +49,7 @@ class BootStrap {
     def filesystemProjectManager
     def reportService
     def configurationService
+    def fileUploadService
     def filterInterceptor
     Scheduler quartzScheduler
     MetricRegistry metricRegistry
@@ -216,19 +217,6 @@ class BootStrap {
                  }
              }
 
-            def result=timer("FrameworkService extractEmbeddedPlugins"){
-                frameworkService.extractEmbeddedPlugins(grailsApplication)
-            }
-            if(!result.success){
-                log.error("Failed extracting embedded plugins: "+result.message)
-                result?.logs?.each {
-                    log.error(it)
-                }
-            }else{
-                result?.logs?.each {
-                    log.debug(it)
-                }
-            }
 
             //import filesystem projects if using DB storage
             if((grailsApplication.config.rundeck?.projectsStorageType?:'db') == 'db'){
@@ -425,6 +413,7 @@ class BootStrap {
              }else{
                  log.debug("logFileStorageService.resumeIncompleteLogStorage: skipping per configuration")
              }
+             fileUploadService.onBootstrap()
          }
          log.info("Rundeck startup finished in ${System.currentTimeMillis()-bstart}ms")
      }

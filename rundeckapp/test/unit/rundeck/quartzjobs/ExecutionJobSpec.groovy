@@ -25,6 +25,7 @@ import org.quartz.Scheduler
 import rundeck.CommandExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.Execution
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
@@ -33,7 +34,7 @@ import spock.lang.Specification
 /**
  * Created by greg on 4/12/16.
  */
-@Mock([ScheduledExecution, Workflow, CommandExec])
+@Mock([ScheduledExecution, Workflow, CommandExec, Execution])
 class ExecutionJobSpec extends Specification {
     def "execute missing job"() {
         given:
@@ -80,6 +81,17 @@ class ExecutionJobSpec extends Specification {
                 scheduleEnabled: true
         )
         se.save(flush:true)
+        Execution e = new Execution(
+                scheduledExecution: se,
+                dateStarted: new Date(),
+                dateCompleted: null,
+                project: se.project,
+                user: 'bob',
+                workflow: new Workflow(commands: [new CommandExec(
+                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                )]
+                )
+        ).save(flush: true)
         def datamap = new JobDataMap(
                 [
                         scheduledExecutionId: se.id,
@@ -87,7 +99,8 @@ class ExecutionJobSpec extends Specification {
                         executionUtilService: eus,
                         frameworkService    : fs,
                         bySchedule          : true,
-                        serverUUID          : serverUUID
+                        serverUUID          : serverUUID,
+                        execution           : e
                 ]
         )
         ExecutionJob job = new ExecutionJob()
