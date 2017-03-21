@@ -1185,7 +1185,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             .frameworkProject(execMap.project)
             .storageTree(storageService.storageTreeWithContext(authContext))
             .jobService(jobStateService.jobServiceWithAuthContext(authContext))
-            .nodeService(nodeService.nodeService())
+            .nodeService(nodeService)
             .user(userName)
             .nodeSelector(nodeselector)
             .nodes(nodeSet)

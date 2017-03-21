@@ -285,9 +285,4 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
         result
     }
 
-
-    ProjectNodeService nodeService() {
-        return this
-    }
-
 }

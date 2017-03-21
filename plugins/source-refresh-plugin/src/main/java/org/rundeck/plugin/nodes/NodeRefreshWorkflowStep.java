@@ -38,9 +38,21 @@ public class NodeRefreshWorkflowStep implements StepPlugin {
 
     public static final String PROVIDER_NAME = "source-refresh-plugin";
 
+    @PluginProperty(title = "Sleep", description = "Optional sleep time before refresh sources for asynchronous source refresh.", required = false)
+    private Integer sleep;
 
     @Override
     public void executeStep(PluginStepContext context, Map<String, Object> configuration) throws StepException {
+        if(null != sleep){
+            if(sleep.intValue()>0){
+                try {
+                    Thread.sleep(sleep.intValue()*1000);
+                } catch (InterruptedException e) {
+                    context.getLogger().log(2, "InterruptedException: " + e);
+                }
+            }
+
+        }
         context.getExecutionContext().getNodeService().refreshProjectNodes(context.getFrameworkProject());
         IProjectNodes nodes = context.getExecutionContext().getNodeService().getNodes(context.getFrameworkProject());
         INodeSet set = nodes.getNodeSet();
