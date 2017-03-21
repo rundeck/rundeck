@@ -24,7 +24,9 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.common.NodeEntryImpl;
+import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import junit.framework.TestCase;
+import org.mockito.Mockito;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -66,5 +68,16 @@ public class TestExecutionContextImpl extends TestCase {
         assertEquals("testNode", imp2.getDataContext().get("node").get("name"));
         assertNotNull(imp2.getDataContext().get("ctx1"));
         assertEquals("value", imp2.getDataContext().get("ctx1").get("test"));
+    }
+
+    public void testBuildNodeService(){
+        Map<String, Map<String, String>> map = new HashMap<String, Map<String, String>>();
+        Map<String, String> ctx1 = new HashMap<String, String>();
+        ctx1.put("test", "value");
+        map.put("ctx1", ctx1);
+        ProjectNodeService pns = Mockito.mock(ProjectNodeService.class);
+        ExecutionContextImpl imp =
+                ExecutionContextImpl.builder().dataContext(map).nodeService(pns).build();
+        assertNotNull(imp.getNodeService());
     }
 }
