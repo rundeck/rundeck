@@ -39,13 +39,13 @@ public class TestPolicies extends TestCase {
     }
 
     public void testPoliciesStructural() throws Exception {
-        assertEquals("Policy count mismatch", 9, policies.count());
+        assertEquals("Policy count mismatch", 8, policies.count());
         assertEquals("Policy count mismatch", 4, policiesSingle.count());
     }
 
     public void testListAllRoles() throws Exception {
         List<String> results = policies.listAllRoles();
-        assertEquals("Results did not return the correct number of policies.", 9, results.size());
+        assertEquals("Results did not return the correct number of policies.", 8, results.size());
         results.containsAll(Arrays.asList("admin","foo","admin-environment","ou=Foo,dn=example,dn=com"));
     }
     public void testListAllRolesSingle() throws Exception {

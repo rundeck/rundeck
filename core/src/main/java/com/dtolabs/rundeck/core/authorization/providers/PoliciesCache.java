@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.authorization.providers;
 
 import com.dtolabs.rundeck.core.authorization.Attribute;
+import com.dtolabs.rundeck.core.authorization.ValidationSet;
 import org.apache.log4j.Logger;
 import org.yaml.snakeyaml.parser.ParserException;
 
@@ -72,9 +73,9 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
         }
     }
 
-    private PolicyCollection createEntry(final YamlSource source) throws PoliciesParseException {
+    private PolicyCollection createEntry(final YamlSource source, final ValidationSet validation) throws PoliciesParseException {
         try {
-            return YamlProvider.policiesFromSource(source, forcedContext);
+            return YamlProvider.policiesFromSource(source, forcedContext, validation);
         } catch (ParserException e1) {
             throw new PoliciesParseException("YAML syntax error: " + e1.toString(), e1);
         }catch (Exception e1) {
@@ -101,13 +102,24 @@ public class PoliciesCache implements Iterable<PolicyCollection> {
 //                        cacheRemove++;
                     } else {
 //                        cacheMiss++;
-                        PolicyCollection entry1 = createEntry(source);
+                        ValidationSet validation = new ValidationSet();
+                        PolicyCollection entry1 = createEntry(source, validation);
+                        validation.complete();
                         if (null != entry1) {
                             entry = new CacheItem(entry1, lastmod);
                             cache.put(source.getIdentity(), entry);
+
+                            if(!validation.isValid()){
+                                logger.warn(validation.toString());
+                                System.err.println(validation.toString());
+                            }
                         } else {
                             cache.remove(source.getIdentity());
                             entry = null;
+
+                            if(!validation.isValid()){
+                                throw new PoliciesParseException(validation.toString());
+                            }
                         }
                     }
             }else{

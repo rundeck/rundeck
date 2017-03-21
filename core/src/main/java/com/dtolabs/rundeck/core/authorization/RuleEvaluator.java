@@ -33,6 +33,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 /**
  * Evaluate ACL requests over a set of rules
@@ -76,54 +77,51 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         );
     }
 
-    public List<AclRule> narrowContext(
+    public static List<AclRule> narrowContext(
             final AclRuleSet ruleSet,
-            final AclSubject subject, final Set<Attribute> environment
-    )
-    {
-        List<AclRule> matchedContexts = new ArrayList<>();
-        for (final AclRule f : ruleSet.getRules()) {
-            if (matchesContexts(f, subject, environment)) {
-                matchedContexts.add(f);
-            }
-        }
-        return matchedContexts;
-    }
-
-    private boolean matchesContexts(
-            final AclRule f,
             final AclSubject subject,
             final Set<Attribute> environment
     )
     {
-        long userMatchStart = System.currentTimeMillis();
+        return ruleSet.getRules()
+                      .stream()
+                      .filter(rule -> matchesContexts(rule, subject, environment))
+                      .collect(Collectors.toList());
 
-        if (f.getEnvironment() != null) {
-            final EnvironmentalContext environment1 = f.getEnvironment();
+    }
+
+    private static boolean matchesContexts(
+            final AclRule rule,
+            final AclSubject subject,
+            final Set<Attribute> environment
+    )
+    {
+        if (rule.getEnvironment() != null) {
+            final EnvironmentalContext environment1 = rule.getEnvironment();
             if (!environment1.isValid()) {
-                logger.warn(f.toString() + ": Context section not valid: " + environment1.toString());
+                logger.warn(rule.toString() + ": Context section not valid: " + environment1.toString());
             }
             if (!environment1.matches(environment)) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug(f.toString() + ": environment not matched: " + environment1.toString());
+                    logger.debug(rule.toString() + ": environment not matched: " + environment1.toString());
                 }
                 return false;
             }
         } else if (null != environment && environment.size() > 0) {
-            logger.debug(f.toString() + ": empty environment not matched");
+            logger.debug(rule.toString() + ": empty environment not matched");
             return false;
         }
 
 
-        if (subject.getUsername() != null && f.getUsername() != null) {
+        if (subject.getUsername() != null && rule.getUsername() != null) {
 
-            if (subject.getUsername().equals(f.getUsername())
-                || matchesPattern(subject.getUsername(), f.getUsername())
+            if (subject.getUsername().equals(rule.getUsername())
+                || matchesPattern(subject.getUsername(), rule.getUsername())
                     ) {
                 return true;
-            } else if (f.getUsername() != null) {
+            } else if (rule.getUsername() != null) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug(f.toString() + ": username not matched: " + f.getUsername());
+                    logger.debug(rule.toString() + ": username not matched: " + rule.getUsername());
                 }
             }
         }
@@ -131,19 +129,19 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
 
         if (subject.getGroups().size() > 0) {
             // no username matched, check groups.
-            if (subject.getGroups().contains(f.getGroup())
-                || matchesAnyPatterns(subject.getGroups(), f.getGroup())) {
+            if (subject.getGroups().contains(rule.getGroup())
+                || matchesAnyPatterns(subject.getGroups(), rule.getGroup())) {
                 return true;
             } else if (subject.getGroups().size() > 0) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug(f.toString() + ": group not matched: " + f.getGroup());
+                    logger.debug(rule.toString() + ": group not matched: " + rule.getGroup());
                 }
             }
         }
         return false;
     }
 
-    private boolean matchesAnyPatterns(final Set<String> groups, final String patternStr) {
+    public static boolean matchesAnyPatterns(final Collection<String> groups, final String patternStr) {
         final Pattern pattern;
         try {
             pattern = Pattern.compile(patternStr);
@@ -158,7 +156,7 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         return false;
     }
 
-    private boolean matchesPattern(final String username, final String pattern) {
+    private static boolean matchesPattern(final String username, final String pattern) {
         try {
             return Pattern.compile(pattern).matcher(username).matches();
         } catch (PatternSyntaxException e) {

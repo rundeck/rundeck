@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,23 +16,23 @@
 
 package com.dtolabs.rundeck.core.authorization.providers;
 
-import java.util.Collection;
-import java.util.Set;
+/**
+ * @author greg
+ * @since 3/20/17
+ */
+class AclPolicySyntaxException extends RuntimeException {
+    AclPolicySyntaxException() {
+    }
 
-import javax.security.auth.Subject;
+    AclPolicySyntaxException(String s) {
+        super(s);
+    }
 
-import com.dtolabs.rundeck.core.authorization.AclRuleSetSource;
-import com.dtolabs.rundeck.core.authorization.Attribute;
+    AclPolicySyntaxException(String s, Throwable throwable) {
+        super(s, throwable);
+    }
 
-public interface PolicyCollection extends AclRuleSetSource {
-
-    /**
-     * For a given policy collection, return all the group names associated with it.
-     * @return collection of group names.
-     */
-    public Collection<String> groupNames() ;
-
-    public long countPolicies() ;
-
-
+    AclPolicySyntaxException(Throwable throwable) {
+        super(throwable);
+    }
 }

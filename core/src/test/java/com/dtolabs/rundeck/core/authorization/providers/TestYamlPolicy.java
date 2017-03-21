@@ -70,7 +70,7 @@ public class TestYamlPolicy  {
     /**
      * Test evaluation of top level policy definition
      */
-    @Test(expected = YamlPolicy.AclPolicySyntaxException.class)
+    @Test(expected = AclPolicySyntaxException.class)
     public void testYamlAclContext_description_required(){
 
         //test "description" is required
@@ -80,7 +80,7 @@ public class TestYamlPolicy  {
         yamlRuleSetConstructor = new YamlPolicy.YamlRuleSetConstructor(map, null, typeRuleSetConstructorFactory);
     }
 
-    @Test(expected = YamlPolicy.AclPolicySyntaxException.class)
+    @Test(expected = AclPolicySyntaxException.class)
     public void testYamlAclContext_type_required() {
         //test resource requires "type"
         final Map map = new HashMap();
@@ -95,7 +95,7 @@ public class TestYamlPolicy  {
 
     }
 
-    @Test(expected = YamlPolicy.AclPolicySyntaxException.class)
+    @Test(expected = AclPolicySyntaxException.class)
     public void testYamlAclContext_for_contents() {
         //for: must be map
         final Map map = new HashMap();
@@ -107,7 +107,7 @@ public class TestYamlPolicy  {
         Assert.fail("Expected syntax error");
     }
 
-    @Test(expected = YamlPolicy.AclPolicySyntaxException.class)
+    @Test(expected = AclPolicySyntaxException.class)
     public void testYamlAclContext_for_must_be_map() {
         //for: must be map
         final Map map = new HashMap();
@@ -118,7 +118,7 @@ public class TestYamlPolicy  {
                                                                                                                typeRuleSetConstructorFactory
         );
     }
-    @Test(expected = YamlPolicy.AclPolicySyntaxException.class)
+    @Test(expected = AclPolicySyntaxException.class)
     public void testYamlAclContext_for_must_exist() {
         //for: must not be null
         final Map map = new HashMap();
@@ -130,7 +130,7 @@ public class TestYamlPolicy  {
         );
     }
 
-    @Test(expected = YamlPolicy.AclPolicySyntaxException.class)
+    @Test(expected = AclPolicySyntaxException.class)
     public void testYamlAclContext_for_not_empty() {
         //for: may not be empty
         final Map map = new HashMap();

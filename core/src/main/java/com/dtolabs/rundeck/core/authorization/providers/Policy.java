@@ -23,6 +23,8 @@
 */
 package com.dtolabs.rundeck.core.authorization.providers;
 
+import com.dtolabs.rundeck.core.authorization.AclRuleSetSource;
+
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -34,14 +36,7 @@ import java.util.regex.Pattern;
  *
  * @author noahcampbell
  */
-public interface Policy {
-    
-    /**
-     * Return the {@link RuleSetConstructor} for this policy representation.
-     * 
-     * @return context
-     */
-    RuleSetConstructor getContext();
+public interface Policy extends AclRuleSetSource {
 
     /**
      * Return a list of usernames as strings associated with this policy.
@@ -50,10 +45,6 @@ public interface Policy {
      */
     public Set<String> getUsernames();
 
-    /**
-     * @return regexes for username matching
-     */
-    public Set<Pattern> getUsernamePatterns();
 
     /**
      * 
@@ -63,10 +54,6 @@ public interface Policy {
      */
     public Set<String> getGroups();
 
-    /**
-     * @return regexes  for group matching
-     */
-    public Set<Pattern> getGroupPatterns();
 
     /**
      * @return the environmental context to test the Policy against an input environment

@@ -23,6 +23,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.security.auth.Subject
+import java.util.regex.Pattern
 
 /**
  * Created by greg on 7/17/15.
@@ -195,6 +196,25 @@ class RuleEvaluatorSpec extends Specification {
         "DELETE" == result.action
     }
 
+    def "test multiple match clauses"() {
+        given:
+        Authorization eval = new RuleEvaluator(basicRules3())
+        when:
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("bob", "admin", "user"),
+                "DELETE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result != null
+        !result.isAuthorized()
+        "DELETE" == result.action
+    }
+
     @Unroll
     def "evaluate actions"() {
         when:
@@ -326,6 +346,108 @@ class RuleEvaluatorSpec extends Specification {
         'val1,val2'     | ['val2', 'val1']  | 'subset'   | true
         'val1,val2'     | ['val3', 'val1']  | 'subset'   | false
         'val1,val3'     | ['val12', 'val1'] | 'subset'   | false
+
+    }
+
+    def "matches any pattern"() {
+        expect:
+        RuleEvaluator.matchesAnyPatterns(["abc"], "abc")
+        RuleEvaluator.matchesAnyPatterns(["abc", "def", "ghi"], "abc")
+        RuleEvaluator.matchesAnyPatterns(["abc"], "a.*")
+        RuleEvaluator.matchesAnyPatterns(["abc", "def", "ghi"], "a.*")
+        RuleEvaluator.matchesAnyPatterns(["abc", "def", "ghi"], "d.*")
+        RuleEvaluator.matchesAnyPatterns(["abc", "def", "ghi"], "g.*")
+        RuleEvaluator.matchesAnyPatterns(["abc"], ".*c")
+        RuleEvaluator.matchesAnyPatterns(["abc", "def", "ghi"], ".*c")
+        RuleEvaluator.matchesAnyPatterns(["abc"], ".*")
+        RuleEvaluator.matchesAnyPatterns(["abc", "def", "ghi"], ".*")
+
+        !RuleEvaluator.matchesAnyPatterns(["abc"], "d.*")
+        !RuleEvaluator.matchesAnyPatterns(["abc"], "g.*")
+        RuleEvaluator.matchesAnyPatterns(["abc", "def", "ghi"], "d.*")
+        RuleEvaluator.matchesAnyPatterns(["abc", "def", "ghi"], "g.*")
+        !RuleEvaluator.matchesAnyPatterns(["abc"], "d")
+
+    }
+
+    def "narrow contexts"() {
+        given:
+
+        AclRuleSet ruleset = (basicRulesFromList([
+                [
+                        sourceIdentity: 'a',
+                        username      : null,
+                        group         : 'dev',
+                        environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ],
+                [
+                        sourceIdentity: 'b',
+                        username      : 'bob',
+                        group         : null,
+                        environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ],
+                [
+                        sourceIdentity: 'c',
+                        username      : null,
+                        group         : 'qa.*',
+                        environment   : BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ],
+                [
+                        sourceIdentity: 'd',
+                        username      : null,
+                        group         : 'blah',
+                        environment   : BasicEnvironmentalContext.staticContextFor("project", "testproj1")
+                ],
+                [
+                        sourceIdentity: 'e',
+                        username      : 'bob',
+                        group         : null,
+                        environment   : BasicEnvironmentalContext.staticContextFor("project", "testproj1")
+                ],
+                [
+                        sourceIdentity: 'f',
+                        username      : 'bob.*',
+                        group         : null,
+                        environment   : BasicEnvironmentalContext.staticContextFor("project", "testproj1")
+                ],
+                [
+                        sourceIdentity: 'g',
+                        username      : null,
+                        group         : 'bloo.*',
+                        environment   : BasicEnvironmentalContext.staticContextFor("project", "testproj1")
+                ]
+        ]
+        )
+        )
+        AclSubject subject = Mock(AclSubject) {
+            getUsername() >> testuser
+            getGroups() >> testgroups
+        }
+        def env = projenv ? [new Attribute(EnvironmentalContext.PROJECT_BASE_URI, projenv)] as Set :
+                EnvironmentalContext.RUNDECK_APP_ENV
+        when:
+        def result = RuleEvaluator.narrowContext(ruleset, subject, env)
+
+        then:
+        result*.sourceIdentity == expectrules
+
+        where:
+        testuser  | testgroups             | projenv     | expectrules
+        'bob'     | ['dev']                | null        | ['a', 'b']
+        'bob'     | ['qa']                 | null        | ['b', 'c']
+        'bob'     | ['other']              | null        | ['b']
+        'bob'     | ['dev', 'qa']          | null        | ['a', 'b', 'c']
+        'zob'     | ['zoop']               | null        | []
+        'zob'     | ['qa_regex']           | null        | ['c']
+
+        //project
+        'bob'     | ['dev']                | 'testproj1' | ['e', 'f']
+        'zob'     | ['blah']               | 'testproj1' | ['d']
+        'bobbert' | ['other']              | 'testproj1' | ['f']
+        'bob'     | ['blah', 'blee', 'qa'] | 'testproj1' | ['d', 'e', 'f']
+        'zob'     | ['blig']               | 'testproj1' | []
+        'zob'     | ['bloo_regex']         | 'testproj1' | ['g']
+
 
     }
 

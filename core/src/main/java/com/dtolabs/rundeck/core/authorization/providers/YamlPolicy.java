@@ -30,8 +30,11 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.Predicate;
 import org.apache.commons.collections.PredicateUtils;
 import org.apache.log4j.Logger;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
@@ -62,8 +65,6 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
 
     private Set<String> usernames = new HashSet<String>();
     private Set<String> groups = new HashSet<String>();
-    private Set<Pattern> usernamePatterns = new HashSet<Pattern>();
-    private Set<Pattern> groupPatterns = new HashSet<Pattern>();
     YamlRuleSetConstructor constructor;
     private YamlEnvironmentalContext environment;
     private Set<AclRule> rules = new HashSet<>();
@@ -111,6 +112,61 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
                     allowed
             );
         }
+    }
+
+    static YamlPolicyCollection.YamlSourceLoader<Map> loader(YamlSource source, ValidationSet validation) {
+        return new YamlPolicyCollection.YamlSourceLoader<Map>() {
+            @Override
+            public Iterable<Map> loadAll() throws IOException {
+                final Yaml yaml = new Yaml(new Constructor(Map.class));
+                Iterable<Object> objects = source.loadAll(yaml);
+                Iterator<Object> iterator = objects.iterator();
+                return () -> new Iterator<Map>() {
+                    @Override
+                    public boolean hasNext() {
+                        return iterator.hasNext();
+                    }
+
+                    @Override
+                    public Map next() {
+                        Object next = iterator.next();
+                        if (!(next instanceof Map)) {
+                            if(validation!=null) {
+                                validation.addError(
+                                        source.getIdentity(),
+                                        "Expected a Map document, but was type: " + next.getClass()
+                                );
+                            }
+                            return null;
+                        }
+                        return (Map) next;
+                    }
+                };
+            }
+
+            ;
+
+            @Override
+            public void close() throws IOException {
+                source.close();
+            }
+        };
+    }
+
+    static YamlPolicyCollection.YamlPolicyCreator<Map> creator(
+            final Set<Attribute> forcedContext,
+            final ValidationSet validation
+    )
+    {
+        return (policyInput, sourceIdent, sourceIndex) -> {
+            return YamlPolicy.createYamlPolicy(
+                    forcedContext,
+                    policyInput,
+                    sourceIdent,
+                    sourceIndex,
+                    validation
+            );
+        };
     }
 
     static YamlPolicy createYamlPolicy(final Map policyInput, final String sourceIdent, final int sourceIndex,ValidationSet validation) {
@@ -190,7 +246,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             if (null == ctxClause || !(ctxClause instanceof Map)) {
                 throw new AclPolicySyntaxException(
                         null == ctxClause
-                        ? "Required 'context:' section was not present."
+                        ? "Required 'context:' section was not present"
                         : "Context section is not valid: expected a Map, but it was: " + ctxClause.getClass().getName()
                 );
             }
@@ -205,30 +261,18 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             }
             if (ctxClause1.size() != 1) {
                 throw new AclPolicySyntaxException(
-                        "Context section is not valid: " +
-                        ctxClause +
-                        ", it should have only one entry: 'application:' or 'project:'"
+                        "Context section should have only one entry: 'application:' or 'project:'"
                 );
             }
             if (!allowedContexts.containsAll(ctxClause1.keySet())) {
                 throw new AclPolicySyntaxException(
-                        "Context section is not valid: " +
-                        ctxClause +
-                        ", it should contain only 'application:' or 'project:'"
+                        "Context section should contain only 'application:' or 'project:'"
                 );
             }
         }
 
     }
 
-
-    public Set<Pattern> getUsernamePatterns() {
-        return usernamePatterns;
-    }
-
-    public Set<Pattern> getGroupPatterns() {
-        return groupPatterns;
-    }
 
     static class YamlEnvironmentalContext implements EnvironmentalContext {
         Map<URI, String> matcher = new HashMap<URI, String>();
@@ -453,7 +497,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
                         o.getClass().getName()
                 );
             }
-            final Map section = (Map) o;
+            final Map<String, ?> section = (Map<String, ?>) o;
             rules.add(new TypeRuleConstructor(type, section, validation, i, this));
             i++;
         }
@@ -468,7 +512,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
         final Object byClause = policyInput.get(BY_SECTION);
         if (byClause == null) {
             throw new AclPolicySyntaxException(
-                    "Required '"+BY_SECTION+":' section was not present."
+                    "Required '"+BY_SECTION+":' section was not present"
             );
         }
         if (!(byClause instanceof Map)) {
@@ -538,20 +582,10 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
     }
 
     private void addGroup(String g) {
-        try {
-            Pattern p = Pattern.compile(g);
-            getGroupPatterns().add(p);
-        } catch (PatternSyntaxException e) {
-        }
         groups.add(g);
     }
 
     private void addUsername(String u) {
-        try {
-            Pattern p = Pattern.compile(u);
-            getUsernamePatterns().add(p);
-        } catch (PatternSyntaxException e) {
-        }
         usernames.add(u);
     }
 
@@ -621,7 +655,24 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
         public static final String SUBSET_SECTION = "subset";
         public static final String ALLOW_ACTIONS = "allow";
         public static final String DENY_ACTIONS = "deny";
-        Map ruleSection;
+        static final Set<String> ALLOWED_CONTENT;
+
+        static {
+            HashSet<String> strings = new HashSet<>();
+            Collections.addAll(
+                    strings,
+                    MATCH_SECTION,
+                    EQUALS_SECTION,
+                    CONTAINS_SECTION,
+                    SUBSET_SECTION,
+                    ALLOW_ACTIONS,
+                    DENY_ACTIONS
+            );
+            ALLOWED_CONTENT = Collections.unmodifiableSet(strings);
+        }
+
+        Map<String, ?> ruleSection;
+        Map<String, Map<String, ?>> matchSections = new HashMap<>();
         int index;
         YamlPolicy policy;
         ValidationSet validation;
@@ -630,7 +681,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
 
         TypeRuleConstructor(
                 final String type,
-                final Map ruleSection,
+                final Map<String, ?> ruleSection,
                 ValidationSet validation,
                 final int index,
                 final YamlPolicy policy
@@ -1026,22 +1077,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             return CollectionUtils.isSubCollection(items, input);
         }
     }
-    static class AclPolicySyntaxException extends RuntimeException{
-        AclPolicySyntaxException() {
-        }
 
-        AclPolicySyntaxException(String s) {
-            super(s);
-        }
-
-        AclPolicySyntaxException(String s, Throwable throwable) {
-            super(s, throwable);
-        }
-
-        AclPolicySyntaxException(Throwable throwable) {
-            super(throwable);
-        }
-    }
     /**
      * Returns decision for a resource and action, based on the "type" of the resource, and the rules defined in the
      * for: type: section of the policy def.
@@ -1070,7 +1106,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             //require description
             final Object descriptionValue = policyDef.get(DESCRIPTION_KEY);
             if (descriptionValue == null || !(descriptionValue instanceof String)) {
-                throw new AclPolicySyntaxException("Policy is missing a description.");
+                throw new AclPolicySyntaxException("Policy is missing a description");
             }
             description = (String) descriptionValue;
 
@@ -1078,7 +1114,7 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
 
             //require for section is a map
             if (null == forMap) {
-                throw new AclPolicySyntaxException("Required '" + FOR_SECTION + ":' section was not present.");
+                throw new AclPolicySyntaxException("Required '" + FOR_SECTION + ":' section was not present");
             }
             if (!(forMap instanceof Map)) {
                 throw new AclPolicySyntaxException("Expected '" + FOR_SECTION + ":' section to contain a map, " +
