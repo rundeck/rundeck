@@ -114,6 +114,7 @@ def manifest=[
     "plugins/copyfile-plugin/${target}/rundeck-copyfile-plugin-${version}.jar":[:],
     "plugins/job-state-plugin/${target}/rundeck-job-state-plugin-${version}.jar":[:],
     "plugins/flow-control-plugin/${target}/rundeck-flow-control-plugin-${version}.jar":[:],
+    "plugins/source-refresh-plugin/${target}/rundeck-source-refresh-plugin-${version}.jar":[:],
 ]
 def pluginsum=1
 //generate list of plugin files in the jar to validate
