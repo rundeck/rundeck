@@ -77,7 +77,7 @@ class AclsUtilSpec extends Specification {
             group null
             username "elf"
             resourceType "typeC"
-            resource( [big:"deal"])
+            regexResource( [big:"deal"])
             regexMatch true
             build()
         }

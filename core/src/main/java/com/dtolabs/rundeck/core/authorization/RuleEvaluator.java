@@ -518,22 +518,26 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         }
 
         //evaluate match:
+        boolean matched = true;
+        boolean tested = false;
         if (rule.isRegexMatch()) {
-            return ruleMatchesMatchSection(resource, rule)
-                   ? allowOrDenyAction(rule, action)
-                   : Explanation.Code.REJECTED;
-        } else if (rule.isEqualsMatch()) {
-            return ruleMatchesEqualsSection(resource, rule)
-                   ? allowOrDenyAction(rule, action)
-                   : Explanation.Code.REJECTED;
-        } else if (rule.isContainsMatch()) {
-            return ruleMatchesContainsSection(resource, rule)
-                   ? allowOrDenyAction(rule, action)
-                   : Explanation.Code.REJECTED;
-        } else if (rule.isSubsetMatch()) {
-            return ruleMatchesSubsetSection(resource, rule)
-                   ? allowOrDenyAction(rule, action)
-                   : Explanation.Code.REJECTED;
+            tested = true;
+            matched &= ruleMatchesMatchSection(resource, rule);
+        }
+        if (rule.isEqualsMatch()) {
+            tested = true;
+            matched &= ruleMatchesEqualsSection(resource, rule);
+        }
+        if (rule.isContainsMatch()) {
+            tested = true;
+            matched &= ruleMatchesContainsSection(resource, rule);
+        }
+        if (rule.isSubsetMatch()) {
+            tested = true;
+            matched &= ruleMatchesSubsetSection(resource, rule);
+        }
+        if (tested) {
+            return matched ? allowOrDenyAction(rule, action) : Explanation.Code.REJECTED;
         } else {
             //no resource matching defined, matches all resources of this type.
             return allowOrDenyAction(rule, action);
@@ -616,41 +620,41 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         }
 
         public boolean test(final String o) {
+            if (o == null) {
+                return true;
+            }
             return isSubset(o, items);
         }
     }
 
     boolean ruleMatchesContainsSection(final Map<String, String> resource, final AclRule rule) {
-        return validRuleSection(rule.getResource())
+        return validRuleSection(rule.getContainsResource())
                &&
                predicateMatchRules(
-                       rule,
                        resource,
                        SetContainsPredicate::new,
-                       SetContainsPredicate::new
+                       SetContainsPredicate::new, rule.getContainsResource(), rule.getSourceIdentity()
                );
     }
 
     boolean ruleMatchesSubsetSection(final Map<String, String> resource, final AclRule rule) {
-        return validRuleSection(rule.getResource())
+        return validRuleSection(rule.getSubsetResource())
                &&
                predicateMatchRules(
-                       rule,
                        resource,
                        SetSubsetPredicate::new,
-                       SetSubsetPredicate::new
+                       SetSubsetPredicate::new, rule.getSubsetResource(), rule.getSourceIdentity()
                );
     }
 
     boolean ruleMatchesEqualsSection(final Map<String, String> resource, final AclRule rule) {
 
-        return validRuleSection(rule.getResource())
+        return validRuleSection(rule.getEqualsResource())
                &&
                predicateMatchRules(
-                       rule,
                        resource,
                        o -> o::equals,
-                       null
+                       null, rule.getEqualsResource(), rule.getSourceIdentity()
                );
     }
 
@@ -659,12 +663,11 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
     }
 
     boolean ruleMatchesMatchSection(final Map<String, String> resource, final AclRule ruleSection) {
-        return validRuleSection(ruleSection.getResource())
+        return validRuleSection(ruleSection.getRegexResource())
                &&
                predicateMatchRules(
-                       ruleSection,
                        resource, o -> new RegexPredicate(patternForRegex(o)),
-                       null
+                       null, ruleSection.getRegexResource(), ruleSection.getSourceIdentity()
                );
     }
 
@@ -707,27 +710,26 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
     /**
      * Return true if all entries in the "match" map pass the predicate tests for the resource
      *
-     * @param match                the set of matches to check
      * @param resource             the resource
      * @param predicateTransformer transformer to convert a String into a Predicate check
      * @param listpred
+     * @param ruleResource
+     * @param sourceIdentity
      */
     @SuppressWarnings("rawtypes")
     boolean predicateMatchRules(
-            final AclRule match,
             final Map<String, String> resource,
             final Function<String, Predicate<String>> predicateTransformer,
-            final Function<List, Predicate<String>> listpred
+            final Function<List, Predicate<String>> listpred,
+            final Map<String, Object> ruleResource, final String sourceIdentity
     )
     {
-        for (final Object o : match.getResource().entrySet()) {
+        for (final Object o : ruleResource.entrySet()) {
             final Map.Entry entry = (Map.Entry) o;
             final String key = (String) entry.getKey();
             final Object test = entry.getValue();
 
-            final boolean matched = applyTest(match, resource, predicateTransformer, key, test,
-                                              listpred
-            );
+            final boolean matched = applyTest(resource, predicateTransformer, key, test, listpred, sourceIdentity);
             if (!matched) {
                 return false;
             }
@@ -744,13 +746,15 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
      * @param key                  the resource attribute key to check
      * @param test                 test to apply, can be a String, or List of Strings if allowListMatch is true
      * @param listpred
+     * @param sourceIdentity
      */
     boolean applyTest(
-            final AclRule rule,
             final Map<String, String> resource,
             final Function<String, Predicate<String>> stringPredicate,
             final String key,
-            final Object test, final Function<List, Predicate<String>> listpred
+            final Object test,
+            final Function<List, Predicate<String>> listpred,
+            final String sourceIdentity
     )
     {
 
@@ -763,7 +767,7 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
             tests.add(stringPredicate.apply((String) test));
         } else {
             //unexpected format, do not match
-            logger.error(rule.getSourceIdentity() + ": cannot evaluate unexpected type: " + test.getClass().getName());
+            logger.error(sourceIdentity + ": cannot evaluate unexpected type: " + test.getClass().getName());
             return false;
         }
         String value = resource.get(key);

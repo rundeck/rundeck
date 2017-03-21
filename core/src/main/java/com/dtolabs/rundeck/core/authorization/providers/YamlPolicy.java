@@ -859,22 +859,24 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             //determine match section
             Map resourceMap;
             if(isRuleSectionMatch()) {
-                ruleBuilder.regexMatch(true);
                 resourceMap = (Map)ruleSection.get(MATCH_SECTION);
+                ruleBuilder.regexResource(resourceMap);
             }else if(isRuleSectionContains()) {
                 ruleBuilder.containsMatch(true);
                 resourceMap = (Map)ruleSection.get(CONTAINS_SECTION);
+                ruleBuilder.containsResource(resourceMap);
             } else if (isRuleSectionSubset()) {
                 ruleBuilder.subsetMatch(true);
                 resourceMap = (Map) ruleSection.get(SUBSET_SECTION);
+                ruleBuilder.subsetResource(resourceMap);
             }else if(isRuleSectionEquals()){
                 ruleBuilder.equalsMatch(true);
                 resourceMap = (Map)ruleSection.get(EQUALS_SECTION);
+                ruleBuilder.equalsResource(resourceMap);
             }else{
                 resourceMap=null;
             }
 
-            ruleBuilder.resource(resourceMap);
 
             return ruleBuilder.build();
         }

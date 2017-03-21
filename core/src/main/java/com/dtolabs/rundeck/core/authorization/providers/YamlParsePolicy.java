@@ -114,27 +114,14 @@ public class YamlParsePolicy implements Policy {
         final Set<String> denyActions = null != typeRule.getDeny() ? typeRule.getDenyActions() : new HashSet<>();
         ruleBuilder.sourceIdentityAppend("[rule: " + type + "]")
                    .allowActions(allowActions)
-                   .denyActions(denyActions);
+                   .denyActions(denyActions)
 
-        //determine match section
-        Map resourceMap;
-        if (null != typeRule.getMatch()) {
-            ruleBuilder.regexMatch(true);
-            resourceMap = typeRule.getMatch();
-        } else if (null != typeRule.getContains()) {
-            ruleBuilder.containsMatch(true);
-            resourceMap = typeRule.getContains();
-        } else if (null != typeRule.getSubset()) {
-            ruleBuilder.subsetMatch(true);
-            resourceMap = typeRule.getSubset();
-        } else if (null != typeRule.getEquals()) {
-            ruleBuilder.equalsMatch(true);
-            resourceMap = typeRule.getEquals();
-        } else {
-            resourceMap = null;
-        }
+                   //add resource match sections
+                   .regexResource(typeRule.getMatch())
+                   .containsResource(typeRule.getContains())
+                   .subsetResource(typeRule.getSubset())
+                   .equalsResource(typeRule.getEquals());
 
-        ruleBuilder.resource(resourceMap);
 
         return ruleBuilder.build();
     }

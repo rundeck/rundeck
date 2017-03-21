@@ -23,7 +23,6 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.security.auth.Subject
-import java.util.regex.Pattern
 
 /**
  * Created by greg on 7/17/15.
@@ -193,7 +192,8 @@ class RuleEvaluatorSpec extends Specification {
         then:
         result != null
         !result.isAuthorized()
-        "DELETE" == result.action
+        result.action == "DELETE"
+        result.explain().code == Explanation.Code.REJECTED_DENIED
     }
 
     def "test multiple match clauses"() {
@@ -220,22 +220,22 @@ class RuleEvaluatorSpec extends Specification {
         when:
         def rules = allowed.collect {
             [
-                    resource    : [
+                    equalsResource: [
                             jobName: 'bob'
                     ],
-                    resourceType: 'job',
-                    allowActions: it as Set,
-                    denyActions : [] as Set,
+                    resourceType  : 'job',
+                    allowActions  : it as Set,
+                    denyActions   : [] as Set,
             ]
         }
         def rules2 = denied.collect {
             [
-                    resource    : [
+                    equalsResource: [
                             jobName: 'bob'
                     ],
-                    resourceType: 'job',
-                    allowActions: [] as Set,
-                    denyActions : it as Set,
+                    resourceType  : 'job',
+                    allowActions  : [] as Set,
+                    denyActions   : it as Set,
             ]
         }
         def ruleset = rules + rules2
@@ -291,17 +291,18 @@ class RuleEvaluatorSpec extends Specification {
     @Unroll
     def "evaluate rule #testRule - #testType - #testValue"() {
         when:
+        def matchResourceName = [match: 'regexResource']
         Authorization eval = new RuleEvaluator(basicRules([
-                regexMatch   : testType == 'match',
-                containsMatch: testType == 'contains',
-                subsetMatch  : testType == 'subset',
-                equalsMatch  : testType == 'equals',
-                resource     : [
+                regexMatch                                              : testType == 'match',
+                containsMatch                                           : testType == 'contains',
+                subsetMatch                                             : testType == 'subset',
+                equalsMatch                                             : testType == 'equals',
+                (matchResourceName[testType] ?: (testType + 'Resource')): [
                         jobName: testRule
                 ],
-                resourceType : 'job',
-                allowActions : ['EXECUTE'] as Set,
-                denyActions  : [] as Set,
+                resourceType                                            : 'job',
+                allowActions                                            : ['EXECUTE'] as Set,
+                denyActions                                             : [] as Set,
         ]
         )
         )
@@ -347,6 +348,60 @@ class RuleEvaluatorSpec extends Specification {
         'val1,val2'     | ['val3', 'val1']  | 'subset'   | false
         'val1,val3'     | ['val12', 'val1'] | 'subset'   | false
 
+    }
+
+    @Unroll
+    def "evaluate multi match"() {
+        when:
+        def matchResourceName = [match: 'regexResource']
+        Authorization eval = new RuleEvaluator(basicRules([
+                regexMatch    : true,
+                containsMatch : false,
+                subsetMatch   : true,
+                equalsMatch   : false,
+                regexResource : [
+                        jobName: regexValue
+                ],
+                subsetResource: [
+                        blahval: subsetValue
+                ],
+                resourceType  : 'job',
+                allowActions  : ['EXECUTE'] as Set,
+                denyActions   : [] as Set,
+        ]
+        )
+        )
+        def testRes = [
+                type   : 'job',
+                jobName: testJobName,
+        ]
+        if (null != testBlahval) {
+            testRes['blahval'] = testBlahval
+        }
+        def result = eval.evaluate(
+                testRes,
+                basicSubject("bob", "admin", "user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result != null
+        result.isAuthorized() == isauthorized
+        result.action == "EXECUTE"
+
+        where:
+        testJobName   | testBlahval        | regexValue | subsetValue      | isauthorized
+        'bob'         | null               | 'bob'      | ['asdf', 'ghij'] | true
+        'boblinkious' | 'asdf'             | 'bob.*'    | ['asdf', 'ghij'] | true
+        'boblinkious' | 'ghij'             | 'bob.*'    | ['asdf', 'ghij'] | true
+        'boblinkious' | 'asdf,ghij'        | 'bob.*'    | ['asdf', 'ghij'] | true
+        //subset fail
+        'boblinkious' | 'asdf,ghij,bunkle' | 'bob.*'    | ['asdf', 'ghij'] | false
+        'boblinkious' | 'asdf,bunkle'      | 'bob.*'    | ['asdf', 'ghij'] | false
+        'boblinkious' | 'ghij,bunkle'      | 'bob.*'    | ['asdf', 'ghij'] | false
+        'boblinkious' | 'fwinny'           | 'bob.*'    | ['asdf', 'ghij'] | false
+        //regex fail
+        'zingle'      | 'asdf'             | 'bob.*'    | ['asdf', 'ghij'] | false
     }
 
     def "matches any pattern"() {
@@ -464,7 +519,7 @@ class RuleEvaluatorSpec extends Specification {
                     [
                             sourceIdentity: "test1",
                             description   : "bob job allow exec, deny delete for admin group",
-                            resource      : [
+                            equalsResource: [
                                     jobName: 'bob'
                             ],
                             resourceType  : 'job',
@@ -487,7 +542,7 @@ class RuleEvaluatorSpec extends Specification {
                         [
                                 sourceIdentity: "test1",
                                 description   : "bob job allow exec, deny delete for admin group",
-                                resource      : [
+                                equalsResource: [
                                         jobName: 'bob'
                                 ],
                                 resourceType  : 'job',
@@ -510,7 +565,7 @@ class RuleEvaluatorSpec extends Specification {
                 new Rule(
                         sourceIdentity: "test1",
                         description: "bob job allow exec, deny delete for admin group",
-                        resource: [
+                        equalsResource: [
                                 jobName: 'bob'
                         ],
                         resourceType: 'job',
@@ -531,7 +586,7 @@ class RuleEvaluatorSpec extends Specification {
                 new Rule(
                         sourceIdentity: "test1",
                         description   : "bob job allow exec, deny delete for admin group",
-                        resource      : [
+                        equalsResource: [
                                 jobName: 'bob'
                         ],
                         resourceType  : 'job',
@@ -549,19 +604,19 @@ class RuleEvaluatorSpec extends Specification {
     }
     AclRuleSet basicRules2() {
         def rules = [new Rule(
-                        sourceIdentity: "test2",
-                        description   : "bob job allow delete for admin group",
-                        resource      : [
+                sourceIdentity: "test2",
+                description: "bob job allow delete for admin group",
+                equalsResource: [
                                 jobName: 'bob'
                         ],
-                        resourceType  : 'job',
-                        regexMatch    : false,
-                        containsMatch : false,
-                        equalsMatch : true,
-                        username      : null,
-                        group         : 'admin',
-                        allowActions  : ['READ'] as Set,
-                        environment   : BasicEnvironmentalContext.staticContextFor("application","rundeck")
+                resourceType: 'job',
+                regexMatch: false,
+                containsMatch: false,
+                equalsMatch: true,
+                username: null,
+                group: 'admin',
+                allowActions: ['READ'] as Set,
+                environment: BasicEnvironmentalContext.staticContextFor("application", "rundeck")
         ),
         ] as Set
         new AclRuleSetImpl(basicRules().rules + rules)
@@ -571,7 +626,7 @@ class RuleEvaluatorSpec extends Specification {
         def rules = [new Rule(
                 sourceIdentity: "test2",
                 description: "bob job allow delete for admin group",
-                resource: [
+                equalsResource: [
                         jobName: 'bob'
                 ],
                 resourceType: 'job',
@@ -593,13 +648,15 @@ class RuleEvaluatorSpec extends Specification {
 
         String resourceType;
 
-        String resourceKind;
-
         boolean regexMatch;
+        Map<String, Object> regexResource;
 
         boolean containsMatch;
+        Map<String, Object> containsResource;
         boolean subsetMatch;
+        Map<String, Object> subsetResource
         boolean equalsMatch;
+        Map<String, Object> equalsResource;
 
         String username;
 
