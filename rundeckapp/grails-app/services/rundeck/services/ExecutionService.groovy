@@ -100,6 +100,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def logFileStorageService
     MessageSource messageSource
     def jobStateService
+    def nodeService
     def grailsApplication
     def configurationService
     def grailsEvents
@@ -1205,6 +1206,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             .frameworkProject(execMap.project)
             .storageTree(storageService.storageTreeWithContext(authContext))
             .jobService(jobStateService.jobServiceWithAuthContext(authContext))
+            .nodeService(nodeService)
             .user(userName)
             .nodeSelector(nodeselector)
             .nodes(nodeSet)
