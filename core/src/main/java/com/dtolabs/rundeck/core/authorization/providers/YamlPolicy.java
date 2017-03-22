@@ -82,7 +82,17 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
         constructor = new YamlRuleSetConstructor(
                 this.policyInput,
                 this.validation,
-                (type, typeSection) -> (builder) -> createRules(type, typeSection, builder)
+                new TypeRuleSetConstructorFactory() {
+                    @Override
+                    public RuleSetConstructor createRuleSetConstructor(final String type, final List typeSection) {
+                        return new RuleSetConstructor() {
+                            @Override
+                            public Set<AclRule> createRules(final AclRuleBuilder builder) {
+                                return YamlPolicy.this.createRules(type, typeSection, builder);
+                            }
+                        };
+                    }
+                }
         );
         parseEnvironment(context);
         validate();
@@ -158,14 +168,19 @@ final class YamlPolicy implements Policy,AclRuleSetSource {
             final ValidationSet validation
     )
     {
-        return (policyInput, sourceIdent, sourceIndex) -> {
-            return YamlPolicy.createYamlPolicy(
-                    forcedContext,
-                    policyInput,
-                    sourceIdent,
-                    sourceIndex,
-                    validation
-            );
+        return new YamlPolicyCollection.YamlPolicyCreator<Map>() {
+            @Override
+            public Policy createYamlPolicy(final Map policyInput, final String sourceIdent, final int sourceIndex)
+                    throws AclPolicySyntaxException
+            {
+                return YamlPolicy.createYamlPolicy(
+                        forcedContext,
+                        policyInput,
+                        sourceIdent,
+                        sourceIndex,
+                        validation
+                );
+            }
         };
     }
 

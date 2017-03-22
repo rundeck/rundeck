@@ -59,7 +59,12 @@ public class YamlProvider {
 
     }
 
-    static final FilenameFilter filenameFilter = (dir, name) -> name.endsWith(".aclpolicy");
+    static final FilenameFilter filenameFilter = new FilenameFilter() {
+        @Override
+        public boolean accept(final File dir, final String name) {
+            return name.endsWith(".aclpolicy");
+        }
+    };
 
     public static Validation validate(final CacheableYamlSource source) {
         return validate(source, null);

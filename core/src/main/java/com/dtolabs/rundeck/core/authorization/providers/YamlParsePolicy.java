@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -92,17 +93,17 @@ public class YamlParsePolicy implements Policy {
     )
     {
         HashSet<AclRule> aclRules = new HashSet<>();
+        int i = 1;
         for (ACLPolicyDoc.TypeRule typeRule : typeRules) {
-            AclRuleBuilder builder = AclRuleBuilder.builder(
-                    proto
-            );
-            aclRules.add(createRule(type, typeRule, builder));
+            AclRuleBuilder builder = AclRuleBuilder.builder(proto);
+            aclRules.add(createRule(type, i++, typeRule, builder));
         }
         return aclRules;
     }
 
     private AclRule createRule(
             final String type,
+            final int index,
             final ACLPolicyDoc.TypeRule typeRule,
             final AclRuleBuilder prototype
     )
@@ -112,7 +113,7 @@ public class YamlParsePolicy implements Policy {
         Object deny = typeRule.getDeny();
         final Set<String> allowActions = null != typeRule.getAllow() ? typeRule.getAllowActions() : new HashSet<>();
         final Set<String> denyActions = null != typeRule.getDeny() ? typeRule.getDenyActions() : new HashSet<>();
-        ruleBuilder.sourceIdentityAppend("[rule: " + type + "]")
+        ruleBuilder.sourceIdentityAppend("[rule: " + index + "]")
                    .allowActions(allowActions)
                    .denyActions(denyActions)
 
@@ -347,7 +348,12 @@ public class YamlParsePolicy implements Policy {
                                                "'" + name + ":' should not be empty.");
         }
         List<String> collect = resource.keySet().stream()
-                                       .filter(verify::contains)
+                                       .filter(new Predicate<String>() {
+                                           @Override
+                                           public boolean test(final String o) {
+                                               return verify.contains(o);
+                                           }
+                                       })
                                        .collect(Collectors.toList());
 
         if (collect.size() > 0) {
@@ -361,7 +367,12 @@ public class YamlParsePolicy implements Policy {
         if (checkfor != null) {
 
             List<String> collect2 = resource.keySet().stream()
-                                            .filter(s -> !checkfor.equals(s))
+                                            .filter(new Predicate<String>() {
+                                                @Override
+                                                public boolean test(final String s) {
+                                                    return !checkfor.equals(s);
+                                                }
+                                            })
                                             .collect(Collectors.toList());
 
 
@@ -595,56 +606,61 @@ public class YamlParsePolicy implements Policy {
                 final Yaml yaml = new Yaml(new YamlPolicyDocConstructor());
                 Iterable<Object> objects = source1.loadAll(yaml);
                 Iterator<Object> iterator = objects.iterator();
-                return () -> new Iterator<ACLPolicyDoc>() {
-                    int index = 0;
-
+                return new Iterable<ACLPolicyDoc>() {
                     @Override
-                    public boolean hasNext() {
-                        return iterator.hasNext();
-                    }
+                    public Iterator<ACLPolicyDoc> iterator() {
+                        return new Iterator<ACLPolicyDoc>() {
+                            int index = 0;
 
-                    @Override
-                    public ACLPolicyDoc next() {
-                        Object next = null;
-                        index++;
-                        try {
-                            next = iterator.next();
-                        } catch (ConstructorException e) {
-                            e.printStackTrace();
-                            if (null != validation) {
-                                validation.addError(
-                                        currentIdentity(),
-                                        "Error parsing the policy document: " + e.getCause().getMessage()
-                                );
+                            @Override
+                            public boolean hasNext() {
+                                return iterator.hasNext();
                             }
-                            return null;
-                        } catch (YAMLException e) {
-                            e.printStackTrace();
-                            if (null != validation) {
-                                validation.addError(
-                                        currentIdentity(),
-                                        "Error parsing the policy document: " + e.getMessage()
-                                );
-                            }
-                            return null;
-                        }
-                        if (next == null) {
-                            return null;
-                        }
-                        if (!(next instanceof ACLPolicyDoc)) {
-                            if (null != validation) {
-                                validation.addError(
-                                        currentIdentity(),
-                                        "Expected a YamlPolicyDoc document, but was type: " + next.getClass()
-                                );
-                            }
-                            return null;
-                        }
-                        return (ACLPolicyDoc) next;
-                    }
 
-                    private String currentIdentity() {
-                        return source1.getIdentity() + "[" + index + "]";
+                            @Override
+                            public ACLPolicyDoc next() {
+                                Object next = null;
+                                index++;
+                                try {
+                                    next = iterator.next();
+                                } catch (ConstructorException e) {
+                                    e.printStackTrace();
+                                    if (null != validation) {
+                                        validation.addError(
+                                                currentIdentity(),
+                                                "Error parsing the policy document: " + e.getCause().getMessage()
+                                        );
+                                    }
+                                    return null;
+                                } catch (YAMLException e) {
+                                    e.printStackTrace();
+                                    if (null != validation) {
+                                        validation.addError(
+                                                currentIdentity(),
+                                                "Error parsing the policy document: " + e.getMessage()
+                                        );
+                                    }
+                                    return null;
+                                }
+                                if (next == null) {
+                                    return null;
+                                }
+                                if (!(next instanceof ACLPolicyDoc)) {
+                                    if (null != validation) {
+                                        validation.addError(
+                                                currentIdentity(),
+                                                "Expected a YamlPolicyDoc document, but was type: " + next.getClass()
+                                        );
+                                    }
+                                    return null;
+                                }
+                                return (ACLPolicyDoc) next;
+                            }
+
+                            private String currentIdentity() {
+                                return source1.getIdentity() + "[" + index + "]";
+                            }
+                        };
                     }
                 };
             }
@@ -661,14 +677,23 @@ public class YamlParsePolicy implements Policy {
             final ValidationSet validation
     )
     {
-        return (policyInput, sourceIdent, sourceIndex) -> {
-            return YamlParsePolicy.createYamlPolicy(
-                    forcedContext,
-                    policyInput,
-                    sourceIdent,
-                    sourceIndex,
-                    validation
-            );
+        return new YamlPolicyCollection.YamlPolicyCreator<ACLPolicyDoc>() {
+            @Override
+            public Policy createYamlPolicy(
+                    final ACLPolicyDoc policyInput,
+                    final String sourceIdent,
+                    final int sourceIndex
+            )
+                    throws AclPolicySyntaxException
+            {
+                return YamlParsePolicy.createYamlPolicy(
+                        forcedContext,
+                        policyInput,
+                        sourceIdent,
+                        sourceIndex,
+                        validation
+                );
+            }
         };
     }
 

@@ -41,7 +41,7 @@ import java.util.stream.Collectors;
 public class RuleEvaluator implements Authorization, AclRuleSetSource {
     private final static Logger logger = Logger.getLogger(RuleEvaluator.class);
     final private AclRuleSet rules;
-    final private AclRuleSetSource source;
+    final private AclRuleSetSource source;;
 
     private RuleEvaluator(final AclRuleSetSource ruleSetSource) {
         this.source = ruleSetSource;
@@ -85,7 +85,12 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
     {
         return ruleSet.getRules()
                       .stream()
-                      .filter(rule -> matchesContexts(rule, subject, environment))
+                      .filter(new Predicate<AclRule>() {
+                          @Override
+                          public boolean test(final AclRule rule) {
+                              return matchesContexts(rule, subject, environment);
+                          }
+                      })
                       .collect(Collectors.toList());
 
     }
@@ -492,17 +497,17 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
     }
 
     private ContextDecision ruleIncludesResourceAction(
-            final AclRule ctx,
+            final AclRule rule,
             final Map<String, String> resource,
             final String action
     )
     {
         final ArrayList<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
-        final Explanation.Code decision = includes(ctx, resource, action);
+        final Explanation.Code decision = includes(rule, resource, action);
         evaluations.add(
                 new ContextEvaluation(
                         decision,
-                        MessageFormat.format("{0} {1} for action {2}", ctx, decision, action)
+                        MessageFormat.format("{0} {1} for action {2}", rule, decision, action)
                 )
         );
         return new ContextDecision(decision, Explanation.Code.GRANTED == decision, evaluations);
@@ -627,13 +632,39 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         }
     }
 
+    private Function<String, Predicate<String>> setContainsString = new Function<String, Predicate<String>>() {
+        @Override
+        public Predicate<String> apply(final String item) {
+            return new SetContainsPredicate(item);
+        }
+    };
+    private Function<List, Predicate<String>> setContainsList = new Function<List, Predicate<String>>() {
+        @Override
+        public Predicate<String> apply(final List items) {
+            return new SetContainsPredicate(items);
+        }
+    };
+    private Function<String, Predicate<String>> setSubsetString = new Function<String, Predicate<String>>() {
+        @Override
+        public Predicate<String> apply(final String item) {
+            return new SetSubsetPredicate(item);
+        }
+    };
+    private Function<List, Predicate<String>> setSubsetList = new Function<List, Predicate<String>>() {
+        @Override
+        public Predicate<String> apply(final List items) {
+            return new SetSubsetPredicate(items);
+        }
+    };
     boolean ruleMatchesContainsSection(final Map<String, String> resource, final AclRule rule) {
         return validRuleSection(rule.getContainsResource())
                &&
                predicateMatchRules(
                        resource,
-                       SetContainsPredicate::new,
-                       SetContainsPredicate::new, rule.getContainsResource(), rule.getSourceIdentity()
+                       setContainsString,
+                       setContainsList,
+                       rule.getContainsResource(),
+                       rule.getSourceIdentity()
                );
     }
 
@@ -642,8 +673,10 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
                &&
                predicateMatchRules(
                        resource,
-                       SetSubsetPredicate::new,
-                       SetSubsetPredicate::new, rule.getSubsetResource(), rule.getSourceIdentity()
+                       setSubsetString,
+                       setSubsetList,
+                       rule.getSubsetResource(),
+                       rule.getSourceIdentity()
                );
     }
 
@@ -653,7 +686,17 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
                &&
                predicateMatchRules(
                        resource,
-                       o -> o::equals,
+                       new Function<String, Predicate<String>>() {
+                           @Override
+                           public Predicate<String> apply(final String o) {
+                               return new Predicate<String>() {
+                                   @Override
+                                   public boolean test(final String anObject) {
+                                       return o.equals(anObject);
+                                   }
+                               };
+                           }
+                       },
                        null, rule.getEqualsResource(), rule.getSourceIdentity()
                );
     }
@@ -666,7 +709,13 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         return validRuleSection(ruleSection.getRegexResource())
                &&
                predicateMatchRules(
-                       resource, o -> new RegexPredicate(patternForRegex(o)),
+                       resource,
+                       new Function<String, Predicate<String>>() {
+                           @Override
+                           public Predicate<String> apply(final String o) {
+                               return new RegexPredicate(RuleEvaluator.this.patternForRegex(o));
+                           }
+                       },
                        null, ruleSection.getRegexResource(), ruleSection.getSourceIdentity()
                );
     }
@@ -771,6 +820,11 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
             return false;
         }
         String value = resource.get(key);
-        return tests.stream().allMatch(pred -> pred.test(value));
+        return tests.stream().allMatch(new Predicate<Predicate<String>>() {
+            @Override
+            public boolean test(final Predicate<String> pred) {
+                return pred.test(value);
+            }
+        });
     }
 }
