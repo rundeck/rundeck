@@ -59,10 +59,6 @@ class AclRuleBuilderSpec extends Specification {
             group 'gblah'
             allowActions(['ablah', 'ablah2'] as Set)
             denyActions(['dblah', 'dblah2'] as Set)
-            containsMatch true
-            regexMatch true
-            equalsMatch true
-            subsetMatch true
             username "ublah"
             environment Mock(EnvironmentalContext){
                 isValid()>>true
@@ -87,6 +83,47 @@ class AclRuleBuilderSpec extends Specification {
         rule.subsetMatch
         rule.username=='ublah'
         rule.environment!=null
+        rule.environment.isValid()
+    }
+
+    def "null resources"() {
+        def builder = AclRuleBuilder.builder()
+        given:
+        builder.with {
+            description "blah"
+            sourceIdentity "sblah"
+            resourceType "rblah"
+            equalsResource(null)
+            containsResource(null)
+            subsetResource(null)
+            regexResource(null)
+            group 'gblah'
+            allowActions(['ablah', 'ablah2'] as Set)
+            denyActions(['dblah', 'dblah2'] as Set)
+            username "ublah"
+            environment Mock(EnvironmentalContext) {
+                isValid() >> true
+            }
+        }
+        def rule = builder.build()
+        expect:
+        rule != null
+        rule.description == 'blah'
+        rule.sourceIdentity == 'sblah'
+        rule.resourceType == 'rblah'
+        rule.equalsResource == null
+        rule.containsResource == null
+        rule.subsetResource == null
+        rule.regexResource == null
+        rule.group == 'gblah'
+        rule.allowActions == ['ablah', 'ablah2'] as Set
+        rule.denyActions == ['dblah', 'dblah2'] as Set
+        !rule.containsMatch
+        !rule.regexMatch
+        !rule.equalsMatch
+        !rule.subsetMatch
+        rule.username == 'ublah'
+        rule.environment != null
         rule.environment.isValid()
     }
 }

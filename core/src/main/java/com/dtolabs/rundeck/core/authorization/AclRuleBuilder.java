@@ -73,7 +73,7 @@ public class AclRuleBuilder {
     }
 
     public AclRuleBuilder regexResource(final Map<String, Object> resource) {
-        regexMatch(true);
+        regexMatch(resource != null && resource.size() > 0);
         aclRuleImpl.regexResource = resource;
         return this;
     }
@@ -84,7 +84,7 @@ public class AclRuleBuilder {
     }
 
     public AclRuleBuilder containsResource(final Map<String, Object> resource) {
-        containsMatch(true);
+        containsMatch(resource != null && resource.size() > 0);
         aclRuleImpl.containsResource = resource;
         return this;
     }
@@ -95,7 +95,7 @@ public class AclRuleBuilder {
     }
 
     public AclRuleBuilder subsetResource(final Map<String, Object> resource) {
-        subsetMatch(true);
+        subsetMatch(resource != null && resource.size() > 0);
         aclRuleImpl.subsetResource = resource;
         return this;
     }
@@ -105,7 +105,7 @@ public class AclRuleBuilder {
     }
 
     public AclRuleBuilder equalsResource(final Map<String, Object> resource) {
-        equalsMatch(true);
+        equalsMatch(resource != null && resource.size() > 0);
         aclRuleImpl.equalsResource = resource;
         return this;
     }
