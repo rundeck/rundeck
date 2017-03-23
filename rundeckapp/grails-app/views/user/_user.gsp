@@ -249,7 +249,7 @@
                                                        min="0"/>
 
                                                 <div class="help-block">
-                                                    <g:message code="expiration.token.help"/>
+                                                    <g:message code="expiration.token.help" args="${tokenMaxExpiration?g.timeDuration(time:tokenMaxExpiration*1000):'none'}"/>
                                                 </div>
                                             </div>
 
