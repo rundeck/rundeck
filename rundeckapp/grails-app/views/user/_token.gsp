@@ -82,7 +82,7 @@
                     </div>
 
                     <div class="modal-footer">
-                        <g:form controller="user" action="clearApiToken">
+                        <g:form controller="user" action="clearApiToken" useToken="true">
                             <g:hiddenField name="login" value="${user.login}"/>
                             <g:if test="${token.uuid}">
                                 <g:hiddenField name="tokenid" value="${token.uuid}"/>
@@ -92,7 +92,7 @@
                             </g:else>
                             <button type="button" class="btn btn-default" data-dismiss="modal"><g:message
                                     code="button.action.Cancel"/></button>
-                            <input type="submit" class="btn btn-danger yes" value="Delete" name="Delete"/>
+                            <input type="submit" class="btn btn-danger yes" value="Delete" name="${message(code:'button.action.Delete')}"/>
                         </g:form>
                     </div>
                 </div><!-- /.modal-content -->

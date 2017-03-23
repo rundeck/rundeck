@@ -19,7 +19,7 @@
 <table width="100%" class="table table-condensed table-striped apitokentable">
     <tr>
         <th class="table-header">
-            <g:message code="userController.page.profile.heading.apiTokens.label"/>
+            <g:message code="token"/>
         </th>
         <th class="table-header" colspan="2">
             <g:message code="expiration"/>
