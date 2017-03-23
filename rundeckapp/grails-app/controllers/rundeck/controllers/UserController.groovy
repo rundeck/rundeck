@@ -41,7 +41,6 @@ class UserController extends ControllerBase{
             store:'POST',
             update:'POST',
             clearApiToken:'POST',
-            generateApiToken:'POST',
             generateUserToken:'POST',
     ]
 
@@ -110,7 +109,7 @@ class UserController extends ControllerBase{
         if(!u && params.login==session.user){
             //redirect to profile edit page, so user can setup their profile
             flash.message="Please fill out your profile"
-            return redirect(action:register)
+            return redirect(action:'register')
         }
         if(notFoundResponse(u, 'User', params['login'])){
             return
@@ -129,7 +128,7 @@ class UserController extends ControllerBase{
         }
         def User u = User.findByLogin(params.login)
         if(u){
-           return redirect(action:edit)
+           return redirect(action:'edit')
         }
         u = new User(login:params.login)
         u.dashboardPref="1,2,3,4"
@@ -211,78 +210,8 @@ class UserController extends ControllerBase{
         return redirect(action:'profile')
     }
     def edit={
-        def model=profile(params)
+        def model=profile()
         return model
-    }
-    def generateApiToken(User user) {
-        boolean valid=false
-        withForm{
-            valid=true
-            g.refreshFormTokensHeader()
-        }.invalidToken{
-            response.status=HttpServletResponse.SC_BAD_REQUEST
-            request.error = g.message(code: 'request.error.invalidtoken.message')
-            withFormat {
-                html {
-                    return render(view: 'profile', model: [user: user])
-                }
-                json {
-                    render([error: request.error] as JSON)
-                }
-            }
-        }
-        if(!valid){
-            return
-        }
-        if (user.hasErrors()) {
-            request.errors = user.errors
-            withFormat {
-                html {
-                    return render(view: 'profile', model: [user: user])
-                }
-                json {
-                    render([error: 'Invalid input'] as JSON)
-                }
-            }
-        }
-        //check auth to edit profile
-        //default to current user profile
-        def login = params.login
-        def result
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN))) {
-            def error = "Unauthorized: admin role required"
-            log.error error
-            result=[result: false, error: error] 
-        }else{
-            def User u = userService.findOrCreateUser(login)
-            if (!u) {
-                def error = "Couldn't find user: ${login}"
-                log.error error
-                result=[result: false, error: error]
-            }else{
-                try{
-                    AuthToken token =apiService.generateAuthToken(u)
-                    result = [result: true, apitoken: token.token]
-                }catch (Exception e){
-                    result = [result: false, error: e.message]
-                }
-            }
-        }
-        withFormat {
-            html{
-                if (result.error) {
-                    flash.error = result.error
-                }else{
-                    flash.newtoken=result.apitoken
-                }
-                redirect(controller: 'user', action: 'profile', params: [login: login])
-            }
-            json {
-                render(result as JSON)
-            }
-        }
     }
 
 

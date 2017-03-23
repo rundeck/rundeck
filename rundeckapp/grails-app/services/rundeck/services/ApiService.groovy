@@ -56,26 +56,7 @@ class ApiService {
     private String genRandomString() {
         return RandomStringUtils.random(32, "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
     }
-    /**
-     * Generate a new unique auth token for the user and return it
-     * @param u
-     * @return
-     */
-    AuthToken generateAuthToken(User u){
 
-        String newtoken = genRandomString()
-        while (AuthToken.findByToken(newtoken) != null) {
-            newtoken = genRandomString()
-        }
-        AuthToken token = new AuthToken(token: newtoken, authRoles: 'api_token_group', user: u)
-
-        if (token.save()) {
-            log.debug("GENERATE TOKEN ${newtoken} for User ${u.login} with roles: ${token.authRoles}")
-            return token
-        } else {
-            throw new Exception("Failed to save token for User ${u.login}")
-        }
-    }
     Clock systemClock = Clock.systemUTC()
     /**
      * Generate the expiration date for a token given the duration string, and

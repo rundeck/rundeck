@@ -31,7 +31,7 @@ ko.bindingHandlers.foreachprop = {
                 return a.key.localeCompare(b.key);
             });
         }
-        return properties;
+        return ko.observableArray(properties);
     },
     init: function (element, valueAccessor, allBindingsAccessor, viewModel, bindingContext) {
         var unsorted = allBindingsAccessor.get('unsorted');
@@ -41,7 +41,18 @@ ko.bindingHandlers.foreachprop = {
             bindingContext.$rawData,
             null // Optionally, pass a string here as an alias for the data item in descendant contexts
         );
+        jQuery(element).data('childBindingContext', childBindingContext);
         ko.applyBindingsToNode(element, { foreach: properties }, childBindingContext);
         return { controlsDescendantBindings: true };
+    },
+    update:function(element, valueAccessor, allBindingsAccessor, viewModel, bindingContext){
+        "use strict";
+        var unsorted = allBindingsAccessor.get('unsorted');
+        var value = ko.utils.unwrapObservable(valueAccessor()),
+            properties = ko.bindingHandlers.foreachprop.transformObject(value,unsorted);
+        var childBindingContext=jQuery(element).data('childBindingContext');
+        ko.bindingHandlers['foreach'].update(element, properties, allBindingsAccessor, viewModel, childBindingContext);
+        return { controlsDescendantBindings: true };
+
     }
 };
