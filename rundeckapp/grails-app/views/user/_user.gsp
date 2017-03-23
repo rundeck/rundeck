@@ -308,11 +308,6 @@
                     <span class="gentokenerror-text"></span>
                 </div>
 
-                <g:javascript>
-
-                    fireWhenReady('gentokensection',function(){highlightNew('gentokensection');});
-
-                </g:javascript>
             </div>
         </div></div>
 </g:if>
