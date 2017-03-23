@@ -106,7 +106,10 @@ class ApiService {
         )
 
         if (token.save()) {
-            log.debug("GENERATE TOKEN ${newtoken} for User ${u.login} with roles: ${token.authRoles}")
+            log.info(
+                    "GENERATE TOKEN: ID:${uuid} creator:${ownerUsername} username:${u.login} roles:"
+                            + "${token.authRoles} expiration:${expiration}"
+            )
             return token
         } else {
             throw new Exception("Failed to save token for User ${u.login}")
