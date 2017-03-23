@@ -89,17 +89,20 @@ class ApiService {
      * @param u
      * @return
      */
-    AuthToken generateAuthToken(User u, Set<String> roles, Date expiration) {
+    AuthToken generateAuthToken(String ownerUsername, User u, Set<String> roles, Date expiration) {
 
         String newtoken = genRandomString()
         while (AuthToken.findByToken(newtoken) != null) {
             newtoken = genRandomString()
         }
+        def uuid = UUID.randomUUID().toString()
         AuthToken token = new AuthToken(
                 token: newtoken,
                 authRoles: AuthToken.generateAuthRoles(roles),
                 user: u,
-                expiration: expiration
+                expiration: expiration,
+                uuid: uuid,
+                creator: ownerUsername
         )
 
         if (token.save()) {
@@ -120,6 +123,22 @@ class ApiService {
                 AuthConstants.TYPE_APITOKEN,
                 [username: username, roles: AuthToken.generateAuthRoles(roles)]
         )
+    }
+    /**
+     * Find a token by UUID and creator
+     */
+    AuthToken findUserToken(
+            String creator,
+            String id
+    )
+    {
+        AuthToken.findByUuidAndCreator(id, creator)
+    }
+    /**
+     * Find a token by UUID
+     */
+    AuthToken findUserToken( String id) {
+        AuthToken.findByUuid(id)
     }
     /**
      * Generate an auth token
@@ -216,7 +235,7 @@ class ApiService {
         if (!u) {
             throw new Exception("Couldn't find user: ${createTokenUser}")
         }
-        return generateAuthToken(u, roles, newDate)
+        return generateAuthToken(authContext.username, u, roles, newDate)
     }
 
     def respondOutput(HttpServletResponse response, String contentType, String output) {
@@ -1064,5 +1083,16 @@ class ApiService {
                 params: [project: execution.project],
                 absolute: true
         )
+    }
+
+    def removeToken(final AuthToken authToken) {
+
+        def user = authToken.user
+        def creator = authToken.creator ?: user.login
+        def id = authToken.uuid ?: authToken.token
+        def oldAuthRoles = authToken.authRoles
+
+        authToken.delete(flush: true)
+        log.info("DELETED TOKEN ${id} (creator:$creator) User ${user.login} with roles: ${oldAuthRoles}")
     }
 }
