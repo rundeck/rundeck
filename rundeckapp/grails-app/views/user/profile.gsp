@@ -38,29 +38,10 @@
     <asset:javascript src="user/profile.js"/>
     <script type="text/javascript">
 
-        function changeLanguage() {
-            var url = '${g.createLink(controller: 'user', action: 'profile')}';
-            window.location.href = url + "?lang=" + jQuery("#language").val();
-        }
-
-        jQuery(function () {
-            var data = loadJsonData('genPageData');
-            jQuery("#language").val(data.language);
-            jQuery(document).on('click', '.obs_reveal_token', function (e) {
-                revealUserToken(data.user, jQuery(e.target));
-            });
-            jQuery(document).on('click', '.clearconfirm input.yes', function (e) {
-                e.preventDefault();
-                clearToken(jQuery(e.target).closest('.apitokenform')[0]);
-                return false;
-            });
-            var dom = jQuery('#gentokensection');
-            if (dom.length == 1) {
-                var roleset = new RoleSet(data.roles);
-                window.tokencreator = new TokenCreator({roleset: roleset, user: data.user});
-                ko.applyBindings(tokencreator, dom[0]);
-            }
-        });
+    function changeLanguage() {
+        var url = '${g.createLink(controller: 'user', action: 'profile')}';
+        window.location.href = url + "?lang=" + jQuery("#language").val();
+    }
     </script>
     <g:embedJSON
             data="${[user         : user.login,

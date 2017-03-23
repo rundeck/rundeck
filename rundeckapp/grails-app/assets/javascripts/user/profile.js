@@ -81,7 +81,7 @@ function RoleSet(list) {
     }
 }
 
-function highlightNew(elem) {
+function highlightNew() {
     jQuery(' .apitokenform.newtoken').fadeTo('slow', 1);
 }
 function tokenAjaxError(msg) {
@@ -181,3 +181,24 @@ function revealUserToken(login, elem) {
         }
     }).success(_ajaxReceiveTokens.curry('api_req_tokens'));
 }
+
+
+jQuery(function () {
+    var data = loadJsonData('genPageData');
+    jQuery("#language").val(data.language);
+    jQuery(' .apitokenform.newtoken').fadeTo('slow', 1);
+    jQuery(document).on('click', '.obs_reveal_token', function (e) {
+        revealUserToken(data.user, jQuery(e.target));
+    });
+    jQuery(document).on('click', '.clearconfirm input.yes', function (e) {
+        e.preventDefault();
+        clearToken(jQuery(e.target).closest('.apitokenform')[0]);
+        return false;
+    });
+    var dom = jQuery('#gentokensection');
+    if (dom.length == 1) {
+        var roleset = new RoleSet(data.roles);
+        window.tokencreator = new TokenCreator({roleset: roleset, user: data.user});
+        ko.applyBindings(tokencreator, dom[0]);
+    }
+});
