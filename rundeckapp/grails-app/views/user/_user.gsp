@@ -78,83 +78,160 @@
 
 </div>
 
-<g:set var="tokenAdmin" value="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.ACTION_ADMIN],
-        context: 'application')}"/>
-<g:set var="selfToken"
-       value="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.GENERATE_USER_TOKEN],
-                                         context: 'application')}"/>
-<g:set var="serviceToken"
-       value="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.GENERATE_SERVICE_TOKEN],
-               context: 'application')}"/>
 
-<g:if test="${session.user == user.login && (tokenAdmin || serviceToken)}">
-    <g:set var="rkeytok" value="${g.rkey()}"/>
-    <div id="${enc(attr: rkeytok)}">
+<g:if test="${session.user == user.login && (tokenAdmin || serviceToken || selfToken)}">
+    <div id="gentokensection">
         <div class="row ">
             <div class="col-sm-12">
                 <h3>
                     <g:message code="userController.page.profile.heading.userTokens.label"/>
                     <a class="small btn btn-link btn-xs"
-                       href="#">
+                       data-toggle="modal"
+                       href="#gentokenmodal">
                         <g:icon name="plus"/>
                     </a>
                 </h3>
             </div>
         </div>
-        <div class="row">
-            <div class="col-sm-12">
-                <div class="form-inline">
+        <!-- Modal -->
+        <div class="modal fade clearconfirm" id="gentokenmodal" tabindex="-1" role="dialog"
+             aria-labelledby="gentokenLabel"
+             aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                        <h4 class="modal-title" id="gentokenLabel"><g:message
+                                code="button.GenerateNewToken.label"/></h4>
+                    </div>
 
-                    <label>
-                        <g:message code="jobquery.title.userFilter"/>:
-                        <input type="text" maxlength="256" name="tokenUser" value="${user.login}"
-                               class="form-control"/>
-                    </label>
-                    <label>
-                        <g:message code="roles"/>:
-                        <div class="input-group">
-                            <g:textField type="text" maxlength="256" name="tokenRoles"
-                                         class="form-control"
-                                         value="${authRoles?.join(", ")}"/>
-                            <div class="input-group-addon">
-                                <g:helpTooltip code="roles.token.help" css="text-muted"/>
+                    <div class="modal-body" id="userTokenGenerateForm">
+                        <div class="row">
+                            <div class="col-sm-12">
+                                <div class="form">
+                                    <g:if test="${tokenAdmin || serviceToken}">
+                                        <div class="form-group">
+                                            <label class="control-label" for="tokenuser">
+                                                <g:message code="jobquery.title.userFilter"/>
+                                            </label>
+                                            <input type="text" maxlength="256" name="tokenUser" value="${user.login}"
+                                                data-bind="value: tokenUser"
+                                                   class="form-control" id="tokenuser"/>
+
+                                            <div class="help-block">
+                                                Username associated with the token
+                                            </div>
+                                        </div>
+                                    </g:if>
+                                    <div class="form-group">
+                                        <label class="control-label" for="tokenRoles">
+                                            <g:message code="roles"/>
+                                        </label>
+                                        <g:if test="${tokenAdmin || serviceToken}">
+                                            <g:textField type="text" maxlength="256" name="tokenRoles"
+                                                data-bind="value: tokenRolesStr"
+                                                         class="form-control"
+                                                         value="${authRoles?.join(", ")}"/>
+
+                                            <div class="help-block">
+                                                <g:message code="roles.token.help"/>
+                                            </div>
+                                        </g:if>
+                                        <g:elseif test="${selfToken}">
+                                            <div data-bind="with: roleset">
+
+                                            <span class="textbtn " data-bind="click: checkAll"><g:message code="select.all" /></span>
+                                            <span class="textbtn" data-bind="click: uncheckAll"><g:message code="select.none" /></span>
+                                            <div class="optionmultiarea" >
+                                                <div class="grid " data-bind="foreach: roles">
+
+                                                    <div class="optionvaluemulti ">
+                                                        <label class="grid-row optionvaluemulti">
+                                                            <span class="grid-cell grid-front">
+                                                                <input type="checkbox"
+                                                                       name="tokenRoles"
+                                                                       checked
+                                                                    data-bind="value: name, checked: checked"
+                                                                       />
+                                                            </span>
+                                                            <span class="grid-cell grid-rest" data-bind="text: name">z
+                                                            </span>
+                                                        </label>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+
+                                            <div class="help-block">
+                                                <g:message code="roles.token.help"/>
+                                            </div></div>
+                                        </g:elseif>
+                                    </label></div>
+
+                                    <div class="form-group">
+                                        <label class="control-label">
+                                            <g:message code="expiration.in"/>
+                                        </label>
+
+                                        <div class="row">
+                                            <div class="col-sm-6">
+
+                                                <input type="number"
+                                                       name="tokenTime"
+                                                       class="form-control"
+                                                    data-bind="value: tokenTime"
+                                                       placeholder="0"
+                                                       min="0"/>
+
+                                                <div class="help-block">
+                                                    <g:message code="expiration.token.help"/>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-sm-6">
+
+                                                <select class="form-control col-sm-6" name="tokenTimeUnit" data-bind="value: tokenTimeUnit">
+                                                    <option value="m"><g:message
+                                                            code="time.unit.minute.plural"/></option>
+                                                    <option value="h"><g:message code="time.unit.hour.plural"/></option>
+                                                    <option value="d"><g:message code="time.unit.day.plural"/></option>
+                                                </select>
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                </div>
                             </div>
                         </div>
-                    </label>
-                    <label>
-                        <g:message code="expiration.in"/>:
-                        <div class="input-group">
-                            <input type="number" min="0" max="360" name="tokenTime" class="form-control"
-                                   placeholder="10"
-                                   value="10"/>
+                    </div>
 
-                            <div class="input-group-addon">
-                                <g:helpTooltip code="expiration.token.help" css="text-muted"/>
-                            </div>
-                        </div>
-
-                    </label>
-                    <select class="form-control" name="tokenTimeUnit">
-                        <option value="m"><g:message code="time.unit.minute.plural"/></option>
-                        <option value="h"><g:message code="time.unit.hour.plural"/></option>
-                        <option value="d"><g:message code="time.unit.day.plural"/></option>
-                    </select>
-                    <a class="genusertokenbtn small btn btn-link btn-xs"
-                       href="${createLink(
-                               controller: 'user',
-                               action: 'generateUserToken',
-                               params: [login: user.login]
-                       )}">
-                        <g:icon name="plus"/>
-                        <g:message code="button.GenerateNewToken.label"/>
-                    </a>
-                </div>
-            </div>
-        </div>
+                    <div class="modal-footer">
+                        %{--
+                        <span data-bind="foreachprop: generateData">
+                            <span data-bind="text: key"></span>=<span data-bind="text: value"></span>
+                        </span>
+                        --}%
+                        <a class="genusertokenbtn small btn btn-success"
+                            data-bind="click: actionGenerate"
+                           href="${createLink(
+                                   controller: 'user',
+                                   action: 'generateUserToken',
+                                   params: [login: user.login]
+                           )}">
+                            <g:icon name="plus"/>
+                            <g:message code="button.GenerateNewToken.label"/>
+                        </a>
+                    </div>
+                </div><!-- /.modal-content -->
+            </div><!-- /.modal-dialog -->
+        </div><!-- /.modal -->
 
         <div class="row userapitoken">
             <div class="col-sm-12">
-                <g:set var="tokens" value="${rundeck.AuthToken.findAll()}"/>
+                <g:set var="tokens"
+                       value="${(tokenAdmin) ? rundeck.AuthToken.findAll() :
+                               rundeck.AuthToken.findAllByCreator(user.login)}"/>
 
                 <g:if test="${tokens}">
                     <g:render template="tokenList" model="${[user:user, tokenList:tokens,flashToken:flash.newtoken]}"/>
@@ -167,89 +244,9 @@
                 </div>
 
                 <g:javascript>
-                    fireWhenReady('${enc(js: rkeytok)}',function(){addUserBehavior(true,'${enc(js: rkeytok)}',"${enc(
-                        js: user.login
-                )}");});
-                    fireWhenReady('${enc(js: rkeytok)}',function(){highlightNew('${enc(js: rkeytok)}');});
-                    fireWhenReady('${enc(js: rkeytok)}',function(){setLanguage('${enc(js: rkeytok)}');});
-                </g:javascript>
-            </div>
-        </div></div>
-</g:if>
 
-<g:if test="${session.user == user.login && (selfToken && !tokenAdmin)}">
-    <g:set var="rkeytok" value="${g.rkey()}"/>
-    <div id="${enc(attr: rkeytok)}">
-        <div class="row ">
-            <div class="col-sm-12">
-                <h3>
-                    <g:message code="userController.page.profile.heading.userTokens.label"/>
-                    <a class="small btn btn-link btn-xs"
-                       href="#">
-                        <g:icon name="plus"/>
-                    </a>
-                </h3>
-            </div>
-        </div>
-        <div class="row">
-            <div class="col-sm-12">
-                <table>
-                    <tr>
-                        <td><g:message code="roles"/>:</td>
-                        <td>
-
-                            <select class="form-control tokenRoles" name="tokenRoles" multiple>
-                                <g:each var="group" in="${request.subject.getPrincipals(com.dtolabs.rundeck.core.authentication.Group.class)}" status="index">
-                                    <option value="${group.name}">${group.name}</option>
-                                </g:each>
-                            </select>
-                        </td>
-                        <td><g:message code="expiration.in"/>:<g:helpTooltip code="expiration.token.help" css="text-muted"/></td>
-                        <td> <input type="number" min="0" max="360" name="tokenTime"/> </td>
-                        <td>
-                            <select class="form-control" name="tokenTimeUnit">
-                                <option value="m"><g:message code="time.unit.minute.plural"/></option>
-                                <option value="h"><g:message code="time.unit.hour.plural"/></option>
-                                <option value="d"><g:message code="time.unit.day.plural"/></option>
-                            </select>
-                        </td>
-                        <td>
-                            <a class="genusertokenbtn small btn btn-link btn-xs"
-                               href="${createLink(
-                                       controller: 'user',
-                                       action: 'generateUserToken',
-                                       params: [login: user.login]
-                               )}">
-                                <g:icon name="plus"/>
-                                <g:message code="button.GenerateNewToken.label" />
-                            </a>
-                        </td>
-                    </tr>
-                </table>
-            </div>
-        </div>
-
-        <div class="row userapitoken">
-            <div class="col-sm-12">
-                <g:set var="tokens" value="${rundeck.AuthToken.findAllByUser(user)}"/>
-
-
-                <g:if test="${tokens}">
-                    <g:render template="tokenList" model="${[user:user, tokenList:tokens,flashToken:flash.newtoken]}"/>
-                </g:if>
-
-
-                <div style="display:none" class="gentokenerror alert alert-danger alert-dismissable">
-                    <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-                    <span class="gentokenerror-text"></span>
-                </div>
-
-                <g:javascript>
-                    fireWhenReady('${enc(js: rkeytok)}',function(){addUserBehavior(false,'${enc(js: rkeytok)}',"${enc(
-                        js: user.login
-                )}");});
-                    fireWhenReady('${enc(js: rkeytok)}',function(){highlightNew('${enc(js: rkeytok)}');});
-                    fireWhenReady('${enc(js: rkeytok)}',function(){setLanguage('${enc(js: rkeytok)}');});
+                    fireWhenReady('gentokensection',function(){highlightNew('gentokensection');});
+                    fireWhenReady('gentokensection',function(){setLanguage('gentokensection');});
                 </g:javascript>
             </div>
         </div></div>

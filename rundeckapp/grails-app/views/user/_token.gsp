@@ -23,7 +23,25 @@
 <g:set var="ukey" value="${g.rkey()}"/>
 <tr class="apitokenform ${token.token == flashToken ? 'newtoken' : ''}"
     style="${token.token == flashToken ? 'opacity:0;' : ''}">
-    <td width="20%"><code>${token.token}</code></td>
+    <td width="20%" class="token-data-holder">
+        <g:if test="${token.uuid}">
+            <span class="btn btn-link btn-xs collapse in obs_reveal_token" data-token-id="${token.uuid}">
+                <g:icon name="eye-open"/>
+                <g:message code="show.token"/>
+            </span>
+            <code class="token-data-holder obs_hide_token collapse" data-token-id="${token.uuid}"></code>
+        </g:if>
+        <g:else>
+            <span class="btn btn-link btn-xs collapse in"
+                  id="${ukey}_rvbtn"
+                  data-toggle="collapse"
+                  data-target="#${ukey}_reveal,#${ukey}_rvbtn">
+                <g:icon name="eye-open"/>
+                <g:message code="show.token"/>
+            </span>
+            <code class="token-data-holder collapse" id="${ukey}_reveal">${token.token}</code>
+        </g:else>
+    </td>
         <td width="8%">
             <g:if test="${token.expiration}">
                 <g:relativeDate elapsed="${token.expiration}" untilClass="timeuntil" agoClass="text-warning"/>
@@ -37,8 +55,8 @@
         <td width="10%">
             <g:enc>${token.user.login}</g:enc>
         </td>
-        <td width="40%">
-            <g:enc>${token.authRoles}</g:enc>
+        <td width="40%" class="ellipsis" title="${token.authRoles}">
+            <span>${token.authRoles}</span>
         </td>
         <td width="10%">
         <a style="${wdgt.styleVisible(if: token.token && !(params.showConfirm && params.token==token.token))}"
@@ -66,8 +84,14 @@
                     <div class="modal-footer">
                         <g:form controller="user" action="clearApiToken">
                             <g:hiddenField name="login" value="${user.login}"/>
-                            <g:hiddenField name="token" value="${token.token}"/>
-                            <button type="button" class="btn btn-default" data-dismiss="modal"><g:message code="button.action.Cancel" /></button>
+                            <g:if test="${token.uuid}">
+                                <g:hiddenField name="tokenid" value="${token.uuid}"/>
+                            </g:if>
+                            <g:else>
+                                <g:hiddenField name="token" value="${token.token}"/>
+                            </g:else>
+                            <button type="button" class="btn btn-default" data-dismiss="modal"><g:message
+                                    code="button.action.Cancel"/></button>
                             <input type="submit" class="btn btn-danger yes" value="Delete" name="Delete"/>
                         </g:form>
                     </div>

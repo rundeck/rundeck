@@ -37,11 +37,12 @@ class UserController extends ControllerBase{
     def configurationService
 
     static allowedMethods = [
-            addFilterPref:'POST',
-            store:'POST',
-            update:'POST',
-            clearApiToken:'POST',
+            addFilterPref    : 'POST',
+            store            : 'POST',
+            update           : 'POST',
+            clearApiToken    : 'POST',
             generateUserToken:'POST',
+            renderUsertoken  : 'POST',
     ]
 
     def index = {
@@ -259,11 +260,44 @@ class UserController extends ControllerBase{
                     tokenUser ?: params.login,
                     AuthToken.parseAuthRoles(tokenRoles)
             )
-            result = [result: true, apitoken: token.token]
+            result = [result: true, /*apitoken: token.token, */ tokenid: token.uuid]
         } catch (Exception e) {
             result = [result: false, error: e.message]
         }
         return renderTokenGenerateResult(result, params.login)
+    }
+
+    def renderUsertoken(String tokenid) {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        boolean valid = false
+
+        withForm {
+            valid = true
+            g.refreshFormTokensHeader()
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            withFormat {
+                html {
+                    return render(view: 'profile', model: [user: user])
+                }
+                json {
+                    render([error: request.error] as JSON)
+                }
+            }
+        }
+        if (!valid) {
+            return
+        }
+        try {
+            AuthToken token = apiService.findUserToken(authContext.username, tokenid)
+            if (!token) {
+                renderTokenGenerateResult([result: false, error: 'Not Found'], authContext.username)
+            }
+            renderTokenGenerateResult([result: true, apitoken: token.token, tokenid: token.uuid], authContext.username)
+        } catch (Exception e) {
+            renderTokenGenerateResult([result: false, error: e.message], authContext.username)
+        }
     }
 
     private Map renderTokenGenerateResult(Map result, String login) {
@@ -281,7 +315,7 @@ class UserController extends ControllerBase{
         }
     }
 
-    def renderApiToken = {
+    def renderApiToken() {
         //check auth to edit profile
         //default to current user profile
 
@@ -290,9 +324,24 @@ class UserController extends ControllerBase{
         def user
         def token
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN) || frameworkService.authorizeApplicationResourceType(authContext,
-                AuthConstants.TYPE_USER, AuthConstants.GENERATE_USER_TOKEN))) {
+        if (!(
+                frameworkService.authorizeApplicationResourceType(
+                        authContext,
+                        AuthConstants.TYPE_USER,
+                        AuthConstants.ACTION_ADMIN
+                )
+                        || frameworkService.authorizeApplicationResourceType(
+                        authContext,
+                        AuthConstants.TYPE_APITOKEN,
+                        AuthConstants.GENERATE_USER_TOKEN
+                )
+                        ||
+                        frameworkService.authorizeApplicationResourceType(
+                                authContext,
+                                AuthConstants.TYPE_APITOKEN,
+                                AuthConstants.GENERATE_SERVICE_TOKEN
+                        )
+        )) {
             def error = "Unauthorized: admin role required"
             log.error error
             result = [result: false, error: error]
@@ -303,7 +352,7 @@ class UserController extends ControllerBase{
                 log.error error
                 result = [result: false, error: error]
             } else {
-                def t= AuthToken.findByToken(params.token);
+                def t = apiService.findUserToken(login, params.tokenid);
                 if(t){
                     token=t
                 }else{
@@ -356,20 +405,46 @@ class UserController extends ControllerBase{
         def login = user.login
         def result
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!(frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN) || frameworkService.authorizeApplicationResourceType(authContext,
-                AuthConstants.TYPE_USER, AuthConstants.GENERATE_USER_TOKEN))) {
+        def adminAuth =
+                frameworkService.authorizeApplicationResourceType(
+                        authContext,
+                        AuthConstants.TYPE_APITOKEN,
+                        AuthConstants.ACTION_ADMIN
+                ) ||
+                        frameworkService.authorizeApplicationResourceType(
+                                authContext,
+                                AuthConstants.TYPE_USER,
+                                AuthConstants.ACTION_ADMIN
+                        )
+        if (!(adminAuth
+                ||
+                frameworkService.authorizeApplicationResourceType(
+                        authContext,
+                        AuthConstants.TYPE_APITOKEN,
+                        AuthConstants.GENERATE_USER_TOKEN
+                )
+                ||
+                frameworkService.authorizeApplicationResourceType(
+                        authContext,
+                        AuthConstants.TYPE_APITOKEN,
+                        AuthConstants.GENERATE_SERVICE_TOKEN
+                )
+        )) {
             def error = "Unauthorized: admin role required"
             log.error error
             result=[result: false, error: error]
-        }else if(!params.token){
-            def error = "Parameter token required"
+        } else if (!params.token && !params.tokenid) {
+            def error = "Parameter tokenid required"
             log.error error
             result = [result: false, error: error]
         }else if (params.No == 'No') {
             return redirect(controller: 'user', action: 'profile', params: [login: login])
         }else if (request.getMethod()=='GET') {
-            return redirect(controller: 'user', action: 'profile', params: [login: login,showConfirm:true,token:params.token])
+            return redirect(
+                    controller: 'user',
+                    action: 'profile',
+                    params: [login: login, showConfirm: true, tokenid: params.tokenid]
+            )
         }else{
             def User u = userService.findOrCreateUser(login)
             if (!u) {
@@ -377,20 +452,25 @@ class UserController extends ControllerBase{
                 log.error error
                 result=[result: false, error: error]
             }else{
-                def findtoken=params.token
-                def found=AuthToken.findByToken(findtoken)
+                def findtoken = params.tokenid ?: params.token
+                AuthToken found = null
+                if (adminAuth) {
+                    //admin can delete any token
+                    found = params.token ? AuthToken.findByToken(params.token) :
+                            apiService.findUserToken(params.tokenid)
+                } else {
+                    //users can delete owned token
+                    found = params.token ? AuthToken.findByTokenAndUser(params.token, u) :
+                            apiService.findUserToken(login, params.tokenid)
+                }
+
                 if(!found){
                     def error = "Couldn't find token ${findtoken} for user ${login}"
                     log.error error
                     result = [result: false, error: error]
-                }else{
-
-                    AuthToken oldtoken=found
-                    def oldAuthRoles=oldtoken.authRoles
-
-                    oldtoken.delete(flush: true)
-                    log.info("EXPIRE TOKEN ${findtoken} for User ${login} with roles: ${oldAuthRoles}")
-                    result= [result: true]
+                } else {
+                    apiService.removeToken(found)
+                    result = [result: true]
                 }
             }
         }

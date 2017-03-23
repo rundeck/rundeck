@@ -1322,6 +1322,7 @@ section{
     }
   }
 }
+
 .node_entry{
   .nodeident, .nodedesc, .nodetags, .username, .hostname{
     white-space: nowrap;
@@ -1435,7 +1436,24 @@ pre.filtererror{
   color: @brand-info;
   padding:0;
 }
+td {
 
+  &.ellipsis {
+    position: relative;
+  }
+  &.ellipsis:before {
+    content: '&nbsp;';
+    visibility: hidden;
+  }
+  &.ellipsis span {
+    position: absolute;
+    left: 0;
+    right: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
 .overflowx{
   text-overflow: ellipsis;
   overflow-x: auto;
