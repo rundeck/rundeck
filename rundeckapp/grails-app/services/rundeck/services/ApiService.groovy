@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
+import grails.transaction.Transactional
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
@@ -1097,5 +1098,39 @@ class ApiService {
 
         authToken.delete(flush: true)
         log.info("DELETED TOKEN ${id} (creator:$creator) User ${user.login} with roles: ${oldAuthRoles}")
+    }
+
+    /**
+     * Find and remove AuthTokens created by creator that are expired
+     * @param creator
+     * @return
+     */
+    @Transactional
+    def removeAllExpiredTokens(final String creator) {
+        def now = Date.from(Clock.systemUTC().instant())
+        def found = AuthToken.findAllByCreatorAndExpirationLessThan(creator, now)
+        if (found) {
+            found.each {
+                it.delete()
+            }
+        }
+        found.size()
+    }
+
+    /**
+     * Find and remove all AuthTokens that are expired
+     * @param creator
+     * @return
+     */
+    @Transactional
+    def removeAllExpiredTokens() {
+        def now = Date.from(Clock.systemUTC().instant())
+        def found = AuthToken.findAllByExpirationLessThan(now)
+        if (found) {
+            found.each {
+                it.delete()
+            }
+        }
+        found.size()
     }
 }

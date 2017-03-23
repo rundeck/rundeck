@@ -37,12 +37,13 @@ class UserController extends ControllerBase{
     def configurationService
 
     static allowedMethods = [
-            addFilterPref    : 'POST',
-            store            : 'POST',
-            update           : 'POST',
-            clearApiToken    : 'POST',
-            generateUserToken:'POST',
-            renderUsertoken  : 'POST',
+            addFilterPref      : 'POST',
+            store              : 'POST',
+            update             : 'POST',
+            clearApiToken      : 'POST',
+            generateUserToken  : 'POST',
+            renderUsertoken    : 'POST',
+            removeExpiredTokens: 'POST',
     ]
 
     def index = {
@@ -216,6 +217,7 @@ class UserController extends ControllerBase{
     }
 
 
+
     def generateUserToken(String tokenTime, String tokenTimeUnit, String tokenUser, String tokenRoles) {
         boolean valid=false
 
@@ -370,6 +372,81 @@ class UserController extends ControllerBase{
 
     }
 
+    def removeExpiredTokens() {
+        boolean valid = false
+        withForm {
+            valid = true
+            g.refreshFormTokensHeader()
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            withFormat {
+                html {
+                    return render(view: 'profile', model: [user: user])
+                }
+                json {
+                    render([error: request.error] as JSON)
+                }
+            }
+        }
+        if (!valid) {
+            return
+        }
+        def login = params.login
+        def deleteall = params.deleteall?.toBoolean()
+        def result
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def adminAuth =
+                frameworkService.authorizeApplicationResourceType(
+                        authContext,
+                        AuthConstants.TYPE_APITOKEN,
+                        AuthConstants.ACTION_ADMIN
+                ) ||
+                        frameworkService.authorizeApplicationResourceType(
+                                authContext,
+                                AuthConstants.TYPE_USER,
+                                AuthConstants.ACTION_ADMIN
+                        )
+        if (unauthorizedResponse(
+                login == authContext.username || adminAuth,
+                AuthConstants.ACTION_ADMIN,
+                'API Tokens for user: ',
+                params.login
+        )) {
+            return
+        }
+        if (unauthorizedResponse(
+                !deleteall || adminAuth,
+                AuthConstants.ACTION_ADMIN,
+                'API Tokens for ',
+                "All users"
+        )) {
+            return
+        }
+
+        def total = deleteall ? apiService.removeAllExpiredTokens() : apiService.removeAllExpiredTokens(login)
+
+        if (total > 0) {
+            flash.message = "Removed $total expired tokens"
+        } else {
+            flash.error = "No expired tokens found"
+        }
+        def done = false
+        withFormat {
+            html {
+
+            }
+            json {
+                done = true
+                render(result as JSON)
+            }
+        }
+        if (done) {
+            return
+        }
+
+        return redirect(controller: 'user', action: 'profile', params: [login: login])
+    }
     def clearApiToken(User user) {
         boolean valid=false
         withForm{

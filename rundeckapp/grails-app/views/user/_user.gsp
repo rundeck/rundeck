@@ -90,10 +90,75 @@
                        href="#gentokenmodal">
                         <g:icon name="plus"/>
                     </a>
+
+                <span class="pull-right">
+                    <g:if test="${!tokenAdmin}">
+
+                        <g:form controller="user" action="removeExpiredTokens" useToken="true">
+                            <g:hiddenField name="login" value="${user.login}"/>
+                            <button type="submit" class="btn btn-sm btn-danger" value="Delete">
+                                <g:icon name="remove-circle"/>
+                                Delete all expired...
+                            </button>
+                        </g:form>
+                    </g:if>
+                    <g:else>
+
+                        <a class="small btn btn-link btn-xs"
+                           data-toggle="modal"
+                           href="#delexpiredtokenmodal">
+                            Delete all expired...
+                        </a>
+                    </g:else>
+                </span>
                 </h3>
+
             </div>
         </div>
-        <!-- Modal -->
+
+        <!-- Delete expired Modal -->
+        <div class="modal fade clearconfirm" id="delexpiredtokenmodal" tabindex="-1" role="dialog"
+             aria-labelledby="gentokenLabel"
+             aria-hidden="true">
+
+            <g:form controller="user" action="removeExpiredTokens" useToken="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title" id="delexpiredtokenmodalLabel"><g:message
+                                    code="button.GenerateNewToken.label"/></h4>
+                        </div>
+
+                        <div class="modal-body">
+                            Delete expired tokens created by:
+                            <div class="radio">
+                                <label>
+                                    <input type="radio" value="false" name="deleteall" checked/>
+                                    Me
+                                </label>
+                                <label>
+                                    <input type="radio" value="true" name="deleteall"/>
+                                    All Users
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+
+                            <g:hiddenField name="login" value="${user.login}"/>
+                            <button type="button" class="btn btn-default" data-dismiss="modal"><g:message
+                                    code="button.action.Cancel"/></button>
+                            <input type="submit" class="btn btn-danger " value="Delete"
+                                   name="${message(code: 'button.action.Delete')}"/>
+
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </g:form>
+        </div><!-- /.modal -->
+
+    <!-- Generate Modal -->
         <div class="modal fade clearconfirm" id="gentokenmodal" tabindex="-1" role="dialog"
              aria-labelledby="gentokenLabel"
              aria-hidden="true">
@@ -207,11 +272,6 @@
                     </div>
 
                     <div class="modal-footer">
-                        %{--
-                        <span data-bind="foreachprop: generateData">
-                            <span data-bind="text: key"></span>=<span data-bind="text: value"></span>
-                        </span>
-                        --}%
                         <a class="genusertokenbtn small btn btn-success"
                             data-bind="click: actionGenerate"
                            href="${createLink(
@@ -246,7 +306,7 @@
                 <g:javascript>
 
                     fireWhenReady('gentokensection',function(){highlightNew('gentokensection');});
-                    fireWhenReady('gentokensection',function(){setLanguage('gentokensection');});
+
                 </g:javascript>
             </div>
         </div></div>
