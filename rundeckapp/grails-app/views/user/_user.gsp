@@ -98,16 +98,17 @@
                             <g:hiddenField name="login" value="${user.login}"/>
                             <button type="submit" class="btn btn-sm btn-danger" value="Delete">
                                 <g:icon name="remove-circle"/>
-                                Delete all expired...
+                                <g:message code="button.delete.expired.tokens" />
                             </button>
                         </g:form>
                     </g:if>
                     <g:else>
 
-                        <a class="small btn btn-link btn-xs"
+                        <a class="btn btn-sm btn-danger"
                            data-toggle="modal"
                            href="#delexpiredtokenmodal">
-                            Delete all expired...
+                            <g:icon name="remove-circle"/>
+                            <g:message code="button.delete.expired.tokens.ellipsis" />
                         </a>
                     </g:else>
                 </span>
@@ -126,20 +127,24 @@
                     <div class="modal-content">
                         <div class="modal-header">
                             <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                            <h4 class="modal-title" id="delexpiredtokenmodalLabel"><g:message
-                                    code="button.GenerateNewToken.label"/></h4>
+                            <h4 class="modal-title" id="delexpiredtokenmodalLabel">
+                                <g:message code="title.delete.expired.tokens" />
+                            </h4>
                         </div>
 
                         <div class="modal-body">
-                            Delete expired tokens created by:
+                            <g:message code="user.profile.modal.delete.expired.tokens.created.by" />
                             <div class="radio">
                                 <label>
                                     <input type="radio" value="false" name="deleteall" checked/>
-                                    Me
+                                    <g:message code="me" />
                                 </label>
+                            </div>
+
+                            <div class="radio">
                                 <label>
                                     <input type="radio" value="true" name="deleteall"/>
-                                    All Users
+                                    <g:message code="all.users" />
                                 </label>
                             </div>
                         </div>
@@ -184,7 +189,7 @@
                                                    class="form-control" id="tokenuser"/>
 
                                             <div class="help-block">
-                                                Username associated with the token
+                                                <g:message code="user.profile.generateToken.AuthToken.username.description" />
                                             </div>
                                         </div>
                                     </g:if>
