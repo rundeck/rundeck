@@ -41,13 +41,16 @@ class CustomJsonMarshaller extends BaseCustomMarshaller implements ObjectMarshal
 
     @Override
     void marshalObject(final Object object, final JSON converter) throws ConverterException {
-        def (Map attrs, Map fields, Map subelements) = introspect(object)
+        def (Map attrs, Map fields, Map subelements, Map colNames, Map<String, String> formats) = introspect(object)
 
         //if only one subelement, simply apply that
         if (subelements.size() == 1 && !fields) {
-            converter.convertAnother(subelements.values().first())
+            converter.convertAnother(formatCustom(subelements.values().first(), formats[subelements.keySet().first()]))
             return
         }
-        converter.convertAnother(attrs + fields + subelements)
+        def map = (attrs + fields + subelements).collectEntries { k, v ->
+            [k, formatCustom(v, formats[k])]
+        }
+        converter.convertAnother(map)
     }
 }

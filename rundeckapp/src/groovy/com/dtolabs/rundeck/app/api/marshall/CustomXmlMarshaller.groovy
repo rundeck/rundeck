@@ -53,19 +53,35 @@ class CustomXmlMarshaller extends BaseCustomMarshaller implements ObjectMarshall
 
     @Override
     void marshalObject(final Object object, final XML xml) throws ConverterException {
-        def (Map attrs, Map fields, Map subelements) = introspect(object)
+        def (Map attrs, Map fields, Map subelements, Map colnames, Map<String,String> format) = introspect(object)
 
         attrs.each { String k, Object v ->
-            xml.attribute(k, v?.toString() ?: '')
+            xml.attribute(k, formatCustom(v,format[k])?.toString() ?: '')
         }
         xml.build {
             def xmld = delegate
             fields.each { k, v ->
-                xmld."$k"(v)
+                if (v instanceof Collection && colnames[k]) {
+                    def name = colnames[k]
+                    xmld."$k" {
+                        v.each { val ->
+                            xmld."$name"(val)
+                        }
+                    }
+                } else if (v instanceof Map && colnames[k]) {
+                    def name = colnames[k]
+                    xmld."$k" {
+                        v.each { mk, val ->
+                            xmld."$name"([key: mk], val)
+                        }
+                    }
+                } else {
+                    xmld."$k"(formatCustom(v,format[k]))
+                }
             }
         }
         subelements.each { k, v ->
-            xml.convertAnother(v)
+            xml.convertAnother(formatCustom(v,format[k]))
         }
 
     }

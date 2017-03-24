@@ -103,6 +103,14 @@ class ApiMarshaller {
             if (elemName) {
                 fieldDef.elementName = elemName.value()
             }
+            def colElem = f.getAnnotation(CollectionElement)
+            if (colElem) {
+                fieldDef.collectionKeyName = colElem.value()
+            }
+            def fmat = f.getAnnotation(CustomFormat)
+            if (fmat) {
+                fieldDef.customFormat = fmat.value()
+            }
         }
         return fieldDefs
     }
