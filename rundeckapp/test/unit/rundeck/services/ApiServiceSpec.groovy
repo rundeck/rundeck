@@ -258,7 +258,7 @@ class ApiServiceSpec extends Specification {
         def tokenUser = 'auser'
         def tokenRoles = ['role1'] as Set
 
-        def tokenTime = 3600
+        def tokenTime = 124
 
         service.frameworkService = Mock(FrameworkService)
         service.configurationService = Mock(ConfigurationService)
