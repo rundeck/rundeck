@@ -1,5 +1,5 @@
-<div class="form-group %{--
-  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+%{--
+  - Copyright 2017 Rundeck, Inc. (http://simplifyops.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -13,8 +13,7 @@
   - See the License for the specific language governing permissions and
   - limitations under the License.
   --}%
-
-${user.errors?.hasFieldErrors('login')?'has-error':''}">
+<div class="form-group ${user.errors?.hasFieldErrors('login')?'has-error':''}">
     <label for="login" class="col-sm-2 control-label">
         <g:message code="domain.User.login.label"/>
     </label>
