@@ -151,7 +151,7 @@ class ApiService {
     /**
      * Find a token by UUID
      */
-    AuthToken findUserTokenId(String id) {
+    AuthToken findTokenId(String id) {
         AuthToken.findByUuid(id)
     }
     /**

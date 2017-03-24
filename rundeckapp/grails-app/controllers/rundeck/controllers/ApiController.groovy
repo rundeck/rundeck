@@ -140,7 +140,7 @@ class ApiController extends ControllerBase{
         //admin: search by token ID then token value
         //user: search for token ID owned by user
         AuthToken oldtoken = adminAuth ?
-                (apiService.findUserTokenId(params.token) ?: apiService.findUserTokenValue(params.token)) :
+                (apiService.findTokenId(params.token) ?: apiService.findUserTokenValue(params.token)) :
                 apiService.findUserTokenId(authContext.username, params.token)
 
 
