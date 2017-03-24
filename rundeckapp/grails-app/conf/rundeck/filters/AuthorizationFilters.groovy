@@ -211,15 +211,12 @@ public class AuthorizationFilters implements ApplicationContextAware{
         }
         def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
         if (tokenobj) {
-            if (tokenobj.expiration != null) {
-                def now = Clock.systemUTC().instant()
-                def tokenexpire = tokenobj.expiration.toInstant()
-                if (tokenexpire < now) {
-                    return null
-                }
+            if (tokenobj.tokenIsExpired()) {
+                log.debug("loginCheck token is expired ${tokenobj?.user}, token: ${tokenobj.uuid?:tokenobj.token}");
+                return null
             }
             User user = tokenobj?.user
-            log.debug("loginCheck found user ${user} via DB, token: ${authtoken}");
+            log.debug("loginCheck found user ${user} via DB, token: ${tokenobj.uuid?:tokenobj.token}");
             return user.login
         }
         null

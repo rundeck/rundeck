@@ -15,6 +15,9 @@
  */
 
 package rundeck
+
+import java.time.Clock
+
 class AuthToken {
     String token
     String authRoles
@@ -52,5 +55,9 @@ class AuthToken {
             return []
         }
         new HashSet(authRoles.split(' *, *').collect { it.trim() }.findAll { it } as List)
+    }
+
+    boolean tokenIsExpired() {
+        expiration!=null && (expiration < Date.from(Clock.systemUTC().instant()))
     }
 }
