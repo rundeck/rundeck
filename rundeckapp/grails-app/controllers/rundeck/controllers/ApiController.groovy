@@ -16,10 +16,11 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.tokens.ListTokens
+import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
-import rundeck.User
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
@@ -39,8 +40,8 @@ class ApiController extends ControllerBase{
     def configurationService
 
     static allowedMethods = [
-            apiTokenList  : ['GET'],
-            apiTokenCreate: ['GET']
+            apiTokenList         : ['GET'],
+            apiTokenCreate       : ['POST'],
     ]
     def invalid = {
         return apiService.renderErrorXml(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
@@ -116,24 +117,46 @@ class ApiController extends ControllerBase{
             response.outputStream.close()
         }
     }
-    private renderToken(AuthToken oldtoken){
-        withFormat {
-            xml {
-                apiService.renderSuccessXml(request, response) {
-                    delegate.token(id: oldtoken.token, user: oldtoken.user.login, roles:oldtoken.authRoles, expiration:oldtoken.expiration)
-                }
-            }
-            json {
-                render(contentType: 'application/json') {
-                    delegate.id = oldtoken.token
-                    delegate.user = oldtoken.user.login
-                    delegate.roles = oldtoken.authRolesSet()
-                    delegate.expiration = oldtoken.expiration
-                }
+    /**
+     * /api/11/token/$token
+     */
+    def apiTokenManage() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
 
-            }
+        if (!apiService.requireParametersFormat(params, response, ['token'])) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def adminAuth = apiService.hasTokenAdminAuth(authContext)
+
+        if (request.api_version < ApiRequestFilters.V19 && !adminAuth) {
+            return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'Rundeck', 'User account'])
+        }
+
+        //admin: search by token ID then token value
+        //user: search for token ID owned by user
+        AuthToken oldtoken = adminAuth ?
+                (apiService.findUserTokenId(params.token) ?: apiService.findUserTokenValue(params.token)) :
+                apiService.findUserTokenId(authContext.username, params.token)
+
+
+        if (!apiService.requireExistsFormat(response, oldtoken, ['Token', params.token])) {
+            return
+        }
+
+        switch (request.method) {
+            case 'GET':
+                return respond(new Token(oldtoken), [formats: ['xml', 'json']])
+                break;
+            case 'DELETE':
+                apiService.removeToken(oldtoken)
+                return render(status: HttpServletResponse.SC_NO_CONTENT)
+                break;
         }
     }
+
     /**
      * GET /api/11/tokens/$user?
      */
@@ -143,58 +166,27 @@ class ApiController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!frameworkService.authorizeApplicationResourceType(
-                authContext,
-                AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN
-        )) {
+        def adminAuth = apiService.hasTokenAdminAuth(authContext)
+
+        if (request.api_version < ApiRequestFilters.V19 && !adminAuth) {
             return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'Rundeck', 'User account'])
+        }
+
+        if (!adminAuth && params.user && params.user != authContext.username) {
+            return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'User', params.user])
         }
         def tokenlist
         if (params.user) {
-            def user = User.findByLogin(params.user)
-            tokenlist = user ? AuthToken.findAllByUser(user) : []
+            tokenlist = apiService.findUserTokensCreator(params.user)
+        } else if (!adminAuth) {
+            tokenlist = apiService.findUserTokensCreator(authContext.username)
         } else {
             tokenlist = AuthToken.list()
         }
+        def apiv19 = request.api_version >= ApiRequestFilters.V19
+        def data = new ListTokens(params.user, !params.user, tokenlist.collect { new Token(it, apiv19) })
 
-        withFormat {
-            xml {
-                apiService.renderSuccessXml(request, response) {
-                    def attrs = [count: tokenlist.size()]
-                    if (params.user) {
-                        attrs.user = params.user
-                    } else {
-                        attrs.allusers = 'true'
-                    }
-                    tokens(attrs) {
-                        tokenlist.each { AuthToken token ->
-                            delegate.token(
-                                    id: token.token,
-                                    user: token.user.login,
-                                    roles: token.authRoles,
-                                    expiration: token.expiration
-                            )
-                        }
-                    }
-                }
-            }
-            json {
-                render(contentType: 'application/json') {
-                    array {
-                        tokenlist.each { AuthToken token ->
-                            delegate.element(
-                                    id: token.token,
-                                    user: token.user.login,
-                                    roles: token.authRolesSet(),
-                                    expiration: token.expiration
-                            )
-                        }
-                    }
-                }
-
-            }
-        }
+        respond(data, [formats: ['xml', 'json']])
     }
 
     /**
@@ -207,53 +199,59 @@ class ApiController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
             //parse input json or xml
-        String tokenuser = params.user
+        String tokenuser = params.user ?: authContext.username
         def roles = null
         def tokenDuration = null
         def errors = []
-        boolean tokenRolesV19Enabled = request.api_version > ApiRequestFilters.V18
+        boolean tokenRolesV19Enabled = request.api_version >= ApiRequestFilters.V19
 
-        def parsed = apiService.parseJsonXmlWith(request, response, [
-                json: { data ->
-                    if (!params.user) {
-                        tokenuser = data.user
-                        if (!tokenuser) {
-                            errors << " json: expected 'user' property"
+        if (tokenRolesV19Enabled || request.getHeader("Content-Type")) {
+            def parsed = apiService.parseJsonXmlWith(request, response, [
+                    json: { data ->
+                        if (!params.user) {
+                            tokenuser = data.user
+                            if (!tokenuser) {
+                                errors << " json: expected 'user' property"
+                            }
+                        }
+                        if (tokenRolesV19Enabled) {
+                            roles = data.roles
+                            tokenDuration = data.duration
+                            if (!roles) {
+                                errors << " json: expected 'roles' property"
+                            }
+                        }
+                    },
+                    xml : { xml ->
+                        if (!params.user) {
+                            tokenuser = xml.'@user'.text()
+                            if (!tokenuser) {
+                                errors << " xml: expected 'user' attribute"
+                            }
+                        }
+                        if (tokenRolesV19Enabled) {
+                            roles = xml.'@roles'.text()
+                            tokenDuration = xml.'@duration'.text()
+                            if (!roles) {
+                                errors << " xml: expected 'roles' attribute"
+                            }
                         }
                     }
-                    roles = data.roles
-                    tokenDuration = data.duration
-                    if (!roles && tokenRolesV19Enabled) {
-                        errors << " json: expected 'roles' property"
-                    }
-                },
-                xml : { xml ->
-                    if (!params.user) {
-                        tokenuser = xml.'@user'.text()
-                        if (!tokenuser) {
-                            errors << " xml: expected 'user' attribute"
-                        }
-                    }
-                    roles = xml.'@roles'.text()
-                    tokenDuration = xml.'@duration'.text()
-                    if (!roles && tokenRolesV19Enabled) {
-                        errors << " xml: expected 'roles' attribute"
-                    }
-                }
-        ]
-        )
-        if (!parsed) {
-            return
-        }
-        if (errors) {
-            return apiService.renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_BAD_REQUEST,
-                    code  : 'api.error.invalid.request',
-                    args  : ["Format was not valid." + errors.join(" ")]
             ]
             )
+            if (!parsed) {
+                return
+            }
+            if (errors) {
+                return apiService.renderErrorFormat(response, [
+                        status: HttpServletResponse.SC_BAD_REQUEST,
+                        code  : 'api.error.invalid.request',
+                        args  : ["Format was not valid." + errors.join(" ")]
+                ]
+                )
+            }
         }
-        if (request.api_version <= ApiRequestFilters.V18) {
+        if (!tokenRolesV19Enabled) {
             roles = 'api_token_group'
             tokenDuration = null
         }
@@ -261,6 +259,9 @@ class ApiController extends ControllerBase{
             roles = AuthToken.parseAuthRoles(roles)
         } else if (roles instanceof Collection) {
             roles = new HashSet(roles)
+        }
+        if (roles == ['*']) {
+            roles = null
         }
         AuthToken token
 
@@ -289,47 +290,7 @@ class ApiController extends ControllerBase{
             )
         }
         response.status = HttpServletResponse.SC_CREATED
-        renderToken(token)
-    }
-
-    /**
-     * /api/11/token/$token
-     */
-    def apiTokenManage() {
-        if (!apiService.requireApi(request, response)) {
-            return
-        }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN)) {
-            return apiService.renderErrorFormat(response, [
-                    status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized',
-                    args: [AuthConstants.ACTION_ADMIN, 'Rundeck', 'User account']
-            ])
-        }
-        if(!apiService.requireParametersFormat(params,response,['token'])){
-            return
-        }
-
-        AuthToken oldtoken = AuthToken.findByToken(params.token)
-        if (!apiService.requireExistsFormat(response,oldtoken,['Token',params.token])) {
-            return
-        }
-
-        switch (request.method){
-            case 'GET':
-                return renderToken(oldtoken)
-                break;
-            case 'DELETE':
-                def findtoken=params.token
-                def login=oldtoken.user.login
-                def oldAuthRoles = oldtoken.authRoles
-                oldtoken.delete(flush: true)
-                log.info("EXPIRE TOKEN ${findtoken} for User ${login} with roles: ${oldAuthRoles}")
-                return render(status: HttpServletResponse.SC_NO_CONTENT)
-                break;
-        }
+        respond(new Token(token), [formats: ['xml', 'json']])
     }
 
     /**
