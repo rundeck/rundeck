@@ -52,7 +52,7 @@ class Sizes {
         null
     }
 
-    static final Map<String, Long> TIME_UNITS = [s: 1, m: 60, h: 60 * 60, d: 24 * 60 * 60]
+    static final Map<String, Long> TIME_UNITS = [s: 1, m: 60, h: 60 * 60, d: 24 * 60 * 60, y: 365 * 24 * 60 * 60]
     /**
      * Return the timeout duration in seconds for a timeout string in the form "1d2h3m15s" etc
      * @param time
@@ -63,9 +63,9 @@ class Sizes {
         long timeval = 0
         def matcher = (time =~ /(\d+)(.)?/)
         matcher.each { m ->
-            int val
+            long val
             try {
-                val = Integer.parseInt(m[1])
+                val = Long.parseLong(m[1])
             } catch (NumberFormatException e) {
                 return
             }
@@ -83,7 +83,7 @@ class Sizes {
      * @return
      */
     public static boolean validTimeDuration(String time) {
-        def matcher = (time =~ /(\d+)([smhd])?/)
+        def matcher = (time =~ /(\d+)([smhdy])?/)
         return matcher.matches()
     }
 }
