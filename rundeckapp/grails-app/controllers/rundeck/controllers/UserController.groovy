@@ -119,7 +119,7 @@ class UserController extends ControllerBase{
         [
                 user              : u,
                 authRoles         : authContext.getRoles(),
-                tokenMaxExpiration: configurationService.getInteger("api.tokens.duration.max", 0)
+                tokenMaxExpiration: apiService.maxTokenDurationConfig()
         ]
     }
     def create={

@@ -26,6 +26,7 @@ import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
 import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
+import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.User
@@ -228,7 +229,7 @@ class ApiService {
             }
         }
 
-        Integer maxTokenDuration = configurationService.getInteger("api.tokens.duration.max", 0)
+        Integer maxTokenDuration = maxTokenDurationConfig()
         def generate = generateTokenExpirationDate(tokenTimeSeconds, maxTokenDuration)
         if (generate.max) {
             throw new Exception("Duration exceeds maximum allowed: " + maxTokenDuration)
@@ -240,6 +241,15 @@ class ApiService {
             throw new Exception("Couldn't find user: ${createTokenUser}")
         }
         return generateAuthToken(authContext.username, u, roles, newDate)
+    }
+
+    public int maxTokenDurationConfig() {
+        def string = configurationService.getString("api.tokens.duration.max", null)
+        if (!Sizes.validTimeDuration(string)) {
+            log.warn("Invalid configuration for rundeck.api.tokens.duration.max: " + string + ", using 30d")
+            string = "30d"
+        }
+        string ? Sizes.parseTimeDuration(string) : 0
     }
 
     def respondOutput(HttpServletResponse response, String contentType, String output) {

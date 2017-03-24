@@ -269,7 +269,7 @@ class ApiServiceSpec extends Specification {
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
         service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> true
-        service.configurationService.getInteger("api.tokens.duration.max", 0) >> 123
+        service.configurationService.getString("api.tokens.duration.max", null) >> '123'
         service.userService.findOrCreateUser('auser') >> user
         Exception e = thrown()
         e.message =~ /Duration exceeds maximum allowed: /
