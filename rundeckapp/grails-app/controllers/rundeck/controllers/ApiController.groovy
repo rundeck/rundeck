@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.app.api.tokens.ListTokens
+import com.dtolabs.rundeck.app.api.tokens.RemoveExpiredTokens
 import com.dtolabs.rundeck.app.api.tokens.Token
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import org.rundeck.util.Sizes
@@ -42,6 +43,7 @@ class ApiController extends ControllerBase{
     static allowedMethods = [
             apiTokenList         : ['GET'],
             apiTokenCreate       : ['POST'],
+            apiTokenRemoveExpired: ['POST']
     ]
     def invalid = {
         return apiService.renderErrorXml(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
@@ -293,6 +295,44 @@ class ApiController extends ControllerBase{
         respond(new Token(token), [formats: ['xml', 'json']])
     }
 
+    /**
+     * /api/19/tokens/$user?/removeExpired
+     */
+    def apiTokenRemoveExpired() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+            return
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def adminAuth = apiService.hasTokenAdminAuth(authContext)
+
+        if (!apiService.requireParameters(params, response, ['user'])) {
+            return
+        }
+        def user = params.user
+        def alltokens = user == '*'
+
+        if (!adminAuth && alltokens) {
+            return apiService.renderUnauthorized(
+                    response,
+                    [AuthConstants.ACTION_ADMIN, 'API Tokens for ', "All users"]
+            )
+        }
+        if (!adminAuth && user != authContext.username) {
+            return apiService.renderUnauthorized(
+                    response,
+                    [AuthConstants.ACTION_ADMIN, 'API Tokens for user: ', params.user]
+            )
+        }
+
+        def resultCount = alltokens ?
+                apiService.removeAllExpiredTokens() :
+                apiService.removeAllExpiredTokens(user)
+
+        respond(
+                new RemoveExpiredTokens(count: resultCount, message: "Removed $resultCount expired tokens"),
+                [formats: ['json', 'xml']]
+        )
+    }
     /**
      * /api/1/system/info: display stats and info about the server
      */
