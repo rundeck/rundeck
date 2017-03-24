@@ -301,6 +301,7 @@ class ApiServiceSpec extends Specification {
         result.expiration != null
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >>
                 (tokenaction == 'admin')
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'generate_service_token') >>
                 ((tokenaction == 'generate_service_token'))
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
@@ -382,6 +383,7 @@ class ApiServiceSpec extends Specification {
         result.expiration != null
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >>
                 (tokenaction == 'admin')
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
         if (tokenaction == 'admin') {
             0 * service.frameworkService.authorizeApplicationResource(*_)
@@ -420,6 +422,7 @@ class ApiServiceSpec extends Specification {
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
         service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
         service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
         1 * service.frameworkService.authorizeApplicationResource(
                 auth,
@@ -488,6 +491,7 @@ class ApiServiceSpec extends Specification {
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'generate_service_token') >>
                 (tokenaction == 'generate_service_token')
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
@@ -524,6 +528,7 @@ class ApiServiceSpec extends Specification {
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'generate_service_token') >>
                 (tokeaction == 'generate_service_token')
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'generate_user_token') >>
@@ -559,6 +564,7 @@ class ApiServiceSpec extends Specification {
         def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
         then:
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
         _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'generate_service_token') >>
                 true
         0 * service.frameworkService._(*_)
