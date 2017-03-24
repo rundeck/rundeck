@@ -164,10 +164,8 @@ public class ApiRequestFilters {
                 }
                 request.api_version = VersionMap[params.api_version]
                 request['ApiRequestFilters.request.parameters.project']=params.project?:request.project?:''
-                if (request.api_version >= V18) {
-                    XML.use('v' + request.api_version)
-                    JSON.use('v' + request.api_version)
-                }
+                XML.use('v' + request.api_version)
+                JSON.use('v' + request.api_version)
                 return true
             }
             after = {
