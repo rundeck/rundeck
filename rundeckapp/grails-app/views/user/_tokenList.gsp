@@ -25,7 +25,7 @@
             <g:message code="expiration"/>
         </th>
         <th class="table-header">
-            <g:message code="user"/>
+            <g:message code="token.username" />
         </th>
         <th class="table-header">
             <g:message code="roles"/>
