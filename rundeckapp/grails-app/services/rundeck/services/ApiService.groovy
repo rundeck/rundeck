@@ -132,7 +132,7 @@ class ApiService {
     /**
      * Find a token by UUID and creator
      */
-    AuthToken findUserToken(
+    AuthToken findUserTokenId(
             String creator,
             String id
     )
@@ -140,10 +140,25 @@ class ApiService {
         AuthToken.findByUuidAndCreator(id, creator)
     }
     /**
+     * Find a token by UUID and creator
+     */
+    List<AuthToken> findUserTokensCreator(
+            String creator
+    )
+    {
+        AuthToken.findAllByCreator(creator)
+    }
+    /**
      * Find a token by UUID
      */
-    AuthToken findUserToken( String id) {
+    AuthToken findUserTokenId(String id) {
         AuthToken.findByUuid(id)
+    }
+    /**
+     * Find a token by UUID
+     */
+    AuthToken findUserTokenValue(String token) {
+        AuthToken.findByToken(token)
     }
     /**
      * Generate an auth token
@@ -151,7 +166,7 @@ class ApiService {
      * @param tokenTime time value for token expiration
      * @param tokenTimeUnit time unit for token expiration (h,m,s)
      * @param username owner name of token
-     * @param tokenRoles role list for token
+     * @param tokenRoles role list for token, or null to use all owner roles (user token only)
      * @return
      */
     AuthToken generateUserToken(
@@ -168,25 +183,13 @@ class ApiService {
         def selfAuth = false
         def serviceAuth = false
         //admin auth allows generate of any user token with anhy roles
-        def adminAuth = frameworkService.authorizeApplicationResourceType(
-                authContext,
-                AuthConstants.TYPE_APITOKEN,
-                AuthConstants.ACTION_ADMIN
-        )
+        def adminAuth = hasTokenAdminAuth(authContext)
         if (!adminAuth) {
             //service auth allows generate of any user token with additional service roles
-            serviceAuth = frameworkService.authorizeApplicationResourceType(
-                    authContext,
-                    AuthConstants.TYPE_APITOKEN,
-                    AuthConstants.GENERATE_SERVICE_TOKEN
-            )
+            serviceAuth = hasTokenServiceGenerateAuth(authContext)
             if (!serviceAuth) {
                 //self auth allows generate of self-owned token with any subset of self-owned roles
-                selfAuth = frameworkService.authorizeApplicationResourceType(
-                        authContext,
-                        AuthConstants.TYPE_APITOKEN,
-                        AuthConstants.GENERATE_USER_TOKEN
-                )
+                selfAuth = hasTokenUserGenerateAuth(authContext)
             }
         }
         if (!(adminAuth || serviceAuth || selfAuth)) {
@@ -241,6 +244,34 @@ class ApiService {
             throw new Exception("Couldn't find user: ${createTokenUser}")
         }
         return generateAuthToken(authContext.username, u, roles, newDate)
+    }
+
+    public boolean hasTokenUserGenerateAuth(UserAndRolesAuthContext authContext) {
+        authorizedForTokenAction(authContext, AuthConstants.GENERATE_USER_TOKEN)
+    }
+
+    public boolean hasTokenServiceGenerateAuth(UserAndRolesAuthContext authContext) {
+        authorizedForTokenAction(authContext, AuthConstants.GENERATE_SERVICE_TOKEN)
+    }
+
+    private boolean authorizedForTokenAction(UserAndRolesAuthContext authContext, String action) {
+        frameworkService.authorizeApplicationResourceType(
+                authContext,
+                AuthConstants.TYPE_APITOKEN,
+                action
+        )
+    }
+
+    public boolean hasTokenAdminAuth(UserAndRolesAuthContext authContext) {
+        frameworkService.authorizeApplicationResourceType(
+                authContext,
+                AuthConstants.TYPE_APITOKEN,
+                AuthConstants.ACTION_ADMIN
+        ) || frameworkService.authorizeApplicationResourceType(
+                authContext,
+                AuthConstants.TYPE_USER,
+                AuthConstants.ACTION_ADMIN
+        )
     }
 
     public int maxTokenDurationConfig() {
