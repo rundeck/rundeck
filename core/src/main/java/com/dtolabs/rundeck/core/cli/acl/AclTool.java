@@ -819,7 +819,8 @@ public class AclTool extends BaseTool {
             Arrays.asList(
                     ACLConstants.TYPE_PROJECT,
                     ACLConstants.TYPE_PROJECT_ACL,
-                    ACLConstants.TYPE_STORAGE
+                    ACLConstants.TYPE_STORAGE,
+                    ACLConstants.TYPE_APITOKEN
             )
     );
     static final Set<String> appKinds = new HashSet<>(
@@ -828,7 +829,8 @@ public class AclTool extends BaseTool {
                     ACLConstants.TYPE_SYSTEM,
                     ACLConstants.TYPE_SYSTEM_ACL,
                     ACLConstants.TYPE_USER,
-                    ACLConstants.TYPE_JOB
+                    ACLConstants.TYPE_JOB,
+                    ACLConstants.TYPE_APITOKEN
             )
     );
 
@@ -857,6 +859,10 @@ public class AclTool extends BaseTool {
                     ACLConstants.ACTION_UPDATE,
                     ACLConstants.ACTION_DELETE
             );
+    static final List<String> appApitokenActions =
+            Arrays.asList(
+                    ACLConstants.ACTION_CREATE
+            );
     static final List<String> appProjectKindActions =
             Arrays.asList(
                     ACLConstants.ACTION_CREATE
@@ -878,13 +884,17 @@ public class AclTool extends BaseTool {
             );
     static final List<String> appUserKindActions =
             Arrays.asList(
-                    ACLConstants.ACTION_ADMIN,
-                    ACLConstants.ACTION_GENERATE_USER_TOKEN,
-                    ACLConstants.ACTION_GENERATE_SERVICE_TOKEN
+                    ACLConstants.ACTION_ADMIN
             );
     static final List<String> appJobKindActions =
             Arrays.asList(
                     ACLConstants.ACTION_ADMIN
+            );
+    static final List<String> appApitokenKindActions =
+            Arrays.asList(
+                    ACLConstants.ACTION_ADMIN,
+                    ACLConstants.ACTION_GENERATE_USER_TOKEN,
+                    ACLConstants.ACTION_GENERATE_SERVICE_TOKEN
             );
     static final Map<String, List<String>> appResActionsByType;
     static final Map<String, List<String>> appResAttrsByType;
@@ -894,6 +904,7 @@ public class AclTool extends BaseTool {
         appResActionsByType.put(ACLConstants.TYPE_PROJECT, appProjectActions);
         appResActionsByType.put(ACLConstants.TYPE_PROJECT_ACL, appProjectAclActions);
         appResActionsByType.put(ACLConstants.TYPE_STORAGE, appStorageActions);
+        appResActionsByType.put(ACLConstants.TYPE_APITOKEN, appApitokenActions);
     }
 
     static {
@@ -901,6 +912,7 @@ public class AclTool extends BaseTool {
         appResAttrsByType.put(ACLConstants.TYPE_PROJECT, Collections.singletonList("name"));
         appResAttrsByType.put(ACLConstants.TYPE_PROJECT_ACL, Collections.singletonList("name"));
         appResAttrsByType.put(ACLConstants.TYPE_STORAGE, Arrays.asList("path", "name"));
+        appResAttrsByType.put(ACLConstants.TYPE_APITOKEN, Arrays.asList("username", "roles"));
 
     }
 
@@ -914,6 +926,7 @@ public class AclTool extends BaseTool {
         appKindActionsByType.put(ACLConstants.TYPE_SYSTEM_ACL, appSystemAclKindActions);
         appKindActionsByType.put(ACLConstants.TYPE_USER, appUserKindActions);
         appKindActionsByType.put(ACLConstants.TYPE_JOB, appJobKindActions);
+        appKindActionsByType.put(ACLConstants.TYPE_APITOKEN, appApitokenKindActions);
     }
 
 
@@ -1930,6 +1943,7 @@ public class AclTool extends BaseTool {
         public static final String TYPE_SYSTEM_ACL = "system_acl";
         public static final String TYPE_NODE = "node";
         public static final String TYPE_JOB = "job";
+        public static final String TYPE_APITOKEN = "apitoken";
         public static final String TYPE_ADHOC = "adhoc";
         public static final String TYPE_PROJECT = "project";
         public static final String TYPE_PROJECT_ACL = "project_acl";
