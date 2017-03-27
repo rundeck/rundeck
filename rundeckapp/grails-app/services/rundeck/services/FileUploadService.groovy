@@ -159,7 +159,7 @@ class FileUploadService {
     private void expireRecord(JobFileRecord record) {
         try {
             def uuid = record.uuid
-            removeFile(record, JobFileRecord.STATE_EXPIRED)
+            changeFileState(record, FileUploadPlugin.ExternalState.Unused)
             log.debug("Job File Record Expired: $uuid")
         } catch (Throwable t) {
             log.error("Failed removing expired file with plugin: " + t, t)
@@ -206,17 +206,26 @@ class FileUploadService {
         getPlugin().retrieveFile(reference, output)
     }
 
-    def removeFile(JobFileRecord record, String toState) {
-        getPlugin().removeFile(record.storageReference)
+    private def changeFileState(JobFileRecord record, FileUploadPlugin.ExternalState extState) {
+        def result = getPlugin().transitionState(record.storageReference, extState)
+        String toState = FileUploadPlugin.InternalState.Deleted == result ?
+                (FileUploadPlugin.ExternalState.Unused == extState ?
+                        JobFileRecord.STATE_EXPIRED :
+                        JobFileRecord.STATE_DELETED
+                ) :
+                JobFileRecord.STATE_RETAINED
+
         record.state(toState)
         record.save(flush: true)
-        removeLocalFile(record.storageReference)
+        if (result == FileUploadPlugin.InternalState.Deleted) {
+            removeLocalFile(record.storageReference)
+        }
     }
 
     def deleteRecord(JobFileRecord record) {
         def plugin = getPlugin()
         if (plugin.hasFile(record.storageReference)) {
-            plugin.removeFile(record.storageReference)
+            plugin.transitionState(record.storageReference, FileUploadPlugin.ExternalState.Deleted)
         }
         removeLocalFile(record.storageReference)
         record.delete()
@@ -514,7 +523,7 @@ class FileUploadService {
     @Listener
     def executionComplete(ExecutionCompleteEvent e) {
         findRecords(e.execution, RECORD_TYPE_OPTION_INPUT)?.each {
-            removeFile(it, JobFileRecord.STATE_DELETED)
+            changeFileState(it, FileUploadPlugin.ExternalState.Used)
         }
     }
 

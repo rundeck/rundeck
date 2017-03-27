@@ -108,4 +108,14 @@ class FSFileUploadPlugin implements FileUploadPlugin {
         File output = new File(basedir, reference)
         return Files.deleteIfExists(output.toPath())
     }
+
+    @Override
+    FileUploadPlugin.InternalState transitionState(
+            final String reference,
+            final FileUploadPlugin.ExternalState reason
+    )
+    {
+        removeFile(reference)
+        FileUploadPlugin.InternalState.Deleted
+    }
 }

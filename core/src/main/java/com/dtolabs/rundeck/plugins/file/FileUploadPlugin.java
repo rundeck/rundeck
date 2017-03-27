@@ -67,7 +67,7 @@ public interface FileUploadPlugin {
     public boolean hasFile(String ref);
 
     /**
-     * Retrieve the file if iti si available locally, otherwise return null
+     * Retrieve the file if it is available locally, otherwise return null
      *
      * @param ref ref
      *
@@ -93,4 +93,45 @@ public interface FileUploadPlugin {
      */
     boolean removeFile(String reference);
 
+    /**
+     * Transition between states, allows plugin to determine behavior
+     *
+     * @param reference reference
+     * @param reason    the new external state of the file
+     *
+     * @return the new internal state of the file
+     */
+    InternalState transitionState(String reference, ExternalState reason);
+
+    /**
+     * Represents file states known to rundeck
+     */
+    enum ExternalState {
+        /**
+         * The file has been used
+         */
+        Used,
+        /**
+         * The file is no longer used
+         */
+        Unused,
+        /**
+         * The file should be deleted
+         */
+        Deleted,
+    }
+
+    /**
+     * Represents file states known to the plugin
+     */
+    enum InternalState {
+        /**
+         * The internal stored file was deleted
+         */
+        Deleted,
+        /**
+         * The internal stored file is retained
+         */
+        Retained
+    }
 }
