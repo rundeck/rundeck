@@ -19,11 +19,8 @@ package com.dtolabs.rundeck.core.authorization;
 import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.providers.*;
-import com.dtolabs.rundeck.core.utils.Converter;
 import com.dtolabs.rundeck.core.utils.PairImpl;
 import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.Predicate;
-import org.apache.commons.collections.PredicateUtils;
 import org.apache.log4j.Logger;
 
 import javax.security.auth.Subject;
@@ -32,8 +29,11 @@ import java.security.Principal;
 import java.text.MessageFormat;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 
 /**
  * Evaluate ACL requests over a set of rules
@@ -41,7 +41,7 @@ import java.util.regex.PatternSyntaxException;
 public class RuleEvaluator implements Authorization, AclRuleSetSource {
     private final static Logger logger = Logger.getLogger(RuleEvaluator.class);
     final private AclRuleSet rules;
-    final private AclRuleSetSource source;
+    final private AclRuleSetSource source;;
 
     private RuleEvaluator(final AclRuleSetSource ruleSetSource) {
         this.source = ruleSetSource;
@@ -77,54 +77,56 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         );
     }
 
-    public List<AclRule> narrowContext(
+    public static List<AclRule> narrowContext(
             final AclRuleSet ruleSet,
-            final AclSubject subject, final Set<Attribute> environment
-    )
-    {
-        List<AclRule> matchedContexts = new ArrayList<>();
-        for (final AclRule f : ruleSet.getRules()) {
-            if (matchesContexts(f, subject, environment)) {
-                matchedContexts.add(f);
-            }
-        }
-        return matchedContexts;
-    }
-
-    private boolean matchesContexts(
-            final AclRule f,
             final AclSubject subject,
             final Set<Attribute> environment
     )
     {
-        long userMatchStart = System.currentTimeMillis();
+        return ruleSet.getRules()
+                      .stream()
+                      .filter(new Predicate<AclRule>() {
+                          @Override
+                          public boolean test(final AclRule rule) {
+                              return matchesContexts(rule, subject, environment);
+                          }
+                      })
+                      .collect(Collectors.toList());
 
-        if (f.getEnvironment() != null) {
-            final EnvironmentalContext environment1 = f.getEnvironment();
+    }
+
+    private static boolean matchesContexts(
+            final AclRule rule,
+            final AclSubject subject,
+            final Set<Attribute> environment
+    )
+    {
+        if (rule.getEnvironment() != null) {
+            final EnvironmentalContext environment1 = rule.getEnvironment();
             if (!environment1.isValid()) {
-                logger.warn(f.toString() + ": Context section not valid: " + environment1.toString());
+                logger.warn(rule.toString() + ": Context section not valid: " + environment1.toString());
             }
             if (!environment1.matches(environment)) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug(f.toString() + ": environment not matched: " + environment1.toString());
+                    logger.debug(rule.toString() + ": environment not matched: " + environment1.toString());
                 }
                 return false;
             }
         } else if (null != environment && environment.size() > 0) {
-            logger.debug(f.toString() + ": empty environment not matched");
+            logger.debug(rule.toString() + ": empty environment not matched");
             return false;
         }
 
 
-        if (subject.getUsername() != null && f.getUsername() != null) {
+        if (subject.getUsername() != null && rule.getUsername() != null) {
 
-            if (subject.getUsername().equals(f.getUsername())
-                || matchesPattern(subject.getUsername(), f.getUsername())
+            if (subject.getUsername().equals(rule.getUsername())
+                || matchesPattern(subject.getUsername(), rule.getUsername())
                     ) {
                 return true;
-            } else if (f.getUsername() != null) {
+            } else if (rule.getUsername() != null) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug(f.toString() + ": username not matched: " + f.getUsername());
+                    logger.debug(rule.toString() + ": username not matched: " + rule.getUsername());
                 }
             }
         }
@@ -132,19 +134,19 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
 
         if (subject.getGroups().size() > 0) {
             // no username matched, check groups.
-            if (subject.getGroups().contains(f.getGroup())
-                || matchesAnyPatterns(subject.getGroups(), f.getGroup())) {
+            if (subject.getGroups().contains(rule.getGroup())
+                || matchesAnyPatterns(subject.getGroups(), rule.getGroup())) {
                 return true;
             } else if (subject.getGroups().size() > 0) {
                 if (logger.isDebugEnabled()) {
-                    logger.debug(f.toString() + ": group not matched: " + f.getGroup());
+                    logger.debug(rule.toString() + ": group not matched: " + rule.getGroup());
                 }
             }
         }
         return false;
     }
 
-    private boolean matchesAnyPatterns(final Set<String> groups, final String patternStr) {
+    public static boolean matchesAnyPatterns(final Collection<String> groups, final String patternStr) {
         final Pattern pattern;
         try {
             pattern = Pattern.compile(patternStr);
@@ -159,7 +161,7 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         return false;
     }
 
-    private boolean matchesPattern(final String username, final String pattern) {
+    private static boolean matchesPattern(final String username, final String pattern) {
         try {
             return Pattern.compile(pattern).matcher(username).matches();
         } catch (PatternSyntaxException e) {
@@ -495,17 +497,17 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
     }
 
     private ContextDecision ruleIncludesResourceAction(
-            final AclRule ctx,
+            final AclRule rule,
             final Map<String, String> resource,
             final String action
     )
     {
         final ArrayList<ContextEvaluation> evaluations = new ArrayList<ContextEvaluation>();
-        final Explanation.Code decision = includes(ctx, resource, action);
+        final Explanation.Code decision = includes(rule, resource, action);
         evaluations.add(
                 new ContextEvaluation(
                         decision,
-                        MessageFormat.format("{0} {1} for action {2}", ctx, decision, action)
+                        MessageFormat.format("{0} {1} for action {2}", rule, decision, action)
                 )
         );
         return new ContextDecision(decision, Explanation.Code.GRANTED == decision, evaluations);
@@ -521,18 +523,26 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         }
 
         //evaluate match:
+        boolean matched = true;
+        boolean tested = false;
         if (rule.isRegexMatch()) {
-            return ruleMatchesMatchSection(resource, rule)
-                   ? allowOrDenyAction(rule, action)
-                   : Explanation.Code.REJECTED;
-        } else if (rule.isEqualsMatch()) {
-            return ruleMatchesEqualsSection(resource, rule)
-                   ? allowOrDenyAction(rule, action)
-                   : Explanation.Code.REJECTED;
-        } else if (rule.isContainsMatch()) {
-            return ruleMatchesContainsSection(resource, rule)
-                   ? allowOrDenyAction(rule, action)
-                   : Explanation.Code.REJECTED;
+            tested = true;
+            matched &= ruleMatchesMatchSection(resource, rule);
+        }
+        if (rule.isEqualsMatch()) {
+            tested = true;
+            matched &= ruleMatchesEqualsSection(resource, rule);
+        }
+        if (rule.isContainsMatch()) {
+            tested = true;
+            matched &= ruleMatchesContainsSection(resource, rule);
+        }
+        if (rule.isSubsetMatch()) {
+            tested = true;
+            matched &= ruleMatchesSubsetSection(resource, rule);
+        }
+        if (tested) {
+            return matched ? allowOrDenyAction(rule, action) : Explanation.Code.REJECTED;
         } else {
             //no resource matching defined, matches all resources of this type.
             return allowOrDenyAction(rule, action);
@@ -553,27 +563,40 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
      * Evaluates to true if the input is a string or collection of strings, and they are a superset of this object's
      * collection.
      */
-    static class SetContainsPredicate implements Predicate {
+    static class SetContainsPredicate implements Predicate<String> {
         HashSet<String> items = new HashSet<String>();
 
-        SetContainsPredicate(final Object item) {
-            if (item instanceof String) {
-                items.add((String) item);
-            } else if (item instanceof List) {
-                items.addAll((List<String>) item);
-            } else {
-                //unexpected, will reject everything
-                items = null;
-            }
+        SetContainsPredicate(List<String> items) {
+            this.items.addAll(items);
         }
 
-        public boolean evaluate(final Object o) {
-            if (null == items || null == o) {
+        SetContainsPredicate(final String item) {
+            items.add(item);
+        }
+
+        boolean isSubset(Object sub, Object sup) {
+            if (null == sub || null == sup) {
                 return false;
             }
-            final Collection input;
+            Collection supcollection = getCollection(sup);
+            if (null == supcollection) {
+                return false;
+            }
+            Collection subcollection = getCollection(sub);
+            if (null == subcollection) {
+                return false;
+            }
+            return CollectionUtils.isSubCollection(subcollection, supcollection);
+        }
+
+        public boolean test(final String o) {
+            return isSubset(items, o);
+        }
+
+        Collection getCollection(final Object o) {
+            Collection input = null;
             if (o instanceof String) {
-                final HashSet<String> hs = new HashSet<String>();
+                final HashSet<String> hs = new HashSet<>();
                 //treat o as comma-seperated list of strings
                 final String str = (String) o;
                 final String[] split = str.split(",");
@@ -583,36 +606,99 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
                 input = hs;
             } else if (o instanceof Collection) {
                 input = (Collection) o;
-            } else {
-                return false;
             }
-            return CollectionUtils.isSubCollection(items, input);
+            return input;
         }
     }
 
+    /**
+     * Evaluates to true if the input is a string or collection of strings, and they are a subset of this object's
+     * collection.
+     */
+    static class SetSubsetPredicate extends SetContainsPredicate implements Predicate<String> {
+        SetSubsetPredicate(final List<String> item) {
+            super(item);
+        }
+
+        SetSubsetPredicate(final String item) {
+            super(item);
+        }
+
+        public boolean test(final String o) {
+            if (o == null) {
+                return true;
+            }
+            return isSubset(o, items);
+        }
+    }
+
+    private Function<String, Predicate<String>> setContainsString = new Function<String, Predicate<String>>() {
+        @Override
+        public Predicate<String> apply(final String item) {
+            return new SetContainsPredicate(item);
+        }
+    };
+    private Function<List, Predicate<String>> setContainsList = new Function<List, Predicate<String>>() {
+        @Override
+        public Predicate<String> apply(final List items) {
+            return new SetContainsPredicate(items);
+        }
+    };
+    private Function<String, Predicate<String>> setSubsetString = new Function<String, Predicate<String>>() {
+        @Override
+        public Predicate<String> apply(final String item) {
+            return new SetSubsetPredicate(item);
+        }
+    };
+    private Function<List, Predicate<String>> setSubsetList = new Function<List, Predicate<String>>() {
+        @Override
+        public Predicate<String> apply(final List items) {
+            return new SetSubsetPredicate(items);
+        }
+    };
     boolean ruleMatchesContainsSection(final Map<String, String> resource, final AclRule rule) {
-        return validRuleSection(rule.getResource()) && predicateMatchRules(
-                rule, resource, true, new Converter<String,
-                        Predicate>()
-                {
-                    public Predicate convert(final String o) {
-                        return new SetContainsPredicate(o);
-                    }
-                }
-        );
+        return validRuleSection(rule.getContainsResource())
+               &&
+               predicateMatchRules(
+                       resource,
+                       setContainsString,
+                       setContainsList,
+                       rule.getContainsResource(),
+                       rule.getSourceIdentity()
+               );
+    }
+
+    boolean ruleMatchesSubsetSection(final Map<String, String> resource, final AclRule rule) {
+        return validRuleSection(rule.getSubsetResource())
+               &&
+               predicateMatchRules(
+                       resource,
+                       setSubsetString,
+                       setSubsetList,
+                       rule.getSubsetResource(),
+                       rule.getSourceIdentity()
+               );
     }
 
     boolean ruleMatchesEqualsSection(final Map<String, String> resource, final AclRule rule) {
 
-        return validRuleSection(rule.getResource()) && predicateMatchRules(
-                rule, resource, false, new Converter<String,
-                        Predicate>()
-                {
-                    public Predicate convert(final String o) {
-                        return PredicateUtils.equalPredicate(o);
-                    }
-                }
-        );
+        return validRuleSection(rule.getEqualsResource())
+               &&
+               predicateMatchRules(
+                       resource,
+                       new Function<String, Predicate<String>>() {
+                           @Override
+                           public Predicate<String> apply(final String o) {
+                               return new Predicate<String>() {
+                                   @Override
+                                   public boolean test(final String anObject) {
+                                       return o.equals(anObject);
+                                   }
+                               };
+                           }
+                       },
+                       null, rule.getEqualsResource(), rule.getSourceIdentity()
+               );
     }
 
     private boolean validRuleSection(final Map section) {
@@ -620,30 +706,33 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
     }
 
     boolean ruleMatchesMatchSection(final Map<String, String> resource, final AclRule ruleSection) {
-        return validRuleSection(ruleSection.getResource()) && predicateMatchRules(
-                ruleSection, resource, true, new Converter<String,
-                        Predicate>()
-                {
-                    public Predicate convert(final String o) {
-                        return new RegexPredicate(patternForRegex(o));
-                    }
-                }
-        );
+        return validRuleSection(ruleSection.getRegexResource())
+               &&
+               predicateMatchRules(
+                       resource,
+                       new Function<String, Predicate<String>>() {
+                           @Override
+                           public Predicate<String> apply(final String o) {
+                               return new RegexPredicate(RuleEvaluator.this.patternForRegex(o));
+                           }
+                       },
+                       null, ruleSection.getRegexResource(), ruleSection.getSourceIdentity()
+               );
     }
 
 
     /**
      * evaluates to true if the input matches a regular expression
      */
-    static class RegexPredicate implements Predicate {
+    static class RegexPredicate implements Predicate<String> {
         Pattern regex;
 
         RegexPredicate(final Pattern regex) {
             this.regex = regex;
         }
 
-        public boolean evaluate(final Object o) {
-            return o instanceof String && regex.matcher((String) o).matches();
+        public boolean test(final String o) {
+            return regex.matcher(o).matches();
         }
 
     }
@@ -670,24 +759,26 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
     /**
      * Return true if all entries in the "match" map pass the predicate tests for the resource
      *
-     * @param match                the set of matches to check
      * @param resource             the resource
-     * @param allowListMatch       if true, allow the match value to be a list of values which much all pass the
-     *                             test
      * @param predicateTransformer transformer to convert a String into a Predicate check
+     * @param listpred
+     * @param ruleResource
+     * @param sourceIdentity
      */
     @SuppressWarnings("rawtypes")
     boolean predicateMatchRules(
-            final AclRule match, final Map<String, String> resource, final boolean allowListMatch,
-            final Converter<String, Predicate> predicateTransformer
+            final Map<String, String> resource,
+            final Function<String, Predicate<String>> predicateTransformer,
+            final Function<List, Predicate<String>> listpred,
+            final Map<String, Object> ruleResource, final String sourceIdentity
     )
     {
-        for (final Object o : match.getResource().entrySet()) {
+        for (final Object o : ruleResource.entrySet()) {
             final Map.Entry entry = (Map.Entry) o;
             final String key = (String) entry.getKey();
             final Object test = entry.getValue();
 
-            final boolean matched = applyTest(match, resource, allowListMatch, predicateTransformer, key, test);
+            final boolean matched = applyTest(resource, predicateTransformer, key, test, listpred, sourceIdentity);
             if (!matched) {
                 return false;
             }
@@ -700,34 +791,40 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
      * Return true if all predicate tests on a certain resource entry evaluate to true
      *
      * @param resource             the resource
-     * @param allowListMatch       if true, allow the test to be a list of strings
-     * @param predicateTransformer a Converter<S,Predicate> to convert String to Predicate test
+     * @param stringPredicate a Converter<S,Predicate> to convert String to Predicate test
      * @param key                  the resource attribute key to check
      * @param test                 test to apply, can be a String, or List of Strings if allowListMatch is true
+     * @param listpred
+     * @param sourceIdentity
      */
     boolean applyTest(
-            final AclRule rule, final Map<String, String> resource, final boolean allowListMatch,
-            final Converter<String, Predicate> predicateTransformer, final String key,
-            final Object test
+            final Map<String, String> resource,
+            final Function<String, Predicate<String>> stringPredicate,
+            final String key,
+            final Object test,
+            final Function<List, Predicate<String>> listpred,
+            final String sourceIdentity
     )
     {
 
-        final ArrayList<Predicate> tests = new ArrayList<Predicate>();
-        if (allowListMatch && test instanceof List) {
+        final ArrayList<Predicate<String>> tests = new ArrayList<>();
+        if (listpred != null && test instanceof List) {
             //must match all values
-            for (final Object item : (List) test) {
-                final String s = (String) item;
-                tests.add(predicateTransformer.convert(s));
-            }
+            tests.add(listpred.apply((List) test));
         } else if (test instanceof String) {
             //match single test
-            tests.add(predicateTransformer.convert((String) test));
+            tests.add(stringPredicate.apply((String) test));
         } else {
             //unexpected format, do not match
-            logger.error(rule.getSourceIdentity() + ": cannot evaluate unexpected type: " + test.getClass().getName());
+            logger.error(sourceIdentity + ": cannot evaluate unexpected type: " + test.getClass().getName());
             return false;
         }
-
-        return PredicateUtils.allPredicate(tests).evaluate(resource.get(key));
+        String value = resource.get(key);
+        return tests.stream().allMatch(new Predicate<Predicate<String>>() {
+            @Override
+            public boolean test(final Predicate<String> pred) {
+                return pred.test(value);
+            }
+        });
     }
 }

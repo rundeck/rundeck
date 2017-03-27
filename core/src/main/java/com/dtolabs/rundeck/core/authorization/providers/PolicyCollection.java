@@ -20,7 +20,6 @@ import java.util.Collection;
 import java.util.Set;
 
 import javax.security.auth.Subject;
-import javax.xml.xpath.XPathExpressionException;
 
 import com.dtolabs.rundeck.core.authorization.AclRuleSetSource;
 import com.dtolabs.rundeck.core.authorization.Attribute;
@@ -35,7 +34,5 @@ public interface PolicyCollection extends AclRuleSetSource {
 
     public long countPolicies() ;
 
-    public Collection<AclContext> matchedContexts(Subject subject,
-            Set<Attribute> environment) ;
 
 }

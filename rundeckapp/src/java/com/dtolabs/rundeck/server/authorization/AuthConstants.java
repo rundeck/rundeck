@@ -51,11 +51,14 @@ public class AuthConstants {
     public static final String ACTION_DISABLE_EXECUTIONS = "disable_executions";
     public static final String ACTION_TOGGLE_SCHEDULE = "toggle_schedule";
     public static final String ACTION_TOGGLE_EXECUTION = "toggle_execution";
+    public static final String GENERATE_USER_TOKEN = "generate_user_token";
+    public static final String GENERATE_SERVICE_TOKEN="generate_service_token";
 
     public static final String TYPE_SYSTEM = "system";
     public static final String TYPE_SYSTEM_ACL = "system_acl";
     public static final String TYPE_NODE = "node";
     public static final String TYPE_JOB = "job";
+    public static final String TYPE_APITOKEN = "apitoken";
     public static final String TYPE_ADHOC = "adhoc";
     public static final String TYPE_PROJECT = "project";
     public static final String TYPE_PROJECT_ACL = "project_acl";

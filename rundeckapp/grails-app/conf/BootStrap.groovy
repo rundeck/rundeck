@@ -207,8 +207,17 @@ class BootStrap {
                      log.error("Unable to load static tokens file: "+e.getMessage())
                  }
                  Properties tokens = new Properties()
+                 def splitRegex = " *, *"
                  userTokens.each { k, v ->
-                    tokens[v]=k
+                     def roles='api_token_group'
+                     def tokenTmp=v
+                     def split = v.toString().split(splitRegex)
+                     if (split.length > 1) {
+                         tokenTmp = split[0]
+                         def groupList = split.drop(1)
+                         roles = groupList.join(',')
+                     }
+                    tokens[tokenTmp]=k+','+roles
                  }
                  servletContext.setAttribute("TOKENS_FILE_PATH", new File(tokensfile).absolutePath)
                  servletContext.setAttribute("TOKENS_FILE_PROPS", tokens)
@@ -216,7 +225,6 @@ class BootStrap {
                      log.debug("Loaded ${tokens.size} tokens from tokens file: ${tokensfile}...")
                  }
              }
-
 
             //import filesystem projects if using DB storage
             if((grailsApplication.config.rundeck?.projectsStorageType?:'db') == 'db'){

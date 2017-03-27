@@ -173,13 +173,20 @@ You might also want to restrict who can create *new* jobs. Since a new job does
 not exist yet, you cannot create a rule for this action to apply to an existing
 job.  Which means this corresponds to a generic resource with a "kind" called "job".
 
-## Special API Token Authentication group
+## API Token Authorization Roles
 
-Clients of the [Web API](../api/index.html) may use the [Token Authentication](../api/index.html#token-authentication) method.  These clients are
-placed in the special authorization group called `api_token_group`.
+In Rundeck 2.8.x and later, Authentication Tokens are given a set of *Authorization Roles* at generation time,
+so the access levels for the Token depend on how it was generated. 
 
-`api_token_group`
-~   Special role given to all [API Token](../api/index.html#token-authentication) authenticated access.
+See: [API Token](../api/index.html#token-authentication) usage instructions.
+
+See below: [API Token Authorization][].
+
+
+(**Note:** In Rundeck 2.7.x and earlier, clients of the [Web API](../api/index.html) may use the [Token Authentication](../api/index.html#token-authentication) method.  These clients are
+placed in the special authorization group called `api_token_group`.)
+
+[API Token Authorization]: #api-token-authorization
 
 ## Rundeck resource authorizations
 
@@ -227,50 +234,134 @@ aclpolicy:
     * Updating `update`
     * Deleting `delete`
     * Full access `admin`
+* Generating API Tokens (actions on a resource type of kind `apitoken`)
+    * Creating User tokens `generate_user_token`
+    * Creating Service tokens `generate_service_token`
+    * Full access `admin`
+* Create Service Tokens with specified Roles (actions on a `apitoken` type)
+    * Creating Service tokens `create`
 
 The following table summarizes the generic and specific resources and the
 actions you can restrict in the application scope:
 
-Type       Resource Kind     Properties   Actions               Description
-------     --------------    -----------  --------              ------------
-`resource` `project`         none         `create`              Create a new project
-"          `system`          none         `read`                Read system information
-"          "                 none         `enable_executions`   Enable executions
-"          "                 none         `disable_executions`  Disable executions
-"          "                 none         `admin`               Enable or disable executions
-"          `system_acl`      none         `read`                Read system ACL policy files
-"          "                 none         `create`              Create system ACL policy files
-"          "                 none         `update`              Update system ACL policy files
-"          "                 none         `delete`              Delete system ACL policy files
-"          "                 none         `admin`               All access to system ACL policy files
-"          `user`            none         `admin`               Modify user profiles
-"          `job`             none         `admin`               Manage job schedules
+Type       Resource Kind     Properties   Actions                  Description
+------     --------------    -----------  --------                 ------------
+`resource` `project`         none         `create`                 Create a new project
+"          `system`          none         `read`                   Read system information
+"          "                 none         `enable_executions`      Enable executions
+"          "                 none         `disable_executions`     Disable executions
+"          "                 none         `admin`                  Enable or disable executions
+"          `system_acl`      none         `read`                   Read system ACL policy files
+"          "                 none         `create`                 Create system ACL policy files
+"          "                 none         `update`                 Update system ACL policy files
+"          "                 none         `delete`                 Delete system ACL policy files
+"          "                 none         `admin`                  All access to system ACL policy files
+"          `user`            none         `admin`                  Modify user profiles
+"          `job`             none         `admin`                  Manage job schedules
+"          `apitoken`        none         `generate_user_token`    Create a "user" token
+"          "                 none         `generate_service_token` Create a "service" token
+"          "                 none         `admin`                  Full access
 ----------------------------
 
 Table: Application scope generic type actions
 
-Type          Properties    Actions                Description
------         -----------   --------               ------------
-`project`     "name"        `read`                 View a project in the project list
-"             "             `configure`            View and modify project configuration
-"             "             `delete`               Delete project
-"             "             `import`               Import archive contents to the project
-"             "             `export`               Export the project as an archive
-"             "             `delete_execution`     Delete executions
-"             "             `admin`                Full access to project
-`project_acl` "name"        `read`                 Read project ACL Policy files
-"             "             `create`               Create project ACL Policy files
-"             "             `update`               Update project ACL Policy files
-"             "             `delete`               Delete project ACL Policy files
-"             "             `admin`                All access to project ACL Policy files
-`storage`     "path","name" `create`               Create files in the storage facility
-"             "             `update`               Modify files in the storage facility
-"             "             `read`                 Read files and list directories in the storage facility
-"             "             `delete`               Delete files in the storage facility
+Type          Properties         Actions                Description
+-----         -----------        --------               ------------
+`project`     "name"             `read`                 View a project in the project list
+"             "                  `configure`            View and modify project configuration
+"             "                  `delete`               Delete project
+"             "                  `import`               Import archive contents to the project
+"             "                  `export`               Export the project as an archive
+"             "                  `delete_execution`     Delete executions
+"             "                  `admin`                Full access to project
+`project_acl` "name"             `read`                 Read project ACL Policy files
+"             "                  `create`               Create project ACL Policy files
+"             "                  `update`               Update project ACL Policy files
+"             "                  `delete`               Delete project ACL Policy files
+"             "                  `admin`                All access to project ACL Policy files
+`storage`     "path","name"      `create`               Create files in the storage facility
+"             "                  `update`               Modify files in the storage facility
+"             "                  `read`                 Read files and list directories in the storage facility
+"             "                  `delete`               Delete files in the storage facility
+`apitoken`    "username","roles" `create`               Create an API Token with specified roles or username
 ----------------------------
 
 Table: Application scope specific resource actions
 
+#### API Token Authorization
+
+API Tokens can be generated if the user has the appropriate authorization on the `apitoken` generic resource type.
+
+"User Token"
+:    An API Token with the owner's username, and a subset of the owner's authorization roles.
+
+"Service Token"
+:    An API Token which may have a different username than the owner, and may have a different set of authorization roles.
+
+This distinction allows administrators to let some users generate API Tokens which cannot increase their access levels (User Tokens), and other users to generate API Tokens with different access levels in a controlled way.
+
+The authorizations levels are:
+
+* `generate_user_token`: allows the user to generate a User Token.
+* `generate_service_token`: allows a user to generate a Service Token (see below).
+* `admin`: allows the user to generate a Token with any username and roles.
+
+Example to generate a User Token:
+
+~~~{.yaml}
+description: Allow "ops_team" members to generate User Tokens
+for:
+  resource:
+  - equals:
+      kind: apitoken
+    allow: generate_user_token
+context:
+  application: rundeck
+by:
+  group: ops_team
+~~~
+
+To specify what roles and usernames are allowed for a Service Token,
+the user must *also* be authorized to `create` an `apitoken` resource type for a declared set of usernames and roles.
+
+
+Example to generate a Service Token:
+
+~~~{.yaml}
+description: Allow "sec_ops" members to generate Service Tokens, for specific usernames and additional roles
+for:
+
+  resource:
+  - equals:
+      kind: apitoken
+    allow: generate_service_token
+
+  apitoken:
+  - allow: create
+    match:
+      username: '(mysql|myservice)'
+    subset:
+      roles: 
+      - mysql_api_access
+      - myservice_api_access
+context:
+  application: rundeck
+by:
+  group: sec_ops
+~~~
+
+Service Tokens implicitly allow a subset of the user's own authorization roles and username
+(`generate_service_token` implies `generate_user_token`), so the usernames and roles authorized in the
+ACL Policy must specify any *extra* roles. When a Service Token is generated, any requested roles not
+already allowed by `generate_user_token` will be checked against the ACL Policy. However,
+it is best to be explicit in the list of roles you want to allow.
+
+**Important:** 
+
+The `subset:` match for `roles:` declares that *extra* roles for the Service Token may only
+come from this list, but doesn't require the token to have all of the roles.
+(If you used `contains:` it would be the inverse, and grant access only if 
+the extra Service Token roles contained all of those in the `roles:` list, i.e. a superset vs. a subset.)
 
 ### Project Scope Resources and Actions
 

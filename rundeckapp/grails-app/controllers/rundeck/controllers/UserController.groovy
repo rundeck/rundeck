@@ -17,8 +17,10 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
+import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.services.FrameworkService
@@ -32,13 +34,16 @@ class UserController extends ControllerBase{
     FrameworkService frameworkService
     def grailsApplication
     def apiService
+    def configurationService
 
     static allowedMethods = [
-            addFilterPref:'POST',
-            store:'POST',
-            update:'POST',
-            clearApiToken:'POST',
-            generateApiToken:'POST',
+            addFilterPref      : 'POST',
+            store              : 'POST',
+            update             : 'POST',
+            clearApiToken      : 'POST',
+            generateUserToken  : 'POST',
+            renderUsertoken    : 'POST',
+            removeExpiredTokens: 'POST',
     ]
 
     def index = {
@@ -90,13 +95,13 @@ class UserController extends ControllerBase{
         [users:User.listOrderByLogin()]
     }
 
-    def profile={
+    def profile() {
         //check auth to view profile
         //default to current user profile
         if(!params.login){
             params.login=session.user
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if(unauthorizedResponse(params.login == session.user || frameworkService.authorizeApplicationResourceType
                 (authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN), AuthConstants.ACTION_ADMIN,'Users',
                 params.login)){
@@ -106,12 +111,16 @@ class UserController extends ControllerBase{
         if(!u && params.login==session.user){
             //redirect to profile edit page, so user can setup their profile
             flash.message="Please fill out your profile"
-            return redirect(action:register)
+            return redirect(action:'register')
         }
         if(notFoundResponse(u, 'User', params['login'])){
             return
         }
-        [user:u]
+        [
+                user              : u,
+                authRoles         : authContext.getRoles(),
+                tokenMaxExpiration: apiService.maxTokenDurationConfig()
+        ]
     }
     def create={
         render(view:'register',model:[user:new User(),newuser:true])
@@ -122,7 +131,7 @@ class UserController extends ControllerBase{
         }
         def User u = User.findByLogin(params.login)
         if(u){
-           return redirect(action:edit)
+           return redirect(action:'edit')
         }
         u = new User(login:params.login)
         u.dashboardPref="1,2,3,4"
@@ -204,11 +213,15 @@ class UserController extends ControllerBase{
         return redirect(action:'profile')
     }
     def edit={
-        def model=profile(params)
+        def model=profile()
         return model
     }
-    def generateApiToken(User user) {
+
+
+
+    def generateUserToken(String tokenTime, String tokenTimeUnit, String tokenUser, String tokenRoles) {
         boolean valid=false
+
         withForm{
             valid=true
             g.refreshFormTokensHeader()
@@ -224,104 +237,47 @@ class UserController extends ControllerBase{
                 }
             }
         }
-        if(!valid){
+        if (!valid) {
             return
         }
-        if (user.hasErrors()) {
-            request.errors = user.errors
-            withFormat {
-                html {
-                    return render(view: 'profile', model: [user: user])
-                }
-                json {
-                    render([error: 'Invalid input'] as JSON)
-                }
-            }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        def tokenTimeString = null
+        if (tokenTime && tokenTimeUnit) {
+            tokenTimeString = tokenTime + tokenTimeUnit
         }
+
+        if (tokenTimeString && !Sizes.validTimeDuration(tokenTimeString)) {
+            def result = [result: false, error: "Duration format was not valid"]
+            return renderTokenGenerateResult(result, params.login)
+        }
+        Integer tokenDurationSeconds = tokenTimeString ? Sizes.parseTimeDuration(tokenTimeString) : 0
         //check auth to edit profile
         //default to current user profile
-        def login = params.login
-        def result
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER,
-                AuthConstants.ACTION_ADMIN)) {
-            def error = "Unauthorized: admin role required"
-            log.error error
-            result=[result: false, error: error] 
-        }else{
-            def User u = userService.findOrCreateUser(login)
-            if (!u) {
-                def error = "Couldn't find user: ${login}"
-                log.error error
-                result=[result: false, error: error]
-            }else{
-                try{
-                    AuthToken token =apiService.generateAuthToken(u)
-                    result = [result: true, apitoken: token.token]
-                }catch (Exception e){
-                    result = [result: false, error: e.message]
-                }
-            }
+        def result = [:]
+        try {
+            AuthToken token = apiService.generateUserToken(
+                    authContext,
+                    tokenDurationSeconds,
+                    tokenUser ?: params.login,
+                    AuthToken.parseAuthRoles(tokenRoles)
+            )
+            result = [result: true, /*apitoken: token.token, */ tokenid: token.uuid]
+        } catch (Exception e) {
+            result = [result: false, error: e.message]
         }
-        withFormat {
-            html{
-                if (result.error) {
-                    flash.error = result.error
-                }else{
-                    flash.newtoken=result.apitoken
-                }
-                redirect(controller: 'user', action: 'profile', params: [login: login])
-            }
-            json {
-                render(result as JSON)
-            }
-        }
+        return renderTokenGenerateResult(result, params.login)
     }
 
-    def renderApiToken = {
-        //check auth to edit profile
-        //default to current user profile
-
-        def login = params.login
-        def result
-        def user
-        def token
+    def renderUsertoken(String tokenid) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN)) {
-            def error = "Unauthorized: admin role required"
-            log.error error
-            result = [result: false, error: error]
-        } else {
-            user = userService.findOrCreateUser(login)
-            if (!user) {
-                def error = "Couldn't find user: ${login}"
-                log.error error
-                result = [result: false, error: error]
-            } else {
-                def t= AuthToken.findByUserAndToken(user,params.token);
-                if(t){
-                    token=t
-                }else{
-                    def error = "Couldn't find user auth token: ${params.token}"
-                    log.error error
-                    result = [result: false, error: error]
-                }
-            }
-        }
-        if(user && token){
-            return render(template: 'token',model: [user:user,token:token]);
-        }else{
-            return renderErrorFragment(result.error)
-        }
+        boolean valid = false
 
-    }
-
-    def clearApiToken(User user) {
-        boolean valid=false
-        withForm{
-            valid=true
+        withForm {
+            valid = true
             g.refreshFormTokensHeader()
-        }.invalidToken{
+        }.invalidToken {
             response.status = HttpServletResponse.SC_BAD_REQUEST
             request.error = g.message(code: 'request.error.invalidtoken.message')
             withFormat {
@@ -333,16 +289,168 @@ class UserController extends ControllerBase{
                 }
             }
         }
-        if(!valid){
+        if (!valid) {
+            return
+        }
+        def adminAuth = apiService.hasTokenAdminAuth(authContext)
+
+        try {
+            AuthToken token = adminAuth ?
+                    apiService.findTokenId(tokenid) :
+                    apiService.findUserTokenId(authContext.username, tokenid)
+            if (!token) {
+                renderTokenGenerateResult([result: false, error: 'Not Found'], authContext.username)
+            }
+            renderTokenGenerateResult([result: true, apitoken: token.token, tokenid: token.uuid], authContext.username)
+        } catch (Exception e) {
+            renderTokenGenerateResult([result: false, error: e.message], authContext.username)
+        }
+    }
+
+    private Map renderTokenGenerateResult(Map result, String login) {
+        if (result.error) {
+            log.error result.error
+        }
+        withFormat {
+            html {
+                flash.error = result.error
+                redirect(controller: 'user', action: 'profile', params: [login: login])
+            }
+            json {
+                render(result as JSON)
+            }
+        }
+    }
+
+    def renderApiToken() {
+        def login = params.login
+        def result
+        def user
+        def token
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def adminAuth = apiService.hasTokenAdminAuth(authContext)
+        if (!adminAuth && login != authContext.username) {
+            def error = "Unauthorized: retrieve token for ${login}"
+            log.error error
+            return renderErrorFragment(error)
+        }
+        user = userService.findOrCreateUser(login)
+        if (!user) {
+            def error = "Couldn't find user: ${login}"
+            log.error error
+            result = [result: false, error: error]
+        } else {
+            def t = adminAuth ?
+                    (apiService.findTokenId(params.tokenid)) :
+                    apiService.findUserTokenId(login, params.tokenid);
+            if (t) {
+                token = t
+            } else {
+                def error = "Couldn't find user auth token: ${params.token}"
+                log.error error
+                result = [result: false, error: error]
+            }
+        }
+        if(user && token){
+            return render(template: 'token',model: [user:user,token:token]);
+        }else{
+            return renderErrorFragment(result.error)
+        }
+
+    }
+
+    def removeExpiredTokens() {
+        boolean valid = false
+        withForm {
+            valid = true
+            g.refreshFormTokensHeader()
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            withFormat {
+                html {
+                    return render(view: 'profile', model: [user: user])
+                }
+                json {
+                    render([error: request.error] as JSON)
+                }
+            }
+        }
+        if (!valid) {
+            return
+        }
+        def login = params.login
+        def deleteall = params.deleteall?.toBoolean()
+        def result
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def adminAuth = apiService.hasTokenAdminAuth(authContext)
+        if (unauthorizedResponse(
+                login == authContext.username || adminAuth,
+                AuthConstants.ACTION_ADMIN,
+                'API Tokens for user: ',
+                params.login
+        )) {
+            return
+        }
+        if (unauthorizedResponse(
+                !deleteall || adminAuth,
+                AuthConstants.ACTION_ADMIN,
+                'API Tokens for ',
+                "All users"
+        )) {
+            return
+        }
+
+        def total = deleteall ? apiService.removeAllExpiredTokens() : apiService.removeAllExpiredTokens(login)
+
+        if (total > 0) {
+            flash.message = "Removed $total expired tokens"
+        } else {
+            flash.error = "No expired tokens found"
+        }
+        def done = false
+        withFormat {
+            html {
+
+            }
+            json {
+                done = true
+                render(result as JSON)
+            }
+        }
+        if (done) {
+            return
+        }
+
+        return redirect(controller: 'user', action: 'profile', params: [login: login])
+    }
+    def clearApiToken(User user) {
+        boolean valid = false
+        withForm {
+            valid = true
+            g.refreshFormTokensHeader()
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            withFormat {
+                html {
+                    return render(view: 'profile', model: [user: user])
+                }
+                json {
+                    render([error: request.error] as JSON)
+                }
+            }
+        }
+        if (!valid) {
             return
         }
         if (user.hasErrors()) {
             request.errors = user.errors
             withFormat {
-                html{
+                html {
                     return render(view: 'profile', model: [user: user])
                 }
-                json{
+                json {
                     render([error: 'Invalid input'] as JSON)
                 }
             }
@@ -351,39 +459,46 @@ class UserController extends ControllerBase{
         def login = user.login
         def result
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        if (!frameworkService.authorizeApplicationResourceType(authContext, AuthConstants.TYPE_USER, AuthConstants.ACTION_ADMIN)) {
-            def error = "Unauthorized: admin role required"
-            log.error error
-            result=[result: false, error: error]
-        }else if(!params.token){
-            def error = "Parameter token required"
+        def adminAuth = apiService.hasTokenAdminAuth(authContext)
+        if (!params.token && !params.tokenid) {
+            def error = "Parameter tokenid required"
             log.error error
             result = [result: false, error: error]
-        }else if (params.No == 'No') {
+        } else if (params.No == 'No') {
             return redirect(controller: 'user', action: 'profile', params: [login: login])
-        }else if (request.getMethod()=='GET') {
-            return redirect(controller: 'user', action: 'profile', params: [login: login,showConfirm:true,token:params.token])
-        }else{
+        } else if (!adminAuth && login != authContext.username) {
+            def error = "Unauthorized: admin role required"
+            log.error error
+            result = [result: false, error: error]
+        } else {
+
             def User u = userService.findOrCreateUser(login)
             if (!u) {
                 def error = "Couldn't find user: ${login}"
                 log.error error
                 result=[result: false, error: error]
             }else{
-                def findtoken=params.token
-                def found=AuthToken.findByUserAndToken(u,findtoken)
+                def findtoken = params.tokenid ?: params.token
+                AuthToken found = null
+                if (adminAuth) {
+                    //admin can delete any token
+                    found = params.token ?
+                            AuthToken.findByToken(params.token) :
+                            apiService.findTokenId(params.tokenid)
+                } else {
+                    //users can delete owned token
+                    found = params.token ?
+                            AuthToken.findByTokenAndCreator(params.token, login) :
+                            apiService.findUserTokenId(login, params.tokenid)
+                }
+
                 if(!found){
                     def error = "Couldn't find token ${findtoken} for user ${login}"
                     log.error error
                     result = [result: false, error: error]
-                }else{
-
-                    AuthToken oldtoken=found
-                    def oldAuthRoles=oldtoken.authRoles
-
-                    oldtoken.delete(flush: true)
-                    log.info("EXPIRE TOKEN ${findtoken} for User ${login} with roles: ${oldAuthRoles}")
-                    result= [result: true]
+                } else {
+                    apiService.removeToken(found)
+                    result = [result: true]
                 }
             }
         }

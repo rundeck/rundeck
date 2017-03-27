@@ -26,47 +26,48 @@ import java.util.Set;
  */
 public class AclRuleImpl implements AclRule {
 
-    private String sourceIdentity;
-    private String description;
-    private Map<String, Object> resource;
-    private String resourceType;
-    private boolean regexMatch;
-    private boolean containsMatch;
-    private boolean equalsMatch;
-    private String username;
-    private String group;
-    private Set<String> allowActions;
-    private EnvironmentalContext environment;
-    private Set<String> denyActions;
+    String sourceIdentity;
+    String description;
+    String resourceType;
+    boolean regexMatch;
+    Map<String, Object> regexResource;
+    boolean containsMatch;
+    Map<String, Object> containsResource;
+    boolean subsetMatch;
+    Map<String, Object> subsetResource;
+    boolean equalsMatch;
 
-    public AclRuleImpl(
-            final String sourceIdentity,
-            final String description,
-            final Map<String, Object> resource,
-            final String resourceType,
-            final boolean regexMatch,
-            final boolean containsMatch,
-            final boolean equalsMatch,
-            final String username,
-            final String group,
-            final Set<String> allowActions,
-            final Set<String> denyActions,
-            final EnvironmentalContext environment
-    )
-    {
-        this.sourceIdentity = sourceIdentity;
-        this.description = description;
-        this.resource = resource;
-        this.resourceType = resourceType;
-        this.regexMatch = regexMatch;
-        this.containsMatch = containsMatch;
-        this.equalsMatch = equalsMatch;
-        this.username = username;
-        this.group = group;
-        this.allowActions = allowActions;
-        this.denyActions = denyActions;
-        this.environment = environment;
+    Map<String, Object> equalsResource;
+    String username;
+    String group;
+    Set<String> allowActions;
+    EnvironmentalContext environment;
+    Set<String> denyActions;
+
+    AclRuleImpl() {
+
     }
+
+    AclRuleImpl(AclRule prototype) {
+
+        sourceIdentity = prototype.getSourceIdentity();
+        description = (prototype.getDescription());
+        resourceType = (prototype.getResourceType());
+        regexMatch = (prototype.isRegexMatch());
+        regexResource = (prototype.getRegexResource());
+        containsMatch = (prototype.isContainsMatch());
+        containsResource = (prototype.getContainsResource());
+        subsetMatch = (prototype.isSubsetMatch());
+        subsetResource = (prototype.getSubsetResource());
+        equalsMatch = (prototype.isEqualsMatch());
+        equalsResource = (prototype.getEqualsResource());
+        username = (prototype.getUsername());
+        group = (prototype.getGroup());
+        allowActions = (prototype.getAllowActions());
+        denyActions = (prototype.getDenyActions());
+        environment = (prototype.getEnvironment());
+    }
+
 
     @Override
     public String getSourceIdentity() {
@@ -76,11 +77,6 @@ public class AclRuleImpl implements AclRule {
     @Override
     public String getDescription() {
         return description;
-    }
-
-    @Override
-    public Map<String, Object> getResource() {
-        return resource;
     }
 
     @Override
@@ -96,6 +92,11 @@ public class AclRuleImpl implements AclRule {
     @Override
     public boolean isContainsMatch() {
         return containsMatch;
+    }
+
+    @Override
+    public boolean isSubsetMatch() {
+        return subsetMatch;
     }
 
     @Override
@@ -130,9 +131,13 @@ public class AclRuleImpl implements AclRule {
                " context=" + environment +
                " type='" + resourceType + '\'' +
                (regexMatch?" match " :"") +
+               (null!=regexResource? ", resource=" + regexResource : "") +
                (containsMatch?" contains " :"") +
+               (null!=containsResource? ", resource=" + containsResource : "") +
                (equalsMatch?" equals " :"") +
-               (null!=resource? ", resource=" + resource : "") +
+               (null!=equalsResource? ", resource=" + equalsResource : "") +
+               (subsetMatch?" subset " :"") +
+               (null!=subsetResource? ", resource=" + subsetResource : "") +
                " for: {"+
                (null!=username?" username='" + username + '\'':"") +
                (null!=group?" group='" + group + '\'':"") +
@@ -145,5 +150,25 @@ public class AclRuleImpl implements AclRule {
     @Override
     public boolean isEqualsMatch() {
         return equalsMatch;
+    }
+
+    @Override
+    public Map<String, Object> getRegexResource() {
+        return regexResource;
+    }
+
+    @Override
+    public Map<String, Object> getContainsResource() {
+        return containsResource;
+    }
+
+    @Override
+    public Map<String, Object> getSubsetResource() {
+        return subsetResource;
+    }
+
+    @Override
+    public Map<String, Object> getEqualsResource() {
+        return equalsResource;
     }
 }

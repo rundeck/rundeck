@@ -186,7 +186,8 @@ It also has one or more of these "Matching" entries:
 
 * `match` - (List or String) - regular expression matches
 * `equals` - (String) - equality matches
-* `contains` - (List or String) - set membership matches
+* `contains` - (List or String) - superset membership matches
+* `subset` - (List or String) - subset membership matches
 
 Each Matching entry is composed of `property: value`, which declare what property
 of the resource to test, and what value or values to apply the matching rule to.
@@ -220,6 +221,9 @@ The `match` and `contains` allow a list of property values, and all of them
 must match the resource's property for the rule to match.  This allows the basic
 boolean AND logic.  For OR logic, you can simply declare another rule in the
 sequence since all rules are checked (except in the case of an explicit deny).
+
+The `subset` match allows a list of property values, and will fail if the resource
+has any values *not* included in the subset.
 
 ## `by`
 

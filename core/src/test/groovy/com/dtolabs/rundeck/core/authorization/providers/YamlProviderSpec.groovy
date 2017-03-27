@@ -74,7 +74,7 @@ description: blah
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Required \'context:\' section was not present.']
+        validation.errors['test1[1]'] == ['Required \'context:\' section was not present']
     }
     def "validate required context, any context"(){
         when:
@@ -132,7 +132,7 @@ for:
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Policy is missing a description.']
+        validation.errors['test1[1]'] == ['Policy is missing a description']
     }
     def "validate no by"(){
         when:
@@ -148,7 +148,7 @@ for:
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Required \'by:\' section was not present.']
+        validation.errors['test1[1]'] == ['Required \'by:\' section was not present']
     }
     def "validate no for"(){
         when:
@@ -164,7 +164,7 @@ by:
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Required \'for:\' section was not present.']
+        validation.errors['test1[1]'] == ['Required \'for:\' section was not present']
     }
     def "validate extraneous section"(){
         when:
@@ -183,7 +183,9 @@ invalid: blah
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Policy contains invalid keys: [invalid], allowed keys: [by, id, for, context, description]']
+        validation.errors['test1[1]'][0].contains(
+                'Policy contains invalid keys: [invalid], allowed keys: [by, id, for, context, description]'
+        )
     }
     def "validate context invalid entry"(){
         when:
@@ -201,7 +203,8 @@ for:
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Context section is not valid: {blab=test}, it should contain only \'application:\' or \'project:\'']
+        validation.errors['test1[1]'].size() == 1
+        validation.errors['test1[1]'][0] =~ /Context section should contain only 'application:' or 'project:'/
     }
     def "validate by invalid entry"(){
         when:
@@ -219,7 +222,8 @@ for:
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Section \'by:\' is not valid: {blonk=elf} it must contain \'group:\' and/or \'username:\'']
+        validation.errors['test1[1]'].size() == 1
+        validation.errors['test1[1]'][0] =~ /Cannot create property=blonk/
     }
     def "validate by group: not a string"(){
         when:
@@ -282,7 +286,7 @@ for: { }
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Section \'for:\' should not be empty.']
+        validation.errors['test1[1]'] == ['Error parsing the policy document: Section \'for:\' cannot be empty']
     }
     def "validate for expect map"(){
         when:
@@ -292,13 +296,13 @@ context:
 description: wat
 by:
     username: elf
-for: [ ]
+for: [ x , y , z ]
 '''
 
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Expected \'for:\' section to contain a map, but was [java.util.ArrayList].']
+        validation.errors['test1[1]'][0] =~ /Expected 'for:' section to contain a map, but was sequence/
     }
     def "validate for expect map entry is list"(){
         when:
@@ -315,7 +319,8 @@ for:
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Expected \'for: { blah: <...> }\' section to contain a List, but was [java.util.LinkedHashMap].']
+        validation.errors['test1[1]'] ==
+                ['Error parsing the policy document: Expected \'for: { blah: <...> }\' to be a Seqence, but was [mapping]']
     }
     def "validate type entry requires non-empty"(){
         when:
@@ -332,7 +337,7 @@ for:
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Section \'for: { blah: [...] }\' list should not be empty.']
+        validation.errors['test1[1]'] == ['Type rule \'for: { blah: [...] }\' list should not be empty.']
     }
     def "validate type entry requires map"(){
         when:
@@ -350,7 +355,9 @@ for:
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]']==['Type rule \'for: { blah: [...] }\'\' entry at index [1] expected a Map but saw: java.util.ArrayList']
+        validation.errors['test1[1]'] ==
+                ['Error parsing the policy document: Type rule \'for: { blah: [...] }\' entry at index [1] expected a' +
+                         ' Map but saw: sequence']
     }
     def "validate type entry requires non-empty map"(){
         when:
@@ -415,14 +422,16 @@ for:
         validation.errors.size()==1
         validation.errors['test1[1]']== [('Type rule \'for: { blah: [...] }\' entry at index [1] Section \'' +
                                                   actionsname +
-                                                  ':\' should not be empty.')]
+                ':\' should not be empty')]
 
         where:
         actionsname | _
         "allow"     | _
         "deny"      | _
     }
-    def "validate type entry match/equals/contains not empty"(String matchname,_){
+
+    @Unroll
+    def "validate type entry #matchname not empty"(String matchname, _) {
         when:
         def validation = validationForString """
 context:
@@ -444,10 +453,11 @@ for:
                                                   ':\' should not be empty.')]
 
         where:
-        matchname | _
-        "match"   | _
-        "equals"  | _
-        "contains"  | _
+        matchname  | _
+        "match"    | _
+        "equals"   | _
+        "contains" | _
+        "subset"   | _
     }
     @Unroll
     def "validate type entry match/equals/contains does not contain allow/deny"(String matchname,String actionsname,_){
@@ -467,16 +477,13 @@ for:
         then:
         !validation.valid
         validation.errors.size()==1
-        validation.errors['test1[1]'].size()==(matchname=='contains'?2:1)
-        if(matchname=='contains'){
+        validation.errors['test1[1]'].size() == 1
+        if (matchname == 'contains' && actionsname == 'blee') {
             validation.errors['test1[1]']== [
                     ('Type rule \'for: { blah: [...] }\' entry at index [1] Section \'' +
                             matchname +
                             ':\' can only be applied to \'tags\'.')
-                    ,
-                    ('Type rule \'for: { blah: [...] }\' entry at index [1] Section \'' +
-                    matchname +
-                    ':\' should not contain \'allow:\' or \'deny:\'.')]
+            ]
         }else{
             validation.errors['test1[1]']== [('Type rule \'for: { blah: [...] }\' entry at index [1] Section \'' +
                     matchname +
@@ -492,6 +499,7 @@ for:
         "equals"   | "deny"      | _
         "contains" | "allow"     | _
         "contains" | "deny"      | _
+        "contains" | "blee"      | _
     }
     @Unroll
     def "validate multi-policy with empty policy is valid"(){

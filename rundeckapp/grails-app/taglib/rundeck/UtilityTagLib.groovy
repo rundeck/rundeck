@@ -177,7 +177,7 @@ class UtilityTagLib{
 
         def long dms
         if(attrs.time){
-            dms= (long)Math.floor(attrs.time / 1000.0)
+            dms= (long)Math.floor(attrs.time / 1000.0d)
         }else{
             def Date start = attrs.start
             def Date end = attrs.end

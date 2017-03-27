@@ -22,38 +22,17 @@ import java.util.Map;
 import java.util.Set;
 
 public class AclRuleBuilder {
-    private String sourceIdentity;
-    private String description;
-    private Map<String, Object> resource;
-    private String resourceType;
-    private boolean regexMatch;
-    private boolean containsMatch;
-    private boolean equalsMatch;
-    private String username;
-    private String group;
-    private Set<String> allowActions;
-    private Set<String> denyActions;
-    private EnvironmentalContext environment;
+    AclRuleImpl aclRuleImpl;
 
     private AclRuleBuilder() {
+        aclRuleImpl = new AclRuleImpl();
     }
 
     private AclRuleBuilder(AclRuleBuilder fromBuilder) {
         this(fromBuilder.build());
     }
     private AclRuleBuilder(AclRule fromRule) {
-        sourceIdentity(fromRule.getSourceIdentity());
-        description(fromRule.getDescription());
-        resource(fromRule.getResource());
-        resourceType(fromRule.getResourceType());
-        regexMatch(fromRule.isRegexMatch());
-        containsMatch(fromRule.isContainsMatch());
-        equalsMatch(fromRule.isEqualsMatch());
-        username(fromRule.getUsername());
-        group(fromRule.getGroup());
-        allowActions(fromRule.getAllowActions());
-        denyActions(fromRule.getDenyActions());
-        environment(fromRule.getEnvironment());
+        aclRuleImpl = new AclRuleImpl(fromRule);
     }
 
     public static AclRuleBuilder builder(AclRule fromRule) {
@@ -68,82 +47,94 @@ public class AclRuleBuilder {
     }
 
     public AclRuleBuilder sourceIdentityAppend(final String sourceIdentity) {
-        this.sourceIdentity = null != this.sourceIdentity ? this.sourceIdentity + sourceIdentity : sourceIdentity;
+        aclRuleImpl.sourceIdentity = null != aclRuleImpl.sourceIdentity
+                                     ? aclRuleImpl.sourceIdentity + sourceIdentity
+                                     : sourceIdentity;
         return this;
     }
     public AclRuleBuilder sourceIdentity(final String sourceIdentity) {
-        this.sourceIdentity = sourceIdentity;
+        aclRuleImpl.sourceIdentity = sourceIdentity;
         return this;
     }
 
     public AclRuleBuilder description(final String description) {
-        this.description = description;
-        return this;
-    }
-
-    public AclRuleBuilder resource(final Map<String, Object> resource) {
-        this.resource = resource;
+        aclRuleImpl.description = description;
         return this;
     }
 
     public AclRuleBuilder resourceType(final String resourceType) {
-        this.resourceType = resourceType;
+        aclRuleImpl.resourceType = resourceType;
         return this;
     }
 
     public AclRuleBuilder regexMatch(final boolean regexMatch) {
-        this.regexMatch = regexMatch;
+        aclRuleImpl.regexMatch = regexMatch;
+        return this;
+    }
+
+    public AclRuleBuilder regexResource(final Map<String, Object> resource) {
+        regexMatch(resource != null && resource.size() > 0);
+        aclRuleImpl.regexResource = resource;
         return this;
     }
 
     public AclRuleBuilder containsMatch(final boolean containsMatch) {
-        this.containsMatch = containsMatch;
+        aclRuleImpl.containsMatch = containsMatch;
         return this;
     }
 
+    public AclRuleBuilder containsResource(final Map<String, Object> resource) {
+        containsMatch(resource != null && resource.size() > 0);
+        aclRuleImpl.containsResource = resource;
+        return this;
+    }
+
+    public AclRuleBuilder subsetMatch(final boolean subsetMatch) {
+        aclRuleImpl.subsetMatch = subsetMatch;
+        return this;
+    }
+
+    public AclRuleBuilder subsetResource(final Map<String, Object> resource) {
+        subsetMatch(resource != null && resource.size() > 0);
+        aclRuleImpl.subsetResource = resource;
+        return this;
+    }
     public AclRuleBuilder equalsMatch(final boolean equalsMatch) {
-        this.equalsMatch = equalsMatch;
+        aclRuleImpl.equalsMatch = equalsMatch;
         return this;
     }
 
+    public AclRuleBuilder equalsResource(final Map<String, Object> resource) {
+        equalsMatch(resource != null && resource.size() > 0);
+        aclRuleImpl.equalsResource = resource;
+        return this;
+    }
     public AclRuleBuilder username(final String username) {
-        this.username = username;
+        aclRuleImpl.username = username;
         return this;
     }
 
     public AclRuleBuilder group(final String group) {
-        this.group = group;
+        aclRuleImpl.group = group;
         return this;
     }
 
     public AclRuleBuilder allowActions(final Set<String> allowActions) {
-        this.allowActions = allowActions;
+        aclRuleImpl.allowActions = allowActions;
         return this;
     }
 
     public AclRuleBuilder environment(final EnvironmentalContext environment) {
-        this.environment = environment;
+        aclRuleImpl.environment = environment;
         return this;
     }
 
     public AclRuleBuilder denyActions(final Set<String> denyActions) {
-        this.denyActions = denyActions;
+        aclRuleImpl.denyActions = denyActions;
         return this;
     }
 
     public AclRule build() {
-        return new AclRuleImpl(
-                sourceIdentity,
-                description,
-                resource,
-                resourceType,
-                regexMatch,
-                containsMatch,
-                equalsMatch,
-                username,
-                group,
-                allowActions,
-                denyActions, environment
-        );
+        return new AclRuleImpl(aclRuleImpl);
     }
 }

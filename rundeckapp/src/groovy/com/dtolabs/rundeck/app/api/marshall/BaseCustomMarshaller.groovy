@@ -31,6 +31,13 @@ class BaseCustomMarshaller {
         return marshaller.supports(object)
     }
 
+    Object formatCustom(final Object object, String format) {
+        if (object instanceof CustomFormatter) {
+            ((CustomFormatter) object).format(format)
+        } else {
+            object
+        }
+    }
     /**
      * Scan fields of the object based on the ApiMarshaller introspection, and return
      * the maps to use for XML Attributes, fields, and direct subelements.
@@ -42,6 +49,8 @@ class BaseCustomMarshaller {
         def attrs = [:]
         def fields = [:]
         def subelements = [:]
+        def collectionElemNames = [:]
+        def customFormat = [:]
         def fieldDefs = marshaller.getFieldDefsForClass(object.class)
 
         object.properties.keySet().each { String k ->
@@ -62,21 +71,30 @@ class BaseCustomMarshaller {
             if (resField.ignoreOnlyIfNull && null == object[k]) {
                 return
             }
+            def fname = k
+            def used = false
             if (resField.xmlAttr) {
-                attrs[resField.xmlAttr] = object[k]
-                return
+                fname = resField.xmlAttr
+                attrs[fname] = object[k]
+                used = true
+            } else if (resField.subElement) {
+                subelements[k] = object[k]
+                used = true
+            } else if (resField.elementName) {
+                fname = resField.elementName
+            }
+            if (!used) {
+                fields[fname] = object[k]
             }
 
-            if (resField.subElement) {
-                subelements[k] = object[k]
-                return
+            if (resField.collectionKeyName) {
+                collectionElemNames[fname] = resField.collectionKeyName
             }
-            if (resField.elementName) {
-                fields[resField.elementName] = object[k]
-            } else {
-                fields[k] = object[k]
+
+            if (resField.customFormat) {
+                customFormat[fname] = resField.customFormat
             }
         }
-        [attrs, fields, subelements]
+        [attrs, fields, subelements, collectionElemNames, customFormat]
     }
 }

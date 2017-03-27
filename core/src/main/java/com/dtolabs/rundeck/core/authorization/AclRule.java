@@ -31,14 +31,17 @@ public interface AclRule {
 
     public String getDescription();
 
-    public Map<String, Object> getResource();
-
     public String getResourceType();
 
     public boolean isRegexMatch();
+    public Map<String, Object> getRegexResource();
 
     public boolean isContainsMatch();
+    public Map<String, Object> getContainsResource();
+    public boolean isSubsetMatch();
+    public Map<String, Object> getSubsetResource();
     public boolean isEqualsMatch();
+    public Map<String, Object> getEqualsResource();
 
     //    public Subject getSubject();
     public String getUsername();

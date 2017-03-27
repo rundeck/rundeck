@@ -65,7 +65,7 @@ class YamlPolicySpec extends Specification {
         )
 
         then:
-        YamlPolicy.AclPolicySyntaxException e = thrown()
+        AclPolicySyntaxException e = thrown()
         e.message.contains('Context section should not be specified, it is already set to: {project=monkey}')
 
         where:

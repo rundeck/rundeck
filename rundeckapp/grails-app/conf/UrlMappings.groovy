@@ -179,7 +179,13 @@ class UrlMappings {
         "/api/$api_version/system/executions/enable"(controller: 'execution', action: 'apiExecutionModeActive')
         "/api/$api_version/system/executions/disable"(controller: 'execution', action: 'apiExecutionModePassive')
         "/api/$api_version/system/acl/$path**"(controller: 'framework',action: 'apiSystemAcls')
-        "/api/$api_version/tokens/$user?"(controller: 'api', action: 'apiTokenList')
+        "/api/$api_version/tokens/$user?"(controller: 'api'){
+            action=[
+                    GET:"apiTokenList",
+                    POST:"apiTokenCreate"
+            ]
+        }
+        "/api/$api_version/tokens/$user/removeExpired"(controller: 'api', action: 'apiTokenRemoveExpired')
         "/api/$api_version/token/$token"(controller: 'api', action: 'apiTokenManage')
 
         "/api/$api_version/storage/keys/$resourcePath**"(controller: 'storage', action: 'apiKeys')

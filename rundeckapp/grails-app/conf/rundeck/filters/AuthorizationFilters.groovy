@@ -32,6 +32,7 @@ import rundeck.services.FrameworkService
 
 import javax.servlet.ServletContext
 import javax.servlet.http.HttpServletRequest
+import java.time.Clock
 
 /*
 * AuthorizationFilters.groovy
@@ -75,6 +76,7 @@ public class AuthorizationFilters implements ApplicationContextAware{
                     //allow authentication token to be used 
                     def authtoken = params.authtoken? params.authtoken : request.getHeader('X-RunDeck-Auth-Token')
                     String user = lookupToken(authtoken, servletContext)
+                    List<String> roles = lookupTokenRoles(authtoken, servletContext)
 
                     if (user){
                         session.user = user
@@ -83,7 +85,7 @@ public class AuthorizationFilters implements ApplicationContextAware{
                         def subject = new Subject();
                         subject.principals << new Username(user)
 
-                        ['api_token_group'].each{role->
+                        roles.each{role->
                             subject.principals << new Group(role.trim());
                         }
 
@@ -201,16 +203,52 @@ public class AuthorizationFilters implements ApplicationContextAware{
         if (context.getAttribute("TOKENS_FILE_PROPS")) {
             Properties tokens = (Properties) context.getAttribute("TOKENS_FILE_PROPS")
             if (tokens[authtoken]) {
-                def user = tokens[authtoken]
+                def userLine = tokens[authtoken]
+                def user = userLine.toString().split(",")[0]
                 log.debug("loginCheck found user ${user} via tokens file, token: ${authtoken}");
                 return user
             }
         }
         def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
         if (tokenobj) {
+            if (tokenobj.tokenIsExpired()) {
+                log.debug("loginCheck token is expired ${tokenobj?.user}, token: ${tokenobj.uuid?:tokenobj.token}");
+                return null
+            }
             User user = tokenobj?.user
-            log.debug("loginCheck found user ${user} via DB, token: ${authtoken}");
+            log.debug("loginCheck found user ${user} via DB, token: ${tokenobj.uuid?:tokenobj.token}");
             return user.login
+        }
+        null
+    }
+
+    /**
+     * Look up the given authToken and return the associated roles, or null
+     * @param authtoken
+     * @param context
+     * @return
+     */
+    private List<String> lookupTokenRoles(String authtoken, ServletContext context) {
+        if(!authtoken){
+            return null
+        }
+        List<String> roles = []
+        if (context.getAttribute("TOKENS_FILE_PROPS")) {
+            Properties tokens = (Properties) context.getAttribute("TOKENS_FILE_PROPS")
+            if (tokens[authtoken]) {
+                def userLine = tokens[authtoken]
+                if(userLine.toString().split(",").length>1){
+                    roles = userLine.toString().split(",").drop(1) as List
+                }
+                log.debug("loginCheck found roles ${roles} via tokens file, token: ${authtoken}");
+                return roles
+            }
+        }
+        def tokenobj = authtoken ? AuthToken.findByToken(authtoken) : null
+        if (tokenobj) {
+            roles = tokenobj?.authRoles?.split(",") as List
+            log.debug("loginCheck found roles ${roles} via DB, token: ${authtoken}");
+            return roles
         }
         null
     }

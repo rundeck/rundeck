@@ -945,8 +945,8 @@ class ProjectManagerServiceSpec extends Specification {
                     getInputStream() >> new ByteArrayInputStream(
                             ('{ description: \'\', \n' +
                                     'by: { username: \'test\' }, \n' +
-                                    'for: { resource: [ { allow: \'x\' } ] } }').bytes
-//                            ('asdf').bytes
+                                    'for: { resource: [ { equals: { kind: \'zambo\' }, allow: \'x\' } ] } }'
+                            ).bytes
                     )
                     getModificationTime() >> new Date()
                 }
@@ -965,10 +965,14 @@ class ProjectManagerServiceSpec extends Specification {
         rulea.allowActions==['x'] as Set
         rulea.description==''
         !rulea.containsMatch
-        !rulea.equalsMatch
+        rulea.equalsMatch
         !rulea.regexMatch
+        !rulea.subsetMatch
         rulea.resourceType=='resource'
-        rulea.resource==null
+        rulea.regexResource==null
+        rulea.containsResource==null
+        rulea.subsetResource==null
+        rulea.equalsResource==[kind:'zambo']
         rulea.username=='test'
         rulea.group==null
         rulea.environment!=null

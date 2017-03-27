@@ -50,4 +50,10 @@ class ResourceField {
      * The name of the element to marshall for the value of this field, instead of the field name.
      */
     String elementName
+    /**
+     * The name of the element to marshall for the value of each item in a collection, instead of the default
+     */
+    String collectionKeyName
+
+    String customFormat
 }

@@ -16,20 +16,30 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import grails.converters.JSON
+import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.ControllerUnitTestMixin
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
+import rundeck.AuthToken
+import rundeck.User
 import spock.lang.Specification
+import spock.lang.Unroll
+
+import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 
 /**
  * Created by greg on 7/28/15.
  */
 @TestFor(ApiService)
 @TestMixin(ControllerUnitTestMixin)
+@Mock([User, AuthToken])
 class ApiServiceSpec extends Specification {
     def "renderWrappedFileContents json"(){
         given:
@@ -168,6 +178,398 @@ class ApiServiceSpec extends Specification {
         parsed.'policy'[1].'error'.size()==2
         parsed.'policy'[1].'error'[0].text()=='error3'
         parsed.'policy'[1].'error'[1].text()=='error4'
+
+    }
+
+    def "generateTokenExpirationDate"() {
+        given:
+        service.systemClock = Clock.fixed(Instant.ofEpochMilli(1000), ZoneId.of("Z"))
+        when:
+        def result = service.generateTokenExpirationDate(duration, max)
+        then:
+        result == expected
+        where:
+        duration | max | expected
+        123      | 200 | [date: new Date(124000), max: false]
+        123      | 100 | [date: new Date(101000), max: true]
+        0        | 100 | [date: new Date(101000), max: false]
+        200      | 0   | [date: new Date(201000), max: false]
+        0        | 0   | [date: null, max: false]
+
+    }
+
+    def "generate user token unauthorized"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenUser = 'auser'
+        def tokenRoles = ['role1'] as Set
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService)
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', _) >> false
+        Exception e = thrown()
+        e.message =~ /Unauthorized/
+    }
+
+    def "generate user token wrong username unauthorized"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenRoles = ['role1'] as Set
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService)
+        def user = new User(login: 'auser')
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'generate_user_token') >> true
+        service.userService.findOrCreateUser('auser') >> user
+        Exception e = thrown()
+        e.message =~ /Unauthorized/
+
+        where:
+        tokenUser  | _
+        'notauser' | _
+    }
+
+    def "generate user token exceed max duration"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenUser = 'auser'
+        def tokenRoles = ['role1'] as Set
+
+        def tokenTime = 124
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService)
+        def user = new User(login: 'auser')
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> true
+        service.configurationService.getString("api.tokens.duration.max", null) >> '123'
+        service.userService.findOrCreateUser('auser') >> user
+        Exception e = thrown()
+        e.message =~ /Duration exceeds maximum allowed: /
+    }
+
+    def "generate user token own groups any auth"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenUser = 'auser'
+        def tokenRoles = ['role1'] as Set
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService)
+        def user = new User(login: 'auser')
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        result != null
+        result.user == user
+        result.authRoles == 'role1'
+        result.authRolesSet() == tokenRoles
+        result.expiration != null
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >>
+                (tokenaction == 'admin')
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'generate_service_token') >>
+                ((tokenaction == 'generate_service_token'))
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
+        0 * service.frameworkService._(*_)
+        service.userService.findOrCreateUser('auser') >> user
+
+        where:
+        tokenaction              | _
+        'admin'                  | _
+        'generate_user_token'    | _
+        'generate_service_token' | _
+    }
+
+    def "generate service token service groups service/admin auth"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenUser = 'auser'
+        def tokenRoles = ['role1', 'svc_roleA'] as Set
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService)
+        def user = new User(login: 'auser')
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        result != null
+        result.user == user
+        result.authRoles == 'role1,svc_roleA'
+        result.authRolesSet() == tokenRoles
+        result.expiration != null
+        service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
+        if (tokenaction == 'admin') {
+            0 * service.frameworkService.authorizeApplicationResource(*_)
+        } else {
+            1 * service.frameworkService.authorizeApplicationResource(
+                    auth,
+                    [type: 'apitoken', username: tokenUser, roles: 'svc_roleA'],
+                    'create'
+            ) >> true
+        }
+        service.userService.findOrCreateUser('auser') >> user
+
+        where:
+        tokenaction              | _
+        'admin'                  | _
+        'generate_service_token' | _
+    }
+
+    def "generate service token service username service/admin auth"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenRoles = ['role1', 'svc_roleA'] as Set
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService) {
+            findOrCreateUser(tokenUser) >> new User(login: tokenUser)
+        }
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        result != null
+        result.user.login == tokenUser
+        result.authRoles == 'role1,svc_roleA'
+        result.authRolesSet() == tokenRoles
+        result.expiration != null
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >>
+                (tokenaction == 'admin')
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
+        if (tokenaction == 'admin') {
+            0 * service.frameworkService.authorizeApplicationResource(*_)
+        } else {
+            1 * service.frameworkService.authorizeApplicationResource(
+                    auth,
+                    [type: 'apitoken', username: tokenUser, roles: 'svc_roleA'],
+                    'create'
+            ) >> true
+        }
+        0 * service.frameworkService._(*_)
+
+        where:
+        tokenaction              | tokenUser
+        'admin'                  | 'someuser'
+        'generate_service_token' | 'someuser'
+    }
+
+    def "generate service token service username not allowed username"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenRoles = ['role1', 'svc_roleA'] as Set
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService) {
+            findOrCreateUser(tokenUser) >> new User(login: tokenUser)
+        }
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
+        service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
+        1 * service.frameworkService.authorizeApplicationResource(
+                auth,
+                ['type': 'apitoken', 'username': 'someBuser', 'roles': 'svc_roleA'],
+                'create'
+        ) >> false
+        0 * service.frameworkService._(*_)
+        Exception e = thrown()
+        e.message =~ /Unauthorized: create API token for $tokenUser with roles/
+
+        where:
+        tokenaction              | tokenUser
+        'generate_service_token' | 'someBuser'
+    }
+
+
+    def "generate user token any groups admin auth"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenRoles = ['role1', 'svc_roleA', 'any_role'] as Set
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService)
+        def user = new User(login: tokenUser)
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        result != null
+        result.user == user
+        result.authRolesSet() == tokenRoles
+        result.expiration != null
+        service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
+        service.userService.findOrCreateUser(tokenUser) >> user
+
+        where:
+        tokenaction | tokenUser | _
+        'admin'     | 'auser'   | _
+        'admin'     | 'anyuser' | _
+    }
+
+    @Unroll
+    def "generate user token any groups only #tokenaction auth"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenUser = 'auser'
+        def tokenRoles = ['role1', 'svc_roleA', 'any_role'] as Set
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService)
+        def user = new User(login: 'auser')
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'generate_service_token') >>
+                (tokenaction == 'generate_service_token')
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', tokenaction) >> true
+        _ * service.frameworkService.authorizeApplicationResource(auth, _, 'create') >> false
+        0 * service.frameworkService._(*_)
+        service.userService.findOrCreateUser('auser') >> user
+        Exception e = thrown()
+        e.message =~ expectMessage
+
+        where:
+        tokenaction              | expectMessage
+        'generate_service_token' | /Unauthorized: create API token for auser with roles/
+        'generate_user_token'    | /Unauthorized: create API token for auser with roles/
+    }
+
+    @Unroll
+    def "generate user token no roles as owner uses auth roles"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenUser = 'auser'
+        def tokenRoles = null
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService)
+        def user = new User(login: 'auser')
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'generate_service_token') >>
+                (tokeaction == 'generate_service_token')
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'generate_user_token') >>
+                (tokeaction == 'generate_user_token')
+        0 * service.frameworkService._(*_)
+        service.userService.findOrCreateUser('auser') >> user
+        result.authRolesSet() == (['role1', 'role2'] as Set)
+        where:
+        tokeaction               | _
+        'generate_service_token' | _
+        'generate_user_token'    | _
+
+    }
+
+    @Unroll
+    def "generate service token no roles as other user is error"() {
+        given:
+        def auth = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'auser'
+            getRoles() >> (['role1', 'role2'] as Set)
+        }
+        def tokenUser = 'otheruser'
+        def tokenRoles = null
+
+        def tokenTime = 3600
+
+        service.frameworkService = Mock(FrameworkService)
+        service.configurationService = Mock(ConfigurationService)
+        service.userService = Mock(UserService)
+        def user = new User(login: 'auser')
+
+        when:
+        def result = service.generateUserToken(auth, tokenTime, tokenUser, tokenRoles)
+        then:
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'user', 'admin') >> false
+        _ * service.frameworkService.authorizeApplicationResourceType(auth, 'apitoken', 'generate_service_token') >>
+                true
+        0 * service.frameworkService._(*_)
+        Exception e = thrown()
+        e.message =~ /Roles are required/
 
     }
 }

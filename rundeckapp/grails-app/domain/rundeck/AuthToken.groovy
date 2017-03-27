@@ -15,17 +15,49 @@
  */
 
 package rundeck
+
+import java.time.Clock
+
 class AuthToken {
     String token
     String authRoles
+    String uuid
+    String creator
+    Date expiration
+    Date dateCreated
+    Date lastUpdated
     static belongsTo = [user:User]
 
     static constraints = {
         token(nullable:false,unique:true)
         authRoles(nullable:false)
+        uuid(nullable: true)
         user(nullable:false)
+        creator(nullable: true)
+        expiration(nullable: true)
+        lastUpdated(nullable: true)
+        dateCreated(nullable: true)
     }
     static mapping = {
         authRoles type: 'text'
+    }
+
+    Set<String> authRolesSet() {
+        return parseAuthRoles(authRoles)
+    }
+
+    static String generateAuthRoles(Collection<String> roles) {
+        new HashSet(roles.collect { it.trim() }.findAll { it }).join(',')
+    }
+
+    static Set<String> parseAuthRoles(String authRoles) {
+        if (!authRoles) {
+            return []
+        }
+        new HashSet(authRoles.split(' *, *').collect { it.trim() }.findAll { it } as List)
+    }
+
+    boolean tokenIsExpired() {
+        expiration!=null && (expiration < Date.from(Clock.systemUTC().instant()))
     }
 }

@@ -22,14 +22,46 @@ import com.dtolabs.rundeck.core.authorization.ValidationSet;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
  * Created by greg on 7/17/15.
  */
 public class YamlProvider {
+    private static PolicyCollectionFactory factory;
+    public static final Class<?> DEFAULT_FACTORY =   YamlPolicyFactoryV2.class;
+    public static final String FACTORY_CLASS_PROPERTY = YamlProvider.class.getName() + ".factoryClass";
+
+    static {
+        String prop = System.getProperty(FACTORY_CLASS_PROPERTY);
+        Class<?> factoryClass = DEFAULT_FACTORY;
+        if (null != prop) {
+            try {
+                factoryClass = Class.forName(prop);
+                if (!PolicyCollectionFactory.class.isAssignableFrom(factoryClass)) {
+                    throw new RuntimeException("Cannot use class " + prop + " as PolicyCollectionFactory");
+                }
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        try {
+            Constructor<?> declaredConstructor = factoryClass.getDeclaredConstructor();
+            Object o = declaredConstructor.newInstance();
+            factory = (PolicyCollectionFactory) o;
+        } catch (NoSuchMethodException | InstantiationException | InvocationTargetException | IllegalAccessException
+                e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
     static final FilenameFilter filenameFilter = new FilenameFilter() {
-        public boolean accept(File dir, String name) {
+        @Override
+        public boolean accept(final File dir, final String name) {
             return name.endsWith(".aclpolicy");
         }
     };
@@ -56,19 +88,15 @@ public class YamlProvider {
             final Set<Attribute> forcedContext
     )
     {
-        for (CacheableYamlSource source : sources) {
-            try {
-                YamlPolicyCollection yamlPolicyCollection = YamlProvider.policiesFromSource(
-                        source,
-                        forcedContext,
-                        validation
-                );
-            } catch (Exception e1) {
-                validation.addError(source.getIdentity(), e1.getMessage());
-            }
-        }
-        validation.complete();
-        return validation;
+        return getFactory().validate(validation, sources, forcedContext);
+    }
+
+    public static PolicyCollectionFactory getFactory() {
+        return factory;
+    }
+
+    public static void setFactory(PolicyCollectionFactory factory) {
+        YamlProvider.factory = factory;
     }
 
     /**
@@ -80,8 +108,8 @@ public class YamlProvider {
      *
      * @throws IOException
      */
-    public static YamlPolicyCollection policiesFromSource(final YamlSource source) throws IOException {
-        return new YamlPolicyCollection(source);
+    public static PolicyCollection policiesFromSource(final YamlSource source) throws IOException {
+        return policiesFromSource(source, null, null);
     }
 
     /**
@@ -94,30 +122,34 @@ public class YamlProvider {
      *
      * @throws IOException
      */
-    public static YamlPolicyCollection policiesFromSource(final YamlSource source, final Set<Attribute> forcedContext)
-            throws IOException
-    {
-        return new YamlPolicyCollection(source, forcedContext, null);
-    }
-
-    /**
-     * Load policies from a source
-     *
-     * @param source        source
-     * @param forcedContext Context to require for all policies parsed
-     *
-     * @return policies
-     *
-     * @throws IOException
-     */
-    public static YamlPolicyCollection policiesFromSource(
+    public static PolicyCollection policiesFromSource(
             final YamlSource source,
             final Set<Attribute> forcedContext,
-            ValidationSet validation
+            final ValidationSet validation
     )
             throws IOException
     {
-        return new YamlPolicyCollection(source, forcedContext, validation);
+
+        return factory.policiesFromSource(source, forcedContext, validation);
+    }
+
+    /**
+     * Load policies from a source
+     *
+     * @param source        source
+     * @param forcedContext Context to require for all policies parsed
+     *
+     * @return policies
+     *
+     * @throws IOException
+     */
+    public static PolicyCollection policiesFromSource(
+            final YamlSource source,
+            final Set<Attribute> forcedContext
+    )
+            throws IOException
+    {
+        return policiesFromSource(source, forcedContext, null);
     }
 
     /**
@@ -129,8 +161,8 @@ public class YamlProvider {
      *
      * @throws IOException
      */
-    public static YamlPolicyCollection policiesFromFile(final File source) throws IOException {
-        return new YamlPolicyCollection(sourceFromFile(source));
+    public static PolicyCollection policiesFromFile(final File source) throws IOException {
+        return policiesFromSource(sourceFromFile(source));
     }
 
     public static CacheableYamlSource sourceFromFile(final File file) {
