@@ -62,6 +62,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
     def grailsApplication
     def scheduledExecutionService
     def executionService
+    def fileUploadService
     def loggingService
     def logFileStorageService
     def workflowService
@@ -1268,6 +1269,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
                 def allexecs= Execution.findAllByProject(project.name)
                 def other=allexecs.size()
                 executionService.deleteBulkExecutionIds(allexecs*.id, authContext, username)
+
+
+                fileUploadService.deleteRecordsForProject(project.name)
 
                 log.debug("${other} other executions deleted")
 

@@ -226,6 +226,14 @@ class FileUploadService {
         JobFileRecord.findAllByExecution(e).each this.&deleteRecord
     }
 
+    def deleteRecordsForScheduledExecution(ScheduledExecution job) {
+        JobFileRecord.findAllByJobId(job.extid).each this.&deleteRecord
+    }
+
+    def deleteRecordsForProject(String project) {
+        JobFileRecord.findAllByProject(project).each this.&deleteRecord
+    }
+
     /**
      * Validate whether the file ref uuid can be used for the jobid and option
      * @param fileuuid

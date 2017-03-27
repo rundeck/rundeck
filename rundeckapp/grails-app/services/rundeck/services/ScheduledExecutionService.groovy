@@ -764,6 +764,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     exec.scheduledExecution = null
                 }
             }
+            fileUploadService.deleteRecordsForScheduledExecution(scheduledExecution)
             try {
                 scheduledExecution.delete(flush: true)
                 deleteJob(jobname, groupname)
