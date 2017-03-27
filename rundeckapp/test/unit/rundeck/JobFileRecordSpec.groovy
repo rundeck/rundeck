@@ -155,7 +155,8 @@ class JobFileRecordSpec extends Specification {
                 storageType: 'atype',
                 user: 'auser',
                 storageReference: 'someref',
-                execution: exec
+                execution: exec,
+                project: 'testproj1'
         ).save(flush: true)
 
         when:
@@ -178,6 +179,7 @@ class JobFileRecordSpec extends Specification {
         map.'storageMeta' == null
         map.'serverNodeUUID' == serveruuid
         map.'recordType' == FileUploadService.RECORD_TYPE_OPTION_INPUT
+        map.'project' == 'testproj1'
     }
 
     def "frommap"() {
@@ -213,7 +215,8 @@ class JobFileRecordSpec extends Specification {
                 storageType: 'atype',
                 user: 'auser',
                 storageReference: 'someref',
-                execution: exec
+                execution: exec,
+                project: 'testproj1'
         )
 
         then:
@@ -234,5 +237,6 @@ class JobFileRecordSpec extends Specification {
         jfr.'storageMeta' == null
         jfr.'serverNodeUUID' == serveruuid
         jfr.'recordType' == FileUploadService.RECORD_TYPE_OPTION_INPUT
+        jfr.'project' == 'testproj1'
     }
 }

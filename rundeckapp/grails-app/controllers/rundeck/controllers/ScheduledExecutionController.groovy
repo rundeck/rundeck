@@ -2985,6 +2985,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                     file.originalFilename,
                                     optname,
                                     scheduledExecution.extid,
+                                    scheduledExecution.project,
                                     expirationStart ?: new Date()
                             )
                             fileresults[optname] = ref
@@ -3541,6 +3542,7 @@ class ScheduledExecutionController  extends ControllerBase{
                             file.originalFilename,
                             optname,
                             scheduledExecution.extid,
+                            scheduledExecution.project,
                             new Date()
                     )
                     uploadedFileRefs[optname] = ref
@@ -3581,6 +3583,7 @@ class ScheduledExecutionController  extends ControllerBase{
                         params.fileName,
                         params.optionName,
                         scheduledExecution.extid,
+                        scheduledExecution.project,
                         new Date()
                 )
                 uploadedFileRefs[params.optionName] = ref

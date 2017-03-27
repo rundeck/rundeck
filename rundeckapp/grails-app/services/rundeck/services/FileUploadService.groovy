@@ -88,6 +88,7 @@ class FileUploadService {
             String origName,
             String inputName,
             String jobId,
+            String project,
             Date expiryStart
     )
     {
@@ -119,7 +120,7 @@ class FileUploadService {
         }
         def shaString = shastream.SHAString
         log.debug("uploadedFile $uuid refid $refid (sha $shaString)")
-        def record = createRecord(refid, length, uuid, shaString, origName, jobId, inputName, username, expiryStart)
+        def record = createRecord(refid, length, uuid, shaString, origName, jobId, inputName, username, project, expiryStart)
         log.debug("record: $record")
         if (expiryStart) {
             Long id = record.id
@@ -174,6 +175,7 @@ class FileUploadService {
             String jobId,
             String inputName,
             String username,
+            String project,
             Date expiryStart
     )
     {
@@ -191,7 +193,8 @@ class FileUploadService {
                 recordName: inputName,
                 storageType: getPluginType(),
                 user: username,
-                storageReference: refid
+                storageReference: refid,
+                project: project
         )
         if(!jfr.validate()){
             throw new RuntimeException("Could not validate record: $jfr.errors")

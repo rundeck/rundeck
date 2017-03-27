@@ -43,8 +43,20 @@ class FileUploadServiceSpec extends Specification {
         String origName = 'afile'
         String optionName = 'myopt'
         String sha = 'z'*64
+        String project = 'testproj'
         when:
-        def result = service.createRecord('abcd', 123, uuid, sha, origName, jobid, optionName, user, expiryStart)
+        def result = service.createRecord(
+                'abcd',
+                123,
+                uuid,
+                sha,
+                origName,
+                jobid,
+                optionName,
+                user,
+                project,
+                expiryStart
+        )
         then:
         result.storageReference == 'abcd'
         result.uuid == uuid.toString()
@@ -58,6 +70,7 @@ class FileUploadServiceSpec extends Specification {
         result.fileState == 'temp'
         result.storageType == 'filesystem-temp'
         result.fileName == 'afile'
+        result.project == project
 
         where:
         delay  | _
@@ -97,7 +110,8 @@ class FileUploadServiceSpec extends Specification {
                 recordName: optionName,
                 storageType: 'filesystem-temp',
                 user: user,
-                storageReference: 'abcd'
+                storageReference: 'abcd',
+                project: 'testproj'
         ).save()
 
         ScheduledExecution job = mkjob(jobid)
@@ -149,7 +163,8 @@ class FileUploadServiceSpec extends Specification {
                 recordName: optionName,
                 storageType: 'filesystem-temp',
                 user: user,
-                storageReference: storageRef
+                storageReference: storageRef,
+                project: 'testproj'
         ).save()
 
         ScheduledExecution job = mkjob(jobid)
@@ -215,7 +230,8 @@ class FileUploadServiceSpec extends Specification {
                 recordName: optionName,
                 storageType: 'filesystem-temp',
                 user: user,
-                storageReference: 'abcd'
+                storageReference: 'abcd',
+                project: 'testproj'
         ).save()
 
         ScheduledExecution job = mkjob(jobid)
@@ -268,7 +284,8 @@ class FileUploadServiceSpec extends Specification {
                 recordName: optionName,
                 storageType: 'filesystem-temp',
                 user: user,
-                storageReference: 'abcd'
+                storageReference: 'abcd',
+                project: 'testproj'
         ).save()
 
         ScheduledExecution job = mkjob(jobid)
