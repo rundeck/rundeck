@@ -917,7 +917,7 @@ class ScheduledExecution extends ExecutionContext {
      * @return
      */
     List<Option> listFileOptions() {
-        options.findAll { it.optionType == 'file' } as List
+        options.findAll { it.typeFile } as List
     }
 }
 
