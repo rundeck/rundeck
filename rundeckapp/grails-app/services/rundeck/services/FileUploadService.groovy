@@ -55,10 +55,12 @@ class FileUploadService {
         pluginService.getPluginDescriptor(pluginType, FileUploadPlugin)?.description
     }
 
+
     FileUploadPlugin getPlugin() {
-        def plugin = pluginService.getPlugin(pluginType, FileUploadPlugin)
-        plugin.initialize([:])
-        plugin
+        def configured = pluginService.configurePlugin(pluginType, [:], FileUploadPlugin)
+        def plugin = configured.instance
+        plugin.initialize()
+        return plugin
     }
 
     private String getPluginType() {
@@ -87,6 +89,7 @@ class FileUploadService {
             String username,
             String origName,
             String inputName,
+            Map inputConfig,
             String jobId,
             String project,
             Date expiryStart
@@ -106,10 +109,10 @@ class FileUploadService {
             readstream = new ThresholdInputStream(readstream, max)
         }
         UUID uuid = UUID.randomUUID()
-        def refid
+        def fileref
         def uuidstring = uuid.toString()
         try {
-            refid = getPlugin().uploadFile(readstream, length, uuidstring)
+            fileref = getPlugin().uploadFile(readstream, length, uuidstring, inputConfig)
         } catch (ThresholdInputStream.Threshold e) {
             throw new FileUploadServiceException(
                     "Uploaded file data size ($e.breach) is larger than configured maximum file size: " +
@@ -119,8 +122,19 @@ class FileUploadService {
             throw new FileUploadServiceException("Error receiving file: " + e.message, e)
         }
         def shaString = shastream.SHAString
-        log.debug("uploadedFile $uuid refid $refid (sha $shaString)")
-        def record = createRecord(refid, length, uuid, shaString, origName, jobId, inputName, username, project, expiryStart)
+        log.debug("uploadedFile $uuid refid $fileref (sha $shaString)")
+        def record = createRecord(
+                fileref,
+                length,
+                uuid,
+                shaString,
+                origName,
+                jobId,
+                inputName,
+                username,
+                project,
+                expiryStart
+        )
         log.debug("record: $record")
         if (expiryStart) {
             Long id = record.id
@@ -194,16 +208,12 @@ class FileUploadService {
                 storageType: getPluginType(),
                 user: username,
                 storageReference: refid,
-                project: project
+                project: project,
         )
         if(!jfr.validate()){
             throw new RuntimeException("Could not validate record: $jfr.errors")
         }
         jfr.save(flush: true)
-    }
-
-    def retrieveFile(OutputStream output, String reference) {
-        getPlugin().retrieveFile(reference, output)
     }
 
     private def changeFileState(JobFileRecord record, FileUploadPlugin.ExternalState extState) {
@@ -222,12 +232,14 @@ class FileUploadService {
         }
     }
 
+
     def deleteRecord(JobFileRecord record) {
         def plugin = getPlugin()
-        if (plugin.hasFile(record.storageReference)) {
-            plugin.transitionState(record.storageReference, FileUploadPlugin.ExternalState.Deleted)
+        def reference = record.storageReference
+        if (plugin.hasFile(reference)) {
+            plugin.transitionState(reference, FileUploadPlugin.ExternalState.Deleted)
         }
-        removeLocalFile(record.storageReference)
+        removeLocalFile(reference)
         record.delete()
     }
 

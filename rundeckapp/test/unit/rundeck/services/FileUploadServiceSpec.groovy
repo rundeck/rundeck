@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
+import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
@@ -173,12 +174,7 @@ class FileUploadServiceSpec extends Specification {
         Execution exec = mkexec(job)
         exec.validate()
         StepExecutionContext context = Mock(StepExecutionContext)
-
-        when:
-        def result = service.loadFileOptionInputs(exec, job, context)
-        then:
-        result != null
-        1 * service.pluginService.getPlugin('filesystem-temp', FileUploadPlugin) >> Mock(FileUploadPlugin) {
+        def plugin = Mock(FileUploadPlugin) {
             1 * hasFile(storageRef) >> true
             1 * retrieveLocalFile(storageRef) >> null
             1 * retrieveFile(storageRef, _) >> {
@@ -186,6 +182,13 @@ class FileUploadServiceSpec extends Specification {
                 5L
             }
         }
+        when:
+        def result = service.loadFileOptionInputs(exec, job, context)
+        then:
+        result != null
+
+        1 * service.pluginService.configurePlugin('filesystem-temp', _, FileUploadPlugin) >>
+                new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
         1 * context.getDataContext() >> [
                 option: [
                         (optionName): ref
@@ -378,15 +381,17 @@ class FileUploadServiceSpec extends Specification {
         service.configurationService = Mock(ConfigurationService) {
             getString('fileupload.plugin.type', _) >> { it[1] }
         }
+        def plugin = Mock(FileUploadPlugin) {
+            1 * initialize()
+            1 * transitionState(storageRef, FileUploadPlugin.ExternalState.Unused) >> stateResult
+        }
 
         when:
         service.checkAndExpireAllRecords()
         then:
         1 * service.frameworkService.getServerUUID()
-        1 * service.pluginService.getPlugin('filesystem-temp', FileUploadPlugin) >> Mock(FileUploadPlugin) {
-            1 * initialize(_)
-            1 * transitionState(storageRef, FileUploadPlugin.ExternalState.Unused) >> stateResult
-        }
+        1 * service.pluginService.configurePlugin('filesystem-temp', _, FileUploadPlugin) >>
+                new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
         jfr.fileState == dbState
 
         where:
@@ -431,15 +436,16 @@ class FileUploadServiceSpec extends Specification {
         service.configurationService = Mock(ConfigurationService) {
             getString('fileupload.plugin.type', _) >> { it[1] }
         }
-
+        def plugin = Mock(FileUploadPlugin) {
+            1 * initialize()
+            1 * transitionState(storageRef, FileUploadPlugin.ExternalState.Used) >> stateResult
+        }
         def event = new ExecutionCompleteEvent(execution: exec, job: job)
         when:
         service.executionComplete(event)
         then:
-        1 * service.pluginService.getPlugin('filesystem-temp', FileUploadPlugin) >> Mock(FileUploadPlugin) {
-            1 * initialize(_)
-            1 * transitionState(storageRef, FileUploadPlugin.ExternalState.Used) >> stateResult
-        }
+        1 * service.pluginService.configurePlugin('filesystem-temp', _, FileUploadPlugin) >>
+                new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
         jfr.fileState == dbState
 
         where:

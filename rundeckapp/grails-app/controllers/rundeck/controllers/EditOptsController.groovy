@@ -579,6 +579,9 @@ class EditOptsController {
         }
 
         opt.properties = params
+        if (params.optionType && params.configMap) {
+            opt.configMap = params.configMap
+        }
         opt.valuesList = params.valuesList
         if(params.valuesType == 'list'){
             opt.realValuesUrl=null
