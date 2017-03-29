@@ -131,7 +131,9 @@ function _jobEhData() {
 }
 /**
  * After loading WF item edit form in the list, update input and apply ACE editor
- * @param item
+ * @param item li item
+ * @param iseh true if error handler
+ * @param isnodestep true if node step
  */
 function postLoadItemEdit(item, iseh, isnodestep) {
     var liitem = jQuery(item);
@@ -159,7 +161,7 @@ function postLoadItemEdit(item, iseh, isnodestep) {
     //special error-handler vars
 
     if (iseh) {
-        baseVarData.concat(_jobEhData());
+        baseVarData = baseVarData.concat(_jobEhData());
     }
 
     var mkenv = function (name) {
