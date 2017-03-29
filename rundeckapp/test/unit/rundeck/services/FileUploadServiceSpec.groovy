@@ -3,6 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
+import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
@@ -11,6 +12,7 @@ import rundeck.JobFileRecord
 import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.services.events.ExecutionCompleteEvent
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -43,8 +45,20 @@ class FileUploadServiceSpec extends Specification {
         String origName = 'afile'
         String optionName = 'myopt'
         String sha = 'z'*64
+        String project = 'testproj'
         when:
-        def result = service.createRecord('abcd', 123, uuid, sha, origName, jobid, optionName, user, expiryStart)
+        def result = service.createRecord(
+                'abcd',
+                123,
+                uuid,
+                sha,
+                origName,
+                jobid,
+                optionName,
+                user,
+                project,
+                expiryStart
+        )
         then:
         result.storageReference == 'abcd'
         result.uuid == uuid.toString()
@@ -58,6 +72,7 @@ class FileUploadServiceSpec extends Specification {
         result.fileState == 'temp'
         result.storageType == 'filesystem-temp'
         result.fileName == 'afile'
+        result.project == project
 
         where:
         delay  | _
@@ -97,7 +112,8 @@ class FileUploadServiceSpec extends Specification {
                 recordName: optionName,
                 storageType: 'filesystem-temp',
                 user: user,
-                storageReference: 'abcd'
+                storageReference: 'abcd',
+                project: 'testproj'
         ).save()
 
         ScheduledExecution job = mkjob(jobid)
@@ -149,7 +165,8 @@ class FileUploadServiceSpec extends Specification {
                 recordName: optionName,
                 storageType: 'filesystem-temp',
                 user: user,
-                storageReference: storageRef
+                storageReference: storageRef,
+                project: 'testproj'
         ).save()
 
         ScheduledExecution job = mkjob(jobid)
@@ -157,12 +174,7 @@ class FileUploadServiceSpec extends Specification {
         Execution exec = mkexec(job)
         exec.validate()
         StepExecutionContext context = Mock(StepExecutionContext)
-
-        when:
-        def result = service.loadFileOptionInputs(exec, job, context)
-        then:
-        result != null
-        1 * service.pluginService.getPlugin('filesystem-temp', FileUploadPlugin) >> Mock(FileUploadPlugin) {
+        def plugin = Mock(FileUploadPlugin) {
             1 * hasFile(storageRef) >> true
             1 * retrieveLocalFile(storageRef) >> null
             1 * retrieveFile(storageRef, _) >> {
@@ -170,6 +182,13 @@ class FileUploadServiceSpec extends Specification {
                 5L
             }
         }
+        when:
+        def result = service.loadFileOptionInputs(exec, job, context)
+        then:
+        result != null
+
+        1 * service.pluginService.configurePlugin('filesystem-temp', _, FileUploadPlugin) >>
+                new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
         1 * context.getDataContext() >> [
                 option: [
                         (optionName): ref
@@ -215,7 +234,8 @@ class FileUploadServiceSpec extends Specification {
                 recordName: optionName,
                 storageType: 'filesystem-temp',
                 user: user,
-                storageReference: 'abcd'
+                storageReference: 'abcd',
+                project: 'testproj'
         ).save()
 
         ScheduledExecution job = mkjob(jobid)
@@ -243,15 +263,6 @@ class FileUploadServiceSpec extends Specification {
         given:
         String jobid = 'ajobid'
         String user = 'auser'
-//        service.configurationService = Mock(ConfigurationService) {
-//            getString('fileupload.plugin.type', _) >> { it[1] }
-//            getLong('fileUploadService.tempfile.expiration', _) >> 30000L
-//        }
-//        service.frameworkService = Mock(FrameworkService) {
-//
-//        }
-//        service.pluginService = Mock(PluginService)
-
         String origName = 'afile'
         String optionName = 'myopt'
         String sha = 'fc4b5fd6816f75a7c81fc8eaa9499d6a299bd803397166e8c4cf9280b801d62c'
@@ -268,7 +279,8 @@ class FileUploadServiceSpec extends Specification {
                 recordName: optionName,
                 storageType: 'filesystem-temp',
                 user: user,
-                storageReference: 'abcd'
+                storageReference: 'abcd',
+                project: 'testproj'
         ).save()
 
         ScheduledExecution job = mkjob(jobid)
@@ -335,5 +347,110 @@ class FileUploadServiceSpec extends Specification {
                         new Option(optionType: 'file', name: 'myopt', required: false, enforced: false).save()
                 ]
         ).save(flush: true)
+    }
+
+    def "check and expire records"() {
+        given:
+        String jobid = 'ajobid'
+        String user = 'auser'
+        String origName = 'afile'
+        String optionName = 'myopt'
+        String sha = 'fc4b5fd6816f75a7c81fc8eaa9499d6a299bd803397166e8c4cf9280b801d62c'
+        def storageRef = 'abcd'
+        def jfr = new JobFileRecord(
+                fileName: origName,
+                size: 123,
+                recordType: 'option',
+                expirationDate: new Date(),
+                fileState: 'temp',
+                uuid: '44a26bb3-5013-4906-9997-286306005408',
+                serverNodeUUID: null,
+                sha: sha,
+                jobId: jobid,
+                recordName: optionName,
+                storageType: 'filesystem-temp',
+                user: user,
+                storageReference: storageRef,
+                project: 'testproj'
+        ).save()
+
+        ScheduledExecution job = mkjob(jobid)
+        job.validate()
+        service.frameworkService = Mock(FrameworkService)
+        service.pluginService = Mock(PluginService)
+        service.configurationService = Mock(ConfigurationService) {
+            getString('fileupload.plugin.type', _) >> { it[1] }
+        }
+        def plugin = Mock(FileUploadPlugin) {
+            1 * initialize()
+            1 * transitionState(storageRef, FileUploadPlugin.ExternalState.Unused) >> stateResult
+        }
+
+        when:
+        service.checkAndExpireAllRecords()
+        then:
+        1 * service.frameworkService.getServerUUID()
+        1 * service.pluginService.configurePlugin('filesystem-temp', _, FileUploadPlugin) >>
+                new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
+        jfr.fileState == dbState
+
+        where:
+        stateResult                             | dbState
+        FileUploadPlugin.InternalState.Deleted  | 'expired'
+        FileUploadPlugin.InternalState.Retained | 'retained'
+    }
+
+    def "execution complete event"() {
+        given:
+        String jobid = 'ajobid'
+        String user = 'auser'
+        String origName = 'afile'
+        String optionName = 'myopt'
+        String sha = 'fc4b5fd6816f75a7c81fc8eaa9499d6a299bd803397166e8c4cf9280b801d62c'
+        def storageRef = 'abcd'
+
+        ScheduledExecution job = mkjob(jobid)
+        job.validate()
+        Execution exec = mkexec(job)
+        exec.validate()
+        def jfr = new JobFileRecord(
+                fileName: origName,
+                size: 123,
+                recordType: 'option',
+                expirationDate: new Date(),
+                fileState: 'retained',
+                uuid: '44a26bb3-5013-4906-9997-286306005408',
+                serverNodeUUID: null,
+                sha: sha,
+                jobId: jobid,
+                recordName: optionName,
+                storageType: 'filesystem-temp',
+                user: user,
+                storageReference: storageRef,
+                project: 'testproj',
+                execution: exec
+        ).save()
+
+        service.frameworkService = Mock(FrameworkService)
+        service.pluginService = Mock(PluginService)
+        service.configurationService = Mock(ConfigurationService) {
+            getString('fileupload.plugin.type', _) >> { it[1] }
+        }
+        def plugin = Mock(FileUploadPlugin) {
+            1 * initialize()
+            1 * transitionState(storageRef, FileUploadPlugin.ExternalState.Used) >> stateResult
+        }
+        def event = new ExecutionCompleteEvent(execution: exec, job: job)
+        when:
+        service.executionComplete(event)
+        then:
+        1 * service.pluginService.configurePlugin('filesystem-temp', _, FileUploadPlugin) >>
+                new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
+        jfr.fileState == dbState
+
+        where:
+        stateResult                             | dbState
+        FileUploadPlugin.InternalState.Deleted  | 'deleted'
+        FileUploadPlugin.InternalState.Retained | 'retained'
     }
 }

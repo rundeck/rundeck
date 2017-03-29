@@ -2941,7 +2941,11 @@ class ScheduledExecutionController  extends ControllerBase{
         def fileresults = [:]
         if (request instanceof MultipartRequest) {
             def fileOptions = scheduledExecution.listFileOptions()
-            def fileOptionNames = fileOptions*.name
+            def fileOptionConfig = [:]
+            fileOptions.each { Option option ->
+                fileOptionConfig[option.name] = option.configMap
+            }
+            def fileOptionNames = fileOptionConfig.keySet()
             def invalid = []
             long maxsize = fileUploadService.optionUploadMaxSize
             if (maxsize > 0) {
@@ -2984,7 +2988,9 @@ class ScheduledExecutionController  extends ControllerBase{
                                     authContext.username,
                                     file.originalFilename,
                                     optname,
+                                    fileOptionConfig[optname],
                                     scheduledExecution.extid,
+                                    scheduledExecution.project,
                                     expirationStart ?: new Date()
                             )
                             fileresults[optname] = ref
@@ -3541,6 +3547,7 @@ class ScheduledExecutionController  extends ControllerBase{
                             file.originalFilename,
                             optname,
                             scheduledExecution.extid,
+                            scheduledExecution.project,
                             new Date()
                     )
                     uploadedFileRefs[optname] = ref
@@ -3581,6 +3588,7 @@ class ScheduledExecutionController  extends ControllerBase{
                         params.fileName,
                         params.optionName,
                         scheduledExecution.extid,
+                        scheduledExecution.project,
                         new Date()
                 )
                 uploadedFileRefs[params.optionName] = ref

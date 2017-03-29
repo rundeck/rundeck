@@ -68,7 +68,7 @@ public class Option implements Comparable{
     String configData
 
     static belongsTo=[scheduledExecution:ScheduledExecution]
-    static transients = ['valuesList', 'realValuesUrl', 'configMap']
+    static transients = ['valuesList', 'realValuesUrl', 'configMap', 'typeFile']
 
     static constraints={
         name(nullable:false,blank:false,matches: '[a-zA-Z_0-9.-]+')
@@ -312,6 +312,9 @@ public class Option implements Comparable{
         }
     }
 
+    boolean isTypeFile() {
+        this.optionType == 'file'
+    }
 
     /**
      * create a clone Option object and set the valuesList string

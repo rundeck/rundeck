@@ -2141,7 +2141,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     return
                 }
 
-                if (opt.optionType == 'file' && optparams[opt.name]) {
+                if (opt.typeFile && optparams[opt.name]) {
                     def validate = fileUploadService.validateFileRefForJobOption(
                             optparams[opt.name],
                             scheduledExecution.extid,

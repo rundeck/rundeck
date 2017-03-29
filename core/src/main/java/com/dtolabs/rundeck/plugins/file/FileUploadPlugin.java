@@ -30,11 +30,10 @@ import java.util.Map;
  */
 public interface FileUploadPlugin {
     /**
-     * Initializes the plugin with contextual data
+     * Initializes the plugin before use
      *
-     * @param context context data
      */
-    public void initialize(Map<String, ? extends Object> context);
+    public void initialize();
 
     /**
      * Upload a file for the given job and file input name, and return an identifier to reference the
@@ -46,7 +45,12 @@ public interface FileUploadPlugin {
      *
      * @return identifier
      */
-    public String uploadFile(final InputStream content, final long length, final String refid) throws IOException;
+    public String uploadFile(
+            final InputStream content,
+            final long length,
+            final String refid,
+            Map<String, String> config
+    ) throws IOException;
 
     /**
      * Retrieve the file by reference
@@ -67,7 +71,7 @@ public interface FileUploadPlugin {
     public boolean hasFile(String ref);
 
     /**
-     * Retrieve the file if iti si available locally, otherwise return null
+     * Retrieve the file if it is available locally, otherwise return null
      *
      * @param ref ref
      *
@@ -93,4 +97,45 @@ public interface FileUploadPlugin {
      */
     boolean removeFile(String reference);
 
+    /**
+     * Transition between states, allows plugin to determine behavior
+     *
+     * @param reference reference
+     * @param state    the new external state of the file
+     *
+     * @return the new internal state of the file
+     */
+    InternalState transitionState(String reference, ExternalState state);
+
+    /**
+     * Represents file states known to rundeck
+     */
+    enum ExternalState {
+        /**
+         * The file has been used for an operation, and
+         */
+        Used,
+        /**
+         * The file will no longer be used
+         */
+        Unused,
+        /**
+         * The file should be deleted
+         */
+        Deleted,
+    }
+
+    /**
+     * Represents file states known to the plugin
+     */
+    enum InternalState {
+        /**
+         * The internal stored file was deleted
+         */
+        Deleted,
+        /**
+         * The internal stored file is retained
+         */
+        Retained
+    }
 }

@@ -281,6 +281,20 @@ class PluginService {
     }
 
     /**
+     * Configure a new plugin using a specific property resolver for configuration
+     * @param name provider name
+     * @param service service
+     * @param config instance configuration data
+     * @return validation
+     */
+    def ValidatedPlugin validatePluginConfig(String name, Class clazz, Map config) {
+        return rundeckPluginRegistry?.validatePluginByName(name, rundeckPluginRegistry?.createPluggableService(clazz), config)
+    }
+
+    def <T> Map listPlugins(Class<T> clazz) {
+        listPlugins(clazz, rundeckPluginRegistry?.createPluggableService(clazz))
+    }
+    /**
      * @param clazz
      * @param service
      * @return map of [name: DescribedPlugin]

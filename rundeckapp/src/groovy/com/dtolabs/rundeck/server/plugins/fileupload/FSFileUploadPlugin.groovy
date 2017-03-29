@@ -17,7 +17,7 @@
 package com.dtolabs.rundeck.server.plugins.fileupload
 
 import com.dtolabs.rundeck.core.plugins.Plugin
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
@@ -25,7 +25,6 @@ import groovy.transform.ToString
 import org.apache.commons.fileupload.util.Streams
 
 import java.nio.file.Files
-import java.nio.file.OpenOption
 
 /**
  * @author greg
@@ -37,13 +36,20 @@ import java.nio.file.OpenOption
 @ToString(includeNames = true)
 class FSFileUploadPlugin implements FileUploadPlugin {
 
-    @PluginProperty(title = 'Base Path', description = 'Root Filesystem path to store uploaded files')
-    String basePath;
+    @PluginProperty(
+            title = 'Base Path',
+            description = 'Root Filesystem path to store uploaded files (Default: $RDECK_BASE/var/uploads)',
+            scope = PropertyScope.Framework
+    )
+    String basePath
 
-    private File basedir;
+    private File basedir
+    private inited = false
 
-    @Override
-    void initialize(final Map<String, ?> context) {
+    synchronized void initialize() {
+        if (inited) {
+            return
+        }
         if (!basePath) {
             throw new IllegalStateException('basePath is required')
         }
@@ -53,10 +59,11 @@ class FSFileUploadPlugin implements FileUploadPlugin {
         } else if (!basedir.isDirectory()) {
             throw new IllegalStateException("basePath must point to a directory: $basedir")
         }
+        inited = true
     }
 
     @Override
-    String uploadFile(final InputStream content, final long length, final String refid)
+    String uploadFile(final InputStream content, final long length, final String refid, final Map ignored)
             throws IOException
     {
         File output = new File(basedir, refid)
@@ -107,5 +114,15 @@ class FSFileUploadPlugin implements FileUploadPlugin {
     boolean removeFile(final String reference) {
         File output = new File(basedir, reference)
         return Files.deleteIfExists(output.toPath())
+    }
+
+    @Override
+    FileUploadPlugin.InternalState transitionState(
+            final String reference,
+            final FileUploadPlugin.ExternalState state
+    )
+    {
+        removeFile(reference)
+        FileUploadPlugin.InternalState.Deleted
     }
 }

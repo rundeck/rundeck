@@ -278,6 +278,7 @@ class ProjectServiceSpec extends Specification {
         }
         service.scmService = Mock(ScmService)
         service.executionService = Mock(ExecutionService)
+        service.fileUploadService = Mock(FileUploadService)
         def fwk = Mock(Framework)
 
         when:
@@ -290,6 +291,7 @@ class ProjectServiceSpec extends Specification {
         1 * fwk.getFrameworkProjectMgr() >> Mock(ProjectManager) {
             1 * removeFrameworkProject('myproject')
         }
+        1 * service.fileUploadService.deleteRecordsForProject('myproject')
         result.success
 
     }

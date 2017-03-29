@@ -94,6 +94,21 @@
                                                                        ),
                                                                textCss    : '',
                                                                mode       : 'hidden', rkey: g.rkey()]"/></span>
+
+                    <g:if test="${fileUploadPluginDescription?.properties}">
+                        <g:set var="prefix" value="${'configMap.'}"/>
+                        <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                service:'FileUploadPluginService',
+                                provider:fileUploadPluginDescription.name,
+                                properties:fileUploadPluginDescription?.properties,
+                                report: configMapValidate,
+                                prefix:prefix,
+                                values:option?.configMap,
+                                fieldnamePrefix:prefix,
+                                origfieldnamePrefix:'orig.' + prefix,
+                                allowedScope:com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Instance
+                        ]}"/>
+                    </g:if>
                 </g:if>
             </div>
         </div>

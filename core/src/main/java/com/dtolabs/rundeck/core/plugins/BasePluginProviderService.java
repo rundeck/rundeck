@@ -70,7 +70,6 @@ public class BasePluginProviderService<T> extends BasePluggableProviderService<T
 
 
     public List<Description> listDescriptions() {
-        //TODO: enable field annotations for properties, update plugin Interface and deprecate use of Factory
         return DescribableServiceUtil.listDescriptions(this, false);
     }
 

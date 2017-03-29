@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import grails.events.Listener
 import grails.transaction.Transactional
@@ -10,6 +11,7 @@ import org.rundeck.util.Sizes
 import org.rundeck.util.ThresholdInputStream
 import rundeck.Execution
 import rundeck.JobFileRecord
+import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.events.ExecutionCompleteEvent
@@ -55,10 +57,31 @@ class FileUploadService {
         pluginService.getPluginDescriptor(pluginType, FileUploadPlugin)?.description
     }
 
+    def validatePluginConfig(Map configMap) {
+        pluginService.validatePluginConfig(pluginType, FileUploadPlugin, configMap)
+    }
+    Validator.Report validateFileOptConfig(Option opt) {
+        if (opt.typeFile) {
+            def result = validatePluginConfig(opt.configMap)
+            if (!result.valid) {
+
+                opt.errors.rejectValue(
+                        'configMap',
+                        'option.file.config.invalid.message',
+                        [result.report.toString()].toArray(),
+                        "invalid file config: {0}"
+                )
+                return result.report
+            }
+        }
+    }
+
+
     FileUploadPlugin getPlugin() {
-        def plugin = pluginService.getPlugin(pluginType, FileUploadPlugin)
-        plugin.initialize([:])
-        plugin
+        def configured = pluginService.configurePlugin(pluginType, [:], FileUploadPlugin)
+        def plugin = configured.instance
+        plugin.initialize()
+        return plugin
     }
 
     private String getPluginType() {
@@ -87,7 +110,9 @@ class FileUploadService {
             String username,
             String origName,
             String inputName,
+            Map inputConfig,
             String jobId,
+            String project,
             Date expiryStart
     )
     {
@@ -105,10 +130,10 @@ class FileUploadService {
             readstream = new ThresholdInputStream(readstream, max)
         }
         UUID uuid = UUID.randomUUID()
-        def refid
+        def fileref
         def uuidstring = uuid.toString()
         try {
-            refid = getPlugin().uploadFile(readstream, length, uuidstring)
+            fileref = getPlugin().uploadFile(readstream, length, uuidstring, inputConfig)
         } catch (ThresholdInputStream.Threshold e) {
             throw new FileUploadServiceException(
                     "Uploaded file data size ($e.breach) is larger than configured maximum file size: " +
@@ -118,8 +143,19 @@ class FileUploadService {
             throw new FileUploadServiceException("Error receiving file: " + e.message, e)
         }
         def shaString = shastream.SHAString
-        log.debug("uploadedFile $uuid refid $refid (sha $shaString)")
-        def record = createRecord(refid, length, uuid, shaString, origName, jobId, inputName, username, expiryStart)
+        log.debug("uploadedFile $uuid refid $fileref (sha $shaString)")
+        def record = createRecord(
+                fileref,
+                length,
+                uuid,
+                shaString,
+                origName,
+                jobId,
+                inputName,
+                username,
+                project,
+                expiryStart
+        )
         log.debug("record: $record")
         if (expiryStart) {
             Long id = record.id
@@ -158,7 +194,7 @@ class FileUploadService {
     private void expireRecord(JobFileRecord record) {
         try {
             def uuid = record.uuid
-            removeFile(record, JobFileRecord.STATE_EXPIRED)
+            changeFileState(record, FileUploadPlugin.ExternalState.Unused)
             log.debug("Job File Record Expired: $uuid")
         } catch (Throwable t) {
             log.error("Failed removing expired file with plugin: " + t, t)
@@ -174,6 +210,7 @@ class FileUploadService {
             String jobId,
             String inputName,
             String username,
+            String project,
             Date expiryStart
     )
     {
@@ -191,7 +228,8 @@ class FileUploadService {
                 recordName: inputName,
                 storageType: getPluginType(),
                 user: username,
-                storageReference: refid
+                storageReference: refid,
+                project: project,
         )
         if(!jfr.validate()){
             throw new RuntimeException("Could not validate record: $jfr.errors")
@@ -199,28 +237,43 @@ class FileUploadService {
         jfr.save(flush: true)
     }
 
-    def retrieveFile(OutputStream output, String reference) {
-        getPlugin().retrieveFile(reference, output)
-    }
+    private def changeFileState(JobFileRecord record, FileUploadPlugin.ExternalState extState) {
+        def result = getPlugin().transitionState(record.storageReference, extState)
+        String toState = FileUploadPlugin.InternalState.Deleted == result ?
+                (FileUploadPlugin.ExternalState.Unused == extState ?
+                        JobFileRecord.STATE_EXPIRED :
+                        JobFileRecord.STATE_DELETED
+                ) :
+                JobFileRecord.STATE_RETAINED
 
-    def removeFile(JobFileRecord record, String toState) {
-        getPlugin().removeFile(record.storageReference)
         record.state(toState)
         record.save(flush: true)
-        removeLocalFile(record.storageReference)
+        if (result == FileUploadPlugin.InternalState.Deleted) {
+            removeLocalFile(record.storageReference)
+        }
     }
+
 
     def deleteRecord(JobFileRecord record) {
         def plugin = getPlugin()
-        if (plugin.hasFile(record.storageReference)) {
-            plugin.removeFile(record.storageReference)
+        def reference = record.storageReference
+        if (plugin.hasFile(reference)) {
+            plugin.transitionState(reference, FileUploadPlugin.ExternalState.Deleted)
         }
-        removeLocalFile(record.storageReference)
+        removeLocalFile(reference)
         record.delete()
     }
 
     def deleteRecordsForExecution(Execution e) {
         JobFileRecord.findAllByExecution(e).each this.&deleteRecord
+    }
+
+    def deleteRecordsForScheduledExecution(ScheduledExecution job) {
+        JobFileRecord.findAllByJobId(job.extid).each this.&deleteRecord
+    }
+
+    def deleteRecordsForProject(String project) {
+        JobFileRecord.findAllByProject(project).each this.&deleteRecord
     }
 
     /**
@@ -385,7 +438,6 @@ class FileUploadService {
             throw new FileUploadServiceException("Failed to retrieve file $reference: " + e, e)
         }
         //copy locally
-        //TODO: rundeck tmp dir
         if (!plugin.hasFile(reference)) {
             throw new FileUploadServiceException("File is not available: $reference")
         }
@@ -503,18 +555,17 @@ class FileUploadService {
     @Listener
     def executionComplete(ExecutionCompleteEvent e) {
         findRecords(e.execution, RECORD_TYPE_OPTION_INPUT)?.each {
-            removeFile(it, JobFileRecord.STATE_DELETED)
+            changeFileState(it, FileUploadPlugin.ExternalState.Used)
         }
     }
 
-    //TODO:
     Map<String, File> localFileMap = [:]
 
 
     private void removeLocalFile(String reference) {
-        if (localFileMap[reference]) {
-            localFileMap[reference].delete()
-            localFileMap.remove(reference)
+        def file = localFileMap.remove(reference)
+        if (file && file.exists()) {
+            file.delete()
         }
     }
 
