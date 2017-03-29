@@ -417,7 +417,6 @@ class FileUploadService {
             throw new FileUploadServiceException("Failed to retrieve file $reference: " + e, e)
         }
         //copy locally
-        //TODO: rundeck tmp dir
         if (!plugin.hasFile(reference)) {
             throw new FileUploadServiceException("File is not available: $reference")
         }
@@ -539,14 +538,13 @@ class FileUploadService {
         }
     }
 
-    //TODO:
     Map<String, File> localFileMap = [:]
 
 
     private void removeLocalFile(String reference) {
-        if (localFileMap[reference]) {
-            localFileMap[reference].delete()
-            localFileMap.remove(reference)
+        def file = localFileMap.remove(reference)
+        if (file && file.exists()) {
+            file.delete()
         }
     }
 
