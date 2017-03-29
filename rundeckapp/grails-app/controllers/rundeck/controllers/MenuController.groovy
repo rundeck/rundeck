@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
@@ -1319,6 +1320,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
+        pluginDescs['FileUploadPluginService']=pluginService.listPlugins(FileUploadPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+
 
         def uiPluginProfiles = [:]
         def loadedFileNameMap=[:]
@@ -1347,6 +1352,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 (framework.getResourceFormatGeneratorService().name): framework.getResourceFormatGeneratorService().getBundledProviderNames(),
                 (framework.getResourceModelSourceService().name): framework.getResourceModelSourceService().getBundledProviderNames(),
                 (storagePluginProviderService.name): storagePluginProviderService.getBundledProviderNames()+['db'],
+                FileUploadPluginService: ['filesystem-temp'],
         ]
         //list included plugins
         def embeddedList = frameworkService.listEmbeddedPlugins(grailsApplication)
@@ -1375,6 +1381,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 ],
                 (scmService.scmImportPluginProviderService.name):[
                         description: message(code:"plugin.scmImport.special.description"),
+                ],
+                FileUploadPluginService:[
+                        description: message(code:"plugin.FileUploadPluginService.special.description"),
                 ]
         ]
         def specialScoping=[

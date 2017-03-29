@@ -280,6 +280,9 @@ class PluginService {
         return rundeckPluginRegistry?.validatePluginByName(name, service, config)
     }
 
+    def <T> Map listPlugins(Class<T> clazz) {
+        listPlugins(clazz, rundeckPluginRegistry?.createPluggableService(clazz))
+    }
     /**
      * @param clazz
      * @param service

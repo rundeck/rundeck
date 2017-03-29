@@ -38,7 +38,7 @@ class FSFileUploadPlugin implements FileUploadPlugin {
 
     @PluginProperty(
             title = 'Base Path',
-            description = 'Root Filesystem path to store uploaded files',
+            description = 'Root Filesystem path to store uploaded files (Default: $RDECK_BASE/var/uploads)',
             scope = PropertyScope.Framework
     )
     String basePath
