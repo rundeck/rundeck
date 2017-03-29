@@ -29,7 +29,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import grails.events.EventException
 import grails.plugins.quartz.listeners.SessionBinderJobListener
 import grails.transaction.Transactional
 import org.apache.log4j.Logger
@@ -1932,6 +1931,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def optfailed = false
             optsmap.values().each {Option opt ->
                 EditOptsController._validateOption(opt,null,scheduledExecution.scheduled)
+                fileUploadService.validateFileOptConfig(opt)
                 if (opt.errors.hasErrors()) {
                     optfailed = true
                     def errmsg = opt.name + ": " + opt.errors.allErrors.collect {lookupMessageError(it)}.join(";")
@@ -1969,6 +1969,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def Option theopt = new Option(optdefparams)
                 scheduledExecution.addToOptions(theopt)
                 EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
+                fileUploadService.validateFileOptConfig(theopt)
                 if (theopt.errors.hasErrors() || !theopt.validate()) {
                     failed = true
                     theopt.discard()
@@ -1988,6 +1989,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //evaluate required option defaults
             scheduledExecution.options.each{Option theopt->
                 EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
+                fileUploadService.validateFileOptConfig(theopt)
                 if(theopt.errors.hasErrors()) {
                     failed=true
                     def errmsg = theopt.name + ": " +
@@ -2483,6 +2485,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             params.options.each {Option theopt ->
                 scheduledExecution.addToOptions(theopt)
                 EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
+                fileUploadService.validateFileOptConfig(theopt)
                 if (theopt.errors.hasErrors() || !theopt.validate()) {
                     failed = true
                     theopt.discard()
@@ -2970,6 +2973,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def optfailed = false
             optsmap.values().each {Option opt ->
                 EditOptsController._validateOption(opt,null,scheduledExecution.scheduled)
+                fileUploadService.validateFileOptConfig(opt)
                 if (opt.errors.hasErrors()) {
                     optfailed = true
                     def errmsg = opt.name + ": " + opt.errors.allErrors.collect {lookupMessageError(it)}.join(";")
@@ -2999,6 +3003,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     def Option theopt = origopt.createClone()
                     scheduledExecution.addToOptions(theopt)
                     EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
+                    fileUploadService.validateFileOptConfig(theopt)
 
                     if (theopt.errors.hasErrors() || !theopt.validate()) {
                         failed = true
@@ -3019,6 +3024,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     def Option theopt = new Option(optdefparams)
                     scheduledExecution.addToOptions(theopt)
                     EditOptsController._validateOption(theopt,null,scheduledExecution.scheduled)
+                    fileUploadService.validateFileOptConfig(theopt)
                     if (theopt.errors.hasErrors() || !theopt.validate()) {
                         failed = true
                         theopt.discard()

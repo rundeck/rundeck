@@ -101,7 +101,7 @@
                                 service:'FileUploadPluginService',
                                 provider:fileUploadPluginDescription.name,
                                 properties:fileUploadPluginDescription?.properties,
-                                report:null,
+                                report: configMapValidate,
                                 prefix:prefix,
                                 values:option?.configMap,
                                 fieldnamePrefix:prefix,

@@ -62,7 +62,9 @@ class EditOptsController {
         def outparams=[:]
         if(null != params.name && editopts[params.name]){
 
-            outparams = _validateOption(editopts[params.name], null,params.jobWasScheduled=='true')
+            def opt = editopts[params.name]
+            outparams = _validateOption(opt, null, params.jobWasScheduled == 'true')
+            outparams = validateFileOpt(opt, outparams)
         }
 
         def model = [
@@ -158,6 +160,7 @@ class EditOptsController {
                     newoption                  : params['newoption'],
                     edit                       : true,
                     regexError                 : result.regexError,
+                    configMapValidate          : result.configMapValidate,
                     fileUploadPluginDescription: fileUploadService.pluginDescription
             ]
             return render(template: "/scheduledExecution/optEdit", model: model
@@ -376,6 +379,7 @@ class EditOptsController {
             def name = input.name
             def option = _setOptionFromParams(new Option(), input.params)
             def vres = _validateOption(option, input.params,input.params.jobWasScheduled=='true')
+            vres = validateFileOpt(option, vres)
             if (null != editopts[name]) {
                 option.errors.rejectValue('name', 'option.name.duplicate.message', [name] as Object[], "Option already exists: {0}")
             }
@@ -436,6 +440,7 @@ class EditOptsController {
             def moditem = option.createClone()
             _setOptionFromParams(moditem, input.params)
             def vres = _validateOption(moditem, input.params,input.params.jobWasScheduled=='true')
+            vres = validateFileOpt(moditem, vres)
             if (moditem.name != name && null != editopts[moditem.name]) {
                 moditem.errors.rejectValue('name', 'option.name.duplicate.message', [moditem.name] as Object[], "Option already exists: {0}")
             }
@@ -455,6 +460,15 @@ class EditOptsController {
         return result
     }
 
+    /**
+     * Validate the Option, return any output parameters in a map
+     * @param opt the option
+     * @param params input params if any
+     */
+    protected validateFileOpt(Option opt, Map results) {
+        results.configMapValidate = fileUploadService.validateFileOptConfig(opt)
+        results
+    }
     /**
      * Validate the Option, return any output parameters in a map
      * @param opt the option

@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import grails.events.Listener
 import grails.transaction.Transactional
@@ -10,6 +11,7 @@ import org.rundeck.util.Sizes
 import org.rundeck.util.ThresholdInputStream
 import rundeck.Execution
 import rundeck.JobFileRecord
+import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.events.ExecutionCompleteEvent
@@ -53,6 +55,25 @@ class FileUploadService {
 
     def getPluginDescription(){
         pluginService.getPluginDescriptor(pluginType, FileUploadPlugin)?.description
+    }
+
+    def validatePluginConfig(Map configMap) {
+        pluginService.validatePluginConfig(pluginType, FileUploadPlugin, configMap)
+    }
+    Validator.Report validateFileOptConfig(Option opt) {
+        if (opt.typeFile) {
+            def result = validatePluginConfig(opt.configMap)
+            if (!result.valid) {
+
+                opt.errors.rejectValue(
+                        'configMap',
+                        'option.file.config.invalid.message',
+                        [result.report.toString()].toArray(),
+                        "invalid file config: {0}"
+                )
+                return result.report
+            }
+        }
     }
 
 
