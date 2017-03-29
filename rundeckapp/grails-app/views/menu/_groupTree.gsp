@@ -88,7 +88,7 @@
         }%
     </g:else>
     <g:set var="prevkey" value="${group.key}"/>
-    <g:set var="groupopen" value="${(wasfiltered || jscallback || level.size()==1)}"/>
+    <g:set var="groupopen" value="${(wasfiltered || jscallback || (level.size()<= jobExpandLevel || jobExpandLevel<0))}"/>
     ${raw("<")}div class="expandComponentHolder ${groupopen ? 'expanded' : ''} " ${raw(">")}
         %{divcounts++;}%
         <div style="margin-bottom:4px;">
