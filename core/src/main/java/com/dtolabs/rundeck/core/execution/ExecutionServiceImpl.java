@@ -36,15 +36,11 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
-import com.dtolabs.rundeck.core.utils.*;
-import org.apache.commons.collections.Predicate;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * NewExecutionServiceImpl is ...
@@ -234,6 +230,34 @@ class ExecutionServiceImpl implements ExecutionService {
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
+            }
+        }
+        return result;
+    }
+
+    public String[] fileCopyFiles(ExecutionContext context, List<File> files, String remotePath, INodeEntry node)
+            throws FileCopierException {
+
+        if (null != context.getExecutionListener()) {
+            context.getExecutionListener().beginFileCopyFile(context, files, node);
+        }
+        final FileCopier copier;
+        try {
+            copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
+        } catch (ExecutionServiceException e) {
+            throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
+        }
+        String[] result = null;
+        try {
+            if (copier instanceof DestinationFileCopier) {
+                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
+                result = dcopier.copyFiles(context, files, remotePath, node);
+            }else{
+                result = copier.copyFiles(context, files, remotePath, node);
+            }
+        } finally {
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishMultiFileCopy(result, context, node);
             }
         }
         return result;

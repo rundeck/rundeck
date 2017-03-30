@@ -98,6 +98,14 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
     }
 
     /**
+     * Copy existing file
+     */
+    public String[] copyFiles(final ExecutionContext executionContext, final  List<File> files, String remotePath,
+                           final INodeEntry node) throws FileCopierException {
+        return copyMultipleFiles(executionContext, files, remotePath, node);
+    }
+
+    /**
      * Copy string content
      */
     public String copyScriptContent(final ExecutionContext executionContext, final String s,
@@ -282,5 +290,20 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
         executionContext.getExecutionListener().log(3, "[" + pluginname + "]: result filepath: " + remotefilepath);
 
         return remotefilepath;
+    }
+
+    String[] copyMultipleFiles(
+            final ExecutionContext executionContext,
+            final  List<File> files,
+            final String remotePath,
+            final INodeEntry node
+    ) throws FileCopierException
+    {
+        ArrayList<String> ret = new ArrayList<String>();
+        for(File file: files){
+            String tmp = copyFile(executionContext,file,null,null,node,remotePath+file.getName());
+            ret.add(tmp);
+        }
+        return ret.toArray(new String[0]);
     }
 }

@@ -175,4 +175,30 @@ public class FileUtils {
         }
     }
 
+
+    public static void copyDirectory(final File sourceDir, final File newDir)
+            throws IOException {
+        final File[] srcFiles = sourceDir.listFiles();
+        if (srcFiles == null) {
+           throw new IOException("Failed to list contents of " + sourceDir);
+        }
+        if (newDir.exists() && !newDir.isDirectory()) {
+            throw new IOException("Destination '" + newDir + "' exists but is not a directory");
+        } else if (!newDir.mkdirs() && !newDir.isDirectory()) {
+            throw new IOException("Destination '" + newDir + "' directory cannot be created");
+        }
+        if (!newDir.canWrite()) {
+            throw new IOException("Destination '" + newDir + "' cannot be written to");
+        }
+        for (final File srcFile : srcFiles) {
+            final File dstFile = new File(newDir, srcFile.getName());
+            if (srcFile.isDirectory()) {
+                copyDirectory(srcFile, dstFile);
+            } else {
+                copyFileStreams(srcFile, dstFile);
+            }
+        }
+
+    }
+
 }

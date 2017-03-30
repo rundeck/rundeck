@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * Copy files to a specific destination on a remote node.
@@ -55,6 +56,19 @@ public interface DestinationFileCopier extends FileCopier {
      * @throws FileCopierException if an error occurs
      */
     public String copyFile(final ExecutionContext context, File file, INodeEntry node, String destination) throws FileCopierException;
+
+    /**
+     * Copy the contents of an input stream to the node
+     *
+     * @param context context
+     * @param files    array of local files tocopy
+     * @param node node
+     *
+     * @return File path of the file after copying to the node
+     *
+     * @throws FileCopierException if an error occurs
+     */
+    public String[] copyFiles(final ExecutionContext context, List<File> files, String remotePath, INodeEntry node) throws FileCopierException;
 
     /**
      * Copy the contents of an input stream to the node

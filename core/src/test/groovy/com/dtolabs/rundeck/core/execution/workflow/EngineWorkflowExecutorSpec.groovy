@@ -466,6 +466,14 @@ class EngineWorkflowExecutorSpec extends Specification {
         }
 
         @Override
+        public void finishMultiFileCopy(String[] result, ExecutionContext context, INodeEntry node) {
+        }
+
+        @Override
+        public void beginFileCopyFile(ExecutionContext context, List<File> input, INodeEntry node) {
+        }
+
+        @Override
         ExecutionListenerOverride createOverride() {
             return null
         }

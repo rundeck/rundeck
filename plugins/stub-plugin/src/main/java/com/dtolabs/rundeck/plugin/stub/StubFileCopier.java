@@ -33,10 +33,10 @@ import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.Property;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -67,10 +67,10 @@ public class StubFileCopier implements FileCopier, Describable {
     }
 
     public String copyFile(final ExecutionContext context, final File file, final INodeEntry node) throws
-        FileCopierException {
+            FileCopierException {
 
         String identity = null!=context.getDataContext() && null!=context.getDataContext().get("job")?
-                          context.getDataContext().get("job").get("execid"):null;
+                context.getDataContext().get("job").get("execid"):null;
         final String resultpath = BaseFileCopier.generateRemoteFilepathForNode(
                 node,
                 context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
@@ -80,8 +80,30 @@ public class StubFileCopier implements FileCopier, Describable {
                 identity
         );
         context.getExecutionListener().log(Constants.WARN_LEVEL,
-            "[stub] copy local file to node " + node.getNodename() + ": " + resultpath);
+                "[stub] copy local file to node " + node.getNodename() + ": " + resultpath);
         return resultpath;
+    }
+
+    public String[] copyFiles(final ExecutionContext context, final List<File> files, String remotePath, final INodeEntry node) throws
+            FileCopierException {
+
+        String identity = null!=context.getDataContext() && null!=context.getDataContext().get("job")?
+                context.getDataContext().get("job").get("execid"):null;
+        ArrayList<String> ret = new ArrayList<String>();
+        for(File file: files){
+            String resultpath = BaseFileCopier.generateRemoteFilepathForNode(
+                    node,
+                    context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                    context.getFramework(),
+                    file.getName(),
+                    null,
+                    identity
+            );
+            ret.add(resultpath);
+            context.getExecutionListener().log(Constants.WARN_LEVEL,
+                    "[stub] copy local file to node " + node.getNodename() + ": " + resultpath);
+        }
+        return ret.toArray(new String[0]);
     }
 
     public String copyScriptContent(final ExecutionContext context, final String script, final INodeEntry node) throws
