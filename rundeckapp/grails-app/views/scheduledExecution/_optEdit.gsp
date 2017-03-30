@@ -547,7 +547,7 @@
                             <div class="checkbox">
                                 <label class="${hasErrors(bean: option, field: 'multivalued', 'fieldError')}">
                                     <g:checkBox name="multivalueAllSelected" value="true" checked="${option?.multivalueAllSelected}" id="mvalltrue_${rkey}"/>
-                                    Select All Values by Default
+                                    <g:message code="form.option.multivalueAllSelected.label" />
                                 </label>
                             </div>
                         </div>
