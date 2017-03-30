@@ -7,6 +7,7 @@ import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Created by greg on 5/17/16.
@@ -145,6 +146,63 @@ inside]]></aproperty>
         doc.job[0].context[0].options[0].option[0].config[0].entry[1].'@value' == 'data2'
     }
 
+    @Unroll
+    def "encode option multivalued all selected #mvas"() {
+        given:
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new CommandExec(
+                                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese ' +
+                                                '-particle']
+                                )],
+                                ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
+                        options: [
+                                new Option(
+                                        name: 'testop1',
+                                        required: false,
+                                        enforced: false,
+                                        multivalued: true,
+                                        delimiter: ',',
+                                        multivalueAllSelected: mvas
+                                )
+                        ]
+                )
+        ]
+        when:
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+
+        then:
+        null != xmlstr
+        xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        doc.name() == 'joblist'
+        doc.job.size() == 1
+        doc.job[0].name[0].text() == 'test job 1'
+        doc.job[0].context.size() == 1
+        doc.job[0].context[0].options.size() == 1
+        doc.job[0].context[0].options[0].option.size() == 1
+        doc.job[0].context[0].options[0].option[0].'@name' == 'testop1'
+        doc.job[0].context[0].options[0].option[0].'@multivalued' == 'true'
+        doc.job[0].context[0].options[0].option[0].'@delimiter' == ','
+        doc.job[0].context[0].options[0].option[0].'@multivalueAllSelected'.text() == res
+
+        where:
+        mvas  | res
+        true  | 'true'
+        false | ''
+    }
+
 
     def "decode option file type"() {
         given:
@@ -184,6 +242,51 @@ inside]]></aproperty>
         result[0].options[0].name == 'testopt1'
         result[0].options[0].optionType == 'atype'
         result[0].options[0].configMap == ['asdf': 'xyxy', 'monkey': 'donut']
+
+    }
+
+    @Unroll
+    def "decode option multivalued all selected"() {
+        given:
+        def xml = """<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+    <context>
+        <options>
+            <option name="testopt1" type="atype" multivalued="true" $text>
+            </option>
+        </options>
+    </context>
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+      </command>
+    </sequence>
+
+  </job>
+</joblist>
+"""
+        when:
+        def result = JobsXMLCodec.decode(xml.toString())
+
+        then:
+        result.size() == 1
+        result[0].jobName == 'test job 1'
+        result[0].options.size() == 1
+        result[0].options[0].name == 'testopt1'
+        result[0].options[0].multivalued
+        result[0].options[0].multivalueAllSelected == resval
+
+        where:
+        text                            | resval
+        'multivalueAllSelected="true"'  | true
+        'multivalueAllSelected="false"' | false
+        'multivalueAllSelected=""'      | false
+        ''                              | false
 
     }
 }
