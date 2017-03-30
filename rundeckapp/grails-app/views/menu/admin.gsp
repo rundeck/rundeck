@@ -200,7 +200,7 @@
             </ol>
         </li>
 
-             <g:if test="${extraConfig}">
+             <g:if test="${extraConfig && extraConfig.values()*.configurable.find{it.category=='resourceModelSource'}}">
                  <div class="list-group-item">
                      <h4 class="list-group-item-heading ">
                          <g:message code="resource.model" />
@@ -226,6 +226,37 @@
                                                ]}"/>
                                  </g:each>
                                  
+                             </g:if>
+                         </g:each>
+                     </div>
+                 </div>
+             </g:if>
+             <g:if test="${extraConfig && extraConfig.values()*.configurable.find{it.category=='jobs'}}">
+                 <div class="list-group-item">
+                     <h4 class="list-group-item-heading ">
+                         <g:message code="Job.plural" />
+                     </h4>
+
+                     <span class="text-muted">
+                         <g:message code="project.configuration.extra.category.jobs.description" />
+                     </span>
+
+                     <div class="inpageconfig">
+                         <g:each in="${extraConfig.keySet()}" var="configService">
+                             <g:set var="configurable" value="${extraConfig[configService].configurable}"/>
+                             <g:if test="${configurable.category == 'jobs'}">
+
+                                 <g:set var="pluginprefix" value="${extraConfig[configService].get('prefix')}"/>
+
+                                 <g:each in="${configurable.projectConfigProperties}" var="prop">
+                                     <g:render template="/framework/pluginConfigPropertySummaryValue"
+                                               model="${[
+                                                       prop:prop,
+                                                       prefix:pluginprefix,
+                                                         values:extraConfig[configService].get('values')?:[:],
+                                               ]}"/>
+                                 </g:each>
+
                              </g:if>
                          </g:each>
                      </div>

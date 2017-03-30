@@ -61,7 +61,6 @@ import rundeck.services.NotificationService
 import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
-import rundeck.services.UiPluginService
 import rundeck.services.UserService
 import rundeck.services.framework.RundeckProjectConfigurable
 
@@ -270,6 +269,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(results.warning){
             request.warn=results.warning
         }
+
+        def framework = frameworkService.getRundeckFramework()
+        def rdprojectconfig = framework.projectManager.loadProjectConfig(params.project)
+        results.jobExpandLevel = scheduledExecutionService.getJobExpandLevel(rdprojectconfig)
 
         withFormat{
             html {
