@@ -27,7 +27,7 @@ If the limit is low (eg ``1024``) it should be raised.
 You can get the current number of open file descriptors used by the 
 Rundeck server process with [lsof](http://linux.die.net/man/8/lsof):
 
-    losf -p <rundeck pid> | wc -l
+    lsof -p <rundeck pid> | wc -l
 
 Increase the limit for a wide margin. 
 Edit [/etc/security/limits.conf](http://ss64.com/bash/limits.conf.html) file
