@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.DestinationFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.MultiFileCopier;
 
 import java.io.File;
 import java.io.InputStream;
@@ -41,7 +42,7 @@ import java.util.List;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class LocalFileCopier extends BaseFileCopier implements FileCopier, DestinationFileCopier {
+public class LocalFileCopier extends BaseFileCopier implements FileCopier, MultiFileCopier {
     public static final String SERVICE_PROVIDER_TYPE = "local";
 
     public LocalFileCopier(Framework framework) {
@@ -92,11 +93,11 @@ public class LocalFileCopier extends BaseFileCopier implements FileCopier, Desti
                     file,
                     null,
                     null,
-                    null !=  remotePath ? new File(remotePath+file.getName()) : null
+                    null != remotePath ? new File(remotePath, file.getName()) : null
             ).getAbsolutePath();
             ret.add(tmp);
         }
-        return ret.toArray(new String[0]);
+        return ret.toArray(new String[ret.size()]);
     }
 
     private String copyFile(

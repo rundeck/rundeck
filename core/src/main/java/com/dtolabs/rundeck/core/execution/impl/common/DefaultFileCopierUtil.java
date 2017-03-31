@@ -480,12 +480,9 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
             }
 
             return destinationFile;
-        } catch (IOException e) {
+        } catch (IOException | SecurityException e) {
             throw new FileCopierException("error writing to tempfile: " + e.getMessage(),
                                           StepFailureReason.IOFailure, e);
-        } catch (SecurityException e) {
-            throw new FileCopierException("error writing to tempfile: " + e.getMessage(),
-                    StepFailureReason.IOFailure, e);
         }
 
     }

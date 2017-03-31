@@ -722,13 +722,19 @@ public class SSHTaskBuilder {
         return scp;
     }
 
-    public static Scp buildMultiScp(final INodeEntry nodeentry, final Project project, final List<File> files, final String remotePath,
-                               final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
+    public static Scp buildMultiScp(
+            final INodeEntry nodeentry,
+            final Project project,
+            final File basedir,
+            final List<File> files,
+            final String remotePath,
+            final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger
+    ) throws
             BuilderException {
 
 
         final ExtScp scp = new ExtScp();
-        buildMultiScp(scp, nodeentry, project, files, remotePath, sshConnectionInfo, loglevel, logger);
+        buildMultiScp(scp, nodeentry, project, basedir, files, remotePath, sshConnectionInfo, loglevel, logger);
         return scp;
     }
 
@@ -797,10 +803,20 @@ public class SSHTaskBuilder {
         scp.setTodir(sshUriPrefix + remotePath);
 
     }
-    static void buildMultiScp(final SCPInterface scp, final INodeEntry nodeentry,
-                         final Project project, final List<File> files, final String remotePath,
-                         final SSHConnectionInfo sshConnectionInfo, final int loglevel, final PluginLogger logger) throws
-            BuilderException {
+
+    static void buildMultiScp(
+            final SCPInterface scp,
+            final INodeEntry nodeentry,
+            final Project project,
+            final File basedir,
+            final List<File> files,
+            final String remotePath,
+            final SSHConnectionInfo sshConnectionInfo,
+            final int loglevel,
+            final PluginLogger logger
+    ) throws
+            BuilderException
+    {
 
         if (null == files || files.size()==0) {
             throw new BuilderException("files was not set");
@@ -814,19 +830,42 @@ public class SSHTaskBuilder {
 
         //Set the local and remote file paths
 
-        //scp.setLocalFile(sourceFile.getAbsolutePath());
+        FileSet top = new FileSet();
+        top.setDir(basedir);
+        String basepath = basedir.getAbsolutePath();
+        if (!basepath.endsWith("/")) {
+            basepath += "/";
+        }
+        Map<File, FileSet> dirs = new HashMap<>();
 
+        //create a fileset for each dir in the input list
         for(File source: files ){
-            FileSet set = new FileSet();
             if(source.isDirectory()){
-                System.out.println("directory");
-                set.setDir(source);
-            }else {
-                set.setDir(source.getParentFile());
-                set.setIncludes(source.getName());
-
+                FileSet dir = new FileSet();
+                dir.setDir(source);
+                dir.setIncludes("**");
+                dirs.put(source, dir);
             }
-            scp.addFileset(set);
+        }
+        //for each file in the input list, remove the parent dir/** pattern and
+        //use an include pattern from the top dir
+        boolean seenFile = false;
+        for (File source : files) {
+            if (!source.isDirectory()) {
+                seenFile = true;
+                File parentDir = source.getParentFile();
+                FileSet fileSet = dirs.get(parentDir);
+                if (null != fileSet) {
+                    dirs.remove(parentDir);
+                }
+                top.createInclude().setName(source.getAbsolutePath().substring(basepath.length()));
+            }
+        }
+        if(seenFile) {
+            scp.addFileset(top);
+        }
+        for (FileSet fileSet : dirs.values()) {
+            scp.addFileset(fileSet);
         }
 
         final String sshUriPrefix = username + "@" + nodeentry.extractHostname() + ":";
@@ -879,7 +918,7 @@ public class SSHTaskBuilder {
 
 
         /**
-         * @return the private key passphrase if set, or null.4
+         * @return the private key passphrase if set, or null.
          */
         public String getPrivateKeyPassphrase();
         public String getPrivateKeyPassphraseStoragePath();

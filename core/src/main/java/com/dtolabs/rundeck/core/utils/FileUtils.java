@@ -23,6 +23,9 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * TODO: Consider wrapping {@link org.apache.tools.ant.util.FileUtils}
@@ -173,6 +176,49 @@ public class FileUtils {
                         "structure for file " + file.getAbsolutePath());
             }
         }
+    }
+
+    /**
+     * Return common base directory of the given files
+     *
+     * @param files
+     *
+     * @return common base directory
+     */
+    public static File getBaseDir(final List<File> files) {
+        String common = getCommonPrefix(files.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
+        if (null != common) {
+            return new File(common);
+        }
+        return null;
+    }
+
+    public static String getCommonPrefix(final List<String> files) {
+        int minlength = -1;
+        String common = null;
+        for (String path : files) {
+            if (path == null) {
+                continue;
+            }
+            if (minlength < 0) {
+                common = path;
+                minlength = common.length();
+            } else {
+                int testlen = Math.min(path.length(), minlength);
+                for (int i = 0; i < testlen; i++) {
+                    if (path.charAt(i) != common.charAt(i)) {
+                        minlength = i;
+                        common = path.substring(0, minlength);
+                        break;
+                    }
+                }
+                if (testlen < minlength) {
+                    minlength = testlen;
+                    common = path.substring(0, minlength);
+                }
+            }
+        }
+        return common;
     }
 
 

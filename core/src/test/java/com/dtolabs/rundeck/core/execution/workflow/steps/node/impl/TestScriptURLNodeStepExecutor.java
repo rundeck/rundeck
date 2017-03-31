@@ -85,7 +85,7 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
         Test
     }
 
-    public static class testFileCopier implements FileCopier,DestinationFileCopier {
+    public static class testFileCopier implements FileCopier, MultiFileCopier {
         String testResult;
         ExecutionContext testContext;
         InputStream testInput;

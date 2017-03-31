@@ -29,14 +29,15 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
-import com.dtolabs.rundeck.core.execution.service.DestinationFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.MultiFileCopier;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
+import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -44,6 +45,7 @@ import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Echo;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +56,7 @@ import java.util.List;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Describable, DestinationFileCopier {
+public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Describable, MultiFileCopier {
     public static final String SERVICE_PROVIDER_TYPE = "jsch-scp";
 
 
@@ -182,14 +184,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
         try {
             scp.execute();
         } catch (BuildException e) {
-            JschNodeExecutor.ExtractFailure failure = JschNodeExecutor.extractFailure(e,
-                    node,
-                    nodeAuthentication.getSSHTimeout(),
-                    framework);
-            errormsg = failure.getErrormsg();
-            FailureReason failureReason = failure.getReason();
-            context.getExecutionListener().log(0, errormsg);
-            throw new FileCopierException("[jsch-scp] Failed copying the file: " + errormsg, failureReason, e);
+            handleBuildException(context, node, nodeAuthentication, e);
         } finally {
             if (null == scriptfile) {
                 if (!ScriptfileUtils.releaseTempFile(localTempfile)) {
@@ -223,38 +218,67 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
                 node,
                 framework,
                 context);
+        File basedir = FileUtils.getBaseDir(files);
         try {
 
-            scp = SSHTaskBuilder.buildMultiScp(node, project,  files, remotePath, nodeAuthentication,
-                    context.getLoglevel(),context.getExecutionListener());
+            scp = SSHTaskBuilder.buildMultiScp(
+                    node,
+                    project,
+                    basedir,
+                    files,
+                    remotePath,
+                    nodeAuthentication,
+                    context.getLoglevel(),
+                    context.getExecutionListener()
+            );
         } catch (SSHTaskBuilder.BuilderException e) {
             throw new FileCopierException("Configuration error: " + e.getMessage(),
                     StepFailureReason.ConfigurationFailure, e);
         }
 
-        /**
+        /*
          * Copy the file over
          */
-        context.getExecutionListener().log(3,"copying  '" + files.size()
-                + "' files to: '" + node.getNodename() + ":" + remotePath + "'");
+        context.getExecutionListener().log(
+                3,
+                String.format(
+                        "copying  '%d' files to: '%s:%s'",
+                        files.size(),
+                        node.getNodename(),
+                        remotePath
+                )
+        );
 
         String errormsg = null;
         try {
             scp.execute();
         } catch (BuildException e) {
-            JschNodeExecutor.ExtractFailure failure = JschNodeExecutor.extractFailure(e,
-                    node,
-                    nodeAuthentication.getSSHTimeout(),
-                    framework);
-            errormsg = failure.getErrormsg();
-            FailureReason failureReason = failure.getReason();
-            context.getExecutionListener().log(0, errormsg);
-            throw new FileCopierException("[jsch-scp] Failed copying the file: " + errormsg, failureReason, e);
+            handleBuildException(context, node, nodeAuthentication, e);
         }
 
 
         return ret.toArray(new String[0]);
     }
+
+    private void handleBuildException(
+            final ExecutionContext context,
+            final INodeEntry node,
+            final NodeSSHConnectionInfo nodeAuthentication,
+            final BuildException e
+    ) throws FileCopierException
+    {
+        JschNodeExecutor.ExtractFailure failure = JschNodeExecutor.extractFailure(
+                e,
+                node,
+                nodeAuthentication.getSSHTimeout(),
+                framework
+        );
+        final String errormsg = failure.getErrormsg();
+        FailureReason failureReason = failure.getReason();
+        context.getExecutionListener().log(0, errormsg);
+        throw new FileCopierException("[jsch-scp] Failed copying the file: " + errormsg, failureReason, e);
+    }
+
 
     private Echo createEcho(final String message, final Project project, final String logLevel) {
         final Echo echo = new Echo();

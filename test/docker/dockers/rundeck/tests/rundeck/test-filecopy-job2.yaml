@@ -1,0 +1,44 @@
+- description: copy wildcard files
+  executionEnabled: true
+  group: test
+  id: 3b09625a-8371-4d6c-9c04-9e8e90084548
+  loglevel: INFO
+  name: copy multi
+  nodeFilterEditable: false
+  nodefilters:
+    dispatch:
+      excludePrecedence: true
+      keepgoing: false
+      rankOrder: ascending
+      threadcount: 1
+    filter: 'name: SOME_NODE'
+  nodesSelectedByDefault: true
+  options:
+  - description: source directory
+    name: sourcedir
+    required: true
+  - description: dest directory
+    name: destdir
+    required: true
+  - description: pattern
+    name: pattern
+    required: true
+  scheduleEnabled: true
+  sequence:
+    commands:
+    - exec: mkdir -p ${option.destdir}
+    - exec: "echo copy from ${option.sourcedir} to  ${option.destdir} pattern: ${option.pattern}"
+    - configuration:
+        destinationPath: ${option.destdir}
+        echo: 'true'
+        recursive: 'false'
+        sourcePath: ${option.sourcedir}
+        pattern: ${option.pattern}
+      nodeStep: true
+      type: copyfile
+    keepgoing: false
+    pluginConfig:
+      WorkflowStrategy:
+        node-first: null
+    strategy: node-first
+  uuid: 3b09625a-8371-4d6c-9c04-9e8e90084548

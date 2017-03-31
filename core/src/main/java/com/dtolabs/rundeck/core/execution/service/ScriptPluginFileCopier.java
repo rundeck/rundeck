@@ -53,7 +53,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFileCopier {
+class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier, MultiFileCopier {
     @Override
     public boolean isAllowCustomProperties() {
         return true;
@@ -304,6 +304,6 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements DestinationFile
             String tmp = copyFile(executionContext,file,null,null,node,remotePath+file.getName());
             ret.add(tmp);
         }
-        return ret.toArray(new String[0]);
+        return ret.toArray(new String[ret.size()]);
     }
 }

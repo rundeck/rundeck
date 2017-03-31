@@ -77,7 +77,8 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
     enum TestReason implements FailureReason{
         Test
     }
-    public static class testFileCopier implements FileCopier,DestinationFileCopier {
+
+    public static class testFileCopier implements FileCopier, MultiFileCopier {
         String testResult;
         ExecutionContext testContext;
         InputStream testInput;

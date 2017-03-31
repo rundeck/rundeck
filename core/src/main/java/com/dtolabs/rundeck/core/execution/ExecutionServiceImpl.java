@@ -188,12 +188,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String result = null;
         try {
-            if (null != destinationPath && copier instanceof DestinationFileCopier) {
-                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
-                result = dcopier.copyFileStream(context, input, node, destinationPath);
-            } else {
-                result = copier.copyFileStream(context, input, node);
-            }
+            result = copier.copyFileStream(context, input, node, destinationPath);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
@@ -221,12 +216,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String result = null;
         try {
-            if (null != destinationPath && copier instanceof DestinationFileCopier) {
-                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
-                result = dcopier.copyFile(context, file, node, destinationPath);
-            }else{
-                result = copier.copyFile(context, file, node);
-            }
+            result = copier.copyFile(context, file, node, destinationPath);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
@@ -249,11 +239,16 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String[] result = null;
         try {
-            if (copier instanceof DestinationFileCopier) {
-                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
+            if (copier instanceof MultiFileCopier) {
+                MultiFileCopier dcopier = (MultiFileCopier) copier;
                 result = dcopier.copyFiles(context, files, remotePath, node);
             }else{
-                result = copier.copyFiles(context, files, remotePath, node);
+                List<String> copied = new ArrayList<>();
+                for (File file : files) {
+                    String destination = remotePath + file.getName();
+                    copied.add(copier.copyFile(context, file, node, destination));
+                }
+                result = copied.toArray(new String[copied.size()]);
             }
         } finally {
             if (null != context.getExecutionListener()) {
@@ -281,12 +276,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String result = null;
         try {
-            if (null != destinationPath && copier instanceof DestinationFileCopier) {
-                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
-                result = dcopier.copyScriptContent(context, script, node, destinationPath);
-            }else{
-                result = copier.copyScriptContent(context, script, node);
-            }
+            result = copier.copyScriptContent(context, script, node, destinationPath);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
