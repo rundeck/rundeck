@@ -32,16 +32,17 @@ import java.util.List;
  */
 public class MultiFileCopierUtil {
     /**
-     * Perform a multiple file copy using a FileCopier
+     * Perform a multiple file copy using a FileCopier by repeatedly calling
+     * {@link FileCopier#copyFile(ExecutionContext, File, INodeEntry, String)}
      *
-     * @param copier
-     * @param context
-     * @param basedir
-     * @param files
-     * @param remotePath
-     * @param node
+     * @param copier     file copier
+     * @param context    context
+     * @param basedir    local base dir of all files to copy
+     * @param files      list of local files to copy
+     * @param remotePath remote destination base path
+     * @param node       node
      *
-     * @return
+     * @return list of remote file paths copied
      *
      * @throws FileCopierException
      */
