@@ -36,8 +36,8 @@ it_should_copy_recursive_dir_files_remotely() {
     bash -c "rd run -i $JOBID -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- -sourcedir '$SRCDIR' -destdir '$DESTDIR' | grep -v ^#"
 
     # list the remote dir
-    cmdout=($(bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- find $DESTDIR | grep -v ^#"))
-    expout=(${DESTDIR} ${DESTDIR}afile.txt ${DESTDIR}files2 ${DESTDIR}files2/cfile.xml ${DESTDIR}btest.txt)
+    cmdout=($(bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- find $DESTDIR | grep -v ^# | sort "))
+    expout=(${DESTDIR} ${DESTDIR}afile.txt ${DESTDIR}btest.txt ${DESTDIR}files2 ${DESTDIR}files2/cfile.xml)
     # There should be one line for the uname response.
     echo "${cmdout[@]}"
     if ! test ${#expout[*]} = ${#cmdout[*]}
@@ -69,8 +69,9 @@ it_should_copy_recursive_pattern_files_remotely() {
     bash -c "rd run -i $JOBID -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- -sourcedir '$SRCDIR' -pattern '$PATTERN' -destdir '$DESTDIR' | grep -v ^#"
 
     # list the remote dir
-    cmdout=($(bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- find $DESTDIR | grep -v ^#"))
+    cmdout=($(bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- find $DESTDIR | grep -v ^# | sort"))
     expout=($DESTDIR ${DESTDIR}afile.txt ${DESTDIR}files2 ${DESTDIR}files2/cfile.xml)
+    echo "${cmdout[@]}"
     # There should be one line for the uname response.
     if ! test ${#expout[*]} = ${#cmdout[*]}
     then
@@ -102,7 +103,7 @@ it_should_copy_recursive_pattern_dirs_remotely() {
     bash -c "rd run -i $JOBID -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- -sourcedir '$SRCDIR' -pattern '$PATTERN' -destdir '$DESTDIR' | grep -v ^#"
 
     # list the remote dir
-    cmdout=($(bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- find $DESTDIR | grep -v ^#"))
+    cmdout=($(bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- find $DESTDIR | grep -v ^# | sort"))
     expout=($DESTDIR ${DESTDIR}files2 ${DESTDIR}files2/cfile.xml)
     # There should be one line for the uname response.
     if ! test ${#expout[*]} = ${#cmdout[*]}
@@ -134,7 +135,7 @@ it_should_copy_pattern_files_remotely() {
     bash -c "rd run -i $JOBID -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- -sourcedir '$SRCDIR' -pattern '$PATTERN' -destdir '$DESTDIR' | grep -v ^#"
 
     # list the remote dir
-    cmdout=($(bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- find '$DESTDIR' | grep -v ^#"))
+    cmdout=($(bash -c "rd adhoc -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- find '$DESTDIR' | grep -v ^# | sort"))
     expout=($DESTDIR ${DESTDIR}afile.txt ${DESTDIR}btest.txt)
     # There should be one line for the uname response.
     if ! test ${#expout[*]} = ${#cmdout[*]}
