@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.tasks.net;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.core.utils.SSHAgentProcess;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.utils.Streams;
@@ -831,41 +832,32 @@ public class SSHTaskBuilder {
         //Set the local and remote file paths
 
         FileSet top = new FileSet();
+        top.setProject(project);
         top.setDir(basedir);
-        String basepath = basedir.getAbsolutePath();
-        if (!basepath.endsWith("/")) {
-            basepath += "/";
-        }
-        Map<File, FileSet> dirs = new HashMap<>();
+        Map<File, String> dirs = new HashMap<>();
 
-        //create a fileset for each dir in the input list
+        //prepare include/** for each dir in the input list
         for(File source: files ){
-            if(source.isDirectory()){
-                FileSet dir = new FileSet();
-                dir.setDir(source);
-                dir.setIncludes("**");
-                dirs.put(source, dir);
+            if (source.isDirectory() && !source.equals(basedir)) {
+                String relpath = FileUtils.relativePath(basedir, source);
+                dirs.put(source, relpath + "/**");
             }
         }
         //for each file in the input list, remove the parent dir/** pattern and
         //use an include pattern from the top dir
-        boolean seenFile = false;
         for (File source : files) {
             if (!source.isDirectory()) {
-                seenFile = true;
                 File parentDir = source.getParentFile();
-                FileSet fileSet = dirs.get(parentDir);
-                if (null != fileSet) {
+                String dirpath = dirs.get(parentDir);
+                if (null != dirpath) {
                     dirs.remove(parentDir);
                 }
-                top.createInclude().setName(source.getAbsolutePath().substring(basepath.length()));
+                top.setIncludes(FileUtils.relativePath(basedir, source));
             }
         }
-        if(seenFile) {
-            scp.addFileset(top);
-        }
-        for (FileSet fileSet : dirs.values()) {
-            scp.addFileset(fileSet);
+        scp.addFileset(top);
+        for (String dirpath : dirs.values()) {
+            top.setIncludes(dirpath);
         }
 
         final String sshUriPrefix = username + "@" + nodeentry.extractHostname() + ":";

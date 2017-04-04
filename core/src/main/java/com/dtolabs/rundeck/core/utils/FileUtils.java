@@ -22,6 +22,7 @@ import java.io.*;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.function.Function;
@@ -191,6 +192,25 @@ public class FileUtils {
             return new File(common);
         }
         return null;
+    }
+
+    /**
+     * Return the relative path between a parent directory and some child path
+     *
+     * @param parent
+     * @param child
+     *
+     * @return the relative path for the child
+     *
+     * @throws IllegalArgumentException if child is not a subpath
+     */
+    public static String relativePath(File parent, File child) {
+        Path superPath = parent.toPath();
+        Path subPath = child.toPath();
+        if (!subPath.startsWith(superPath)) {
+            throw new IllegalArgumentException("Not a subpath: " + child);
+        }
+        return superPath.relativize(subPath).toString();
     }
 
     public static String getCommonPrefix(final List<String> files) {

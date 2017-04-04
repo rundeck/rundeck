@@ -96,7 +96,7 @@ it_should_copy_recursive_pattern_dirs_remotely() {
     IFS=$'\n\t'
 
     SRCDIR=/tests/rundeck/files1/
-    DESTDIR=/tmp/test-files3/
+    DESTDIR=/tmp/test-files4/
     PATTERN=**/files2
     # Run the uname command across the nodes tagged 'adhoc'. Should be two nodes.
     bash -c "rd run -i $JOBID -p $RUNDECK_PROJECT -f -F '$REMOTE_NODE' -- -sourcedir '$SRCDIR' -pattern '$PATTERN' -destdir '$DESTDIR' | grep -v ^#"

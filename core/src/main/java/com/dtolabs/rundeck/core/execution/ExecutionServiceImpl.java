@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
+import com.dtolabs.rundeck.core.utils.FileUtils;
 
 import java.io.File;
 import java.io.InputStream;
@@ -225,7 +226,13 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public String[] fileCopyFiles(ExecutionContext context, List<File> files, String remotePath, INodeEntry node)
+    public String[] fileCopyFiles(
+            ExecutionContext context,
+            File basedir,
+            List<File> files,
+            String remotePath,
+            INodeEntry node
+    )
             throws FileCopierException {
 
         if (null != context.getExecutionListener()) {
@@ -241,14 +248,9 @@ class ExecutionServiceImpl implements ExecutionService {
         try {
             if (copier instanceof MultiFileCopier) {
                 MultiFileCopier dcopier = (MultiFileCopier) copier;
-                result = dcopier.copyFiles(context, files, remotePath, node);
+                result = dcopier.copyFiles(context, basedir, files, remotePath, node);
             }else{
-                List<String> copied = new ArrayList<>();
-                for (File file : files) {
-                    String destination = remotePath + file.getName();
-                    copied.add(copier.copyFile(context, file, node, destination));
-                }
-                result = copied.toArray(new String[copied.size()]);
+                result = MultiFileCopierUtil.copyMultipleFiles(copier, context, basedir, files, remotePath, node);
             }
         } finally {
             if (null != context.getExecutionListener()) {

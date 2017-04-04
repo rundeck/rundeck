@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
-import com.dtolabs.rundeck.core.execution.service.DestinationFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.MultiFileCopier;
@@ -82,7 +81,7 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin(name = "script-copy", service = ServiceNameConstants.FileCopier)
-public class ScriptFileCopier implements FileCopier, Describable, MultiFileCopier {
+public class ScriptFileCopier implements FileCopier, Describable {
     public static String SERVICE_PROVIDER_NAME = "script-copy";
     public static String SCRIPT_ATTRIBUTE = "script-copy";
     public static String DIR_ATTRIBUTE = "script-copy-dir";
@@ -213,31 +212,11 @@ public class ScriptFileCopier implements FileCopier, Describable, MultiFileCopie
     }
 
     @Override
-    public String[] copyFiles(ExecutionContext context, List<File> file, String remotePath, INodeEntry node) throws FileCopierException {
-        return copyMultipleFiles(context, file, remotePath, node);
-    }
-
-    @Override
     public String copyScriptContent(ExecutionContext context, String script, INodeEntry node, String destination) throws FileCopierException {
         return copyFile(context, null, null, script, node, destination);
     }
 
 
-    String[] copyMultipleFiles(
-            final ExecutionContext executionContext,
-            final List<File> files,
-            final String remotePath,
-            final INodeEntry node
-    ) throws
-            FileCopierException
-    {
-        ArrayList<String> ret = new ArrayList<String>();
-        for(File file: files){
-            String tmp = copyFile(executionContext,file,null,null,node,remotePath+file.getName());
-            ret.add(tmp);
-        }
-        return ret.toArray(new String[0]);
-    }
     /**
      * Internal copy method accepting file, inputstream or string
      */

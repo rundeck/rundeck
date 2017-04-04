@@ -149,15 +149,25 @@ public interface ExecutionService extends FrameworkSupportService {
             String destinationPath) throws FileCopierException;
 
     /**
-     * Copy file to the node to a specific path
-
-     * @param context context
-     * @param files array of input files
-     * @param node node
+     * Copy multiple files to the node to a specific path
+     *
+     * @param context    context
+     * @param basedir    base directory for copied files
+     * @param files      array of input files
+     * @param remotePath remote path destination for files
+     * @param node       node
+     *
+     * @return list of copied paths from the remote node
+     *
      * @throws FileCopierException on error
-     * @return filepath
      */
-    public String[] fileCopyFiles(final ExecutionContext context, List<File> files, String remotePath, INodeEntry node) throws FileCopierException;
+    public String[] fileCopyFiles(
+            final ExecutionContext context,
+            File basedir,
+            List<File> files,
+            String remotePath,
+            INodeEntry node
+    ) throws FileCopierException;
 
     /**
      * Copy string as a file to the node,

@@ -53,7 +53,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier, MultiFileCopier {
+class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
     @Override
     public boolean isAllowCustomProperties() {
         return true;
@@ -97,13 +97,7 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier, Mul
         return copyFile(executionContext, file, null, null, node, null);
     }
 
-    /**
-     * Copy existing file
-     */
-    public String[] copyFiles(final ExecutionContext executionContext, final  List<File> files, String remotePath,
-                           final INodeEntry node) throws FileCopierException {
-        return copyMultipleFiles(executionContext, files, remotePath, node);
-    }
+
 
     /**
      * Copy string content
@@ -292,18 +286,4 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier, Mul
         return remotefilepath;
     }
 
-    String[] copyMultipleFiles(
-            final ExecutionContext executionContext,
-            final  List<File> files,
-            final String remotePath,
-            final INodeEntry node
-    ) throws FileCopierException
-    {
-        ArrayList<String> ret = new ArrayList<String>();
-        for(File file: files){
-            String tmp = copyFile(executionContext,file,null,null,node,remotePath+file.getName());
-            ret.add(tmp);
-        }
-        return ret.toArray(new String[ret.size()]);
-    }
 }

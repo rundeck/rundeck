@@ -46,7 +46,7 @@ import java.util.List;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin (name = "stub",service = "FileCopier")
-public class StubFileCopier implements FileCopier, Describable, MultiFileCopier {
+public class StubFileCopier implements FileCopier, Describable {
     public static final String SERVICE_PROVIDER_NAME = "stub";
 
     @Override
@@ -130,28 +130,6 @@ public class StubFileCopier implements FileCopier, Describable, MultiFileCopier 
             FileCopierException
     {
         return copyFile(context, file, node, null);
-    }
-
-    public String[] copyFiles(final ExecutionContext context, final List<File> files, String remotePath, final INodeEntry node) throws
-            FileCopierException {
-
-        String identity = null!=context.getDataContext() && null!=context.getDataContext().get("job")?
-                context.getDataContext().get("job").get("execid"):null;
-        ArrayList<String> ret = new ArrayList<String>();
-        for(File file: files){
-            String resultpath = BaseFileCopier.generateRemoteFilepathForNode(
-                    node,
-                    context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                    context.getFramework(),
-                    file.getName(),
-                    null,
-                    identity
-            );
-            ret.add(resultpath);
-            context.getExecutionListener().log(Constants.WARN_LEVEL,
-                    "[stub] copy local file to node " + node.getNodename() + ": " + resultpath);
-        }
-        return ret.toArray(new String[0]);
     }
 
     public String copyScriptContent(final ExecutionContext context, final String script, final INodeEntry node) throws

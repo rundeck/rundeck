@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
@@ -85,7 +84,7 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
         Test
     }
 
-    public static class testFileCopier implements FileCopier, MultiFileCopier {
+    public static class testFileCopier implements FileCopier {
         String testResult;
         ExecutionContext testContext;
         InputStream testInput;
@@ -159,22 +158,6 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
         {
             testResult = copyScriptContent(context, script, node);
             return destination;
-        }
-
-        @Override
-        public String[] copyFiles(
-                final ExecutionContext context,
-                final List<File> files,
-                final String destination,
-                final INodeEntry node
-        )
-                throws FileCopierException
-        {
-            for(File file: files) {
-                testResult = copyFile(context, file, node);
-            }
-            String[] ret = {destination};
-            return ret;
         }
 
     }

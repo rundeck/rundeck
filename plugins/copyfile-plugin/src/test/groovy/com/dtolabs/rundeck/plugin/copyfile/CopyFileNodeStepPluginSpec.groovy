@@ -58,20 +58,14 @@ class CopyFileNodeStepPluginSpec extends Specification {
         FileUtils.deleteDir(destDir.toFile())
     }
 
-    def makeDirFiles(Path dir) {
-        File file1 = new File(copyDir.toFile(), "test1.txt")
-        File file2 = new File(copyDir.toFile(), "file2.txt")
-        File sub1 = new File(copyDir.toFile(), "sub1")
-        sub1.mkdirs()
-        File file3 = new File(sub1, "test3.xml")
-        File sub2 = new File(sub1, "sub2")
-        sub2.mkdirs()
-        File file4 = new File(sub2, "test4.blah")
-
-        file1.text = 'a test file'
-        file2.text = 'b test file'
-        file3.text = 'c test file'
-        file4.text = 'd test file'
+    def makeDirFiles(Path dir, List<String> paths = []) {
+        int i = 0
+        for (String path : paths) {
+            File file1 = new File(dir.toFile(), path)
+            file1.getParentFile().mkdirs()
+            file1.text = "$i test file"
+            i++
+        }
     }
 
     def "copy single file"() {
@@ -110,8 +104,8 @@ class CopyFileNodeStepPluginSpec extends Specification {
         given:
         def plugin = new CopyFileNodeStepPlugin()
         plugin.sourcePath = copyDir.toString()
-        plugin.recursive = recursive
-        plugin.pattern = pattern
+        plugin.recursive = true
+        plugin.pattern = null
         def destPath = destDir.toString() + '/'
         plugin.destinationPath = destPath
 
@@ -132,65 +126,10 @@ class CopyFileNodeStepPluginSpec extends Specification {
 
         1 * context.getFramework() >> mockFwk
         1 * execSvc.fileCopyFile(_, new File(copyDir.toString()), node, destPath)
-
-        where:
-        recursive | pattern | expectList
-        true      | null    | ['test1.txt', 'file2.text', 'sub1/test3.xml']
     }
 
     @Unroll
-    def "copy not recursive with pattern"() {
-        given:
-        def plugin = new CopyFileNodeStepPlugin()
-        def srcPath = copyDir.toString() + '/'
-        plugin.sourcePath = srcPath
-        plugin.recursive = recursive
-        plugin.pattern = pattern
-        def destPath = destDir.toString() + '/'
-        plugin.destinationPath = destPath
-        plugin.echo = true
-
-        def context = Mock(PluginStepContext) {
-            getLogger() >> Mock(PluginLogger) {
-                log(_, _) >> { args ->
-                    System.err.println(args[1])
-                }
-            }
-        }
-        def node = Mock(INodeEntry)
-        def execSvc = Mock(ExecutionService)
-        def fkwScs = Mock(IFrameworkServices) {
-            getExecutionService() >> execSvc
-        }
-        def mockFwk = testFramework(fkwScs)
-        makeDirFiles(copyDir)
-
-        when:
-        plugin.executeNodeStep(context, [:], node)
-        then:
-
-
-        if (expectList) {
-            1 * context.getFramework() >> mockFwk
-            1 * execSvc.fileCopyFiles(_, { arg ->
-                def collect = arg*.getAbsolutePath().collect { it.substring(srcPath.length()) }
-                collect.containsAll(expectList)
-            }, destPath, node
-            ) >> expectList.toArray()
-        } else {
-            0 * execSvc._(*_)
-        }
-
-        where:
-        recursive | pattern  | expectList
-        false     | '**'     | ['test1.txt', 'file2.txt', 'sub1/test3.xml']
-        false     | '*.txt'  | ['test1.txt', 'file2.txt']
-        false     | '*.blah' | []
-
-    }
-
-    @Unroll
-    def "copy recursive with pattern"() {
+    def "copy recursive #recursive with pattern #pattern"() {
         given:
         def plugin = new CopyFileNodeStepPlugin()
         def srcPath = copyDir.toString() + '/'
@@ -214,25 +153,48 @@ class CopyFileNodeStepPluginSpec extends Specification {
             getExecutionService() >> execSvc
         }
         def mockFwk = testFramework(fkwScs)
-        makeDirFiles(copyDir)
+        makeDirFiles(copyDir, [
+                'test1.txt',
+                'file2.txt',
+                'sub1/test3.xml',
+                'sub1/sub2/test4.blah'
+        ]
+        )
 
         when:
         plugin.executeNodeStep(context, [:], node)
         then:
 
-
-        1 * context.getFramework() >> mockFwk
-        1 * execSvc.fileCopyFiles(_, { arg ->
-            def collect = arg*.getAbsolutePath().collect { it.substring(srcPath.length()) }
-            collect.containsAll(expectList)
-        }, destPath, node
-        ) >> expectList.toArray()
+        if (expectList) {
+            1 * context.getFramework() >> mockFwk
+            1 * execSvc.fileCopyFiles(_, _, { arg ->
+                def collect = arg*.getAbsolutePath().collect { it.substring(srcPath.length()) }
+                collect.containsAll(expectList) && expectList.containsAll(collect)
+            }, destPath, node
+            ) >> expectList.toArray()
+        }
+        0 * execSvc._(*_)
 
         where:
-        recursive | pattern   | expectList
-        true      | '**'      | ['test1.txt', 'file2.txt', 'sub1/test3.xml']
-        true      | '*.txt'   | ['test1.txt', 'file2.txt']
-        true      | '**/sub2' | ['sub1/sub2']
+        recursive | pattern     | expectList
+        false     | '*'         | ['test1.txt', 'file2.txt']
+        true      | '*'         | ['test1.txt', 'file2.txt', 'sub1']
+        false     | '**/test*'  | ['test1.txt', 'sub1/test3.xml', 'sub1/sub2/test4.blah']
+        true      | '**/test*'  | ['test1.txt', 'sub1/test3.xml', 'sub1/sub2/test4.blah']
+
+        false     | '**'        | ['test1.txt', 'file2.txt', 'sub1/test3.xml', 'sub1/sub2/test4.blah']
+        true      | '**'        |
+                ['test1.txt', 'file2.txt', 'sub1', 'sub1/test3.xml', 'sub1/sub2/test4.blah', 'sub1/sub2']
+        false     | '*.txt'     | ['test1.txt', 'file2.txt']
+        true      | '*.txt'     | ['test1.txt', 'file2.txt']
+        false     | 'sub*/*'    | ['sub1/test3.xml']
+        true      | 'sub*/sub*' | ['sub1/sub2']
+        false     | '**/sub2'   | []
+        true      | '**/sub2'   | ['sub1/sub2']
+        false     | '*/sub2'    | []
+        true      | '*/sub2'    | ['sub1/sub2']
+        false     | 'sub1'      | []
+        true      | 'sub1'      | ['sub1']
 
     }
 

@@ -77,10 +77,9 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
             throws NodeStepException
     {
 
-        boolean wildcards = pattern != null;
         String destinationPathDir = destinationPath.endsWith("/") ? destinationPath : destinationPath + "/";
-        if(recursive && !wildcards){
-            File folder = new File(sourcePath);
+        File folder = new File(sourcePath);
+        if (recursive || pattern != null) {
             if (!folder.isDirectory()) {
                 throw new NodeStepException(
                         "sourcePath has to be a directory",
@@ -88,26 +87,16 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
                         entry.getNodename()
                 );
             }
+        }
+        if (recursive && pattern == null) {
             copyFile(sourcePath, destinationPathDir, context, entry);
-        } else if (wildcards) {
+        } else if (pattern != null) {
             List<File> fileList = new ArrayList<>();
             File basedir = new File(sourcePath);
             if (echo) {
                 context.getLogger().log(2, String.format("Searching : '%s' on: '%s'", pattern, sourcePath));
             }
-            DirectoryScanner scanner = new DirectoryScanner();
-            scanner.setBasedir(basedir);
-            scanner.setIncludes(new String[]{pattern});
-            scanner.setFollowSymlinks(true);
-            scanner.scan();
-            for (String file : scanner.getIncludedFiles()) {
-                File source = new File(sourcePath, file);
-                if (echo) {
-                    context.getLogger().log(2, String.format("To copy file: %s", source.getAbsolutePath()));
-                }
-
-                fileList.add(source);
-            }
+            DirectoryScanner scanner = scanDirectory(context, fileList, basedir, sourcePath, pattern);
             if (recursive) {
                 for (String file : scanner.getIncludedDirectories()) {
                     if ("".equals(file)) {
@@ -121,11 +110,35 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
                     fileList.add(source);
                 }
             }
-            copyFileList(fileList, destinationPathDir, context, entry);
+            copyFileList(folder, fileList, destinationPathDir, context, entry);
         } else {
             copyFile(sourcePath, destinationPath, context, entry);
         }
 
+    }
+
+    private DirectoryScanner scanDirectory(
+            final PluginStepContext context,
+            final List<File> fileList,
+            final File basedir,
+            final String sourcePath,
+            final String pattern
+    )
+    {
+        DirectoryScanner scanner = new DirectoryScanner();
+        scanner.setBasedir(basedir);
+        scanner.setIncludes(new String[]{pattern});
+        scanner.setFollowSymlinks(true);
+        scanner.scan();
+        for (String file : scanner.getIncludedFiles()) {
+            File source = new File(sourcePath, file);
+            if (echo) {
+                context.getLogger().log(2, String.format("To copy file: %s", source.getAbsolutePath()));
+            }
+
+            fileList.add(source);
+        }
+        return scanner;
     }
 
 
@@ -165,7 +178,13 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
         }
     }
 
-    private void copyFileList(List<File> fileList, String destinationPath, PluginStepContext context, INodeEntry entry)
+    private void copyFileList(
+            File basedir,
+            List<File> fileList,
+            String destinationPath,
+            PluginStepContext context,
+            INodeEntry entry
+    )
             throws NodeStepException{
         if(fileList.size() == 0){
             if(echo) {
@@ -185,7 +204,13 @@ public class CopyFileNodeStepPlugin implements NodeStepPlugin {
                 }
                 String[] paths = context.getFramework()
                                         .getExecutionService()
-                                        .fileCopyFiles(context.getExecutionContext(), fileList, destinationPath, entry);
+                                        .fileCopyFiles(
+                                                context.getExecutionContext(),
+                                                basedir,
+                                                fileList,
+                                                destinationPath,
+                                                entry
+                                        );
                 if (echo) {
                     for (String path : paths) {
                         context.getLogger().log(2, String.format("Copied: %s", path));

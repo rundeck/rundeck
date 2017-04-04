@@ -45,7 +45,6 @@ import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Echo;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -201,6 +200,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
 
     private String[] copyMultipleFiles(
             final ExecutionContext context,
+            File basedir,
             List<File> files,
             String remotePath,
             final INodeEntry node
@@ -218,9 +218,7 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
                 node,
                 framework,
                 context);
-        File basedir = FileUtils.getBaseDir(files);
         try {
-
             scp = SSHTaskBuilder.buildMultiScp(
                     node,
                     project,
@@ -309,9 +307,15 @@ public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Des
         return copyFile(context, null, null, script, node, destination);
     }
 
-    public String[] copyFiles(final ExecutionContext context, List<File> files, String remotePath, INodeEntry node)
+    public String[] copyFiles(
+            final ExecutionContext context,
+            final File basedir,
+            List<File> files,
+            String remotePath,
+            INodeEntry node
+    )
             throws FileCopierException{
-        return copyMultipleFiles(context, files, remotePath, node);
+        return copyMultipleFiles(context, basedir, files, remotePath, node);
     }
 
 }
