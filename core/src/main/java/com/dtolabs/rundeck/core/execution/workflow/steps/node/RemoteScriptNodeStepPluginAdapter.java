@@ -178,7 +178,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
             );
             final String filepath; //result file path
             try {
-                filepath = executionService.fileCopyScriptContent(context, script.getScript(), node,destpath);
+                filepath = executionService.fileCopyScriptContent(context, script.getScript(), node, destpath);
             } catch (FileCopierException e) {
                 throw new NodeStepException(e.getMessage(), e, e.getFailureReason(), node.getNodename());
             }
