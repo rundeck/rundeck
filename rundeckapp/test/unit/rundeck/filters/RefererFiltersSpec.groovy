@@ -14,32 +14,39 @@
  * limitations under the License.
  */
 
-package rundeck.controllers
+package rundeck.filters
 
 import com.codahale.metrics.MetricRegistry
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.FiltersUnitTestMixin
-import rundeck.filters.AA_TimerFilters
-import rundeck.filters.ApiRequestFilters
-import rundeck.filters.RefererFilters
+import org.codehaus.groovy.grails.web.pages.GroovyPagesTemplateEngine
+import org.codehaus.groovy.grails.web.pages.discovery.CachingGrailsConventionGroovyPageLocator
+import org.codehaus.groovy.grails.web.servlet.view.GroovyPageViewResolver
+import rundeck.controllers.ApiController
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
+ * Test the RefererFilters, using ApiController for mocked controller requests
  * @author greg
  * @since 4/4/17
  */
 @TestFor(ApiController)
 @Mock([AA_TimerFilters, ApiRequestFilters, RefererFilters])
 @TestMixin(FiltersUnitTestMixin)
-class ApiControllerSpec extends Specification {
+class RefererFiltersSpec extends Specification {
     static doWithSpring = {
         configurationService(ConfigurationService)
         metricRegistry(MetricRegistry)
+
+        //pageTemplateEngine,pageLocator,viewResolver, allows mocked filter to call `render(view:'/view')`
+        pageTemplateEngine(GroovyPagesTemplateEngine)
+        pageLocator(CachingGrailsConventionGroovyPageLocator)
+        viewResolver(GroovyPageViewResolver, pageTemplateEngine, pageLocator)
     }
 
     @Unroll

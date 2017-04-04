@@ -77,15 +77,25 @@ class RefererFilters {
                         // referer must match serverURL, optionally https
 
                         if (!isvalidReferer) {
-                            log.error("${request.method}: reject referer: $referer for $request.forwardURI")
+                            def refid = "REFID:${UUID.randomUUID()}"
+                            log.error("${request.method}: reject referer: $referer for $request.forwardURI [$refid]")
                             response.status = HttpServletResponse.SC_UNAUTHORIZED
+                            request.titleCode = 'request.error.unauthorized.title'
+                            request.errorCode = 'request.error.invalidrequest.message'
+                            request.errorArgs = [refid]
+                            render(view: '/common/error')
                         }
                         return isvalidReferer
                     }
                 } else if (csrf == '*') {
                     if (!isvalidReferer) {
-                        log.error("${request.method}: reject referer: $referer for $request.forwardURI")
+                        def refid = "REFID:${UUID.randomUUID()}"
+                        log.error("${request.method}: reject referer: $referer for $request.forwardURI [$refid]")
                         response.status = HttpServletResponse.SC_UNAUTHORIZED
+                        request.titleCode = 'request.error.unauthorized.title'
+                        request.errorCode = 'request.error.invalidrequest.message'
+                        request.errorArgs = [refid]
+                        render(view: '/common/error')
                     }
                     return isvalidReferer
                 }
