@@ -97,17 +97,6 @@ public interface ExecutionService extends FrameworkSupportService {
         throws DispatcherException, ExecutionServiceException;
 
 
-    /**
-     * Copy inputstream as a file to the node.
-     * @param context context
-     * @param input input stream
-     * @param node node
-     * @throws FileCopierException on error
-     * @return filepath on the node for the destination file.
-     * @deprecated use {@link #fileCopyFileStream(ExecutionContext, java.io.InputStream, com.dtolabs.rundeck.core.common.INodeEntry, String)}
-     */
-    public String fileCopyFileStream(final ExecutionContext context, InputStream input, INodeEntry node) throws
-        FileCopierException;
 
     /**
      * Copy inputstream as a file to the node to a specific path
@@ -122,18 +111,6 @@ public interface ExecutionService extends FrameworkSupportService {
     public String fileCopyFileStream(final ExecutionContext context, InputStream input, INodeEntry node,
             String destinationPath) throws
             FileCopierException;
-
-    /**
-     * Copy file to the node as a script file to the temp file location.
-     *
-     * @param context context
-     * @param file input file
-     * @param node node
-     * @throws FileCopierException on error
-     * @return filepath for the copied file on the node.
-     * @deprecated use {@link #fileCopyFile(ExecutionContext, java.io.File, com.dtolabs.rundeck.core.common.INodeEntry, String)}
-     */
-    public String fileCopyFile(final ExecutionContext context, File file, INodeEntry node) throws FileCopierException;
 
     /**
      * Copy file to the node to a specific path
@@ -169,20 +146,6 @@ public interface ExecutionService extends FrameworkSupportService {
             INodeEntry node
     ) throws FileCopierException;
 
-    /**
-     * Copy string as a file to the node,
-     *
-     * @param context context
-     * @param script script string
-     * @param node node
-     * @throws FileCopierException on error
-     * @return filepath for the copied file on the node
-     *
-     * @deprecated use {@link #fileCopyScriptContent(ExecutionContext, String, com.dtolabs.rundeck.core.common.INodeEntry, String)}
-     */
-    public String fileCopyScriptContent(final ExecutionContext context, String script,
-                                        INodeEntry node) throws
-        FileCopierException;
     /**
      * Copy string as a file to the node to a specific path
      *

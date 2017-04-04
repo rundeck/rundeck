@@ -56,19 +56,11 @@ public class StubFileCopier implements FileCopier, Describable {
     {
         String identity = null != context.getDataContext() && null != context.getDataContext().get("job") ?
                           context.getDataContext().get("job").get("execid") : null;
-        final String resultpath = null != destination ? destination : BaseFileCopier.generateRemoteFilepathForNode(
-                node,
-                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getFramework(),
-                "stub-script",
-                null,
-                identity
-        );
         context.getExecutionListener().log(
                 Constants.WARN_LEVEL,
-                "[stub] copy inputstream to node " + node.getNodename() + ": " + resultpath
+                "[stub] copy inputstream to node " + node.getNodename() + ": " + destination
         );
-        return resultpath;
+        return destination;
     }
 
     @Override
@@ -82,19 +74,11 @@ public class StubFileCopier implements FileCopier, Describable {
     {
         String identity = null != context.getDataContext() && null != context.getDataContext().get("job") ?
                           context.getDataContext().get("job").get("execid") : null;
-        final String resultpath = null != destination ? destination : BaseFileCopier.generateRemoteFilepathForNode(
-                node,
-                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getFramework(),
-                file.getName(),
-                null,
-                identity
-        );
         context.getExecutionListener().log(
                 Constants.WARN_LEVEL,
-                "[stub] copy local file to node " + node.getNodename() + ": " + resultpath
+                "[stub] copy local file to node " + node.getNodename() + ": " + destination
         );
-        return resultpath;
+        return destination;
     }
 
     @Override
@@ -104,38 +88,14 @@ public class StubFileCopier implements FileCopier, Describable {
     {
         String identity = null != context.getDataContext() && null != context.getDataContext().get("job") ?
                           context.getDataContext().get("job").get("execid") : null;
-        final String resultpath = destination != null ? destination : BaseFileCopier.generateRemoteFilepathForNode(
-                node,
-                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getFramework(),
-                "stub-script",
-                null,
-                identity
-        );
         final int linecount = script != null ? script.split("(\\r?\\n)").length : 0;
         context.getExecutionListener().log(
                 Constants.WARN_LEVEL,
-                "[stub] copy [" + linecount + " lines] to node " + node.getNodename() + ": " + resultpath
+                "[stub] copy [" + linecount + " lines] to node " + node.getNodename() + ": " + destination
         );
-        return resultpath;
+        return destination;
     }
 
-    public String copyFileStream(final ExecutionContext context, final InputStream input, final INodeEntry node) throws
-            FileCopierException
-    {
-        return copyFileStream(context, input, node, null);
-    }
-
-    public String copyFile(final ExecutionContext context, final File file, final INodeEntry node) throws
-            FileCopierException
-    {
-        return copyFile(context, file, node, null);
-    }
-
-    public String copyScriptContent(final ExecutionContext context, final String script, final INodeEntry node) throws
-        FileCopierException {
-        return copyScriptContent(context, script, node, null);
-    }
 
     final static Description DESC = new AbstractBaseDescription(){
         public String getName() {

@@ -84,33 +84,6 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
      * Copy inputstream
      */
     public String copyFileStream(final ExecutionContext executionContext, final InputStream inputStream,
-                                 final INodeEntry node) throws FileCopierException {
-
-        return copyFile(executionContext, null, inputStream, null, node, null);
-    }
-
-    /**
-     * Copy existing file
-     */
-    public String copyFile(final ExecutionContext executionContext, final File file,
-            final INodeEntry node) throws FileCopierException {
-        return copyFile(executionContext, file, null, null, node, null);
-    }
-
-
-
-    /**
-     * Copy string content
-     */
-    public String copyScriptContent(final ExecutionContext executionContext, final String s,
-                                    final INodeEntry node) throws
-                                                           FileCopierException {
-        return copyFile(executionContext, null, null, s, node, null);
-    }
-    /**
-     * Copy inputstream
-     */
-    public String copyFileStream(final ExecutionContext executionContext, final InputStream inputStream,
                                  final INodeEntry node, String destination) throws FileCopierException {
 
         return copyFile(executionContext, null, inputStream, null, node, destination);

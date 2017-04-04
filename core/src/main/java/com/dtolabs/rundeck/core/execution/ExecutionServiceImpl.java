@@ -168,10 +168,6 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public String fileCopyFileStream(ExecutionContext context, InputStream input, INodeEntry node) throws
-        FileCopierException {
-        return fileCopyFileStream(context, input, node, null);
-    }
 
     public String fileCopyFileStream(ExecutionContext context, InputStream input, INodeEntry node,
             String destinationPath) throws
@@ -198,10 +194,6 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public String fileCopyFile(ExecutionContext context, File file,
-                               INodeEntry node) throws FileCopierException {
-        return fileCopyFile(context, file, node, null);
-    }
 
     public String fileCopyFile(ExecutionContext context, File file, INodeEntry node,
             String destinationPath) throws FileCopierException {
@@ -260,10 +252,6 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public String fileCopyScriptContent(ExecutionContext context, String script,
-            INodeEntry node) throws FileCopierException {
-        return fileCopyScriptContent(context,script,node,null);
-    }
 
     public String fileCopyScriptContent(ExecutionContext context, String script, INodeEntry node, String
             destinationPath) throws FileCopierException {

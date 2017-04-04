@@ -411,7 +411,7 @@ public class TestScriptPluginFileCopier {
                                                            .executionListener(new testListener())
                                                            .build();
         NodeEntryImpl nodeEntry = new NodeEntryImpl("node1");
-        String result = scriptPluginFileCopier.copyFile(context, null, nodeEntry);
+        String result = scriptPluginFileCopier.copyFile(context, null, nodeEntry, null);
         Assert.assertNotNull(result);
     }
 

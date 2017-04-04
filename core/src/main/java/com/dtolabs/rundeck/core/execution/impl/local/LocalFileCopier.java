@@ -48,31 +48,7 @@ public class LocalFileCopier extends BaseFileCopier implements FileCopier {
         this.framework = framework;
     }
 
-    public String copyScriptContent(ExecutionContext context, String script, INodeEntry node) throws
-        FileCopierException {
-
-        return copyFile(context, null, null, script, node);
-    }
-
     private Framework framework;
-
-    public String copyFileStream(final ExecutionContext context, InputStream input, INodeEntry node) throws
-        FileCopierException {
-
-        return copyFile(context, null, input, null, node);
-    }
-
-    public String copyFile(final ExecutionContext context, File scriptfile, INodeEntry node) throws
-            FileCopierException {
-        return copyFile(context, scriptfile, null, null, node);
-    }
-
-
-
-    private String copyFile(final ExecutionContext context, File scriptfile, InputStream input, String script,
-                            INodeEntry node) throws FileCopierException {
-        return copyFile(context, scriptfile, input, script, node, null);
-    }
 
     private String copyFile(
             final ExecutionContext context,
