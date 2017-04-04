@@ -36,46 +36,64 @@ import java.util.List;
  * be used to generate a destination file path.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * @see MultiFileCopier
  */
-public interface FileCopier extends  DestinationFileCopier {
-    /**
-     * Copy the contents of an input stream to the node
-     *
-     * @param context context
-     * @param input   the input stream
-     * @param node node
-     *
-     * @return File path of the file after copying to the node
-     *
-     * @throws FileCopierException if an error occurs
-     */
-    public String copyFileStream(final ExecutionContext context, InputStream input, INodeEntry node) throws
-        FileCopierException;
+public interface FileCopier {
 
     /**
      * Copy the contents of an input stream to the node
      *
-     * @param context context
-     * @param file    local file tocopy
-     * @param node node
+     * @param context     context
+     * @param input       the input stream
+     * @param node        node
+     * @param destination the full path destination for the file
      *
      * @return File path of the file after copying to the node
      *
      * @throws FileCopierException if an error occurs
      */
-    public String copyFile(final ExecutionContext context, File file, INodeEntry node) throws FileCopierException;
+    public String copyFileStream(
+            final ExecutionContext context,
+            InputStream input,
+            INodeEntry node,
+            String destination
+    ) throws FileCopierException;
 
     /**
      * Copy the contents of an input stream to the node
      *
-     * @param context context
-     * @param script  file content string
-     * @param node node
+     * @param context     context
+     * @param file        local file tocopy
+     * @param node        node
+     * @param destination the full path destination for the file
      *
      * @return File path of the file after copying to the node
      *
      * @throws FileCopierException if an error occurs
      */
-    public String copyScriptContent(final ExecutionContext context, String script, INodeEntry node) throws
-        FileCopierException;
+    public String copyFile(
+            final ExecutionContext context,
+            File file,
+            INodeEntry node,
+            String destination
+    ) throws FileCopierException;
+
+    /**
+     * Copy the contents of an input stream to the node
+     *
+     * @param context     context
+     * @param script      file content string
+     * @param node        node
+     * @param destination the full path destination for the file
+     *
+     * @return File path of the file after copying to the node
+     *
+     * @throws FileCopierException if an error occurs
+     */
+    public String copyScriptContent(
+            final ExecutionContext context,
+            String script,
+            INodeEntry node,
+            String destination
+    ) throws FileCopierException;
 }
