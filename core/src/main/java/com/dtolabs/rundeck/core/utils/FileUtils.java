@@ -187,7 +187,12 @@ public class FileUtils {
      * @return common base directory
      */
     public static File getBaseDir(final List<File> files) {
-        String common = getCommonPrefix(files.stream().map(File::getAbsolutePath).collect(Collectors.toList()));
+        String common = getCommonPrefix(files.stream().map(new Function<File, String>() {
+            @Override
+            public String apply(final File file) {
+                return file.getAbsolutePath();
+            }
+        }).collect(Collectors.toList()));
         if (null != common) {
             return new File(common);
         }
