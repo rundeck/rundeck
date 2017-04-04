@@ -16,34 +16,78 @@
 
 package rundeck.filters
 
+import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
 
+/**
+ * Requires Referer header matches the grails.serverURL value for POST requests, prevents CSRF attacks.
+ *
+ * Configuration:
+ * <code><pre>
+ * #Set HTTP Method to filter based on Referer header.  Can be POST, or "*" for all methods. Default:
+ * # NONE (disabled)
+ * rundeck.security.csrf.referer.filterMethod=NONE|POST|*
+ *
+ * # Allow /api/* requests without requireing matching Referer header. Default: true.
+ * rundeck.security.csrf.referer.allowApi=true|false
+ *
+ * # If server URL is HTTPS, Require referer header to be from HTTPS version of server URL, if false allow HTTP as
+ * # well. Default: true.
+ * rundeck.security.csrf.referer.requireHttps=true|false
+ * </pre></code>
+ */
 class RefererFilters {
+    def configurationService
     def dependsOn = [ApiRequestFilters]
     def filters = {
         checkReferer(controller: 'user', action: 'login', invert: true) {
             before = {
-                def csrf = grailsApplication.config.rundeck.security.csrf
-                def urlString = (grailsApplication.config.grails.serverURL).toString()
-                def validRefererPrefix = "^" + Pattern.quote(urlString).replace("^https://", "^https?://")
-                def referer = request.getHeader('Referer')
-                if (csrf && csrf != 'NONE') {
-                    def isvalidReferer = referer && referer =~ validRefererPrefix
-                    if (csrf == 'POST') {
-                        if (request.method.toUpperCase() == "POST") {
-                            // referer must match serverURL, optionally https
+                // Set HTTP Method to filter based on Referer header.  Can be POST, or "*" for all methods. Default:
+                // NONE (disabled)
+                def csrf = configurationService.getString('security.csrf.referer.filterMethod', 'NONE')
+                if (!csrf || csrf == 'NONE') {
+                    return true
+                }
 
-                            if(!isvalidReferer) {
-                                System.err.println("${request.method}: invalid referer")
-                            }
-                            return isvalidReferer
-                        }
-                    } else if (csrf == '*') {
-                        if(!isvalidReferer) {
-                            System.err.println("${request.method}: invalid referer")
+                // Allow /api/* access without matching Referer header. Default: true.
+                def allowApi = configurationService.getBoolean('security.csrf.referer.allowApi', true)
+
+                if (request.api_version && allowApi) {
+                    return true
+                }
+
+                def urlString = (grailsApplication.config.grails.serverURL).toString()
+
+                // Require referer header to be from HTTPS version of server URL, otherwise allow HTTP. Default: true.
+                def requireHttps = configurationService.getBoolean('security.csrf.referer.requireHttps', true)
+
+                def quoteUrl = Pattern.quote(urlString)
+                if (!requireHttps) {
+                    quoteUrl = urlString.replaceFirst("(?i)^https://(.*)\$") {
+                        "https?://" + Pattern.quote(it[1])
+                    }
+                }
+
+                def validRefererPrefix = "(?i)^" + quoteUrl
+                def referer = request.getHeader('Referer')
+
+                def isvalidReferer = referer && referer =~ validRefererPrefix
+                if (csrf == 'POST') {
+                    if (request.method.toUpperCase() == "POST") {
+                        // referer must match serverURL, optionally https
+
+                        if (!isvalidReferer) {
+                            log.error("${request.method}: reject referer: $referer for $request.forwardURI")
+                            response.status = HttpServletResponse.SC_UNAUTHORIZED
                         }
                         return isvalidReferer
                     }
+                } else if (csrf == '*') {
+                    if (!isvalidReferer) {
+                        log.error("${request.method}: reject referer: $referer for $request.forwardURI")
+                        response.status = HttpServletResponse.SC_UNAUTHORIZED
+                    }
+                    return isvalidReferer
                 }
 
             }
