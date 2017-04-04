@@ -40,7 +40,7 @@ class RefererFilters {
     def configurationService
     def dependsOn = [ApiRequestFilters]
     def filters = {
-        checkReferer(controller: 'user', action: 'login', invert: true) {
+        checkReferer(action: '*', controller: '*') {
             before = {
                 // Set HTTP Method to filter based on Referer header.  Can be POST, or "*" for all methods. Default:
                 // NONE (disabled)
