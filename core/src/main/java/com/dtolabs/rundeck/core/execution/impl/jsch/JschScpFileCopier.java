@@ -55,7 +55,7 @@ import java.util.List;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class JschScpFileCopier extends BaseFileCopier implements FileCopier, Describable, MultiFileCopier {
+public class JschScpFileCopier extends BaseFileCopier implements MultiFileCopier, Describable {
     public static final String SERVICE_PROVIDER_TYPE = "jsch-scp";
 
 
