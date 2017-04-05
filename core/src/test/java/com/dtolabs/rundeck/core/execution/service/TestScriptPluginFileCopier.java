@@ -38,10 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -319,6 +316,12 @@ public class TestScriptPluginFileCopier {
 
         }
 
+        @Override public void beginFileCopyFile(
+                ExecutionContext context, List<File> input, INodeEntry node
+        ) {
+
+        }
+
         @Override public void beginFileCopyScriptContent(
                 ExecutionContext context, String input, INodeEntry node
         ) {
@@ -328,6 +331,11 @@ public class TestScriptPluginFileCopier {
         @Override public void finishFileCopy(
                 String result, ExecutionContext context, INodeEntry node
         ) {
+
+        }
+        @Override public void finishMultiFileCopy(
+                String[] result, ExecutionContext context, INodeEntry node
+        ){
 
         }
 
@@ -403,7 +411,7 @@ public class TestScriptPluginFileCopier {
                                                            .executionListener(new testListener())
                                                            .build();
         NodeEntryImpl nodeEntry = new NodeEntryImpl("node1");
-        String result = scriptPluginFileCopier.copyFile(context, null, nodeEntry);
+        String result = scriptPluginFileCopier.copyFile(context, null, nodeEntry, null);
         Assert.assertNotNull(result);
     }
 

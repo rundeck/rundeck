@@ -30,8 +30,9 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
-import com.dtolabs.rundeck.core.execution.service.DestinationFileCopier;
+import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.MultiFileCopier;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
@@ -80,7 +81,7 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 @Plugin(name = "script-copy", service = ServiceNameConstants.FileCopier)
-public class ScriptFileCopier implements DestinationFileCopier, Describable {
+public class ScriptFileCopier implements FileCopier, Describable {
     public static String SERVICE_PROVIDER_NAME = "script-copy";
     public static String SCRIPT_ATTRIBUTE = "script-copy";
     public static String DIR_ATTRIBUTE = "script-copy-dir";
@@ -169,32 +170,6 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
         return DESC;
     }
 
-    /**
-     * Copy inputstream
-     */
-    public String copyFileStream(final ExecutionContext executionContext, final InputStream inputStream,
-                                 final INodeEntry node) throws FileCopierException {
-
-        return copyFile(executionContext, null, inputStream, null, node, null);
-    }
-
-    /**
-     * Copy existing file
-     */
-    public String copyFile(final ExecutionContext executionContext, final File file, final INodeEntry node) throws
-                                                                                                            FileCopierException {
-        return copyFile(executionContext, file, null, null, node,null);
-    }
-
-    /**
-     * Copy string content
-     */
-    public String copyScriptContent(final ExecutionContext executionContext, final String s,
-                                    final INodeEntry node) throws
-                                                           FileCopierException {
-        return copyFile(executionContext, null, null, s, node, null);
-    }
-
     static enum Reason implements FailureReason {
         ScriptFileCopierPluginExpectedOutputMissing
     }
@@ -213,6 +188,7 @@ public class ScriptFileCopier implements DestinationFileCopier, Describable {
     public String copyScriptContent(ExecutionContext context, String script, INodeEntry node, String destination) throws FileCopierException {
         return copyFile(context, null, null, script, node, destination);
     }
+
 
     /**
      * Internal copy method accepting file, inputstream or string

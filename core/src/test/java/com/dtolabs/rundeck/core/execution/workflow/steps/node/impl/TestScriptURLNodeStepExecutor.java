@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
-import com.dtolabs.rundeck.core.execution.ExecutionException;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
@@ -85,45 +84,29 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
         Test
     }
 
-    public static class testFileCopier implements FileCopier,DestinationFileCopier {
+    public static class testFileCopier implements FileCopier {
         String testResult;
         ExecutionContext testContext;
         InputStream testInput;
         INodeEntry testNode;
         boolean throwException;
 
-        public String copyFileStream(ExecutionContext context, InputStream input, INodeEntry node) throws
-            FileCopierException {
+        @Override
+        public String copyFileStream(
+                final ExecutionContext context, final InputStream input, final INodeEntry node, final String destination
+        ) throws FileCopierException
+        {
             testContext = context;
             testNode = node;
             testInput = input;
             if (throwException) {
                 throw new FileCopierException("copyFileStream test",TestReason.Test);
             }
-            return testResult;
-        }
-
-        @Override
-        public String copyFileStream(
-                final ExecutionContext context, final InputStream input, final INodeEntry node, final String destination
-        ) throws FileCopierException
-        {
-            testResult = copyFileStream(context, input, node);
 
             return destination;
         }
 
         File testFile;
-
-        public String copyFile(ExecutionContext context, File file, INodeEntry node) throws FileCopierException {
-            testContext = context;
-            testNode = node;
-            testFile = file;
-            if (throwException) {
-                throw new FileCopierException("copyFile test", TestReason.Test);
-            }
-            return testResult;
-        }
 
         @Override
         public String copyFile(
@@ -134,14 +117,22 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
         )
                 throws FileCopierException
         {
-            testResult = copyFile(context, file, node);
+            testContext = context;
+            testNode = node;
+            testFile = file;
+            if (throwException) {
+                throw new FileCopierException("copyFile test", TestReason.Test);
+            }
             return destination;
         }
 
         String testScript;
 
-        public String copyScriptContent(ExecutionContext context, String script, INodeEntry node) throws
-            FileCopierException {
+        @Override
+        public String copyScriptContent(
+                final ExecutionContext context, final String script, final INodeEntry node, final String destination
+        ) throws FileCopierException
+        {
             testContext = context;
             testNode = node;
             testScript = script;
@@ -149,17 +140,9 @@ public class TestScriptURLNodeStepExecutor extends AbstractBaseTest {
             if (throwException) {
                 throw new FileCopierException("copyScriptContent test", TestReason.Test);
             }
-            return testResult;
-        }
-
-        @Override
-        public String copyScriptContent(
-                final ExecutionContext context, final String script, final INodeEntry node, final String destination
-        ) throws FileCopierException
-        {
-            testResult = copyScriptContent(context, script, node);
             return destination;
         }
+
     }
 
     public static class multiTestNodeExecutor implements NodeExecutor {

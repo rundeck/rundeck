@@ -77,37 +77,40 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
     enum TestReason implements FailureReason{
         Test
     }
-    public static class testFileCopier implements FileCopier,DestinationFileCopier {
+
+    public static class testFileCopier implements FileCopier {
         String testResult;
         ExecutionContext testContext;
         InputStream testInput;
         INodeEntry testNode;
         boolean throwException;
 
-        public String copyFileStream(ExecutionContext context, InputStream input, INodeEntry node) throws
-            FileCopierException {
+        @Override
+        public String copyFileStream(
+                final ExecutionContext context, final InputStream input, final INodeEntry node, final String destination
+        ) throws FileCopierException
+        {
             testContext = context;
             testNode = node;
             testInput = input;
             if(throwException) {
                 throw new FileCopierException("copyFileStream test", TestReason.Test);
             }
-            return testResult;
-        }
-
-        @Override
-        public String copyFileStream(
-                final ExecutionContext context, final InputStream input, final INodeEntry node, final String destination
-        ) throws FileCopierException
-        {
-            testResult = copyFileStream(context, input, node);
             return destination;
         }
 
         File testFile;
         String testFileContents;
 
-        public String copyFile(ExecutionContext context, File file, INodeEntry node) throws FileCopierException {
+        @Override
+        public String copyFile(
+                final ExecutionContext context,
+                final File file,
+                final INodeEntry node,
+                final String destination
+        )
+                throws FileCopierException
+        {
             testContext = context;
             testNode = node;
             testFile = file;
@@ -119,26 +122,16 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             if (throwException) {
                 throw new FileCopierException("copyFile test", TestReason.Test);
             }
-            return testResult;
-        }
-
-        @Override
-        public String copyFile(
-                final ExecutionContext context,
-                final File file,
-                final INodeEntry node,
-                final String destination
-        )
-                throws FileCopierException
-        {
-            testResult = copyFile(context, file, node);
             return destination;
         }
 
         String testScript;
 
-        public String copyScriptContent(ExecutionContext context, String script, INodeEntry node) throws
-            FileCopierException {
+        @Override
+        public String copyScriptContent(
+                final ExecutionContext context, final String script, final INodeEntry node, final String destination
+        ) throws FileCopierException
+        {
             testContext = context;
             testNode = node;
             testScript = script;
@@ -146,17 +139,10 @@ public class TestScriptFileNodeStepExecutor extends AbstractBaseTest {
             if (throwException) {
                 throw new FileCopierException("copyScriptContent test", TestReason.Test);
             }
-            return testResult;
-        }
-
-        @Override
-        public String copyScriptContent(
-                final ExecutionContext context, final String script, final INodeEntry node, final String destination
-        ) throws FileCopierException
-        {
-            testResult = copyScriptContent(context, script, node);
             return destination;
         }
+
+
     }
 
     public static class multiTestNodeExecutor implements NodeExecutor {

@@ -29,14 +29,15 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.MultiFileCopier;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.AbstractBaseDescription;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
-import com.dtolabs.rundeck.core.plugins.configuration.Property;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -47,61 +48,54 @@ import java.util.List;
 @Plugin (name = "stub",service = "FileCopier")
 public class StubFileCopier implements FileCopier, Describable {
     public static final String SERVICE_PROVIDER_NAME = "stub";
-    public String copyFileStream(final ExecutionContext context, final InputStream input, final INodeEntry node) throws
-        FileCopierException {
 
-
-        String identity = null!=context.getDataContext() && null!=context.getDataContext().get("job")?
-                          context.getDataContext().get("job").get("execid"):null;
-        final String resultpath = BaseFileCopier.generateRemoteFilepathForNode(
-                node,
-                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getFramework(),
-                "stub-script",
-                null,
-                identity
+    @Override
+    public String copyFileStream(
+            final ExecutionContext context, final InputStream input, final INodeEntry node, final String destination
+    ) throws FileCopierException
+    {
+        String identity = null != context.getDataContext() && null != context.getDataContext().get("job") ?
+                          context.getDataContext().get("job").get("execid") : null;
+        context.getExecutionListener().log(
+                Constants.WARN_LEVEL,
+                "[stub] copy inputstream to node " + node.getNodename() + ": " + destination
         );
-        context.getExecutionListener().log(Constants.WARN_LEVEL,
-            "[stub] copy inputstream to node " + node.getNodename() + ": " + resultpath);
-        return resultpath;
+        return destination;
     }
 
-    public String copyFile(final ExecutionContext context, final File file, final INodeEntry node) throws
-        FileCopierException {
-
-        String identity = null!=context.getDataContext() && null!=context.getDataContext().get("job")?
-                          context.getDataContext().get("job").get("execid"):null;
-        final String resultpath = BaseFileCopier.generateRemoteFilepathForNode(
-                node,
-                context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
-                context.getFramework(),
-                file.getName(),
-                null,
-                identity
+    @Override
+    public String copyFile(
+            final ExecutionContext context,
+            final File file,
+            final INodeEntry node,
+            final String destination
+    )
+            throws FileCopierException
+    {
+        String identity = null != context.getDataContext() && null != context.getDataContext().get("job") ?
+                          context.getDataContext().get("job").get("execid") : null;
+        context.getExecutionListener().log(
+                Constants.WARN_LEVEL,
+                "[stub] copy local file to node " + node.getNodename() + ": " + destination
         );
-        context.getExecutionListener().log(Constants.WARN_LEVEL,
-            "[stub] copy local file to node " + node.getNodename() + ": " + resultpath);
-        return resultpath;
+        return destination;
     }
 
-    public String copyScriptContent(final ExecutionContext context, final String script, final INodeEntry node) throws
-        FileCopierException {
-
-        String identity = null!=context.getDataContext() && null!=context.getDataContext().get("job")?
-                          context.getDataContext().get("job").get("execid"):null;
-        final String resultpath = BaseFileCopier.generateRemoteFilepathForNode(
-                node,
-                context.getFramework().getFrameworkProjectMgr().getFrameworkProject( context.getFrameworkProject()),
-                context.getFramework(),
-                "stub-script",
-                null,
-                identity
-        );
+    @Override
+    public String copyScriptContent(
+            final ExecutionContext context, final String script, final INodeEntry node, final String destination
+    ) throws FileCopierException
+    {
+        String identity = null != context.getDataContext() && null != context.getDataContext().get("job") ?
+                          context.getDataContext().get("job").get("execid") : null;
         final int linecount = script != null ? script.split("(\\r?\\n)").length : 0;
-        context.getExecutionListener().log(Constants.WARN_LEVEL,
-            "[stub] copy [" + linecount + " lines] to node " + node.getNodename() + ": " + resultpath);
-        return resultpath;
+        context.getExecutionListener().log(
+                Constants.WARN_LEVEL,
+                "[stub] copy [" + linecount + " lines] to node " + node.getNodename() + ": " + destination
+        );
+        return destination;
     }
+
 
     final static Description DESC = new AbstractBaseDescription(){
         public String getName() {

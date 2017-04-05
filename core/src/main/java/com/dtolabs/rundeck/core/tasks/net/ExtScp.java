@@ -22,8 +22,11 @@ import com.jcraft.jsch.JSchException;
 import com.jcraft.jsch.Session;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.taskdefs.optional.ssh.Scp;
+import org.apache.tools.ant.types.FileSet;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -39,6 +42,23 @@ public class ExtScp extends Scp implements SSHTaskBuilder.SCPInterface {
     private long                timeout;
     private Map<String, String> sshConfig;
     private PluginLogger        pluginLogger;
+    private String toDir;
+    private List<FileSet> fileSets;
+
+    @Override
+    public void setTodir(final String aToUri) {
+        this.toDir = aToUri;
+        super.setTodir(aToUri);
+    }
+
+    @Override
+    public void addFileset(final FileSet set) {
+        if (fileSets == null) {
+            fileSets = new ArrayList<>();
+        }
+        fileSets.add(set);
+        super.addFileset(set);
+    }
 
     @Override
     public void setSshConfig(Map<String, String> config) {
@@ -115,5 +135,13 @@ public class ExtScp extends Scp implements SSHTaskBuilder.SCPInterface {
 
     public Integer getTtlSSHAgent() {
         return 0;
+    }
+
+    public String getIfaceToDir() {
+        return toDir;
+    }
+
+    public List<FileSet> getIfaceFileSets() {
+        return fileSets;
     }
 }

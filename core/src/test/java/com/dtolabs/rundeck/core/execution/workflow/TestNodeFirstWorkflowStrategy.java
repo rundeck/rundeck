@@ -168,10 +168,16 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         public void beginFileCopyFile(ExecutionContext context, File input, INodeEntry node) {
         }
 
+        public void beginFileCopyFile(ExecutionContext context, List<File> input, INodeEntry node) {
+        }
+
+
         public void beginFileCopyScriptContent(ExecutionContext context, String input, INodeEntry node) {
         }
 
         public void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
+        }
+        public void finishMultiFileCopy(String[] result, ExecutionContext context, INodeEntry node) {
         }
 
         public void beginExecuteNodeStep(ExecutionContext context, NodeStepExecutionItem item, INodeEntry node) {

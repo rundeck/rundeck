@@ -36,15 +36,12 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
-import com.dtolabs.rundeck.core.utils.*;
-import org.apache.commons.collections.Predicate;
+import com.dtolabs.rundeck.core.utils.FileUtils;
 
 import java.io.File;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 
 /**
  * NewExecutionServiceImpl is ...
@@ -171,10 +168,6 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public String fileCopyFileStream(ExecutionContext context, InputStream input, INodeEntry node) throws
-        FileCopierException {
-        return fileCopyFileStream(context, input, node, null);
-    }
 
     public String fileCopyFileStream(ExecutionContext context, InputStream input, INodeEntry node,
             String destinationPath) throws
@@ -192,12 +185,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String result = null;
         try {
-            if (null != destinationPath && copier instanceof DestinationFileCopier) {
-                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
-                result = dcopier.copyFileStream(context, input, node, destinationPath);
-            } else {
-                result = copier.copyFileStream(context, input, node);
-            }
+            result = copier.copyFileStream(context, input, node, destinationPath);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
@@ -206,10 +194,6 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public String fileCopyFile(ExecutionContext context, File file,
-                               INodeEntry node) throws FileCopierException {
-        return fileCopyFile(context, file, node, null);
-    }
 
     public String fileCopyFile(ExecutionContext context, File file, INodeEntry node,
             String destinationPath) throws FileCopierException {
@@ -225,12 +209,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String result = null;
         try {
-            if (null != destinationPath && copier instanceof DestinationFileCopier) {
-                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
-                result = dcopier.copyFile(context, file, node, destinationPath);
-            }else{
-                result = copier.copyFile(context, file, node);
-            }
+            result = copier.copyFile(context, file, node, destinationPath);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);
@@ -239,10 +218,40 @@ class ExecutionServiceImpl implements ExecutionService {
         return result;
     }
 
-    public String fileCopyScriptContent(ExecutionContext context, String script,
-            INodeEntry node) throws FileCopierException {
-        return fileCopyScriptContent(context,script,node,null);
+    public String[] fileCopyFiles(
+            ExecutionContext context,
+            File basedir,
+            List<File> files,
+            String remotePath,
+            INodeEntry node
+    )
+            throws FileCopierException {
+
+        if (null != context.getExecutionListener()) {
+            context.getExecutionListener().beginFileCopyFile(context, files, node);
+        }
+        final FileCopier copier;
+        try {
+            copier = framework.getFileCopierForNodeAndProject(node, context.getFrameworkProject());
+        } catch (ExecutionServiceException e) {
+            throw new FileCopierException(e.getMessage(), ServiceFailureReason.ServiceFailure, e);
+        }
+        String[] result = null;
+        try {
+            if (copier instanceof MultiFileCopier) {
+                MultiFileCopier dcopier = (MultiFileCopier) copier;
+                result = dcopier.copyFiles(context, basedir, files, remotePath, node);
+            }else{
+                result = MultiFileCopierUtil.copyMultipleFiles(copier, context, basedir, files, remotePath, node);
+            }
+        } finally {
+            if (null != context.getExecutionListener()) {
+                context.getExecutionListener().finishMultiFileCopy(result, context, node);
+            }
+        }
+        return result;
     }
+
 
     public String fileCopyScriptContent(ExecutionContext context, String script, INodeEntry node, String
             destinationPath) throws FileCopierException {
@@ -257,12 +266,7 @@ class ExecutionServiceImpl implements ExecutionService {
         }
         String result = null;
         try {
-            if (null != destinationPath && copier instanceof DestinationFileCopier) {
-                DestinationFileCopier dcopier = (DestinationFileCopier) copier;
-                result = dcopier.copyScriptContent(context, script, node, destinationPath);
-            }else{
-                result = copier.copyScriptContent(context, script, node);
-            }
+            result = copier.copyScriptContent(context, script, node, destinationPath);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishFileCopy(result, context, node);

@@ -27,48 +27,28 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
-import com.dtolabs.rundeck.core.execution.service.DestinationFileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.MultiFileCopier;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * LocalFileCopier is ...
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class LocalFileCopier extends BaseFileCopier implements FileCopier, DestinationFileCopier {
+public class LocalFileCopier extends BaseFileCopier implements FileCopier {
     public static final String SERVICE_PROVIDER_TYPE = "local";
 
     public LocalFileCopier(Framework framework) {
         this.framework = framework;
     }
 
-    public String copyScriptContent(ExecutionContext context, String script, INodeEntry node) throws
-        FileCopierException {
-
-        return copyFile(context, null, null, script, node);
-    }
-
     private Framework framework;
-
-    public String copyFileStream(final ExecutionContext context, InputStream input, INodeEntry node) throws
-        FileCopierException {
-
-        return copyFile(context, null, input, null, node);
-    }
-
-    public String copyFile(final ExecutionContext context, File scriptfile, INodeEntry node) throws
-        FileCopierException {
-        return copyFile(context, scriptfile, null, null, node);
-    }
-
-    private String copyFile(final ExecutionContext context, File scriptfile, InputStream input, String script,
-                            INodeEntry node) throws FileCopierException {
-        return copyFile(context, scriptfile, input, script, node, null);
-    }
 
     private String copyFile(
             final ExecutionContext context,

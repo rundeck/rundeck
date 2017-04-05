@@ -33,6 +33,7 @@ import junit.framework.TestCase;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.taskdefs.optional.ssh.SSHUserInfo;
 import org.apache.tools.ant.types.Environment;
+import org.apache.tools.ant.types.FileSet;
 import org.rundeck.storage.api.PathUtil;
 import org.rundeck.storage.api.StorageException;
 
@@ -208,6 +209,8 @@ public class TestSSHTaskBuilder extends TestCase {
     static class testSCPInterface extends testSSHBaseInterface implements SSHTaskBuilder.SCPInterface {
         String localFile;
         String remoteTofile;
+        String dir;
+        FileSet fileSet;
 
         public void setLocalFile(String localFile) {
             this.localFile = localFile;
@@ -215,6 +218,14 @@ public class TestSSHTaskBuilder extends TestCase {
 
         public void setRemoteTofile(String remoteTofile) {
             this.remoteTofile = remoteTofile;
+        }
+
+        public void addFileset(FileSet set) {
+            this.fileSet = set;
+        }
+
+        public void setTodir(String aToUri) {
+            this.dir = aToUri;
         }
     }
 

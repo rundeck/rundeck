@@ -31,7 +31,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
-
 import java.io.File;
 import java.io.InputStream;
 import java.util.*;
@@ -135,6 +134,12 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         }
     }
 
+    public void beginFileCopyFile(ExecutionContext context, List<File> input, INodeEntry node) {
+        if (null != delegate) {
+            delegate.beginFileCopyFile(context, input, node);
+        }
+    }
+
     public void beginFileCopyScriptContent(ExecutionContext context, String input, INodeEntry node) {
         if (null != delegate) {
             delegate.beginFileCopyScriptContent(context, input, node);
@@ -144,6 +149,12 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
     public void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
         if (null != delegate) {
             delegate.finishFileCopy(result, context, node);
+        }
+    }
+
+    public void finishMultiFileCopy(String[] result, ExecutionContext context, INodeEntry node) {
+        if (null != delegate) {
+            delegate.finishMultiFileCopy(result, context, node);
         }
     }
 

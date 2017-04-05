@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 
 /**
  * ExecutionService provides interface to all dispatcher and command execution services.
@@ -96,17 +97,6 @@ public interface ExecutionService extends FrameworkSupportService {
         throws DispatcherException, ExecutionServiceException;
 
 
-    /**
-     * Copy inputstream as a file to the node.
-     * @param context context
-     * @param input input stream
-     * @param node node
-     * @throws FileCopierException on error
-     * @return filepath on the node for the destination file.
-     * @deprecated use {@link #fileCopyFileStream(ExecutionContext, java.io.InputStream, com.dtolabs.rundeck.core.common.INodeEntry, String)}
-     */
-    public String fileCopyFileStream(final ExecutionContext context, InputStream input, INodeEntry node) throws
-        FileCopierException;
 
     /**
      * Copy inputstream as a file to the node to a specific path
@@ -123,18 +113,6 @@ public interface ExecutionService extends FrameworkSupportService {
             FileCopierException;
 
     /**
-     * Copy file to the node as a script file to the temp file location.
-     *
-     * @param context context
-     * @param file input file
-     * @param node node
-     * @throws FileCopierException on error
-     * @return filepath for the copied file on the node.
-     * @deprecated use {@link #fileCopyFile(ExecutionContext, java.io.File, com.dtolabs.rundeck.core.common.INodeEntry, String)}
-     */
-    public String fileCopyFile(final ExecutionContext context, File file, INodeEntry node) throws FileCopierException;
-
-    /**
      * Copy file to the node to a specific path
 
      * @param context context
@@ -148,19 +126,26 @@ public interface ExecutionService extends FrameworkSupportService {
             String destinationPath) throws FileCopierException;
 
     /**
-     * Copy string as a file to the node,
+     * Copy multiple files to the node to a specific path
      *
-     * @param context context
-     * @param script script string
-     * @param node node
+     * @param context    context
+     * @param basedir    base directory for copied files
+     * @param files      array of input files
+     * @param remotePath remote path destination for files
+     * @param node       node
+     *
+     * @return list of copied paths from the remote node
+     *
      * @throws FileCopierException on error
-     * @return filepath for the copied file on the node
-     *
-     * @deprecated use {@link #fileCopyScriptContent(ExecutionContext, String, com.dtolabs.rundeck.core.common.INodeEntry, String)}
      */
-    public String fileCopyScriptContent(final ExecutionContext context, String script,
-                                        INodeEntry node) throws
-        FileCopierException;
+    public String[] fileCopyFiles(
+            final ExecutionContext context,
+            File basedir,
+            List<File> files,
+            String remotePath,
+            INodeEntry node
+    ) throws FileCopierException;
+
     /**
      * Copy string as a file to the node to a specific path
      *

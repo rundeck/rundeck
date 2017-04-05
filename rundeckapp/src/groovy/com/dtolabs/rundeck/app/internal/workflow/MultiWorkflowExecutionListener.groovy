@@ -176,6 +176,11 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
     }
 
     @Override
+    void beginFileCopyFile(ExecutionContext context, List input, INodeEntry node) {
+        delegate.beginFileCopyFile(context,input,node)
+    }
+
+    @Override
     void beginFileCopyScriptContent(ExecutionContext context, String input, INodeEntry node) {
         delegate.beginFileCopyScriptContent(context, input, node)
     }
@@ -183,6 +188,11 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
     @Override
     void finishFileCopy(String result, ExecutionContext context, INodeEntry node) {
         delegate.finishFileCopy(result, context, node)
+    }
+
+    @Override
+    void finishMultiFileCopy(String[] result, ExecutionContext context, INodeEntry node) {
+        delegate.finishMultiFileCopy(result, context, node)
     }
 
     @Override
