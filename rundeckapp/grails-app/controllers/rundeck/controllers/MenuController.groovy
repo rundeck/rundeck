@@ -69,6 +69,7 @@ import java.lang.management.ManagementFactory
 
 class MenuController extends ControllerBase implements ApplicationContextAware{
     FrameworkService frameworkService
+    MenuService menuService
     ExecutionService executionService
     UserService userService
     ScheduledExecutionService scheduledExecutionService
@@ -760,10 +761,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
             //construct existing values from project properties
             def values=Validator.demapProperties(fproject.getProjectProperties(),v.getPropertiesMapping(), true)
-            extraConfig[k]=[
-                    configurable:v,
-                    values:values,
-                    prefix:"extraConfig.${k}."
+            extraConfig[k] = [
+                    name        : k,
+                    configurable: v,
+                    values      : values,
+                    prefix      : "extraConfig.${k}."
             ]
         }
             return [configs:configs,
@@ -1597,6 +1599,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
             summary[project.name].description= project.hasProperty("project.description")?project.getProperty("project.description"):''
             if(!params.refresh) {
+                summary[project.name].readmeDisplay = menuService.getReadmeDisplay(project)
+                summary[project.name].motdDisplay = menuService.getMotdDisplay(project)
                 summary[project.name].readme = frameworkService.getFrameworkProjectReadmeContents(project)
                 //authorization
                 summary[project.name].auth = [

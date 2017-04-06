@@ -31,6 +31,7 @@
         var confirm = new PageConfirm(message('page.unsaved.changes'));
         _onJobEdit(confirm.setNeedsConfirm);
     </g:javascript>
+    <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
 </head>
 <body>
 

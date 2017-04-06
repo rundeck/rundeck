@@ -83,7 +83,10 @@
                      id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}"/>
         </div>
         <div class="${valueColTypeSplitB}">
-        <g:set var="propSelectValues" value="${prop.selectValues.collect{[key:it.encodeAsHTML(),value:it]}}"/>
+            <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
+            <g:set var="propSelectValues" value="${prop.selectValues.collect {
+                [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)]
+            }}"/>
         <g:select name="${fieldid+'_sel'}" from="${propSelectValues}" id="${fieldid}"
                     optionKey="key" optionValue="value"
                   value="${(values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue)?.encodeAsHTML()}"
@@ -94,7 +97,9 @@
         </div>
     </g:if>
     <g:else>
-        <g:set var="propSelectValues" value="${prop.selectValues.collect{[key:it.encodeAsHTML(),value:it]}}"/>
+        <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
+        <g:set var="propSelectValues"
+               value="${prop.selectValues.collect { [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)] }}"/>
         <g:set var="noSelectionValue" value="${prop.required ? null : ['':'-none selected-']}"/>
         <div class="${valueColType}">
         <g:select name="${fieldname}" from="${propSelectValues}" id="${fieldid}"
@@ -105,6 +110,44 @@
         </div>
     </g:else>
 </g:elseif>
+    <g:elseif test="${prop.type.toString() == 'Options'}">
+        <g:set var="fieldid" value="${g.rkey()}"/>
+        <label class="${labelColType}   ${prop.required ? 'required' : ''}"
+               for="${enc(attr: fieldid)}"><stepplugin:message
+                service="${service}"
+                name="${provider}"
+                code="${messagePrefix}property.${prop.name}.title"
+                default="${prop.title ?: prop.name}"/></label>
+
+        <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
+
+        <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
+        <g:set var="propSelectValues"
+               value="${prop.selectValues.collect { [value: it, label: (propSelectLabels[it] ?: it)] }}"/>
+        <g:set var="noSelectionValue" value="${prop.required ? null : ['': '-none selected-']}"/>
+
+<g:set var="defval" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>
+<g:set var="defvalset" value="${defval? defval.split(', *') :[] }"/>
+
+        <div class="${valueColType} ">
+        <div class=" grid">
+
+            <g:each in="${propSelectValues}" var="propval">
+                <div class="optionvaluemulti ">
+                    <label class="grid-row optionvaluemulti">
+                        <span class="grid-cell grid-front">
+                            <g:checkBox name="${fieldname}" checked="${propval.value in defvalset}"
+                                   value="${propval.value}"/>
+                        </span>
+                        <span class="grid-cell grid-rest">
+                            ${propval.label}
+                        </span>
+                    </label>
+                </div>
+            </g:each>
+        </div>
+        </div>
+    </g:elseif>
 <g:else>
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:set var="hasStorageSelector" value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.STORAGE_PATH,'STORAGE_PATH']}"/>

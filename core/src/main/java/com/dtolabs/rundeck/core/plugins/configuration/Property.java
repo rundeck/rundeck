@@ -59,7 +59,11 @@ public interface Property {
         /**
          * A string input property with a select
          */
-        FreeSelect
+        FreeSelect,
+        /**
+         * A set of checkbox options
+         */
+        Options
     }
 
     /**
@@ -101,6 +105,11 @@ public interface Property {
      * @return a list of values for a select property
      */
     public List<String> getSelectValues();
+
+    /**
+     * @return a map of display labels to use for the select values, keyed by value
+     */
+    public Map<String, String> getSelectLabels();
 
     /**
      * @return the scope of this property, i.e. where the value can be retrieved and overridden, or null to indicate

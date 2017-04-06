@@ -99,6 +99,9 @@ class ScriptPluginConfigBuilder {
                 }
             }
         }
+        if(props['labels'] instanceof Map){
+            pbuilder.labels(props['labels'])
+        }
         if (props['type']) {
             if (props['type'] instanceof String) {
                 pbuilder.type(Property.Type.valueOf(props['type']))

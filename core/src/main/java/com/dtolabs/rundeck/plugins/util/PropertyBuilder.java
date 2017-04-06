@@ -16,10 +16,7 @@
 
 package com.dtolabs.rundeck.plugins.util;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.dtolabs.rundeck.core.plugins.configuration.*;
 
@@ -35,6 +32,7 @@ public class PropertyBuilder {
     private boolean required;
     private String value;
     private List<String> values;
+    private Map<String, String> labels;
     private PropertyValidator validator;
     private PropertyScope scope;
     private Map<String, Object> renderingOptions = new HashMap<String, Object>();
@@ -62,6 +60,7 @@ public class PropertyBuilder {
             .description(orig.getDescription())
             .title(orig.getTitle())
             .values(orig.getSelectValues())
+            .labels(orig.getSelectLabels())
             .validator(orig.getValidator())
             .scope(orig.getScope())
             .renderingOptions(orig.getRenderingOptions())
@@ -125,6 +124,19 @@ public class PropertyBuilder {
     public PropertyBuilder select(final String name) {
         name(name);
         type(Property.Type.Select);
+        return this;
+    }
+
+
+    /**
+     * Return a new PropertyBuilder of type {@link Property.Type#Select}
+     * @param name name
+     *
+     * @return this builder
+     */
+    public PropertyBuilder options(final String name) {
+        name(name);
+        type(Property.Type.Options);
         return this;
     }
 
@@ -214,6 +226,18 @@ public class PropertyBuilder {
      */
     public PropertyBuilder values(final List<String> values) {
         this.values = values;
+        return this;
+    }
+
+    /**
+     * Set the select labels
+     *
+     * @param labels map of value to label
+     *
+     * @return this builder
+     */
+    public PropertyBuilder labels(final Map<String, String> labels) {
+        this.labels = labels;
         return this;
     }
 
@@ -311,7 +335,19 @@ public class PropertyBuilder {
         if (null == name) {
             throw new IllegalStateException("name is required");
         }
-        return PropertyUtil.forType(type, name, title, description, required, value, values, validator, scope, renderingOptions);
+        return PropertyUtil.forType(
+                type,
+                name,
+                title,
+                description,
+                required,
+                value,
+                values,
+                labels,
+                validator,
+                scope,
+                renderingOptions
+        );
     }
 
     /**
