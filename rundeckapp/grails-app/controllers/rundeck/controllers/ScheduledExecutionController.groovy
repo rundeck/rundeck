@@ -1913,6 +1913,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def notificationPlugins = notificationService.listNotificationPlugins()
 
         def orchestratorPlugins = orchestratorPluginService.listDescriptions()
+        def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
                 notificationPlugins : notificationPlugins,
                 orchestratorPlugins : orchestratorPlugins,
@@ -1920,7 +1921,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 nextExecutionTime   :scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 authorized          :scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
-                stepDescriptions    : stepTypes]
+                stepDescriptions    : stepTypes,
+                globalVars:globals]
     }
 
 
@@ -1971,6 +1973,7 @@ class ScheduledExecutionController  extends ControllerBase{
             def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
             def stepTypes = frameworkService.getStepPluginDescriptions()
             def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
+            def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
             return render(view:'edit', model: [scheduledExecution:scheduledExecution,
                        nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
                     notificationValidation: params['notificationValidation'],
@@ -1979,7 +1982,8 @@ class ScheduledExecutionController  extends ControllerBase{
                     strategyPlugins: strategyPlugins,
                     notificationPlugins: notificationService.listNotificationPlugins(),
                     orchestratorPlugins: orchestratorPluginService.listDescriptions(),
-                    params:params
+                    params:params,
+                    globalVars:globals
                    ])
         }else{
 
@@ -2187,11 +2191,13 @@ class ScheduledExecutionController  extends ControllerBase{
         def stepTypes = frameworkService.getStepPluginDescriptions()
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
+        def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 strategyPlugins:strategyPlugins,
-                orchestratorPlugins: orchestratorPluginService.listDescriptions()]
+                orchestratorPlugins: orchestratorPluginService.listDescriptions(),
+                globalVars:globals]
     }
 
     private clearEditSession(id='_new'){

@@ -62,8 +62,24 @@ function _removeOptionName(name) {
 var _VAR_DATA = {
     job: [],
     node: [],
-    eh: []
+    eh: [],
+    globals: []
 };
+function _jobGlobalVarData() {
+    "use strict";
+    if (_VAR_DATA['globals'].length < 1) {
+        var globdata = loadJsonData('globalVarData');
+        if (globdata) {
+            globdata.each(function (e) {
+                _VAR_DATA['globals'].push({
+                    key: 'globals.' + e,
+                    category: 'Global Vars'
+                });
+            });
+        }
+    }
+    return _VAR_DATA['globals'];
+}
 function _jobVarData() {
     if (_VAR_DATA['job'].length < 1) {
         var jobdata = {
@@ -154,6 +170,7 @@ function postLoadItemEdit(item, iseh, isnodestep) {
     };
 
     var baseVarData = [].concat(_jobVarData());
+    baseVarData = baseVarData.concat(_jobGlobalVarData());
 
 
     var baseNodeData = [];
