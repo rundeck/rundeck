@@ -143,7 +143,8 @@ class ExecutionServiceSpec extends Specification {
                 dateStarted: new Date(),
                 dateCompleted: null,
                 user: 'user',
-                project: 'AProject'
+                project: 'AProject',
+                executionType: 'scheduled'
         ).save()
         service.frameworkService = Stub(FrameworkService) {
             getServerUUID() >> null
@@ -152,10 +153,11 @@ class ExecutionServiceSpec extends Specification {
             getUsername() >> 'user1'
         }
         when:
-        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12'], true, exec.id)
+        Execution e2 = service.createExecution(job, authContext, null, ['extra.option.test': '12',executionType: 'scheduled'], true, exec.id)
 
         then:
         e2 != null
+        e2.executionType == 'scheduled'
     }
 
     void "create execution as user"() {
@@ -184,7 +186,12 @@ class ExecutionServiceSpec extends Specification {
             getUsername() >> 'user1'
         }
         when:
-        Execution e2 = service.createExecution(job, authContext, 'testuser', ['extra.option.test': '12'])
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                ['extra.option.test': '12', executionType: 'user']
+        )
 
         then:
         e2 != null
@@ -220,7 +227,8 @@ class ExecutionServiceSpec extends Specification {
         Execution e2 = service.createExecution(
                 job,
                 authContext,
-                null
+                null,
+                [executionType: 'user']
         )
 
         then:
@@ -301,7 +309,7 @@ class ExecutionServiceSpec extends Specification {
             getUsername() >> 'user1'
         }
         when:
-        def result = service.executeJob(job, authContext, 'test2', [:])
+        def result = service.executeJob(job, authContext, 'test2', [executionType: 'user'])
 
         then:
         1 * service.scheduledExecutionService.scheduleTempJob(job, 'test2', authContext, _, [:], [:], 0) >> { args ->

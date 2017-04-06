@@ -1766,6 +1766,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         message: 'A job cannot be scheduled for a time in the past',
                         options: input.option]
             }
+            if(!allowedOptions['executionType']){
+                allowedOptions['executionType'] = 'user-scheduled'
+            }
 
             def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions)
             // Update execution
@@ -1882,7 +1885,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (input && input['executionType']) {
             props.executionType = input['executionType']
         } else {
-            props.executionType = 'scheduled'
+            throw new ExecutionServiceException("executionType is required")
         }
 
         //evaluate embedded Job options for validation
