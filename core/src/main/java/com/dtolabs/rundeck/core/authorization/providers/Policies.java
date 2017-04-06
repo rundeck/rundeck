@@ -78,7 +78,7 @@ public class Policies implements AclRuleSetSource{
      *
      */
     public static Policies load(File rootPath, final Set<Attribute> forcedContext)  {
-        return new Policies(PoliciesCache.fromDir(rootPath));
+        return new Policies(PoliciesCache.fromDir(rootPath, forcedContext));
     }
     /**
      * @return Load the policies contained in the root path.
