@@ -33,16 +33,8 @@ public class DirectFilepathMapper implements FilepathMapper {
         this.rootDir = rootDir;
         this.contentDir = new File(rootDir, "content");
         this.metaDir = new File(rootDir, "meta");
-        if (!contentDir.exists()) {
-            if (!contentDir.mkdirs()) {
-                throw new IllegalArgumentException("Unable to create root dir: " + rootDir);
-            }
-        }
-        if (!metaDir.exists()) {
-            if (!metaDir.mkdirs()) {
-                throw new IllegalArgumentException("Unable to create meta dir: " + metaDir);
-            }
-        }
+        contentDir.mkdirs();
+        metaDir.mkdirs();
     }
 
     /**
