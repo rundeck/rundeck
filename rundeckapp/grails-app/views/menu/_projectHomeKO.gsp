@@ -140,9 +140,9 @@
 
     <div data-bind="if: project">
         <div class="row row-space"
-             data-bind="if: project.readme && (project.readme().readmeHTML || project.readme().motdHTML)">
+             data-bind="if: project.showMessage() ">
             <div class="col-sm-12">
-                <!-- ko if: project.readme().motdHTML() -->
+                <!-- ko if: project.showMotd() -->
                 <div class="well well autoshow">
 
                     <span data-bind="if: project.auth().admin">
@@ -161,7 +161,7 @@
                 </div>
                 <!-- /ko -->
 
-                <!-- ko if: project.readme().readmeHTML() -->
+                <!-- ko if: project.showReadme() -->
                 <div class="well well well-nobg autoshow">
                 <span data-bind="if: project.auth().admin">
                     <a href="${g.createLink(

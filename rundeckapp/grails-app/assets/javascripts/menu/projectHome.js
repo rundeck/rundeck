@@ -51,7 +51,7 @@ function init() {
     var data = loadJsonData('projectData');
     var projectHome = new ProjectHome(data.project, {baseUrl: appLinks.menuHomeAjax});
     projectHome.project(
-        new Project({name: data.project})
+        new Project({name: data.project, page: 'projectHome'})
     );
     projectHome.load();
     ko.applyBindings(projectHome);

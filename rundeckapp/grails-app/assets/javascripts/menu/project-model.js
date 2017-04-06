@@ -46,6 +46,27 @@ function Project(data) {
     self.auth = ko.observable(new ProjectAuth());
     self.readme = ko.observable(new ProjectReadme());
     self.loaded = ko.observable(false);
+    self.readmeDisplay = ko.observable(data.readmeDisplay || []);
+    self.motdDisplay = ko.observable(data.motdDisplay || []);
+    self.page = ko.observable(data.page || []);
+    self.showReadme = ko.computed(function () {
+        var page = self.page();
+        var rddisplay = self.readmeDisplay();
+        var content = self.readme().readmeHTML();
+        return content && rddisplay.indexOf(page) >= 0;
+    });
+    self.showMotd = ko.computed(function () {
+        var page = self.page();
+        var rddisplay = self.motdDisplay();
+        var content = self.readme().motdHTML();
+        return content && rddisplay.indexOf(page) >= 0;
+    });
+    self.showMessage = ko.computed(function () {
+        var rd = self.readme();
+        var showm= self.showMotd();
+        var showr = self.showReadme();
+        return rd && (showm || showr);
+    });
     self.mapping = {
         auth: {
             create: function (options) {

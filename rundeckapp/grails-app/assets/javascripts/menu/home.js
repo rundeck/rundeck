@@ -95,7 +95,7 @@ function HomeData(data) {
         "use strict";
         return !self.search() || self.searchProjectsByName()[name]!=null;
     };
-    self.prototypeProject=new Project({});
+    self.prototypeProject = new Project({page: 'projectList'});
     self.projectForName = function (name) {
         var projectsByName = self.projectsByName()[name];
         if(null==projectsByName){
@@ -149,7 +149,7 @@ function HomeData(data) {
                 found.loaded(true);
             } else {
                 self.projects.push(
-                    new Project(jQuery.extend(newproj, {loaded: true}))
+                    new Project(jQuery.extend(newproj, {loaded: true, page: 'projectList'}))
                 );
             }
         }
