@@ -881,9 +881,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 return
             }
             //construct input values for the bean
-            def beanData=[
-                    configurable:v,
-                    prefix:"extraConfig.${k}."
+            def beanData = [
+                    name        : k,
+                    configurable: v,
+                    prefix      : "extraConfig.${k}."
             ]
             def input=params.extraConfig?."${k}"?:[:]
             beanData.values=input
@@ -891,6 +892,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             v.getProjectConfigProperties().findAll{it.type==Property.Type.Boolean}.each{
                 if(input[it.name]!='true'){
                     input[it.name]='false'
+                }
+            }
+            v.getProjectConfigProperties().findAll { it.type == Property.Type.Options }.each {
+                if (input[it.name] instanceof Collection) {
+                    input[it.name] = input[it.name].join(',')
+                } else if (input[it.name] instanceof String[]) {
+                    input[it.name] = input[it.name].join(',')
                 }
             }
             //validate
@@ -997,9 +1005,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
             //construct existing values from project properties
             extraConfig[k]=[
+                    name        : k,
                     configurable:v,
-                    values:[:],
-                    prefix:"extraConfig.${k}."
+                    values      : [:],
+                    prefix      : "extraConfig.${k}."
             ]
         }
 
@@ -1339,8 +1348,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 }
                 //construct input values for the bean
                 def beanData=[
-                        configurable:v,
-                        prefix:"extraConfig.${k}"
+                        name        : k,
+                        configurable: v,
+                        prefix      : "extraConfig.${k}"
                 ]
                 def input=params.extraConfig."${k}"
                 beanData.values=input
@@ -1348,6 +1358,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 v.getProjectConfigProperties().findAll{it.type==Property.Type.Boolean}.each{
                     if(input[it.name]!='true'){
                         input[it.name]='false'
+                    }
+                }
+                v.getProjectConfigProperties().findAll { it.type == Property.Type.Options }.each {
+                    if (input[it.name] instanceof Collection) {
+                        input[it.name] = input[it.name].join(',')
+                    } else if (input[it.name] instanceof String[]) {
+                        input[it.name] = input[it.name].join(',')
                     }
                 }
                 //validate
@@ -1472,9 +1489,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             //construct existing values from project properties
             def values=Validator.demapProperties(fwkProject.getProjectProperties(),v.getPropertiesMapping(), true)
             extraConfig[k]=[
+                    name        : k,
                     configurable:v,
-                    values:values,
-                    prefix:"extraConfig.${k}."
+                    values      : values,
+                    prefix      : "extraConfig.${k}."
             ]
         }
 

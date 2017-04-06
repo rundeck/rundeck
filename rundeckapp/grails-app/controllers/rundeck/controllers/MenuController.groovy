@@ -760,10 +760,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
             //construct existing values from project properties
             def values=Validator.demapProperties(fproject.getProjectProperties(),v.getPropertiesMapping(), true)
-            extraConfig[k]=[
-                    configurable:v,
-                    values:values,
-                    prefix:"extraConfig.${k}."
+            extraConfig[k] = [
+                    name        : k,
+                    configurable: v,
+                    values      : values,
+                    prefix      : "extraConfig.${k}."
             ]
         }
             return [configs:configs,
