@@ -339,14 +339,14 @@
                     </div>
 
                     <div data-bind="if: $root.projectForName(project)">
-                        <div class="row row-space" data-bind="if: $root.projectForName(project).readme && ($root.projectForName(project).readme().readmeHTML || $root.projectForName(project).readme().motdHTML)">
+                        <div class="row row-space" data-bind="if: $root.projectForName(project).showMessage() ">
                             <div class="col-sm-12">
-                                <div data-bind="if: $root.projectForName(project).readme().motdHTML()">
+                                <div data-bind="if: $root.projectForName(project).showMotd() ">
                                     <span data-bind="if: $root.projectForName(project).readme().motdHTML()">
                                         <span data-bind="html: $root.projectForName(project).readme().motdHTML()"></span>
                                     </span>
                                 </div>
-                                <div data-bind="if: $root.projectForName(project).readme().readmeHTML()">
+                                <div data-bind="if:  $root.projectForName(project).showReadme() ">
                                     <span data-bind="if: $root.projectForName(project).readme().readmeHTML()">
                                         <span data-bind="html: $root.projectForName(project).readme().readmeHTML()"></span>
                                     </span>

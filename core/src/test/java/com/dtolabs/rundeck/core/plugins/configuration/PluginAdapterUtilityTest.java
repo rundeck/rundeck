@@ -422,6 +422,9 @@ public class PluginAdapterUtilityTest extends TestCase {
         @PluginProperty
         @SelectValues(values = {"a", "b", "c"}, freeSelect = true)
         private String testSelect2;
+        @PluginProperty
+        @SelectValues(values = {"a", "b", "c"}, multiOption = true)
+        private String testSelect3;
     }
 
     public void testSelectFields() {
@@ -435,8 +438,8 @@ public class PluginAdapterUtilityTest extends TestCase {
         assertEquals(2, select1.getSelectValues().size());
         assertEquals(Arrays.asList("a", "b"), select1.getSelectValues());
 
-        assertPropertyType(map, "testSelect2", Property.Type.FreeSelect);
-        Property select2 = map.get("testSelect2");
+        assertPropertyType(map, "testSelect3", Property.Type.Options);
+        Property select2 = map.get("testSelect3");
         assertNotNull(select2.getSelectValues());
         assertEquals(3, select2.getSelectValues().size());
         assertEquals(Arrays.asList("a", "b", "c"), select2.getSelectValues());
@@ -455,6 +458,9 @@ public class PluginAdapterUtilityTest extends TestCase {
         @PluginProperty
         @SelectValues(values = {"a", "b", "c"}, freeSelect = true)
         String testSelect2;
+        @PluginProperty
+        @SelectValues(values = {"a", "b", "c"}, multiOption = true)
+        String testSelect3;
         @PluginProperty
         Boolean testbool1;
         @PluginProperty
@@ -554,6 +560,16 @@ public class PluginAdapterUtilityTest extends TestCase {
             config.put("testSelect2", value);
             PluginAdapterUtility.configureProperties(new mapResolver(config),test);
             assertEquals(value,test.testSelect2);
+        }
+    }
+    public void testConfigurePropertiesOptionsAllowed() throws Exception {
+        configuretest1 test = new configuretest1();
+        String[] values = {"a", "b", "c"};
+        for (final String value : values) {
+            HashMap<String, Object> configuration = new HashMap<String, Object>();
+            configuration.put("testSelect3", value);
+            PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+            assertEquals(value, test.testSelect3);
         }
     }
 

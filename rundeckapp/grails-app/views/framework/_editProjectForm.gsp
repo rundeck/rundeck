@@ -114,67 +114,16 @@
     </div>
 
 </g:if>
+    <g:set var="otherconfigs" value="${extraConfig?.values()?.groupBy { it.configurable.category }}"/>
+    <g:each in="${otherconfigs}" var="otherconfig">
 
-    <g:if test="${extraConfig && extraConfig.values()*.configurable.find{it.category=='resourceModelSource'}}">
-       <div class="list-group-item">
-           <span class="h4 ">
-                <g:message code="resource.model" />
-            </span>
+        <g:render template="projectConfigurableForm"
+                  model="${[extraConfigSet: otherconfig.value,
+                            titleCode     : 'project.configuration.extra.category.'+otherconfig.key+'.title',
+                            helpCode      : 'project.configuration.extra.category.'+otherconfig.key+'.description'
+                  ]}"/>
 
-            <div class="help-block">
-                <g:message code="additional.configuration.for.the.resource.model.for.this.project" />
-            </div>
-
-            <div class="form-horizontal">
-                <g:each in="${extraConfig.keySet()}" var="configService">
-                    <g:set var="configurable" value="${extraConfig[configService].configurable}"/>
-                    <g:if test="${configurable.category == 'resourceModelSource'}">
-
-                        <g:set var="pluginprefix" value="${extraConfig[configService].get('prefix')}"/>
-                        <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                                properties:configurable.projectConfigProperties,
-                                report:extraConfig[configService].get('report'),
-                                prefix:pluginprefix,
-                                values:extraConfig[configService].get('values')?:[:],
-                                fieldnamePrefix:pluginprefix,
-                                origfieldnamePrefix:'orig.' + pluginprefix,
-                                allowedScope:PropertyScope.Project
-                        ]}"/>
-                    </g:if>
-                </g:each>
-            </div>
-       </div>
-    </g:if>
-    <g:if test="${extraConfig && extraConfig.values()*.configurable.find{it.category=='jobs'}}">
-        <div class="list-group-item">
-            <span class="h4 ">
-                <g:message code="Job.plural" />
-            </span>
-
-            <div class="help-block">
-                <g:message code="project.configuration.extra.category.jobs.description" />
-            </div>
-
-            <div class="form-horizontal">
-                <g:each in="${extraConfig.keySet()}" var="configService">
-                    <g:set var="configurable" value="${extraConfig[configService].configurable}"/>
-                    <g:if test="${configurable.category == 'jobs'}">
-
-                        <g:set var="pluginprefix" value="${extraConfig[configService].get('prefix')}"/>
-                        <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                                properties:configurable.projectConfigProperties,
-                                report:extraConfig[configService].get('report'),
-                                prefix:pluginprefix,
-                                values:extraConfig[configService].get('values')?:[:],
-                                fieldnamePrefix:pluginprefix,
-                                origfieldnamePrefix:'orig.' + pluginprefix,
-                                allowedScope:PropertyScope.Project
-                        ]}"/>
-                    </g:if>
-                </g:each>
-            </div>
-        </div>
-    </g:if>
+    </g:each>
 
 <g:if test="${nodeExecDescriptions}">
     <div class="list-group-item">

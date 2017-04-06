@@ -188,6 +188,8 @@ public class PluginAdapterUtility {
             return Property.Type.Boolean;
         } else if (clazz == String.class) {
             return Property.Type.String;
+        } else if (clazz == String[].class || Set.class.isAssignableFrom(clazz) || List.class.isAssignableFrom(clazz)) {
+            return Property.Type.Options;
         }
         return null;
     }
@@ -200,12 +202,20 @@ public class PluginAdapterUtility {
             return null;
         }
         pbuild.type(type);
-        if (type == Property.Type.String) {
+        if (type == Property.Type.Options) {
+            final SelectValues selectAnnotation = field.getAnnotation(SelectValues.class);
+            if (null != selectAnnotation) {
+                pbuild.values(selectAnnotation.values());
+            }
+        }else if (type == Property.Type.String) {
             StringRenderingConstants.DisplayType renderBehaviour = StringRenderingConstants.DisplayType.SINGLE_LINE;
             //set select/freeselect
             final SelectValues selectAnnotation = field.getAnnotation(SelectValues.class);
             if (null != selectAnnotation) {
-                pbuild.type(selectAnnotation.freeSelect() ? Property.Type.FreeSelect : Property.Type.Select);
+                pbuild.type(
+                        selectAnnotation.multiOption() ? Property.Type.Options :
+                        (selectAnnotation.freeSelect() ? Property.Type.FreeSelect : Property.Type.Select)
+                );
                 pbuild.values(selectAnnotation.values());
             }
 
@@ -456,12 +466,18 @@ public class PluginAdapterUtility {
         final Property.Type ftype = propertyTypeFromFieldType(field.getType());
         if (ftype != property.getType()
                 && !(ftype == Property.Type.String
-                && (property.getType() == Property.Type.Select
-                || property.getType() == Property.Type.FreeSelect))) {
+                     && (property.getType() == Property.Type.Select ||
+                         property.getType() == Property.Type.FreeSelect ||
+                         property.getType() == Property.Type.Options))) {
 
             throw new IllegalStateException(
-                    "cannot map property {" + property.getName() + " type: " + property.getType() + "} to field {"
-                            + field.getName() + " type: " + ftype + "}");
+                    String.format(
+                            "cannot map property {%s type: %s} to field {%s type: %s}",
+                            property.getName(),
+                            property.getType(),
+                            field.getName(),
+                            ftype
+                    ));
         }
         final Object resolvedValue;
         if (type == Property.Type.Integer) {
@@ -500,6 +516,41 @@ public class PluginAdapterUtility {
                 return false;
             }
             resolvedValue = boolvalue;
+        } else if (type == Property.Type.Options) {
+            if (value instanceof String) {
+                String valstring = (String) value;
+                Set<String> resolvedValueSet=null;
+                //not a String field
+                if (field.getType().isAssignableFrom(Set.class)) {
+                    HashSet<String> strings = new HashSet<>();
+                    strings.addAll(Arrays.asList(valstring.split(", *")));
+                    resolvedValueSet = strings;
+                    resolvedValue = strings;
+                } else if (field.getType().isAssignableFrom(List.class)) {
+                    ArrayList<String> strings = new ArrayList<>();
+                    strings.addAll(Arrays.asList(valstring.split(", *")));
+                    resolvedValueSet = new HashSet<>(strings);
+                    resolvedValue = strings;
+                } else if (field.getType() == String[].class) {
+                    ArrayList<String> strings = new ArrayList<>();
+                    strings.addAll(Arrays.asList(valstring.split(", *")));
+                    resolvedValueSet = new HashSet<>(strings);
+                    resolvedValue = strings.toArray(new String[strings.size()]);
+                } else if (field.getType() == String.class) {
+                    resolvedValueSet = new HashSet<>();
+                    resolvedValueSet.addAll(Arrays.asList(valstring.split(", *")));
+                    resolvedValue = value;
+                } else {
+                    return false;
+                }
+                if (!property.getSelectValues().containsAll(resolvedValueSet)) {
+                    throw new RuntimeException(
+                            "Some options values were not allowed for property " + property.getName() + ": " + resolvedValue);
+                }
+            } else {
+                //XXX
+                return false;
+            }
         } else if (type == Property.Type.String || type == Property.Type.FreeSelect) {
             if (value instanceof String) {
                 resolvedValue = value;

@@ -67,7 +67,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
                 integer 'groupExpandLevel'
-                title 'Group Expansion Level'
+                title 'Job Group Expansion Level'
                 description 'In the Jobs page, expand Job groups to this depth by default.\n\n' +
                                     '* `0`: collapse all Groups\n' +
                                     '* `-1`: expand all Groups.'
@@ -104,7 +104,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     @Override
-    String getCategory() { return "jobs" }
+    String getCategory() { return "gui" }
 
     @Override
     List<Property> getProjectConfigProperties() { ProjectConfigProperties }

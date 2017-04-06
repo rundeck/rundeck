@@ -72,6 +72,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     public static final String CONFIG_REQUIRED = "required";
     public static final String CONFIG_DEFAULT = "default";
     public static final String CONFIG_VALUES = "values";
+    public static final String CONFIG_LABELS = "labels";
     public static final String CONFIG_SCOPE = "scope";
     public static final String CONFIG_RENDERING_OPTIONS = "renderingOptions";
     public static final String SETTING_MERGE_ENVIRONMENT = "mergeEnvironment";
@@ -185,6 +186,10 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                         values = null;
                     }
                     pbuild.values(values);
+                    Object labelmap = itemmeta.get(CONFIG_LABELS);
+                    if(labelmap instanceof Map){
+                        pbuild.labels((Map) labelmap);
+                    }
 
                     final String scopeString = metaStringProp(itemmeta, CONFIG_SCOPE);
                     if(null!=scopeString) {

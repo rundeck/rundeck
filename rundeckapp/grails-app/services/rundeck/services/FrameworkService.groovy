@@ -233,13 +233,13 @@ class FrameworkService implements ApplicationContextAware {
      * @param framework
      * @return [readme: "readme content", readmeHTML: "rendered content", motd: "motd content", motdHTML: "readnered content"]
      */
-    def getFrameworkProjectReadmeContents(IRundeckProject project1){
+    def getFrameworkProjectReadmeContents(IRundeckProject project1, boolean includeReadme=true, boolean includeMotd=true){
         def result = [:]
-        if(project1.info?.readme){
+        if(includeReadme && project1.info?.readme){
             result.readme = project1.info?.readme
             result.readmeHTML = project1.info?.readmeHTML?:result.readme?.decodeMarkdown()
         }
-        if(project1.info?.motd){
+        if(includeMotd && project1.info?.motd){
             result.motd = project1.info?.motd
             result.motdHTML = project1.info?.motdHTML?:result.motd?.decodeMarkdown()
         }

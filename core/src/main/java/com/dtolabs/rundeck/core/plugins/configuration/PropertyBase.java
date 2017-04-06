@@ -88,6 +88,11 @@ abstract class PropertyBase implements Property {
         return null;
     }
 
+    @Override
+    public Map<String, String> getSelectLabels() {
+        return null;
+    }
+
     public PropertyValidator getValidator() {
         return validator;
     }
