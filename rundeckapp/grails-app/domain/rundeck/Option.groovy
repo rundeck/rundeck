@@ -66,6 +66,7 @@ public class Option implements Comparable{
     Boolean secureExposed
     String optionType
     String configData
+    Boolean multivalueAllSelected
 
     static belongsTo=[scheduledExecution:ScheduledExecution]
     static transients = ['valuesList', 'realValuesUrl', 'configMap', 'typeFile']
@@ -91,6 +92,7 @@ public class Option implements Comparable{
         sortIndex(nullable:true)
         optionType(nullable: true, maxSize: 255)
         configData(nullable: true)
+        multivalueAllSelected(nullable: true)
     }
 
 
@@ -174,6 +176,9 @@ public class Option implements Comparable{
         if(multivalued){
             map.multivalued=multivalued
             map.delimiter=delimiter?:','
+            if (multivalueAllSelected) {
+                map.multivalueAllSelected = true
+            }
         }
         if(secureInput){
             map.secure=secureInput
@@ -226,6 +231,7 @@ public class Option implements Comparable{
             if(data.delimiter){
                 opt.delimiter=data.delimiter
             }
+            opt.multivalueAllSelected = Boolean.valueOf(data.multivalueAllSelected)
         }
         if(data.secure){
             opt.secureInput=Boolean.valueOf(data.secure)
@@ -322,7 +328,9 @@ public class Option implements Comparable{
     public Option createClone(){
         Option opt = new Option()
         ['name', 'description', 'defaultValue', 'defaultStoragePath', 'sortIndex', 'enforced', 'required', 'isDate',
-         'dateFormat', 'values', 'valuesList', 'valuesUrl', 'valuesUrlLong', 'regex', 'multivalued', 'delimiter',
+         'dateFormat', 'values', 'valuesList', 'valuesUrl', 'valuesUrlLong', 'regex', 'multivalued',
+         'multivalueAllSelected',
+         'delimiter',
          'secureInput', 'secureExposed', 'optionType', 'configData'].
                 each { k ->
             opt[k]=this[k]
@@ -348,6 +356,7 @@ public class Option implements Comparable{
         ", valuesUrl=" + getRealValuesUrl() +
         ", regex='" + regex + '\'' +
         ", multivalued='" + multivalued + '\'' +
+                ", multivalueAllSelected='" + multivalueAllSelected + '\'' +
         ", secureInput='" + secureInput + '\'' +
         ", secureExposed='" + secureExposed + '\'' +
         ", delimiter='" + delimiter + '\'' +

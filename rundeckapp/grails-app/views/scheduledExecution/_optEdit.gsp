@@ -499,7 +499,7 @@
             </div>
         </div>
         <!-- ko if: !isFileType() -->
-        <div class="row form-inline">
+        <div class="form-group">
             <label class="col-sm-2 control-label ${hasErrors(bean: option, field: 'multivalued', 'has-error')}">
                 <g:message code="form.option.multivalued.label" />
             </label>
@@ -521,23 +521,37 @@
                     <div class="help-block obs_multivalued_false" style="${wdgt.styleVisible(if: !option || !option.multivalued)}">
                         <g:message code="form.option.multivalued.description"/>
                     </div>
-                    <div class="form-group obs_multivalued_true" style="${wdgt.styleVisible(if: option?.multivalued)}">
-                    <div class="input-group col-sm-3 ${hasErrors(bean: option, field: 'delimiter', 'has-error')}">
-                            <div class="input-group-addon">
-                                <g:message code="form.option.delimiter.label" />
-                            </div>
-                            <input type="text"
-                                   name="delimiter"
-                                   value="${enc(attr:option?.delimiter)}"
-                                   size="5"
-                                    class="form-control"
-                                   id="vdelimiter_${enc(attr:rkey)}"
-                            />
+                    <div class=" obs_multivalued_true" style="${wdgt.styleVisible(if: option?.multivalued)}">
+                        <div class="input-group col-sm-3 ${hasErrors(bean: option, field: 'delimiter', 'has-error')}">
+                                <div class="input-group-addon">
+                                    <g:message code="form.option.delimiter.label" />
+                                </div>
+                                <input type="text"
+                                       name="delimiter"
+                                       value="${enc(attr:option?.delimiter)}"
+                                       size="5"
+                                        class="form-control"
+                                       id="vdelimiter_${enc(attr:rkey)}"
+                                />
 
-                    </div>
+                        </div>
                         <span class="help-block">
                             <g:message code="form.option.delimiter.description"/>
                         </span>
+
+                    </div>
+                    <div class=" obs_multivalued_true" style="${wdgt.styleVisible(if: option?.multivalued)}">
+                        <div class=" ${hasErrors(bean: option, field: 'multivalueAllSelected', 'has-error')}">
+
+
+                            <div class="checkbox">
+                                <label class="${hasErrors(bean: option, field: 'multivalued', 'fieldError')}">
+                                    <g:checkBox name="multivalueAllSelected" value="true" checked="${option?.multivalueAllSelected}" id="mvalltrue_${rkey}"/>
+                                    <g:message code="form.option.multivalueAllSelected.label" />
+                                </label>
+                            </div>
+                        </div>
+
 
                     </div>
 

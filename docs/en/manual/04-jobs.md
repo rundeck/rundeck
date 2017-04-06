@@ -1089,6 +1089,21 @@ Name Value List:
 ] 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
+For multivalued options, if the result is a list of objects and some have a `selected` property of `true`,
+those values will be selected by default.
+
+For a single valued option, the first result with `selected=true` will be selected (if any).
+
+Name Value List with default selections:
+ 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.json}
+[
+  {"name":"X Label", "value":"x value", "selected": true},
+  {"name":"Y Label", "value":"y value"},
+  {"name":"A Label", "value":"a value", "selected": true}
+] 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
+
 ### URL connection parameters
 
 You can configure timeouts globally as described in [Configuration - Job Remote Option URL connection parameters](../administration/configuration-file-reference.html#rundeck-config.properties).

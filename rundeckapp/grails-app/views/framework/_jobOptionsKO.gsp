@@ -64,6 +64,7 @@ used by _editOptions.gsp template
                                               defaultStoragePath : optionSelect.defaultStoragePath,
                                               multivalued        : optionSelect.multivalued,
                                               defaultMultiValues : optionSelect.listDefaultMultiValues(),
+                                              multivalueAllSelected : optionSelect.multivalueAllSelected,
                                               delimiter          : optionSelect.delimiter,
                                               selectedMultiValues: selectedMultiValues,
                                               fieldName          : usePrefix + 'option.' + optName,
@@ -79,7 +80,7 @@ used by _editOptions.gsp template
                                               value              : selectedvalue ? selectedvalue :
                                                       selectedoptsmap && null != selectedoptsmap[optName] ?
                                                               selectedoptsmap[optName] :
-                                                              optionSelect.defaultValue ? optionSelect.defaultValue : ''
+                                                              (optionSelect.defaultValue ?: '')
                                       ]
                                   }
     ]}" id="jobOptionData"/>

@@ -500,9 +500,11 @@ class JobsXMLCodec {
                     //convert 'multivalued' and delimiter to attribute
                     BuilderUtil.makeAttribute(x,'multivalued')
                     BuilderUtil.makeAttribute(x,'delimiter')
+                    BuilderUtil.makeAttribute(x, 'multivalueAllSelected')
                 }else{
                     x.remove('multivalued')
                     x.remove('delimiter')
+                    x.remove('multivalueAllSelected')
                 }
                 if(x.type) {
                     BuilderUtil.addAttribute(x, 'type', x.remove('type'))

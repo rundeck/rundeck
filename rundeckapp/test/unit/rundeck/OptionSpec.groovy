@@ -87,4 +87,33 @@ class OptionSpec extends Specification {
         opt.configMap == [a: 'b', c: 'd']
 
     }
+
+    def "to map multivalue default select all"() {
+        given:
+        def opt = new Option(name: 'bob', multivalued: true, multivalueAllSelected: mvas)
+        expect:
+        res == opt.toMap().multivalueAllSelected
+
+        where:
+        mvas  | res
+        true  | true
+        false | null
+    }
+
+    def "from map multivalue all selected"() {
+        given:
+        def opt = Option.fromMap('test', [multivalued: true, multivalueAllSelected: mvas])
+        expect:
+        opt.multivalued
+        opt.multivalueAllSelected == res
+
+        where:
+        mvas    | res
+        true    | true
+        "true"  | true
+        false   | false
+        "false" | false
+        null    | false
+
+    }
 }

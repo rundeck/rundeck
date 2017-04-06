@@ -569,6 +569,10 @@ delimiter
 
 :    A string used to conjoin multiple input values.  (Required if `multivalued` is "true")
 
+multivalueAllSelected
+
+:    "true/false" - whether all values should be selected by default
+
 secure
 
 :   "true/false" - whether the option is a secure input option. Not compatible with "multivalued"
