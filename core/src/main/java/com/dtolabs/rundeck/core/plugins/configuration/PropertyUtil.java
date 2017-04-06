@@ -23,17 +23,12 @@
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
-import static com.dtolabs.rundeck.core.plugins.configuration.Property.Type.Boolean;
-import static com.dtolabs.rundeck.core.plugins.configuration.Property.Type.FreeSelect;
-import static com.dtolabs.rundeck.core.plugins.configuration.Property.Type.Integer;
-import static com.dtolabs.rundeck.core.plugins.configuration.Property.Type.Long;
-import static com.dtolabs.rundeck.core.plugins.configuration.Property.Type.Select;
-import static com.dtolabs.rundeck.core.plugins.configuration.Property.Type.String;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -104,7 +99,48 @@ public class PropertyUtil {
                                    final PropertyScope scope) {
         return forType(type, name, title, description, required, defaultValue, values, validator, scope, null);
     }
-    
+
+    /**
+     * @param type             type
+     * @param name             name
+     * @param title            optional title
+     * @param description      optional description
+     * @param required         true if required
+     * @param defaultValue     optional default value
+     * @param values           optional values list
+     * @param validator        validator
+     * @param scope            resolution scope
+     * @param renderingOptions options
+     *
+     * @return a property instance for a particular simple type
+     */
+    public static Property forType(
+            final Property.Type type,
+            final String name,
+            final String title,
+            final String description,
+            final boolean required,
+            final String defaultValue,
+            final List<String> values,
+            final PropertyValidator validator,
+            final PropertyScope scope,
+            final Map<String, Object> renderingOptions
+    )
+    {
+        return forType(
+                type,
+                name,
+                title,
+                description,
+                required,
+                defaultValue,
+                values,
+                null,
+                validator,
+                scope,
+                renderingOptions
+        );
+    }
     /**
      * @param type type
      * @param name name
@@ -125,6 +161,7 @@ public class PropertyUtil {
                                    final boolean required,
                                    final String defaultValue,
                                    final List<String> values,
+                                   final Map<String, String> labels,
                                    final PropertyValidator validator,
                                    final PropertyScope scope,
                                    final Map<String, Object> renderingOptions
@@ -137,10 +174,39 @@ public class PropertyUtil {
             case Long:
                 return longProp(name, title, description, required, defaultValue, validator, scope, renderingOptions);
             case Select:
-                return PropertyUtil.select(name, title, description, required, defaultValue, values, scope, renderingOptions);
+                return PropertyUtil.select(
+                        name,
+                        title,
+                        description,
+                        required,
+                        defaultValue,
+                        values,
+                        labels,
+                        scope,
+                        renderingOptions
+                );
             case FreeSelect:
-                return PropertyUtil.freeSelect(name, title, description, required, defaultValue, values, validator,
+                return PropertyUtil.freeSelect(name,
+                                               title,
+                                               description,
+                                               required,
+                                               defaultValue,
+                                               values,
+                                               labels,
+                                               validator,
                                                scope, renderingOptions);
+            case Options:
+                return PropertyUtil.options(
+                        name,
+                        title,
+                        description,
+                        required,
+                        defaultValue,
+                        values,
+                        labels,
+                        scope,
+                        renderingOptions
+                );
             default:
                 return string(name, title, description, required, defaultValue, validator, scope, renderingOptions);
         }
@@ -468,9 +534,54 @@ public class PropertyUtil {
      */
     public static Property select(final String name, final String title, final String description,
                                   final boolean required, final String defaultValue, final List<String> selectValues,
-                                  final PropertyScope scope, final Map<String, Object> renderingOptions) {
+                                  final PropertyScope scope, final Map<String, Object> renderingOptions
+    )
+    {
 
-        return new SelectProperty(name, title, description, required, defaultValue, selectValues, scope, renderingOptions);
+        return select(
+                name,
+                title,
+                description,
+                required,
+                defaultValue,
+                selectValues,
+                null,
+                scope,
+                renderingOptions
+        );
+    }
+
+    /**
+     * @param name             name
+     * @param title            optional title
+     * @param description      optional description
+     * @param required         true if required
+     * @param defaultValue     optional default value
+     * @param selectValues     optional values list
+     * @param scope            resolution scope
+     * @param renderingOptions options
+     *
+     * @return a Select property with a list of values
+     */
+    public static Property select(
+            final String name, final String title, final String description,
+            final boolean required, final String defaultValue, final List<String> selectValues,
+            final Map<String, String> selectLabels,
+            final PropertyScope scope, final Map<String, Object> renderingOptions
+    )
+    {
+
+        return new SelectProperty(
+                name,
+                title,
+                description,
+                required,
+                defaultValue,
+                selectValues,
+                selectLabels,
+                scope,
+                renderingOptions
+        );
     }
     /**
      * @param name name
@@ -484,15 +595,43 @@ public class PropertyUtil {
      * @return a Select property with a list of values
      */
     public static Property select(final String name, final String title, final String description,
-                                  final boolean required, final String defaultValue, final Collection<? extends Enum<?>> selectValues,
-                                  final PropertyScope scope, final Map<String, Object> renderingOptions) {
+                                  final boolean required, final String defaultValue, final Collection<? extends
+            Enum<?>> selectValues,
+
+                                  final PropertyScope scope,
+                                  final Map<String, Object> renderingOptions
+    )
+    {
+        return select(name, title, description, required, defaultValue, selectValues, null, scope, renderingOptions);
+    }
+
+    /**
+     * @param name             name
+     * @param title            optional title
+     * @param description      optional description
+     * @param required         true if required
+     * @param defaultValue     optional default value
+     * @param selectValues     optional values list
+     * @param scope            resolution scope
+     * @param renderingOptions options
+     *
+     * @return a Select property with a list of values
+     */
+    public static Property select(
+            final String name, final String title, final String description,
+            final boolean required, final String defaultValue, final Collection<? extends Enum<?>> selectValues,
+            final Map<String, String> selectLabels,
+            final PropertyScope scope, final Map<String, Object> renderingOptions
+    )
+    {
         //create string representation of the enum values
         ArrayList<String> strings = new ArrayList<String>();
         for (Enum<?> selectValue : selectValues) {
             strings.add(selectValue.name());
         }
-        return new SelectProperty(name, title, description, required, defaultValue, strings, scope,
-                renderingOptions);
+        return new SelectProperty(name, title, description, required, defaultValue, strings, selectLabels, scope,
+                                  renderingOptions
+        );
     }
 
     /**
@@ -563,7 +702,93 @@ public class PropertyUtil {
                                       final List<String> selectValues, final PropertyValidator validator,
                                       final PropertyScope scope, final Map<String, Object> renderingOptions) {
 
-        return new FreeSelectProperty(name, title, description, required, defaultValue, selectValues, validator, scope, renderingOptions);
+        return new FreeSelectProperty(
+                name,
+                title,
+                description,
+                required,
+                defaultValue,
+                selectValues,
+                null,
+                validator,
+                scope,
+                renderingOptions
+        );
+    }
+
+    /**
+     * @param name             name
+     * @param title            optional title
+     * @param description      optional description
+     * @param required         true if required
+     * @param defaultValue     optional default value
+     * @param selectValues     optional values list
+     * @param validator        validator
+     * @param scope            resolution scope
+     * @param renderingOptions options
+     *
+     * @return a Free Select property with a list of values
+     */
+    public static Property freeSelect(
+            final String name, final String title, final String description,
+            final boolean required, final String defaultValue,
+            final List<String> selectValues,
+            final Map<String, String> labels,
+            final PropertyValidator validator,
+            final PropertyScope scope, final Map<String, Object> renderingOptions
+    )
+    {
+
+        return new FreeSelectProperty(
+                name,
+                title,
+                description,
+                required,
+                defaultValue,
+                selectValues,
+                labels,
+                validator,
+                scope,
+                renderingOptions
+        );
+    }
+
+    /**
+     * @param name             name
+     * @param title            optional title
+     * @param description      optional description
+     * @param required         true if required
+     * @param defaultValue     optional default value
+     * @param selectValues     optional values list
+     * @param scope            resolution scope
+     * @param renderingOptions options
+     *
+     * @return a Free Select property with a list of values
+     */
+    public static Property options(
+            final String name,
+            final String title,
+            final String description,
+            final boolean required,
+            final String defaultValue,
+            final List<String> selectValues,
+            final Map<String, String> labels,
+            final PropertyScope scope,
+            final Map<String, Object> renderingOptions
+    )
+    {
+
+        return new OptionsProperty(
+                name,
+                title,
+                description,
+                required,
+                defaultValue,
+                selectValues,
+                labels,
+                scope,
+                renderingOptions
+        );
     }
 
     static final class StringProperty extends PropertyBase {
@@ -580,7 +805,7 @@ public class PropertyUtil {
         }
 
         public Type getType() {
-            return String;
+            return Type.String;
         }
     }
 
@@ -598,47 +823,105 @@ public class PropertyUtil {
         };
     }
 
-    static final class FreeSelectProperty extends PropertyBase {
+    static class FreeSelectProperty extends PropertyBase {
         final List<String> selectValues;
+        final Map<String, String> selectLabels;
 
         public FreeSelectProperty(final String name,
                                   final String title,
                                   final String description,
                                   final boolean required,
                                   final String defaultValue,
-                                  final List<String> selectValues, final PropertyValidator validator,
-                                  final PropertyScope scope, final Map<String, Object> renderingOptions) {
+                                  final List<String> selectValues,
+                                  final Map<String, String> selectLabels,
+                                  final PropertyValidator validator,
+                                  final PropertyScope scope,
+                                  final Map<String, Object> renderingOptions
+        )
+        {
             super(name, title, description, required, defaultValue, validator, scope, renderingOptions);
             this.selectValues = selectValues;
+            this.selectLabels = selectLabels;
         }
 
         public Type getType() {
-            return FreeSelect;
+            return Type.FreeSelect;
         }
 
         @Override
         public List<String> getSelectValues() {
             return selectValues;
+        }
+
+        @Override
+        public Map<String, String> getSelectLabels() {
+            return selectLabels;
         }
     }
 
-    static final class SelectProperty extends PropertyBase {
-        final List<String> selectValues;
+    static final class SelectProperty extends FreeSelectProperty {
 
-        public SelectProperty(final String name, final String title, final String description, final boolean required,
-                              final String defaultValue, final List<String> selectValues, final PropertyScope scope, 
-                              final Map<String, Object> renderingOptions) {
-            super(name, title, description, required, defaultValue, new SelectValidator(selectValues), scope, renderingOptions);
-            this.selectValues = selectValues;
+        public SelectProperty(
+                final String name,
+                final String title,
+                final String description,
+                final boolean required,
+                final String defaultValue,
+                final List<String> selectValues,
+                final Map<String, String> selectLabels,
+                final PropertyScope scope,
+                final Map<String, Object> renderingOptions
+        )
+        {
+            super(
+                    name,
+                    title,
+                    description,
+                    required,
+                    defaultValue,
+                    selectValues,
+                    selectLabels,
+                    new SelectValidator(selectValues),
+                    scope,
+                    renderingOptions
+            );
         }
 
         public Type getType() {
-            return Select;
+            return Type.Select;
+        }
+    }
+
+    static final class OptionsProperty extends FreeSelectProperty {
+
+        public OptionsProperty(
+                final String name,
+                final String title,
+                final String description,
+                final boolean required,
+                final String defaultValue,
+                final List<String> selectValues,
+                final Map<String, String> selectLabels,
+                final PropertyScope scope,
+                final Map<String, Object> renderingOptions
+        )
+        {
+            super(
+                    name,
+                    title,
+                    description,
+                    required,
+                    defaultValue,
+                    selectValues,
+                    selectLabels,
+                    new OptionsValidator(selectValues),
+                    scope,
+                    renderingOptions
+            );
         }
 
-        @Override
-        public List<String> getSelectValues() {
-            return selectValues;
+        public Type getType() {
+            return Type.Options;
         }
     }
 
@@ -655,6 +938,36 @@ public class PropertyUtil {
         }
     }
 
+    static final class OptionsValidator implements PropertyValidator {
+
+        final List<String> selectValues;
+
+        OptionsValidator(final List<String> selectValues) {
+            this.selectValues = selectValues;
+        }
+
+        public boolean isValid(final String value) throws ValidationException {
+            Set<String> propvalset = new HashSet<>();
+            if (value.indexOf(',') > 0) {
+                Stream<String> stream = Arrays.stream(value.split(", *"));
+                propvalset.addAll(stream.map(new Function<java.lang.String, java.lang.String>() {
+                    @Override
+                    public String apply(final String s1) {
+                        return s1.trim();
+                    }
+                }).filter(new Predicate<java.lang.String>() {
+                    @Override
+                    public boolean test(final String s) {
+                        return !"".equals(s);
+                    }
+                }).collect(Collectors.toSet()));
+            } else {
+                propvalset.add(value);
+            }
+            return selectValues.containsAll(propvalset);
+        }
+    }
+
     static final class BooleanProperty extends PropertyBase {
         public BooleanProperty(final String name, final String title, final String description, final boolean required,
                                final String defaultValue, final PropertyScope scope, Map<String, Object> renderingOptions) {
@@ -662,7 +975,7 @@ public class PropertyUtil {
         }
 
         public Type getType() {
-            return Boolean;
+            return Type.Boolean;
         }
     }
 
@@ -680,7 +993,7 @@ public class PropertyUtil {
         }
 
         public Type getType() {
-            return Integer;
+            return Type.Integer;
         }
 
     }
@@ -704,7 +1017,7 @@ public class PropertyUtil {
         }
 
         public Type getType() {
-            return Long;
+            return Type.Long;
         }
 
     }
