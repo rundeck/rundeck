@@ -76,6 +76,27 @@
                 name="${provider}"
                 code="${messagePrefix}property.${prop.name}.title"
                 default="${prop.title ?: prop.name}"/>:</span>
-        <span class="text-success"><g:enc>${values[prop.name]}</g:enc></span>
+
+        <g:if test="${prop.type.toString() in ['Options', 'Select', 'FreeSelect']}">
+
+            <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
+            <g:set var="defval" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>
+
+            <g:if test="${prop.type.toString() in ['Select', 'FreeSelect']}">
+                <span class="text-success">${propSelectLabels[defval] ?: defval}</span>
+            </g:if>
+            <g:else>
+                <g:set var="defvalset" value="${defval ? defval.split(', *') : []}"/>
+                <span class="text-success">
+                    <g:each in="${defvalset}" var="optval">
+                        <span class="text-success"><g:icon name="ok-circle"/> ${propSelectLabels[optval] ?: optval}</span>
+                    </g:each>
+                </span>
+            </g:else>
+
+        </g:if>
+        <g:else>
+            <span class="text-success"><g:enc>${values[prop.name]}</g:enc></span>
+        </g:else>
     </span>
 </g:elseif>
