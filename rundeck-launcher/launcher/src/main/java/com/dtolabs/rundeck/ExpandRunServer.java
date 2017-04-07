@@ -20,10 +20,10 @@ import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.net.*;
+import java.nio.channels.FileChannel;
+import java.nio.file.StandardOpenOption;
 import java.security.ProtectionDomain;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Properties;
+import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.regex.Matcher;
@@ -110,7 +110,8 @@ public class ExpandRunServer {
     private final Options options = new Options();
 
     public static void main(final String[] args) throws Exception {
-        new ExpandRunServer().run(args);
+        int result = new ExpandRunServer().run(args);
+        System.exit(result);
     }
 
     @SuppressWarnings("static-access")
@@ -192,9 +193,11 @@ public class ExpandRunServer {
         runClassName = RUN_SERVER_CLASS;
         thisJar = thisJarFile();
         //load jar attributes
-        final Attributes mainAttributes = getJarMainAttributes();
-        if (null == mainAttributes) {
-            throw new RuntimeException("Unable to load attributes");
+        final Attributes mainAttributes;
+        try {
+            mainAttributes = getJarMainAttributes();
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to load attributes", e);
         }
 
         versionString = mainAttributes.getValue(RUNDECK_VERSION);
@@ -216,8 +219,8 @@ public class ExpandRunServer {
             throw new RuntimeException("Jar file attribute not found: " + RUNDECK_JETTY_LIB_PATH);
         }
     }
-    
-    public void run(final String[] args) throws Exception {
+
+    public int run(final String[] args) throws Exception {
         
         final CommandLineParser parser = new GnuParser();
         
@@ -227,20 +230,18 @@ public class ExpandRunServer {
             
             if(cl.hasOption('h')) {
                 printUsage();
-                return;
+                return 0;
             }
             if(cl.hasOption(FLAG_INSTALLONLY) && cl.hasOption(FLAG_SKIPINSTALL)) {
                 ERR("--" + FLAG_INSTALLONLY + " and --" + FLAG_SKIPINSTALL + " are mutually exclusive");
                 printUsage();
-                System.exit(1);
-                return;
+                return 1;
             }
             
         } catch (ParseException e) {
             // oops, something went wrong
             System.err.println( "Parsing failed.  Reason: " + e.getMessage() );
-            System.exit(1);
-            return;
+            return 1;
         }
         debug = debug || cl.hasOption('d');
         DEBUG("Debugging is turned on.");
@@ -303,8 +304,9 @@ public class ExpandRunServer {
 
         if (cl.hasOption(FLAG_INSTALLONLY)) {
             DEBUG("Done. --"+FLAG_INSTALLONLY+": Not starting server.");
+            return 0;
         } else {
-            execute(cl.getArgs(), configDir, new File(basedir), serverdir, configuration);
+            return execute(cl.getArgs(), configDir, new File(basedir), serverdir, configuration);
         }
     }
 
@@ -348,18 +350,23 @@ public class ExpandRunServer {
             }
         }
         //get dependencies info
-        final JarFile zf = new JarFile(coreJar);
-        final String depslist = zf.getManifest().getMainAttributes().getValue("Rundeck-Tools-Dependencies");
+        final String depslist;
+        final String[] jars;
+        final String jarpath;
+        final File destfile;
+        try (JarFile zf = new JarFile(coreJar)) {
+            depslist = zf.getManifest().getMainAttributes().getValue("Rundeck-Tools-Dependencies");
+        }
         if (null == depslist) {
             throw new RuntimeException(
                 "Rundeck Core jar file manifest attribute \"Rundeck-Tools-Dependencies\" was not found: " + coreJar
                     .getAbsolutePath());
         }
-        final String[] jars = depslist.split(" ");
+        jars = depslist.split(" ");
 
         //copy jars from list to toolslibdir
 
-        final String jarpath = jettyLibPath;
+        jarpath = jettyLibPath;
         for (final String jarName : jars) {
             ZipUtil.extractZip(thisJar.getAbsolutePath(), toolslibdir, jarpath + "/" + jarName, jarpath + "/");
             if(!new File(toolslibdir,jarName).exists()) {
@@ -368,7 +375,7 @@ public class ExpandRunServer {
         }
 
         //finally, copy corejar to toolslibdir
-        final File destfile = new File(toolslibdir, coreJarName);
+        destfile = new File(toolslibdir, coreJarName);
         if(!destfile.exists()) {
             if(!destfile.createNewFile()) {
                 ERR("Unable to create file: " + destfile.createNewFile());
@@ -559,11 +566,14 @@ public class ExpandRunServer {
     private Properties loadDefaults(final String path) {
         final Properties properties = new Properties();
         try {
-            final InputStream is = loadResourceInternal(CONFIG_DEFAULTS_PROPERTIES);
-            if (null == is) {
-                throw new RuntimeException("Unable to read config-defaults.properties from jar");
+            final InputStream is;
+            try (ZipFile jar = new ZipFile(thisJar)) {
+                is = jar.getInputStream(new ZipEntry(CONFIG_DEFAULTS_PROPERTIES));
+                if (null == is) {
+                    throw new RuntimeException("Unable to read config-defaults.properties from jar");
+                }
+                properties.load(is);
             }
-            properties.load(is);
         } catch (IOException e) {
             throw new RuntimeException("Unable to load config defaults: " + path + ": " + e.getMessage(), e);
         }
@@ -669,8 +679,10 @@ public class ExpandRunServer {
         }
     }
 
-    private void execute(final String[] args, final File configDir, final File baseDir, final File serverDir,
-                         final Properties configuration) throws
+    private int execute(
+            final String[] args, final File configDir, final File baseDir, final File serverDir,
+            final Properties configuration
+    ) throws
         IOException {
         //set some system properties used by the RunServer class
         System.setProperty("server.http.port", configuration.getProperty("server.http.port"));
@@ -707,7 +719,7 @@ public class ExpandRunServer {
             e.printStackTrace();
         }
         DEBUG("Finished, exit code: " + result);
-        System.exit(result);
+        return result;
     }
 
     /**
@@ -742,20 +754,6 @@ public class ExpandRunServer {
 
 
     /**
-     * Return inputstream for a resource from the enclosing jar file
-     *
-     * @param path resource path
-     *
-     * @return InputStream for the resource
-     *
-     * @throws IOException if an error occurs
-     */
-    private InputStream loadResourceInternal(final String path) throws IOException {
-        final ZipFile jar = new ZipFile(thisJar);
-        return jar.getInputStream(new ZipEntry(path));
-    }
-
-    /**
      * Initialize field values based on parsed args and system properties.  Sets the basedir to parent dir of the
      * launcher jar if unset, and loads necessary manifest attributes for extracting the launcher jar contents.
      */
@@ -776,14 +774,11 @@ public class ExpandRunServer {
      *
      * @return
      */
-    private static Attributes getJarMainAttributes() {
+    private static Attributes getJarMainAttributes() throws IOException {
         Attributes mainAttributes = null;
-        try {
-            final File file = thisJarFile();
-            final JarFile jarFile = new JarFile(file);
+        final File file = thisJarFile();
+        try (JarFile jarFile = new JarFile(file)) {
             mainAttributes = jarFile.getManifest().getMainAttributes();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
         return mainAttributes;
     }
