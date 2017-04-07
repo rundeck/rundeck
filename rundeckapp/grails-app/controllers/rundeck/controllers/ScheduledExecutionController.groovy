@@ -2901,7 +2901,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
         if (runAtTime) {
             inputOpts['runAtTime'] = runAtTime
-            inputOpts['executionType'] = 'user-scheduled'
 
             def scheduleResult = executionService.scheduleAdHocJob(
                     scheduledExecution,
@@ -3423,6 +3422,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         if (request.api_version <= ApiRequestFilters.V17 || !jobRunAtTime) {
+            inputOpts['executionType'] = 'user'
             result = executionService.executeJob(scheduledExecution,
                         authContext, username, inputOpts)
         }

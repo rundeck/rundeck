@@ -248,6 +248,36 @@ class ScheduledExecutionControllerSpec extends Specification {
         1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
     }
+    def "api run job now"() {
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        when:
+        request.api_version = 18
+        request.method = 'POST'
+        params.id = 'ajobid'
+        def result = controller.apiJobRun()
+
+        then:
+
+
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID('ajobid') >> [:]
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        1 * controller.apiService.requireExists(_, _, _) >> true
+        1 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                [executionType: 'user']
+        ) >> [success: true]
+        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        0 * controller.executionService._(*_)
+    }
     def "api run job at time"() {
         given:
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
@@ -270,7 +300,12 @@ class ScheduledExecutionControllerSpec extends Specification {
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
         1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
         1 * controller.apiService.requireExists(_, _, _) >> true
-        1 * controller.executionService.scheduleAdHocJob(_, _, _, [runAtTime: 'timetorun']) >> [success: true]
+        1 * controller.executionService.scheduleAdHocJob(
+                _,
+                _,
+                _,
+                [runAtTime: 'timetorun']
+        ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_, _, _)
         0 * controller.executionService._(*_)
     }
@@ -299,7 +334,12 @@ class ScheduledExecutionControllerSpec extends Specification {
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,_)
         1 * controller.frameworkService.authorizeProjectJobAll(_,_,['run'],_)>>true
         1 * controller.apiService.requireExists(_,_,_)>>true
-        1 * controller.executionService.scheduleAdHocJob(_,_,_,[runAtTime:'timetorun'])>>[success: true]
+        1 * controller.executionService.scheduleAdHocJob(
+                _,
+                _,
+                _,
+                [runAtTime: 'timetorun']
+        ) >> [success: true]
         1 * controller.executionService.respondExecutionsXml(_,_,_)
         0 * controller.executionService._(*_)
     }
@@ -614,7 +654,7 @@ class ScheduledExecutionControllerSpec extends Specification {
             1 * getExecutionsAreActive() >> true
             0 * executeJob(*_)
             1 * scheduleAdHocJob(se, testcontext, _, { opts ->
-                opts['runAtTime'] == 'dummy' && opts['executionType'] == 'user-scheduled'
+                opts['runAtTime'] == 'dummy' /*&& opts['executionType'] == 'user-scheduled'*/
             }
             ) >> [executionId: exec.id, id: exec.id]
         }
@@ -678,7 +718,7 @@ class ScheduledExecutionControllerSpec extends Specification {
             1 * getExecutionsAreActive() >> true
             0 * executeJob(*_)
             1 * scheduleAdHocJob(se, testcontext, _, {opts->
-                opts['runAtTime']=='dummy' && opts['executionType']=='user-scheduled'
+                opts['runAtTime']=='dummy' /*&& opts['executionType']=='user-scheduled'*/
             }) >> [executionId: exec.id]
         }
         controller.fileUploadService = Mock(FileUploadService)

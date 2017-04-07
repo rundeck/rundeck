@@ -100,9 +100,10 @@ class ExecutionJobTest extends GroovyTestCase{
         mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
             [test:'input']
         }
-        mockes.demand.createExecution(1..1){ ScheduledExecution se1, UserAndRolesAuthContext auth, user ->
+        mockes.demand.createExecution(1..1){ ScheduledExecution se1, UserAndRolesAuthContext auth, user, input ->
             Assert.assertEquals(se.id,se1.id)
             Assert.assertEquals(se.user, auth.username)
+            Assert.assertEquals(input.executionType, 'scheduled')
             'fakeExecution'
         }
         mockfs.demand.getRundeckFramework(1..1){->
@@ -150,9 +151,10 @@ class ExecutionJobTest extends GroovyTestCase{
         mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
             [test:'input']
         }
-        mockes.demand.createExecution(1..1){ ScheduledExecution se1, UserAndRolesAuthContext auth, user ->
+        mockes.demand.createExecution(1..1){ ScheduledExecution se1, UserAndRolesAuthContext auth, user, input ->
             Assert.assertEquals(se.id,se1.id)
             Assert.assertEquals(se.user, auth.username)
+            Assert.assertEquals(input.executionType, 'scheduled')
             'fakeExecution'
         }
         mockfs.demand.getRundeckFramework(1..1){->
