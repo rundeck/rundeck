@@ -68,7 +68,7 @@ public interface ExecutionContext {
     public JobService getJobService();
 
     /**
-     * @return the job service
+     * @return the node service
      */
     public ProjectNodeService getNodeService();
 

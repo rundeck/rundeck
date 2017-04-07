@@ -16,9 +16,8 @@
 
 package org.rundeck.plugin.nodes;
 
-import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.IProjectNodes;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
@@ -30,28 +29,29 @@ import java.util.Map;
 
 
 @Plugin(name = NodeRefreshWorkflowStep.PROVIDER_NAME, service = ServiceNameConstants.WorkflowStep)
-@PluginDescription(title = "Force refresh node list",
-                   description = "Force refresh node list.\n")
+@PluginDescription(title = "Refresh Project Nodes",
+                   description = "Force a refresh of node sources for the project.\n\nThe refreshed nodes will be " +
+                                 "available in any subsequent Job Reference step, but not within the current workflow.")
 
 
 public class NodeRefreshWorkflowStep implements StepPlugin {
 
     public static final String PROVIDER_NAME = "source-refresh-plugin";
 
-    @PluginProperty(title = "Sleep", description = "Optional sleep time before refresh sources for asynchronous source refresh.", required = false)
+    @PluginProperty(title = "Sleep",
+                    description = "Optional sleep time in seconds before refreshing sources.",
+                    required = false)
     private Integer sleep;
 
     @Override
     public void executeStep(PluginStepContext context, Map<String, Object> configuration) throws StepException {
-        if(null != sleep){
-            if(sleep.intValue()>0){
-                try {
-                    Thread.sleep(sleep.intValue()*1000);
-                } catch (InterruptedException e) {
-                    context.getLogger().log(2, "InterruptedException: " + e);
-                }
+        if (null != sleep && sleep > 0) {
+            try {
+                Thread.sleep(1000L * sleep);
+            } catch (InterruptedException e) {
+                context.getLogger().log(2, "InterruptedException: " + e);
+                Thread.currentThread().interrupt();
             }
-
         }
         ProjectNodeService nodeService = context.getExecutionContext().getNodeService();
 
