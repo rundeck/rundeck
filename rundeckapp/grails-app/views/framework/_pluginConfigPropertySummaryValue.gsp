@@ -54,7 +54,7 @@
 </g:elseif>
 <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.CODE, 'CODE']}">
     <g:set var="rakey" value="${g.rkey()}"/>
-    <g:set var="script" value="${values[prop.name]}"/>
+    <g:set var="script" value="${values[prop.name]?:''}"/>
     <g:set var="split" value="${script.split('(\r?\n)') as List}"/>
 
     <span class="configpair">
