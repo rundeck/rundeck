@@ -53,6 +53,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
             getServerUUID() >> TEST_UUID2
             getRundeckBase() >> ''
         }
+        service.fileUploadService=Mock(FileUploadService)
 
         String jobUuid  = UUID.randomUUID().toString()
         def workflow = new Workflow(commands: []).save(flush: true,
@@ -116,6 +117,7 @@ class ScheduledExecutionServiceTest extends IntegrationSpec {
             getServerUUID() >> TEST_UUID2
             getRundeckBase() >> ''
         }
+        service.fileUploadService=Mock(FileUploadService)
 
         String jobUuid  = UUID.randomUUID().toString()
         String jobUuid2 = UUID.randomUUID().toString()
