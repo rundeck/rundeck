@@ -339,7 +339,6 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                     .nodeSelector(nodeset)
                     .executionListener(new testListener())
                     .framework(testFramework)
-                    .nodesFile(extResourcesfile)
                     .nodes(FileResourceModelSource.parseFile(extResourcesfile, testFramework, TEST_PROJECT))
                     .build();
                     //specify ext resources file
@@ -542,7 +541,6 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
                 .nodeSelector(nodeset)
                 .executionListener(new testListener())
                 .framework(testFramework)
-                .nodesFile(extResourcesfile2)
                 .nodes(FileResourceModelSource.parseFile(extResourcesfile2, testFramework, TEST_PROJECT))
                 .build();
 

@@ -66,7 +66,6 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private ExecutionListener executionListener;
     private Framework framework;
     private AuthContext authContext;
-    private File nodesFile;
     private String nodeRankAttribute;
     private boolean nodeRankOrderAscending = true;
     private int stepNumber = 1;
@@ -146,7 +145,6 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.executionListener = original.getExecutionListener();
                 ctx.framework = original.getFramework();
                 ctx.authContext = original.getAuthContext();
-                ctx.nodesFile = original.getNodesFile();
                 ctx.threadCount = original.getThreadCount();
                 ctx.keepgoing = original.isKeepgoing();
                 ctx.nodeRankAttribute = original.getNodeRankAttribute();
@@ -294,11 +292,6 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             return this;
         }
 
-        public Builder nodesFile(File nodesFile) {
-            ctx.nodesFile = nodesFile;
-            return this;
-        }
-
         public Builder threadCount(int threadCount) {
             ctx.threadCount = threadCount;
             return this;
@@ -380,10 +373,6 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
     public Framework getFramework() {
         return framework;
-    }
-
-    public File getNodesFile() {
-        return nodesFile;
     }
 
     public int getThreadCount() {

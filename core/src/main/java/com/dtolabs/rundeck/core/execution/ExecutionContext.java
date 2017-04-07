@@ -136,10 +136,5 @@ public interface ExecutionContext {
 
     public ExecutionListener getExecutionListener();
 
-    /**
-     * @return Specific file to use for nodes source instead of project nodes
-     */
-    public File getNodesFile();
-
 	public OrchestratorConfig getOrchestrator();
 }

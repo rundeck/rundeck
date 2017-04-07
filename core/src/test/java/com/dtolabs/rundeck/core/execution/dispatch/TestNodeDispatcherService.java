@@ -190,7 +190,6 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                 .nodeSelector(nodeSet)
                 .threadCount(nodeSet.getThreadCount())
                 .keepgoing(nodeSet.isKeepgoing())
-                .nodesFile(resourcesfile)
                 .nodes(NodeFilter.filterNodes(
                                nodeSet,
                                frameworkInstance.getFrameworkProjectMgr().getFrameworkProject(PROJ_NAME).getNodeSet()
@@ -214,7 +213,6 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
                 .nodeSelector(nodeSet)
                 .threadCount(nodeSet.getThreadCount())
                 .keepgoing(nodeSet.isKeepgoing())
-                .nodesFile(extResourcesfile)
                 .nodes(NodeFilter.filterNodes(nodeSet,FileResourceModelSource.parseFile(extResourcesfile, frameworkInstance, PROJ_NAME)))
                 .build();
             assertEquals(2,context.getNodes().getNodeNames().size());
