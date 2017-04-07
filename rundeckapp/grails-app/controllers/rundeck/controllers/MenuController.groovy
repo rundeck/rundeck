@@ -208,20 +208,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
     def index() {
         /**
-        * redirect to configured start page, or default to Run page
+         * redirect to configured start page, or default page
          */
-        def startpage='home'
-        if(grailsApplication.config.rundeck.gui.startpage){
-            startpage=grailsApplication.config.rundeck.gui.startpage
+
+        if (!params.project) {
+            return redirect(controller: 'menu', action: 'home')
         }
-        if(params.page){
-            startpage=params.page
-        }
-        if(!params.project){
-            startpage='home'
-        }else if (params.project && startpage == 'home') {
-            startpage = 'projectHome'
-        }
+        def startpage = params.page?: grailsApplication.config.rundeck.gui.startpage ?: 'jobs'
         switch (startpage){
             case 'home':
                 return redirect(controller: 'menu', action: 'home')
