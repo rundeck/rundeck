@@ -413,7 +413,8 @@ public class ExpandRunServer {
      * @param overwrite
      */
     private void expandTemplates(final Properties props, final File directory, final boolean overwrite) throws
-        IOException {
+            IOException
+    {
         if (overwrite) {
             DEBUG("Configuration overwrite is TRUE");
         }
@@ -437,6 +438,8 @@ public class ExpandRunServer {
                 return input;
             }
         };
+        List<File> origNames = new ArrayList<>();
+        List<File> partNames = new ArrayList<>();
         /**
          * accept .template files in templates/ directory
          * and only accept if destination file doesn't exist, or overwrite==true
@@ -456,15 +459,59 @@ public class ExpandRunServer {
                                        && name.endsWith(tmplSuffix);
                 if (accept) {
                     DEBUG("Writing config file: " + destFile.getAbsolutePath());
+                    if (!destFile.getName().contains("._")) {
+                        origNames.add(destFile);
+                    } else {
+                        partNames.add(destFile);
+                    }
                 }
                 return accept;
             }
         };
         ZipUtil.extractZip(thisJar.getAbsolutePath(), directory,
-            filenameFilter,
-            renamer,
-            //expand properties in-place
-            new propertyExpander(props));
+                           filenameFilter,
+                           renamer,
+                           //expand properties in-place
+                           new propertyExpander(props)
+        );
+        Set<File> parts = processFileParts(origNames);
+        partNames.removeAll(parts);
+        for (File part : parts) {
+            //unprocessed
+            part.delete();
+        }
+    }
+
+    private Set<File> processFileParts(final List<File> origNames) throws IOException {
+        //process appending file parts
+        Set<File> parts = new HashSet<>();
+        for (File origName : origNames) {
+            int i = 1;
+            File test = new File(origName.getParentFile(), origName.getName() + "._" + i);
+            while (test.exists()) {
+                //append to original
+                appendFile(test, origName);
+                test.delete();
+                parts.add(test);
+                i++;
+                test = new File(origName.getParentFile(), origName.getName() + "._" + i);
+            }
+        }
+        return parts;
+    }
+
+    private void appendFile(final File test, final File origName) throws IOException {
+
+        try (
+                FileChannel inc = FileChannel.open(test.toPath(), StandardOpenOption.READ);
+                FileChannel outc = FileChannel.open(
+                        origName.toPath(),
+                        StandardOpenOption.WRITE,
+                        StandardOpenOption.APPEND
+                );
+        ) {
+            inc.transferTo(0, inc.size(), outc);
+        }
     }
 
     private static class propertyExpander implements ZipUtil.streamCopier {
