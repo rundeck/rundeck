@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.codahale.metrics.MetricRegistry
+import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IProjectNodesFactory
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
@@ -282,6 +283,10 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
 
     def expireProjectNodes(String name){
         nodeCache.invalidate(name)
+    }
+
+    INodeSet getNodeSet(final String name) {
+        getNodes(name).nodeSet
     }
 
     IProjectNodes getNodes(final String name) {

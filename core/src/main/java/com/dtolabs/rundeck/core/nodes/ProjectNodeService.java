@@ -1,7 +1,5 @@
-package com.dtolabs.rundeck.core.nodes;
-
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +14,9 @@ package com.dtolabs.rundeck.core.nodes;
  * limitations under the License.
  */
 
-import com.dtolabs.rundeck.core.common.IProjectNodes;
+package com.dtolabs.rundeck.core.nodes;
+
+import com.dtolabs.rundeck.core.common.INodeSet;
 
 /**
  * Service for interact with nodes.
@@ -31,5 +31,10 @@ public interface ProjectNodeService {
      */
     void refreshProjectNodes(final String project);
 
-    IProjectNodes getNodes(final String name);
+    /**
+     * Get the current nodes
+     * @param name Project name
+     * @return nodes
+     */
+    INodeSet getNodeSet(final String name);
 }

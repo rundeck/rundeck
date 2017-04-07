@@ -53,9 +53,10 @@ public class NodeRefreshWorkflowStep implements StepPlugin {
             }
 
         }
-        context.getExecutionContext().getNodeService().refreshProjectNodes(context.getFrameworkProject());
-        IProjectNodes nodes = context.getExecutionContext().getNodeService().getNodes(context.getFrameworkProject());
-        INodeSet set = nodes.getNodeSet();
+        ProjectNodeService nodeService = context.getExecutionContext().getNodeService();
+
+        nodeService.refreshProjectNodes(context.getFrameworkProject());
+        nodeService.getNodeSet(context.getFrameworkProject());
     }
 
 
