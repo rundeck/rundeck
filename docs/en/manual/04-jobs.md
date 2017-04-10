@@ -727,8 +727,12 @@ loaded to the Rundeck server. See [job-xml] and [job-yaml] and
 
 ## Defining an option
 
+**Text Options**
+
 New options can be defined by pressing the "Add an option" link while
-existing ones can be changed by pressing their "edit" link.
+existing ones can be changed by pressing their "edit" link. 
+
+Choose "Text" from the Option Type:
 
 ![Option edit form](../figures/fig0502.png)
 
@@ -780,15 +784,52 @@ Requirement
      choose "Yes" to indicate that a blank value is not allowed.  
 
      If a Default Value is set, then it will be used when no value is provided, unless a blank value is allowed and is explicitly specified.
-     
+
+
+![Option Multivalued Form](../figures/fig-option-multival.png)
+
 Multi-valued
 
-:    Defines if the user input can consist of multiple values. Choosing "No" states that only a single value can chosen as input. Choosing "Yes" states that the user may select multiple input values from the Allowed values and/or enter multiple values of their own.  The delimiter string will be used to separate the multiple values when the Job is run.
+:    Defines if the user input can consist of multiple values. Choosing "No" states that only a single value can chosen as input. Choosing "Yes" states that the user may select multiple input values from the Allowed values and/or enter multiple values of their own.  
+
+Delimiter
+
+:    The delimiter string will be used to separate the multiple values when the Job is run.
+
+Select All Values by Default
+
+:    If checked, and no default value(s) are specified, all of the remote or local values will be selected by default.
 
 Once satisfied with the option definition, press the "Save" button to
 add it to the Job definition. Pressing the "Cancel" button will
 dismiss the changes and close the form.
 
+Usage (see below)
+
+![Option Usage](../figures/fig-option-usage.png)
+
+### File Option Type
+
+Choose "File" from the Option Type:
+
+![File Option Edit Form](../figures/fig-newoption-file.png)
+
+The Option Name and Description can be entered.
+
+Required
+
+:    Choose whether to require the option have a value.
+
+File option usage:
+
+
+The `option.NAME` variable will contain a unique ID identifying the uploaded file.
+
+`file.NAME` will be the local file path.
+
+`file.NAME.filename` will be the original file name (if available).
+
+`file.NAME.sha` will be the SHA256 hash of the file.
 
 ## Script usage
 
