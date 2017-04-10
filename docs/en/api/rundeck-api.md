@@ -62,10 +62,15 @@ Changes introduced by API Version number:
     - [`GET /api/19/job/[ID]/input/files`][/api/V/job/[ID]/input/files] - List uploaded files for a job
     - [`GET /api/19/execution/[ID]/input/files`][/api/V/execution/[ID]/input/files] - List input files used for an execution
     - [`GET /api/19/jobs/file/[ID]`][/api/V/jobs/file/[ID]] - Get info for an uploaded file
+    - [`GET /api/19/project/[PROJECT]/export/async`][/api/V/project/[PROJECT]/export/async] - Async project archive export
+    - [`GET /api/19/project/[PROJECT]/export/status/[TOKEN]`][/api/V/project/[PROJECT]/export/status/[TOKEN]] - Async project archive export status
+    - [`GET /api/19/project/[PROJECT]/export/download/[TOKEN]`][/api/V/project/[PROJECT]/export/download/[TOKEN]] - Async project archive export download
+    
 * Updated Endpoints.
     - [`POST /api/19/tokens/[USER]`][POST /api/V/tokens/[USER]] - Specify token roles and expiration
     - [`GET /api/19/tokens/[USER]`][/api/V/tokens/[USER]] - List tokens for users
     - [`GET /api/19/token/[ID]`][/api/V/token/[ID]] - Get Token string for Token ID
+    - [`GET /api/19/project/[PROJECT]/export`][/api/V/project/[PROJECT]/export] - Additional parameters to select archive contents.
 
 **Version 18**:
 
@@ -4532,7 +4537,8 @@ Response will be
 
 ### Project Archive Export ###
 
-Export a zip archive of the project.  Requires `export` authorization for the project.
+Export a zip archive of the project.  Requires `export` authorization for the project. Performs the export synchronously. 
+(See [Project Archive Export Async][/api/V/project/[PROJECT]/export/async] for asynchronous export.)
 
     GET /api/11/project/[PROJECT]/export
 
@@ -4545,6 +4551,15 @@ contain *only* executions that are specified, and will not contain Jobs, ACLs, o
     * optionally use `POST` method with with `application/x-www-form-urlencoded` content for large lists of execution IDs
     * optionally, specify `executionIds` multiple times, with a single ID per entry.
 
+In APIv19 or later:
+
+* `exportAll` true/false, include all project contents (default: true)
+* `exportJobs` true/false, include executions
+* `exportExecutions` true/false, include executions
+* `exportConfigs` true/false, include project configuration
+* `exportReadmes` true/false, include project readme/motd files
+* `exportAcls` true/false, include project ACL Policy files, if authorized
+
 GET Examples:
 
     GET /api/11/project/AlphaProject/export?executionIds=1,4,9
@@ -4556,6 +4571,59 @@ Post:
     Content-Type: application/x-www-form-urlencoded
 
     executionIds=1&executionIds=4&executionIds=9&...
+
+### Project Archive Export Async
+
+Export a zip archive of the project asynchronously.  Requires `export` authorization for the project. Use the Token result
+to query the export status with [/api/V/project/[PROJECT]/export/status/[TOKEN]][], and retrieve the result once ready
+with [/api/V/project/[PROJECT]/export/download/[TOKEN]][].
+
+    GET /api/19/project/[PROJECT]/export/async
+
+**Request:**
+
+Same as [Project Archive Export][/api/V/project/[PROJECT]/export].
+
+**Response:**
+
+Same as [Project Archive Export Async Status][/api/V/project/[PROJECT]/export/status/[TOKEN]].
+
+
+### Project Archive Export Async Status
+
+Get the status of an async export request. Retrieve the result once ready
+with [/api/V/project/[PROJECT]/export/download/[TOKEN]][].
+
+    GET /api/19/project/[PROJECT]/export/status/[TOKEN]
+
+**Response:**
+
+`application/xml`
+
+~~~ {.xml}
+<projectExport token="[TOKEN]" ready="true/false" precentage="#">
+</projectExport>
+~~~
+
+`application/json`
+
+~~~ {.json}
+{
+    "token":"[TOKEN]",
+    "ready":true/false,
+    "percentage":int,
+}
+~~~
+
+### Project Archive Export Async Download
+
+Download the archive file once the export status is `ready`.
+
+    GET /api/19/project/[PROJECT]/export/download/[TOKEN]
+
+**Response:**
+
+Response content type is `application/zip`
 
 ### Project Archive Import ###
 
@@ -6012,6 +6080,18 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `GET` [Project Archive Export](#project-archive-export)
 
+[/api/V/project/[PROJECT]/export/async][]
+
+* `GET` [Project Archive Export Async](#project-archive-export-async)
+
+[/api/V/project/[PROJECT]/export/status/[TOKEN]][]
+
+* `GET` [Project Archive Export Async Status](#project-archive-export-async-status)
+
+[/api/V/project/[PROJECT]/export/download/[TOKEN]][]
+
+* `GET` [Project Archive Export Async Download](#project-archive-export-async-download)
+
 [/api/V/project/[PROJECT]/[FILE.md]][]
 
 * `GET` [GET Readme File](#get-readme-file)
@@ -6261,6 +6341,9 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 
 [/api/V/project/[PROJECT]/export]:#project-archive-export
+[/api/V/project/[PROJECT]/export/async]:#project-archive-export-async
+[/api/V/project/[PROJECT]/export/status/[TOKEN]]:#project-archive-export-async-status
+[/api/V/project/[PROJECT]/export/download/[TOKEN]]:#project-archive-export-async-download
 
 
 [/api/V/project/[PROJECT]/[FILE.md]]:#get-readme-file
