@@ -16,7 +16,7 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
+import com.dtolabs.rundeck.app.api.project.ProjectExport
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
@@ -35,7 +35,6 @@ import javax.servlet.http.HttpServletResponse
 import java.text.SimpleDateFormat
 import org.apache.commons.fileupload.util.Streams
 import org.springframework.web.multipart.MultipartHttpServletRequest
-import com.dtolabs.rundeck.core.authentication.Group
 
 class ProjectController extends ControllerBase{
     def frameworkService
@@ -88,10 +87,11 @@ class ProjectController extends ControllerBase{
         def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
                                                                          frameworkService.authResourceForProjectAcl(project),
                                                                          [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
+        ArchiveOptions options = archiveParams.toArchiveOptions()
         //temp file
         def outfile
         try {
-            outfile = projectService.exportProjectToFile(project1,framework,null,aclReadAuth)
+            outfile = projectService.exportProjectToFile(project1, framework, null, aclReadAuth, options)
         } catch (ProjectServiceException exc) {
             return renderErrorView(exc.message)
         }
@@ -140,7 +140,8 @@ class ProjectController extends ControllerBase{
         def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
                                                                          frameworkService.authResourceForProjectAcl(project),
                                                                          [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
-        def token = projectService.exportProjectToFileAsync(project1, framework, session.user, aclReadAuth)
+        ArchiveOptions options = archiveParams.toArchiveOptions()
+        def token = projectService.exportProjectToFileAsync(project1, framework, session.user, aclReadAuth, options)
         return redirect(action:'exportWait',params: [token:token,project:archiveParams.project])
     }
     /**
@@ -1395,28 +1396,146 @@ class ProjectController extends ControllerBase{
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
 
-    def apiProjectExport(){
+    def apiProjectExport(ProjectArchiveParams archiveParams) {
         def project = validateProjectConfigApiRequest(AuthConstants.ACTION_EXPORT)
         if (!project) {
             return
         }
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'], 'xml')
+        if (archiveParams.hasErrors()) {
+            return apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_BAD_REQUEST,
+                    code  : 'api.error.invalid.request',
+                    args  : [archiveParams.errors.allErrors.collect { g.message(error: it) }.join("; ")],
+                    format: respFormat
+            ]
+            )
+        }
+        if (params.async) {
+            if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+                return
+            }
+        }
         def framework = frameworkService.rundeckFramework
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def aclReadAuth = frameworkService.authorizeApplicationResourceAny(
+                authContext,
+                frameworkService.authResourceForProjectAcl(project.name),
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+        )
+        ArchiveOptions options
+        if (params.executionIds) {
+            options = new ArchiveOptions(all: false, executionsOnly: true)
+            options.parseExecutionsIds(params.executionIds)
+        } else if (request.api_version >= ApiRequestFilters.V19) {
+            options = archiveParams.toArchiveOptions()
+        } else {
+            options = new ArchiveOptions(all: true)
+        }
+        if (params.async && params.async.asBoolean()) {
+
+            def token = projectService.exportProjectToFileAsync(
+                    project,
+                    framework,
+                    session.user,
+                    aclReadAuth,
+                    options
+            )
+
+            File outfile = projectService.promiseReady(session.user, token)
+            def percentage = projectService.promiseSummary(session.user, token).percent()
+            return respond(
+                    new ProjectExport(token: token, ready: null != outfile, percentage: percentage),
+                    [formats: ['xml', 'json']]
+            )
+        }
         SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
         def dateStamp = dateFormater.format(new Date());
         response.setContentType("application/zip")
         response.setHeader("Content-Disposition", "attachment; filename=\"${project.name}-${dateStamp}.rdproject.jar\"")
+        projectService.exportProjectToOutputStream(
+                project,
+                framework,
+                response.outputStream,
+                null,
+                aclReadAuth,
+                options
+        )
+    }
 
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
-                                                                         frameworkService.authResourceForProjectAcl(project.name),
-                                                                         [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
-        ArchiveOptions options=new ArchiveOptions(all: true)
-        if(params.executionIds){
-            options.all=false
-            options.executionsOnly=true
-            options.parseExecutionsIds(params.executionIds)
+
+    def apiProjectExportAsyncStatus() {
+        def token = params.token
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+            return
         }
-        projectService.exportProjectToOutputStream(project, framework,response.outputStream,null,aclReadAuth,options)
+        if (!apiService.requireParameters(params, response, ['token'])) {
+            return
+        }
+        if (!apiService.requireExists(
+                response,
+                projectService.hasPromise(session.user, token),
+                ['Export Request Token', token]
+        )) {
+            return
+        }
+
+        if (projectService.promiseError(session.user, token)) {
+            apiService.renderErrorFormat(response, [
+                    status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                    code  : 'api.error.project.archive.failure',
+                    args  : [token, projectService.promiseError(session.user, token).message]
+            ]
+            )
+        }
+        File outfile = projectService.promiseReady(session.user, token)
+        def percentage = projectService.promiseSummary(session.user, token).percent()
+        respond(
+                new ProjectExport(token: token, ready: null != outfile, percentage: percentage),
+                [formats: ['xml', 'json']]
+        )
+    }
+
+    def apiProjectExportAsyncDownload() {
+        def token = params.token
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+            return
+        }
+        if (!apiService.requireParameters(params, response, ['token'])) {
+            return
+        }
+        if (!apiService.requireExists(
+                response,
+                projectService.hasPromise(session.user, token),
+                ['Export Request Token', token]
+        )) {
+            return
+        }
+
+        File outfile = projectService.promiseReady(session.user, token)
+        if (!apiService.requireExists(
+                response,
+                outfile,
+                ['Export File for Token', token]
+        )) {
+            return
+        }
+
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
+        Date date = projectService.promiseRequestStarted(session.user, token)
+        def dateStamp = dateFormater.format(null != date ? date : new Date());
+        //output the file as an attachment
+        response.setContentType("application/zip")
+        response.setHeader(
+                "Content-Disposition",
+                "attachment; filename=\"${params.project}-${dateStamp}.rdproject.jar\""
+        )
+
+        outfile.withInputStream { instream ->
+            Streams.copy(instream, response.outputStream, false)
+        }
+        projectService.releasePromise(session.user, token)
     }
 
     def apiProjectImport(ProjectArchiveParams archiveParams){
@@ -1487,6 +1606,7 @@ class ProjectController extends ControllerBase{
             case 'json':
                 render(contentType: 'application/json'){
                     import_status=result.success?'successful':'failed'
+                    successful=result.success
                     if (!result.success) {
                         //list errors
                         delegate.'errors'=result.joberrors
@@ -1503,7 +1623,7 @@ class ProjectController extends ControllerBase{
                 break;
             case 'xml':
                 apiService.renderSuccessXml(request, response) {
-                    delegate.'import'(status: result.success ? 'successful' : 'failed'){
+                    delegate.'import'(status: result.success ? 'successful' : 'failed', successful:result.success){
                         if(!result.success){
                             //list errors
                             delegate.'errors'(count: result.joberrors.size()){

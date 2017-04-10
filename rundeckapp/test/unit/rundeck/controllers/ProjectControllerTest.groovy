@@ -2040,7 +2040,8 @@ class ProjectControllerTest {
         controller.apiProjectImport()
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals( [
-                              import_status: 'successful'
+                              import_status: 'successful',
+                              successful   : true
                       ],
                       response.json
         )

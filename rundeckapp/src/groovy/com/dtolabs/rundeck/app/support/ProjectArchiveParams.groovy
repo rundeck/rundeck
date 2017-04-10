@@ -18,6 +18,8 @@ package com.dtolabs.rundeck.app.support
 
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import grails.validation.Validateable
+import groovy.transform.ToString
+import rundeck.services.ArchiveOptions
 
 /**
  * ProjectArchiveParams is ...
@@ -25,12 +27,19 @@ import grails.validation.Validateable
  * @since 2014-08-14
  */
 @Validateable
+@ToString(includeNames = true, includePackage = false)
 class ProjectArchiveParams implements ProjectArchiveImportRequest{
     String project
     String jobUuidOption='preserve'
     Boolean importExecutions=true
     Boolean importConfig=false
     Boolean importACL=false
+    Boolean exportAll
+    Boolean exportJobs
+    Boolean exportExecutions
+    Boolean exportConfigs
+    Boolean exportReadmes
+    Boolean exportAcls
 
     static constraints={
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -38,16 +47,24 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest{
         importExecutions(nullable: true)
         importConfig(nullable: true)
         importACL(nullable: true)
+        exportAll(nullable: true)
+        exportJobs(nullable: true)
+        exportExecutions(nullable: true)
+        exportConfigs(nullable: true)
+        exportReadmes(nullable: true)
+        exportAcls(nullable: true)
     }
 
-    @Override
-    public String toString() {
-        return "ProjectArchiveParams{" +
-                "project='" + project + '\'' +
-                ", jobUuidOption='" + jobUuidOption + '\'' +
-                ", importExecutions=" + importExecutions +
-                ", importConfig=" + importConfig +
-                ", importACL=" + importACL +
-                '}';
+    ArchiveOptions toArchiveOptions() {
+        def a = new ArchiveOptions(
+                all: exportAll,
+                jobs: exportJobs,
+                executions: exportExecutions,
+                configs: exportConfigs,
+                readmes: exportReadmes,
+                acls: exportAcls
+        )
+        return a;
     }
+
 }

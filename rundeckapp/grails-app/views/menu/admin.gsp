@@ -27,6 +27,31 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
     <title><g:message code="gui.menu.Admin" /></title>
+    <script type="application/javascript">
+        function select_all() {
+            jQuery('.export_select_list input[type=checkbox]').prop('checked', true);
+        }
+        function select_none() {
+            jQuery('.export_select_list input[type=checkbox]').val([]);
+        }
+        function deselect_one() {
+            jQuery('.export_all').prop('checked', false);
+        }
+        jQuery(function () {
+            jQuery('.obs_export_select_all').on('click', select_all);
+            jQuery('.obs_export_select_none').on('click', select_none);
+            jQuery('.export_select_list input[type=checkbox]').on('change', function () {
+                if (!jQuery(this).prop('checked')) {
+                    deselect_one();
+                }
+            });
+            jQuery('.export_all').on('change', function () {
+                if (jQuery(this).prop('checked')) {
+                    select_all();
+                }
+            });
+        });
+    </script>
 </head>
 
 <body>
@@ -284,11 +309,112 @@
             <g:message code="download.an.archive.of.project.named.prompt" args="${[params.project ?: request.project]}"/>
         </div>
         <div class="panel-body">
-                <g:link controller="project" action="exportPrepare" params="[project: params.project ?: request.project]"
+
+            <a data-toggle="modal" href="#exportProjectModal"
                     class="btn btn-success"
                 >
                     <g:message code="export.project.jar.button" args="${[params.project ?: request.project]}" />
-                </g:link>
+            </a>
+
+            <g:form style="display: inline;" controller="project" action="exportPrepare"
+                    params="[project: (params.project ?: request.project)]"
+                    useToken="true">
+                <div class="modal fade" id="exportProjectModal" role="dialog" aria-labelledby="exportProjectModalLabel"
+                     aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"
+                                        aria-hidden="true">&times;</button>
+                                <h4 class="modal-title" id="exportProjectModalLabel">
+                                    <g:message code="export.project.jar.button"
+                                               args="${[params.project ?: request.project]}"/></h4>
+                            </div>
+
+                            <div class="modal-body container form-horizontal">
+                                <div class="form-group">
+                                    <label class="control-label col-sm-2"><g:message code="project.prompt"/></label>
+
+                                    <div class="col-sm-10">
+                                        <span class="form-control-static"><g:enc>${params.project ?:
+                                                request.project}</g:enc></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="control-label col-sm-2">Include</label>
+
+                                    <div class="col-sm-10">
+                                        <div class="checkbox">
+                                            <label>
+                                                <g:checkBox name="exportAll" value="true" checked="true"
+                                                            class="export_all"/>
+                                                <em>All</em>
+                                            </label>
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <div class="col-sm-offset-2 col-sm-10 export_select_list">
+                                        <div class="checkbox">
+                                            <label><g:checkBox name="exportJobs" value="true"/> Jobs</label>
+                                        </div>
+
+                                        <div class="checkbox">
+                                            <label><g:checkBox name="exportExecutions" value="true"/> Executions</label>
+                                        </div>
+
+                                        <div class="checkbox">
+                                            <label><g:checkBox name="exportConfigs" value="true"/> Configuration</label>
+                                        </div>
+
+                                        <div class="checkbox">
+                                            <label><g:checkBox name="exportReadmes" value="true"/> Readme/Motd</label>
+                                        </div>
+
+                                        <auth:resourceAllowed
+                                                action="${[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]}"
+                                                any="true"
+                                                context='application'
+                                                type="project_acl"
+                                                name="${params.project}">
+
+                                            <div class="checkbox">
+                                                <label><g:checkBox name="exportAcls" value="true"/> ACL Policies</label>
+                                            </div>
+                                        </auth:resourceAllowed>
+                                        <auth:resourceAllowed
+                                                action="${[AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]}"
+                                                any="true"
+                                                context='application'
+                                                type="project_acl"
+                                                has="false"
+                                                name="${params.project}">
+
+                                            <div class="checkbox disabled text-muted">
+                                                <i class="glyphicon glyphicon-ban-circle"></i> ACL Policies (Unauthorized)
+                                            </div>
+
+                                        </auth:resourceAllowed>
+
+
+                                    </div>
+                                </div>
+
+                            </div>
+
+
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-default" data-dismiss="modal"><g:message
+                                        code="cancel"/></button>
+                                <button type="submit" class="btn btn-success">Export</button>
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div>
+            </g:form>
 
         </div>
 
@@ -331,8 +457,8 @@
                                     <label class="control-label col-sm-2"><g:message code="project.prompt" /></label>
 
                                     <div class="col-sm-10">
-                                        <span class="form-control-static"
-                                              data-bind="text: filterName"><g:enc>${params.project ?: request.project}</g:enc></span>
+                                        <span class="form-control-static"><g:enc>${params.project ?:
+                                                request.project}</g:enc></span>
                                     </div>
                                 </div>
                             </div>

@@ -122,7 +122,17 @@ class UrlMappings {
             action = [GET: 'apiProjectFileGet', PUT: 'apiProjectFilePut', DELETE: 'apiProjectFileDelete']
         }
         "/api/$api_version/project/$project/acl/$path**"(controller: 'project',action: 'apiProjectAcls')
-        "/api/$api_version/project/$project/export"(controller: 'project',action: 'apiProjectExport')
+        "/api/$api_version/project/$project/export"(controller: 'project', action: 'apiProjectExport') {
+            async = false
+        }
+        "/api/$api_version/project/$project/export/async"(controller: 'project', action: 'apiProjectExport') {
+            async = true
+        }
+        "/api/$api_version/project/$project/export/status/$token"(controller: 'project', action: 'apiProjectExportAsyncStatus')
+        "/api/$api_version/project/$project/export/download/$token"(
+                controller: 'project',
+                action: 'apiProjectExportAsyncDownload'
+        )
         "/api/$api_version/project/$project/import"(controller: 'project',action: 'apiProjectImport')
         "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
         "/api/$api_version/project/$project/resources"(controller: 'framework') {

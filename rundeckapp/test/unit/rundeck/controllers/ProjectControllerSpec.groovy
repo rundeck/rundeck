@@ -26,6 +26,7 @@ import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
+import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -145,10 +146,131 @@ class ProjectControllerSpec extends Specification{
         })
 
         where:
+        eidparam       | expectedset
+        '123'          | ['123'] as Set
+        '123,456'      | ['123', '456'] as Set
+        ['123', '456'] | ['123', '456'] as Set
+    }
+
+    def "api export params"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.exportAll = all
+        params.exportJobs = jobs
+        params.exportExecutions = execs
+        params.exportConfigs = configs
+        params.exportReadmes = readmes
+        params.exportAcls = acls
+
+        when:
+        def result = controller.apiProjectExport()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, _) >> true
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.exportProjectToOutputStream(_, _, _, _, _, { ArchiveOptions opts ->
+            opts.executionsOnly == false &&
+                    opts.all == all &&
+                    opts.jobs == jobs &&
+                    opts.executions == execs &&
+                    opts.configs == configs &&
+                    opts.readmes == readmes &&
+                    opts.acls == acls
+        }
+        )
+
+        where:
+        all  | jobs  | execs | configs | readmes | acls
+        true | false | false | false   | false   | false
+    }
+
+    def "api export execution ids async"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.executionIds = eidparam
+        params.async = true
+
+        when:
+        def result = controller.apiProjectExport()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, 11) >> true
+        1 * controller.apiService.requireVersion(_, _, 19) >> true
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['export', 'admin']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.exportProjectToFileAsync(_, _, _, _, { ArchiveOptions opts ->
+            opts.executionsOnly == true && opts.executionIds == (expectedset)
+        }
+        ) >> 'atoken'
+        1 * controller.projectService.promiseReady(_, 'atoken') >> null
+        1 * controller.projectService.promiseSummary(_, 'atoken') >> Mock(ProgressSummary)
+
+        where:
         eidparam | expectedset
         '123' | ['123'] as Set
         '123,456' | ['123','456'] as Set
         ['123','456'] | ['123','456'] as Set
+    }
+
+    def "api export async status"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.token = 'atoken'
+        params.async = true
+
+        when:
+        def result = controller.apiProjectExportAsyncStatus()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, 19) >> true
+        1 * controller.apiService.requireParameters(_, _, ['token']) >> true
+        1 * controller.apiService.requireExists(_, true, ['Export Request Token', 'atoken']) >> true
+        1 * controller.projectService.hasPromise(_, 'atoken') >> true
+        1 * controller.projectService.promiseError(_, 'atoken') >> null
+        1 * controller.projectService.promiseReady(_, 'atoken') >> null
+        1 * controller.projectService.promiseSummary(_, 'atoken') >> Mock(ProgressSummary)
+
+    }
+
+    def "api export async download"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.token = 'atoken'
+        params.async = true
+        def afile = File.createTempFile("project-async-export-test", "data")
+        afile.text << 'test'
+
+
+        when:
+        def result = controller.apiProjectExportAsyncDownload()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, 19) >> true
+        1 * controller.apiService.requireParameters(_, _, ['token']) >> true
+        1 * controller.apiService.requireExists(_, true, ['Export Request Token', 'atoken']) >> true
+        1 * controller.projectService.hasPromise(_, 'atoken') >> true
+        1 * controller.projectService.promiseReady(_, 'atoken') >> afile
+        1 * controller.apiService.requireExists(_, afile, ['Export File for Token', 'atoken']) >> true
+        1 * controller.projectService.promiseRequestStarted(_, 'atoken') >> new Date()
+        1 * controller.projectService.releasePromise(_, 'atoken')
+        response.getHeader('content-disposition') != null
+        response.getContentType() == 'application/zip'
+
     }
     def "project file readme get not project param"(){
         given:

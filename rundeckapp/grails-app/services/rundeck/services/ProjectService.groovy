@@ -28,6 +28,7 @@ import com.google.common.cache.Cache
 import com.google.common.cache.CacheBuilder
 import com.google.common.cache.RemovalNotification
 import grails.async.Promises
+import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
 import org.springframework.beans.factory.InitializingBean
@@ -463,7 +464,14 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
      * @param ident username or identify of requestor
      * @return token string to identify the new request
      */
-    def exportProjectToFileAsync(IRundeckProject project, Framework framework, String ident, boolean aclReadAuth){
+    def exportProjectToFileAsync(
+            IRundeckProject project,
+            Framework framework,
+            String ident,
+            boolean aclReadAuth,
+            ArchiveOptions options
+    )
+    {
         String token = UUID.randomUUID().toString()
         def summary=new ArchiveRequestProgress()
         def request=new ArchiveRequest(summary:summary,token:token)
@@ -471,7 +479,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
         def p = Promises.task {
             try {
                 ScheduledExecution.withNewSession {
-                    request.file = exportProjectToFile(project, framework, summary, aclReadAuth)
+                    request.file = exportProjectToFile(project, framework, summary, aclReadAuth, options)
                     log.debug("Async archive request with token ${token} finished successfully")
                 }
             } catch (Throwable t) {
@@ -560,7 +568,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
      * @throws ProjectServiceException
      */
     def exportProjectToFile(IRundeckProject project, Framework framework, ProgressListener listener=null,
-                            boolean aclReadAuth=false) throws ProjectServiceException{
+                            boolean aclReadAuth = false, ArchiveOptions options
+    ) throws ProjectServiceException
+    {
         def outfile
         try {
             outfile = File.createTempFile("export-${project.name}", ".jar")
@@ -568,7 +578,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
             throw new ProjectServiceException("Could not create temp file for archive: " + exc.message, exc)
         }
         outfile.withOutputStream { output ->
-            exportProjectToOutputStream(project, framework, output, listener,aclReadAuth)
+            exportProjectToOutputStream(project, framework, output, listener, aclReadAuth, options)
         }
         outfile.deleteOnExit()
         outfile
@@ -583,9 +593,9 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
     def exportProjectToOutputStream(IRundeckProject project,
                                     Framework framework,
                                     OutputStream stream,
-                                    ProgressListener listener=null,
-                                    boolean aclReadAuth=false,
-                                    ArchiveOptions options=null
+                                    ProgressListener listener,
+                                    boolean aclReadAuth,
+                                    ArchiveOptions options
     ) throws ProjectServiceException
     {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
@@ -599,40 +609,58 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
         manifest.mainAttributes.putValue('Rundeck-Archive-Export-Date', sdf.format(new Date()))
 
         def zip = new JarOutputStream(stream,manifest)
-        exportProjectToStream(project, framework, zip, listener, aclReadAuth,options)
-        zip.close()
+        try {
+            exportProjectToStream(project, framework, zip, listener, aclReadAuth, options)
+        } finally {
+            zip.close()
+        }
     }
 
     def exportProjectToStream(
             IRundeckProject project,
             Framework framework,
             ZipOutputStream output,
-            ProgressListener listener = null,
-            boolean aclReadAuth=false,
-            ArchiveOptions options=null
+            ProgressListener listener,
+            boolean aclReadAuth,
+            ArchiveOptions options
     ) throws ProjectServiceException
     {
         ZipBuilder zip = new ZipBuilder(output)
 //        zip.debug = true
         String projectName = project.name
-        if(!options ||options.all) {
-            listener?.total(
-                    'export',
-                    ScheduledExecution.countByProject(projectName) +
-                            3 * Execution.countByProject(projectName) +
-                            BaseReport.countByCtxProject(projectName) +
-                            4 //properties and other files
-            )
-        }else if(options.executionsOnly) {
+        def isExportJobs = !options || options.all || options.jobs
+        def isExportExecutions = !options || options.all || options.executions
+        def isExportConfigs = !options || options.all || options.configs
+        def isExportReadmes = !options || options.all || options.readmes
+        def isExportAcls = aclReadAuth && (!options || options.all || options.acls)
+        if (options && options.executionsOnly) {
             listener?.total(
                     'export',
                     4 * options.executionIds.size()
             )
+        } else {
+            def total = 0
+            if (isExportExecutions) {
+                total += 3 * Execution.countByProject(projectName) + BaseReport.countByCtxProject(projectName)
+            }
+            if (isExportJobs) {
+                total += ScheduledExecution.countByProject(projectName)
+            }
+            if (isExportConfigs) {
+                total += 1
+            }
+            if (isExportReadmes) {
+                total += 1
+            }
+            if (isExportAcls) {
+                total += 1
+            }
+            listener?.total('export', total)
         }
 
         zip.dir("rundeck-${projectName}/") {
             //export jobs
-            if(!options ||options.all) {
+            if (isExportJobs) {
                 def jobs = ScheduledExecution.findAllByProject(projectName)
                 dir('jobs/') {
                     jobs.each { ScheduledExecution job ->
@@ -646,102 +674,104 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
 
             List<Execution> execs=[]
             List<BaseReport> reports=[]
-            if(!options || options.all){
-                execs = Execution.findAllByProject(projectName)
-                reports = BaseReport.findAllByCtxProject(projectName)
-            }else if(options.executionsOnly){
+            if (options.executionsOnly) {
                 //find execs
                 List<Long> execIds = []
                 List<String> execIdStrings = []
                 options.executionIds.each {
-                    if(it instanceof Long){
-                        execIds<<it
-                        execIdStrings<<it.toString()
-                    }else if(it instanceof String){
-                        execIds<<Long.parseLong(it)
-                        execIdStrings<<it
+                    if (it instanceof Long) {
+                        execIds << it
+                        execIdStrings << it.toString()
+                    } else if (it instanceof String) {
+                        execIds << Long.parseLong(it)
+                        execIdStrings << it
                     }
                 }
-                execs = Execution.findAllByProjectAndIdInList(projectName,execIds)
-                reports=ExecReport.findAllByCtxProjectAndJcExecIdInList(projectName,execIdStrings)
+                execs = Execution.findAllByProjectAndIdInList(projectName, execIds)
+                reports = ExecReport.findAllByCtxProjectAndJcExecIdInList(projectName, execIdStrings)
+            } else if (isExportExecutions) {
+                execs = Execution.findAllByProject(projectName)
+                reports = BaseReport.findAllByCtxProject(projectName)
             }
             List<JobFileRecord> jobfilerecords = []
 
-            dir('executions/') {
-                //export executions
-                //export execution logs
-                execs.each { Execution exec ->
-                    exportExecution zip, exec, "execution-${exec.id}.xml"
+            if (execs) {
+                dir('executions/') {
+                    //export executions
+                    //export execution logs
+                    execs.each { Execution exec ->
+                        exportExecution zip, exec, "execution-${exec.id}.xml"
 
-                    jobfilerecords.addAll JobFileRecord.findAllByExecution(exec)
+                        jobfilerecords.addAll JobFileRecord.findAllByExecution(exec)
 
-                    listener?.inc('export',3)
+                        listener?.inc('export', 3)
+                    }
                 }
-            }
-            dir('jobfiles/') {
-                jobfilerecords.each { JobFileRecord record ->
-                    exportFileRecord zip, record, "filerecord-${record.id}.xml"
-                }
-            }
-            //export history
 
-            dir('reports/') {
-                reports.each { BaseReport report ->
-                    exportHistoryReport zip, report, "report-${report.id}.xml"
-                    listener?.inc('export',1)
+                dir('jobfiles/') {
+                    jobfilerecords.each { JobFileRecord record ->
+                        exportFileRecord zip, record, "filerecord-${record.id}.xml"
+                    }
+                }
+                //export history
+
+                dir('reports/') {
+                    reports.each { BaseReport report ->
+                        exportHistoryReport zip, report, "report-${report.id}.xml"
+                        listener?.inc('export', 1)
+                    }
                 }
             }
 
             //export config
-            if(!options || options.all) {
+            if (isExportConfigs || isExportReadmes || isExportAcls) {
                 dir('files/') {
-                    dir('etc/') {
-                        zip.file('project.properties') { Writer writer ->
-                            def map = project.getProjectProperties()
-                            map = replaceRelativePathsForProjectProperties(project, framework, map, '%PROJECT_BASEDIR%')
-                            def projectProps = map as Properties
-                            def sw = new StringWriter()
-                            projectProps.store(sw, "Exported configuration")
-                            def projectPropertiesText = sw.toString().
-                                    split(Pattern.quote(System.getProperty("line.separator"))).
-                                    sort().
-                                    join(System.getProperty("line.separator"))
-                            writer.write(projectPropertiesText)
+                    if (isExportConfigs) {
+                        dir('etc/') {
+                            zip.file('project.properties') { Writer writer ->
+                                def map = project.getProjectProperties()
+                                map = replaceRelativePathsForProjectProperties(
+                                        project,
+                                        framework,
+                                        map,
+                                        '%PROJECT_BASEDIR%'
+                                )
+                                def projectProps = map as Properties
+                                def sw = new StringWriter()
+                                projectProps.store(sw, "Exported configuration")
+                                def projectPropertiesText = sw.toString().
+                                        split(Pattern.quote(System.getProperty("line.separator"))).
+                                        sort().
+                                        join(System.getProperty("line.separator"))
+                                writer.write(projectPropertiesText)
 
-                            listener?.inc('export', 1)
-                        }
-                    }
-                    ['readme.md', 'motd.md'].each { filename ->
-                        if (project.existsFileResource(filename)) {
-                            zip.fileStream(filename) { OutputStream stream ->
-                                project.loadFileResource(filename, stream)
                                 listener?.inc('export', 1)
                             }
-                        } else {
-                            listener?.inc('export', 1)
                         }
                     }
-                    if (aclReadAuth) {
+                    if (isExportReadmes) {
+                        ['readme.md', 'motd.md'].each { filename ->
+                            if (project.existsFileResource(filename)) {
+                                zip.fileStream(filename) { OutputStream stream ->
+                                    project.loadFileResource(filename, stream)
+                                }
+                            }
+                        }
+                        listener?.inc('export', 1)
+                    }
+                    if (isExportAcls) {
                         //acls
                         def policies = project.listDirPaths('acls/').grep(~/^.*\.aclpolicy$/)
                         if (policies) {
-                            def count = policies.size()
                             dir('acls/') {
                                 policies.each { path ->
                                     def fname = path.substring('acls/'.length())
                                     zip.fileStream(fname) { OutputStream stream ->
                                         project.loadFileResource(path, stream)
-                                        count--
-                                        if (count == 0) {
-                                            listener?.inc('export', 1)
-                                        }
                                     }
                                 }
                             }
-                        } else {
-                            listener?.inc('export', 1)
                         }
-                    } else {
                         listener?.inc('export', 1)
                     }
 
@@ -1289,10 +1319,20 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
         return result
     }
 }
+
+@ToString(includeNames = true, includePackage = false)
 class ArchiveOptions{
     Set executionIds=null
+    /**
+     * if true, only include the executions in the executionIds set
+     */
     boolean executionsOnly=false
-    boolean all=true
+    boolean all = false
+    boolean jobs = false
+    boolean executions = false
+    boolean configs = false
+    boolean readmes = false
+    boolean acls = false
     def parseExecutionsIds(execidsparam){
         if(execidsparam instanceof String){
             executionIds=new HashSet(execidsparam.split(',') as List)
