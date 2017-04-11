@@ -367,6 +367,31 @@ function Option(data) {
         }
     });
 
+    self.loadRemoteValues = function (values, selvalue) {
+        self.remoteError(null);
+        var rvalues = [];
+        var remoteselected;
+        ko.utils.arrayForEach(values, function (val) {
+            var optval;
+            if (typeof(val) === 'object') {
+                if (!remoteselected && val.selected) {
+                    remoteselected = val.value;
+                }
+                optval = new OptionVal({label: val.name, value: val.value, selected: val.selected});
+            } else if (typeof(val) === 'string') {
+                optval = new OptionVal({label: val, value: val});
+            }
+            if (optval) {
+                rvalues.push(optval);
+            }
+        });
+
+        if ((selvalue || remoteselected) && !self.multivalued()) {
+            self.value(remoteselected || selvalue);
+            self.selectedOptionValue(remoteselected || selvalue);
+        }
+        self.remoteValues(rvalues);
+    };
     /**
      * Option values data loaded from remote JSON request
      * @param data
@@ -380,29 +405,7 @@ function Option(data) {
             self.remoteError(err);
             self.remoteValues([]);
         } else if (data.values) {
-            self.remoteError(null);
-            var rvalues = [];
-            var selvalue=self.value() || self.selectedOptionValue() || data.selectedvalue;
-            ko.utils.arrayForEach(data.values, function (val) {
-                var optval;
-                if (typeof(val) == 'object') {
-                    if(!selvalue && val.selected){
-                        selvalue=val.value;
-                    }
-                    optval = new OptionVal({label: val.name, value: val.value, selected: val.selected});
-                } else if (typeof(val) == 'string') {
-                    optval = new OptionVal({label: val, value: val});
-                }
-                if (optval) {
-                    rvalues.push(optval);
-                }
-            });
-
-            if (selvalue && !self.multivalued()) {
-                self.value(selvalue);
-                self.selectedOptionValue(selvalue);
-            }
-            self.remoteValues(rvalues);
+            self.loadRemoteValues(data.values, data.selectedvalue);
         }
     };
     self.animateRemove = function (div) {
