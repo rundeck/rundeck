@@ -44,6 +44,7 @@ properties of your class.  These are the supported Java types for annotated fiel
 * String
 * Boolean/boolean
 * Integer/integer, Long/long
+* `Set`, `List`, `String[]` (if used with `@SelectValues(multiOption = true)`)
 
 When your plugin is executed, the fields will be set to the appropriate values
 based on their default value, scope, and any value set by the user in the
@@ -52,7 +53,7 @@ workflow configuration.
 These annotation classes are used:
 
 * [PluginProperty](../javadoc/com/dtolabs/rundeck/plugins/descriptions/PluginProperty.html) - Declares a class field as a plugin configuration property
-* [SelectValues](../javadoc/com/dtolabs/rundeck/plugins/descriptions/SelectValues.html) - Declares a String property to be a "Select" property, which defines a set of input values that can be chosen from a list
+* [SelectValues](../javadoc/com/dtolabs/rundeck/plugins/descriptions/SelectValues.html) - Declares a String property to be a "Select" property, which defines a set of input values that can be chosen from a list. Can be used with `multiOption` attribute to declare a `Set`, `List` or `String[]` and allow multiple values to be chosen. If `multiOption` is used with a String, the value will be the values joined with a `,` (comma).
 * [TextArea](../javadoc/com/dtolabs/rundeck/plugins/descriptions/TextArea.html) - Declares a String property to be rendered as a multi-line text area in the Rundeck GUI.
 
 Attributes:
@@ -67,6 +68,7 @@ Attributes:
 * `@SelectValues`
     * `values` (String[]) the set of values that can be chosen
     * `freeSelect` (boolean) whether the user can enter values not in the list. Default: false.
+    * `multiOption` (boolean) wheter multiple values can be selected as checkboxes, cannot be used with freeSelect. Default: false.
 
 Examples:
 

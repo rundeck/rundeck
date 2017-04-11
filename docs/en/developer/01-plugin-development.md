@@ -417,6 +417,7 @@ map entries for each configuration property you want to define. In the map entry
     * `Long`
     * `Select` must be on of a set of values
     * `FreeSelect` may be one of a set of values
+    * `Options` may be more than one of a set of values, the result will be the values joined with a `,` (comma)
 * `name` - Name to identify the property
 * `title` - Title to display in the GUI (optional)
 * `description` - Description to display in the GUI (optional)
