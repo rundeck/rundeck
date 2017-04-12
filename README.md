@@ -56,7 +56,7 @@ There are several install options: a self-contained jar file, or RPM, or Debian.
 
 To start from the rundeck-launcher.jar, put it in a directory named ~/rundeck, then execute:
 
-    java -Xmx1024m -Xms256m -server -jar rundeck-launcher-2.0.0.jar
+    java -Xmx1024m -Xms256m -XX:MaxMetaspaceSize=256m -server -jar rundeck-launcher-2.0.0.jar
 
 If you'd like to install via RPM, you can use Yum:
 
