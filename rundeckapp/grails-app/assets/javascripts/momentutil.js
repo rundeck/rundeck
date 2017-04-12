@@ -17,7 +17,7 @@
 //= require moment.min
 
  var MomentUtil =(function(){
-     var self=  {
+     return {
 
     duration : function (start, end) {
         return (end?moment(end):moment()).diff(moment(start));
@@ -111,6 +111,4 @@
         return duration.humanize();
     }
 };
-     return self;
-
 })();
