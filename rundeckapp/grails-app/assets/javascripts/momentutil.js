@@ -53,9 +53,9 @@
         } else if (since.asWeeks() < 1) {
             return time.format('ddd h:mm a');
         } else if (time.year() != now.year()) {
-            return time.format('MMM do YYYY h a');
+            return time.format('MMM Do YYYY h a');
         } else {
-            return time.format('M/d ha');
+            return time.format('M/D ha');
         }
     },
     formatDurationSimple : function (ms) {
