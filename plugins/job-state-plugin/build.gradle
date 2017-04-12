@@ -21,7 +21,15 @@
 ext.pluginClassNames = 'org.rundeck.plugin.jobstate.JobStateWorkflowStep'
 ext.pluginName = 'Job State Conditional'
 ext.pluginDescription = 'Evaluate state of another Job'
+apply plugin: 'groovy'
+dependencies{
 
+    testCompile 'junit:junit:4.8.1',
+                'org.mockito:mockito-all:1.8.5'
+
+    testCompile "org.codehaus.groovy:groovy-all:2.3.7"
+    testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
+}
 jar {
     manifest {
         attributes 'Rundeck-Plugin-Classnames': pluginClassNames

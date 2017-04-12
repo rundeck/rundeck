@@ -165,10 +165,7 @@ public class JobStateWorkflowStep implements StepPlugin {
             throws StepException
     {
         if(result!=equality) {
-            //for now fail
-//            String message = "Condition not met: " + stringBuilder;
-//            throw new StepException(message, Failures.ConditionNotMet);
-            context.getLogger().log(0, message);
+            context.getLogger().log(halt && fail ? 0 : 1, message);
             haltConditionally(context);
         }else{
             context.getLogger().log(2, message);
