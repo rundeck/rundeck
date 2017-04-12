@@ -19,8 +19,10 @@ package rundeck.services
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
+import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemImpl
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowImpl
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -57,10 +59,11 @@ class ExecutionUtilService {
         }
     }
     def  finishExecutionLogging(Map execMap) {
-        def ServiceThreadBase thread = execMap.thread
+        def ServiceThreadBase<WorkflowExecutionResult> thread = execMap.thread
         def ExecutionLogWriter loghandler = execMap.loghandler
 
         try {
+            WorkflowExecutionResult object = thread.resultObject
             if (!thread.isSuccessful()) {
                 Throwable exc = thread.getThrowable()
                 def errmsgs = []
@@ -72,8 +75,8 @@ class ExecutionUtilService {
                     if (exc.getCause()) {
                         errmsgs << "Caused by: " + exc.getCause().getMessage()
                     }
-                } else if (thread.resultObject) {
-                    loghandler.logVerbose(thread.resultObject.toString())
+                } else if (object) {
+                    loghandler.logVerbose(object.toString())
                 }
                 if (errmsgs) {
                     log.error(
@@ -87,19 +90,34 @@ class ExecutionUtilService {
                         loghandler.logVerbose(getStackTrace(exc))
                     }
                 } else {
-                    log.error(
-                            "Execution failed: " + execMap.execution.id +
-                                    " in project ${execMap.execution.project}: " +
-                                    thread.resultObject?.toString()
-                    )
-                    loghandler.logError(
-                            "Execution failed: " + execMap.execution.id +
-                                    " in project ${execMap.execution.project}: " +
-                                    thread.resultObject?.toString()
-                    )
+                    if (object?.controlBehavior == ControlBehavior.Halt && object?.statusString) {
+                        def msg = "Execution halted (\"${object.statusString}\"):${execMap.execution.id}" +
+                                " in project ${execMap.execution.project}: " +
+                                object?.toString()
+
+                        log.error(msg)
+                        loghandler.logWarn(msg)
+                    } else {
+                        def msg = "Execution failed: ${execMap.execution.id}" +
+                                " in project ${execMap.execution.project}: " +
+                                object?.toString()
+                        log.error(msg)
+                        loghandler.logError(msg)
+                    }
                 }
             } else {
-                log.info("Execution successful: " + execMap.execution.id + " in project ${execMap.execution.project}")
+                if (object?.controlBehavior == ControlBehavior.Halt) {
+                    def msg = "Execution halted (succeeded):${execMap.execution.id}" +
+                            " in project ${execMap.execution.project}: " +
+                            object?.toString()
+
+                    log.info(msg)
+                    loghandler.log(msg)
+                } else {
+                    log.info(
+                            "Execution successful: " + execMap.execution.id + " in project ${execMap.execution.project}"
+                    )
+                }
             }
         } finally {
             sysThreadBoundOut.close()

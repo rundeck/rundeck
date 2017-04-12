@@ -18,6 +18,9 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
@@ -69,7 +72,7 @@ class ExecutionUtilServiceTests {
     void testFinishExecutionLoggingNoMessage(){
 
         def executionUtilService = new ExecutionUtilService()
-        def thread = new ServiceThreadBase()
+        def thread = new ServiceThreadBase<WorkflowExecutionResult>()
         thread.success = false
         def logcontrol = mockFor(ExecutionLogWriter)
         logcontrol.demand.logError(1..1){String value->
@@ -96,9 +99,49 @@ class ExecutionUtilServiceTests {
     void testFinishExecutionLoggingNoMessageWithResult(){
 
         def executionUtilService = new ExecutionUtilService()
-        def thread = new ServiceThreadBase()
+        def thread = new ServiceThreadBase<WorkflowExecutionResult>()
         thread.success = false
-        thread.resultObject="abcd"
+        thread.resultObject=new WorkflowExecutionResult(){
+            @Override
+            String getStatusString() {
+                return null
+            }
+
+            @Override
+            ControlBehavior getControlBehavior() {
+                return null
+            }
+
+            @Override
+            boolean isSuccess() {
+                return false
+            }
+
+            @Override
+            Throwable getException() {
+                return null
+            }
+
+            @Override
+            List<StepExecutionResult> getResultSet() {
+                return null
+            }
+
+            @Override
+            Map<String, Collection<StepExecutionResult>> getNodeFailures() {
+                return null
+            }
+
+            @Override
+            Map<Integer, StepExecutionResult> getStepFailures() {
+                return null
+            }
+
+            @Override
+            String toString() {
+                "abcd"
+            }
+        }
         def logcontrol = mockFor(ExecutionLogWriter)
         logcontrol.demand.logVerbose(1..1){String value->
             assertEquals("abcd",value)
@@ -127,9 +170,9 @@ class ExecutionUtilServiceTests {
     void testFinishExecutionLoggingCausedByException(){
 
         def executionUtilService = new ExecutionUtilService()
-        def thread = new ServiceThreadBase()
+        def thread = new ServiceThreadBase<WorkflowExecutionResult>()
         thread.success = false
-        thread.resultObject="abcd123"
+        thread.resultObject=null
         thread.thrown=new Exception("exceptionTest1")
         def logcontrol = mockFor(ExecutionLogWriter)
         logcontrol.demand.logError(1..1){String value->
@@ -160,9 +203,9 @@ class ExecutionUtilServiceTests {
     void testFinishExecutionLoggingCausedByExceptionWithCause(){
 
         def executionUtilService = new ExecutionUtilService()
-        def thread = new ServiceThreadBase()
+        def thread = new ServiceThreadBase<WorkflowExecutionResult>()
         thread.success = false
-        thread.resultObject="abcd123"
+        thread.resultObject=null
         def cause=new Exception("exceptionCause1")
         thread.thrown=new Exception("exceptionTest1",cause)
         def logcontrol = mockFor(ExecutionLogWriter)
