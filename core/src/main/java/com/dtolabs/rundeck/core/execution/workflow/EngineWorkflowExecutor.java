@@ -6,12 +6,12 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.*;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.rules.*;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.FluentIterable;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -319,6 +319,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 stepExecutionResults.put(success.stepNum, success.result);
                 if (!success.result.isSuccess()) {
                     stepFailures.put(success.stepNum, success.result);
+                    workflowSuccess = false;
                 }
                 stepResults.add(success.result);
                 if (success.controlBehavior != null && success.controlBehavior != ControlBehavior.Continue) {
@@ -363,17 +364,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                         )
                 );
             }
-        }
-        // fail if there is any result is not successful
-        Predicate<StepExecutionResult> resultSuccess = new Predicate<StepExecutionResult>() {
-            @Override
-            public boolean apply(final StepExecutionResult stepExecutionResult) {
-                return stepExecutionResult.isSuccess();
-            }
-        };
-
-        if (FluentIterable.from(stepExecutionResults.values()).anyMatch(Predicates.not(resultSuccess))) {
-            workflowSuccess = false;
         }
 
         WorkflowStatusResult workflowResult = workflowResult(

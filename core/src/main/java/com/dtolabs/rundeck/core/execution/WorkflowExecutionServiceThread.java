@@ -34,7 +34,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutor;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class WorkflowExecutionServiceThread extends ServiceThreadBase {
+public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowExecutionResult> {
     WorkflowExecutionService weservice;
     WorkflowExecutionItem weitem;
     private StepExecutionContext context;

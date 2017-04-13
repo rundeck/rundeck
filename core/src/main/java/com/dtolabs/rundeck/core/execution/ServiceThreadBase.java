@@ -30,11 +30,11 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class ServiceThreadBase extends Thread {
+public class ServiceThreadBase<T> extends Thread {
     volatile boolean success = false;
     private volatile boolean aborted = false;
     volatile Throwable thrown;
-    volatile Object resultObject;
+    volatile T resultObject;
 
     public void abort() {
         if (isAlive()) {
@@ -55,7 +55,7 @@ public class ServiceThreadBase extends Thread {
         return aborted;
     }
 
-    public Object getResultObject() {
+    public T getResultObject() {
         return resultObject;
     }
 }
