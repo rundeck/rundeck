@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.NodesSelector
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.plugins.codecs.URLCodec
+import org.codehaus.groovy.grails.plugins.testing.GrailsMockMultipartFile
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
@@ -862,5 +863,110 @@ class ScheduledExecutionControllerSpec extends Specification {
         !model.success
         model.failed
         model.error == 'disabled.execution.run'
+    }
+
+    def "api job file upload single"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1',
+                project: 'testProject',
+                description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save(),
+                options: [
+                        new Option(name: 'f1', optionType: 'file', required: true, enforced: false,)
+                ],
+                )
+        se.save()
+        request.api_version = 19
+        params.id = se.extid
+        params.optionName = 'f1'
+        controller.apiService = Mock(ApiService) {
+            requireApi(_, _) >> true
+            requireVersion(_, _, 19) >> true
+            requireParameters(_, _, ['id']) >> true
+            requireParameters(_, _, ['optionName']) >> true
+            requireExists(_, _, _) >> true
+            0 * _(*_)
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(se.extid) >> se
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+            authorizeProjectJobAll(*_) >> true
+            0 * _(*_)
+        }
+        controller.fileUploadService = Mock(FileUploadService) {
+            1 * receiveFile(_, 4l, null, null, 'f1', _, _, 'testProject', _) >> 'filerefid1'
+            1 * getOptionUploadMaxSize() >> 0l
+            0 * _(*_)
+        }
+        request.method = 'POST'
+        request.content = 'data'.bytes
+        request.addHeader('accept', 'application/json')
+
+        when:
+        controller.apiJobFileUpload()
+        then:
+        response.status == 200
+        response.json == [total: 1, options: [f1: 'filerefid1']]
+
+    }
+
+    def "api job file multifile"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1',
+                project: 'testProject',
+                description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save(),
+                options: [
+                        new Option(name: 'f1', optionType: 'file', required: true, enforced: false,),
+                        new Option(name: 'f2', optionType: 'file', required: true, enforced: false,),
+                ],
+                )
+        se.save()
+        request.api_version = 19
+        params.id = se.extid
+        params.optionName = 'f1'
+        controller.apiService = Mock(ApiService) {
+            requireApi(_, _) >> true
+            requireVersion(_, _, 19) >> true
+            requireParameters(_, _, ['id']) >> true
+            requireParameters(_, _, ['optionName']) >> true
+            requireExists(_, _, _) >> true
+            0 * _(*_)
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(se.extid) >> se
+            0 * _(*_)
+        }
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext)
+            authorizeProjectJobAll(*_) >> true
+            0 * _(*_)
+        }
+        controller.fileUploadService = Mock(FileUploadService) {
+            1 * receiveFile(_, 5l, null, 'name1', 'f1', _, _, 'testProject', _) >> 'filerefid1'
+            1 * receiveFile(_, 5l, null, 'name2', 'f2', _, _, 'testProject', _) >> 'filerefid2'
+            1 * getOptionUploadMaxSize() >> 0l
+            0 * _(*_)
+        }
+        request.method = 'POST'
+        request.addHeader('accept', 'application/json')
+        request.addFile(new GrailsMockMultipartFile('option.f1', 'name1', 'application/octet-stream', 'data1'.bytes))
+        request.addFile(new GrailsMockMultipartFile('option.f2', 'name2', 'application/octet-stream', 'data2'.bytes))
+
+        when:
+        controller.apiJobFileUpload()
+        then:
+        response.status == 200
+        response.json == [total: 2, options: [f1: 'filerefid1', f2: 'filerefid2']]
+
     }
 }
