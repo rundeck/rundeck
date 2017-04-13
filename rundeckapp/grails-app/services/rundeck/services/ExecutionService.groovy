@@ -950,22 +950,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
                     execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed,inputCharset)
 
-            def evt = grailsEvents?.event(
-                    null,
-                    'executionBeforeStart',
+            fileUploadService.executionBeforeStart(
                     new ExecutionPrepareEvent(
-                            execution:execution,
-                            job:scheduledExecution,
+                            execution: execution,
+                            job: scheduledExecution,
                             context: executioncontext
                     )
             )
-            evt?.get()
-            def errs = evt?.getErrors()
-            if (errs) {
-                def err=(errs[0] instanceof EventException)? errs[0].cause : errs[0]
-                throw new ExecutionServiceException(err.message, err)
-            }
-
 
             //ExecutionService handles Job reference steps
             final cis = StepExecutionService.getInstanceForFramework(framework);
@@ -992,6 +983,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
             thread.start()
+            log.debug("started thread")
             return [thread:thread, loghandler:loghandler, noderecorder:recorder, execution: execution, scheduledExecution:scheduledExecution,threshold:threshold]
         }catch(Exception e) {
             log.error("Failed while starting execution: ${execution.id}", e)
