@@ -11,6 +11,7 @@ Issue type: Bug report/Enhancement Request
 * Rundeck version: 
 * install type: (rpm,deb,war,launcher?)
 * OS Name/version: 
+* DB Type/version: mysql? postgres? h2?..
 
 **Expected Behavior**
 
