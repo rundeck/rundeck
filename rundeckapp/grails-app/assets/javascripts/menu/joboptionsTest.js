@@ -385,7 +385,57 @@ jQuery(function () {
                     };
                 }
             );
+        },
+        loadRemote_json_data_with_object_values_selected_Test: function (pref) {
+            "use strict";
+            var self = this;
+            self.testMatrix(
+                " loadRemoteValues({0})",
+                [
+                    [
+                        {values: [{value: 'x', name: 'X'}, {value: 'y', name: 'Y'}], selectedvalue: 'x'},
+                        {value: 'x', selectedOptionValue: 'x', remoteValues: 'x,y'}
+                    ],
+                    [
+                        {
+                            values: [{value: 'x', name: 'X', selected: true}, {value: 'y', name: 'Y'}],
+                            selectedvalue: 'x'
+                        },
+                        {value: 'x', selectedOptionValue: 'x', remoteValues: 'x,y'}
+                    ],
+                    [
+                        {
+                            values: [{value: 'x', name: 'X', selected: false}, {value: 'y', name: 'Y', selected: true}],
+                            selectedvalue: 'x'
+                        },
+                        {value: 'y', selectedOptionValue: 'y', remoteValues: 'x,y'}
+                    ],
+                    [
+                        {
+                            values: [{value: 'x', name: 'X', selected: false}, {value: 'y', name: 'Y', selected: true}]
+                        },
+                        {value: 'y', selectedOptionValue: 'y', remoteValues: 'x,y'}
+                    ],
+                    [
+                        {
+                            values: [{value: 'x', name: 'X', selected: true}, {value: 'y', name: 'Y', selected: false}]
+                        },
+                        {value: 'x', selectedOptionValue: 'x', remoteValues: 'x,y'}
+                    ]
+                ],
+                function (val) {
+                    var opt = mkopt({value: null, selectedOptionValue: null});
+                    opt.loadRemoteValues(val.values, val.selectedvalue);
 
+                    return {
+                        value: opt.value(),
+                        selectedOptionValue: opt.selectedOptionValue(),
+                        remoteValues: ko.utils.arrayMap(opt.remoteValues(), function (val) {
+                            return val.value();
+                        }).join(',')
+                    };
+                }
+            );
         },
         loadRemote_json_data_with_error_Test: function (pref) {
             "use strict";
