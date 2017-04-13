@@ -3502,12 +3502,17 @@ class ScheduledExecutionController  extends ControllerBase{
             )
         }
         def fileOptionNames = fileOptions*.name
+        def fileMap = [:]
+        fileOptions.each { Option option ->
+            fileMap[option.name] = option
+        }
         def uploadedFileRefs = [:]
         def uploadError
-        if (request instanceof MultipartRequest) {
+        if (request instanceof MultipartRequest && request.fileMap) {
             def invalid = []
             Map<String,MultipartFile> optionRequestFiles = [:]
-            ((MultipartRequest) request).fileMap.each { String name, file ->
+            ((MultipartRequest) request).fileNames.each { String name ->
+                MultipartFile file = ((MultipartRequest) request).getFile(name)
                 if (name.startsWith(optionParameterPrefix)) {
                     //process file option upload
                     String optname = name.substring(optionParameterPrefix.length())
@@ -3544,7 +3549,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             for (def entry : optionRequestFiles) {
                 String optname = entry.key
-                MultipartFile file = entry.value
+                def file = entry.value
                 try {
                     String ref = fileUploadService.receiveFile(
                             file.inputStream,
@@ -3552,6 +3557,7 @@ class ScheduledExecutionController  extends ControllerBase{
                             authContext.username,
                             file.originalFilename,
                             optname,
+                            fileMap[optname].configMap,
                             scheduledExecution.extid,
                             scheduledExecution.project,
                             new Date()
@@ -3593,6 +3599,7 @@ class ScheduledExecutionController  extends ControllerBase{
                         authContext.username,
                         params.fileName,
                         params.optionName,
+                        fileMap[params.optionName].configMap,
                         scheduledExecution.extid,
                         scheduledExecution.project,
                         new Date()
