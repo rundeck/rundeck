@@ -73,6 +73,7 @@ class JobFileRecord {
         storageMeta(type: 'text')
         storageReference(type: 'text')
         serverNodeUUID(type: 'text')
+        user column: "rduser"
     }
 
     boolean stateIsExpired() {
