@@ -969,4 +969,36 @@ class ScheduledExecutionControllerSpec extends Specification {
         response.json == [total: 2, options: [f1: 'filerefid1', f2: 'filerefid2']]
 
     }
+    def "create from execution"() {
+        given:
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        ).save()
+        params.executionId = exec.id.toString()
+        controller.frameworkService = Mock(FrameworkService) {
+            _ * getAuthContextForSubjectAndProject(_, _) >> Mock(UserAndRolesAuthContext) {
+                getRoles() >> ['a', 'b']
+                getUsername() >> 'bob'
+            }
+            authorizeProjectResourceAll(_, _, _, _) >> true
+            authorizeProjectExecutionAll(_, exec, _) >> true
+            getProjectGlobals(_) >> [:]
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.notificationService = Mock(NotificationService) {
+            1 * listNotificationPlugins() >> [:]
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
+            1 * listDescriptions()
+        }
+        when:
+        def result = controller.createFromExecution()
+        then:
+        response.status == 200
+        model.scheduledExecution != null
+    }
 }

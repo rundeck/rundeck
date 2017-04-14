@@ -2067,7 +2067,7 @@ class ScheduledExecutionController  extends ControllerBase{
     /**
      * action to populate the Create form with execution info from a previous (transient) execution
      */
-    def createFromExecution={
+    def createFromExecution(){
 
         log.debug("ScheduledExecutionController: create : params: " + params)
         Execution execution = Execution.get(params.executionId)
@@ -2119,7 +2119,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def wf=WorkflowController.getSessionWorkflow(session,null,props.workflow)
         session.editWFPassThru=true
 
-        def model=create.call()
+        def model=create()
         render(view:'create',model:model)
     }
 
