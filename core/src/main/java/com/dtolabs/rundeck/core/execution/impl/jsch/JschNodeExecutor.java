@@ -325,7 +325,6 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
 
             //set up SSH execution
-            sshexec.setAllocatePty(true);
             sshexec.setInputStream(jschInput);
             sshexec.setSecondaryStream(jschOutput);
             sshexec.setDisconnectHolder(resultHandler);
@@ -364,6 +363,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         String errormsg = null;
         FailureReason failureReason=null;
         try {
+            sshexec.setAllocatePty(true);
             sshexec.execute();
             success = true;
         } catch (BuildException e) {
