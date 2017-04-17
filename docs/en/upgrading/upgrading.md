@@ -2,6 +2,83 @@
 % Greg Schueler
 % April 15, 2015
 
+## Upgrading to Rundeck 2.8.1 from 2.8.0
+
+### Important Note 
+
+If you have previously installed Rundeck 2.8.0, using Mysql or H2 database, the 2.8.1 update 
+will not work correctly. A DB schema change was required to fix a bug with Postgres and other databases:
+ (`user` is a reserved word).
+
+If you upgrade from 2.7.x to 2.8.1 (skipping 2.8.0), or install 2.8.1 from scratch, you will *not* encounter this problem.
+
+Use the following methods to update your DB schema for Mysql or H2 if you are upgrading from 2.8.0 to 2.8.1:
+
+#### Mysql upgrade to 2.8.1 from 2.8.0
+
+1. Stop Rundeck
+2. Run the following SQL script, to rename the `user` column in the `job_file_record` table to `rduser`.
+
+~~~{.sql}
+use rundeck;
+alter table job_file_record change column user rduser varchar(255) not null;
+~~~
+
+After running this script, you can proceed with the 2.8.1 upgrade.
+
+#### H2 upgrade to 2.8.1 from 2.8.0
+
+For H2, you will need to do the following:
+
+1. Shut down Rundeck.
+2. (backup your H2 database contents, see [Backup and Recovery][]).
+3. Use the h2 [`RunScript`](http://h2database.com/javadoc/org/h2/tools/RunScript.html) command
+to run the following SQL script.
+
+To run the script you will need:
+
+* URL defining the location of your H2 database.  This is the same as the `dataSource.url` defined in
+   your `rundeck-config.properties`.
+
+    * For RPM/DEB installs it is `jdbc:h2:file:/var/lib/rundeck/data/rundeckdb`.
+    * For a Launcher install, it will include your `$RDECK_BASE` path.  It can be relative to your current
+   working directory, such as `jdbc:h2:file:$RDECK_BASE/server/data/grailsdb`.
+* File path to the `h2-1.4.x.jar` jar file, which is in the expanded war contents of the Rundeck install.
+    * For RPM/DEB installs it is `/var/lib/rundeck/exp/webapp/WEB-INF/lib/h2-1.4.193.jar`.
+    * For launcher install it will under your `$RDECK_BASE`, such as: 
+    `$RDECK_BASE/server/exp/webapp/WEB-INF/lib/h2-1.4.193.jar`
+
+Save this into a file `upgrade-2.8.1.sql`:
+
+~~~ {.sql}
+alter table job_file_record rename column user to rduser;
+~~~
+
+Run this command:
+
+~~~ {.bash}
+H2_JAR_FILE=... #jar file location
+H2_URL=...      #jdbc URL
+java -cp $H2_JAR_FILE org.h2.tools.RunScript  \
+  -url $H2_URL \
+  -user sa \
+  -script upgrade-2.8.1.sql
+~~~
+
+This command should complete with a 0 exit code (and no output).
+
+You can now upgrade to 2.8.1.
+
+**Error output**
+
+If you see output containing `Column "USER" not found;` then you have already run this script successfully.
+
+If you see output containing `Table "JOB_FILE_RECORD" not found`, then you probably did not have 2.8.0 installed,
+you should be able to upgrade from 2.7 without a problem.
+
+[Backup and Recovery]: ../administration/backup-and-recovery.html
+
+
 ## Upgrading to Rundeck 2.8 from earlier versions
 
 ### Java 8 is required
