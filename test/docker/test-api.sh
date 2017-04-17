@@ -2,7 +2,7 @@
 
 . common.sh
 
-export DOCKER_COMPOSE_SPEC=docker-compose-api-test.yml
+export DOCKER_COMPOSE_SPEC=${DOCKER_COMPOSE_SPEC:-docker-compose-api-test.yml}
 export SETUP_TEST_PROJECT=test
 
 if [ -f rundeck-launcher.jar ] ; then
