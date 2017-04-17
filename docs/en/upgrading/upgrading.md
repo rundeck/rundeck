@@ -2,6 +2,12 @@
 % Greg Schueler
 % April 15, 2015
 
+## Upgrading to Rundeck 2.8 from earlier versions
+
+### Java 8 is required
+
+Rundeck server now requires Java 8.
+
 ## Upgrading to Rundeck 2.7 from 2.6.x
 
 
