@@ -34,10 +34,7 @@ import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResultImpl;
-import com.dtolabs.rundeck.core.execution.utils.BasicSource;
-import com.dtolabs.rundeck.core.execution.utils.LeadPipeOutputStream;
-import com.dtolabs.rundeck.core.execution.utils.PasswordSource;
-import com.dtolabs.rundeck.core.execution.utils.ResponderTask;
+import com.dtolabs.rundeck.core.execution.utils.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
@@ -105,6 +102,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String NODE_ATTR_SSH_KEY_PASSPHRASE_STORAGE_PATH = "ssh-key-passphrase-storage-path";
     public static final String DEFAULT_SSH_KEY_PASSPHRASE_OPTION = "option.sshKeyPassphrase";
 
+    public static final String NODE_ATTR_ALWAYS_SET_PTY = "always-set-pty";
+    public static final String FWK_PROP_SET_PTY = FWK_PROP_PREFIX + NODE_ATTR_ALWAYS_SET_PTY;
+    public static final String PROJ_PROP_SET_PTY = PROJ_PROP_PREFIX + NODE_ATTR_ALWAYS_SET_PTY;
 
     public static final String FWK_PROP_SSH_AUTHENTICATION = FWK_PROP_PREFIX + NODE_ATTR_SSH_AUTHENTICATION;
     public static final String PROJ_PROP_SSH_AUTHENTICATION = PROJ_PROP_PREFIX + NODE_ATTR_SSH_AUTHENTICATION;
@@ -150,6 +150,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String CONFIG_PASSSTORE_PATH = "passwordstoragepath";
     public static final String CONFIG_SUDO_PASSSTORE_PATH = "sudopasswordstoragepath";
     public static final String CONFIG_AUTHENTICATION = "authentication";
+    public static final String CONFIG_SET_PTY = "always-set-pty";
 
     static final Description DESC ;
 
@@ -183,6 +184,10 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             true, SSHTaskBuilder.AuthenticationType.privateKey.toString(), Arrays.asList(SSHTaskBuilder
             .AuthenticationType.values()), null, null);
 
+    public static final Property ALWAYS_SET_PTY = PropertyUtil.bool(CONFIG_SET_PTY, "Force PTY",
+            "Always force use of new pty",
+            false, "false");
+
     static {
         DescriptionBuilder builder = DescriptionBuilder.builder();
         builder.name(SERVICE_PROVIDER_TYPE)
@@ -194,6 +199,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         builder.property(SSH_KEY_STORAGE_PROP);
         builder.property(SSH_PASSWORD_STORAGE_PROP);
         builder.property(SSH_AUTH_TYPE_PROP);
+        builder.property(ALWAYS_SET_PTY);
 
         builder.mapping(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH);
         builder.frameworkMapping(CONFIG_KEYPATH, FWK_PROP_SSH_KEYPATH);
@@ -203,6 +209,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         builder.frameworkMapping(CONFIG_PASSSTORE_PATH, FWK_PROP_SSH_PASSWORD_STORAGE_PATH);
         builder.mapping(CONFIG_AUTHENTICATION, PROJ_PROP_SSH_AUTHENTICATION);
         builder.frameworkMapping(CONFIG_AUTHENTICATION, FWK_PROP_SSH_AUTHENTICATION);
+        builder.mapping(CONFIG_SET_PTY, PROJ_PROP_SET_PTY);
+        builder.frameworkMapping(CONFIG_SET_PTY, FWK_PROP_SET_PTY);
 
         DESC=builder.build();
     }
@@ -221,6 +229,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
                 node
             );
         }
+        boolean forceNewPty = ResolverUtil.resolveBooleanProperty(CONFIG_SET_PTY,false,
+                node,context.getFramework().getFrameworkProjectMgr().getFrameworkProject(context.getFrameworkProject()),
+                context.getFramework());
 
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
@@ -325,7 +336,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
 
             //set up SSH execution
-            sshexec.setAllocatePty(true);
+            if(!forceNewPty){
+                sshexec.setAllocatePty(true);
+            }
             sshexec.setInputStream(jschInput);
             sshexec.setSecondaryStream(jschOutput);
             sshexec.setDisconnectHolder(resultHandler);
@@ -364,6 +377,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         String errormsg = null;
         FailureReason failureReason=null;
         try {
+            if(forceNewPty) {
+                sshexec.setAllocatePty(true);
+            }
             sshexec.execute();
             success = true;
         } catch (BuildException e) {
