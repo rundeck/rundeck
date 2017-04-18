@@ -943,7 +943,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 if(!extraParams){
                     extraParams=[:]
                 }
-                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext,true)
+                Map<String, String> args = FrameworkService.parseOptsFromString(execution.argString)
+                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true, args)
             }
             String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
 
@@ -1032,7 +1033,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Map secureOptsExposed,
             Map secureOpts,
             AuthContext authContext,
-            boolean failIfMissingRequired=false
+            boolean failIfMissingRequired=false,
+            Map<String, String> args = null
     )
     {
         def found = scheduledExecution.options?.findAll {
@@ -1048,7 +1050,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def keystore = storageService.storageTreeWithContext(authContext)
             found?.each {
                 try {
-                    def password = keystore.readPassword(it.defaultStoragePath)
+                    def defStoragePath = it.defaultStoragePath
+                    if (args && defStoragePath?.contains('${')) {
+                        defStoragePath = DataContextUtils.replaceDataReferences(defStoragePath, DataContextUtils.addContext("option", args, null)).trim()
+                    }
+                    def password = keystore.readPassword(defStoragePath)
                     if (it.secureExposed) {
                         secureOptsExposed[it.name] = new String(password)
                     } else {
