@@ -2043,4 +2043,71 @@ class ExecutionServiceSpec extends Specification {
         val.getNodeService() != null
 
     }
+
+    def "loadSecureOptionStorageDefaultsWithOptionParam"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-env '+env,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec(
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                )
+                        ]
+                ),
+                options: [
+                        new Option(
+                                name: 'env',
+                                required: true
+                        ),
+                        new Option(
+                                name: 'pass',
+                                secureInput: true,
+                                secureExposed: false,
+                                defaultStoragePath: 'keys/${option.env}/pass'
+                        )
+                ]
+        )
+        job.save()
+
+        Map secureOptsExposed = [:]
+        Map secureOpts = [:]
+        def authContext = Mock(AuthContext)
+        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        service.storageService = Mock(StorageService)
+
+
+        when:
+        service.loadSecureOptionStorageDefaults(job, secureOptsExposed, secureOpts, authContext,false, args)
+
+        then:
+        service.storageService.storageTreeWithContext(authContext) >> Mock(KeyStorageTree) {
+            readPassword('keys/opta/pass') >> {
+                    return 'pass1'.bytes
+            }
+            readPassword('keys/optb/pass') >> {
+                    return 'pass2'.bytes
+            }
+            readPassword('keys/optc/pass') >> {
+                    return 'pass3'.bytes
+            }
+            readPassword(_) >> {
+                return ''.bytes
+            }
+        }
+        expectedpass == secureOpts['pass']
+        where:
+        expectedpass    | env
+        'pass1'         | 'opta'
+        'pass2'         | 'optb'
+        'pass3'         | 'optc'
+        ''              | 'other'
+
+    }
 }

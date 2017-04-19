@@ -1045,13 +1045,13 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     !(secureOpts?.containsKey(it.name))
         }
         if (found) {
-
             //load secure option defaults from key storage
             def keystore = storageService.storageTreeWithContext(authContext)
             found?.each {
                 try {
                     def defStoragePath = it.defaultStoragePath
-                    if (args && defStoragePath?.contains('${')) {
+                    //search and replace ${option.
+                    if (args && defStoragePath?.contains('${option.')) {
                         defStoragePath = DataContextUtils.replaceDataReferences(defStoragePath, DataContextUtils.addContext("option", args, null)).trim()
                     }
                     def password = keystore.readPassword(defStoragePath)
