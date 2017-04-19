@@ -422,7 +422,15 @@ public class ScriptExecUtil {
     ) {
         final ArrayList<String> arglist = new ArrayList<String>();
         if (null != scriptinterpreter) {
-            arglist.addAll(Arrays.asList(OptsUtil.burst(scriptinterpreter)));
+            List<String> c = Arrays.asList(
+                    DataContextUtils.replaceDataReferences(
+                            OptsUtil.burst(scriptinterpreter),
+                            localDataContext,
+                            null,
+                            false,
+                            true
+                    ));
+            arglist.addAll(c);
         }
         if (null != scriptinterpreter && interpreterargsquoted) {
             final ArrayList<String> sublist = new ArrayList<String>();
