@@ -1093,7 +1093,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         if (!se) {
             ident = [jobname:"TEMP:"+e.user +":"+e.id, groupname:e.user+":run"]
-        } else if (se.scheduled && e.executionType == "scheduled") {
+        } else if (se.scheduled && e.executionType == "scheduled" && !e.retryAttempt) {
             // For jobs which have fixed schedules
             ident = [jobname:se.generateJobScheduledName(),groupname:se.generateJobGroupName()]
         } else {
