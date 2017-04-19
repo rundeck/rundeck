@@ -1,9 +1,9 @@
-Release 2.8.1
+Release 2.8.2
 ===========
 
-Date: 2017-04-17
+Date: 2017-04-19
 
-Name: <span style="color: Navy"><span class="glyphicon glyphicon-cutlery"></span> "cafe cubano navy cutlery"</span>
+Name: <span style="color: Olive"><span class="glyphicon glyphicon-flag"></span> "cafe cubano olive flag"</span>
 
 ## Upgrading from 2.8.0
 
@@ -16,30 +16,27 @@ A DB schema change requires a manual fix before upgrading.
 
 * See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
 
+## Notes
+
+Bug fixes and a few slight enhancements.
+
 ## Contributors
 
 * Greg Schueler (gschueler)
-* Jordan Jethwa (jjethwa)
 * jtobard
 
-## Bug Reporters
+## Reporters
 
-* gschueler
-* jjethwa
 * jtobard
-* ltamaster
-* schast
-* sebastianopilla
+* al-heisner
+* jquick
+* ahonor
 
 ## Issues
 
-[Milestone 2.8.1](https://github.com/rundeck/rundeck/milestone/53)
+[Milestone 2.8.2](https://github.com/rundeck/rundeck/milestone/54)
 
-* [Create Job from execution fails](https://github.com/rundeck/rundeck/issues/2435)
-* [Kill remote ssh command tasks](https://github.com/rundeck/rundeck/pull/2433)
-* [Job File Input Upload API broken](https://github.com/rundeck/rundeck/issues/2428)
-* [Date format on Execution show page incorrect](https://github.com/rundeck/rundeck/issues/2426)
-* [Add -XX:MaxMetaspaceSize=256m](https://github.com/rundeck/rundeck/pull/2424)
-* [Upgrade from 2.7.1 to 2.8.0 missing job_file_record table and options0_.config_data column](https://github.com/rundeck/rundeck/issues/2423)
-* [single valued options with "selected=true" fetched from remote URL don't work](https://github.com/rundeck/rundeck/issues/2420)
-* [Job Step Conditional Error Message](https://github.com/rundeck/rundeck/issues/2116)
+* [Using option value in key storage path](https://github.com/rundeck/rundeck/pull/2443)
+* [Jobs hang when retry is enabled and step fails on at least one node](https://github.com/rundeck/rundeck/issues/2442)
+* [v2.8.1 Cannot create table job_file_record due to reserved word (oracle)](https://github.com/rundeck/rundeck/issues/2441)
+* [Expand global properties in plugin.yaml context](https://github.com/rundeck/rundeck/issues/2399)
