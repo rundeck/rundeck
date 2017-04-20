@@ -104,36 +104,36 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                 WorkflowStatusResult sectionSuccess;
 
                 StepExecutor stepExecutor = framework.getStepExecutionService()
-                    .getExecutorForItem(flowsection.getCommands().get(0));
+                        .getExecutorForItem(flowsection.getCommands().get(0));
 
                 if (stepExecutor.isNodeDispatchStep(flowsection.getCommands().get(0))) {
                     sectionSuccess = executeWFSectionNodeDispatch(executionContext,
-                                                                  stepCount,
-                                                                  results,
-                                                                  failures,
-                                                                  stepFailures,
-                                                                  flowsection
+                            stepCount,
+                            results,
+                            failures,
+                            stepFailures,
+                            flowsection
                     );
                 } else {
                     //execute each item sequentially
                     sectionSuccess = executeWFSection(executionContext,
-                                                      results,
-                                                      failures,
-                                                      stepFailures,
-                                                      stepCount,
-                                                      flowsection.getCommands(),
-                                                      flowsection.isKeepgoing());
+                            results,
+                            failures,
+                            stepFailures,
+                            stepCount,
+                            flowsection.getCommands(),
+                            flowsection.isKeepgoing());
 
                 }
                 wfresult = sectionSuccess;
-                if(!sectionSuccess.isSuccess()) {
+                if (!sectionSuccess.isSuccess()) {
                     workflowsuccess = false;
                 }
                 if (sectionSuccess.getControlBehavior() != null &&
-                    sectionSuccess.getControlBehavior() != ControlBehavior.Continue) {
+                        sectionSuccess.getControlBehavior() != ControlBehavior.Continue) {
                     controlBehavior = sectionSuccess.getControlBehavior();
                 }
-                if(sectionSuccess.getStatusString() !=null) {
+                if (sectionSuccess.getStatusString() != null) {
                     statusString = sectionSuccess.getStatusString();
                 }
                 if (!workflowsuccess && !item.getWorkflow().isKeepgoing() || controlBehavior == ControlBehavior.Halt) {
@@ -142,6 +142,16 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                 stepCount += flowsection.getCommands().size();
             }
             wfresult = workflowResult(workflowsuccess, statusString, controlBehavior);
+        }catch (NodesetEmptyException e){
+            Boolean successOnEmptyNodeFilter = Boolean.valueOf(executionContext.getDataContext().get("job").get("successOnEmptyNodeFilter"));
+            if(!successOnEmptyNodeFilter){
+                e.printStackTrace();
+                executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
+                        .getMessage());
+                wfresult = WorkflowResultFailed;
+            }else{
+                wfresult = workflowResult(true, null, ControlBehavior.Continue);
+            }
         } catch (RuntimeException e) {
             exception = e;
             e.printStackTrace();
