@@ -131,9 +131,9 @@ fi
 /var/lib/rundeck/cli/xercesImpl-2.11.0.jar
 /var/lib/rundeck/cli/xml-apis-1.4.01.jar
 /var/lib/rundeck/cli/xom-1.0.jar
-/var/lib/rundeck/cli/jackson-annotations-2.5.3.jar
-/var/lib/rundeck/cli/jackson-core-2.5.3.jar
-/var/lib/rundeck/cli/jackson-databind-2.5.3.jar
+/var/lib/rundeck/cli/jackson-annotations-2.8.8.jar
+/var/lib/rundeck/cli/jackson-core-2.8.8.jar
+/var/lib/rundeck/cli/jackson-databind-2.8.8.1.jar
 
 
 # CLI Tools
