@@ -818,7 +818,7 @@ function getCurSEID(){
                                  checked="${!scheduledExecution?.successOnEmptyNodeFilter}"
 
                                  id="successOnEmptyNodeFilterFalse"/>
-                        <g:message code="no" />
+                        <g:message code="scheduledExecution.property.successOnEmptyNodeFilter.false.description"/>
                     </label>
                 </div>
 
@@ -831,7 +831,7 @@ function getCurSEID(){
                                 checked="${scheduledExecution?.successOnEmptyNodeFilter}"
 
                                 id="successOnEmptyNodeFilterTrue"/>
-                        <g:message code="yes" />
+                        <g:message code="scheduledExecution.property.successOnEmptyNodeFilter.true.description"/>
                     </label>
                 </div>
             </div>

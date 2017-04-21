@@ -150,6 +150,7 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                         .getMessage());
                 wfresult = WorkflowResultFailed;
             }else{
+                logger.debug("No matched nodes");
                 wfresult = workflowResult(true, null, ControlBehavior.Continue);
             }
         } catch (RuntimeException e) {
