@@ -93,7 +93,7 @@ fi
 /var/lib/rundeck/bootstrap/jna-3.2.2.jar
 /var/lib/rundeck/bootstrap/libpam4j-1.5.jar
 /var/lib/rundeck/bootstrap/rundeck-jetty-server-%{_vname}.jar
-/var/lib/rundeck/bootstrap/not-yet-commons-ssl-0.3.11.jar
+/var/lib/rundeck/bootstrap/not-yet-commons-ssl-0.3.17.jar
 
 # CLI Lib Support
 %dir /var/lib/rundeck/cli
