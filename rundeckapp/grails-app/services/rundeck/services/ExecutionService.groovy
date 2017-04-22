@@ -857,6 +857,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobcontext.name = execution.scheduledExecution.jobName
             jobcontext.group = execution.scheduledExecution.groupPath
             jobcontext.id = execution.scheduledExecution.extid
+            jobcontext.successOnEmptyNodeFilter=execution.scheduledExecution.successOnEmptyNodeFilter?"true":"false"
         }
         jobcontext.execid = execution.id.toString()
         jobcontext.executionType = execution.executionType
