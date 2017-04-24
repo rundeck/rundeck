@@ -378,8 +378,6 @@ class ReportService  {
                 order(filters[query.sortBy], query.sortOrder == 'ascending' ? 'asc' : 'desc')
             } else {
                 order("dateCompleted", 'desc')
-                order("dateStarted",'desc')
-                order("id", 'desc')
             }
         }
         def executions=[]
