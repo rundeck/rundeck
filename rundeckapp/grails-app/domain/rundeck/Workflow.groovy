@@ -1,5 +1,6 @@
 package rundeck
 
+import com.dtolabs.rundeck.app.support.DomainIndexHelper
 import com.fasterxml.jackson.core.JsonParseException
 import com.fasterxml.jackson.databind.ObjectMapper
 
@@ -44,6 +45,9 @@ public class Workflow {
     static mapping = {
         pluginConfig type: 'text'
         commands lazy: false
+        DomainIndexHelper.generate(delegate){
+            index 'WORKFLOW_COMMANDS_IDX_0',['commands']
+        }
     }
     //ignore fake property 'configuration' and do not store it
     static transients = ['pluginConfigMap']
