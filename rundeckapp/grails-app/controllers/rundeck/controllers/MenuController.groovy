@@ -1448,18 +1448,74 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (null == session.summaryProjectStats ||
                 session.summaryProjectStats_expire < now ||
                 session.summaryProjectStatsSize != projectNames.size()) {
-            session.summaryProjectStats = loadSummaryProjectStats(projectNames)
+            if (configurationService.getBoolean("menuController.projectStats.queryAlt", false)) {
+                session.summaryProjectStats = loadSummaryProjectStatsAlt(projectNames)
+            } else {
+                session.summaryProjectStats = loadSummaryProjectStatsOrig(projectNames)
+            }
             session.summaryProjectStatsSize = projectNames.size()
             session.summaryProjectStats_expire = now + (60 * 1000)
         }
         return session.summaryProjectStats
+    }
+
+    private def loadSummaryProjectStatsAlt(final List projectNames) {
+        long start = System.currentTimeMillis()
+        Calendar n = GregorianCalendar.getInstance()
+        n.add(Calendar.DAY_OF_YEAR, -1)
+        Date lastday = n.getTime()
+        def summary = [:]
+        def projects = new TreeSet()
+        projectNames.each { project ->
+            summary[project] = [name: project, execCount: 0, failedCount: 0, userSummary: [], userCount: 0]
+        }
+        long proj2 = System.currentTimeMillis()
+        def executionResults = Execution.createCriteria().list {
+            gt('dateStarted', lastday)
+            inList('project', projectNames)
+            projections {
+                property('project')
+                property('status')
+                property('user')
+            }
+        }
+        proj2 = System.currentTimeMillis() - proj2
+        long proj3 = System.currentTimeMillis()
+        def projexecs = executionResults.groupBy { it[0] }
+        proj3 = System.currentTimeMillis() - proj3
+
+        def execCount = executionResults.size()
+        def totalFailedCount = 0
+        def users = new HashSet<String>()
+        projexecs.each { name, val ->
+            if (summary[name]) {
+                summary[name.toString()].execCount = val.size()
+                projects << name
+                def failedlist = val.findAll { it[1] in ['false', 'failed'] }
+
+                summary[name.toString()].failedCount = failedlist.size()
+                totalFailedCount += failedlist.size()
+                def projusers = new HashSet<String>()
+                projusers.addAll(val.collect { it[2] })
+
+                summary[name.toString()].userSummary.addAll(projusers)
+                summary[name.toString()].userCount = projusers.size()
+                users.addAll(projusers)
+            }
+        }
+
+        log.error(
+                "loadSummaryProjectStats... ${System.currentTimeMillis() - start}, projexeccount ${proj2}, " +
+                        "projuserdistinct ${proj3}"
+        )
+        [summary: summary, recentUsers: users, recentProjects: projects, execCount: execCount, totalFailedCount: totalFailedCount]
     }
     /**
      *
      * @param projectNames
      * @return
      */
-    private def loadSummaryProjectStats(final List projectNames) {
+    private def loadSummaryProjectStatsOrig(final List projectNames) {
         long start=System.currentTimeMillis()
         Calendar n = GregorianCalendar.getInstance()
         n.add(Calendar.DAY_OF_YEAR, -1)
