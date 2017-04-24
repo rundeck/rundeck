@@ -256,13 +256,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return lastexecs
     }
     /**
-     * Return the last execution time for any execution in the query's project
+     * Return the last execution id in the project
      * @param query
      * @return
      */
-    def Execution lastExecution(String project){
-        def execs = Execution.findAllByProjectAndDateCompletedIsNotNull(project,[max:1,sort:'dateCompleted',order:'desc'])
-        return execs?execs[0]:null
+    def lastExecutionId(String project) {
+        def execs = Execution.createCriteria().get {
+            eq('project', project)
+            order('dateCompleted', 'desc')
+            maxResults(1)
+            projections {
+                property('id')
+            }
+        }
+        return execs ?: null
     }
 
     /**

@@ -124,9 +124,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //        System.err.println("nowrunning: "+model.nowrunning);
         model = executionService.finishQueueQuery(query,params,model)
 
-        //include timestamp of last completed execution for the project
-        Execution e=executionService.lastExecution(query.projFilter)
-        model.lastExecId=e?.id
+        //include id of last completed execution for the project
+        def eid=executionService.lastExecutionId(query.projFilter)
+        model.lastExecId=eid
         
         User u = userService.findOrCreateUser(session.user)
         Map filterpref=[:] 
