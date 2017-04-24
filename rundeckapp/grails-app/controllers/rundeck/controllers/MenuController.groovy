@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProvide
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
+import org.grails.plugins.metricsweb.MetricService
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -79,6 +80,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     PluginService pluginService
+    MetricService metricService
 
     def configurationService
     ScmService scmService
@@ -120,7 +122,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         
         //find previous executions
-        def model= executionService.queryQueue(query)
+        def model = metricService?.withTimer(MenuController.name, actionName+'.queryQueue') {
+            executionService.queryQueue(query)
+        } ?: executionService.queryQueue(query)
         //        System.err.println("nowrunning: "+model.nowrunning);
         model = executionService.finishQueueQuery(query,params,model)
 
@@ -1449,9 +1453,19 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 session.summaryProjectStats_expire < now ||
                 session.summaryProjectStatsSize != projectNames.size()) {
             if (configurationService.getBoolean("menuController.projectStats.queryAlt", false)) {
-                session.summaryProjectStats = loadSummaryProjectStatsAlt(projectNames)
+                session.summaryProjectStats = metricService?.withTimer(
+                        MenuController.name,
+                        'loadSummaryProjectStatsAlt'
+                ) {
+                    loadSummaryProjectStatsAlt(projectNames)
+                } ?: loadSummaryProjectStatsAlt(projectNames)
             } else {
-                session.summaryProjectStats = loadSummaryProjectStatsOrig(projectNames)
+                session.summaryProjectStats = metricService?.withTimer(
+                        MenuController.name,
+                        'loadSummaryProjectStatsOrig'
+                ) {
+                    loadSummaryProjectStatsOrig(projectNames)
+                } ?: loadSummaryProjectStatsOrig(projectNames)
             }
             session.summaryProjectStatsSize = projectNames.size()
             session.summaryProjectStats_expire = now + (60 * 1000)

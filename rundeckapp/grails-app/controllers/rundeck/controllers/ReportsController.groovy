@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
+import org.grails.plugins.metricsweb.MetricService
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
@@ -45,6 +46,7 @@ class ReportsController extends ControllerBase{
     def FrameworkService frameworkService
     def scheduledExecutionService
     def ApiService apiService
+    def MetricService metricService
     static allowedMethods = [
             deleteFilter:'POST',
             storeFilter:'POST'
@@ -125,7 +127,11 @@ class ReportsController extends ControllerBase{
             query.configureFilter()
         }
         def curdate=new Date()
-        def model= reportService.getExecutionReports(query,true)
+        def model =
+                metricService?.withTimer(ReportsController.name, 'index.getExecutionReports') {
+                    reportService.getExecutionReports(query, true)
+                } ?: reportService.getExecutionReports(query, true)
+
 //        System.err.println("("+actionName+"): lastDate: "+model.lastDate);
 //        System.err.println("("+actionName+"): usedFilter: "+usedFilter+", p: "+params.filterName);
         if(model.lastDate<1 && query.recentFilter ){
@@ -480,7 +486,10 @@ class ReportsController extends ControllerBase{
         if(null!=query){
             query.configureFilter()
         }
-        def model=reportService.getExecutionReports(query,true)
+        def model =
+                metricService?.withTimer(ReportsController.name, 'apiHistory.getExecutionReports') {
+                    reportService.getExecutionReports(query, true)
+                } ?: reportService.getExecutionReports(query, true)
         model = reportService.finishquery(query,params,model)
 
         def statusMap = [scheduled: ExecutionService.EXECUTION_SCHEDULED,
