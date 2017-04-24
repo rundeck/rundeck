@@ -16,6 +16,8 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.support.DomainIndexHelper
+
 
 class ExecReport extends BaseReport{
 
@@ -35,6 +37,10 @@ class ExecReport extends BaseReport{
         filterApplied type: 'text'
         succeededNodeList type: 'text'
         failedNodeList type: 'text'
+        DomainIndexHelper.generate(delegate) {
+            index 'EXEC_REPORT_IDX_0', [/*'class', 'ctxProject', 'dateCompleted',*/ 'jcExecId', 'jcJobId']
+            index 'EXEC_REPORT_IDX_1', [/*'ctxProject',*/ 'jcJobId']
+        }
     }
 
     static constraints = {

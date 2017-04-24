@@ -41,6 +41,7 @@ import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProvide
 import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
+import org.grails.plugins.metricsweb.MetricService
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -79,6 +80,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     StoragePluginProviderService storagePluginProviderService
     StorageConverterPluginProviderService storageConverterPluginProviderService
     PluginService pluginService
+    MetricService metricService
 
     def configurationService
     ScmService scmService
@@ -120,13 +122,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         
         //find previous executions
-        def model= executionService.queryQueue(query)
+        def model = metricService?.withTimer(MenuController.name, actionName+'.queryQueue') {
+            executionService.queryQueue(query)
+        } ?: executionService.queryQueue(query)
         //        System.err.println("nowrunning: "+model.nowrunning);
         model = executionService.finishQueueQuery(query,params,model)
 
-        //include timestamp of last completed execution for the project
-        Execution e=executionService.lastExecution(query.projFilter)
-        model.lastExecId=e?.id
+        //include id of last completed execution for the project
+        def eid=executionService.lastExecutionId(query.projFilter)
+        model.lastExecId=eid
         
         User u = userService.findOrCreateUser(session.user)
         Map filterpref=[:] 
@@ -1448,18 +1452,84 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (null == session.summaryProjectStats ||
                 session.summaryProjectStats_expire < now ||
                 session.summaryProjectStatsSize != projectNames.size()) {
-            session.summaryProjectStats = loadSummaryProjectStats(projectNames)
+            if (configurationService.getBoolean("menuController.projectStats.queryAlt", false)) {
+                session.summaryProjectStats = metricService?.withTimer(
+                        MenuController.name,
+                        'loadSummaryProjectStatsAlt'
+                ) {
+                    loadSummaryProjectStatsAlt(projectNames)
+                } ?: loadSummaryProjectStatsAlt(projectNames)
+            } else {
+                session.summaryProjectStats = metricService?.withTimer(
+                        MenuController.name,
+                        'loadSummaryProjectStatsOrig'
+                ) {
+                    loadSummaryProjectStatsOrig(projectNames)
+                } ?: loadSummaryProjectStatsOrig(projectNames)
+            }
             session.summaryProjectStatsSize = projectNames.size()
             session.summaryProjectStats_expire = now + (60 * 1000)
         }
         return session.summaryProjectStats
+    }
+
+    private def loadSummaryProjectStatsAlt(final List projectNames) {
+        long start = System.currentTimeMillis()
+        Calendar n = GregorianCalendar.getInstance()
+        n.add(Calendar.DAY_OF_YEAR, -1)
+        Date lastday = n.getTime()
+        def summary = [:]
+        def projects = new TreeSet()
+        projectNames.each { project ->
+            summary[project] = [name: project, execCount: 0, failedCount: 0, userSummary: [], userCount: 0]
+        }
+        long proj2 = System.currentTimeMillis()
+        def executionResults = Execution.createCriteria().list {
+            gt('dateStarted', lastday)
+            inList('project', projectNames)
+            projections {
+                property('project')
+                property('status')
+                property('user')
+            }
+        }
+        proj2 = System.currentTimeMillis() - proj2
+        long proj3 = System.currentTimeMillis()
+        def projexecs = executionResults.groupBy { it[0] }
+        proj3 = System.currentTimeMillis() - proj3
+
+        def execCount = executionResults.size()
+        def totalFailedCount = 0
+        def users = new HashSet<String>()
+        projexecs.each { name, val ->
+            if (summary[name]) {
+                summary[name.toString()].execCount = val.size()
+                projects << name
+                def failedlist = val.findAll { it[1] in ['false', 'failed'] }
+
+                summary[name.toString()].failedCount = failedlist.size()
+                totalFailedCount += failedlist.size()
+                def projusers = new HashSet<String>()
+                projusers.addAll(val.collect { it[2] })
+
+                summary[name.toString()].userSummary.addAll(projusers)
+                summary[name.toString()].userCount = projusers.size()
+                users.addAll(projusers)
+            }
+        }
+
+        log.error(
+                "loadSummaryProjectStats... ${System.currentTimeMillis() - start}, projexeccount ${proj2}, " +
+                        "projuserdistinct ${proj3}"
+        )
+        [summary: summary, recentUsers: users, recentProjects: projects, execCount: execCount, totalFailedCount: totalFailedCount]
     }
     /**
      *
      * @param projectNames
      * @return
      */
-    private def loadSummaryProjectStats(final List projectNames) {
+    private def loadSummaryProjectStatsOrig(final List projectNames) {
         long start=System.currentTimeMillis()
         Calendar n = GregorianCalendar.getInstance()
         n.add(Calendar.DAY_OF_YEAR, -1)
@@ -1472,6 +1542,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         long proj2=System.currentTimeMillis()
         def projects2 = Execution.createCriteria().list {
             gt('dateStarted', today)
+            inList('project', projectNames)
             projections {
                 groupProperty('project')
                 count()
@@ -1492,6 +1563,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def failedExecs = Execution.createCriteria().list {
             gt('dateStarted', today)
             inList('status', ['false', 'failed'])
+            inList('project', projectNames)
             projections {
                 groupProperty('project')
                 count()
@@ -1509,6 +1581,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         long proj3=System.currentTimeMillis()
         def users2 = Execution.createCriteria().list {
             gt('dateStarted', today)
+            inList('project', projectNames)
             projections {
                 distinct('user')
                 property('project')

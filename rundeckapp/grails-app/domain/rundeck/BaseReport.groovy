@@ -16,6 +16,8 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.app.support.DomainIndexHelper
+
 class BaseReport {
 
     String node
@@ -36,6 +38,12 @@ class BaseReport {
     static mapping = {
         message type: 'text'
         title type: 'text'
+
+        DomainIndexHelper.generate(delegate) {
+            index 'EXEC_REPORT_IDX_0', [/*'class',*/ 'ctxProject', 'dateCompleted', /*'jcExecId', 'jcJobId'*/]
+            index 'EXEC_REPORT_IDX_1', ['ctxProject'/*, 'jcJobId'*/]
+            index 'BASE_REPORT_IDX_2', [/*'class',*/ 'ctxProject', 'dateCompleted', 'dateStarted']
+        }
     }
    static constraints = {
         reportId(nullable:true, maxSize: 1024+2048 /*jobName + groupPath size limitations from ScheduledExecution*/)
