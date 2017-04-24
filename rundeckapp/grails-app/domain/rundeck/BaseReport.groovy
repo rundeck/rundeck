@@ -40,9 +40,9 @@ class BaseReport {
         title type: 'text'
 
         DomainIndexHelper.generate(delegate) {
-            index 'BASE_REPORT_IDX_0', ['class', 'ctxProject', 'dateCompleted', 'jcExecId', 'jcJobId']
-            index 'BASE_REPORT_IDX_1', ['ctxProject', 'jcJobId']
-            index 'BASE_REPORT_IDX_2', ['class', 'ctxProject', 'dateCompleted', 'dateStarted']
+            index 'EXEC_REPORT_IDX_0', [/*'class',*/ 'ctxProject', 'dateCompleted', /*'jcExecId', 'jcJobId'*/]
+            index 'EXEC_REPORT_IDX_1', ['ctxProject'/*, 'jcJobId'*/]
+            index 'BASE_REPORT_IDX_2', [/*'class',*/ 'ctxProject', 'dateCompleted', 'dateStarted']
         }
     }
    static constraints = {
