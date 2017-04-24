@@ -1528,6 +1528,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         long proj2=System.currentTimeMillis()
         def projects2 = Execution.createCriteria().list {
             gt('dateStarted', today)
+            inList('project', projectNames)
             projections {
                 groupProperty('project')
                 count()
@@ -1548,6 +1549,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def failedExecs = Execution.createCriteria().list {
             gt('dateStarted', today)
             inList('status', ['false', 'failed'])
+            inList('project', projectNames)
             projections {
                 groupProperty('project')
                 count()
@@ -1565,6 +1567,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         long proj3=System.currentTimeMillis()
         def users2 = Execution.createCriteria().list {
             gt('dateStarted', today)
+            inList('project', projectNames)
             projections {
                 distinct('user')
                 property('project')
