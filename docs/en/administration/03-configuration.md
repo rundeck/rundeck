@@ -355,10 +355,50 @@ Change this by setting:
     rundeck.jobs.options.remoteUrlRetry=[total]
 
 ### Groovy config format
-You can change you rundeck-config.properties to a rundeck-config.groovy, but you will need to modify the syntax to be groovy, and you will need to point rundeck at the new filename when you start up rundeck:
 
-Launcher:
+You can change you rundeck-config.properties to a rundeck-config.groovy. 
 
-    java -jar -Drundeck.config.name=rundeck-config.groovy rundeck-launcher.jar
+The groovy format is a java-like language, and it is not the same as properties.
 
-RPM/DEB: Modify the RDECK_JVM variable in /etc/rundeck/profile, and set the "-Drundeck.config.name=/etc/rundeck/rundeck-config.groovy" entry to point to the correct file.
+Make sure you put quotes around all string values, but it is not necessary for true/false or numbers.
+
+java properties format:
+
+~~~ {.properties}
+some.property=value 
+~~~
+
+groovy format:
+
+~~~ {.groovy}
+some.property="value"
+~~~
+
+You can also use nested values using curly brackets, or use dot-notation "a.b.c",
+but since it is not simple text properties, strings have to be quoted.
+
+E.g. : a.b.c="blah" is the same as:
+
+~~~ {.groovy}
+a{ 
+    b{
+        c="blah"
+    }
+}
+~~~
+
+### Specify config file location
+
+You will need to point rundeck at the new filename when you start up rundeck:
+
+* Launcher:
+
+        java -jar -Drundeck.config.name=rundeck-config.groovy rundeck-launcher.jar
+
+RPM: Add this to the `/etc/sysconfig/rundeckd` file:
+
+        export RDECK_CONFIG_FILE="/etc/rundeck/rundeck-config.groovy"
+
+RPM/DEB: Add this to the `/etc/default/rundeckd` file:
+
+        export RDECK_CONFIG_FILE="/etc/rundeck/rundeck-config.groovy"
