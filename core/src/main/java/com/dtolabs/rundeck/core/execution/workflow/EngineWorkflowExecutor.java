@@ -343,6 +343,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 stepExecutionResults.put(success.stepNum, result.getStepResult());
                 if (!result.getStepResult().isSuccess()) {
                     stepFailures.put(success.stepNum, result.getStepResult());
+                    workflowSuccess = false;
                 }
                 stepResults.add(result.getStepResult());
                 if (result.getControlBehavior() != null && result.getControlBehavior() != ControlBehavior.Continue) {
