@@ -88,9 +88,10 @@
                 <input type="checkbox" name="bulk_edit" data-bind="value: executionId(), checked: bulkEditSelected"
                        class="_defaultInput"/>
             </td>
-            <td class="eventicon autoclickable" data-bind="attr: { 'title': status() } ">
-                <i class="exec-status icon"
-                   data-bind="css: { 'scheduled': status()=='scheduled', 'succeed': status()=='succeed' || status()=='succeeded', 'fail': status()=='fail' || status()=='failed', 'aborted': status()=='cancel' || status()=='aborted', 'running': status()=='running', 'timedout': status()=='timedout', 'failedretry': status()=='retry', 'other': isCustomStatus() }"></i>
+            <td class="eventicon autoclickable" data-bind="attr: { 'title': executionState() } ">
+                <i class="exec-status icon" data-bind="
+                attr: { 'data-execstate': executionState, 'data-statusstring': customStatusString }
+                "></i>
             </td>
             <td class="eventtitle autoclickable" data-bind="css: { job: isJob(), adhoc: isAdhoc() }">
                 <a href="#" data-bind="text: '#'+executionId(), attr: { href: executionHref() }" class="_defaultAction"></a>

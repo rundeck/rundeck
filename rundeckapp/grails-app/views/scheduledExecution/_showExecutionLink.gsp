@@ -22,7 +22,8 @@
         absolute="${absolute ? 'true' : 'false'}"
         params="${(followparams?.findAll { it.value }?:[:]) + [project: execution.project]}">
     <g:if test="${execution}">
-        <i class="exec-status icon " data-bind="attr: { 'data-execstate': executionState }">
+        <i class="exec-status icon "
+           data-bind="attr: { 'data-execstate': executionState, 'data-statusstring':executionStatusString }">
         </i>
     </g:if>
     <g:if test="${scheduledExecution}">

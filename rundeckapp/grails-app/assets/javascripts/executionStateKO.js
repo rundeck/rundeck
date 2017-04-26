@@ -910,18 +910,31 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
     self.executionId=ko.observable();
     self.outputScrollOffset=0;
     self.activeTab=ko.observable("summary");
-    self.scheduled=ko.pureComputed(function(){ return self.executionState()=='SCHEDULED'; });
-    self.failed=ko.pureComputed(function(){ return self.executionState()=='FAILED'; });
+    self.scheduled = ko.pureComputed(function () {
+        return self.executionState() === 'SCHEDULED';
+    });
+    self.failed = ko.pureComputed(function () {
+        return self.executionState() === 'FAILED';
+    });
+    self.incompleteState = ko.pureComputed(function () {
+        return self.executionState() === 'OTHER' && self.executionStatusString() === 'incomplete';
+    });
     self.totalSteps=ko.pureComputed(function(){ return self.workflow.workflow.length; });
     self.activeNodes=ko.pureComputed(function(){
         return ko.utils.arrayFilter(self.nodes(), function (n) {
-            return n.summaryState() != 'NONE';
+            return n.summaryState() !== 'NONE';
         });
+    });
+    self.displayStatusString = ko.computed(function () {
+        var statusString = self.executionStatusString();
+        return statusString != null && self.executionState() != statusString.toUpperCase() && !self.incompleteState();
     });
     self.totalNodeCount=ko.observable(0);
     self.nodeIndex={};
     self.totalNodes=ko.pureComputed(function(){
-        var nodes = ko.utils.arrayFilter(self.nodes(),function(n){return n.summaryState()!='NONE';});
+        var nodes = ko.utils.arrayFilter(self.nodes(), function (n) {
+            return n.summaryState() !== 'NONE';
+        });
         return nodes?nodes.length:0;
     });
     self.jobPercentage=ko.pureComputed(function(){

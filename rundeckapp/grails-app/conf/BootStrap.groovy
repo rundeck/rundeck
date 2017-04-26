@@ -377,13 +377,21 @@ class BootStrap {
                      'executionService.startup.cleanupMode',
                      'async'
              )
+             def cleanupStatus = configurationService.getString(
+                     'executionService.startup.cleanupStatus',
+                     'incomplete'
+             )
              if ('sync' == cleanupMode) {
                  timer("executionService.cleanupRunningJobs") {
-                     executionService.cleanupRunningJobs(clusterMode ? serverNodeUUID : null)
+                     executionService.cleanupRunningJobs(clusterMode ? serverNodeUUID : null, cleanupStatus, new Date())
                  }
              } else {
                  log.debug("executionService.cleanupRunningJobs: starting asynchronously")
-                 executionService.cleanupRunningJobsAsync(clusterMode ? serverNodeUUID : null)
+                 executionService.cleanupRunningJobsAsync(
+                         clusterMode ? serverNodeUUID : null,
+                         cleanupStatus,
+                         new Date()
+                 )
              }
 
              if (clusterMode && configurationService.getBoolean(

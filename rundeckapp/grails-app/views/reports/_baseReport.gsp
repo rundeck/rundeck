@@ -57,10 +57,10 @@
             </g:if>
             <g:set var="statusIcon" value="${execution.status == 'scheduled' ? 'time' : !execution.dateCompleted ? 'running' : execution.statusSucceeded() ?
                     'succeed' : execution.cancelled ? 'aborted' :execution.willRetry ? 'failedretry' :execution.timedOut ? 'timedout' :
-                    execution.status in ['false','failed']?'fail':'other'}"/>
+                    execution.status in ['false','failed']?'fail':execution.status in ['incomplete']?'fail':'other'}"/>
             <g:set var="statusIcon" value="${[succeeded:'succeed','failed-with-retry':'failedretry',failed:'fail'].get(status)?:status}"/>
             <td class="eventicon autoclickable">
-                <i class="exec-status icon ${statusIcon}"></i>
+                <i class="exec-status icon " data-execstate="${execution.executionState?.toUpperCase()}" data-statusstring="${execution.customStatusString}"></i>
             </td>
             <g:set var="vals" value="${['?','?','?']}"/>
             <g:if test="${it instanceof ExecReport}">

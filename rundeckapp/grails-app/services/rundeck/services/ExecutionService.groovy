@@ -659,7 +659,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      *
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
-    def cleanupRunningJobsAsync(String serverUUID = null, Date before=new Date()) {
+    def cleanupRunningJobsAsync(String serverUUID = null, String status = null, Date before = new Date()) {
         def executionIds = Execution.withCriteria {
             isNotNull('dateStarted')
             isNull('dateCompleted')
@@ -680,7 +680,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         callAsync {
             def found = executionIds.collect { Execution.get(it) }
-            cleanupRunningJobs(found)
+            cleanupRunningJobs(found, status)
         }
     }
 
@@ -710,25 +710,33 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * Set the result status to FAIL for any Executions that are not complete
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
-    def cleanupRunningJobs(String serverUUID=null, Date before=new Date()) {
-        cleanupRunningJobs findRunningExecutions(serverUUID,before)
+    def cleanupRunningJobs(String serverUUID = null, String status = null, Date before = new Date()) {
+        cleanupRunningJobs(findRunningExecutions(serverUUID, before), status)
     }
 
     /**
      * Set the result status to FAIL for any Executions that are not complete
      * @param serverUUID if not null, only match executions assigned to the given serverUUID
      */
-    def cleanupRunningJobs(List<Execution> found) {
+    def cleanupRunningJobs(List<Execution> found, String status = null) {
         found.each { Execution e ->
-            cleanupExecution(e)
+            cleanupExecution(e, status)
         }
     }
 
-    private void cleanupExecution(Execution e) {
-        saveExecutionState(e.scheduledExecution?.id, e.id, [status       : String.valueOf(false),
-                                                            dateCompleted: new Date(), cancelled: true], null, null
+    private void cleanupExecution(Execution e, String status = null) {
+        saveExecutionState(
+                e.scheduledExecution?.id,
+                e.id,
+                [
+                        status       : status ?: String.valueOf(false),
+                        dateCompleted: new Date(),
+                        cancelled    : !status
+                ],
+                null,
+                null
         )
-        log.error("Stale Execution cleaned up: [${e.id}]")
+        log.error("Stale Execution cleaned up: [${e.id}] in ${e.project}")
         metricService.markMeter(this.class.name, 'executionCleanupMeter')
     }
 

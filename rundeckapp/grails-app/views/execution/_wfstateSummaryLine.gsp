@@ -15,9 +15,9 @@
   --}%
 <span class=" execstate execstatedisplay overall h4"
       data-execstate="${enc(attr:execState)}"
-      data-bind="attr: { 'data-execstate': executionState() } ">
+      data-bind="attr: { 'data-execstate': executionState(), 'data-statusstring': executionStatusString() } ">
 </span>
-<span data-bind="if: executionStatusString()!=null && executionState() != executionStatusString().toUpperCase()">
+<span data-bind="if: displayStatusString">
 <span class="  h4 exec-status-text custom-status"
       data-bind="text: executionStatusString() ">
 </span>

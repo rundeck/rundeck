@@ -233,6 +233,11 @@
         content: 'OK';
       }
 
+    &[data-execstate=OTHER][data-statusstring=incomplete]:after {
+      content: 'Incomplete';
+      color: orange;
+    }
+
       &[data-execstate=NODE_PARTIAL_SUCCEEDED]:after {
         content: 'Partial';
       }
@@ -761,6 +766,14 @@ section{
       &.icon {
         .glyphicon();
         .glyphicon-asterisk();
+      }
+    }
+    &[data-execstate=OTHER][data-statusstring=incomplete] {
+      color: orange;
+
+      &.icon {
+        .glyphicon();
+        .glyphicon-exclamation-sign();
       }
     }
     &.fail, &[data-execstate=FAILED] {
