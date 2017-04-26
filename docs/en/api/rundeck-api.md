@@ -55,6 +55,11 @@ View the [Index](#index) listing API paths.
 
 Changes introduced by API Version number:
 
+**Version 20**:
+
+* Updated Endpoints.
+    - [`GET /api/20/project/[PROJECT]/executions`][/api/V/project/[PROJECT]/executions] - Executions query, add `executionTypeFilter`
+
 **Version 19**:
 
 * New Endpoints.
@@ -3260,6 +3265,7 @@ Parameters for querying for Executions for particular jobs:
 * `excludeJobFilter`: specify a filter for the job Name. Exclude any job name that matches this value.
 * `jobExactFilter`: specify an exact job name to match.
 * `excludeJobExactFilter`: specify an exact job name to exclude.
+* `executionTypeFilter`: specify the execution type, one of: `scheduled` (schedule trigger), `user` (user trigger), `user-scheduled` (user scheduled trigger)(*since v20*)
 
 The format for the `jobListFilter` and `excludeJobListFilter` is the job's group and name separated by a '/' character, such as: "group1/job name", or "my job" if there is no group.
 

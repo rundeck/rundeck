@@ -50,6 +50,7 @@ class ExecutionQuery extends ScheduledExecutionQuery{
     boolean doendbeforeFilter
     String recentFilter
     String userFilter
+    String executionTypeFilter
 
     static constraints={
         statusFilter(nullable:true)
@@ -79,6 +80,7 @@ class ExecutionQuery extends ScheduledExecutionQuery{
         excludeJobListFilter(nullable:true)
         abortedbyFilter(nullable:true)
         adhoc(nullable:true)
+        executionTypeFilter( nullable: true)
     }
     /**
      * Modify a date by rewinding a certain number of units

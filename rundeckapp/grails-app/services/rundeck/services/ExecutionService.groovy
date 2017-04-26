@@ -3239,6 +3239,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 eq('cancelled', false)
                 eq('status',  state)
             }
+            if (query.executionTypeFilter) {
+                eq('executionType', query.executionTypeFilter)
+            }
             if (query.abortedbyFilter) {
                 eq('abortedby', query.abortedbyFilter)
             }
