@@ -68,7 +68,7 @@ public class BaseNodeFilters {
         nodeIncludeOsVersion(nullable: true)
         nodeExcludeOsVersion(nullable: true)
         nodeExcludePrecedence(nullable: true)
-        //successOnEmptyNodeFilter(nullable: true)
+        successOnEmptyNodeFilter(nullable: true)
         filter(nullable: true)
     }
     static mapping = {
