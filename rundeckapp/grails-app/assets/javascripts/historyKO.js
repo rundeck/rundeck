@@ -64,6 +64,52 @@ function Report(data) {
     self.customStatusString = ko.computed(function () {
         return self.execution()?self.execution().status():status();
     });
+    self.isRetry = ko.computed(function () {
+        return self.execution() && self.execution().retry && self.execution().retry();
+    });
+    self.hasRetryExec = ko.computed(function () {
+        return self.execution() && self.execution().retryExecutionId && self.execution().retryExecutionId();
+    });
+    self.wasTimedOut = ko.computed(function () {
+        return self.execution() && self.execution().timedOut && self.execution().timedOut();
+    });
+    self.css = ko.computed(function () {
+        if (self.status() == 'scheduled') {
+            return 'scheduled';
+        }
+        if (self.status() == 'succeed' || self.status() == 'succeeded') {
+            return 'succeeded';
+        }
+        if (self.status() == 'fail' || self.status() == 'failed') {
+            return 'failed';
+        }
+        if (self.status() == 'cancel' || self.status() == 'aborted') {
+            return 'aborted';
+        }
+        if (self.status() == 'running') {
+            return 'running';
+        }
+        if (self.status() == 'timedout') {
+            return 'timedout';
+        }
+        if (self.status() == 'retry') {
+            return 'failed-with-retry';
+        }
+        return 'other';
+    });
+    self.executionState = ko.computed(function () {
+        var css = self.css();
+        var exec = self.execution();
+
+        if (self.hasRetryExec()) {
+            return 'FAILED-WITH-RETRY';
+        }
+        if (self.wasTimedOut()) {
+            return 'TIMEDOUT';
+        }
+
+        return css.toUpperCase();
+    });
     self.isJob = ko.computed(function () {
         var id = self.jobId();
         var deleted=self.jobDeleted();

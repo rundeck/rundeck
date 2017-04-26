@@ -1655,6 +1655,11 @@ class ExecutionController extends ControllerBase{
                 )
             }
         }
+
+        if (request.api_version < ApiRequestFilters.V20 && query.executionTypeFilter) {
+            //ignore
+            query.executionTypeFilter = null
+        }
         def resOffset = params.offset ? params.int('offset') : 0
         def resMax = params.max ?
                 params.int('max') :

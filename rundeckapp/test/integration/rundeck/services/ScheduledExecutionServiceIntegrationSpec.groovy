@@ -18,7 +18,7 @@ import spock.lang.Shared
 /**
  * Integration tests for the ScheduledExecutionService.
  */
-class ScheduledExecutionServiceTest extends IntegrationSpec {
+class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
     public static final String TEST_UUID2 = '490966E0-2E2F-4505-823F-E2665ADC66FB'
 

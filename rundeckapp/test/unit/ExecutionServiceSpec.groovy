@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.aspectj.weaver.ast.Not
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
@@ -2108,6 +2109,43 @@ class ExecutionServiceSpec extends Specification {
         'pass2'         | 'optb'
         'pass3'         | 'optc'
         ''              | 'other'
+
+    }
+
+    def "cleanup execution should set custom state"() {
+        given:
+        Execution e = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: "testproj",
+                loglevel: 'WARN',
+                doNodedispatch: false,
+                dateStarted: new Date(),
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])]
+                ).save(),
+                ).save(flush: true)
+        service.frameworkService = Mock(FrameworkService)
+        service.reportService = Mock(ReportService) {
+            1 * reportExecutionResult(_) >> [:]
+        }
+        service.notificationService = Mock(NotificationService) {
+            1 * triggerJobNotification(_, _, _)
+        }
+        service.metricService = Mock(MetricService)
+        when:
+        service.cleanupExecution(e, status)
+        then:
+        e.refresh()
+        e.id != null
+        e.status == result
+        e.cancelled == (status == null)
+
+        where:
+        status      | result
+        'testvalue' | 'testvalue'
+        null        | 'false'
 
     }
 }

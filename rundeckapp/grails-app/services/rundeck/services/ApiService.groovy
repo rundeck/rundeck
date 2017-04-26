@@ -1035,7 +1035,8 @@ class ApiService {
                         href: href,
                         permalink: execdata.permalink,
                         status: status,
-                        project: e.project
+                        project: e.project,
+                        executionType:e.executionType
                 ]
             if(execdata.customStatus){
                 execMap['customStatus']=execdata.customStatus
