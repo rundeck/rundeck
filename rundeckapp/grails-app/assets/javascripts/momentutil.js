@@ -33,7 +33,7 @@
         }
     },
     formatTimeSimple : function (text) {
-        return self.formatTime(text, 'h:mm:ss a');
+        return MomentUtil.formatTime(text, 'h:mm:ss a');
     },
     formatTimeAtDate : function (text) {
         var time = moment(text);
