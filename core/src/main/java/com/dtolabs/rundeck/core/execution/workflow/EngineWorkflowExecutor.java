@@ -4,7 +4,6 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
-import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
@@ -171,7 +170,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                     .getMessage());
             return new BaseWorkflowExecutionResult(
                     stepResults,
-                    new HashMap<String, Collection<StepExecutionResult>>(),
+                    new HashMap<>(),
                     stepFailures,
                     e,
                     WorkflowResultFailed
@@ -189,8 +188,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
 
         int wfThreadcount = strategyForWorkflow.getThreadCount();
-        //strategy.equals("parallel") ? 0 : workflow
-        // .getThreadcount();
 
         ExecutorService executorService = wfThreadcount > 0
                                           ? Executors.newFixedThreadPool(wfThreadcount)
@@ -299,7 +296,11 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 .ruleEngine(ruleEngine)
                 .executor(executorService)
                 .state(state)
-                .listener(createListener(executionContext.getExecutionListener()))
+                .listener(event -> executionContext.getExecutionListener()
+                                                   .log(
+                                                           Constants.DEBUG_LEVEL,
+                                                           event.getEventType() + ": " + event.getMessage()
+                                                   ))
                 .build();
 
         DataContext base = new BaseDataContext();
@@ -409,15 +410,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     }
 
 
-    private WorkflowSystemEventListener createListener(final ExecutionListener executionListener) {
-        return new WorkflowSystemEventListener() {
-            @Override
-            public void onEvent(final WorkflowSystemEvent event) {
-                executionListener.log(Constants.DEBUG_LEVEL, event.getEventType() + ": " + event.getMessage());
-            }
-        };
-    }
-
     private StateObj createTriggerControlStateForStep(final int stepNum) {
         return States.state(
                 stepKey(STEP_CONTROL_KEY, stepNum),
@@ -440,64 +432,61 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final boolean keepgoing
     )
     {
-        return new WorkflowSystem.SimpleFunction<MultiDataContext<String,DataContext>, StepResultCapture>() {
-            @Override
-            public StepResultCapture apply(final MultiDataContext<String,DataContext> inputData) {
-                final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
-                List<StepExecutionResult> resultList = new ArrayList<>();
+        return inputData -> {
+            final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
+            List<StepExecutionResult> resultList = new ArrayList<>();
 
-                BaseDataContext newDataContext = new BaseDataContext();
-                newDataContext.merge(DataContextUtils.context(executionContext.getDataContext()));
-                if(null!=inputData.getBase()) {
-                    newDataContext.merge(inputData.getBase());
-                }
-                //TODO: merge node results from input multidata
+            BaseDataContext newDataContext = new BaseDataContext();
+            newDataContext.merge(DataContextUtils.context(executionContext.getDataContext()));
+            if(null!=inputData.getBase()) {
+                newDataContext.merge(inputData.getBase());
+            }
+            //TODO: merge node results from input multidata
 
-                HashMap<String, Map<String,Map<String,String>>> newNodeData = new HashMap<>();
+            HashMap<String, Map<String,Map<String,String>>> newNodeData = new HashMap<>();
 
-                Map<String, DataContext> inputNodeData = inputData.getData();
-                if(executionContext instanceof NodeExecutionContext){
-                    NodeExecutionContext nctx = (NodeExecutionContext) executionContext;
-                    Map<String, Map<String, Map<String, String>>> nodeDataContext = nctx.getNodeDataContext();
-                    for (String node : nodeDataContext.keySet()) {
-                        BaseDataContext d = new BaseDataContext();
-                        d.merge(DataContextUtils.context(nodeDataContext.get(node)));
-                        DataContext dataContext = inputNodeData.get(node);
-                        if(null!=dataContext){
-                            d.merge(dataContext);
-                        }
-                        newNodeData.put(node, d);
+            Map<String, DataContext> inputNodeData = inputData.getData();
+            if(executionContext instanceof NodeExecutionContext){
+                NodeExecutionContext nctx = (NodeExecutionContext) executionContext;
+                Map<String, Map<String, Map<String, String>>> nodeDataContext = nctx.getNodeDataContext();
+                for (String node : nodeDataContext.keySet()) {
+                    BaseDataContext d = new BaseDataContext();
+                    d.merge(DataContextUtils.context(nodeDataContext.get(node)));
+                    DataContext dataContext = inputNodeData.get(node);
+                    if(null!=dataContext){
+                        d.merge(dataContext);
                     }
-                } else if (inputNodeData != null) {
-                    newNodeData.putAll(inputNodeData);
+                    newNodeData.put(node, d);
                 }
+            } else if (inputNodeData != null) {
+                newNodeData.putAll(inputNodeData);
+            }
 
 
-                executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Input data context: " + inputData);
-                StepExecutionContext newContext =
-                        ExecutionContextImpl.builder(executionContext)
-                                            .dataContext(newDataContext)
-                                            .nodeDataContext(newNodeData)
-                                            .build();
-                try {
-                    return executeWorkflowStep(
-                            newContext,
-                            stepFailedMap,
-                            resultList,
-                            keepgoing,
-                            wlistener,
-                            i,
-                            cmd
-                    );
-                } catch (Throwable e) {
-                    String message = String.format(
-                            "Exception while executing step [%d]: [%s]",
-                            i,
-                            e.toString()
-                    );
-                    executionContext.getExecutionListener().log(Constants.ERR_LEVEL, message);
-                    throw new RuntimeException(e);
-                }
+            executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Input data context: " + inputData);
+            StepExecutionContext newContext =
+                    ExecutionContextImpl.builder(executionContext)
+                                        .dataContext(newDataContext)
+                                        .nodeDataContext(newNodeData)
+                                        .build();
+            try {
+                return executeWorkflowStep(
+                        newContext,
+                        stepFailedMap,
+                        resultList,
+                        keepgoing,
+                        wlistener,
+                        i,
+                        cmd
+                );
+            } catch (Throwable e) {
+                String message = String.format(
+                        "Exception while executing step [%d]: [%s]",
+                        i,
+                        e.toString()
+                );
+                executionContext.getExecutionListener().log(Constants.ERR_LEVEL, message);
+                throw new RuntimeException(e);
             }
         };
     }
