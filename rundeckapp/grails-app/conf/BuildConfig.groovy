@@ -25,8 +25,8 @@ if (System.properties['maven.central.url']) {
 println "Maven Central: ${mavenCentralUrl}"
 
 
-grails.project.target.level = 1.7
-grails.project.source.level = 1.7
+grails.project.target.level = 1.8
+grails.project.source.level = 1.8
 
 grails.project.dependency.resolver = "maven"
 
