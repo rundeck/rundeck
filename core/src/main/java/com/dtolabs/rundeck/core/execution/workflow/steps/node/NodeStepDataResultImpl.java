@@ -28,6 +28,7 @@ public class NodeStepDataResultImpl extends NodeStepResultImpl implements HasDat
         this.dataContext = dataContext;
         this.original = original;
         setSuccess(original.isSuccess());
+        setSourceResult(original);
 
     }
 

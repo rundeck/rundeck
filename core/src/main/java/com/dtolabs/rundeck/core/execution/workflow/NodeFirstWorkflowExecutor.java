@@ -403,9 +403,13 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
             }
             HasSourceResult sourced = (HasSourceResult) dispatcherResult;
             StatusResult sourceResult = sourced.getSourceResult();
-            assert sourceResult instanceof WorkflowExecutionResult;
+            while (!(sourceResult instanceof WorkflowExecutionResult) && (sourceResult instanceof HasSourceResult)) {
+                sourceResult = ((HasSourceResult) sourceResult).getSourceResult();
+            }
+
             if (!(sourceResult instanceof WorkflowExecutionResult)) {
-                throw new IllegalArgumentException("Cannot extract workflow result from dispatcher result");
+                throw new IllegalArgumentException("Cannot extract workflow result from dispatcher result: " +
+                                                   sourceResult.getClass().getName());
             }
             WorkflowExecutionResult wfresult = (WorkflowExecutionResult) sourceResult;
             return wfresult;
