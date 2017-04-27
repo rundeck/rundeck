@@ -34,7 +34,7 @@ import rundeck.services.LoggingService
 import rundeck.services.logging.ExecutionLogState
 
 @TestFor(ExecutionController)
-@Mock([Workflow,ScheduledExecution,Execution])
+@Mock([Workflow,ScheduledExecution,Execution,CommandExec])
 class ExecutionControllerTests  {
 
     /**

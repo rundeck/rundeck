@@ -1367,17 +1367,12 @@ class ScheduledExecutionControllerTests  {
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded = false
         def svcMock = mockFor(ApiService, true)
-        def requireFailed=false
-        svcMock.demand.requireApi { req, resp ->
-            true
+
+        svcMock.demand.renderErrorFormat { response, Map error ->
+            assert error.status == 400
+            assert error.code == 'api.error.invalid.request'
         }
-        svcMock.demand.requireParameters { reqparams, response, List needparams ->
-            assertTrue('project' in needparams)
-            assertTrue('exec' in needparams)
-            assertNull(reqparams.project)
-            requireFailed=true
-            return false
-        }
+
         sec.apiService = svcMock.createMock()
         def result = sec.apiRunCommand(new ApiRunAdhocRequest(exec: 'blah'))
         assert !succeeded
@@ -1385,7 +1380,6 @@ class ScheduledExecutionControllerTests  {
         assertNull(response.redirectedUrl)
         assert null==sec.flash.error
         assert !sec.chainModel
-        assert requireFailed
     }
 
     public void testApiBulkJobDeleteRequest_validation() {
