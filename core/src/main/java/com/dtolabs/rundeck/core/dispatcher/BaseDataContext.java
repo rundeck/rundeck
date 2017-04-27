@@ -12,10 +12,10 @@ public class BaseDataContext implements MutableDataContext {
     private Map<String, Map<String, String>> data;
 
     public BaseDataContext() {
-        this(new HashMap<String, Map<String, String>>());
+        this(new HashMap<>());
     }
     public BaseDataContext(DataContext context) {
-        this(new HashMap<String, Map<String, String>>());
+        this(new HashMap<>());
         merge(context);
     }
 
