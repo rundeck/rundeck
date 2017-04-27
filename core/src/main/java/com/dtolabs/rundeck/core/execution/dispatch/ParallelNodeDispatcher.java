@@ -27,13 +27,13 @@ import com.dtolabs.rundeck.core.cli.CallableWrapperTask;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
+import com.dtolabs.rundeck.core.execution.workflow.ReadableOutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
@@ -212,13 +212,16 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         @Override
         public NodeStepResult call() {
             try {
-                final NodeStepResult interpreterResult = framework.getExecutionService().executeNodeStep(
-                    context, item, node);
-                if (!interpreterResult.isSuccess()) {
-                    failureMap.put(node.getNodename(), interpreterResult);
+                final ReadableOutputContext outputContext = DataContextUtils.outputContext();
+                ExecutionContextImpl nodeDataContext = new ExecutionContextImpl.Builder(context).outputContext(outputContext).build();
+                NodeStepResult result = framework.getExecutionService().executeNodeStep(
+                        nodeDataContext, item, node);
+                result = NodeStepDataResultImpl.with(result, outputContext.getDataContext());
+                if (!result.isSuccess()) {
+                    failureMap.put(node.getNodename(), result);
                 }
-                resultMap.put(node.getNodename(), interpreterResult);
-                return interpreterResult;
+                resultMap.put(node.getNodename(), result);
+                return result;
             } catch (NodeStepException e) {
                 NodeStepResultImpl result = new NodeStepResultImpl(e,
                                                                    e.getFailureReason(),

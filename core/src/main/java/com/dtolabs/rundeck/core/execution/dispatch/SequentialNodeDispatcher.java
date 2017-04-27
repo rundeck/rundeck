@@ -122,27 +122,9 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                     result = framework.getExecutionService().executeNodeStep(nodeDataContext, item, node);
                     //add as node-specific data
                     result = NodeStepDataResultImpl.with(result, outputContext.getDataContext());
-//                    if (context.getOutputContext() != null) {
-//
-//                        final DataOutputContextualized nodedata =
-//                                new DataOutputContextualized("/node:" + node.getNodename());
-//                        nodedata.addOutput(outputContext.getDataContext());
-//                        System.err.println("Node dispatch, copy to parent node data context: "+outputContext.getDataContext());
-//                        nodedata.copyTo(context.getOutputContext());
-//                        Map<String, Map<String, Map<String, String>>> nodeDataContext1 = nodeDataContext
-//                                .getNodeDataContext();
-//                        Map<String, Map<String, String>> oldNodeData = nodeDataContext1.get(node.getNodename());
-//                        if(null != oldNodeData){
-//                            nodeDataContext1.put(
-//                                    node.getNodename(),
-//                                    DataContextUtils.merge(oldNodeData, outputContext.getDataContext())
-//                            );
-//                        }else{
-//                            nodeDataContext1.put(node.getNodename(), outputContext.getDataContext());
-//                        }
-//                    }
                 } else {
                     result = toDispatch.dispatch(nodeDataContext, node);
+                    result = NodeStepDataResultImpl.with(result, outputContext.getDataContext());
                 }
 
                 resultMap.put(node.getNodename(), result);
