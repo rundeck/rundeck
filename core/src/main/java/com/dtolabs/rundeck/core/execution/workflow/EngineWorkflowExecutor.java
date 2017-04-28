@@ -17,8 +17,8 @@ import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 
 
 /**
@@ -323,7 +323,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 return next;
             }
         };
-        Set<WorkflowSystem.OperationResult<MultiDataContext<String,DataContext>, EngineWorkflowStepOperationSuccess,
+        Set<WorkflowSystem.OperationResult<MultiDataContext<String,DataContext>, EngineWorkflowStepOperationCompleted,
                 EngineWorkflowStepOperation>>
                 operationResults =
                 workflowEngine.processOperations(operations, dataContextSharedData);
@@ -334,9 +334,9 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
 
         boolean workflowSuccess = !workflowEngine.isInterrupted();
-        for (WorkflowSystem.OperationResult<MultiDataContext<String,DataContext>, EngineWorkflowStepOperationSuccess,
+        for (WorkflowSystem.OperationResult<MultiDataContext<String,DataContext>, EngineWorkflowStepOperationCompleted,
                 EngineWorkflowStepOperation> operationResult : operationResults) {
-            EngineWorkflowStepOperationSuccess success = operationResult.getSuccess();
+            EngineWorkflowStepOperationCompleted success = operationResult.getSuccess();
             EngineWorkflowStepOperation operation = operationResult.getOperation();
             Throwable failure = operationResult.getFailure();
 
@@ -425,7 +425,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
     }
 
-    WorkflowSystem.SimpleFunction<MultiDataContext<String,DataContext>, BaseWorkflowExecutor.StepResultCapture> callable(
+    Function<MultiDataContext<String,DataContext>, StepResultCapture> callable(
             final StepExecutionItem cmd,
             final StepExecutionContext executionContext,
             final int i,

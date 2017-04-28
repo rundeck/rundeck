@@ -6,17 +6,17 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.rules.*;
 
 import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 /**
  * operation for running a step
  */
-class EngineWorkflowStepOperation implements WorkflowSystem.Operation<MultiDataContext<String,DataContext>,EngineWorkflowStepOperationSuccess> {
+class EngineWorkflowStepOperation implements WorkflowSystem.Operation<MultiDataContext<String,DataContext>,EngineWorkflowStepOperationCompleted> {
     int stepNum;
     String label;
     Set<Condition> startTriggerConditions;
     Set<Condition> skipTriggerConditions;
-    private WorkflowSystem.SimpleFunction<MultiDataContext<String,DataContext>,BaseWorkflowExecutor.StepResultCapture> callable;
+    private Function<MultiDataContext<String,DataContext>,BaseWorkflowExecutor.StepResultCapture> callable;
     private StateObj startTriggerState;
     private StateObj skipTriggerState;
     private boolean didRun = false;
@@ -24,7 +24,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<MultiDataC
     EngineWorkflowStepOperation(
             final int stepNum,
             final String label,
-            final WorkflowSystem.SimpleFunction<MultiDataContext<String,DataContext>,BaseWorkflowExecutor.StepResultCapture> callable,
+            final Function<MultiDataContext<String,DataContext>,BaseWorkflowExecutor.StepResultCapture> callable,
             final StateObj startTriggerState,
             final StateObj skipTriggerState,
             final Set<Condition> startTriggerConditions,
@@ -51,7 +51,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<MultiDataC
     }
 
     @Override
-    public EngineWorkflowStepOperationSuccess apply(MultiDataContext<String,DataContext> context) throws Exception {
+    public EngineWorkflowStepOperationCompleted apply(MultiDataContext<String,DataContext> context)  {
         didRun = true;
         BaseWorkflowExecutor.StepResultCapture stepResultCapture = callable.apply(context);
         StepExecutionResult result = stepResultCapture.getStepResult();
@@ -138,7 +138,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<MultiDataC
             }
         }
 
-        return new EngineWorkflowStepOperationSuccess(stepNum, stateChanges, stepResultCapture);
+        return new EngineWorkflowStepOperationCompleted(stepNum, stateChanges, stepResultCapture);
     }
 
     @Override

@@ -1,9 +1,7 @@
 package com.dtolabs.rundeck.core.rules;
 
-import com.google.common.base.Function;
-
 import java.util.Set;
-import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 /**
  * Process a set of Operations, by use of a RuleEngine to determine when/if operations should run,
@@ -21,7 +19,7 @@ public interface WorkflowSystem {
      *
      * @return set of results for all processed operations
      */
-    <D, T extends OperationSuccess<D>, X extends Operation<D, T>> Set<OperationResult<D, T, X>> processOperations(
+    <D, T extends OperationCompleted<D>, X extends Operation<D, T>> Set<OperationResult<D, T, X>> processOperations(
             final Set<X> operations,
             final SharedData<D> shared
     );
@@ -39,7 +37,7 @@ public interface WorkflowSystem {
      * @param <T> success type
      * @param <X> operation type
      */
-    public static interface OperationResult<D,T extends OperationSuccess<D>, X extends Operation<D,T>> {
+    public static interface OperationResult<D,T extends OperationCompleted<D>, X extends Operation<D,T>> {
         Throwable getFailure();
 
         T getSuccess();
@@ -69,28 +67,20 @@ public interface WorkflowSystem {
     }
 
     /**
-     * Indicates an operation succeeded, supplies a new set of state data to update the mutable state with
+     * Indicates an operation completed, supplies a new set of state data to update the mutable state with
      */
-    public static interface OperationSuccess<T> {
+    public static interface OperationCompleted<T> {
         StateObj getNewState();
 
         T getResult();
     }
 
     /**
-     * function interface with throwable
-     * @param <X>
-     * @param <Y>
-     */
-    public static interface SimpleFunction<X,Y>{
-        Y apply(X x) throws Exception;
-    }
-    /**
      * An operation which returns a success result object
      *
      * @param <T> result type
      */
-    public static interface Operation<X, T extends OperationSuccess> extends SimpleFunction<X, T> {
+    public static interface Operation<X, T extends OperationCompleted> extends Function<X, T> {
         /**
          * @param state current state
          *

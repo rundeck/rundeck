@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * @author greg
  * @since 4/27/17
  */
-class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.OperationSuccess<DAT>, OP extends
+class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.OperationCompleted<DAT>, OP extends
         WorkflowSystem.Operation<DAT, RES>>
 {
     private WorkflowEngine workflowEngine;
@@ -44,7 +44,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private final ListeningExecutorService executorService;
     private final ListeningExecutorService manager;
 
-    private final LinkedBlockingQueue<WorkflowSystem.OperationSuccess<DAT>> stateChangeQueue
+    private final LinkedBlockingQueue<WorkflowSystem.OperationCompleted<DAT>> stateChangeQueue
             = new LinkedBlockingQueue<>();
 
     private final Set<WorkflowSystem.OperationResult<DAT, RES, OP>> results
@@ -218,9 +218,9 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                     resultConsumer.accept(result);
                     StateObj newFailureState = operation.getFailureState(t);
                     if (null != newFailureState && newFailureState.getState().size() > 0) {
-                        WorkflowSystem.OperationSuccess<DAT> objectOperationSuccess = WorkflowEngine.dummyResult(
+                        WorkflowSystem.OperationCompleted<DAT> objectOperationCompleted = WorkflowEngine.dummyResult(
                                 newFailureState);
-                        stateChangeQueue.add(objectOperationSuccess);
+                        stateChangeQueue.add(objectOperationCompleted);
                     }
                     inProcess.remove(operation);
 
@@ -231,7 +231,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         }
     }
 
-    private <D, T extends WorkflowSystem.OperationSuccess<D>, X extends WorkflowSystem.Operation<D, T>>
+    private <D, T extends WorkflowSystem.OperationCompleted<D>, X extends WorkflowSystem.Operation<D, T>>
     WorkflowSystem.OperationResult<D, T, X> result(
             final Throwable t, final X operation
     )
@@ -239,7 +239,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         return new WorkflowEngine.WResult<>(operation, t);
     }
 
-    private <D, T extends WorkflowSystem.OperationSuccess<D>, X extends WorkflowSystem.Operation<D, T>>
+    private <D, T extends WorkflowSystem.OperationCompleted<D>, X extends WorkflowSystem.Operation<D, T>>
     WorkflowSystem.OperationResult<D, T, X> result(
             final T successResult, final X operation
     )
@@ -354,8 +354,8 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                     operation
             );
             StateObj newstate = operation.getSkipState(workflowEngine.getState());
-            WorkflowSystem.OperationSuccess<DAT> objectOperationSuccess = WorkflowEngine.dummyResult(newstate);
-            stateChangeQueue.add(objectOperationSuccess);
+            WorkflowSystem.OperationCompleted<DAT> objectOperationCompleted = WorkflowEngine.dummyResult(newstate);
+            stateChangeQueue.add(objectOperationCompleted);
         }
     }
 

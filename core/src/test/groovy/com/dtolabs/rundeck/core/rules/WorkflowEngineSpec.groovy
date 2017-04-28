@@ -9,13 +9,13 @@ import java.util.concurrent.Executors
  * Created by greg on 5/2/16.
  */
 class WorkflowEngineSpec extends Specification {
-    class TestOpSuccess implements WorkflowSystem.OperationSuccess<Map> {
+    class TestOpCompleted implements WorkflowSystem.OperationCompleted<Map> {
         StateObj newState
         Map result
     }
 
-    class TestOperation implements WorkflowSystem.Operation<Map, TestOpSuccess> {
-        Closure<TestOpSuccess> toCall
+    class TestOperation implements WorkflowSystem.Operation<Map, TestOpCompleted> {
+        Closure<TestOpCompleted> toCall
         Closure<Boolean> shouldRunClos
         private boolean shouldRun
         Closure<Boolean> shouldSkipClos
@@ -48,7 +48,7 @@ class WorkflowEngineSpec extends Specification {
 
 
         @Override
-        TestOpSuccess apply(final Map o) throws Exception {
+        TestOpCompleted apply(final Map o) throws Exception {
             hasRun = true
             input=o
             def result = toCall?.call()
@@ -62,7 +62,7 @@ class WorkflowEngineSpec extends Specification {
         MutableStateObj state = States.mutable()
         ExecutorService executor = Executors.newFixedThreadPool(1)
         WorkflowEngine engine = new WorkflowEngine(ruleEngine, state, executor)
-        Set<WorkflowSystem.Operation<TestOpSuccess>> operations = []
+        Set<TestOperation> operations = []
         when:
         def result = engine.processOperations(operations,null)
 
@@ -81,7 +81,7 @@ class WorkflowEngineSpec extends Specification {
                     StateObj st -> st.hasState(Workflows.WORKFLOW_STATE_KEY, Workflows.WORKFLOW_STATE_STARTED)
                 },
                                   toCall: {
-                                      return new TestOpSuccess(newState: States.state('akey', 'avalue'))
+                                      return new TestOpCompleted(newState: States.state('akey', 'avalue'))
                                   }
                 ),
                 new TestOperation()
@@ -107,7 +107,7 @@ class WorkflowEngineSpec extends Specification {
                     StateObj st -> st.hasState(Workflows.WORKFLOW_STATE_KEY, Workflows.WORKFLOW_STATE_STARTED)
                 },
                                   toCall: {
-                                      return new TestOpSuccess(newState: States.state('akey', 'avalue'))
+                                      return new TestOpCompleted(newState: States.state('akey', 'avalue'))
                                   },
                                   shouldSkipClos: { StateObj st -> true },
                                   skipState: States.state('ckey', 'cvalue')
@@ -134,7 +134,7 @@ class WorkflowEngineSpec extends Specification {
                     StateObj st -> false
                 },
                                   toCall: {
-                                      return new TestOpSuccess(newState: States.state('akey', 'avalue'))
+                                      return new TestOpCompleted(newState: States.state('akey', 'avalue'))
                                   },
                                   shouldSkipClos: { StateObj st -> false },
                                   skipState: States.state('ckey', 'cvalue')
@@ -166,7 +166,7 @@ class WorkflowEngineSpec extends Specification {
                                 st.hasState(Workflows.WORKFLOW_STATE_KEY, Workflows.WORKFLOW_STATE_STARTED)
                         },
                         toCall: {
-                            return new TestOpSuccess(newState: States.state('akey', 'avalue'))
+                            return new TestOpCompleted(newState: States.state('akey', 'avalue'))
                         }
                 ),
                 new TestOperation(
@@ -175,7 +175,7 @@ class WorkflowEngineSpec extends Specification {
                             StateObj st -> st.hasState('akey', 'avalue')
                         },
                         toCall: {
-                            return new TestOpSuccess(newState: States.state('bkey', 'bvalue'))
+                            return new TestOpCompleted(newState: States.state('bkey', 'bvalue'))
                         }
                 ),
         ]
@@ -207,7 +207,7 @@ class WorkflowEngineSpec extends Specification {
                                 st.hasState(Workflows.WORKFLOW_STATE_KEY, Workflows.WORKFLOW_STATE_STARTED)
                         },
                         toCall: {
-                            return new TestOpSuccess(newState: States.state('akey', 'avalue'))
+                            return new TestOpCompleted(newState: States.state('akey', 'avalue'))
                         }
                 ),
                 new TestOperation(
@@ -216,7 +216,7 @@ class WorkflowEngineSpec extends Specification {
                             StateObj st -> st.hasState('akey', 'avalue')
                         },
                         toCall: {
-                            return new TestOpSuccess(newState: States.state('bkey', 'bvalue'))
+                            return new TestOpCompleted(newState: States.state('bkey', 'bvalue'))
                         },
                         shouldSkipClos: {
                             StateObj st -> st.hasState('akey', 'avalue')
@@ -253,7 +253,7 @@ class WorkflowEngineSpec extends Specification {
                                 st.hasState(Workflows.WORKFLOW_STATE_KEY, Workflows.WORKFLOW_STATE_STARTED)
                         },
                         toCall: {
-                            return new TestOpSuccess(newState: new DataState(Workflows.WORKFLOW_DONE, 'true'))
+                            return new TestOpCompleted(newState: new DataState(Workflows.WORKFLOW_DONE, 'true'))
                         }
                 ),
                 new TestOperation(
@@ -262,7 +262,7 @@ class WorkflowEngineSpec extends Specification {
                             StateObj st -> st.hasState('akey', 'avalue')
                         },
                         toCall: {
-                            return new TestOpSuccess(newState: States.state('bkey', 'bvalue'))
+                            return new TestOpCompleted(newState: States.state('bkey', 'bvalue'))
                         }
                 ),
         ]
@@ -301,7 +301,7 @@ class WorkflowEngineSpec extends Specification {
                             StateObj st -> st.hasState('akey', 'avalue')
                         },
                         toCall: {
-                            return new TestOpSuccess(newState: States.state('bkey', 'bvalue'))
+                            return new TestOpCompleted(newState: States.state('bkey', 'bvalue'))
                         }
                 ),
         ]
@@ -333,7 +333,7 @@ class WorkflowEngineSpec extends Specification {
                                 st.hasState(Workflows.WORKFLOW_STATE_KEY, Workflows.WORKFLOW_STATE_STARTED)
                         },
                         toCall: {
-                            return new TestOpSuccess(newState: States.state('akey', 'avalue'), result: [c: 'd'])
+                            return new TestOpCompleted(newState: States.state('akey', 'avalue'), result: [c: 'd'])
                         }
                 ),
                 new TestOperation(
@@ -342,7 +342,7 @@ class WorkflowEngineSpec extends Specification {
                             StateObj st -> st.hasState('akey', 'avalue')
                         },
                         toCall: {
-                            return new TestOpSuccess(newState: States.state('bkey', 'bvalue'), result: [e: 'f'])
+                            return new TestOpCompleted(newState: States.state('bkey', 'bvalue'), result: [e: 'f'])
                         },
                         ),
         ]

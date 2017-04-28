@@ -5,7 +5,6 @@ import org.apache.log4j.Logger;
 
 import java.util.*;
 import java.util.concurrent.*;
-import java.util.function.Consumer;
 
 /**
  * A WorkflowSystem which processes the operations by use of a rule system and a mutable state.
@@ -81,7 +80,7 @@ public class WorkflowEngine implements WorkflowSystem {
     }
 
     public <DAT,
-            RES extends OperationSuccess<DAT>,
+            RES extends OperationCompleted<DAT>,
             OP extends Operation<DAT, RES>
             >
     Set<OperationResult<DAT, RES, OP>> processOperations(final Set<OP> operations, final SharedData<DAT> sharedData) {
@@ -206,7 +205,7 @@ public class WorkflowEngine implements WorkflowSystem {
     }
 
 
-    static <X, Y extends OperationSuccess<X>> Callable<Y> operationCallable(
+    static <X, Y extends OperationCompleted<X>> Callable<Y> operationCallable(
             final Operation<X, Y> operation,
             final X input
     )
@@ -215,8 +214,8 @@ public class WorkflowEngine implements WorkflowSystem {
         return () -> operation.apply(input);
     }
 
-    static <T> OperationSuccess<T> dummyResult(final StateObj state) {
-        return new OperationSuccess<T>() {
+    static <T> OperationCompleted<T> dummyResult(final StateObj state) {
+        return new OperationCompleted<T>() {
             @Override
             public StateObj getNewState() {
                 return state;
@@ -271,7 +270,7 @@ public class WorkflowEngine implements WorkflowSystem {
     }
 
 
-    static class WResult<D, T extends OperationSuccess<D>, X extends Operation<D, T>> implements
+    static class WResult<D, T extends OperationCompleted<D>, X extends Operation<D, T>> implements
             OperationResult<D, T, X>
     {
         final private X operation;
