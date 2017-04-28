@@ -91,26 +91,32 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                 HashMap<String, String> changes = new HashMap<>();
 
                 //load all changes already in the queue
-                pollAllChanges(changes);
+                getAvailableChanges(changes);
 
-                if (changes.isEmpty() && inProcess.isEmpty()) {
-                    //no pending operations, signalling no new state changes will occur
-                    workflowEngine.event(
-                            WorkflowSystemEventType.EndOfChanges,
-                            "No more state changes expected, finishing workflow."
-                    );
-                    break;
-                }
-
-                //wait for any changes
-                if (!changes.isEmpty() || !waitForChangeHasNoResults(changes)) {
-                    //no changes are found, repeat loop and wait again
-                    if (processChangesShouldHalt(changes, results::add)) {
-                        workflowEngine.event(WorkflowSystemEventType.WorkflowEndState, "Workflow end state reached.");
-                        break;
+                if (changes.isEmpty()) {
+                    if (inProcess.isEmpty()) {
+                        //no pending operations, signalling no new state changes will occur
+                        workflowEngine.event(
+                                WorkflowSystemEventType.EndOfChanges,
+                                "No more state changes expected, finishing workflow."
+                        );
+                        return;
                     }
+                    waitForChanges(changes);
+                }
+                if (changes.isEmpty()) {
+                    //no changes within sleep time, try again
+                    continue;
                 }
 
+                //handle state changes
+                processStateChanges(changes);
+
+                if (workflowEngine.isWorkflowEndState(workflowEngine.getState())) {
+                    workflowEngine.event(WorkflowSystemEventType.WorkflowEndState, "Workflow end state reached.");
+                    return;
+                }
+                processOperations(results::add);
             }
         } catch (InterruptedException e) {
             interrupted = true;
@@ -118,16 +124,16 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         }
         if (interrupted) {
             workflowEngine.event(WorkflowSystemEventType.Interrupted, "Engine interrupted, stopping engine...");
-            //attempt to cancel all futures
             cancelFutures();
         }
     }
 
-    private void pollAllChanges(
-            final Map<String, String> changes
-    )
-    {
-        WorkflowSystem.OperationSuccess<DAT> task = stateChangeQueue.poll();
+    /**
+     * Poll for changes from the queue, and process all changes that are immediately available without waiting
+     * @param changes changes map
+     */
+    private void getAvailableChanges( final Map<String, String> changes) {
+        WorkflowSystem.OperationCompleted<DAT> task = stateChangeQueue.poll();
         while (task != null && task.getNewState() != null) {
             changes.putAll(task.getNewState().getState());
             DAT result = task.getResult();
@@ -257,14 +263,11 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
      *
      * @throws InterruptedException
      */
-    private boolean waitForChangeHasNoResults(
-            final Map<String, String> changes
-    ) throws InterruptedException
-    {
-        WorkflowSystem.OperationSuccess<DAT> take = stateChangeQueue.poll(sleeper.time(), sleeper.unit());
+    private void waitForChanges(final Map<String, String> changes) throws InterruptedException {
+        WorkflowSystem.OperationCompleted<DAT> take = stateChangeQueue.poll(sleeper.time(), sleeper.unit());
         if (null == take || take.getNewState().getState().isEmpty()) {
             sleeper.backoff();
-            return true;
+            return;
         }
 
         sleeper.reset();
@@ -275,23 +278,15 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             sharedData.addData(take.getResult());
         }
 
-        pollAllChanges(changes);
-
-        return false;
+        getAvailableChanges(changes);
     }
 
     /**
-     * Process the state changes and
+     * Handle the state changes for the rule engine
      *
      * @param changes
-     *
-     * @return
      */
-    private boolean processChangesShouldHalt(
-            final Map<String, String> changes,
-            final Consumer<WorkflowSystem.OperationResult<DAT, RES, OP>> resultConsumer
-    )
-    {
+    private void processStateChanges(final Map<String, String> changes) {
         workflowEngine.event(WorkflowSystemEventType.WillProcessStateChange,
                              String.format("saw state changes: %s", changes), changes
         );
@@ -308,12 +303,17 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                 ),
                 workflowEngine.getState()
         );
+    }
 
-
-        if (workflowEngine.isWorkflowEndState(workflowEngine.getState())) {
-            return true;
-        }
-
+    /**
+     * Run and skip pending operations
+     *
+     * @param resultConsumer consumer for result of operations
+     */
+    private void processOperations(
+            final Consumer<WorkflowSystem.OperationResult<DAT, RES, OP>> resultConsumer
+    )
+    {
         int origPendingCount = pending.size();
 
         //operations which match runnable conditions
@@ -338,7 +338,6 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         skipped.addAll(shouldskip);
 
         workflowEngine.eventLoopProgress(origPendingCount, shouldskip.size(), shouldrun.size(), pending.size());
-        return false;
     }
 
     /**
