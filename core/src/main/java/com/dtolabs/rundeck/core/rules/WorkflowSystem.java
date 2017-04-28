@@ -1,7 +1,9 @@
 package com.dtolabs.rundeck.core.rules;
 
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * Process a set of Operations, by use of a RuleEngine to determine when/if operations should run,
@@ -64,6 +66,20 @@ public interface WorkflowSystem {
          * @return
          */
         T produceNext();
+
+        static <T> SharedData<T> with(Consumer<T> adder, Supplier<T> producer) {
+            return new SharedData<T>() {
+                @Override
+                public void addData(final T item) {
+                    adder.accept(item);
+                }
+
+                @Override
+                public T produceNext() {
+                    return producer.get();
+                }
+            };
+        }
     }
 
     /**
