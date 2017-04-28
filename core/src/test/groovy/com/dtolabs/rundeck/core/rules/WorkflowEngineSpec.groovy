@@ -9,12 +9,12 @@ import java.util.concurrent.Executors
  * Created by greg on 5/2/16.
  */
 class WorkflowEngineSpec extends Specification {
-    class TestOpSuccess implements WorkflowSystem.OperationSuccess {
+    class TestOpSuccess implements WorkflowSystem.OperationSuccess<Map> {
         StateObj newState
-        Object result
+        Map result
     }
 
-    class TestOperation implements WorkflowSystem.Operation<Object,TestOpSuccess> {
+    class TestOperation implements WorkflowSystem.Operation<Map, TestOpSuccess> {
         Closure<TestOpSuccess> toCall
         Closure<Boolean> shouldRunClos
         private boolean shouldRun
@@ -24,7 +24,7 @@ class WorkflowEngineSpec extends Specification {
         StateObj skipState
         Long id
         boolean hasRun = false
-        Object input = null
+        Map input = null
 
         @Override
         boolean shouldRun(final StateObj state) {
@@ -48,7 +48,7 @@ class WorkflowEngineSpec extends Specification {
 
 
         @Override
-        TestOpSuccess apply(final Object o) throws Exception {
+        TestOpSuccess apply(final Map o) throws Exception {
             hasRun = true
             input=o
             def result = toCall?.call()
@@ -316,5 +316,60 @@ class WorkflowEngineSpec extends Specification {
         !state.hasState('bkey', 'bvalue')
         operations[0].hasRun
         !operations[1].hasRun
+    }
+
+    def "shared data is merged"() {
+        given:
+        RuleEngine ruleEngine = Rules.createEngine()
+        MutableStateObj state = States.mutable()
+        ExecutorService executor = Executors.newFixedThreadPool(1)
+        WorkflowEngine engine = new WorkflowEngine(ruleEngine, state, executor)
+        Set<TestOperation> operations = [
+                new TestOperation(
+                        id: 1,
+                        shouldRunClos: {
+                            StateObj st
+                                ->
+                                st.hasState(Workflows.WORKFLOW_STATE_KEY, Workflows.WORKFLOW_STATE_STARTED)
+                        },
+                        toCall: {
+                            return new TestOpSuccess(newState: States.state('akey', 'avalue'), result: [c: 'd'])
+                        }
+                ),
+                new TestOperation(
+                        id: 2,
+                        shouldRunClos: {
+                            StateObj st -> st.hasState('akey', 'avalue')
+                        },
+                        toCall: {
+                            return new TestOpSuccess(newState: States.state('bkey', 'bvalue'), result: [e: 'f'])
+                        },
+                        ),
+        ]
+
+        def shared = new SharedMap()
+        when:
+        def result = engine.processOperations(operations, shared)
+
+        then:
+        shared.addedData == [[c: 'd'], [e: 'f']]
+        operations[0].hasRun
+        operations[0].input == [:]
+        operations[1].hasRun
+        operations[1].input == [c: 'd']
+    }
+
+    static class SharedMap implements WorkflowSystem.SharedData<Map> {
+        List<Map> addedData = []
+
+        @Override
+        void addData(final Map item) {
+            addedData.add(item)
+        }
+
+        @Override
+        Map produceNext() {
+            addedData.isEmpty() ? [:] : addedData.last()
+        }
     }
 }
