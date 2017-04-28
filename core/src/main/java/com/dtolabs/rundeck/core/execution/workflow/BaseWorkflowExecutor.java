@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
-import com.dtolabs.rundeck.core.dispatcher.BaseDataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.dispatcher.MultiDataContextImpl;
@@ -40,7 +39,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepDataResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
@@ -90,6 +88,10 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             null,
             ControlBehavior.Continue
     );
+
+    static boolean isInnerLoop(final WorkflowExecutionItem item) {
+        return item.getWorkflow() instanceof StepFirstWrapper;
+    }
 
     /**
      * Executes a step
@@ -331,14 +333,14 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     {
 
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
-        if (null != wlistener && !StepFirstWorkflowExecutor.isInnerLoop(item)) {
+        if (null != wlistener && !BaseWorkflowExecutor.isInnerLoop(item)) {
             wlistener.beginWorkflowExecution(executionContext, item);
         }
         WorkflowExecutionResult result = null;
         try {
             result = executeWorkflowImpl(executionContext, item);
         } finally {
-            if (null != wlistener && !StepFirstWorkflowExecutor.isInnerLoop(item)) {
+            if (null != wlistener && !BaseWorkflowExecutor.isInnerLoop(item)) {
                 wlistener.finishWorkflowExecution(result, executionContext, item);
             }
         }
@@ -1065,6 +1067,61 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                    ", controlBehavior=" + controlBehavior +
                    ", resultData=" + resultData +
                    '}';
+        }
+    }
+
+    /**
+     * Wrapper of IWorkflow that always returns STEP_FIRST for strategy
+     */
+    static class StepFirstWrapper implements IWorkflow {
+        private IWorkflow workflow;
+
+        StepFirstWrapper(IWorkflow workflow) {
+            this.workflow = workflow;
+        }
+
+        public List<StepExecutionItem> getCommands() {
+            return workflow.getCommands();
+        }
+
+        public int getThreadcount() {
+            return workflow.getThreadcount();
+        }
+
+        public boolean isKeepgoing() {
+            return workflow.isKeepgoing();
+        }
+
+        public String getStrategy() {
+            return WorkflowExecutionItem.STEP_FIRST;
+        }
+
+        @Override
+        public Map<String, Object> getPluginConfig() {
+            return workflow.getPluginConfig();
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (!(o instanceof StepFirstWrapper)) {
+                return false;
+            }
+
+            StepFirstWrapper that = (StepFirstWrapper) o;
+
+            if (workflow != null ? !workflow.equals(that.workflow) : that.workflow != null) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            return workflow != null ? workflow.hashCode() : 0;
         }
     }
 }

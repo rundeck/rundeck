@@ -513,9 +513,7 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
      *             @return inner loop
      */
     public static WorkflowExecutionItem createInnerLoopItem(IWorkflow item) {
-        final WorkflowExecutionItemImpl workflowExecutionItem = new WorkflowExecutionItemImpl(
-            new StepFirstWorkflowExecutor.stepFirstWrapper(item));
-        return workflowExecutionItem;
+        return new WorkflowExecutionItemImpl(new StepFirstWrapper(item));
     }
 
 }
