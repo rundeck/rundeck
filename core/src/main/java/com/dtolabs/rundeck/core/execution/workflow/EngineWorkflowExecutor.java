@@ -189,9 +189,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
         int wfThreadcount = strategyForWorkflow.getThreadCount();
 
-        ExecutorService executorService = wfThreadcount > 0
-                                          ? Executors.newFixedThreadPool(wfThreadcount)
-                                          : Executors.newCachedThreadPool();
 
         Set<EngineWorkflowStepOperation> operations = new HashSet<>();
 
@@ -294,7 +291,10 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
         WorkflowSystem workflowEngine = getWorkflowSystemBuilder()
                 .ruleEngine(ruleEngine)
-                .executor(executorService)
+                .executor(() -> wfThreadcount > 0
+                                ? Executors.newFixedThreadPool(wfThreadcount)
+                                : Executors.newCachedThreadPool()
+                )
                 .state(state)
                 .listener(event -> executionContext.getExecutionListener()
                                                    .log(
@@ -303,11 +303,12 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                                                    ))
                 .build();
 
+
         DataContext base = new BaseDataContext();
         final MultiDataContextImpl<String, DataContext> sharedContext = MultiDataContextImpl.withBase(base);
-        WorkflowSystem.SharedData<MultiDataContext<String,DataContext>> dataContextSharedData = new WorkflowSystem
-                .SharedData<MultiDataContext<String,DataContext>>()
-        {
+
+        WorkflowSystem.SharedData<MultiDataContext<String, DataContext>> dataContextSharedData
+                = new WorkflowSystem.SharedData<MultiDataContext<String, DataContext>>() {
             @Override
             public void addData(final MultiDataContext<String,DataContext> item) {
                 if(item!=null) {
