@@ -113,8 +113,22 @@ class ExecutionServiceImpl implements ExecutionService {
                     .singleNodeContext(node, true)
                     .build();
             result = interpreter.executeNodeStep(nodeContext, item, node);
+            boolean hasHandler= item instanceof HasFailureHandler;
+            boolean showError = true;
+            if(hasHandler){
+                final HasFailureHandler handles = (HasFailureHandler) item;
+                final StepExecutionItem handler = handles.getFailureHandler();
+                if(null != handler && handler instanceof HandlerExecutionItem){
+                    boolean keepGoing = ((HandlerExecutionItem)handler).isKeepgoingOnSuccess();
+                    showError = !keepGoing;
+                }
+            }
             if (!result.isSuccess()) {
-                context.getExecutionListener().log(0, "Failed: " + result.toString());
+                int level = 0;//error level
+                if(!showError){
+                    level=7;//debug level
+                }
+                context.getExecutionListener().log(level, "Failed: " + result.toString());
             }
         } catch (NodeStepException e) {
             result = new NodeStepResultImpl(e, e.getFailureReason(), e.getMessage(), node);
