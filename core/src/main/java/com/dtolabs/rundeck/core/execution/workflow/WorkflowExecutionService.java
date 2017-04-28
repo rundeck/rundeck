@@ -64,7 +64,6 @@ public class WorkflowExecutionService extends ChainedProviderService<WorkflowExe
         //TODO:
         registry.put(WorkflowExecutor.NODE_FIRST, NodeFirstWorkflowExecutor.class);
 //        registry.put(WorkflowExecutor.STEP_FIRST, StepFirstWorkflowExecutor.class);
-//        registry.put(WorkflowExecutor.PARALLEL, ParallelWorkflowExecutor.class);
 
         registry.put(WorkflowExecutor.STEP_FIRST, EngineWorkflowExecutor.class);
         registry.put(WorkflowExecutor.PARALLEL, EngineWorkflowExecutor.class);
