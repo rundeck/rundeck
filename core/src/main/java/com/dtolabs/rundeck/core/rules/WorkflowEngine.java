@@ -109,16 +109,6 @@ public class WorkflowEngine implements WorkflowSystem {
             Thread.currentThread().interrupt();
         }
 
-        if (!processor.getInProcess().isEmpty()) {
-            //attempt to wait for cancel results to be received
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException ignored) {
-                Thread.currentThread().interrupt();
-
-            }
-        }
-
         manager.shutdown();
         try {
             if (!manager.awaitTermination(5, TimeUnit.MINUTES)) {

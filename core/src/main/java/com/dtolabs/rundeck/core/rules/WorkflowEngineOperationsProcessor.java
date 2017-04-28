@@ -22,7 +22,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 
 import java.util.*;
-import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -50,8 +50,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     private final Set<WorkflowSystem.OperationResult<DAT, RES, OP>> results
             = Collections.synchronizedSet(new HashSet<WorkflowSystem.OperationResult<DAT, RES, OP>>());
 
-    private final List<ListenableFuture<RES>> futures
-            = Collections.synchronizedList(new ArrayList<ListenableFuture<RES>>());
+    private final List<ListenableFuture<RES>> futures = new ArrayList<>();
 
     private WorkflowEngine.Sleeper sleeper = new WorkflowEngine.Sleeper();
 
@@ -85,9 +84,8 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
      * Continue processing from current state
      */
     private void continueProcessing() {
-        interrupted = false;
         try {
-            while (!interrupted) {
+            while (!Thread.currentThread().isInterrupted()) {
                 HashMap<String, String> changes = new HashMap<>();
 
                 //load all changes already in the queue
@@ -101,6 +99,9 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                                 "No more state changes expected, finishing workflow."
                         );
                         return;
+                    }
+                    if (Thread.currentThread().isInterrupted()) {
+                        break;
                     }
                     waitForChanges(changes);
                 }
@@ -119,13 +120,14 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                 processOperations(results::add);
             }
         } catch (InterruptedException e) {
-            interrupted = true;
             Thread.currentThread().interrupt();
         }
-        if (interrupted) {
+        if (Thread.currentThread().isInterrupted()) {
             workflowEngine.event(WorkflowSystemEventType.Interrupted, "Engine interrupted, stopping engine...");
             cancelFutures();
+            interrupted = Thread.interrupted();
         }
+        awaitFutures();
     }
 
     /**
@@ -144,13 +146,21 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
         }
     }
 
-    private void cancelFutures() {
-        synchronized (futures) {
+    private void awaitFutures() {
+        if (!inProcess.isEmpty()) {
             for (ListenableFuture<RES> future : futures) {
-                if (!future.isDone()) {
-                    future.cancel(true);
+                try {
+                    future.get();
+                } catch (InterruptedException | ExecutionException | CancellationException ignored) {
+
                 }
             }
+        }
+    }
+
+    private void cancelFutures() {
+        for (ListenableFuture<RES> future : futures) {
+            future.cancel(true);
         }
     }
 
@@ -187,17 +197,6 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
             final ListenableFuture<RES> submit = executorService.submit(() -> operation.apply(inputData));
             inProcess.add(operation);
             futures.add(submit);
-            FutureCallback<RES> cleanup = new FutureCallback<RES>() {
-                @Override
-                public void onSuccess(final RES result) {
-                    futures.remove(submit);
-                }
-
-                @Override
-                public void onFailure(final Throwable t) {
-                    futures.remove(submit);
-                }
-            };
             FutureCallback<RES> callback = new FutureCallback<RES>() {
                 @Override
                 public void onSuccess(final RES successResult) {
@@ -229,11 +228,10 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                         stateChangeQueue.add(objectOperationCompleted);
                     }
                     inProcess.remove(operation);
-
                 }
             };
+
             Futures.addCallback(submit, callback, manager);
-            Futures.addCallback(submit, cleanup, manager);
         }
     }
 

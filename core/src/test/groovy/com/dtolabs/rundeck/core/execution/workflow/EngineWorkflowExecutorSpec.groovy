@@ -4,6 +4,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.ExecutionListenerOverride
 import com.dtolabs.rundeck.core.execution.FailedNodesListener
@@ -12,6 +13,7 @@ import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
+import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
@@ -502,19 +504,24 @@ class EngineWorkflowExecutorSpec extends Specification {
                         println('-> 2 Starting...')
                         //trigger thread interrupt
                         latch.countDown()
-                        Thread.sleep(2000)
-                        println('-> 2 Finishing...')
-                        new StepExecutionResultImpl()
+                        try {
+                            Thread.sleep(20000)
+                            println('-> 2 Finishing...')
+                            new StepExecutionResultImpl()
+                        } catch (InterruptedException e) {
+                            Thread.currentThread().interrupt()
+                            throw new StepException("interrupted", e, new MyReason("test"))
+                        }
                     }
                 }
         )
         framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy))
         def logger = new LogListener()
-        def context = Mock(StepExecutionContext) {
-            getExecutionListener() >> logger
-            getFrameworkProject() >> PROJECT_NAME
-            getStepNumber() >> 1
-        }
+        def context = ExecutionContextImpl.builder().
+                executionListener(logger).
+                frameworkProject(PROJECT_NAME).
+                stepNumber(1).
+                build()
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
                 getCommands() >> [
@@ -531,21 +538,28 @@ class EngineWorkflowExecutorSpec extends Specification {
 
 
         when:
-        def t = Thread.currentThread()
+        def result
+        def t = new Thread({
+            result = engine.executeWorkflowImpl(context, item)
+            println("finished execute workflow")
+        }
+        )
+
         new Thread({
             latch.await(20, TimeUnit.SECONDS)
             println "causing interrupt..."
             t.interrupt()
         }
         ).start()
-        def result = engine.executeWorkflowImpl(context, item)
+        t.start()
+        t.join()
 
         then:
         null != result
-        !result.success
         result.stepFailures.size() == 1
         result.stepFailures.keySet() == [2] as Set
         result.stepFailures[2].failureReason == StepFailureReason.Interrupted
         result.stepFailures[2].failureMessage == 'Cancellation while running step [2]'
+        !result.success
     }
 }
