@@ -37,6 +37,11 @@ public class MultiDataContextImpl<K, D extends Mergable<D>> implements MultiData
         this(new HashMap<K, D>());
     }
 
+    public MultiDataContextImpl(MultiDataContext<K, D> orig) {
+        this(new HashMap<K, D>());
+        merge(orig);
+    }
+
     @Override
     public Map<K, D> getData() {
         return map;
@@ -57,6 +62,9 @@ public class MultiDataContextImpl<K, D extends Mergable<D>> implements MultiData
     }
 
     public void merge(MultiDataContext<K, D> input) {
+        if (null == input) {
+            return;
+        }
         if (null != base && null != input.getBase()) {
             base.merge(input.getBase());
         }
