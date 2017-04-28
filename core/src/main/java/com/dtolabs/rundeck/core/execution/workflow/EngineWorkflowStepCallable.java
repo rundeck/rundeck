@@ -37,7 +37,7 @@ import java.util.function.Function;
  * @author greg
  * @since 4/28/17
  */
-class EngineWorkflowStepCallable implements Function<MultiDataContext<String, DataContext>, BaseWorkflowExecutor.StepResultCapture> {
+class EngineWorkflowStepCallable implements Function<WFSharedContext, BaseWorkflowExecutor.StepResultCapture> {
     private EngineWorkflowExecutor engineWorkflowExecutor;
     private final StepExecutionContext executionContext;
     private final boolean keepgoing;
@@ -63,7 +63,7 @@ class EngineWorkflowStepCallable implements Function<MultiDataContext<String, Da
     }
 
     @Override
-    public BaseWorkflowExecutor.StepResultCapture apply(final MultiDataContext<String, DataContext> inputData) {
+    public BaseWorkflowExecutor.StepResultCapture apply(final WFSharedContext inputData) {
         final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
         List<StepExecutionResult> resultList = new ArrayList<>();
 

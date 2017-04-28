@@ -11,12 +11,12 @@ import java.util.function.Function;
 /**
  * operation for running a step
  */
-class EngineWorkflowStepOperation implements WorkflowSystem.Operation<MultiDataContext<String,DataContext>,EngineWorkflowStepOperationCompleted> {
+class EngineWorkflowStepOperation implements WorkflowSystem.Operation<WFSharedContext,EngineWorkflowStepOperationCompleted> {
     int stepNum;
     String label;
     Set<Condition> startTriggerConditions;
     Set<Condition> skipTriggerConditions;
-    private Function<MultiDataContext<String,DataContext>,BaseWorkflowExecutor.StepResultCapture> callable;
+    private Function<WFSharedContext,BaseWorkflowExecutor.StepResultCapture> callable;
     private StateObj startTriggerState;
     private StateObj skipTriggerState;
     private boolean didRun = false;
@@ -24,7 +24,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<MultiDataC
     EngineWorkflowStepOperation(
             final int stepNum,
             final String label,
-            final Function<MultiDataContext<String,DataContext>,BaseWorkflowExecutor.StepResultCapture> callable,
+            final Function<WFSharedContext,BaseWorkflowExecutor.StepResultCapture> callable,
             final StateObj startTriggerState,
             final StateObj skipTriggerState,
             final Set<Condition> startTriggerConditions,
@@ -51,7 +51,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<MultiDataC
     }
 
     @Override
-    public EngineWorkflowStepOperationCompleted apply(MultiDataContext<String,DataContext> context)  {
+    public EngineWorkflowStepOperationCompleted apply(WFSharedContext context)  {
         didRun = true;
         BaseWorkflowExecutor.StepResultCapture stepResultCapture = callable.apply(context);
         StepExecutionResult result = stepResultCapture.getStepResult();

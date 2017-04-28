@@ -841,7 +841,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         boolean stepSuccess = stepResult.isSuccess();
         nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
         //collect node data results
-        MultiDataContext<String, DataContext> multiData ;
+        WFSharedContext multiData ;
         if (NodeDispatchStepExecutor.isWrappedDispatcherResult(stepResult)) {
             //TODO:
             //TODO: node and step specific data needs to be captured
@@ -858,9 +858,9 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     map.put(node, dataContext);
                 }
             }
-            multiData = new MultiDataContextImpl<>(map);
+            multiData = new WFSharedContext(map);
         }else{
-            multiData = MultiDataContextImpl.withBase(outputContext.getDataContext());
+            multiData = WFSharedContext.withBase(outputContext.getDataContext());
         }
         System.err.println("Finished step, result data context: "+outputContext.getDataContext());
         if (null != executionContext.getExecutionListener() &&
@@ -1019,14 +1019,14 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         private boolean stepSuccess;
         private String statusString;
         private ControlBehavior controlBehavior;
-        private MultiDataContext<String,DataContext> resultData;
+        private WFSharedContext resultData;
 
         public StepResultCapture(
                 final StepExecutionResult stepResult,
                 final boolean stepSuccess,
                 final String statusString,
                 final ControlBehavior controlBehavior,
-                final MultiDataContext<String,DataContext> resultData
+                final WFSharedContext resultData
         )
         {
             this.stepResult = stepResult;
@@ -1054,7 +1054,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             return stepResult;
         }
 
-        public MultiDataContext<String,DataContext> getResultData() {
+        public WFSharedContext getResultData() {
             return resultData;
         }
 

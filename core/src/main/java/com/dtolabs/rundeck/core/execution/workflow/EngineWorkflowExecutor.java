@@ -184,10 +184,10 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
 
 
-        WorkflowSystem.SharedData<MultiDataContext<String, DataContext>> dataContextSharedData =
+        WorkflowSystem.SharedData<WFSharedContext> dataContextSharedData =
                 prepareWorkflowDataContext();
 
-        Set<WorkflowSystem.OperationResult<MultiDataContext<String,DataContext>, EngineWorkflowStepOperationCompleted,
+        Set<WorkflowSystem.OperationResult<WFSharedContext, EngineWorkflowStepOperationCompleted,
                 EngineWorkflowStepOperation>>
                 operationResults =
                 workflowEngine.processOperations(operations, dataContextSharedData);
@@ -198,7 +198,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
 
         boolean workflowSuccess = !workflowEngine.isInterrupted();
-        for (WorkflowSystem.OperationResult<MultiDataContext<String,DataContext>, EngineWorkflowStepOperationCompleted,
+        for (WorkflowSystem.OperationResult<WFSharedContext, EngineWorkflowStepOperationCompleted,
                 EngineWorkflowStepOperation> operationResult : operationResults) {
             EngineWorkflowStepOperationCompleted completed = operationResult.getSuccess();
             EngineWorkflowStepOperation operation = operationResult.getOperation();
@@ -460,14 +460,14 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return operations;
     }
 
-    private WorkflowSystem.SharedData<MultiDataContext<String, DataContext>> prepareWorkflowDataContext() {
+    private WorkflowSystem.SharedData<WFSharedContext> prepareWorkflowDataContext() {
 
-        final MultiDataContextImpl<String, DataContext> sharedContext
-                = MultiDataContextImpl.withBase(new BaseDataContext());
+        final WFSharedContext sharedContext
+                = WFSharedContext.withBase(new BaseDataContext());
 
         return WorkflowSystem.SharedData.with(
                 sharedContext::merge,
-                () -> new MultiDataContextImpl<>(sharedContext)
+                () -> new WFSharedContext(sharedContext)
         );
 
     }

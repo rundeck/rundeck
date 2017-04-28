@@ -57,7 +57,7 @@ public class MultiDataContextImpl<K, D extends Mergable<D>> implements MultiData
         return base;
     }
 
-    private void setBase(D base) {
+    protected void setBase(D base) {
         this.base = base;
     }
 

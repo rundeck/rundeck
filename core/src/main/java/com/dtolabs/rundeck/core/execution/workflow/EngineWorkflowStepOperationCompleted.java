@@ -8,7 +8,7 @@ import com.dtolabs.rundeck.core.rules.WorkflowSystem;
 /**
  * Successful result of a workflow step operation
  */
-class EngineWorkflowStepOperationCompleted implements WorkflowSystem.OperationCompleted<MultiDataContext<String,DataContext>> {
+class EngineWorkflowStepOperationCompleted implements WorkflowSystem.OperationCompleted<WFSharedContext> {
     int stepNum;
     BaseWorkflowExecutor.StepResultCapture stepResultCapture;
     private StateObj newState;
@@ -25,7 +25,7 @@ class EngineWorkflowStepOperationCompleted implements WorkflowSystem.OperationCo
     }
 
     @Override
-    public MultiDataContext<String,DataContext> getResult() {
+    public WFSharedContext getResult() {
         return stepResultCapture.getResultData();
     }
     public BaseWorkflowExecutor.StepResultCapture getStepResultCapture() {
