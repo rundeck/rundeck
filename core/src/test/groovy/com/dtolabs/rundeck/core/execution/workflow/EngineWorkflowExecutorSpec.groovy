@@ -12,6 +12,7 @@ import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
+import com.dtolabs.rundeck.core.execution.workflow.engine.EngineWorkflowExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
@@ -154,7 +155,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy) {
             getProfile() >> new SkipProfile(skipConditions: [
                     (3): Rules.conditionSet(
-                            Rules.not(
+                            Condition.not(
                                     Rules.equalsCondition('step.1.state', 'failed')
                             )
                     )
@@ -216,8 +217,8 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy) {
             getProfile() >> new SkipProfile(skipConditions: [
                     (3): Rules.conditionSet(
-                            Rules.not(
-                                    Rules.and(
+                            Condition.not(
+                                    Condition.and(
                                             Rules.equalsCondition('step.1.state', 'success'),
                                             Rules.equalsCondition('step.2.state', 'success')
                                     )
@@ -275,7 +276,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy) {
             getProfile() >> new SkipProfile(skipConditions: [
                     (2): Rules.conditionSet(
-                            Rules.not(
+                            Condition.not(
                                     Rules.equalsCondition('step.1.state', 'success')
                             )
                     )

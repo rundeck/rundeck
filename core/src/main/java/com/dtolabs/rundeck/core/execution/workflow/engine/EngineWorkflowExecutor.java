@@ -442,9 +442,9 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 stepSkipTriggerState = createSkipTriggerStateForStep(stepNum);
                 //add a rule to skip the step when its run condition is met, and its skip conditions are met
                 ruleEngine.addRule(Rules.conditionsRule(
-                        Rules.and(
-                                Rules.and(stepStartTriggerConditions),
-                                Rules.and(stepSkipTriggerConditions)
+                        Condition.and(
+                                Condition.and(stepStartTriggerConditions),
+                                Condition.and(stepSkipTriggerConditions)
                         ),
                         stepSkipTriggerState
                 ));
