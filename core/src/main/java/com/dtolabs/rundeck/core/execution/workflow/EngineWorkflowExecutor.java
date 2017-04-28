@@ -3,14 +3,12 @@ package com.dtolabs.rundeck.core.execution.workflow;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 import com.dtolabs.rundeck.core.rules.*;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import org.apache.log4j.Logger;
@@ -433,63 +431,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final boolean keepgoing
     )
     {
-        return inputData -> {
-            final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
-            List<StepExecutionResult> resultList = new ArrayList<>();
-
-            BaseDataContext newDataContext = new BaseDataContext();
-            newDataContext.merge(DataContextUtils.context(executionContext.getDataContext()));
-            if(null!=inputData.getBase()) {
-                newDataContext.merge(inputData.getBase());
-            }
-            //TODO: merge node results from input multidata
-
-            HashMap<String, Map<String,Map<String,String>>> newNodeData = new HashMap<>();
-
-            Map<String, DataContext> inputNodeData = inputData.getData();
-            if(executionContext instanceof NodeExecutionContext){
-                NodeExecutionContext nctx = (NodeExecutionContext) executionContext;
-                Map<String, Map<String, Map<String, String>>> nodeDataContext = nctx.getNodeDataContext();
-                for (String node : nodeDataContext.keySet()) {
-                    BaseDataContext d = new BaseDataContext();
-                    d.merge(DataContextUtils.context(nodeDataContext.get(node)));
-                    DataContext dataContext = inputNodeData.get(node);
-                    if(null!=dataContext){
-                        d.merge(dataContext);
-                    }
-                    newNodeData.put(node, d);
-                }
-            } else if (inputNodeData != null) {
-                newNodeData.putAll(inputNodeData);
-            }
-
-
-            executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Input data context: " + inputData);
-            StepExecutionContext newContext =
-                    ExecutionContextImpl.builder(executionContext)
-                                        .dataContext(newDataContext)
-                                        .nodeDataContext(newNodeData)
-                                        .build();
-            try {
-                return executeWorkflowStep(
-                        newContext,
-                        stepFailedMap,
-                        resultList,
-                        keepgoing,
-                        wlistener,
-                        i,
-                        cmd
-                );
-            } catch (Throwable e) {
-                String message = String.format(
-                        "Exception while executing step [%d]: [%s]",
-                        i,
-                        e.toString()
-                );
-                executionContext.getExecutionListener().log(Constants.ERR_LEVEL, message);
-                throw new RuntimeException(e);
-            }
-        };
+        return new EngineWorkflowStepCallable(this, executionContext, keepgoing, wlistener, i, cmd);
     }
 
 }
