@@ -16,7 +16,6 @@ import org.apache.log4j.Logger;
 import java.util.*;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.Executors;
-import java.util.function.Function;
 
 
 /**
@@ -120,7 +119,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 final boolean isFirstStep
         )
         {
-            return null;
+            return Collections.emptySet();
         }
 
     }
@@ -135,10 +134,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Start EngineWorkflowExecutor");
         final IWorkflow workflow = item.getWorkflow();
 
-        List<StepExecutionItem> commands = workflow.getCommands();
-        int stepCount = commands.size();
-
-        final Map<Integer, StepExecutionResult> stepExecutionResults = new HashMap<>();
         final Map<Integer, StepExecutionResult> stepFailures = new HashMap<>();
         final List<StepExecutionResult> stepResults = new ArrayList<>();
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
@@ -146,49 +141,189 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
         WorkflowStrategy strategyForWorkflow;
         try {
-            Map<String, Object> pluginConfig = new HashMap<>();
-            Map<String, Object> pluginConfig1 = workflow.getPluginConfig();
-            if (pluginConfig1 != null) {
-                Object o = pluginConfig1.get(ServiceNameConstants.WorkflowStrategy);
-                if (o instanceof Map) {
-                    Object o1 = ((Map<String, Object>) o).get(strategy);
-                    if (o1 instanceof Map) {
-                        pluginConfig = (Map<String, Object>) o1;
-                    }
-
-                }
-            }
-            strategyForWorkflow = framework.getWorkflowStrategyService().getStrategyForWorkflow(
-                    item,
-                    pluginConfig,
-                    executionContext.getFrameworkProject()
-            );
+            strategyForWorkflow = setupWorkflowStrategy(executionContext, item, workflow, strategy);
         } catch (ExecutionServiceException e) {
-            executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
-                    .getMessage());
-            return new BaseWorkflowExecutionResult(
-                    stepResults,
-                    new HashMap<>(),
-                    stepFailures,
-                    e,
-                    WorkflowResultFailed
+            executionContext.getExecutionListener().log(
+                    Constants.ERR_LEVEL,
+                    "Exception: " + e.getClass() + ": " + e.getMessage()
             );
+            return mkResult(stepFailures, stepResults, e, WorkflowResultFailed);
         }
-
-        RuleEngine ruleEngine = Rules.createEngine();
 
         MutableStateObj mutable = States.mutable(DataContextUtils.flattenDataContext(
                 executionContext.getDataContext()));
+
         mutable.updateState(WORKFLOW_KEEPGOING_KEY, Boolean.toString(workflow.isKeepgoing()));
-        MutableStateObj state = new StateLogger(
-                mutable,
-                executionContext.getExecutionListener()
+
+        MutableStateObj state = new StateLogger(mutable, executionContext.getExecutionListener());
+
+        RuleEngine ruleEngine = setupRulesEngine(executionContext, workflow, strategyForWorkflow);
+
+        WorkflowStrategyProfile profile = strategyForWorkflow.getProfile();
+        if (profile == null) {
+            profile = new SequentialStrategyProfile();
+        }
+
+        Set<EngineWorkflowStepOperation> operations
+                = buildOperations(executionContext, item, workflow, wlistener, ruleEngine, state, profile);
+
+        executionContext.getExecutionListener().log(
+                Constants.DEBUG_LEVEL,
+                "Create rule engine with rules: " + ruleEngine
+        );
+        executionContext.getExecutionListener().log(
+                Constants.DEBUG_LEVEL,
+                "Create workflow engine with state: " + state
         );
 
-        int wfThreadcount = strategyForWorkflow.getThreadCount();
+        WorkflowSystem workflowEngine = buildWorkflowSystem(
+                executionContext,
+                state,
+                ruleEngine,
+                strategyForWorkflow.getThreadCount()
+        );
 
 
-        Set<EngineWorkflowStepOperation> operations = new HashSet<>();
+        WorkflowSystem.SharedData<MultiDataContext<String, DataContext>> dataContextSharedData =
+                prepareWorkflowDataContext();
+
+        Set<WorkflowSystem.OperationResult<MultiDataContext<String,DataContext>, EngineWorkflowStepOperationCompleted,
+                EngineWorkflowStepOperation>>
+                operationResults =
+                workflowEngine.processOperations(operations, dataContextSharedData);
+
+
+        String statusString = null;
+        ControlBehavior controlBehavior = null;
+
+
+        boolean workflowSuccess = !workflowEngine.isInterrupted();
+        for (WorkflowSystem.OperationResult<MultiDataContext<String,DataContext>, EngineWorkflowStepOperationCompleted,
+                EngineWorkflowStepOperation> operationResult : operationResults) {
+            EngineWorkflowStepOperationCompleted completed = operationResult.getSuccess();
+            EngineWorkflowStepOperation operation = operationResult.getOperation();
+            Throwable failure = operationResult.getFailure();
+
+            if (completed != null) {
+                StepResultCapture result = completed.getStepResultCapture();
+                if (!result.getStepResult().isSuccess()) {
+                    stepFailures.put(completed.stepNum, result.getStepResult());
+                    workflowSuccess = false;
+                }
+                stepResults.add(result.getStepResult());
+                if (result.getControlBehavior() != null && result.getControlBehavior() != ControlBehavior.Continue) {
+                    controlBehavior = result.getControlBehavior();
+                    statusString = result.getStatusString();
+                }
+                System.out.println("Step result data: "+result.getResultData());//XXX
+            } else {
+                workflowSuccess = false;
+                addUnknownStepFailure(executionContext, stepFailures, operation, failure);
+            }
+        }
+        logSkippedOperations(executionContext, operations);
+
+        WorkflowStatusResult workflowResult = workflowResult(
+                workflowSuccess,
+                statusString,
+                null != controlBehavior ? controlBehavior : ControlBehavior.Continue
+        );
+
+        final Map<String, Collection<StepExecutionResult>> nodeFailures = convertFailures(stepFailures);
+        return new BaseWorkflowExecutionResult(stepResults, nodeFailures, stepFailures, null, workflowResult);
+    }
+
+    public WorkflowSystem buildWorkflowSystem(
+            final StepExecutionContext executionContext,
+            final MutableStateObj state,
+            final RuleEngine ruleEngine,
+            final int wfThreadcount
+    )
+    {
+        return getWorkflowSystemBuilder()
+                .ruleEngine(ruleEngine)
+                .executor(() -> wfThreadcount > 0
+                                ? Executors.newFixedThreadPool(wfThreadcount)
+                                : Executors.newCachedThreadPool()
+                )
+                .state(state)
+                .listener(event -> executionContext.getExecutionListener()
+                                                   .log(
+                                                           Constants.DEBUG_LEVEL,
+                                                           event.getEventType() + ": " + event.getMessage()
+                                                   ))
+                .build();
+    }
+
+    private BaseWorkflowExecutionResult mkResult(
+            final Map<Integer, StepExecutionResult> stepFailures,
+            final List<StepExecutionResult> stepResults,
+            final ExecutionServiceException e,
+            final WorkflowStatusResult reason
+    )
+    {
+        return new BaseWorkflowExecutionResult(stepResults, new HashMap<>(), stepFailures, e, reason);
+    }
+
+    private void addUnknownStepFailure(
+            final StepExecutionContext executionContext,
+            final Map<Integer, StepExecutionResult> stepFailures,
+            final EngineWorkflowStepOperation operation,
+            final Throwable failure
+    )
+    {
+        StepFailureReason reason = StepFailureReason.Unknown;
+
+        String message = String.format(
+                "Exception while executing step [%d]: \t[%s]",
+                operation.stepNum,
+                failure.toString()
+        );
+        failure.printStackTrace(System.out);//XXX
+        if (failure instanceof CancellationException) {
+            reason = StepFailureReason.Interrupted;
+
+            message = String.format(
+                    "Cancellation while running step [%d]",
+                    operation.stepNum
+            );
+        }
+        executionContext.getExecutionListener().log(Constants.ERR_LEVEL, message);
+        stepFailures.put(operation.stepNum, StepExecutionResultImpl.wrapStepException(
+                failure instanceof StepException ? (StepException) failure :
+                new StepException(message, failure, reason)
+        ));
+    }
+
+    private void logSkippedOperations(
+            final StepExecutionContext executionContext,
+            final Set<EngineWorkflowStepOperation> operations
+    )
+    {
+        operations.stream()
+                  .filter(op -> !op.isDidRun())
+                  .forEach(op ->
+                                   executionContext.getExecutionListener().log(
+                                           Constants.WARN_LEVEL,
+                                           String.format(
+                                                   "Step [%d] did not run. " +
+                                                   "start conditions: %s, skip " +
+                                                   "conditions: %s",
+                                                   op.stepNum,
+                                                   op.startTriggerConditions,
+                                                   op.skipTriggerConditions
+                                           )
+                                   )
+                );
+    }
+
+    public RuleEngine setupRulesEngine(
+            final StepExecutionContext executionContext,
+            final IWorkflow workflow,
+            final WorkflowStrategy strategyForWorkflow
+    )
+    {
+        RuleEngine ruleEngine = Rules.createEngine();
 
         executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Building initial state and rules...");
 
@@ -221,15 +356,52 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
         //add any additional strategy rules
         strategyForWorkflow.setup(ruleEngine, executionContext, workflow);
+        return ruleEngine;
+    }
 
-        WorkflowStrategyProfile profile = strategyForWorkflow.getProfile();
-        if (profile == null) {
-            profile = new SequentialStrategyProfile();
+    public WorkflowStrategy setupWorkflowStrategy(
+            final StepExecutionContext executionContext,
+            final WorkflowExecutionItem item,
+            final IWorkflow workflow,
+            final String strategy
+    ) throws ExecutionServiceException
+    {
+        final WorkflowStrategy strategyForWorkflow;
+        Map<String, Object> pluginConfig = new HashMap<>();
+        Map<String, Object> pluginConfig1 = workflow.getPluginConfig();
+        if (pluginConfig1 != null) {
+            Object o = pluginConfig1.get(ServiceNameConstants.WorkflowStrategy);
+            if (o instanceof Map) {
+                Object o1 = ((Map<String, Object>) o).get(strategy);
+                if (o1 instanceof Map) {
+                    pluginConfig = (Map<String, Object>) o1;
+                }
+
+            }
         }
+        strategyForWorkflow = framework.getWorkflowStrategyService().getStrategyForWorkflow(
+                item,
+                pluginConfig,
+                executionContext.getFrameworkProject()
+        );
+        return strategyForWorkflow;
+    }
 
-        for (int i = 0; i < stepCount; i++) {
+    private Set<EngineWorkflowStepOperation> buildOperations(
+            final StepExecutionContext executionContext,
+            final WorkflowExecutionItem item,
+            final IWorkflow workflow,
+            final WorkflowExecutionListener wlistener,
+            final RuleEngine ruleEngine,
+            final MutableStateObj state,
+            final WorkflowStrategyProfile profile
+    )
+    {
+        final Set<EngineWorkflowStepOperation> operations = new HashSet<>();
+        List<StepExecutionItem> commands = workflow.getCommands();
+        for (int i = 0; i < commands.size(); i++) {
             final int stepNum = executionContext.getStepNumber() + i;
-            StepExecutionItem cmd = commands.get(i);
+            StepExecutionItem cmd = workflow.getCommands().get(i);
 
             //add initial state of the step
             state.updateState(profile.getInitialStateForStep(stepNum, item, i == 0));
@@ -249,7 +421,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
             Set<Condition> stepSkipTriggerConditions = profile.getSkipConditionsForStep(item, stepNum, i == 0);
             StateObj stepSkipTriggerState = null;
-            if (null != stepSkipTriggerConditions && stepSkipTriggerConditions.size() > 0) {
+            if (null != stepSkipTriggerConditions && !stepSkipTriggerConditions.isEmpty()) {
                 // State that will skip the step
                 stepSkipTriggerState = createSkipTriggerStateForStep(stepNum);
                 //add a rule to skip the step when its run condition is met, and its skip conditions are met
@@ -257,8 +429,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                         Rules.and(
                                 Rules.and(stepStartTriggerConditions),
                                 Rules.and(stepSkipTriggerConditions)
-                        )
-                        ,
+                        ),
                         stepSkipTriggerState
                 ));
                 executionContext.getExecutionListener().log(
@@ -267,143 +438,36 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 );
             }
 
-            operations.add(new EngineWorkflowStepOperation(
-                    stepNum,
-                    cmd.getLabel(),
-                    callable(cmd, executionContext, stepNum, wlistener, workflow.isKeepgoing()),
-                    stepRunTriggerState,
-                    stepSkipTriggerState,
-                    stepStartTriggerConditions,
-                    stepSkipTriggerConditions
-            ));
+            operations.add(
+                    new EngineWorkflowStepOperation(
+                            stepNum,
+                            cmd.getLabel(),
+                            new EngineWorkflowStepCallable(
+                                    this,
+                                    executionContext,
+                                    workflow.isKeepgoing(),
+                                    wlistener,
+                                    stepNum,
+                                    cmd
+                            ),
+                            stepRunTriggerState,
+                            stepSkipTriggerState,
+                            stepStartTriggerConditions,
+                            stepSkipTriggerConditions
+                    )
+            );
         }
+        return operations;
+    }
 
-        executionContext.getExecutionListener().log(
-                Constants.DEBUG_LEVEL,
-                "Create rule engine with rules: " + ruleEngine
-        );
-        executionContext.getExecutionListener().log(
-                Constants.DEBUG_LEVEL,
-                "Create workflow engine with state: " + state
-        );
+    private WorkflowSystem.SharedData<MultiDataContext<String, DataContext>> prepareWorkflowDataContext() {
 
-        WorkflowSystem workflowEngine = getWorkflowSystemBuilder()
-                .ruleEngine(ruleEngine)
-                .executor(() -> wfThreadcount > 0
-                                ? Executors.newFixedThreadPool(wfThreadcount)
-                                : Executors.newCachedThreadPool()
-                )
-                .state(state)
-                .listener(event -> executionContext.getExecutionListener()
-                                                   .log(
-                                                           Constants.DEBUG_LEVEL,
-                                                           event.getEventType() + ": " + event.getMessage()
-                                                   ))
-                .build();
+        final MultiDataContextImpl<String, DataContext> sharedContext
+                = MultiDataContextImpl.withBase(new BaseDataContext());
 
-
-        DataContext base = new BaseDataContext();
-        final MultiDataContextImpl<String, DataContext> sharedContext = MultiDataContextImpl.withBase(base);
-
-        WorkflowSystem.SharedData<MultiDataContext<String, DataContext>> dataContextSharedData
-                = new WorkflowSystem.SharedData<MultiDataContext<String, DataContext>>() {
-            @Override
-            public void addData(final MultiDataContext<String,DataContext> item) {
-                if(item!=null) {
-                    sharedContext.merge(item);
-                }
-            }
-
-            @Override
-            public MultiDataContext<String,DataContext> produceNext() {
-                MultiDataContextImpl<String, DataContext> next = new MultiDataContextImpl<>();
-                next.merge(sharedContext);
-                return next;
-            }
-        };
-        Set<WorkflowSystem.OperationResult<MultiDataContext<String,DataContext>, EngineWorkflowStepOperationCompleted,
-                EngineWorkflowStepOperation>>
-                operationResults =
-                workflowEngine.processOperations(operations, dataContextSharedData);
-
-
-        String statusString = null;
-        ControlBehavior controlBehavior = null;
-
-
-        boolean workflowSuccess = !workflowEngine.isInterrupted();
-        for (WorkflowSystem.OperationResult<MultiDataContext<String,DataContext>, EngineWorkflowStepOperationCompleted,
-                EngineWorkflowStepOperation> operationResult : operationResults) {
-            EngineWorkflowStepOperationCompleted success = operationResult.getSuccess();
-            EngineWorkflowStepOperation operation = operationResult.getOperation();
-            Throwable failure = operationResult.getFailure();
-
-            if (success != null) {
-                StepResultCapture result = success.getStepResultCapture();
-                stepExecutionResults.put(success.stepNum, result.getStepResult());
-                if (!result.getStepResult().isSuccess()) {
-                    stepFailures.put(success.stepNum, result.getStepResult());
-                    workflowSuccess = false;
-                }
-                stepResults.add(result.getStepResult());
-                if (result.getControlBehavior() != null && result.getControlBehavior() != ControlBehavior.Continue) {
-                    controlBehavior = result.getControlBehavior();
-                    statusString = result.getStatusString();
-                }
-                System.out.println("Step result data: "+result.getResultData());//XXX
-            } else {
-                workflowSuccess = false;
-                StepFailureReason reason = StepFailureReason.Unknown;
-
-                String message = String.format(
-                        "Exception while executing step [%d]: \t[%s]",
-                        operation.stepNum,
-                        failure.toString()
-                );
-                failure.printStackTrace(System.out);//XXX
-                if (failure instanceof CancellationException) {
-                    reason = StepFailureReason.Interrupted;
-
-                    message = String.format(
-                            "Cancellation while running step [%d]",
-                            operation.stepNum
-                    );
-                }
-                executionContext.getExecutionListener().log(Constants.ERR_LEVEL, message);
-                stepFailures.put(operation.stepNum, StepExecutionResultImpl.wrapStepException(
-                        failure instanceof StepException ? (StepException) failure :
-                        new StepException(message, failure, reason)
-                ));
-
-            }
-        }
-        for (EngineWorkflowStepOperation operation : operations) {
-            if (!operation.isDidRun()) {
-                executionContext.getExecutionListener().log(
-                        Constants.WARN_LEVEL,
-                        String.format(
-                                "Step [%d] did not run. start conditions: %s, skip conditions: %s",
-                                operation.stepNum,
-                                operation.startTriggerConditions,
-                                operation.skipTriggerConditions
-                        )
-                );
-            }
-        }
-
-        WorkflowStatusResult workflowResult = workflowResult(
-                workflowSuccess,
-                statusString,
-                null != controlBehavior ? controlBehavior : ControlBehavior.Continue
-        );
-
-        final Map<String, Collection<StepExecutionResult>> nodeFailures = convertFailures(stepFailures);
-        return new BaseWorkflowExecutionResult(
-                stepResults,
-                nodeFailures,
-                stepFailures,
-                null,
-                workflowResult
+        return WorkflowSystem.SharedData.with(
+                sharedContext::merge,
+                () -> new MultiDataContextImpl<>(sharedContext)
         );
 
     }
@@ -421,17 +485,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 stepKey(STEP_CONTROL_SKIP_KEY, stepNum),
                 VALUE_TRUE
         );
-    }
-
-    Function<MultiDataContext<String,DataContext>, StepResultCapture> callable(
-            final StepExecutionItem cmd,
-            final StepExecutionContext executionContext,
-            final int i,
-            final WorkflowExecutionListener wlistener,
-            final boolean keepgoing
-    )
-    {
-        return new EngineWorkflowStepCallable(this, executionContext, keepgoing, wlistener, i, cmd);
     }
 
 }
