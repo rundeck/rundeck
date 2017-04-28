@@ -13,7 +13,7 @@ public class BaseRuleEngine implements RuleEngine {
     private Set<Rule> ruleSet;
 
     public BaseRuleEngine(final Set<Rule> ruleSet) {
-        this.ruleSet = ruleSet;
+        this.ruleSet = new HashSet<>(ruleSet);
     }
 
     @Override

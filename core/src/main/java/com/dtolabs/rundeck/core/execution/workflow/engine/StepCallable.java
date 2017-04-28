@@ -14,15 +14,19 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.execution.workflow;
+package com.dtolabs.rundeck.core.execution.workflow.engine;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.dispatcher.BaseDataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.execution.workflow.BaseWorkflowExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
+import com.dtolabs.rundeck.core.execution.workflow.engine.EngineWorkflowExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 
@@ -37,7 +41,7 @@ import java.util.function.Function;
  * @author greg
  * @since 4/28/17
  */
-class EngineWorkflowStepCallable implements Function<WFSharedContext, BaseWorkflowExecutor.StepResultCapture> {
+class StepCallable implements Function<WFSharedContext, BaseWorkflowExecutor.StepResultCapture> {
     private EngineWorkflowExecutor engineWorkflowExecutor;
     private final StepExecutionContext executionContext;
     private final boolean keepgoing;
@@ -45,7 +49,7 @@ class EngineWorkflowStepCallable implements Function<WFSharedContext, BaseWorkfl
     private final int i;
     private final StepExecutionItem cmd;
 
-    public EngineWorkflowStepCallable(
+    public StepCallable(
             final EngineWorkflowExecutor engineWorkflowExecutor,
             final StepExecutionContext executionContext,
             final boolean keepgoing,

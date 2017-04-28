@@ -1,7 +1,24 @@
-package com.dtolabs.rundeck.core.execution.workflow;
+/*
+ * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-import com.dtolabs.rundeck.core.dispatcher.DataContext;
-import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
+package com.dtolabs.rundeck.core.execution.workflow.engine;
+
+import com.dtolabs.rundeck.core.execution.workflow.BaseWorkflowExecutor;
+import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.rules.*;
 
@@ -11,7 +28,7 @@ import java.util.function.Function;
 /**
  * operation for running a step
  */
-class EngineWorkflowStepOperation implements WorkflowSystem.Operation<WFSharedContext,EngineWorkflowStepOperationCompleted> {
+class StepOperation implements WorkflowSystem.Operation<WFSharedContext,OperationCompleted> {
     int stepNum;
     String label;
     Set<Condition> startTriggerConditions;
@@ -21,7 +38,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<WFSharedCo
     private StateObj skipTriggerState;
     private boolean didRun = false;
 
-    EngineWorkflowStepOperation(
+    StepOperation(
             final int stepNum,
             final String label,
             final Function<WFSharedContext,BaseWorkflowExecutor.StepResultCapture> callable,
@@ -51,7 +68,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<WFSharedCo
     }
 
     @Override
-    public EngineWorkflowStepOperationCompleted apply(WFSharedContext context)  {
+    public OperationCompleted apply(WFSharedContext context)  {
         didRun = true;
         BaseWorkflowExecutor.StepResultCapture stepResultCapture = callable.apply(context);
         StepExecutionResult result = stepResultCapture.getStepResult();
@@ -138,7 +155,7 @@ class EngineWorkflowStepOperation implements WorkflowSystem.Operation<WFSharedCo
             }
         }
 
-        return new EngineWorkflowStepOperationCompleted(stepNum, stateChanges, stepResultCapture);
+        return new OperationCompleted(stepNum, stateChanges, stepResultCapture);
     }
 
     @Override

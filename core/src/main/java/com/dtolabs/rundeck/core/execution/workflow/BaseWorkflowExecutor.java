@@ -63,7 +63,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     protected static final String SECURE_OPTION_KEY = "secureOption";
     protected static final String SECURE_OPTION_VALUE = "****";
 
-    final Framework framework;
+    private final Framework framework;
 
     public BaseWorkflowExecutor(final Framework framework) {
         this.framework = framework;
@@ -76,14 +76,14 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
      *
      * @return result with the given input
      */
-    static WorkflowStatusResult workflowResult(boolean status, String statusString, ControlBehavior behavior) {
+    protected static WorkflowStatusResult workflowResult(boolean status, String statusString, ControlBehavior behavior) {
         return new BaseWorkflowStatusResult(status, statusString, behavior);
     }
 
     /**
      * Failure result
      */
-    static final WorkflowStatusResult WorkflowResultFailed = new BaseWorkflowStatusResult(
+    protected static final WorkflowStatusResult WorkflowResultFailed = new BaseWorkflowStatusResult(
             false,
             null,
             ControlBehavior.Continue
@@ -235,6 +235,10 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         return stepResult;
     }
 
+    protected Framework getFramework() {
+        return framework;
+    }
+
     static class BaseWorkflowStatusResult implements WorkflowStatusResult {
         private boolean status;
         private String statusString;
@@ -265,7 +269,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         }
     }
 
-    static class BaseWorkflowExecutionResult extends BaseWorkflowStatusResult implements WorkflowExecutionResult {
+    protected static class BaseWorkflowExecutionResult extends BaseWorkflowStatusResult implements WorkflowExecutionResult {
         private final List<StepExecutionResult> results;
         private final Map<String, Collection<StepExecutionResult>> failures;
         private final Map<Integer, StepExecutionResult> stepFailures;

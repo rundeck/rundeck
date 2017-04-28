@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.ProviderService;
+import com.dtolabs.rundeck.core.execution.workflow.engine.EngineWorkflowExecutor;
 import com.dtolabs.rundeck.core.plugins.*;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.configuration.DescribableService;

@@ -1,10 +1,27 @@
-package com.dtolabs.rundeck.core.execution.workflow;
+/*
+ * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.dtolabs.rundeck.core.execution.workflow.engine;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
+import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
@@ -37,7 +54,35 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     public static final String STEP_ANY_STATE_FAILED_KEY = "step.any.state.failed";
     public static final String STEP_COMPLETED_KEY = "step.#.completed";
     public static final String VALUE_TRUE = Boolean.TRUE.toString();
+    private static final Rule FLOW_CONTROL_HALT_END_WORKFLOW = Rules.conditionsRule(
+            Rules.equalsCondition(
+                    STEP_ANY_FLOW_CONTROL_HALT_KEY,
+                    VALUE_TRUE
+            ),
+            Workflows.getWorkflowEndState()
+    );
     public static final String VALUE_FALSE = Boolean.FALSE.toString();
+    private static final Rule STEP_FAILURE_KEEPGOING_FALSE_END_WORKFLOW = Rules.conditionsRule(
+            Rules.conditionSet(
+                    Rules.equalsCondition(
+                            STEP_ANY_STATE_FAILED_KEY,
+                            VALUE_TRUE
+                    ),
+                    Rules.equalsCondition(
+                            WORKFLOW_KEEPGOING_KEY,
+                            VALUE_FALSE
+                    )
+            ),
+            Workflows.getWorkflowEndState()
+    );
+    private static final Set<Rule> INITIAL_RULES = Collections.unmodifiableSet(
+            new HashSet<>(
+                    Arrays.asList(
+                            FLOW_CONTROL_HALT_END_WORKFLOW,
+                            STEP_FAILURE_KEEPGOING_FALSE_END_WORKFLOW
+                    )
+            )
+    );
     public static final String STEP_STATE_RESULT_SUCCESS = "success";
     public static final String STEP_STATE_RESULT_FAILURE = "failure";
     public static final String STEP_STATE_RESULT_SKIPPED = "skipped";
@@ -147,7 +192,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                     Constants.ERR_LEVEL,
                     "Exception: " + e.getClass() + ": " + e.getMessage()
             );
-            return mkResult(stepFailures, stepResults, e, WorkflowResultFailed);
+            return new BaseWorkflowExecutionResult(stepResults, new HashMap<>(), stepFailures, e, WorkflowResultFailed);
         }
 
         MutableStateObj mutable = States.mutable(DataContextUtils.flattenDataContext(
@@ -164,7 +209,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             profile = new SequentialStrategyProfile();
         }
 
-        Set<EngineWorkflowStepOperation> operations
+        Set<StepOperation> operations
                 = buildOperations(executionContext, item, workflow, wlistener, ruleEngine, state, profile);
 
         executionContext.getExecutionListener().log(
@@ -184,13 +229,11 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
 
 
-        WorkflowSystem.SharedData<WFSharedContext> dataContextSharedData =
-                prepareWorkflowDataContext();
+        WorkflowSystem.SharedData<WFSharedContext>
+                dataContextSharedData = prepareWorkflowDataContext();
 
-        Set<WorkflowSystem.OperationResult<WFSharedContext, EngineWorkflowStepOperationCompleted,
-                EngineWorkflowStepOperation>>
-                operationResults =
-                workflowEngine.processOperations(operations, dataContextSharedData);
+        Set<WorkflowSystem.OperationResult<WFSharedContext, OperationCompleted, StepOperation>>
+                operationResults = workflowEngine.processOperations(operations, dataContextSharedData);
 
 
         String statusString = null;
@@ -198,10 +241,10 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
 
         boolean workflowSuccess = !workflowEngine.isInterrupted();
-        for (WorkflowSystem.OperationResult<WFSharedContext, EngineWorkflowStepOperationCompleted,
-                EngineWorkflowStepOperation> operationResult : operationResults) {
-            EngineWorkflowStepOperationCompleted completed = operationResult.getSuccess();
-            EngineWorkflowStepOperation operation = operationResult.getOperation();
+        for (WorkflowSystem.OperationResult<WFSharedContext, OperationCompleted, StepOperation> operationResult :
+                operationResults) {
+            OperationCompleted completed = operationResult.getSuccess();
+            StepOperation operation = operationResult.getOperation();
             Throwable failure = operationResult.getFailure();
 
             if (completed != null) {
@@ -255,20 +298,10 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 .build();
     }
 
-    private BaseWorkflowExecutionResult mkResult(
-            final Map<Integer, StepExecutionResult> stepFailures,
-            final List<StepExecutionResult> stepResults,
-            final ExecutionServiceException e,
-            final WorkflowStatusResult reason
-    )
-    {
-        return new BaseWorkflowExecutionResult(stepResults, new HashMap<>(), stepFailures, e, reason);
-    }
-
     private void addUnknownStepFailure(
             final StepExecutionContext executionContext,
             final Map<Integer, StepExecutionResult> stepFailures,
-            final EngineWorkflowStepOperation operation,
+            final StepOperation operation,
             final Throwable failure
     )
     {
@@ -297,7 +330,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
     private void logSkippedOperations(
             final StepExecutionContext executionContext,
-            final Set<EngineWorkflowStepOperation> operations
+            final Set<StepOperation> operations
     )
     {
         operations.stream()
@@ -317,42 +350,25 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 );
     }
 
-    public RuleEngine setupRulesEngine(
+    /**
+     * Create and prepare a {@link RuleEngine} for processing operation rules
+     *
+     * @param executionContext    context
+     * @param workflow            workflow
+     * @param strategyForWorkflow strategy
+     *
+     * @return new RuleEngine
+     */
+    private RuleEngine setupRulesEngine(
             final StepExecutionContext executionContext,
             final IWorkflow workflow,
             final WorkflowStrategy strategyForWorkflow
     )
     {
-        RuleEngine ruleEngine = Rules.createEngine();
 
         executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL, "Building initial state and rules...");
 
-        ruleEngine.addRule(
-                //rule to halt processing when flow control says to
-                Rules.conditionsRule(
-                        Rules.equalsCondition(
-                                STEP_ANY_FLOW_CONTROL_HALT_KEY,
-                                VALUE_TRUE
-                        ),
-                        Workflows.getWorkflowEndState()
-                )
-        );
-        ruleEngine.addRule(
-                //rule to stop if keepgoing is false and the step fails
-                Rules.conditionsRule(
-                        Rules.conditionSet(
-                                Rules.equalsCondition(
-                                        STEP_ANY_STATE_FAILED_KEY,
-                                        VALUE_TRUE
-                                ),
-                                Rules.equalsCondition(
-                                        WORKFLOW_KEEPGOING_KEY,
-                                        VALUE_FALSE
-                                )
-                        ),
-                        Workflows.getWorkflowEndState()
-                )
-        );
+        RuleEngine ruleEngine = Rules.createEngine(INITIAL_RULES);
 
         //add any additional strategy rules
         strategyForWorkflow.setup(ruleEngine, executionContext, workflow);
@@ -379,7 +395,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
             }
         }
-        strategyForWorkflow = framework.getWorkflowStrategyService().getStrategyForWorkflow(
+        strategyForWorkflow = getFramework().getWorkflowStrategyService().getStrategyForWorkflow(
                 item,
                 pluginConfig,
                 executionContext.getFrameworkProject()
@@ -387,7 +403,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return strategyForWorkflow;
     }
 
-    private Set<EngineWorkflowStepOperation> buildOperations(
+    private Set<StepOperation> buildOperations(
             final StepExecutionContext executionContext,
             final WorkflowExecutionItem item,
             final IWorkflow workflow,
@@ -397,7 +413,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             final WorkflowStrategyProfile profile
     )
     {
-        final Set<EngineWorkflowStepOperation> operations = new HashSet<>();
+        final Set<StepOperation> operations = new HashSet<>();
         List<StepExecutionItem> commands = workflow.getCommands();
         for (int i = 0; i < commands.size(); i++) {
             final int stepNum = executionContext.getStepNumber() + i;
@@ -439,10 +455,10 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             }
 
             operations.add(
-                    new EngineWorkflowStepOperation(
+                    new StepOperation(
                             stepNum,
                             cmd.getLabel(),
-                            new EngineWorkflowStepCallable(
+                            new StepCallable(
                                     this,
                                     executionContext,
                                     workflow.isKeepgoing(),

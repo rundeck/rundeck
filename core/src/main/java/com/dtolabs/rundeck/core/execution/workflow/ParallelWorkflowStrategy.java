@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.execution.workflow.engine.EngineWorkflowExecutor;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.core.plugins.configuration.Validator;
 import com.dtolabs.rundeck.core.rules.Condition;
@@ -11,8 +12,8 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import java.util.HashSet;
 import java.util.Set;
 
-import static com.dtolabs.rundeck.core.execution.workflow.EngineWorkflowExecutor.WORKFLOW_STATE_KEY;
-import static com.dtolabs.rundeck.core.execution.workflow.EngineWorkflowExecutor.WORKFLOW_STATE_STARTED;
+import static com.dtolabs.rundeck.core.execution.workflow.engine.EngineWorkflowExecutor.WORKFLOW_STATE_KEY;
+import static com.dtolabs.rundeck.core.execution.workflow.engine.EngineWorkflowExecutor.WORKFLOW_STATE_STARTED;
 
 /**
  * Created by greg on 5/5/16.
