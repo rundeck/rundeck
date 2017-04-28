@@ -38,6 +38,12 @@ import java.util.Map;
 class ContextualExecutionListener extends ExecutionListenerOverrideBase implements ContextLoggerExecutionListener {
     private ContextLogger logger;
     private ContextualExecutionListener delegate;
+    private boolean ignoreError;
+
+    public void ignoreErrors(boolean value){
+        ignoreError= value;
+    }
+
     protected ContextualExecutionListener(ContextualExecutionListener delegate){
         super(delegate);
         this.delegate=delegate;

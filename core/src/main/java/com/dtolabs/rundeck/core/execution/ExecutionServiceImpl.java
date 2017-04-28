@@ -290,14 +290,19 @@ class ExecutionServiceImpl implements ExecutionService {
     }
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
+                                             final INodeEntry node, boolean showError) {
+        return executeCommand(context, ExecArgList.fromStrings(DataContextUtils
+                .stringContainsPropertyReferencePredicate, command), node, showError);
+    }
+
+    public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node) {
         return executeCommand(context, ExecArgList.fromStrings(DataContextUtils
-                .stringContainsPropertyReferencePredicate, command), node);
+                .stringContainsPropertyReferencePredicate, command), node, true);
     }
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final ExecArgList command,
-                                             final INodeEntry node) {
-
+                                             final INodeEntry node, boolean showError) {
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginNodeExecution(context, command.asFlatStringArray(), node);
         }
@@ -317,13 +322,19 @@ class ExecutionServiceImpl implements ExecutionService {
         NodeExecutorResult result = null;
         String[] commandArray = commandList.toArray(new String[commandList.size()]);
         try {
-            result = nodeExecutor.executeCommand(nodeContext, commandArray, node);
+            result = nodeExecutor.executeCommand(nodeContext, commandArray, node, showError);
         } finally {
             if (null != context.getExecutionListener()) {
                 context.getExecutionListener().finishNodeExecution(result, context, commandArray, node);
             }
         }
         return result;
+    }
+
+    public NodeExecutorResult executeCommand(final ExecutionContext context, final ExecArgList command,
+                                             final INodeEntry node) {
+        return executeCommand(context,command,node, true);
+
     }
 
     public String getName() {

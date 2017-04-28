@@ -222,6 +222,10 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node)  {
+        return executeCommand(context,command,node,true);
+    }
+    public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
+                                             final INodeEntry node, boolean showError)  {
         if (null == node.getHostname() || null == node.extractHostname() || StringUtils.isBlank(node.extractHostname())) {
             return NodeExecutorResultImpl.createFailure(
                 StepFailureReason.ConfigurationFailure,

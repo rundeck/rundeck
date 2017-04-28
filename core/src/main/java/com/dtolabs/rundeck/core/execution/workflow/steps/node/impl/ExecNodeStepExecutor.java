@@ -25,6 +25,9 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
+import com.dtolabs.rundeck.core.execution.HasFailureHandler;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
@@ -50,7 +53,17 @@ public class ExecNodeStepExecutor implements NodeStepExecutor {
     public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node)
         throws NodeStepException {
         final ExecCommand cmd = (ExecCommand) item;
-        return framework.getExecutionService().executeCommand(context, cmd.getCommand(), node);
+        boolean hasHandler= item instanceof HasFailureHandler;
+        boolean showError = true;
+        if(hasHandler){
+            final HasFailureHandler handles = (HasFailureHandler) item;
+            final StepExecutionItem handler = handles.getFailureHandler();
+            if(null != handler && handler instanceof HandlerExecutionItem){
+                boolean keepGoing = ((HandlerExecutionItem)handler).isKeepgoingOnSuccess();
+                showError = !keepGoing;
+            }
+        }
+        return framework.getExecutionService().executeCommand(context, cmd.getCommand(), node, showError);
     }
 
 }

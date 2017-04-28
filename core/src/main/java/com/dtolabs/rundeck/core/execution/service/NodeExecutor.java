@@ -43,4 +43,16 @@ public interface NodeExecutor {
      * @return a result
      */
     public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node);
+
+    /**
+     * Execute a command on a node and return the result.
+     *
+     * @param context the execution context
+     * @param command the array of strings for the command line, with any necessary data context references replaced.
+     * @param node    the node to execute on
+     * @param showError log the error
+     *
+     * @return a result
+     */
+    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node, boolean showError);
 }

@@ -148,6 +148,11 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
                                              final INodeEntry node)  {
+        return executeCommand(executionContext, command, node, true);
+    }
+
+    public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
+                                             final INodeEntry node, boolean showError)  {
         File workingdir = null;
         String scriptargs;
         String dirstring;

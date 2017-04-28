@@ -42,6 +42,7 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
     List<WorkflowExecutionListener> listenerList;
     List<WorkflowExecutionListener> reversedListenerList;
     ExecutionListener delegate;
+    private boolean ignoreError
 
     private MultiWorkflowExecutionListener(ExecutionListener delegate,List<WorkflowExecutionListener> listenerList) {
         this.delegate = delegate;
@@ -57,6 +58,11 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
      */
     public static MultiWorkflowExecutionListener create(ExecutionListener delegate, List<WorkflowExecutionListener> listenerList) {
         return new MultiWorkflowExecutionListener(delegate,listenerList);
+    }
+
+    @Override
+    public void ignoreErrors(boolean value){
+        ignoreError=value;
     }
 
     @Override
@@ -121,6 +127,9 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
 
     @Override
     void log(int level, String message) {
+        if(level<2 && ignoreError){
+            level=2
+        }
         delegate.log(level,message)
     }
 

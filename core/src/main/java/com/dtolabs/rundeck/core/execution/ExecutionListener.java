@@ -43,6 +43,8 @@ import java.util.Map;
  * @version $Revision$
  */
 public interface ExecutionListener extends PluginLogger {
+
+    public void ignoreErrors(boolean ignore);
     /**
      * @return true if output should be terse and not prefixed
      */
