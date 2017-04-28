@@ -30,7 +30,7 @@ import java.util.Map;
  * A list of commandline arguments, with flags to indicate quoting.
  */
 public class ExecArgList {
-    List<ExecArg> args = new ArrayList<ExecArg>();
+    List<ExecArg> args = new ArrayList<>();
 
     private ExecArgList() {
     }
@@ -93,7 +93,7 @@ public class ExecArgList {
      * @return Flatten the list of arguments into a list
      */
     public ArrayList<String> asFlatStringList() {
-        final ArrayList<String> strings = new ArrayList<String>();
+        final ArrayList<String> strings = new ArrayList<>();
         for (ExecArg arg : getList()) {
             arg.accept(new ExecArg.Visitor() {
                 @Override
@@ -146,7 +146,7 @@ public class ExecArgList {
                 DataContextUtils.replaceMissingOptionsWithBlank,
                 false);
 
-        final ArrayList<String> commandList = new ArrayList<String>();
+        final ArrayList<String> commandList = new ArrayList<>();
         CommandVisitor visiter = new CommandVisitor(commandList, quote, expand);
         command.visitWith(visiter);
         return commandList;
@@ -180,7 +180,7 @@ public class ExecArgList {
         @Override
         public void visit(ExecArg arg) {
             if (arg.isList()) {
-                CommandVisitor commandVisitor = new CommandVisitor(new ArrayList<String>(), quote, expand);
+                CommandVisitor commandVisitor = new CommandVisitor(new ArrayList<>(), quote, expand);
                 for (ExecArg execArg : arg.getList()) {
                     execArg.accept(commandVisitor);
                 }

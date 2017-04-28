@@ -293,7 +293,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
          * @return builder
          */
         public Builder mergeContext(final String key, final Map<String,String> data) {
-            HashMap<String, Map<String, String>> tomerge = new HashMap<String, Map<String, String>>();
+            HashMap<String, Map<String, String>> tomerge = new HashMap<>();
             tomerge.put(key, data);
             return dataContext(DataContextUtils.merge(ctx.dataContext, tomerge));
         }

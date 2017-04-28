@@ -178,7 +178,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
                     //if multi-node, determine set of nodes to run handler on: (failed node list only)
                     if (stepCaptureFailedNodesListener.getMatchedNodes().size() > 1) {
-                        HashSet<String> failedNodeList = new HashSet<String>(
+                        HashSet<String> failedNodeList = new HashSet<>(
                                 stepCaptureFailedNodesListener.getFailedNodes().keySet());
 
                         handlerExecContext = new ExecutionContextImpl.Builder(handlerExecContext).nodeSelector(
@@ -192,7 +192,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     //extract node-specific failure and set as node-context data
                     handlerExecContext = addNodeStepFailureContextData(stepResult, handlerExecContext);
 
-                    Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<Integer, StepExecutionResult>();
+                    Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<>();
                     StepExecutionResult handlerResult = executeWFItem(
                             handlerExecContext,
                             handlerFailedMap,
@@ -543,7 +543,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     )
     {
         HashMap<String, String>
-                resultData = new HashMap<String, String>();
+                resultData = new HashMap<>();
         if (null != stepResult.getFailureData()) {
             //convert values to string
             for (final Map.Entry<String, Object> entry : stepResult.getFailureData().entrySet()) {
@@ -588,8 +588,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         } else if (NodeDispatchStepExecutor.isWrappedDispatcherException(dispatcherStepResult)) {
             DispatcherException exception
                     = NodeDispatchStepExecutor.extractDispatcherException(dispatcherStepResult);
-            HashMap<String, NodeStepResult> stringNodeStepResultHashMap = new HashMap<String,
-                    NodeStepResult>();
+            HashMap<String, NodeStepResult> stringNodeStepResultHashMap = new HashMap<>();
             resultMap = stringNodeStepResultHashMap;
             NodeStepException nodeStepException = exception.getNodeStepException();
             if (null != nodeStepException && null != exception.getNode()) {
@@ -610,7 +609,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             for (final Map.Entry<String, ? extends NodeStepResult> dentry : resultMap.entrySet()) {
                 String nodename = dentry.getKey();
                 NodeStepResult stepResult = dentry.getValue();
-                HashMap<String, String> resultData = new HashMap<String, String>();
+                HashMap<String, String> resultData = new HashMap<>();
                 if (null != stepResult.getFailureData()) {
                     //convert values to string
                     for (final Map.Entry<String, Object> entry : stepResult.getFailureData().entrySet()) {
@@ -628,7 +627,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                 }
                 resultData.put("message", message);
                 //add to data context
-                HashMap<String, Map<String, String>> ndata = new HashMap<String, Map<String, String>>();
+                HashMap<String, Map<String, String>> ndata = new HashMap<>();
                 ndata.put("result", resultData);
                 builder.nodeDataContext(nodename, ndata);
             }
@@ -666,7 +665,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     {
 
         final Map<String, Collection<StepExecutionResult>> failures
-                = new HashMap<String, Collection<StepExecutionResult>>();
+                = new HashMap<>();
         for (final Map.Entry<Integer, StepExecutionResult> entry : failedMap.entrySet()) {
             final StepExecutionResult o = entry.getValue();
 
@@ -677,7 +676,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                 for (final String s : dispatcherResult.getResults().keySet()) {
                     final NodeStepResult interpreterResult = dispatcherResult.getResults().get(s);
                     if (!failures.containsKey(s)) {
-                        failures.put(s, new ArrayList<StepExecutionResult>());
+                        failures.put(s, new ArrayList<>());
                     }
                     failures.get(s).add(interpreterResult);
                 }
@@ -688,7 +687,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     //dispatch failed for a specific node
                     final String key = node.getNodename();
                     if (!failures.containsKey(key)) {
-                        failures.put(key, new ArrayList<StepExecutionResult>());
+                        failures.put(key, new ArrayList<>());
                     }
                     NodeStepException nodeStepException = e.getNodeStepException();
                     if (null != nodeStepException) {
@@ -760,12 +759,12 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             Map<String, Map<String, String>> dataContext
     )
     {
-        Map<String, Map<String, String>> printableContext = new HashMap<String, Map<String, String>>();
+        Map<String, Map<String, String>> printableContext = new HashMap<>();
         if (dataContext != null) {
             printableContext.putAll(dataContext);
-            Set<String> secureValues = new HashSet<String>();
+            Set<String> secureValues = new HashSet<>();
             if (dataContext.containsKey(secureOptionKey)) {
-                Map<String, String> secureOptions = new HashMap<String, String>();
+                Map<String, String> secureOptions = new HashMap<>();
                 secureOptions.putAll(dataContext.get(secureOptionKey));
                 secureValues.addAll(secureOptions.values());
                 for (Map.Entry<String, String> entry : secureOptions.entrySet()) {
@@ -775,7 +774,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             }
 
             if (dataContext.containsKey(optionKey)) {
-                Map<String, String> options = new HashMap<String, String>();
+                Map<String, String> options = new HashMap<>();
                 options.putAll(dataContext.get(optionKey));
                 for (Map.Entry<String, String> entry : options.entrySet()) {
                     if (secureValues.contains(entry.getValue())) {
@@ -900,7 +899,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
                     //if multi-node, determine set of nodes to run handler on: (failed node list only)
                     if (stepCaptureFailedNodesListener.getMatchedNodes().size() > 1) {
-                        HashSet<String> failedNodeList = new HashSet<String>(
+                        HashSet<String> failedNodeList = new HashSet<>(
                                 stepCaptureFailedNodesListener.getFailedNodes().keySet());
 
                         handlerExecContext = new ExecutionContextImpl.Builder(handlerExecContext).nodeSelector(
@@ -927,7 +926,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                             outputContext
                     );
 
-                    Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<Integer, StepExecutionResult>();
+                    Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<>();
                     StepExecutionResult handlerResult = executeWFItem(
                             handlerControlContext,
                             handlerFailedMap,

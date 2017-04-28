@@ -47,7 +47,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
      * Uses a thread local context stack, inherited by sub threads.
      */
     private StepContextWorkflowExecutionListener<INodeEntry, StepContextId> stepContext = new
-            StepContextWorkflowExecutionListener<INodeEntry, StepContextId>();
+            StepContextWorkflowExecutionListener<>();
 
     private WorkflowExecutionListenerImpl delegate;
 
@@ -96,7 +96,7 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         INodeEntry currentNode = stepContext.getCurrentNode();
         List<Pair<StepContextId,INodeEntry>> currentContext = stepContext.getCurrentContextPairs();
         if (null != currentContext || null!=currentNode) {
-            final HashMap<String, String> loggingContext = new HashMap<String, String>();
+            final HashMap<String, String> loggingContext = new HashMap<>();
             if (null != currentNode) {
                 loggingContext.put("node", currentNode.getNodename());
                 loggingContext.put("user", currentNode.extractUserName());
@@ -120,14 +120,14 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
      * @param stack stack
      */
     private StepIdentifier generateIdentifier(List<Pair<StepContextId, INodeEntry>> stack) {
-        List<StepContextId> ctxs = new ArrayList<StepContextId>();
+        List<StepContextId> ctxs = new ArrayList<>();
         int i=0;
         for (Pair<StepContextId, INodeEntry> pair : stack) {
             Map<String, String> params = null;
             if (null != pair.getSecond() && i < stack.size() - 1) {
                 //include node as a parameter to the context only when it is an intermediate step,
                 // i.e. a parent in the sequence
-                params = new HashMap<String, String>();
+                params = new HashMap<>();
                 params.put("node", pair.getSecond().getNodename());
             }
             ctxs.add(StateUtils.stepContextId(pair.getFirst().getStep(), !pair.getFirst().getAspect().isMain(),

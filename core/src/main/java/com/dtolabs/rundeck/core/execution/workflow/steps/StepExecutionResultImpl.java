@@ -47,8 +47,8 @@ public class StepExecutionResultImpl implements StepExecutionResult, HasSourceRe
 
     public StepExecutionResultImpl() {
         this.success = true;
-        resultData = new HashMap<String, Object>();
-        failureData = new HashMap<String, Object>();
+        resultData = new HashMap<>();
+        failureData = new HashMap<>();
     }
 
     public StepExecutionResultImpl(Throwable exception, FailureReason failureReason, String failureMessage) {

@@ -56,8 +56,8 @@ public class StepFirstWorkflowExecutor extends BaseWorkflowExecutor {
         WorkflowStatusResult workflowResult= WorkflowResultFailed;
         Exception exception = null;
         final IWorkflow workflow = item.getWorkflow();
-        final Map<Integer, StepExecutionResult> stepFailures = new HashMap<Integer, StepExecutionResult>();
-        final List<StepExecutionResult> stepResults = new ArrayList<StepExecutionResult>();
+        final Map<Integer, StepExecutionResult> stepFailures = new HashMap<>();
+        final List<StepExecutionResult> stepResults = new ArrayList<>();
         try {
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
                                                         "NodeSet: " + executionContext.getNodeSelector());

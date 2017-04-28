@@ -93,7 +93,7 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
                 executionContext.getFrameworkProject(),
                 executionContext.getDataContext()
         );
-        final HashMap<String, String> scptexec = new HashMap<String, String>();
+        final HashMap<String, String> scptexec = new HashMap<>();
         scptexec.put("command", StringArrayUtil.asString(command, " "));
         localDataContext.put("exec", scptexec);
         final Map<String, Map<String, String>> nodeExecContext =

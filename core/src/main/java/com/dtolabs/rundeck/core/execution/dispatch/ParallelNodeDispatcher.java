@@ -83,7 +83,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         INodeSet nodes = context.getNodes();
         boolean keepgoing = context.isKeepgoing();
 
-        final HashSet<String> nodeNames = new HashSet<String>();
+        final HashSet<String> nodeNames = new HashSet<>();
         FailedNodesListener failedListener = context.getExecutionListener().getFailedNodesListener();
 
         Project project = new Project();
@@ -98,15 +98,15 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         parallelTask.setThreadCount(context.getThreadCount());
         parallelTask.setFailOnAny(!keepgoing);
         boolean success = false;
-        final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
-        final HashMap<String, NodeStepResult> failureMap = new HashMap<String, NodeStepResult>();
+        final HashMap<String, NodeStepResult> resultMap = new HashMap<>();
+        final HashMap<String, NodeStepResult> failureMap = new HashMap<>();
         final Collection<INodeEntry> nodes1 = nodes.getNodes();
         //reorder based on configured rank property and order
         final String rankProperty = null != context.getNodeRankAttribute() ? context.getNodeRankAttribute() : "nodename";
         final boolean rankAscending = context.isNodeRankOrderAscending();
         final INodeEntryComparator comparator = new INodeEntryComparator(rankProperty);
-        final TreeSet<INodeEntry> orderedNodes = new TreeSet<INodeEntry>(
-            rankAscending ? comparator : Collections.reverseOrder(comparator));
+        final TreeSet<INodeEntry> orderedNodes = new TreeSet<>(
+                rankAscending ? comparator : Collections.reverseOrder(comparator));
 
         orderedNodes.addAll(nodes1);
         for (final INodeEntry node: orderedNodes) {
@@ -244,8 +244,8 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
      * @param project the project
      */
     public static void configureNodeContextThreadLocalsForProject(final Project project) {
-        final InheritableThreadLocal<String> localNodeName = new InheritableThreadLocal<String>();
-        final InheritableThreadLocal<String> localUserName = new InheritableThreadLocal<String>();
+        final InheritableThreadLocal<String> localNodeName = new InheritableThreadLocal<>();
+        final InheritableThreadLocal<String> localUserName = new InheritableThreadLocal<>();
         if (null == project.getReference(NODE_NAME_LOCAL_REF_ID)) {
             project.addReference(NODE_NAME_LOCAL_REF_ID, localNodeName);
         }

@@ -78,8 +78,8 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
 
         context.getExecutionListener()
             .log(4, "preparing for sequential execution on " + nodes.getNodes().size() + " nodes");
-        final HashSet<String> nodeNames = new HashSet<String>(nodes.getNodeNames());
-        final HashMap<String, NodeStepResult> failures = new HashMap<String, NodeStepResult>();
+        final HashSet<String> nodeNames = new HashSet<>(nodes.getNodeNames());
+        final HashMap<String, NodeStepResult> failures = new HashMap<>();
         FailedNodesListener failedListener = context.getExecutionListener().getFailedNodesListener();
         if (null != failedListener) {
             failedListener.matchedNodes(nodeNames);
@@ -87,7 +87,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         boolean interrupted = false;
         final Thread thread = Thread.currentThread();
         boolean success = true;
-        final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
+        final HashMap<String, NodeStepResult> resultMap = new HashMap<>();
         final List<INodeEntry> nodes1 = INodeEntryComparator.rankOrderedNodes(nodes, context
                 .getNodeRankAttribute(),
                 context.isNodeRankOrderAscending());

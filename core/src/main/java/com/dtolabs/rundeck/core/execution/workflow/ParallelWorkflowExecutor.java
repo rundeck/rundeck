@@ -67,8 +67,8 @@ public class ParallelWorkflowExecutor extends BaseWorkflowExecutor {
         WorkflowStatusResult workflowResult = WorkflowResultFailed;
         Exception exception = null;
         final IWorkflow workflow = item.getWorkflow();
-        final Map<Integer, StepExecutionResult> stepFailures = new HashMap<Integer, StepExecutionResult>();
-        final List<StepExecutionResult> stepResults = new ArrayList<StepExecutionResult>();
+        final Map<Integer, StepExecutionResult> stepFailures = new HashMap<>();
+        final List<StepExecutionResult> stepResults = new ArrayList<>();
         try {
             // Log stuff
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,
@@ -126,10 +126,10 @@ public class ParallelWorkflowExecutor extends BaseWorkflowExecutor {
         // Prepare runnables for each step
         int numCommands = iWorkflowCmdItems.size();
         ExecutorService es = Executors.newFixedThreadPool(numCommands);
-        final Map<Integer, StepExecutionResult> stepExecutionResults =  new HashMap<Integer, StepExecutionResult>();
-        List<Runnable> parallelSteps = new ArrayList<Runnable>();
+        final Map<Integer, StepExecutionResult> stepExecutionResults = new HashMap<>();
+        List<Runnable> parallelSteps = new ArrayList<>();
         for (int i = 0; i < iWorkflowCmdItems.size(); i++) {
-            final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<Integer, StepExecutionResult>();
+            final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
             final StepExecutionItem cmd = iWorkflowCmdItems.get(i);
             final int stepNum = executionContext.getStepNumber() + i;
 

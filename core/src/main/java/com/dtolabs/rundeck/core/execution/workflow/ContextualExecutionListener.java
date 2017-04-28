@@ -61,7 +61,7 @@ class ContextualExecutionListener extends ExecutionListenerOverrideBase implemen
         }
     }
     private Map<String,String> mergeMap(Map a,Map<String, String> b) {
-        HashMap<String, String> hashMap = new HashMap<String, String>();
+        HashMap<String, String> hashMap = new HashMap<>();
         if(null!=a){
             for (Object k : a.keySet()) {
                 hashMap.put(k.toString(), a.get(k).toString());

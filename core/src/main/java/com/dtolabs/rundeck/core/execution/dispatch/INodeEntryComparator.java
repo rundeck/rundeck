@@ -65,7 +65,7 @@ public class INodeEntryComparator implements Comparator<INodeEntry> {
      */
     public static List<INodeEntry> rankOrderedNodes(Collection<INodeEntry> nodes, String rankProperty,
             boolean rankAscending) {
-        final ArrayList<INodeEntry> nodes1 = new ArrayList<INodeEntry>(nodes);
+        final ArrayList<INodeEntry> nodes1 = new ArrayList<>(nodes);
         //reorder based on configured rank property and order
         final INodeEntryComparator comparator = new INodeEntryComparator(rankProperty);
 
