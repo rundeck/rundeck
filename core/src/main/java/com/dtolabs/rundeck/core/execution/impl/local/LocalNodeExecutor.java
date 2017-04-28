@@ -130,8 +130,7 @@ public class LocalNodeExecutor implements NodeExecutor {
         execTask.setExecutable(taskParameters.getCommandexecutable());
         String[] commandargs = taskParameters.getCommandArgs();
         if(null!=commandargs){
-            for (int i = 0; i < commandargs.length; i++) {
-                String commandarg = commandargs[i];
+            for (String commandarg : commandargs) {
                 execTask.createArg().setValue(commandarg);
             }
         }

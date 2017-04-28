@@ -340,8 +340,7 @@ public class StateUtils {
 
     private static List<StepContextId> asStepContextIds(int[] ids) {
         ArrayList<StepContextId> stepContextIds = new ArrayList<StepContextId>(ids.length);
-        for (int i = 0; i < ids.length; i++) {
-            int id = ids[i];
+        for (int id : ids) {
             stepContextIds.add(stepContextId(id, false));
         }
         return stepContextIds;
