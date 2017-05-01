@@ -127,7 +127,7 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
 
     @Override
     void log(int level, String message) {
-        if(level<2 && ignoreError){
+        if(ignoreError && level<2){
             level=2
         }
         delegate.log(level,message)

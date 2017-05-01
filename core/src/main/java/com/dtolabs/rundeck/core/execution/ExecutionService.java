@@ -174,31 +174,10 @@ public interface ExecutionService extends FrameworkSupportService {
     /**
      * Execute a command within the context on the node.
      * @param context context
-     * @param command command strings
-     * @param node node
-     * @param showError log error
-     * @return result
-     * @deprecated use {@link #executeCommand(ExecutionContext, ExecArgList, com.dtolabs.rundeck.core.common.INodeEntry)}
-     *
-     */
-    public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node, boolean showError);
-
-    /**
-     * Execute a command within the context on the node.
-     * @param context context
      * @param command command
      * @param node node
      * @return result
      */
     public NodeExecutorResult executeCommand(ExecutionContext context, ExecArgList command, INodeEntry node) ;
 
-    /**
-     * Execute a command within the context on the node.
-     * @param context context
-     * @param command command
-     * @param node node
-     * @param showError log error
-     * @return result
-     */
-    public NodeExecutorResult executeCommand(ExecutionContext context, ExecArgList command, INodeEntry node, boolean showError) ;
 }

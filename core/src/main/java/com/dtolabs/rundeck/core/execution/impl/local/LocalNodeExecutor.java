@@ -60,16 +60,11 @@ public class LocalNodeExecutor implements NodeExecutor {
         parameterGenerator = new ExecTaskParameterGeneratorImpl();
     }
 
-    public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
-                                             final INodeEntry node)  {
-        return executeCommand(context, command, node, true);
-    }
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
-                                             final INodeEntry node, boolean showError)  {
+                                             final INodeEntry node)  {
         final ExecutionListener listener = context.getExecutionListener();
         final Project project = new Project();
-        listener.ignoreErrors(!showError);
         AntSupport.addAntBuildListener(listener, project);
 
         String propName = System.currentTimeMillis() + ".node." + node.getNodename() + ".LocalNodeExecutor.result";

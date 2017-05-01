@@ -63,7 +63,8 @@ public class ExecNodeStepExecutor implements NodeStepExecutor {
                 showError = !keepGoing;
             }
         }
-        return framework.getExecutionService().executeCommand(context, cmd.getCommand(), node, showError);
+        context.getExecutionListener().ignoreErrors(!showError);
+        return framework.getExecutionService().executeCommand(context, cmd.getCommand(), node);
     }
 
 }

@@ -59,7 +59,10 @@ class ContextualExecutionListener extends ExecutionListenerOverrideBase implemen
         this.logger = logger;
     }
 
-    public final void log(final int level, final String message) {
+    public final void log(int level, final String message) {
+        if(ignoreError && level<2){
+            level=2;
+        }
         if(null!=delegate) {
             delegate.log(level, message);
         }else{
