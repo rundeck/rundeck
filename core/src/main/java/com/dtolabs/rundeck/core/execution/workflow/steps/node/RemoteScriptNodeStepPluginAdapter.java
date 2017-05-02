@@ -115,6 +115,19 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         Description description = getDescription();
         final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
 
+        boolean hasHandler= item instanceof HasFailureHandler;
+        boolean hideError = false;
+        if(hasHandler){
+            final HasFailureHandler handles = (HasFailureHandler) item;
+            final StepExecutionItem handler = handles.getFailureHandler();
+            if(null != handler && handler instanceof HandlerExecutionItem){
+                hideError = ((HandlerExecutionItem)handler).isKeepgoingOnSuccess();
+            }
+        }
+        if(null != context.getExecutionListener()) {
+            context.getExecutionListener().ignoreErrors(hideError);
+        }
+
         final GeneratedScript script;
         try {
             script = plugin.generateScript(pluginContext, config, node);

@@ -28,6 +28,8 @@ import java.io.StringWriter;
 import java.util.Map;
 
 import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
+import com.dtolabs.rundeck.core.execution.HasFailureHandler;
 import org.apache.log4j.Logger;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
@@ -101,6 +103,18 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
                                                                                                   providerName);
         final PluginStepContext pluginContext = PluginStepContextImpl.from(context);
         final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, getDescription(), plugin, PropertyScope.InstanceOnly);
+        boolean hasHandler= item instanceof HasFailureHandler;
+        boolean hideError = false;
+        if(hasHandler){
+            final HasFailureHandler handles = (HasFailureHandler) item;
+            final StepExecutionItem handler = handles.getFailureHandler();
+            if(null != handler && handler instanceof HandlerExecutionItem){
+                hideError = ((HandlerExecutionItem)handler).isKeepgoingOnSuccess();
+            }
+        }
+        if(null != context.getExecutionListener()) {
+            context.getExecutionListener().ignoreErrors(hideError);
+        }
         try {
             plugin.executeNodeStep(pluginContext, config, node);
         } catch (NodeStepException e) {
