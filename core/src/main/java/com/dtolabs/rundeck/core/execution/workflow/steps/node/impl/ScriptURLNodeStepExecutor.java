@@ -120,19 +120,6 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         if (context.getFramework().hasProperty("execution.script.tokenexpansion.enabled")) {
             expandTokens = "true".equals(context.getFramework().getProperty("execution.script.tokenexpansion.enabled"));
         }
-
-        boolean hasHandler= item instanceof HasFailureHandler;
-        boolean hideError = false;
-        if(hasHandler){
-            final HasFailureHandler handles = (HasFailureHandler) item;
-            final StepExecutionItem handler = handles.getFailureHandler();
-            if(null != handler && handler instanceof HandlerExecutionItem){
-                hideError = ((HandlerExecutionItem)handler).isKeepgoingOnSuccess();
-            }
-        }
-        if(null != context.getExecutionListener()) {
-            context.getExecutionListener().ignoreErrors(hideError);
-        }
         return scriptUtils.executeScriptFile(
                 context,
                 node,

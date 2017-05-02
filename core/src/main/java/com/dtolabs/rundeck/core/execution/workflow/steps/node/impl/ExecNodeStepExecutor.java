@@ -53,18 +53,6 @@ public class ExecNodeStepExecutor implements NodeStepExecutor {
     public NodeStepResult executeNodeStep(StepExecutionContext context, NodeStepExecutionItem item, INodeEntry node)
         throws NodeStepException {
         final ExecCommand cmd = (ExecCommand) item;
-        boolean hasHandler= item instanceof HasFailureHandler;
-        boolean hideError = false;
-        if(hasHandler){
-            final HasFailureHandler handles = (HasFailureHandler) item;
-            final StepExecutionItem handler = handles.getFailureHandler();
-            if(null != handler && handler instanceof HandlerExecutionItem){
-                hideError = ((HandlerExecutionItem)handler).isKeepgoingOnSuccess();
-            }
-        }
-        if(null != context.getExecutionListener()) {
-            context.getExecutionListener().ignoreErrors(hideError);
-        }
         return framework.getExecutionService().executeCommand(context, cmd.getCommand(), node);
     }
 
