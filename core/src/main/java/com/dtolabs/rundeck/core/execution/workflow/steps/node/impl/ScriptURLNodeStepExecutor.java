@@ -122,17 +122,17 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         }
 
         boolean hasHandler= item instanceof HasFailureHandler;
-        boolean showError = true;
+        boolean hideError = false;
         if(hasHandler){
             final HasFailureHandler handles = (HasFailureHandler) item;
             final StepExecutionItem handler = handles.getFailureHandler();
             if(null != handler && handler instanceof HandlerExecutionItem){
-                boolean keepGoing = ((HandlerExecutionItem)handler).isKeepgoingOnSuccess();
-                showError = !keepGoing;
+                hideError = ((HandlerExecutionItem)handler).isKeepgoingOnSuccess();
             }
         }
-        context.getExecutionListener().ignoreErrors(!showError);
-
+        if(null != context.getExecutionListener()) {
+            context.getExecutionListener().ignoreErrors(hideError);
+        }
         return scriptUtils.executeScriptFile(
                 context,
                 node,

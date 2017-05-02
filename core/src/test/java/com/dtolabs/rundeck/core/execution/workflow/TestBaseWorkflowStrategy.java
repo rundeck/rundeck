@@ -837,6 +837,9 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
 
     static class testListener implements ExecutionListenerOverride {
+
+        @Override public void ignoreErrors(boolean ignore){}
+
         public boolean isTerse() {
             return false;
         }
