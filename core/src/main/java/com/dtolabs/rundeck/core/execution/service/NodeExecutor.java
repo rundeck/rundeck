@@ -43,5 +43,4 @@ public interface NodeExecutor {
      * @return a result
      */
     public NodeExecutorResult executeCommand(ExecutionContext context, String[] command, INodeEntry node);
-
 }

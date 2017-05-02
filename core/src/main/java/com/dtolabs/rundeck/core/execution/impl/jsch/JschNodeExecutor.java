@@ -220,7 +220,6 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         return DESC;
     }
 
-
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node)  {
         if (null == node.getHostname() || null == node.extractHostname() || StringUtils.isBlank(node.extractHostname())) {

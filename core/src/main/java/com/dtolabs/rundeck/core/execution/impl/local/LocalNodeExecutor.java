@@ -60,7 +60,6 @@ public class LocalNodeExecutor implements NodeExecutor {
         parameterGenerator = new ExecTaskParameterGeneratorImpl();
     }
 
-
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node)  {
         final ExecutionListener listener = context.getExecutionListener();

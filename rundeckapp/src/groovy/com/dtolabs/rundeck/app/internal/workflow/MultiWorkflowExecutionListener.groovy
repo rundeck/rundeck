@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.app.internal.workflow
 
+import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
@@ -127,8 +128,8 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
 
     @Override
     void log(int level, String message) {
-        if(ignoreError && level<2){
-            level=2
+        if(ignoreError && level<Constants.INFO_LEVEL){
+            level=Constants.INFO_LEVEL
         }
         delegate.log(level,message)
     }
