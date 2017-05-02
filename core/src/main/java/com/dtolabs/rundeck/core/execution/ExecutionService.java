@@ -179,5 +179,4 @@ public interface ExecutionService extends FrameworkSupportService {
      * @return result
      */
     public NodeExecutorResult executeCommand(ExecutionContext context, ExecArgList command, INodeEntry node) ;
-
 }

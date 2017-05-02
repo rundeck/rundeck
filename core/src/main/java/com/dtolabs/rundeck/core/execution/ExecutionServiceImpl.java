@@ -277,13 +277,13 @@ class ExecutionServiceImpl implements ExecutionService {
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node) {
-
         return executeCommand(context, ExecArgList.fromStrings(DataContextUtils
                 .stringContainsPropertyReferencePredicate, command), node);
     }
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final ExecArgList command,
                                              final INodeEntry node) {
+
         if (null != context.getExecutionListener()) {
             context.getExecutionListener().beginNodeExecution(context, command.asFlatStringArray(), node);
         }

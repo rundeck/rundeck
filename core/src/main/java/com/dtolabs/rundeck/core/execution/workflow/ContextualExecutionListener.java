@@ -60,8 +60,8 @@ class ContextualExecutionListener extends ExecutionListenerOverrideBase implemen
     }
 
     public final void log(int level, final String message) {
-        if(ignoreError && level<2){
-            level=2;
+        if(ignoreError && level<Constants.INFO_LEVEL){
+            level=Constants.INFO_LEVEL;
         }
         if(null!=delegate) {
             delegate.log(level, message);
