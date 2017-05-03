@@ -2776,8 +2776,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobOptsMap = addOptionDefaults(se, jobOptsMap)
 
         //select secureAuth and secure options from the args to pass
-        def secAuthOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], false)
-        def secOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], true)
+        Map<String,String> secAuthOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], false)
+        Map<String,String> secOpts = selectSecureOptionInput(se, [optparams: jobOptsMap], true)
 
         //for secAuthOpts, evaluate each in context of original private data context
         def evalSecAuthOpts = [:]
@@ -2808,7 +2808,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         //for plain opts, evaluate in context of non secure data context
-        final plainOpts = removeSecureOptionEntries(se, jobOptsMap)
+        final Map<String,String> plainOpts = removeSecureOptionEntries(se, jobOptsMap)
 
         //define nonsecure opts entries
         def plainOptsContext = executionContext.dataContext['option']?.findAll { !executionContext.dataContext['secureOption'] || null == executionContext.dataContext['secureOption'][it.key] }
