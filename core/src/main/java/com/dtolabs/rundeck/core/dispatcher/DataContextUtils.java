@@ -34,6 +34,8 @@ import org.apache.tools.ant.types.Environment;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -51,7 +53,10 @@ public class DataContextUtils {
      */
     public static final String ENV_VAR_PREFIX = "RD_";
     public static final String PROPERTY_REF_REGEX = "\\$\\{([^\\s.]+)\\.([^\\s}]+)\\}";
+    public static final String PROPERTY_VIEW_REF_REGEX = "\\$\\{(?:(?<STEP>\\d+):)?(?<GROUP>[^\\s.]+)\\." +
+                                                         "(?<KEY>[^\\s@]+)(?:@(?<QUAL>[^\\s}]+))?\\}";
     private static final Pattern PROPERTY_REF_PATTERN = Pattern.compile(PROPERTY_REF_REGEX);
+    private static final Pattern PROPERTY_VIEW_REF_PATTERN = Pattern.compile(PROPERTY_VIEW_REF_REGEX);
 
     /**
      * Return a converter that can expand the property references within a string
@@ -327,12 +332,89 @@ public class DataContextUtils {
      * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
      * context
      *
+     * @param input             input string
+     * @param data              data context map
+     * @param converter         converter to encode/convert the expanded values
+     * @param failOnUnexpanded  true to fail if a reference is not found
+     * @param blankIfUnexpanded true to use blank if a reference is not found
      *
-     * @param input input string
-     * @param data  data context map
-     *              @param converter converter to encode/convert the expanded values
+     * @return string with values substituted, or original string
+     */
+    public static <T extends ViewTraverse<T>> String replaceDataReferences(
+            final String input,
+            final MultiDataContext<T, DataContext> data,
+            final BiFunction<Integer, String, T> viewMap,
+            final Converter<String, String> converter,
+            boolean failOnUnexpanded,
+            boolean blankIfUnexpanded
+    )
+    {
+        if (null == data || null == input) {
+            return input;
+        }
+        final Matcher m = PROPERTY_VIEW_REF_PATTERN.matcher(input);
+        final StringBuffer sb = new StringBuffer();
+        while (m.find()) {
+            final String step = m.group("STEP");
+            final String group = m.group("GROUP");
+            final String key = m.group("KEY");
+            final String qual = m.group("QUAL");
+            T view = viewMap.apply(null != step ? Integer.parseInt(step) : null, qual);
+            String value = data.resolve(view, group, key);
+            if (null != value) {
+                if (null != converter) {
+                    value = converter.convert(value);
+                }
+                m.appendReplacement(sb, Matcher.quoteReplacement(value));
+            } else if (failOnUnexpanded) {
+                throw new UnresolvedDataReferenceException(input, m.group());
+            } else if (blankIfUnexpanded) {
+                m.appendReplacement(sb, "");
+            } else {
+                value = m.group(0);
+                if (null != converter) {
+                    value = converter.convert(value);
+                }
+                m.appendReplacement(sb, Matcher.quoteReplacement(value));
+            }
+        }
+        m.appendTail(sb);
+        return sb.toString();
+    }
+
+    /**
+     * XXX
      *
-     * @param failOnUnexpanded true to fail if a reference is not found
+     * @param qual
+     *
+     * @return
+     */
+    public static ContextView parseViewQualifier(final String qual) {
+        if (null == qual) {
+            return ContextView.global();
+        }
+        if ("^".equals(qual)) {
+            return ContextView.global();
+        } else if (qual.indexOf('/', 1) > -1) {
+            String num = qual.substring(0, qual.indexOf('/'));
+            if (qual.indexOf('/') == qual.length() - 1) {
+                return ContextView.step(Integer.parseInt(num));
+            }
+            String rest = qual.substring(qual.indexOf('/') + 1);
+            return ContextView.nodeStep(Integer.parseInt(num), rest);
+        } else {
+            return ContextView.node(qual);
+        }
+    }
+
+    /**
+     * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
+     * context
+     *
+     * @param input             input string
+     * @param data              data context map
+     * @param converter         converter to encode/convert the expanded values
+     * @param failOnUnexpanded  true to fail if a reference is not found
      * @param blankIfUnexpanded true to use blank if a reference is not found
      *
      * @return string with values substituted, or original string

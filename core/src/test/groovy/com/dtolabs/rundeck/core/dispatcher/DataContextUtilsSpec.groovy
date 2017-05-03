@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.dispatcher
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -25,6 +26,53 @@ import spock.lang.Unroll
  * Created by greg on 11/2/16.
  */
 class DataContextUtilsSpec extends Specification {
+    @Unroll
+    def "multi context replace #str"() {
+        given:
+        WFSharedContext shared = new WFSharedContext()
+        shared.merge(ContextView.global(), new BaseDataContext([a: [b: "global"]]))
+        shared.merge(ContextView.node("node1"), new BaseDataContext([a: [b: "node1"]]))
+        shared.merge(ContextView.nodeStep(2, "node1"), new BaseDataContext([a: [b: "step2 node1"]]))
+        shared.merge(ContextView.step(2), new BaseDataContext([a: [b: "step2"]]))
+        when:
+        def result = DataContextUtils.replaceDataReferences(
+                str,
+                shared,
+                ContextView.&nodeStep,
+                null,
+                false,
+                false
+        )
+        then:
+        result == expected
+
+        where:
+        str              | expected
+        'abc'            | 'abc'
+        '${a.b}'         | 'global'
+        '${a.b@^}'       | 'global'
+        '${a.b@node1}'   | 'node1'
+        '${2:a.b@node1}' | 'step2 node1'
+        '${2:a.b}'       | 'step2'
+        '${2:a.b}'       | 'step2'
+    }
+
+    @Unroll
+    def "parse view qualifier #input"() {
+        when:
+        def result = DataContextUtils.parseViewQualifier(input)
+        then:
+        result.isGlobal() == global
+        result.getStepNumber() == step
+        result.getNodeName() == node
+
+        where:
+        input   | global | step | node
+        null    | true   | null | null
+        "abc"   | false  | null | "abc"
+        "2/abc" | false  | 2    | "abc"
+        "2/"    | false  | 2    | null
+    }
     @Unroll
     def "replace tokens in script duplicate start char #script"() {
         given:

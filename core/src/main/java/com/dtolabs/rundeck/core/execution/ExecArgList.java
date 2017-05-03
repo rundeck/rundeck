@@ -17,7 +17,10 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.cli.CLIUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.utils.Converter;
 
 import java.util.ArrayList;
@@ -138,16 +141,55 @@ public class ExecArgList {
         return buildCommandForNode(this, dataContext, osFamily);
     }
 
-    private static ArrayList<String> buildCommandForNode(ExecArgList command, Map<String, Map<String,
-            String>> dataContext,
-            String osFamily) {
+    private static ArrayList<String> buildCommandForNode(
+            ExecArgList command,
+            Map<String, Map<String, String>> dataContext,
+            String osFamily
+    )
+    {
         final Converter<String, String> quote = CLIUtils.argumentQuoteForOperatingSystem(osFamily);
-        final Converter<String, String> expand = DataContextUtils.replaceDataReferencesConverter(dataContext,
+        final Converter<String, String> expand = DataContextUtils.replaceDataReferencesConverter(
+                dataContext,
                 DataContextUtils.replaceMissingOptionsWithBlank,
-                false);
+                false
+        );
 
         final ArrayList<String> commandList = new ArrayList<>();
         CommandVisitor visiter = new CommandVisitor(commandList, quote, expand);
+        command.visitWith(visiter);
+        return commandList;
+    }
+
+    public ArrayList<String> buildCommandForNode(
+            MultiDataContext<ContextView, DataContext> sharedContext,
+            String nodeName, String osFamily
+    )
+    {
+        return buildCommandForNode(this, sharedContext, nodeName, osFamily);
+    }
+
+    private static ArrayList<String> buildCommandForNode(
+            ExecArgList command,
+            MultiDataContext<ContextView, DataContext> sharedContext,
+            String nodeName,
+            String osFamily
+    )
+    {
+
+        final ArrayList<String> commandList = new ArrayList<>();
+        CommandVisitor visiter = new CommandVisitor(
+                commandList,
+                CLIUtils.argumentQuoteForOperatingSystem(osFamily),
+                str -> DataContextUtils.replaceDataReferences(
+                        str,
+                        sharedContext,
+                        //add node name to qualifier to read node-data first
+                        (i, s) -> ContextView.nodeStep(i, s != null ? s : nodeName),
+                        DataContextUtils.replaceMissingOptionsWithBlank,
+                        false,
+                        false
+                )
+        );
         command.visitWith(visiter);
         return commandList;
     }
