@@ -31,11 +31,12 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.common.OrchestratorConfig;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.workflow.DataOutput;
 import com.dtolabs.rundeck.core.execution.workflow.FlowControl;
 import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.state.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
@@ -62,9 +63,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private boolean keepgoing;
     private int loglevel;
     private String charsetEncoding;
-    private Map<String, Map<String, Map<String, String>>> nodeDataContext;
     private DataContext dataContext;
     private DataContext privateDataContext;
+    private MultiDataContext<ContextView, DataContext> sharedDataContext;
     private ExecutionListener executionListener;
     private Framework framework;
     private AuthContext authContext;
@@ -77,16 +78,14 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private ProjectNodeService nodeService;
     private FlowControl flowControl;
     private OutputContext outputContext;
-    private Map<String, OutputContext> nodeOutputContextMap;
 
     private OrchestratorConfig orchestrator;
     private ExecutionContextImpl() {
         stepContext = new ArrayList<>();
         nodes = new NodeSetImpl();
-        nodeDataContext = new HashMap<>();
-        nodeOutputContextMap = new HashMap<>();
         dataContext = new BaseDataContext();
         privateDataContext = new BaseDataContext();
+        sharedDataContext = new MultiDataContextImpl<>();
         outputContext = new DataOutput();
     }
 
@@ -101,8 +100,8 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     }
 
     @Override
-    public Map<String, Map<String, Map<String, String>>> getNodeDataContext() {
-        return nodeDataContext;
+    public MultiDataContext<ContextView, DataContext> getSharedDataContext() {
+        return sharedDataContext;
     }
 
     public AuthContext getAuthContext() {
@@ -138,10 +137,6 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         return singleNodeContext;
     }
 
-    @Override
-    public Map<String, OutputContext> getNodeOutputContextMap() {
-        return nodeOutputContextMap;
-    }
 
 
     public static class Builder {
@@ -175,10 +170,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.nodeService = original.getNodeService();
                 ctx.orchestrator = original.getOrchestrator();
                 ctx.outputContext = original.getOutputContext();
+                ctx.sharedDataContext = new MultiDataContextImpl<>(original.getSharedDataContext());
                 if(original instanceof NodeExecutionContext){
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
-                    ctx.nodeDataContext.putAll(original1.getNodeDataContext());
-                    ctx.nodeOutputContextMap.putAll(original1.getNodeOutputContextMap());
                     ctx.singleNodeContext = original1.getSingleNodeContext();
                 }
             }
@@ -252,14 +246,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
                 ctx.singleNodeContext=node;
 
-                if (null == ctx.nodeOutputContextMap.get(node.getNodename())) {
-                    ctx.nodeOutputContextMap.put(node.getNodename(), ctx.outputContext);
-                }
-
-                if (null != ctx.nodeDataContext && null != ctx.nodeDataContext.get(node.getNodename())) {
-                    ctx.dataContext = DataContextUtils.merge(ctx.dataContext,
-                                                             ctx.nodeDataContext.get(node.getNodename()));
-                }
+//                if (null != ctx.sharedDataContext && null != ctx.sharedDataContext.getData(node.getNodename())) {
+                //XXX: merge shared node data at this point?
+//                    ctx.dataContext.merge(ctx.sharedDataContext.getData(node.getNodename()));
+//                }
             }
             return this;
         }
@@ -403,12 +393,24 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         public Builder nodeDataContext(final String nodeName, final Map<String,Map<String,String>> dataContext) {
-            ctx.nodeDataContext.put(nodeName, dataContext);
+            ctx.sharedDataContext.merge(
+                    ContextView.nodeStep(ctx.stepNumber, nodeName),
+                    new BaseDataContext(dataContext)
+            );
+            ctx.sharedDataContext.merge(
+                    ContextView.node(nodeName),
+                    new BaseDataContext(dataContext)
+            );
             return this;
         }
 
-        public Builder nodeDataContext(Map<String, ? extends Map<String, Map<String, String>>> nodedata) {
-            ctx.nodeDataContext.putAll(nodedata);
+        public Builder sharedDataContext(MultiDataContext<ContextView, DataContext> shared) {
+            ctx.sharedDataContext = new MultiDataContextImpl<>(shared);
+            return this;
+        }
+
+        public Builder sharedDataContextClear() {
+            ctx.sharedDataContext = new MultiDataContextImpl<>();
             return this;
         }
 

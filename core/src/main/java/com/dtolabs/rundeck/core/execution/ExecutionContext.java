@@ -27,7 +27,9 @@ import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesSelector;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContext;
+import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.common.OrchestratorConfig;
@@ -130,6 +132,10 @@ public interface ExecutionContext {
      * @return map of data contexts keyed by name
      */
     public DataContext getDataContext();
+    /**
+     * @return the node specific context data keyed by node name
+     */
+    public MultiDataContext<ContextView, DataContext> getSharedDataContext();
 
     /**
      * @return the data context in the private scope
