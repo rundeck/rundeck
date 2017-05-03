@@ -1227,6 +1227,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             .charsetEncoding(charsetEncoding)
             .dataContext(datacontext)
             .privateDataContext(privatecontext)
+            .sharedDataContextClear()
             .executionListener(listener)
             .framework(framework)
             .authContext(authContext)
