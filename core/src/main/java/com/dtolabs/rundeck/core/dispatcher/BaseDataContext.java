@@ -26,6 +26,10 @@ public class BaseDataContext implements MutableDataContext {
             this.data = new HashMap<>();
         }
     }
+    public BaseDataContext(String key, Map<String, String> value) {
+        this.data = new HashMap<>();
+        data.put(key, new HashMap<>(value));
+    }
     public void merge(DataContext context){
         data=DataContextUtils.merge(data, context.getData());
     }
