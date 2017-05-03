@@ -27,9 +27,9 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
+import com.dtolabs.rundeck.core.dispatcher.BaseDataContext;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContext;
-import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
-import com.dtolabs.rundeck.core.dispatcher.MultiDataContextImpl;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
@@ -377,33 +377,32 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     }
 
     /**
-     * @param stepContext    the context
+     * @param builder
      * @param stepController a flow control object
      *
      * @return new context using the flow controller
      */
-    private StepExecutionContext withOverride(
-            final StepExecutionContext stepContext,
+    private ExecutionContextImpl.Builder withOverride(
             final FlowController stepController,
-            final OutputContext dataOutput
+            final OutputContext dataOutput,
+            final ExecutionContextImpl.Builder builder
     )
     {
-        return new ExecutionContextImpl.Builder(stepContext).flowControl(stepController)
-                                                            .outputContext(dataOutput)
-                                                            .build();
+        return builder
+                .flowControl(stepController)
+                .outputContext(dataOutput);
     }
 
     /**
      * Add step result failure information to the data context
      *
      * @param stepResult         result
-     * @param handlerExecContext context
      *
      * @return new context
      */
-    protected StepExecutionContext addStepFailureContextData(
+    protected void addStepFailureContextData(
             StepExecutionResult stepResult,
-            StepExecutionContext handlerExecContext
+            ExecutionContextImpl.Builder builder
     )
     {
         HashMap<String, String>
@@ -426,23 +425,20 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         resultData.put("message", message);
         //add to data context
 
-        handlerExecContext = ExecutionContextImpl.builder(handlerExecContext).
-                setContext("result", resultData)
-                                                 .build();
-        return handlerExecContext;
+        builder.setContext("result", resultData);
     }
 
     /**
      * Add any node-specific step failure information to the node-specific data contexts
      *
      * @param dispatcherStepResult result
-     * @param handlerExecContext   context
      *
+     * @param builder
      * @return new context
      */
-    protected StepExecutionContext addNodeStepFailureContextData(
-            StepExecutionResult dispatcherStepResult,
-            StepExecutionContext handlerExecContext
+    protected void addNodeStepFailureContextData(
+            final StepExecutionResult dispatcherStepResult,
+            final ExecutionContextImpl.Builder builder
     )
     {
         final Map<String, ? extends NodeStepResult> resultMap;
@@ -452,23 +448,22 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         } else if (NodeDispatchStepExecutor.isWrappedDispatcherException(dispatcherStepResult)) {
             DispatcherException exception
                     = NodeDispatchStepExecutor.extractDispatcherException(dispatcherStepResult);
-            HashMap<String, NodeStepResult> stringNodeStepResultHashMap = new HashMap<>();
-            resultMap = stringNodeStepResultHashMap;
+            HashMap<String, NodeStepResult> nodeResults = new HashMap<>();
             NodeStepException nodeStepException = exception.getNodeStepException();
             if (null != nodeStepException && null != exception.getNode()) {
                 NodeStepResult nodeExecutorResult = nodeStepResultFromNodeStepException(
                         exception.getNode(),
                         nodeStepException
                 );
-                stringNodeStepResultHashMap.put(
+                nodeResults.put(
                         nodeStepException.getNodeName(),
                         nodeExecutorResult
                 );
             }
+            resultMap = nodeResults;
         } else {
-            return handlerExecContext;
+            return;
         }
-        ExecutionContextImpl.Builder builder = ExecutionContextImpl.builder(handlerExecContext);
         if (null != resultMap) {
             for (final Map.Entry<String, ? extends NodeStepResult> dentry : resultMap.entrySet()) {
                 String nodename = dentry.getKey();
@@ -491,28 +486,27 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                 }
                 resultData.put("message", message);
                 //add to data context
-                HashMap<String, Map<String, String>> ndata = new HashMap<>();
-                ndata.put("result", resultData);
-                builder.nodeDataContext(nodename, ndata);
+//                builder.mergeContext("result", resultData);
+                builder.nodeDataContext(nodename, new BaseDataContext("result", resultData));
             }
         }
-        return builder.build();
     }
 
-    protected StepExecutionContext replaceFailedNodesListenerInContext(
-            StepExecutionContext executionContext,
-            FailedNodesListener captureFailedNodesListener
+    protected ExecutionContextImpl.Builder replaceFailedNodesListenerInContext(
+            final ExecutionContextImpl.Builder builder,
+            final FailedNodesListener captureFailedNodesListener,
+            final ExecutionListener executionListener
     )
     {
         ExecutionListenerOverride listen = null;
-        if (null != executionContext.getExecutionListener()) {
-            listen = executionContext.getExecutionListener().createOverride();
+        if (null != executionListener) {
+            listen = executionListener.createOverride();
         }
         if (null != listen) {
             listen.setFailedNodesListener(captureFailedNodesListener);
         }
 
-        return new ExecutionContextImpl.Builder(executionContext).executionListener(listen).build();
+        return builder.executionListener(listen);
     }
 
     /**
@@ -683,53 +677,43 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
         //wrap node failed listener (if any) and capture status results
         NodeRecorder stepCaptureFailedNodesListener = new NodeRecorder();
-        StepExecutionContext stepContext = replaceFailedNodesListenerInContext(
-                executionContext,
-                stepCaptureFailedNodesListener
+
+        //create the new context for workflow execution
+        ExecutionContextImpl.Builder wfRunContext = new ExecutionContextImpl.Builder(executionContext);
+
+        replaceFailedNodesListenerInContext(
+                wfRunContext,
+                stepCaptureFailedNodesListener,
+                executionContext.getExecutionListener()
         );
 
         final FlowController stepController = new FlowController();
-        //TODO: output data should be contextualized to the step
-        final DataOutputContextualized outputContext = new DataOutputContextualized("/step:" + c );
-        StepExecutionContext controllableContext = withOverride(stepContext, stepController, outputContext);
+
+        //XXX: output data should be contextualized to the step
+        final DataOutput outputContext = new DataOutput();
+        withOverride(
+                stepController,
+                outputContext,
+                wfRunContext
+        );
 
         Map<String, NodeStepResult> nodeFailures;
 
         //execute the step item, and store the results
         StepExecutionResult stepResult = null;
         Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
-        stepResult = executeWFItem(controllableContext, stepFailedMap, c, cmd);
+        stepResult = executeWFItem(wfRunContext.build(), stepFailedMap, c, cmd);
         result.setSuccess(stepResult.isSuccess());
         nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
+
         //collect node data results
-        WFSharedContext multiData ;
-        if (NodeDispatchStepExecutor.isWrappedDispatcherResult(stepResult)) {
-            //TODO:
-            //TODO: node and step specific data needs to be captured
-            //TODO: but in a way that can be reconstituted for later steps on the same node
-            HashMap<String, DataContext> map = new HashMap<>();
-            DispatcherResult dispatcherResult = NodeDispatchStepExecutor.extractDispatcherResult(stepResult);
-            Map<String, ? extends NodeStepResult> results = dispatcherResult.getResults();
-            System.out.println("Finished step, node results: " + results);
-            for (String node : results.keySet()) {
-                NodeStepResult nodeStepResult = results.get(node);
-                if(nodeStepResult instanceof HasDataContext) {
-                    DataContext dataContext = ((HasDataContext) nodeStepResult).getDataContext();
+        WFSharedContext combinedResultData = new WFSharedContext();
+        combineResultData(c, outputContext, combinedResultData, stepResult);
 
-                    map.put(node, dataContext);
-                }
-            }
-            multiData = new WFSharedContext(map);
-        }else{
-            multiData = WFSharedContext.withBase(outputContext.getDataContext());
-        }
-        System.err.println("Finished step, result data context: "+outputContext.getDataContext());
-        if (null != executionContext.getExecutionListener() &&
-            null != executionContext.getExecutionListener().getFailedNodesListener()) {
-            executionContext.getExecutionListener().getFailedNodesListener().matchedNodes(
-                    stepCaptureFailedNodesListener.getMatchedNodes());
+        System.err.println("Finished step, result data context: " + combinedResultData);
 
-        }
+        reportNodesMatched(executionContext, stepCaptureFailedNodesListener);
+
         if (stepController.isControlled()) {
 
             //TODO: halt execution without running the error-handler?
@@ -746,9 +730,12 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     //will throw an exception on failure because keepgoing=false
 
                     NodeRecorder handlerCaptureFailedNodesListener = new NodeRecorder();
-                    StepExecutionContext handlerExecContext = replaceFailedNodesListenerInContext(
-                            executionContext,
-                            handlerCaptureFailedNodesListener
+
+                    ExecutionContextImpl.Builder wfHandlerContext = new ExecutionContextImpl.Builder(executionContext);
+                    replaceFailedNodesListenerInContext(
+                            wfHandlerContext,
+                            handlerCaptureFailedNodesListener,
+                            executionContext.getExecutionListener()
                     );
 
                     //if multi-node, determine set of nodes to run handler on: (failed node list only)
@@ -756,33 +743,35 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                         HashSet<String> failedNodeList = new HashSet<>(
                                 stepCaptureFailedNodesListener.getFailedNodes().keySet());
 
-                        handlerExecContext = new ExecutionContextImpl.Builder(handlerExecContext).nodeSelector(
-                                SelectorUtils.nodeList(failedNodeList)).build();
+                        wfHandlerContext.nodeSelector(SelectorUtils.nodeList(failedNodeList));
 
                     }
 
                     //add step failure data to data context
-                    handlerExecContext = addStepFailureContextData(stepResult, handlerExecContext);
+                    addStepFailureContextData(stepResult, wfHandlerContext);
 
                     //extract node-specific failure and set as node-context data
-                    handlerExecContext = addNodeStepFailureContextData(stepResult, handlerExecContext);
+                    addNodeStepFailureContextData(stepResult, wfHandlerContext);
 
-                    //result of step
-                    handlerExecContext = addOutputData(outputContext.getDataContext(), handlerExecContext);
+                    //add in data context results produced by the step
+                    wfHandlerContext.mergeContext(outputContext.getDataContext());
+
 
                     if (null != wlistener) {
                         wlistener.beginWorkflowItemErrorHandler(c, cmd);
                     }
+
+                    //allow flow control
                     final FlowController handlerController = new FlowController();
-                    StepExecutionContext handlerControlContext = withOverride(
-                            handlerExecContext,
+                    withOverride(
                             handlerController,
-                            outputContext
+                            outputContext,
+                            wfHandlerContext
                     );
 
                     Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<>();
                     StepExecutionResult handlerResult = executeWFItem(
-                            handlerControlContext,
+                            wfHandlerContext.build(),
                             handlerFailedMap,
                             c,
                             handler
@@ -792,6 +781,9 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     if (null != wlistener) {
                         wlistener.finishWorkflowItemErrorHandler(c, cmd, handlerResult);
                     }
+
+                    //combine handler result data
+                    combineResultData(c, outputContext, combinedResultData, handlerResult);
 
                     if (handlerController.isControlled() &&
                         handlerController.getControlBehavior() == ControlBehavior.Halt) {
@@ -844,12 +836,56 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         return new StepResultCapture(stepResult, result, combinedResultData);
     }
 
-    private StepExecutionContext addOutputData(
-            final Map<String, Map<String, String>> outputContext,
-            final StepExecutionContext handlerExecContext
+    public void combineResultData(
+            final int c,
+            final DataOutput outputContext,
+            final WFSharedContext combinedResultData,
+            final StepExecutionResult handlerResult
     )
     {
-        return ExecutionContextImpl.builder(handlerExecContext).mergeContext(outputContext).build();
+        if (NodeDispatchStepExecutor.isWrappedDispatcherResult(handlerResult)) {
+            combineNodeResultData(c, handlerResult, combinedResultData);
+        } else {
+            combinedResultData.merge(ContextView.step(c), outputContext.getDataContext());
+        }
+    }
+
+    public void reportNodesMatched(
+            final StepExecutionContext executionContext,
+            final NodeRecorder stepCaptureFailedNodesListener
+    )
+    {
+        if (null != executionContext.getExecutionListener() &&
+            null != executionContext.getExecutionListener().getFailedNodesListener()) {
+            executionContext.getExecutionListener().getFailedNodesListener().matchedNodes(
+                    stepCaptureFailedNodesListener.getMatchedNodes());
+
+        }
+    }
+
+    public void combineNodeResultData(
+            final int c,
+            final StepExecutionResult stepResult,
+            final WFSharedContext combinedResultData
+    )
+    {
+        //TODO:
+        //TODO: node and step specific data needs to be captured
+        //TODO: but in a way that can be reconstituted for later steps on the same node
+        HashMap<ContextView, DataContext> map = new HashMap<>();
+        DispatcherResult dispatcherResult = NodeDispatchStepExecutor.extractDispatcherResult(stepResult);
+        Map<String, ? extends NodeStepResult> results = dispatcherResult.getResults();
+        System.out.println("Finished step, node results: " + results);
+        for (String node : results.keySet()) {
+            NodeStepResult nodeStepResult = results.get(node);
+            if (nodeStepResult instanceof HasDataContext) {
+                DataContext dataContext = ((HasDataContext) nodeStepResult).getDataContext();
+
+                map.put(ContextView.nodeStep(c, node), dataContext);
+                map.put(ContextView.node(node), dataContext);
+            }
+        }
+        combinedResultData.merge(new WFSharedContext(map));
     }
 
     public static class StepResultCapture implements WorkflowStatusResult {
