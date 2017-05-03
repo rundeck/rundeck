@@ -338,11 +338,11 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             );
             statusString = stepResultCapture.getStatusString();
             controlBehavior = stepResultCapture.getControlBehavior();
-            if (!stepResultCapture.isStepSuccess()) {
+            if (!stepResultCapture.isSuccess()) {
                 workflowsuccess = false;
             }
-            if (stepResultCapture.controlBehavior == ControlBehavior.Halt ||
-                !stepResultCapture.isStepSuccess() && !keepgoing) {
+            if (stepResultCapture.getControlBehavior() == ControlBehavior.Halt ||
+                !stepResultCapture.isSuccess() && !keepgoing) {
                 break;
             }
             c++;
@@ -677,8 +677,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         if (null != wlistener) {
             wlistener.beginWorkflowItem(c, cmd);
         }
-        String statusString = null;
-        ControlBehavior controlBehavior = null;
+        WorkflowStatusResultImpl result = new WorkflowStatusResultImpl(null, null, false);
 
         boolean hasHandler = cmd instanceof HasFailureHandler;
 
@@ -700,7 +699,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         StepExecutionResult stepResult = null;
         Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
         stepResult = executeWFItem(controllableContext, stepFailedMap, c, cmd);
-        boolean stepSuccess = stepResult.isSuccess();
+        result.setSuccess(stepResult.isSuccess());
         nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
         //collect node data results
         WFSharedContext multiData ;
@@ -734,20 +733,11 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         if (stepController.isControlled()) {
 
             //TODO: halt execution without running the error-handler?
-            stepSuccess = stepController.isSuccess();
-            statusString = stepController.getStatusString();
-            controlBehavior = stepController.getControlBehavior();
-            executionContext.getExecutionListener().log(
-                    3,
-                    controlBehavior +
-                    " requested" +
-                    (controlBehavior == ControlBehavior.Halt ?
-                     " with result: " +
-                     (null != statusString ? statusString : stepSuccess) : "")
-            );
+            result = WorkflowStatusResultImpl.with(stepController);
+            executionContext.getExecutionListener().log(3, result.toString());
         }
         try {
-            if (!stepSuccess && hasHandler) {
+            if (!result.isSuccess() && hasHandler) {
                 final HasFailureHandler handles = (HasFailureHandler) cmd;
                 final StepExecutionItem handler = handles.getFailureHandler();
                 if (null != handler) {
@@ -806,15 +796,8 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     if (handlerController.isControlled() &&
                         handlerController.getControlBehavior() == ControlBehavior.Halt) {
                         //handler called Halt()
-                        stepSuccess = handlerController.isSuccess();
-                        statusString = handlerController.getStatusString();
-                        controlBehavior = handlerController.getControlBehavior();
-                        executionContext.getExecutionListener().log(
-                                3,
-                                controlBehavior +
-                                " requested with result: " +
-                                (null != statusString ? statusString : stepSuccess)
-                        );
+                        result = WorkflowStatusResultImpl.with(handlerController);
+                        executionContext.getExecutionListener().log(3, result.toString());
                     } else {
 
                         //handle success conditions:
@@ -826,7 +809,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                             useHandlerResults = ((HandlerExecutionItem) handler).isKeepgoingOnSuccess();
                         }
                         if (useHandlerResults) {
-                            stepSuccess = handlerSuccess;
+                            result.setSuccess(handlerSuccess);
                             stepResult = handlerResult;
                             stepFailedMap = handlerFailedMap;
                             nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
@@ -852,19 +835,13 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             if (nodeFailures.size() > 0) {
                 executionContext.getExecutionListener().getFailedNodesListener().nodesFailed(
                         nodeFailures);
-            } else if (stepSuccess) {
+            } else if (result.isSuccess()) {
                 executionContext.getExecutionListener().getFailedNodesListener().nodesSucceeded();
             }
 
         }
 
-        return new StepResultCapture(
-                stepResult,
-                stepSuccess,
-                statusString,
-                controlBehavior,
-                multiData
-        );
+        return new StepResultCapture(stepResult, result, combinedResultData);
     }
 
     private StepExecutionContext addOutputData(
@@ -875,40 +852,34 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         return ExecutionContextImpl.builder(handlerExecContext).mergeContext(outputContext).build();
     }
 
-    public static class StepResultCapture {
+    public static class StepResultCapture implements WorkflowStatusResult {
 
         private StepExecutionResult stepResult;
-        private boolean stepSuccess;
-        private String statusString;
-        private ControlBehavior controlBehavior;
+        private WorkflowStatusResult statusResult;
         private WFSharedContext resultData;
 
         public StepResultCapture(
                 final StepExecutionResult stepResult,
-                final boolean stepSuccess,
-                final String statusString,
-                final ControlBehavior controlBehavior,
+                final WorkflowStatusResult statusResult,
                 final WFSharedContext resultData
         )
         {
             this.stepResult = stepResult;
-            this.stepSuccess = stepSuccess;
-            this.statusString = statusString;
-            this.controlBehavior = controlBehavior;
+            this.statusResult = statusResult;
             this.resultData = resultData;
         }
 
-        boolean isStepSuccess() {
-            return stepSuccess;
+        public String getStatusString() {
+            return statusResult.getStatusString();
         }
 
-
-        public String getStatusString() {
-            return statusString;
+        @Override
+        public boolean isSuccess() {
+            return statusResult.isSuccess();
         }
 
         public ControlBehavior getControlBehavior() {
-            return controlBehavior;
+            return statusResult.getControlBehavior();
         }
 
 
@@ -924,9 +895,9 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         public String toString() {
             return "StepResultCapture{" +
                    "stepResult=" + stepResult +
-                   ", stepSuccess=" + stepSuccess +
-                   ", statusString='" + statusString + '\'' +
-                   ", controlBehavior=" + controlBehavior +
+                   ", stepSuccess=" + isSuccess() +
+                   ", statusString='" + getStatusString() + '\'' +
+                   ", controlBehavior=" + getStepResult() +
                    ", resultData=" + resultData +
                    '}';
         }
