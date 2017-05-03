@@ -297,8 +297,11 @@ class ExecutionServiceImpl implements ExecutionService {
         //create node context for node and substitute data references in command
         final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).nodeContextData(node).build();
 
-        final ArrayList<String> commandList = command.buildCommandForNode(nodeContext.getDataContext(),
-                node.getOsFamily());
+        final ArrayList<String> commandList = command.buildCommandForNode(
+                nodeContext.getSharedDataContext(),
+                node.getNodename(),
+                node.getOsFamily()
+        );
 
         NodeExecutorResult result = null;
         String[] commandArray = commandList.toArray(new String[commandList.size()]);
