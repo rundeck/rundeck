@@ -17,16 +17,13 @@
 package com.dtolabs.rundeck.core.execution.workflow.engine;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.dispatcher.BaseDataContext;
-import com.dtolabs.rundeck.core.dispatcher.DataContext;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.BaseWorkflowExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
-import com.dtolabs.rundeck.core.execution.workflow.engine.EngineWorkflowExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 
@@ -68,42 +65,14 @@ class StepCallable implements Function<WFSharedContext, BaseWorkflowExecutor.Ste
 
     @Override
     public BaseWorkflowExecutor.StepResultCapture apply(final WFSharedContext inputData) {
-        final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
-        List<StepExecutionResult> resultList = new ArrayList<>();
-
-        BaseDataContext newDataContext = new BaseDataContext();
-        newDataContext.merge(DataContextUtils.context(executionContext.getDataContext()));
-        if (null != inputData.getBase()) {
-            newDataContext.merge(inputData.getBase());
-        }
-        //TODO: merge node results from input multidata
-
-        HashMap<String, Map<String, Map<String, String>>> newNodeData = new HashMap<>();
-
-        Map<String, DataContext> inputNodeData = inputData.getData();
-        if (executionContext instanceof NodeExecutionContext) {
-            NodeExecutionContext nctx = (NodeExecutionContext) executionContext;
-            Map<String, Map<String, Map<String, String>>> nodeDataContext = nctx.getNodeDataContext();
-            for (String node : nodeDataContext.keySet()) {
-                BaseDataContext d = new BaseDataContext();
-                d.merge(DataContextUtils.context(nodeDataContext.get(node)));
-                DataContext dataContext = inputNodeData.get(node);
-                if (null != dataContext) {
-                    d.merge(dataContext);
-                }
-                newNodeData.put(node, d);
-            }
-        } else if (inputNodeData != null) {
-            newNodeData.putAll(inputNodeData);
-        }
-
-
         executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Input data context: " + inputData);
         StepExecutionContext newContext =
                 ExecutionContextImpl.builder(executionContext)
-                                    .dataContext(newDataContext)
-                                    .nodeDataContext(newNodeData)
+                                    .sharedDataContext(inputData)
                                     .build();
+
+        final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
+        List<StepExecutionResult> resultList = new ArrayList<>();
         try {
             return engineWorkflowExecutor.executeWorkflowStep(
                     newContext,
