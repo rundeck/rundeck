@@ -2768,10 +2768,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def curDate=exec?exec.dateStarted: new Date()
             newargs = newargs.collect { expandDateStrings(it, curDate) }.toArray()
 
-            newargs = DataContextUtils.replaceDataReferences(
-                    newargs,
-                    executionContext.dataContext
-            )
+            newargs = executionContext.dataContext.replaceDataReferences(newargs)
         }
 
         def jobOptsMap = frameworkService.parseOptsFromArray(newargs)

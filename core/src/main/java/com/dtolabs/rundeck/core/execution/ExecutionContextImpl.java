@@ -62,9 +62,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private boolean keepgoing;
     private int loglevel;
     private String charsetEncoding;
-    private Map<String, Map<String, String>> dataContext;
-    private Map<String, Map<String, String>> privateDataContext;
     private Map<String, Map<String, Map<String, String>>> nodeDataContext;
+    private DataContext dataContext;
+    private DataContext privateDataContext;
     private ExecutionListener executionListener;
     private Framework framework;
     private AuthContext authContext;
@@ -85,6 +85,8 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         nodes = new NodeSetImpl();
         nodeDataContext = new HashMap<>();
         nodeOutputContextMap = new HashMap<>();
+        dataContext = new BaseDataContext();
+        privateDataContext = new BaseDataContext();
         outputContext = new DataOutput();
     }
 
@@ -263,7 +265,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         public Builder nodeContextData(INodeEntry node) {
-            ctx.dataContext = DataContextUtils.addContext("node", DataContextUtils.nodeData(node), ctx.dataContext);
+            ctx.dataContext.merge(new BaseDataContext("node", DataContextUtils.nodeData(node)));
             return this;
         }
 
@@ -283,7 +285,20 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
          * @return builder
          */
         public Builder mergeContext(final Map<String,Map<String,String>> data) {
-            return dataContext(DataContextUtils.merge(ctx.dataContext,data));
+            return mergeContext(new BaseDataContext(data));
+        }
+
+        /**
+         * Merge a context data set
+         *
+         * @param data data
+         *
+         * @return builder
+         */
+        public Builder mergeContext(final DataContext data) {
+            ctx.dataContext.merge(data);
+            ctx.sharedDataContext.merge(ContextView.global(), data);
+            return this;
         }
 
         /**
@@ -295,7 +310,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         public Builder mergeContext(final String key, final Map<String,String> data) {
             HashMap<String, Map<String, String>> tomerge = new HashMap<>();
             tomerge.put(key, data);
-            return dataContext(DataContextUtils.merge(ctx.dataContext, tomerge));
+            return mergeContext(tomerge);
         }
 
         public Builder loglevel(int loglevel) {
@@ -309,12 +324,25 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         public Builder dataContext(Map<String, Map<String, String>> dataContext) {
-            ctx.dataContext = dataContext;
+            ctx.dataContext = new BaseDataContext(dataContext);
+            ctx.sharedDataContext.getData().put(ContextView.global(), new BaseDataContext(dataContext));
+
+            return this;
+        }
+
+        public Builder dataContext(DataContext dataContext) {
+            ctx.dataContext = new BaseDataContext(dataContext);
+            ctx.sharedDataContext.getData().put(ContextView.global(), new BaseDataContext(dataContext));
             return this;
         }
 
         public Builder privateDataContext(Map<String, Map<String, String>> privateDataContext) {
-            ctx.privateDataContext = privateDataContext;
+            ctx.privateDataContext = new BaseDataContext(privateDataContext);
+            return this;
+        }
+
+        public Builder privateDataContext(DataContext privateDataContext) {
+            ctx.privateDataContext = new BaseDataContext(privateDataContext);
             return this;
         }
 
@@ -409,7 +437,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         return loglevel;
     }
 
-    public Map<String, Map<String, String>> getDataContext() {
+    public DataContext getDataContext() {
         return dataContext;
     }
 
@@ -429,7 +457,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         return keepgoing;
     }
 
-    public Map<String, Map<String, String>> getPrivateDataContext() {
+    public DataContext getPrivateDataContext() {
         return privateDataContext;
     }
 
