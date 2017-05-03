@@ -272,6 +272,9 @@ public class PropertyLookup implements IPropertyLookup {
      * @throws PropertyLookupException thrown if loaderror
      */
     public Map getPropertiesMap() {
+        if(deferred){
+            loadProperties();
+        }
         return Collections.unmodifiableMap(properties);
     }
 
