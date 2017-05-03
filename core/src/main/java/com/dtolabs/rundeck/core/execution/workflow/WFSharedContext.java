@@ -16,8 +16,8 @@
 
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContext;
-import com.dtolabs.rundeck.core.dispatcher.Mergable;
 import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.dispatcher.MultiDataContextImpl;
 
@@ -27,15 +27,13 @@ import java.util.Map;
  * @author greg
  * @since 4/28/17
  */
-public class WFSharedContext
-        extends MultiDataContextImpl<String, DataContext>
-        implements MultiDataContext<String, DataContext>
+public class WFSharedContext extends MultiDataContextImpl<ContextView, DataContext>
 {
     public WFSharedContext(final DataContext base) {
         super(base);
     }
 
-    public WFSharedContext(final Map<String, DataContext> map) {
+    public WFSharedContext(final Map<ContextView, DataContext> map) {
         super(map);
     }
 
@@ -43,7 +41,7 @@ public class WFSharedContext
         super();
     }
 
-    public WFSharedContext(final MultiDataContext<String, DataContext> orig) {
+    public WFSharedContext(final MultiDataContext<ContextView, DataContext> orig) {
         super(orig);
     }
 
@@ -51,6 +49,11 @@ public class WFSharedContext
         super(orig);
     }
 
+    public static WFSharedContext with(final ContextView key, final DataContext data) {
+        WFSharedContext kdMultiDataContext = new WFSharedContext();
+        kdMultiDataContext.merge(key, data);
+        return kdMultiDataContext;
+    }
     public static WFSharedContext withBase(final DataContext base) {
         WFSharedContext kdMultiDataContext = new WFSharedContext();
         kdMultiDataContext.setBase(base);
