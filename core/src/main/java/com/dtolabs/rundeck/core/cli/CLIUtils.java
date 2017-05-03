@@ -24,12 +24,12 @@
 package com.dtolabs.rundeck.core.cli;
 
 import com.dtolabs.rundeck.core.utils.Converter;
-import org.apache.commons.collections.Predicate;
 import org.apache.commons.lang.CharUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.function.Predicate;
 
 /**
  * CLIUtils provides utility functions
@@ -126,21 +126,11 @@ public class CLIUtils {
     /**
      * evaluates to true if a string contains a space
      */
-    public static final Predicate stringContainsWhitespacePredicate = new Predicate() {
-        @Override
-        public boolean evaluate(Object o) {
-            return CLIUtils.containsSpace((String) o);
-        }
-    };
+    public static final Predicate<String> stringContainsWhitespacePredicate = CLIUtils::containsSpace;
     /**
      * evaluates to true if a string contains a quote
      */
-    public static final Predicate stringContainsQuotePredicate = new Predicate() {
-        @Override
-        public boolean evaluate(Object o) {
-            return CLIUtils.containsQuote((String) o);
-        }
-    };
+    public static final Predicate<String> stringContainsQuotePredicate = CLIUtils::containsQuote;
     public static String quoteUnixShellArg(String arg) {
         StringBuilder stringBuilder = new StringBuilder();
         quoteUnixShellArg(stringBuilder, arg);

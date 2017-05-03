@@ -19,12 +19,12 @@ package com.dtolabs.rundeck.core.execution;
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.utils.Converter;
-import org.apache.commons.collections.Predicate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * A list of commandline arguments, with flags to indicate quoting.
@@ -286,7 +286,7 @@ public class ExecArgList {
          */
         public Builder args(List<String> args, Predicate quoted) {
             for (String arg : args) {
-                argList.addArg(arg, quoted.evaluate(arg));
+                argList.addArg(arg, quoted.test(arg));
             }
             return this;
         }
