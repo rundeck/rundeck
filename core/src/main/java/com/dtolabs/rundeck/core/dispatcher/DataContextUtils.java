@@ -29,12 +29,12 @@ import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.DataOutput;
 import com.dtolabs.rundeck.core.utils.Converter;
-import org.apache.commons.collections.Predicate;
 import org.apache.tools.ant.taskdefs.ExecTask;
 import org.apache.tools.ant.types.Environment;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -51,6 +51,7 @@ public class DataContextUtils {
      */
     public static final String ENV_VAR_PREFIX = "RD_";
     public static final String PROPERTY_REF_REGEX = "\\$\\{([^\\s.]+)\\.([^\\s}]+)\\}";
+    private static final Pattern PROPERTY_REF_PATTERN = Pattern.compile(PROPERTY_REF_REGEX);
 
     /**
      * Return a converter that can expand the property references within a string
@@ -71,36 +72,27 @@ public class DataContextUtils {
      */
     public static Converter<String,String> replaceDataReferencesConverter(final Map<String, Map<String, String>> data,
             final Converter<String, String> converter, final boolean failOnUnexpanded){
-        return new Converter<String, String>() {
-            @Override
-            public String convert(String s) {
-                return replaceDataReferences(s,data, converter, failOnUnexpanded);
-            }
-        };
+        return s -> replaceDataReferences(s, data, converter, failOnUnexpanded);
     }
-
 
     /**
      * evaluates to true if a string contains a property reference
      */
-    public static final Predicate stringContainsPropertyReferencePredicate = new Predicate() {
-        Pattern match = Pattern.compile(PROPERTY_REF_REGEX);
-        @Override
-        public boolean evaluate(Object o) {
-            return ((String) o).contains("${") && match.matcher((String) o).matches();
-        }
-    };
+    public static final Predicate<String> stringContainsPropertyReferencePredicate
+            = o -> o.contains("${") && PROPERTY_REF_PATTERN.matcher(o).matches();
+
+
+    private static final Pattern optionPattern = Pattern.compile("^" +
+                                                                 Pattern.quote("${option.") +
+                                                                 "[^}\\s]+?" +
+                                                                 Pattern.quote("}") +
+                                                                 "$");
 
     /**
      * A converter which replaces '${option.*}' with blank when replacing data references
      */
-    public static final Converter<String,String> replaceMissingOptionsWithBlank = new Converter<String, String>() {
-        Pattern optionPattern = Pattern.compile("^"+Pattern.quote("${option.")+"[^}\\s]+?"+Pattern.quote("}")+"$");
-        @Override
-        public String convert(String s) {
-            return optionPattern.matcher(s).matches() ? "" : s;
-        }
-    };
+    public static final Converter<String, String> replaceMissingOptionsWithBlank
+            = s -> optionPattern.matcher(s).matches() ? "" : s;
     /**
      * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
      * context
@@ -166,7 +158,7 @@ public class DataContextUtils {
      */
     public static Map<String, Object> replaceDataReferences(final Map<String, Object> input,
                                                             final Map<String, Map<String, String>> data) {
-        final HashMap<String, Object> output = new HashMap<String, Object>();
+        final HashMap<String, Object> output = new HashMap<>();
         for (final String s : input.keySet()) {
             Object o = input.get(s);
             output.put(s, replaceDataReferencesInObject(o, data));
@@ -253,9 +245,9 @@ public class DataContextUtils {
         final HashMap<String, Map<String, String>> result = deepCopy(targetContext);
         for (final Map.Entry<String, Map<String, String>> entry : newContext.entrySet()) {
             if (!targetContext.containsKey(entry.getKey())) {
-                result.put(entry.getKey(), new HashMap<String, String>());
+                result.put(entry.getKey(), new HashMap<>());
             } else {
-                result.put(entry.getKey(), new HashMap<String, String>(targetContext.get(entry.getKey())));
+                result.put(entry.getKey(), new HashMap<>(targetContext.get(entry.getKey())));
             }
             result.get(entry.getKey()).putAll(entry.getValue());
         }
@@ -330,6 +322,7 @@ public class DataContextUtils {
                                                final Converter<String, String> converter, boolean failOnUnexpanded) {
         return replaceDataReferences(input, data, converter, failOnUnexpanded, false);
     }
+
     /**
      * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
      * context
@@ -344,13 +337,18 @@ public class DataContextUtils {
      *
      * @return string with values substituted, or original string
      */
-    public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data,
-                                               final Converter<String, String> converter, boolean failOnUnexpanded, boolean blankIfUnexpanded) {
-        if(null==data || null==input){
+    public static String replaceDataReferences(
+            final String input,
+            final Map<String, Map<String, String>> data,
+            final Converter<String, String> converter,
+            boolean failOnUnexpanded,
+            boolean blankIfUnexpanded
+    )
+    {
+        if (null == data || null == input) {
             return input;
         }
-        final Pattern p = Pattern.compile(PROPERTY_REF_REGEX);
-        final Matcher m = p.matcher(input);
+        final Matcher m = PROPERTY_REF_PATTERN.matcher(input);
         final StringBuffer sb = new StringBuffer();
         while (m.find()) {
             final String key = m.group(1);
