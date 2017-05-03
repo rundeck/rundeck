@@ -229,8 +229,20 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
 
 
+        final WFSharedContext sharedContext
+                = WFSharedContext.withBase(new BaseDataContext());
+
         WorkflowSystem.SharedData<WFSharedContext>
-                dataContextSharedData = prepareWorkflowDataContext();
+                dataContextSharedData = WorkflowSystem.SharedData.with(
+                (data) -> {
+                    sharedContext.merge(data);
+                    System.err.println("merge shared data: " + data + " result; " + sharedContext);
+                },
+                () -> {
+                    System.err.println("produce next shared data " + sharedContext);
+                    return new WFSharedContext(sharedContext);
+                }
+        );
 
         Set<WorkflowSystem.OperationResult<WFSharedContext, OperationCompleted, StepOperation>>
                 operationResults = workflowEngine.processOperations(operations, dataContextSharedData);
