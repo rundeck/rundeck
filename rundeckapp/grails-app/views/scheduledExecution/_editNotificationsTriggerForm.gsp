@@ -43,7 +43,7 @@
                     <g:textField
                             name="${triggerEmailRecipientsName}"
                             value="${params[triggerEmailRecipientsName] ?: defEmail?.mailConfiguration()?.recipients}"
-                            class="form-control"
+                            class="form-control context_var_autocomplete"
                             size="60"
                             placeholder="user@dns.tld"
                     />
@@ -61,7 +61,7 @@
                         <g:textField
                                 name="${triggerEmailSubjectName}"
                                 value="${params[triggerEmailSubjectName] ?: defEmail?.mailConfiguration()?.subject}"
-                                class="form-control "
+                                class="form-control context_var_autocomplete"
                                 size="60"
                                 placeholder="Subject"/>
                         <g:helpTooltip code="notification.email.subject.description" css="input-group-addon text-info"/>
@@ -125,7 +125,7 @@
                                           placeholder="http://"
                                           rows="6"
                                           cols="40"
-                                          class="form-control "><g:enc>${notifurlcontent}</g:enc></textarea>
+                                          class="form-control context_var_autocomplete"><g:enc>${notifurlcontent}</g:enc></textarea>
 
                                 <span class=" text-muted">
                                     <g:message code="notification.webhook.field.description"/>
@@ -137,7 +137,7 @@
                                         code="notification.webhook.field.title"/></label>
                                 <g:textField name="${triggerUrlFieldName}"
                                              value="${notifurlcontent}"
-                                             class="form-control "
+                                             class="form-control context_var_autocomplete"
                                              size="60"
                                              placeholder="http://"/>
                                 <g:helpTooltip code="notification.webhook.field.description"
@@ -215,6 +215,7 @@
 
                             <g:if test="${pluginDescription?.properties}">
                                 <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                                        extraInputCss: 'context_var_autocomplete',
                                         service:com.dtolabs.rundeck.plugins.ServiceNameConstants.Notification,
                                         provider:pluginDescription.name,
                                         properties:pluginDescription?.properties,
