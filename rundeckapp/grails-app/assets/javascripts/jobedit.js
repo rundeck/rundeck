@@ -230,10 +230,11 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
             data = data.concat(_jobNodeData());
         }
 
+        var mkmodevar = (varmodes[mode] || varmodes['sh']);
         for (var i = 0; i < data.length; i++) {
             expvars.push({value: mkvar(data[i].key), data: data[i]});
             if (mode) {
-                expvars.push({value: (varmodes[mode] || varmodes['sh'])(data[i].key), data: data[i]});
+                expvars.push({value: mkmodevar(data[i].key), data: data[i]});
             }
         }
         for (var x = 0; x < _jobOptionData.length; x++) {
@@ -247,7 +248,7 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
             });
             if (mode) {
                 expvars.push({
-                    value: (varmodes[mode] || varmodes['sh'])('option.' + _jobOptionData[x].name),
+                    value: mkmodevar('option.' + _jobOptionData[x].name),
                     data: {
                         category: 'Options',
                         title: 'Option value',
@@ -281,9 +282,9 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
                     }
                 });
 
-                if (bashvar) {
+                if (mode) {
                     expvars.push({
-                        value: mkbash('file.' + _jobOptionData[x].name),
+                        value: mkmodevar('file.' + _jobOptionData[x].name),
                         data: {
                             category: 'File Option',
                             title: 'The local file path',
@@ -291,7 +292,7 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
                         }
                     });
                     expvars.push({
-                        value: mkbash('file.' + _jobOptionData[x].name + '.fileName'),
+                        value: mkmodevar('file.' + _jobOptionData[x].name + '.fileName'),
                         data: {
                             category: 'File Option',
                             title: 'The original File name',
@@ -299,7 +300,7 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
                         }
                     });
                     expvars.push({
-                        value: mkbash('file.' + _jobOptionData[x].name + '.sha'),
+                        value: mkmodevar('file.' + _jobOptionData[x].name + '.sha'),
                         data: {
                             category: 'File Option',
                             title: 'The file contents SHA256 value',
