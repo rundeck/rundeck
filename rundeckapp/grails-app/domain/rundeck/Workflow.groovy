@@ -143,6 +143,18 @@ public class Workflow {
     /** create canonical map representation */
     public Map toMap(){
         def plugins=pluginConfigMap?[pluginConfig:pluginConfigMap]:[:]
+
+        //remove empty WorkflowStrategy config for the strategy
+        if (!plugins.pluginConfig?.get('WorkflowStrategy')?.get(strategy)) {
+            plugins.pluginConfig?.remove('WorkflowStrategy')
+        }
+        if (!plugins.pluginConfig) {
+            plugins.remove('pluginConfig')
+        }
+        //cleanup WorkflowStrategy to only include the current strategy data
+        if (plugins.pluginConfig?.get('WorkflowStrategy')) {
+            plugins.pluginConfig['WorkflowStrategy'] = [(strategy): plugins.pluginConfig['WorkflowStrategy'][strategy]]
+        }
         return [/*threadcount:threadcount,*/ keepgoing:keepgoing, strategy:strategy, commands:commands.collect{it.toMap()}] + plugins
     }
 
