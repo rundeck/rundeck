@@ -597,10 +597,6 @@ class JobsXMLCodec {
                             convertNotificationPlugin(map.notification[trigger]?.plugin)
                         }else if(map.notification[trigger]?.plugin instanceof Collection){
                             //list of plugins,
-                            map.notification[trigger].plugin = map.notification[trigger].plugin.sort {
-                                a, b -> a.type <=> b.type
-                            }
-
                             map.notification[trigger].plugin.each{Map plugin->
                                 convertNotificationPlugin(plugin)
                             }
@@ -621,7 +617,6 @@ class JobsXMLCodec {
         BuilderUtil.makeAttribute(map, 'strategy')
         map.command = map.remove('commands')
         //convert script args values to idiosyncratic label
-
 
         def gencmd= { cmd, iseh=false ->
             if (cmd.scriptfile || cmd.script || cmd.scripturl) {
