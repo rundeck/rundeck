@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.plugin.stub;
 
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
@@ -31,6 +32,7 @@ import java.io.IOException;
 import java.io.StringReader;
 import java.util.Map;
 import java.util.Properties;
+import java.util.function.Function;
 
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
@@ -75,14 +77,26 @@ public class StubDataStep implements StepPlugin {
     {
         Properties props = parseData(format, data);
 
+        addData(ContextView.global(), context, props, null);
+        context.getLogger().log(2, String.format("Added %d data values", props.size()));
+    }
+
+    public static void addData(
+            final ContextView view,
+            final PluginStepContext context,
+            final Properties props,
+            final Function<String, String> converter
+    )
+    {
         for (String name : props.stringPropertyNames()) {
+            String property = props.getProperty(name);
             context.getOutputContext().addOutput(
+                    view,
                     "stub",
                     name,
-                    props.getProperty(name)
+                    null != converter ? converter.apply(property) : property
             );
         }
-        context.getLogger().log(2, String.format("Added %d data values", props.size()));
     }
 
     public static Properties parseData(final String format, final String data) throws StepException {

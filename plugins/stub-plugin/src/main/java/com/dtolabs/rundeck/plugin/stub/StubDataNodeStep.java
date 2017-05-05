@@ -17,7 +17,7 @@
 package com.dtolabs.rundeck.plugin.stub;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
@@ -26,13 +26,12 @@ import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.step.NodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.Map;
 import java.util.Properties;
 
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.CODE_SYNTAX_MODE;
 import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants.DISPLAY_TYPE_KEY;
+import static com.dtolabs.rundeck.plugin.stub.StubDataStep.addData;
 import static com.dtolabs.rundeck.plugin.stub.StubDataStep.parseData;
 
 /**
@@ -77,14 +76,13 @@ public class StubDataNodeStep implements NodeStepPlugin {
         } catch (StepException e) {
             throw new NodeStepException(e.getMessage(), e, e.getFailureReason(), entry.getNodename());
         }
-
-        for (String name : props.stringPropertyNames()) {
-            context.getOutputContext().addOutput(
-                    "stub",
-                    name,
-                    props.getProperty(name).replaceAll("@node@", entry.getNodename())
-            );
-        }
+        addData(
+                //instead of global scope, add data at node scope
+                ContextView.node(entry.getNodename()),
+                context,
+                props,
+                prop -> prop.replaceAll("@node@", entry.getNodename())
+        );
         context.getLogger().log(2, String.format("Added %d data values", props.size()));
     }
 }
