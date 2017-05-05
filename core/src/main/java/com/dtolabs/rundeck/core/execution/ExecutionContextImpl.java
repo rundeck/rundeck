@@ -32,10 +32,7 @@ import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.common.OrchestratorConfig;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.dispatcher.*;
-import com.dtolabs.rundeck.core.execution.workflow.DataOutput;
-import com.dtolabs.rundeck.core.execution.workflow.FlowControl;
-import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.state.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
@@ -77,7 +74,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private JobService jobService;
     private ProjectNodeService nodeService;
     private FlowControl flowControl;
-    private OutputContext outputContext;
+    private SharedOutputContext outputContext;
 
     private OrchestratorConfig orchestrator;
     private ExecutionContextImpl() {
@@ -86,7 +83,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         dataContext = new BaseDataContext();
         privateDataContext = new BaseDataContext();
         sharedDataContext = new MultiDataContextImpl<>();
-        outputContext = new DataOutput();
+        outputContext = DataContextUtils.outputContext(ContextView.global());
     }
 
     public static Builder builder() {
@@ -129,7 +126,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     public void setCharsetEncoding(String charsetEncoding) {
         this.charsetEncoding = charsetEncoding;
     }
-    public OutputContext getOutputContext() {
+    public SharedOutputContext getOutputContext() {
         return outputContext;
     }
 
@@ -206,7 +203,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             ctx.flowControl = flowControl;
             return this;
         }
-        public Builder outputContext(OutputContext outputContext) {
+        public Builder outputContext(SharedOutputContext outputContext) {
             ctx.outputContext = outputContext;
             return this;
         }
@@ -406,6 +403,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public Builder sharedDataContext(MultiDataContext<ContextView, DataContext> shared) {
             ctx.sharedDataContext = new MultiDataContextImpl<>(shared);
+            return this;
+        }
+        public Builder mergeSharedContext(MultiDataContext<ContextView, DataContext> shared) {
+            ctx.sharedDataContext.merge(shared);
             return this;
         }
 

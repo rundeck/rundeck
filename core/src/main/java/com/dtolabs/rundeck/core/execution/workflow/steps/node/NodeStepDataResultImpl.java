@@ -1,8 +1,8 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.dispatcher.DataContext;
-import com.dtolabs.rundeck.core.execution.workflow.HasDataContext;
+import com.dtolabs.rundeck.core.execution.workflow.HasSharedContext;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 
 import java.util.Map;
@@ -10,8 +10,8 @@ import java.util.Map;
 /**
  * Created by greg on 6/3/16.
  */
-public class NodeStepDataResultImpl extends NodeStepResultImpl implements HasDataContext, ChainedNodeStepResult {
-    DataContext dataContext;
+public class NodeStepDataResultImpl extends NodeStepResultImpl implements HasSharedContext, ChainedNodeStepResult {
+    WFSharedContext sharedContext;
     private final NodeStepResult original;
 
     public NodeStepDataResultImpl(
@@ -21,11 +21,11 @@ public class NodeStepDataResultImpl extends NodeStepResultImpl implements HasDat
             final String failureMessage,
             final Map<String, Object> failureData,
             final INodeEntry node,
-            final DataContext dataContext
+            final WFSharedContext sharedContext
     )
     {
         super(exception, failureReason, failureMessage, failureData, node);
-        this.dataContext = dataContext;
+        this.sharedContext = sharedContext;
         this.original = original;
         setSuccess(original.isSuccess());
         setSourceResult(original);
@@ -40,7 +40,7 @@ public class NodeStepDataResultImpl extends NodeStepResultImpl implements HasDat
      *
      * @return
      */
-    public static NodeStepResult with(final NodeStepResult result, final DataContext dataContext) {
+    public static NodeStepResult with(final NodeStepResult result, final WFSharedContext dataContext) {
         return new NodeStepDataResultImpl(
                 result,
                 result.getException(),
@@ -53,8 +53,8 @@ public class NodeStepDataResultImpl extends NodeStepResultImpl implements HasDat
     }
 
     @Override
-    public DataContext getDataContext() {
-        return dataContext;
+    public WFSharedContext getSharedContext() {
+        return sharedContext;
     }
 
     public NodeStepResult getOriginal() {
@@ -63,6 +63,6 @@ public class NodeStepDataResultImpl extends NodeStepResultImpl implements HasDat
 
     @Override
     public String toString() {
-        return super.toString() + " + {dataContext=" + dataContext + "} ";
+        return super.toString() + " + {dataContext=" + sharedContext + "} ";
     }
 }

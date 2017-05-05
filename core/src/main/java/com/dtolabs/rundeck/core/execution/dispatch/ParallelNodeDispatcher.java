@@ -27,11 +27,14 @@ import com.dtolabs.rundeck.core.cli.CallableWrapperTask;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.workflow.ReadableOutputContext;
+import com.dtolabs.rundeck.core.execution.workflow.ReadableSharedContext;
+import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import org.apache.tools.ant.BuildException;
@@ -212,11 +215,13 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         @Override
         public NodeStepResult call() {
             try {
-                final ReadableOutputContext outputContext = DataContextUtils.outputContext();
+                final ReadableSharedContext outputContext = DataContextUtils.outputContext(ContextView.nodeStep(
+                        context.getStepNumber(),
+                        node.getNodename()
+                ));
                 ExecutionContextImpl nodeDataContext = new ExecutionContextImpl.Builder(context).outputContext(outputContext).build();
-                NodeStepResult result = framework.getExecutionService().executeNodeStep(
-                        nodeDataContext, item, node);
-                result = NodeStepDataResultImpl.with(result, outputContext.getDataContext());
+                NodeStepResult result = framework.getExecutionService().executeNodeStep(nodeDataContext, item, node);
+                result = NodeStepDataResultImpl.with(result, outputContext.getSharedContext());
                 if (!result.isSuccess()) {
                     failureMap.put(node.getNodename(), result);
                 }

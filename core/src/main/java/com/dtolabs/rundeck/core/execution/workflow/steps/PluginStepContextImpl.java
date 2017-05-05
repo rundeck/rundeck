@@ -25,10 +25,12 @@ package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.FlowControl;
 import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
+import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
@@ -46,14 +48,14 @@ public class PluginStepContextImpl implements PluginStepContext {
 
     PluginLogger logger;
     private String frameworkProject;
-    private Map<String, Map<String, String>> dataContext;
+    private DataContext dataContext;
     private INodeSet nodes;
     private int stepNumber;
     private List<Integer> stepContext;
     private Framework framework;
     private ExecutionContext executionContext;
     private FlowControl flowControl;
-    private OutputContext outputContext;
+    private SharedOutputContext outputContext;
 
     public PluginStepContextImpl() {
         stepNumber = -1;
@@ -65,7 +67,7 @@ public class PluginStepContextImpl implements PluginStepContext {
     }
 
     @Override
-    public Map<String, Map<String, String>> getDataContext() {
+    public DataContext getDataContext() {
         return dataContext;
     }
 
@@ -116,7 +118,7 @@ public class PluginStepContextImpl implements PluginStepContext {
     }
 
     @Override
-    public OutputContext getOutputContext() {
+    public SharedOutputContext getOutputContext() {
         return outputContext;
     }
 }

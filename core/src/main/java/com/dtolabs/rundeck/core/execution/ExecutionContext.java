@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
+import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.common.OrchestratorConfig;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
@@ -148,5 +149,5 @@ public interface ExecutionContext {
     /**
      * @return context for emitting new data
      */
-    public OutputContext getOutputContext();
+    public SharedOutputContext getOutputContext();
 }

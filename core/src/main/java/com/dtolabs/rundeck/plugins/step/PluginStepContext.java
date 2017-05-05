@@ -25,10 +25,12 @@ package com.dtolabs.rundeck.plugins.step;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.FlowControl;
 import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
+import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import java.util.List;
@@ -54,7 +56,7 @@ public interface PluginStepContext {
     /**
      * @return the data context
      */
-    public Map<String, Map<String, String>> getDataContext();
+    public DataContext getDataContext();
 
     /**
      * @return the nodes used for this execution
@@ -89,5 +91,5 @@ public interface PluginStepContext {
     /**
      * @return context for sending output data
      */
-    OutputContext getOutputContext();
+    SharedOutputContext getOutputContext();
 }

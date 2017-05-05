@@ -689,13 +689,12 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
         final FlowController stepController = new FlowController();
 
-        //XXX: output data should be contextualized to the step
-        final DataOutput outputContext = new DataOutput();
         withOverride(
                 stepController,
                 outputContext,
                 wfRunContext
         );
+        final DataOutput outputContext = new DataOutput(ContextView.step(c));
 
         Map<String, NodeStepResult> nodeFailures;
 
@@ -754,7 +753,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     addNodeStepFailureContextData(stepResult, wfHandlerContext);
 
                     //add in data context results produced by the step
-                    wfHandlerContext.mergeContext(outputContext.getDataContext());
+                    wfHandlerContext.mergeSharedContext(outputContext.getSharedContext());
 
 
                     if (null != wlistener) {
@@ -843,10 +842,9 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             final StepExecutionResult handlerResult
     )
     {
+        combinedResultData.merge(outputContext.getSharedContext());
         if (NodeDispatchStepExecutor.isWrappedDispatcherResult(handlerResult)) {
             combineNodeResultData(c, handlerResult, combinedResultData);
-        } else {
-            combinedResultData.merge(ContextView.step(c), outputContext.getDataContext());
         }
     }
 
@@ -869,23 +867,21 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             final WFSharedContext combinedResultData
     )
     {
-        //TODO:
-        //TODO: node and step specific data needs to be captured
-        //TODO: but in a way that can be reconstituted for later steps on the same node
         HashMap<ContextView, DataContext> map = new HashMap<>();
         DispatcherResult dispatcherResult = NodeDispatchStepExecutor.extractDispatcherResult(stepResult);
         Map<String, ? extends NodeStepResult> results = dispatcherResult.getResults();
         System.out.println("Finished step, node results: " + results);
+        WFSharedContext noderesults = new WFSharedContext();
         for (String node : results.keySet()) {
             NodeStepResult nodeStepResult = results.get(node);
-            if (nodeStepResult instanceof HasDataContext) {
-                DataContext dataContext = ((HasDataContext) nodeStepResult).getDataContext();
-
-                map.put(ContextView.nodeStep(c, node), dataContext);
-                map.put(ContextView.node(node), dataContext);
+            if (nodeStepResult instanceof HasSharedContext) {
+                WFSharedContext dataContext = ((HasSharedContext) nodeStepResult).getSharedContext();
+                noderesults.merge(dataContext);
+                //XXX: also including node data in nodestep data??
+//                map.put(ContextView.nodeStep(c, node), dataContext);
             }
         }
-        combinedResultData.merge(new WFSharedContext(map));
+        combinedResultData.merge(noderesults);
     }
 
     public static class StepResultCapture implements WorkflowStatusResult {

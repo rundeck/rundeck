@@ -27,13 +27,12 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase;
-import com.dtolabs.rundeck.core.execution.workflow.DataOutputContextualized;
-import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
-import com.dtolabs.rundeck.core.execution.workflow.ReadableOutputContext;
+import com.dtolabs.rundeck.core.execution.workflow.ReadableSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 
@@ -114,17 +113,22 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 NodeStepResult result;
 
                 //execute the step or dispatchable
-                final ReadableOutputContext outputContext = DataContextUtils.outputContext();
+                final ReadableSharedContext outputContext = DataContextUtils.outputContext(
+                        ContextView.nodeStep(
+                                context.getStepNumber(),
+                                node.getNodename()
+                        )
+                );
 
                 ExecutionContextImpl nodeDataContext =
                         new ExecutionContextImpl.Builder(context).outputContext(outputContext).build();
                 if (null != item) {
                     result = framework.getExecutionService().executeNodeStep(nodeDataContext, item, node);
                     //add as node-specific data
-                    result = NodeStepDataResultImpl.with(result, outputContext.getDataContext());
+                    result = NodeStepDataResultImpl.with(result, outputContext.getSharedContext());
                 } else {
                     result = toDispatch.dispatch(nodeDataContext, node);
-                    result = NodeStepDataResultImpl.with(result, outputContext.getDataContext());
+                    result = NodeStepDataResultImpl.with(result, outputContext.getSharedContext());
                 }
 
                 resultMap.put(node.getNodename(), result);

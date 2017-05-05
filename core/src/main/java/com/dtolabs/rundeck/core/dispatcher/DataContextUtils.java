@@ -271,17 +271,24 @@ public class DataContextUtils {
      *
      * @return A new output context
      */
-    public static ReadableOutputContext outputContext() {
-        return new DataOutput();
+    public static ReadableSharedContext outputContext(ContextView defaultView) {
+        return new DataOutput(defaultView);
     }
 
     /**
-     *
      * @return A new context
      */
     public static MutableDataContext context() {
         return new BaseDataContext();
     }
+
+    /**
+     * @return A new context
+     */
+    public static WFSharedContext sharedContext() {
+        return new WFSharedContext();
+    }
+
     /**
      *
      * @return A new context

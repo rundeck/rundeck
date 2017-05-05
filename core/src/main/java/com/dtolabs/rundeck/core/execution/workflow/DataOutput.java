@@ -1,5 +1,6 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.MutableDataContext;
@@ -10,30 +11,57 @@ import java.util.Map;
 /**
  * Created by greg on 5/25/16.
  */
-public class DataOutput implements ReadableOutputContext {
-    private MutableDataContext outputContext;
+public class DataOutput implements ReadableSharedContext {
+    private WFSharedContext outputContext;
+    private ContextView defaultView;
 
-    public DataOutput() {
-        outputContext = DataContextUtils.context();
+    public DataOutput(ContextView defaultView) {
+        this(defaultView, DataContextUtils.sharedContext());
+    }
+
+    public DataOutput(ContextView defaultView, WFSharedContext context) {
+        outputContext = context;
+        this.defaultView = defaultView;
+    }
+
+    @Override
+    public void addOutput(
+            final ContextView view, final Map<String, Map<String, String>> data
+    )
+    {
+
+        outputContext.merge(defaultView, DataContextUtils.context(data));
+    }
+
+    @Override
+    public void addOutput(final ContextView view, final String key, final Map<String, String> data) {
+
+        outputContext.merge(view, DataContextUtils.context(DataContextUtils.addContext(key, data, null)));
+    }
+
+    @Override
+    public void addOutput(final ContextView view, final String key, final String name, final String value) {
+
+        HashMap<String, String> data = new HashMap<>();
+        data.put(name, value);
+        addOutput(view, key, data);
     }
 
     @Override
     public void addOutput(Map<String, Map<String, String>> data) {
-        outputContext.merge(DataContextUtils.context(data));
+        addOutput(defaultView, data);
     }
 
     @Override
     public void addOutput(String key, Map<String, String> data) {
-        outputContext.merge(DataContextUtils.context(DataContextUtils.addContext(key, data, null)));
+        addOutput(defaultView, key, data);
     }
 
     public void addOutput(final String key, final String name, final String value) {
-        HashMap<String, String> data = new HashMap<>();
-        data.put(name, value);
-        addOutput(key,data);
+        addOutput(defaultView, key, name, value);
     }
 
-    public DataContext getDataContext() {
+    public WFSharedContext getSharedContext() {
         return outputContext;
     }
 }
