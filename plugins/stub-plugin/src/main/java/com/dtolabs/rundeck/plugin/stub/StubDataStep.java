@@ -16,7 +16,10 @@
 
 package com.dtolabs.rundeck.plugin.stub;
 
+import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
+import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
@@ -30,6 +33,8 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.io.StringWriter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
@@ -79,6 +84,31 @@ public class StubDataStep implements StepPlugin {
 
         addData(ContextView.global(), context, props, null);
         context.getLogger().log(2, String.format("Added %d data values", props.size()));
+
+        if ("properties".equals(format)) {
+            HashMap<String, String> meta = new HashMap<>();
+            meta.put("content:data-type", "application/x-java-properties");
+            context.getExecutionContext().getExecutionListener().event("log", data, meta);
+        } else if ("json".equals(format)) {
+            HashMap<String, String> meta = new HashMap<>();
+            meta.put("content:data-type", "application/json");
+            context.getExecutionContext().getExecutionListener().event("log", data, meta);
+        }
+        context.getLogger().log(2, "Input data:");
+        MultiDataContext<ContextView, DataContext> sharedDataContext = context.getExecutionContext()
+                                                                              .getSharedDataContext();
+        DataContext data = sharedDataContext.getData(ContextView.global());
+        ObjectMapper objectMapper = new ObjectMapper();
+        StringWriter stringWriter = new StringWriter();
+        try {
+            objectMapper.writeValue(stringWriter, data.getData());
+
+            HashMap<String, String> meta = new HashMap<>();
+            meta.put("content:data-type", "application/json");
+            context.getExecutionContext().getExecutionListener().event("log", stringWriter.toString(), meta);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static void addData(
