@@ -104,19 +104,10 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
     public static void updateStateWithStepResultData(
             final MutableStateObj state,
             final Object identity,
-            final Map<String, Object> resultData,
             final Map<String, Object> failureData
     )
     {
         HashMap<String, String> stringStringHashMap = new HashMap<>();
-        if (null != resultData) {
-            for (String s : resultData.keySet()) {
-                stringStringHashMap.put(
-                        stepKey(STEP_DATA_RESULT_KEY_PREFIX + s, identity),
-                        resultData.get(s).toString()
-                );
-            }
-        }
         if (null != failureData) {
             for (String s : failureData.keySet()) {
                 stringStringHashMap.put(

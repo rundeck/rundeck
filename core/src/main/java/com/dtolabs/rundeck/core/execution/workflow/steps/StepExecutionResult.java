@@ -36,7 +36,6 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public interface StepExecutionResult extends ExceptionStatusResult {
-    public Map<String,Object> getResultData();
     public Map<String,Object> getFailureData();
 
     public FailureReason getFailureReason();

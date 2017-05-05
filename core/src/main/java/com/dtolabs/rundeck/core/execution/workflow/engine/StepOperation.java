@@ -83,7 +83,6 @@ class StepOperation implements WorkflowSystem.Operation<WFSharedContext,Operatio
             EngineWorkflowExecutor.updateStateWithStepResultData(
                     stateChanges,
                     stepNum,
-                    result.getResultData(),
                     result.getFailureData()
             );
         }
@@ -111,7 +110,6 @@ class StepOperation implements WorkflowSystem.Operation<WFSharedContext,Operatio
                 EngineWorkflowExecutor.updateStateWithStepResultData(
                         stateChanges,
                         "label." + label,
-                        result.getResultData(),
                         result.getFailureData()
                 );
             }
