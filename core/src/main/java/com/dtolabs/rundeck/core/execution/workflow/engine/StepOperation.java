@@ -33,7 +33,7 @@ class StepOperation implements WorkflowSystem.Operation<WFSharedContext,Operatio
     String label;
     Set<Condition> startTriggerConditions;
     Set<Condition> skipTriggerConditions;
-    private Function<WFSharedContext,BaseWorkflowExecutor.StepResultCapture> callable;
+    private StepCallable callable;
     private StateObj startTriggerState;
     private StateObj skipTriggerState;
     private boolean didRun = false;
@@ -41,7 +41,7 @@ class StepOperation implements WorkflowSystem.Operation<WFSharedContext,Operatio
     StepOperation(
             final int stepNum,
             final String label,
-            final Function<WFSharedContext,BaseWorkflowExecutor.StepResultCapture> callable,
+            final StepCallable callable,
             final StateObj startTriggerState,
             final StateObj skipTriggerState,
             final Set<Condition> startTriggerConditions,
