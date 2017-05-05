@@ -880,11 +880,30 @@ function getCurSEID(){
             <g:javascript>
                 <wdgt:eventHandlerJS for="scheduledTrue" state="unempty">
                     <wdgt:action visible="true" targetSelector="#scheduledExecutionEditCrontab"/>
+                    <wdgt:action visible="true" targetSelector="#scheduledExecutionEditTZ"/>
                 </wdgt:eventHandlerJS>
                 <wdgt:eventHandlerJS for="scheduledFalse" state="unempty" >
                     <wdgt:action visible="false" target="scheduledExecutionEditCrontab"/>
+                    <wdgt:action visible="false" targetSelector="#scheduledExecutionEditTZ"/>
                 </wdgt:eventHandlerJS>
             </g:javascript>
+    </div>
+
+    <div class="form-group" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditTZ">
+        <div class="${labelColSize} control-label text-form-label">
+            Timezone
+        </div>
+        <div class="${fieldColHalfSize}">
+                <input type='text' name="timeZone" value="${enc(attr:scheduledExecution?.timeZone)}"
+                       id="timeZone" class="form-control"/>
+
+                <span class="help-block">
+                    A TimeZone, either an abbreviation such as "PST", a full name such as "America/Los_Angeles",
+                    or a custom ID such as "GMT-8:00".
+                </span>
+        </div>
+    </div>
+
     </div>
     %{-- scheduleEnabled --}%
     <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_TOGGLE_SCHEDULE)}">

@@ -36,7 +36,7 @@
         return MomentUtil.formatTime(text, 'h:mm:ss a');
     },
     formatTimeAtDate : function (text) {
-        var time = moment(text);
+        var time = moment.parseZone(text);
         if (!text || !time.isValid()) {
             return '';
         }
