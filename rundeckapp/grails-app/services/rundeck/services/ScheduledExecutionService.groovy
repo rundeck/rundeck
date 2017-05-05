@@ -1207,9 +1207,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def cronExpression = se.generateCrontabExression()
         try {
             log.info("creating trigger with crontab expression: " + cronExpression)
-            trigger = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
-                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
-                    .build()
+            if(se.timeZone){
+                log.info("creating trigger with time zone: " + se.timeZone)
+                trigger = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
+                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression).inTimeZone(TimeZone.getTimeZone(se.timeZone)))
+                        .build()
+            }else {
+                trigger = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
+                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                        .build()
+            }
         } catch (java.text.ParseException ex) {
             throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
         }
