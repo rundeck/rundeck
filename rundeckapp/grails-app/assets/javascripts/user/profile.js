@@ -198,7 +198,8 @@ jQuery(function () {
     var dom = jQuery('#gentokensection');
     if (dom.length == 1) {
         var roleset = new RoleSet(data.roles);
-        window.tokencreator = new TokenCreator({roleset: roleset, user: data.user});
+        window.tokencreator = new TokenCreator({roleset: roleset, user: data.user, adminAuth: data.adminAuth,
+            userTokenAuth: data.userTokenAuth, svcTokenAuth: data.svcTokenAuth});
         ko.applyBindings(tokencreator, dom[0]);
     }
 });
