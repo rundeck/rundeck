@@ -377,23 +377,6 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     }
 
     /**
-     * @param builder
-     * @param stepController a flow control object
-     *
-     * @return new context using the flow controller
-     */
-    private ExecutionContextImpl.Builder withOverride(
-            final FlowController stepController,
-            final OutputContext dataOutput,
-            final ExecutionContextImpl.Builder builder
-    )
-    {
-        return builder
-                .flowControl(stepController)
-                .outputContext(dataOutput);
-    }
-
-    /**
      * Add step result failure information to the data context
      *
      * @param stepResult         result
@@ -689,12 +672,11 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
         final FlowController stepController = new FlowController();
 
-        withOverride(
-                stepController,
-                outputContext,
-                wfRunContext
-        );
         final DataOutput outputContext = new DataOutput(ContextView.step(c));
+
+        wfRunContext
+                .flowControl(stepController)
+                .outputContext(outputContext);
 
         Map<String, NodeStepResult> nodeFailures;
 
@@ -762,11 +744,9 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
                     //allow flow control
                     final FlowController handlerController = new FlowController();
-                    withOverride(
-                            handlerController,
-                            outputContext,
-                            wfHandlerContext
-                    );
+                    wfHandlerContext
+                            .flowControl(handlerController)
+                            .outputContext(outputContext);
 
                     Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<>();
                     StepExecutionResult handlerResult = executeWFItem(
