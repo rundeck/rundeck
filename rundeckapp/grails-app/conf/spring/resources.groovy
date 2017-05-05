@@ -32,6 +32,10 @@ import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
+import com.dtolabs.rundeck.server.plugins.logs.JsonConverterPlugin
+import com.dtolabs.rundeck.server.plugins.logs.MarkdownConverterPlugin
+import com.dtolabs.rundeck.server.plugins.logs.PropertiesConverterPlugin
+import com.dtolabs.rundeck.server.plugins.logs.TableConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
@@ -289,6 +293,14 @@ beans={
         basePath = uploadsDir.absolutePath
     }
     pluginRegistry['filesystem-temp'] = 'fsFileUploadPlugin'
+    jsonDataConverterPlugin(JsonConverterPlugin)
+    propertiesDataConverterPlugin(PropertiesConverterPlugin)
+    tableDataConverterPlugin(TableConverterPlugin)
+    markdownDataConverterPlugin(MarkdownConverterPlugin)
+    pluginRegistry[JsonConverterPlugin.PROVIDER_NAME] = 'jsonDataConverterPlugin'
+    pluginRegistry[PropertiesConverterPlugin.PROVIDER_NAME] = 'propertiesDataConverterPlugin'
+    pluginRegistry[TableConverterPlugin.PROVIDER_NAME] = 'tableDataConverterPlugin'
+    pluginRegistry[MarkdownConverterPlugin.PROVIDER_NAME] = 'markdownDataConverterPlugin'
     /**
      * Registry bean contains both kinds of plugin
      */

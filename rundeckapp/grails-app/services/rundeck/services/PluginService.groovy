@@ -291,7 +291,7 @@ class PluginService {
         return rundeckPluginRegistry?.validatePluginByName(name, rundeckPluginRegistry?.createPluggableService(clazz), config)
     }
 
-    def <T> Map listPlugins(Class<T> clazz) {
+    def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz) {
         listPlugins(clazz, rundeckPluginRegistry?.createPluggableService(clazz))
     }
     /**
@@ -299,7 +299,7 @@ class PluginService {
      * @param service
      * @return map of [name: DescribedPlugin]
      */
-    def <T> Map listPlugins(Class<T> clazz,PluggableProviderService<T> service) {
+    def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz,PluggableProviderService<T> service) {
         def plugins = rundeckPluginRegistry?.listPluginDescriptors(clazz, service)
         //XX: avoid groovy bug where generic types referenced in closure can cause NPE: http://jira.codehaus.org/browse/GROOVY-5034
         String svcName=service.name

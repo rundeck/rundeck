@@ -31,7 +31,9 @@ import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.converters.JSON
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import rundeck.CommandExec
@@ -44,6 +46,7 @@ import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
 import rundeck.services.OrchestratorPluginService
+import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.WorkflowService
 import rundeck.services.logging.ExecutionLogReader
@@ -67,6 +70,7 @@ class ExecutionController extends ControllerBase{
     ApiService apiService
     WorkflowService workflowService
     FileUploadService fileUploadService
+    PluginService pluginService
 
     static allowedMethods = [
             delete:['POST','DELETE'],
@@ -670,6 +674,20 @@ class ExecutionController extends ControllerBase{
                     log.error("Ansi decode error: " + exc.getMessage(), exc)
                 }
             }
+            if (params.contentView == 'true') {
+                //interpret any log content
+                if (msgbuf.metadata['content:data-type']) {
+                    //look up content-type
+                    Map meta = [:]
+                    msgbuf.metadata.keySet().findAll{it.startsWith('content:data-view:')}.each{
+                        meta[it.substring('content:data-view:'.length())]=msgbuf.metadata[it]
+                    }
+                    String result = convertContentDataType(message, msgbuf.metadata['content:data-type'],meta, 'text/html')
+                    if (result) {
+                        msghtml = result.encodeAsSanitizedHTML()
+                    }
+                }
+            }
             def css="log_line" + (csslevel?" level_${msgbuf.loglevel.toString().toLowerCase()}":'')
 
             response.outputStream << "<div class=\"$css\" >"
@@ -1110,6 +1128,23 @@ class ExecutionController extends ControllerBase{
                 }
             }
 //        }
+        if (params.contentView == 'true') {
+            //interpret any log content
+
+            entry.each {logentry->
+                if (logentry.mesg && logentry['content:data-type']) {
+                    //look up content-type
+                    Map meta = [:]
+                    logentry.keySet().findAll{it.startsWith('content:data-view:')}.each{
+                        meta[it.substring('content:data-view:'.length())]=logentry[it]
+                    }
+                    String result = convertContentDataType(logentry.mesg, logentry['content:data-type'],meta, 'text/html')
+                    if (result) {
+                        logentry.loghtml = result.encodeAsSanitizedHTML()
+                    }
+                }
+            }
+        }
         if("true" == servletContext.getAttribute("output.markdown.enabled") && !params.disableMarkdown){
             entry.each{
                 if(it.mesg){
@@ -1192,6 +1227,91 @@ class ExecutionController extends ControllerBase{
                 response.outputStream.close()
             }
         }
+    }
+
+    //TODO: move to a service
+    private String convertContentDataType(final Object input, final String inputDataType, Map<String,String> meta, final String outputType) {
+//        log.error("find converter : ${input.class}(${inputDataType}) => ?($outputType)")
+        def plugins = listViewPlugins()
+        List<DescribedPlugin<ContentConverterPlugin>> foundPlugins = findOutputViewPlugins(
+                plugins,
+                inputDataType,
+                input.class
+        )
+        def chain = []
+
+        def resultPlugin = foundPlugins.find {
+            it.instance.getOutputDataTypeForContentDataType(input.class, inputDataType) == outputType
+        }
+
+        //attempt to resolve the data type
+        if (!resultPlugin) {
+//            log.error("not found converter : ${input.class}(${inputDataType}) => $outputType, searching ${foundPlugins.size()} plugins...")
+            foundPlugins.find {
+                def otype = it.instance.getOutputDataTypeForContentDataType(input.class, inputDataType)
+                def oclass = it.instance.getOutputClassForDataType(input.class, inputDataType)
+                def results = findOutputViewPlugins(plugins, otype, oclass)
+
+//                log.error("search subconverter :<${it.name}>  ${oclass}($otype) => ${results}")
+                def plugin2 = results.find {
+                    it.instance.getOutputDataTypeForContentDataType(oclass, otype) == outputType
+                }
+                if (plugin2) {
+//                    log.error(
+//                            " found converter :<${it.name}> ${input.class}(${inputDataType}) => ${oclass}($otype)"
+//                    )
+//                    log.error(" found converter :<${plugin2.name}> ${oclass}(${otype}) => ?($outputType)")
+                    chain = [it, plugin2]
+                }else{
+
+//                    log.error("not found subconverter :<${it.name}> ${input.class}(${inputDataType}) => ${oclass}($otype) => ${outputType}")
+                }
+                //end loop when found
+                plugin2 != null
+            }
+        } else {
+            chain = [resultPlugin]
+        }
+//        log.error("chain: "+chain)
+        if (chain) {
+            def ovalue = input
+            def otype = inputDataType
+            try {
+                chain.each { plugin ->
+                    def nexttype = plugin.instance.getOutputDataTypeForContentDataType(ovalue.getClass(), otype)
+                    ovalue = plugin.instance.convert(ovalue, otype, meta)
+                    otype = nexttype
+                }
+            } catch (Throwable t) {
+                log.warn(
+                        "Failed converting data type ${input.getClass()}($inputDataType)  with plugins: ${chain*.name}",
+                        t
+                )
+            }
+            return ovalue
+        }
+
+        return null
+    }
+
+    private List<DescribedPlugin<ContentConverterPlugin>> findOutputViewPlugins(
+            Map<String, DescribedPlugin<ContentConverterPlugin>> plugins,
+            String inputDataType,
+            Class clazz
+    )
+    {
+        def foundPlugins = plugins.entrySet().findAll {
+            it.value.instance.isSupportsDataType(clazz, inputDataType)
+        }.collect { it.value }
+        foundPlugins
+    }
+    Map<String, DescribedPlugin<ContentConverterPlugin>> viewPluginsMap = [:]
+
+    private Map<String, DescribedPlugin<ContentConverterPlugin>> listViewPlugins() {
+        if (!viewPluginsMap) {
+            viewPluginsMap = pluginService.listPlugins(ContentConverterPlugin)
+        }
+        viewPluginsMap
     }
 
     /**
