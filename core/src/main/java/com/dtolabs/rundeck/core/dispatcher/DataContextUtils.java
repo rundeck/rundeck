@@ -735,8 +735,8 @@ public class DataContextUtils {
      */
     public static Map<String, Map<String, String>> addContext(final String key, final Map<String, String> data,
                                                               final Map<String, Map<String, String>> context) {
-        final Map<String, Map<String, String>> newdata = new HashMap<String, Map<String, String>>();
-        if(null!=context){
+        final Map<String, Map<String, String>> newdata = new HashMap<>();
+        if (null != context) {
             newdata.putAll(context);
         }
         newdata.put(key, data);
