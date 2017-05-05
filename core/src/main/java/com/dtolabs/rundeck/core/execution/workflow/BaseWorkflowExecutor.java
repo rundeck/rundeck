@@ -58,7 +58,6 @@ import java.util.Set;
  * @version $Revision$
  */
 public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
-    protected static final String DATA_CONTEXT_PREFIX = "data context: ";
     protected static final String OPTION_KEY = "option";
     protected static final String SECURE_OPTION_KEY = "secureOption";
     protected static final String SECURE_OPTION_VALUE = "****";
@@ -163,24 +162,27 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
         @Override
         public String toString() {
-            return "[Workflow result: "
-//                   + (null != getResultSet() && getResultSet().size() > 0 ? "results: " + getResultSet() : "")
-                   +
-                   (null != getStepFailures() && getStepFailures().size() > 0
-                    ? ", step failures: " + getStepFailures()
-                    : "")
-                   +
-                   (null != getNodeFailures() && getNodeFailures().size() > 0 ? ", Node failures: "
-                                                                                + getNodeFailures() : "")
-                   +
-                   (null != getException() ? ", exception: " + getException() : "")
-                   + (null != getControlBehavior() ? ", flow control: " + getControlBehavior() : "")
-                   +
-                   (null != getStatusString()
-                    ? ", status: " + getStatusString()
-                    : ", status: " + (isSuccess() ? "succeeded" : "failed"))
-                   +
-                   "]";
+            StringBuilder builder = new StringBuilder();
+            builder.append("[Workflow result: ");
+            builder.append(null != getStepFailures() &&
+                           getStepFailures().size() > 0
+                           ? ", step failures: " + getStepFailures()
+                           : "");
+            builder.append(null != getNodeFailures() &&
+                           getNodeFailures().size() > 0 ? ", Node failures: "
+                                                          +
+                                                          getNodeFailures() : "");
+            builder.append(null != getException() ? ", exception: " + getException() : "");
+            builder.append(null != getControlBehavior()
+                           ? ", flow control: " +
+                             getControlBehavior()
+                           : "");
+            builder.append(", status: ");
+            String success = isSuccess() ? "succeeded" : "failed";
+            String status = null != getStatusString() ? getStatusString() : success;
+            builder.append(status);
+            builder.append("]");
+            return builder.toString();
         }
 
         public Map<Integer, StepExecutionResult> getStepFailures() {
