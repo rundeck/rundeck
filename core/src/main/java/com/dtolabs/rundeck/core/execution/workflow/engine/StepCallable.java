@@ -65,7 +65,6 @@ class StepCallable implements Function<WFSharedContext, BaseWorkflowExecutor.Ste
 
     @Override
     public BaseWorkflowExecutor.StepResultCapture apply(final WFSharedContext inputData) {
-        executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Input data context: " + inputData);
         StepExecutionContext newContext =
                 ExecutionContextImpl.builder(executionContext)
                                     .sharedDataContext(inputData)

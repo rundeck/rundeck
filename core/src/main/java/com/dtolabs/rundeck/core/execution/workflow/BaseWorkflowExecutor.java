@@ -693,7 +693,6 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         WFSharedContext combinedResultData = new WFSharedContext();
         combineResultData(c, outputContext, combinedResultData, stepResult);
 
-        System.err.println("Finished step, result data context: " + combinedResultData);
 
         reportNodesMatched(executionContext, stepCaptureFailedNodesListener);
 
