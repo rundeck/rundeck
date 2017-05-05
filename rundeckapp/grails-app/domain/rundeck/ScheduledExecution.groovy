@@ -285,6 +285,12 @@ class ScheduledExecution extends ExecutionContext {
                     trigger.putAll(map1)
                 }
             }
+            notifications.each {
+                if (map.notification[it.eventTrigger].plugin instanceof Collection) {
+                    map.notification[it.eventTrigger].plugin =
+                            map.notification[it.eventTrigger].plugin.sort { a, b -> a.type <=> b.type }
+                }
+            }
         }
         return map
     }

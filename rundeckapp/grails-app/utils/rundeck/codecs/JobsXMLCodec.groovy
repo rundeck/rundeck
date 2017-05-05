@@ -58,6 +58,7 @@ class JobsXMLCodec {
     static encodeMaps (list, boolean preserveUuid = true, Map<String, String> replaceIds = [:] ){
         def writer = new StringWriter()
         def xml = new MarkupBuilder(writer)
+        xml.expandEmptyElements = false
         encodeMapsWithBuilder(list, xml, preserveUuid, replaceIds)
         return writer.toString()
     }
@@ -510,7 +511,8 @@ class JobsXMLCodec {
                     BuilderUtil.addAttribute(x, 'type', x.remove('type'))
                     if(x.config){
                         def config = x.remove('config')
-                        config.each { k, v ->
+                        config.keySet().sort().each { k ->
+                            def v = config[k]
                             if (!x['config']) {
                                 x['config'] = [entry: []]
                             }
@@ -567,7 +569,8 @@ class JobsXMLCodec {
             def convertNotificationPlugin={Map pluginMap->
                 def confMap = pluginMap.remove('configuration')
                 BuilderUtil.makeAttribute(pluginMap, 'type')
-                confMap.each { k, v ->
+                confMap.keySet().sort().each { k ->
+                    def v = confMap[k]
                     if (!pluginMap['configuration']) {
                         pluginMap['configuration'] = [entry: []]
                     }
@@ -577,7 +580,7 @@ class JobsXMLCodec {
                     pluginMap['configuration']['entry'] <<  entryMap
                 }
             }
-            map.notification.keySet().findAll { it.startsWith('on') }.each{trigger->
+            map.notification.keySet().sort().findAll { it.startsWith('on') }.each { trigger ->
                 if(map.notification[trigger]){
                     if(map.notification[trigger]?.email){
                         def mail= map.notification[trigger].remove('email')
