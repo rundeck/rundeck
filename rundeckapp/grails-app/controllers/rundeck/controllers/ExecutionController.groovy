@@ -672,13 +672,13 @@ class ExecutionController extends ControllerBase{
             def message = msgbuf.message
             def msghtml=message.encodeAsHTML()
             boolean converted = false
-            if (renderContent && msgbuf.metadata['content:data-type']) {
+            if (renderContent && msgbuf.metadata['content-data-type']) {
                 //look up content-type
                 Map meta = [:]
-                msgbuf.metadata.keySet().findAll { it.startsWith('content:data-view:') }.each {
-                    meta[it.substring('content:data-view:'.length())] = msgbuf.metadata[it]
+                msgbuf.metadata.keySet().findAll { it.startsWith('content-meta:') }.each {
+                    meta[it.substring('content-meta:'.length())] = msgbuf.metadata[it]
                 }
-                String result = convertContentDataType(message, msgbuf.metadata['content:data-type'], meta, 'text/html')
+                String result = convertContentDataType(message, msgbuf.metadata['content-data-type'], meta, 'text/html')
                 if (result != null) {
                     msghtml = result.encodeAsSanitizedHTML()
                     converted = true
@@ -1146,15 +1146,15 @@ class ExecutionController extends ControllerBase{
             //interpret any log content
 
             entry.each {logentry->
-                if (logentry.mesg && logentry['content:data-type']) {
+                if (logentry.mesg && logentry['content-data-type']) {
                     //look up content-type
                     Map meta = [:]
-                    logentry.keySet().findAll{it.startsWith('content:data-view:')}.each{
-                        meta[it.substring('content:data-view:'.length())]=logentry[it]
+                    logentry.keySet().findAll{it.startsWith('content-meta:')}.each{
+                        meta[it.substring('content-meta:'.length())]=logentry[it]
                     }
                     String result = convertContentDataType(
                             logentry.mesg,
-                            logentry['content:data-type'],
+                            logentry['content-data-type'],
                             meta,
                             'text/html'
                     )
