@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.server.plugins.logs.JsonConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.MarkdownConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.PropertiesConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.TableConverterPlugin
+import com.dtolabs.rundeck.server.plugins.logs.TabularDataConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
@@ -297,10 +298,12 @@ beans={
     propertiesDataConverterPlugin(PropertiesConverterPlugin)
     tableDataConverterPlugin(TableConverterPlugin)
     markdownDataConverterPlugin(MarkdownConverterPlugin)
+    tabularDataConverterPlugin(TabularDataConverterPlugin)
     pluginRegistry[JsonConverterPlugin.PROVIDER_NAME] = 'jsonDataConverterPlugin'
     pluginRegistry[PropertiesConverterPlugin.PROVIDER_NAME] = 'propertiesDataConverterPlugin'
     pluginRegistry[TableConverterPlugin.PROVIDER_NAME] = 'tableDataConverterPlugin'
     pluginRegistry[MarkdownConverterPlugin.PROVIDER_NAME] = 'markdownDataConverterPlugin'
+    pluginRegistry[TabularDataConverterPlugin.PROVIDER_NAME] = 'tabularDataConverterPlugin'
     /**
      * Registry bean contains both kinds of plugin
      */
