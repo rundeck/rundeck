@@ -67,7 +67,7 @@ class TabularDataConverterPlugin implements ContentConverterPlugin {
 
     @Override
     String getOutputDataTypeForContentDataType(final Class<?> clazz, final String dataType) {
-        isSupportsDataType(clazz, dataType) ? TableConverterPlugin.MAP_LIST_TYPE : null
+        isSupportsDataType(clazz, dataType) ? HTMLTableViewConverterPlugin.MAP_LIST_TYPE : null
     }
 
     @Override

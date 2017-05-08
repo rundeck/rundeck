@@ -35,7 +35,7 @@ import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
 import com.dtolabs.rundeck.server.plugins.logs.JsonConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.MarkdownConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.PropertiesConverterPlugin
-import com.dtolabs.rundeck.server.plugins.logs.TableConverterPlugin
+import com.dtolabs.rundeck.server.plugins.logs.HTMLTableViewConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.TabularDataConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
@@ -296,12 +296,12 @@ beans={
     pluginRegistry['filesystem-temp'] = 'fsFileUploadPlugin'
     jsonDataConverterPlugin(JsonConverterPlugin)
     propertiesDataConverterPlugin(PropertiesConverterPlugin)
-    tableDataConverterPlugin(TableConverterPlugin)
+    HTMLTableViewConverterPlugin(HTMLTableViewConverterPlugin)
     markdownDataConverterPlugin(MarkdownConverterPlugin)
     tabularDataConverterPlugin(TabularDataConverterPlugin)
     pluginRegistry[JsonConverterPlugin.PROVIDER_NAME] = 'jsonDataConverterPlugin'
     pluginRegistry[PropertiesConverterPlugin.PROVIDER_NAME] = 'propertiesDataConverterPlugin'
-    pluginRegistry[TableConverterPlugin.PROVIDER_NAME] = 'tableDataConverterPlugin'
+    pluginRegistry[HTMLTableViewConverterPlugin.PROVIDER_NAME] = 'HTMLTableViewConverterPlugin'
     pluginRegistry[MarkdownConverterPlugin.PROVIDER_NAME] = 'markdownDataConverterPlugin'
     pluginRegistry[TabularDataConverterPlugin.PROVIDER_NAME] = 'tabularDataConverterPlugin'
     /**

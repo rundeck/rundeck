@@ -25,10 +25,11 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
  * @author greg
  * @since 5/5/17
  */
-@Plugin(name = TableConverterPlugin.PROVIDER_NAME, service = 'ContentDataTypeViewPlugin')
-@PluginDescription(title = 'Data Table View',
-        description = 'Renders structured data as a Table in HTML. The input should be a List or Map. If the List contains Maps, the first item\'s keys will be the table headers.')
-class TableConverterPlugin implements ContentConverterPlugin {
+@Plugin(name = HTMLTableViewConverterPlugin.PROVIDER_NAME, service = 'ContentDataTypeViewPlugin')
+@PluginDescription(title = 'HTML Table View',
+        description = '''Renders structured data as a Table in HTML. The input should be a List or Map. If the List 
+contains Maps, the first item\'s keys will be the table headers.''')
+class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
     static final Map<String, Class<?>> datatypes = [
             (MAP_LIST_TYPE): List,
             (MAP_TYPE)     : Map,
@@ -94,7 +95,7 @@ class TableConverterPlugin implements ContentConverterPlugin {
 
     public static String renderSimpleMap(Map map, Map<String, String> metadata) {
         def out = new StringBuffer()
-        renderTableStart(out)
+        renderTableStart(out, metadata['css-class'])
         renderTableHeaders(out, ['Key', 'Value'])
         map.each { key, item ->
             openTag(out, 'tr')
@@ -124,8 +125,8 @@ class TableConverterPlugin implements ContentConverterPlugin {
         out << '</' + tag + '>\n'
     }
 
-    private static StringBuffer renderTableStart(StringBuffer out) {
-        out << '<table class="table table-condensed table-bordered table-embed">\n'
+    private static StringBuffer renderTableStart(StringBuffer out, css = null) {
+        out << '<table class="table table-condensed table-bordered table-embed table-data-embed ' + (css ?: '') + '">\n'
     }
 
     public static String renderTableHtml(List<Map<String, ?>> list, Map<String, String> metadata) {
@@ -134,7 +135,7 @@ class TableConverterPlugin implements ContentConverterPlugin {
             return null
         }
         def out = new StringBuffer()
-        renderTableStart(out)
+        renderTableStart(out, metadata['css-class'])
         renderTableHeaders(out, keys)
         list.each { dataObj ->
 

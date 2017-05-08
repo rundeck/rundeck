@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 
 /**
  * Converts JSON string into a java Object with data type 'application/x-java-map-or-list', which
- * can be rendered to HTML via the {@link TableConverterPlugin}
+ * can be rendered to HTML via the {@link HTMLTableViewConverterPlugin}
  * @author greg
  * @since 5/5/17
  */
