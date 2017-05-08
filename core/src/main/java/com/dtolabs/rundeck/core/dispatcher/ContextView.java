@@ -51,7 +51,7 @@ public class ContextView implements ViewTraverse<ContextView> {
     }
 
     @Override
-    public boolean isFinal() {
+    public boolean isWidest() {
         return isGlobal();
     }
 

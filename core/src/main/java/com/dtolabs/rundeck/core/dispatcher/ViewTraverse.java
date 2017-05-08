@@ -23,7 +23,7 @@ package com.dtolabs.rundeck.core.dispatcher;
  * @since 5/2/17
  */
 public interface ViewTraverse<T> {
-    default boolean isFinal() {
+    default boolean isWidest() {
         return true;
     }
 

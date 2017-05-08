@@ -58,18 +58,23 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
             final String defaultValue
     )
     {
-        DataContext data = getBase();
         if (null != view) {
-            K newview = view;
-            data = getData(newview);
-            while (null == data && !newview.isFinal()) {
-                newview = newview.widenView().getView();
-                data = getData(newview);
+            DataContext data = getData(view);
+
+            //expand view if no data at this scope
+            if (null != data) {
+                String result = data.resolve(group, key, null);
+
+                if (null != result) {
+                    return result;
+                }
             }
-            if (null == data) {
-                data = getBase();
+            if (!view.isWidest()) {
+                return resolve(view.widenView().getView(), group, key, defaultValue);
             }
+            return resolve(null, group, key, defaultValue);
         }
-        return data != null ? data.resolve(group, key, defaultValue) : null;
+        DataContext data = getBase();
+        return data != null ? data.resolve(group, key, defaultValue) : defaultValue;
     }
 }

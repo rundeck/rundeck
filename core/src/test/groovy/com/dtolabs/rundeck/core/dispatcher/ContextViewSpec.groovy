@@ -26,26 +26,26 @@ class ContextViewSpec extends Specification {
     def "widen"() {
         expect:
         ContextView.global().isGlobal()
-        ContextView.global().isFinal()
+        ContextView.global().isWidest()
         !ContextView.step(1).isGlobal()
-        !ContextView.step(1).isFinal()
+        !ContextView.step(1).isWidest()
         !ContextView.nodeStep(1, "node").isGlobal()
-        !ContextView.nodeStep(1, "node").isFinal()
+        !ContextView.nodeStep(1, "node").isWidest()
         !ContextView.node("node").isGlobal()
-        !ContextView.node("node").isFinal()
+        !ContextView.node("node").isWidest()
 
         ContextView.global().widenView().isGlobal()
-        ContextView.global().widenView().isFinal()
+        ContextView.global().widenView().isWidest()
         ContextView.step(1).widenView().isGlobal()
-        ContextView.step(1).widenView().isFinal()
+        ContextView.step(1).widenView().isWidest()
 
         !ContextView.nodeStep(1, "node").widenView().isGlobal()
-        !ContextView.nodeStep(1, "node").widenView().isFinal()
+        !ContextView.nodeStep(1, "node").widenView().isWidest()
         ContextView.nodeStep(1, "node").widenView().getStepNumber() == null
         ContextView.nodeStep(1, "node").widenView().getNodeName() == "node"
 
         ContextView.node("node").widenView().isGlobal()
-        ContextView.node("node").widenView().isFinal()
+        ContextView.node("node").widenView().isWidest()
 
     }
 }
