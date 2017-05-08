@@ -26,8 +26,8 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
  */
 
 @Plugin(name = MarkdownConverterPlugin.PROVIDER_NAME, service = 'ContentDataTypeViewPlugin')
-@PluginDescription(title = 'Log Data Table View',
-        description = 'Renders structured data as a Table in HTML. The input should be a List of Maps')
+@PluginDescription(title = 'Markdown View Converter',
+        description = 'Renders Markdown as HTML')
 class MarkdownConverterPlugin implements ContentConverterPlugin {
     public static final String PROVIDER_NAME = 'markdown-data-view'
     public static final String MARKDOWN_DATA_TYPE = 'text/x-markdown'

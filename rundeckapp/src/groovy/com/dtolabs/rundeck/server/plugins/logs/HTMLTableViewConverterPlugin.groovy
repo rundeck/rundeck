@@ -26,7 +26,7 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
  * @since 5/5/17
  */
 @Plugin(name = HTMLTableViewConverterPlugin.PROVIDER_NAME, service = 'ContentDataTypeViewPlugin')
-@PluginDescription(title = 'HTML Table View',
+@PluginDescription(title = 'HTML Table View Converter',
         description = '''Renders structured data as a Table in HTML. The input should be a List or Map. If the List 
 contains Maps, the first item\'s keys will be the table headers.''')
 class HTMLTableViewConverterPlugin implements ContentConverterPlugin {

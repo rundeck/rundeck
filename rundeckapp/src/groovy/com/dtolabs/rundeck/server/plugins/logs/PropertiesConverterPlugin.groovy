@@ -25,8 +25,10 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
  * @since 5/5/17
  */
 @Plugin(name = PropertiesConverterPlugin.PROVIDER_NAME, service = 'ContentDataTypeViewPlugin')
-@PluginDescription(title = 'Properties Data View',
-        description = 'Renders java style Properties data')
+@PluginDescription(title = 'Properties Data Converter',
+        description = '''Parses Java style Properties data into a Java object.
+
+The "HTML Table View Converter" plugin can render this as a HTML Table.''')
 class PropertiesConverterPlugin implements ContentConverterPlugin {
     public static final String PROVIDER_NAME = 'properties-data-view'
 
