@@ -34,9 +34,15 @@ class Token {
     @XmlAttribute
     String id;
 
+    @ApiVersion(19)
     @Ignore(onlyIfNull = true)
     @XmlAttribute
     String token;
+
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute("id")
+    @ApiVersion(max = 18)
+    String v18TokenId;
 
     @ApiVersion(19)
     @XmlAttribute
@@ -49,6 +55,7 @@ class Token {
     @CollectionElement('role')
     Set<String> roles;
 
+    @Ignore(onlyIfNull = true)
     @ApiVersion(19)
     FormattedDate expiration;
 
@@ -58,10 +65,11 @@ class Token {
     Token(AuthToken authToken, boolean masked = false) {
         this.id = authToken.uuid ?: authToken.token
         this.token = masked ? null : authToken.token
+        this.v18TokenId = authToken.token
         this.creator = authToken.creator
         this.user = authToken.user.login
         this.roles = authToken.authRolesSet()
-        this.expiration = new FormattedDate(authToken.expiration)
+        this.expiration = authToken.expiration ? new FormattedDate(authToken.expiration) : null
         this.expired = authToken.tokenIsExpired()
     }
 }

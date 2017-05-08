@@ -168,7 +168,29 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         }
         return isnodestep;
     };
+    addWfAutocomplete(liitem, iseh, calcnodestep, function (elem) {
+        return jQuery(elem).hasClass('_wfscriptitem');
+    }, function (elem, editor) {
+        var isscriptStep = jQuery(elem).hasClass('_wfscriptitem');
+        if (isscriptStep) {
+            var key = liitem.find('._wfiedit').data('rkey');
+            if (key) {
+                workflowEditor.steps()[key].guessAceMode.subscribe(function (val) {
+                    setAceSyntaxMode(val, editor);
+                });
+            }
+        }
+    }, function (elem) {
+        var obj = jQuery(elem);
+        if (obj.hasClass('context_env_autocomplete')) {
+            var key = liitem.find('._wfiedit').data('rkey');
+            return (key && workflowEditor.steps()[key] && workflowEditor.steps()[key].guessAceMode() || 'sh');
+        }
+        return null;
+    });
+}
 
+function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode, acetexteditorcallback, gettextfieldenvmode) {
     var baseVarData = [].concat(_jobVarData());
     baseVarData = baseVarData.concat(_jobGlobalVarData());
 
@@ -204,7 +226,7 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         var expvars = [];
         var data = [].concat(baseVarData);
 
-        if (calcnodestep()) {
+        if (isnodestepfunc && isnodestepfunc()) {
             data = data.concat(_jobNodeData());
         }
 
@@ -290,7 +312,7 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         return expvars;
     };
     liitem.find('textarea.apply_ace').each(function (ndx, elem) {
-        var isscriptStep = jQuery(elem).hasClass('_wfscriptitem');
+        var isscriptStep = istextareatemplatemode && istextareatemplatemode(elem);
         var editor = _addAceTextarea(elem, null, function (editor, session, pos, prefix) {
             "use strict";
             var aceSyntaxMode = getAceSyntaxMode(editor);
@@ -309,27 +331,17 @@ function postLoadItemEdit(item, iseh, isnodestep) {
                 };
             });
         });
-        if (isscriptStep) {
-            var key = liitem.find('._wfiedit').data('rkey');
-            if (key) {
-                workflowEditor.steps()[key].guessAceMode.subscribe(function (val) {
-                    setAceSyntaxMode(val, editor);
-                });
-            }
-        }
+        acetexteditorcallback && acetexteditorcallback(elem, editor);
     });
-    liitem.find('.context_env_autocomplete,.context_var_autocomplete').each(function (i,elem) {
+    liitem.find('.context_env_autocomplete,.context_var_autocomplete').each(function (i, elem) {
         var obj = jQuery(elem);
-        var iscmd = obj.hasClass('_wfcommanditem');
-        var autoenv = obj.hasClass('context_env_autocomplete');
-        var key = liitem.find('._wfiedit').data('rkey');
+        var autoenvmode = gettextfieldenvmode && gettextfieldenvmode(elem) || null;
         obj.devbridgeAutocomplete({
             delimiter: /( |(?=\$))/,
             tabDisabled: true,
             lookup: function (q, callback) {
                 var query = q.toLowerCase();
-                var acemode = autoenv ? (key && workflowEditor.steps()[key] && workflowEditor.steps()[key].guessAceMode() || 'sh') : null;
-                var results = jQuery.grep(autovarfunc(null, null, acemode), function (suggestion) {
+                var results = jQuery.grep(autovarfunc(null, null, autoenvmode), function (suggestion) {
                     "use strict";
                     return suggestion.value.toLowerCase().indexOf(query) !== -1
                 });
@@ -1107,5 +1119,9 @@ jQuery(window).load(function () {
     });
     jQuery('#groupChooseBtn').on('hide.bs.popover', function (e) {
         jQuery('#groupChooseBtn').data('grouptreeshown', 'false');
+    });
+
+    jQuery('.notifyFields').each(function (i,elem) {
+        addWfAutocomplete(jQuery(elem));
     });
 });
