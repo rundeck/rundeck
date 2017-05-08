@@ -213,7 +213,7 @@
                         <g:link class="textbtn" style="padding:5px;"
                                 title="View colorized output"
                                 controller="execution" action="renderOutput" id="${execution.id}"
-                                params="[project: execution.project, ansicolor:'on',loglevels:'on']">
+                                params="[project: execution.project, ansicolor:'on',loglevels:'on',convertContent:'on']">
                             HTML</g:link>
                     </span>
 

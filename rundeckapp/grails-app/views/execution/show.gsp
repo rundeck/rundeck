@@ -102,7 +102,7 @@
             multiworkflow:multiworkflow,
             appLinks:appLinks,
 
-            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}&contentView=${enc(js:enc(url: params.contentView))}",
+            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}&renderContent=${enc(js:enc(url: params.renderContent))}",
             lastlines: '${enc(js:params.int('lastlines') ?: defaultLastLines)}',
             maxLastLines:'${enc(js:params.int('maxlines') ?: maxLastLines)}',
             collapseCtx: {value:${enc(js:null == execution?.dateCompleted)},changed:false},

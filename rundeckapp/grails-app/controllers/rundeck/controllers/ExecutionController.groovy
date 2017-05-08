@@ -36,11 +36,13 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.converters.JSON
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
+import org.codehaus.groovy.grails.web.servlet.mvc.GrailsParameterMap
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
@@ -71,6 +73,7 @@ class ExecutionController extends ControllerBase{
     WorkflowService workflowService
     FileUploadService fileUploadService
     PluginService pluginService
+    ConfigurationService configurationService
 
     static allowedMethods = [
             delete:['POST','DELETE'],
@@ -661,31 +664,31 @@ class ExecutionController extends ControllerBase{
 <div class="ansicolor ansicolor-${(params.ansicolor in ['false','off'])?'off':'on'}" >"""
 
         def csslevel=!(params.loglevels in ['off','false'])
+        def renderContent = shouldConvertContent(params)
         iterator.each{ LogEvent msgbuf ->
             if(msgbuf.eventType != LogUtil.EVENT_TYPE_LOG){
                 return
             }
             def message = msgbuf.message
             def msghtml=message.encodeAsHTML()
-            if (message.contains('\033[')) {
+            boolean converted = false
+            if (renderContent && msgbuf.metadata['content:data-type']) {
+                //look up content-type
+                Map meta = [:]
+                msgbuf.metadata.keySet().findAll { it.startsWith('content:data-view:') }.each {
+                    meta[it.substring('content:data-view:'.length())] = msgbuf.metadata[it]
+                }
+                String result = convertContentDataType(message, msgbuf.metadata['content:data-type'], meta, 'text/html')
+                if (result != null) {
+                    msghtml = result.encodeAsSanitizedHTML()
+                    converted = true
+                }
+            }
+            if (!converted && message.contains('\033[')) {
                 try {
                     msghtml = message.decodeAnsiColor()
                 } catch (Exception exc) {
                     log.error("Ansi decode error: " + exc.getMessage(), exc)
-                }
-            }
-            if (params.contentView == 'true') {
-                //interpret any log content
-                if (msgbuf.metadata['content:data-type']) {
-                    //look up content-type
-                    Map meta = [:]
-                    msgbuf.metadata.keySet().findAll{it.startsWith('content:data-view:')}.each{
-                        meta[it.substring('content:data-view:'.length())]=msgbuf.metadata[it]
-                    }
-                    String result = convertContentDataType(message, msgbuf.metadata['content:data-type'],meta, 'text/html')
-                    if (result) {
-                        msghtml = result.encodeAsSanitizedHTML()
-                    }
                 }
             }
             def css="log_line" + (csslevel?" level_${msgbuf.loglevel.toString().toLowerCase()}":'')
@@ -705,6 +708,17 @@ class ExecutionController extends ControllerBase{
 </body>
 </html>
 '''
+    }
+
+    /**
+     * @param params
+     * @return true if configuration/params enable log data content conversion plugins
+     */
+    private boolean shouldConvertContent(Map params) {
+        configurationService.getBoolean(
+                'gui.execution.logs.renderConvertedContent',
+                true
+        ) && !(params.convertContent in ['false', false, 'off'])
     }
     /**
      * API: /api/execution/{id}/output, version 5
@@ -1128,7 +1142,7 @@ class ExecutionController extends ControllerBase{
                 }
             }
 //        }
-        if (params.contentView == 'true') {
+        if (shouldConvertContent(params)) {
             //interpret any log content
 
             entry.each {logentry->
@@ -1138,8 +1152,13 @@ class ExecutionController extends ControllerBase{
                     logentry.keySet().findAll{it.startsWith('content:data-view:')}.each{
                         meta[it.substring('content:data-view:'.length())]=logentry[it]
                     }
-                    String result = convertContentDataType(logentry.mesg, logentry['content:data-type'],meta, 'text/html')
-                    if (result) {
+                    String result = convertContentDataType(
+                            logentry.mesg,
+                            logentry['content:data-type'],
+                            meta,
+                            'text/html'
+                    )
+                    if (result != null) {
                         logentry.loghtml = result.encodeAsSanitizedHTML()
                     }
                 }
