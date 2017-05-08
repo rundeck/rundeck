@@ -52,6 +52,6 @@ class MarkdownConverterPlugin implements ContentConverterPlugin {
         if (!isSupportsDataType(data.getClass(), dataType)) {
             return null
         }
-        ((String) data).decodeAsMarkdown()
+        ((String) data).decodeMarkdown()
     }
 }
