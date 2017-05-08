@@ -1230,11 +1230,19 @@ section{
     &.level_warn, &.level_error {
       color: #800;
     }
-    table {
-      font-size: @font-size-base;
-    }
   }
 
+table.table-data-embed {
+  font-size: @font-size-base;
+  white-space: normal;
+  &.invert {
+    background-color: @well-bg;
+    border: 1px solid white;
+    td, th {
+      border: 1px solid white;
+    }
+  }
+}
   .stepident, .stepnum {
 //    color: @brand-light;
   }
