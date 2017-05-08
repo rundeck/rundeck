@@ -30,10 +30,13 @@ class DataContextUtilsSpec extends Specification {
     def "multi context replace #str"() {
         given:
         WFSharedContext shared = new WFSharedContext()
-        shared.merge(ContextView.global(), new BaseDataContext([a: [b: "global"]]))
-        shared.merge(ContextView.node("node1"), new BaseDataContext([a: [b: "node1"]]))
-        shared.merge(ContextView.nodeStep(2, "node1"), new BaseDataContext([a: [b: "step2 node1"]]))
-        shared.merge(ContextView.step(2), new BaseDataContext([a: [b: "step2"]]))
+        shared.merge(ContextView.global(), new BaseDataContext([a: [b: "global", globalval: "aglobalval"]]))
+        shared.merge(ContextView.node("node1"), new BaseDataContext([a: [b: "node1", nodeval: "anodeval"]]))
+        shared.merge(
+                ContextView.nodeStep(2, "node1"),
+                new BaseDataContext([a: [b: "step2 node1", nodestepval: "anodestepval"]])
+        )
+        shared.merge(ContextView.step(2), new BaseDataContext([a: [b: "step2", stepval: "astepval"]]))
         when:
         def result = DataContextUtils.replaceDataReferences(
                 str,
@@ -41,20 +44,30 @@ class DataContextUtilsSpec extends Specification {
                 ContextView.&nodeStep,
                 null,
                 false,
-                false
+                true
         )
         then:
         result == expected
 
         where:
-        str              | expected
-        'abc'            | 'abc'
-        '${a.b}'         | 'global'
-        '${a.b@^}'       | 'global'
-        '${a.b@node1}'   | 'node1'
-        '${2:a.b@node1}' | 'step2 node1'
-        '${2:a.b}'       | 'step2'
-        '${2:a.b}'       | 'step2'
+        str                        | expected
+        'abc'                      | 'abc'
+        '${a.b}'                   | 'global'
+        '${a.globalval}'           | 'aglobalval'
+        '${a.b@badnode}'           | ''
+        '${a.globalval@badnode}'   | ''
+        '${a.b@node1}'             | 'node1'
+        '${a.nodeval@node1}'       | 'anodeval'
+        '${a.globalval@node1}'     | ''
+        '${2:a.b@node1}'           | 'step2 node1'
+        '${2:a.nodestepval@node1}' | 'anodestepval'
+        '${2:a.nodeval@node1}'     | ''
+        '${2:a.globalval@node1}'   | ''
+        '${2:a.b}'                 | 'step2'
+        '${2:a.stepval}'           | 'astepval'
+        '${2:a.nodeval}'           | ''
+        '${2:a.nodestepval}'       | ''
+        '${2:a.globalval}'         | ''
     }
 
     @Unroll

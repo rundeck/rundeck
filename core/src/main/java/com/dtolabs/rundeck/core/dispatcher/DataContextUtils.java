@@ -367,7 +367,8 @@ public class DataContextUtils {
             final String key = m.group("KEY");
             final String qual = m.group("QUAL");
             T view = viewMap.apply(null != step ? Integer.parseInt(step) : null, qual);
-            String value = data.resolve(view, group, key);
+            boolean strict = null != step || null != qual;
+            String value = data.resolve(view, strict, group, key, null);
             if (null != value) {
                 if (null != converter) {
                     value = converter.convert(value);
