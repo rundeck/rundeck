@@ -24,31 +24,6 @@ import spock.lang.Unroll
  * @since 5/2/17
  */
 class MultiDataContextSpec extends Specification {
-    @Unroll
-    def "resolve basic view #view"() {
-        given:
-        MultiDataContextImpl<ContextView, DataContext> context = new MultiDataContextImpl<ContextView, DataContext>(
-                new BaseDataContext([test: [blah: "base"]])
-        )
-        context.merge(ContextView.global(), new BaseDataContext([test: [blah: "global"]]))
-        context.merge(ContextView.node("anode"), new BaseDataContext([test: [blah: "anode"]]))
-        context.merge(ContextView.step(1), new BaseDataContext([test: [blah: "step1"]]))
-        context.merge(ContextView.nodeStep(1, "bnode"), new BaseDataContext([test: [blah: "bnode step 1"]]))
-
-        when:
-        def result = context.resolve(view, "test", "blah")
-        then:
-        result == expect
-
-        where:
-        view                             | expect
-
-        ContextView.global()             | "global"
-        ContextView.node("anode")        | "anode"
-        ContextView.step(1)              | "step1"
-        ContextView.nodeStep(1, "bnode") | "bnode step 1"
-        null                             | "base"
-    }
 
     @Unroll
     def "resolve basic with default #view"() {
@@ -67,18 +42,50 @@ class MultiDataContextSpec extends Specification {
         result == expect
 
         where:
-        view                             | key    | defval | expect
-        null                             | "blah" | "xyz"  | "base"
-        null                             | "purple" | "xyz"  | "xyz"
-        ContextView.global()             | "blah" | "xyz"  | "global"
-        ContextView.global()             | "purple" | "xyz"  | "xyz"
-        ContextView.node("anode")        | "blah" | "xyz"  | "anode"
-        ContextView.node("anode")        | "purple" | "xyz"  | "xyz"
-        ContextView.step(1)              | "blah" | "xyz"  | "step1"
-        ContextView.step(1)              | "purple" | "xyz"  | "xyz"
-        ContextView.nodeStep(1, "bnode") | "blah" | "xyz"  | "bnode step 1"
-        ContextView.nodeStep(1, "bnode") | "purple" | "xyz"  | "xyz"
+        view                             | key        | defval | expect
+        null                             | "blah"     | "xyz"  | "base"
+        null                             | "notfound" | "xyz"  | "xyz"
+        ContextView.global()             | "blah"     | "xyz"  | "global"
+        ContextView.global()             | "notfound" | "xyz"  | "xyz"
+        ContextView.node("anode")        | "blah"     | "xyz"  | "anode"
+        ContextView.node("anode")        | "notfound" | "xyz"  | "xyz"
+        ContextView.step(1)              | "blah"     | "xyz"  | "step1"
+        ContextView.step(1)              | "notfound" | "xyz"  | "xyz"
+        ContextView.nodeStep(1, "bnode") | "blah"     | "xyz"  | "bnode step 1"
+        ContextView.nodeStep(1, "bnode") | "notfound" | "xyz"  | "xyz"
+    }
 
+    @Unroll
+    def "resolve basic with strict #view #key"() {
+        given:
+        MultiDataContextImpl<ContextView, DataContext> context = new MultiDataContextImpl<ContextView, DataContext>(
+                new BaseDataContext([test: [blah: "base", blee: "base"]])
+        )
+        context.merge(ContextView.global(), new BaseDataContext([test: [blah: "global"]]))
+        context.merge(ContextView.node("anode"), new BaseDataContext([test: [blah: "anode"]]))
+        context.merge(ContextView.step(1), new BaseDataContext([test: [blah: "step1"]]))
+        context.merge(ContextView.nodeStep(1, "bnode"), new BaseDataContext([test: [blah: "bnode step 1"]]))
+
+
+        when:
+        def result = context.resolve(view, true, "test", key, defval)
+        then:
+        result == expect
+
+        where:
+        view                             | key        | defval | expect
+        ContextView.global()             | "blah"     | "xyz"  | "global"
+        ContextView.global()             | "blee"     | null   | null
+        ContextView.global()             | "blee"     | "xyz"  | "xyz"
+        ContextView.node("anode")        | "blah"     | "xyz"  | "anode"
+        ContextView.node("anode")        | "notfound" | null   | null
+        ContextView.node("anode")        | "notfound" | "xyz"  | "xyz"
+        ContextView.step(1)              | "blah"     | "xyz"  | "step1"
+        ContextView.step(1)              | "notfound" | null   | null
+        ContextView.step(1)              | "notfound" | "xyz"  | "xyz"
+        ContextView.nodeStep(1, "bnode") | "blah"     | "xyz"  | "bnode step 1"
+        ContextView.nodeStep(1, "bnode") | "notfound" | null   | null
+        ContextView.nodeStep(1, "bnode") | "notfound" | "xyz"  | "xyz"
     }
 
     @Unroll

@@ -42,6 +42,15 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
      */
     void merge(MultiDataContext<K, D> input);
 
+    /**
+     * Resolve a data value from a starting scope
+     *
+     * @param view  scope
+     * @param group group
+     * @param key   key
+     *
+     * @return value or null
+     */
     default String resolve(
             final K view,
             final String group,
@@ -51,8 +60,40 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
         return resolve(view, group, key, null);
     }
 
+    /**
+     * Resolve a data value from a starting scope or return a default
+     *
+     * @param view         scope
+     * @param group        group
+     * @param key          key
+     * @param defaultValue default value
+     *
+     * @return resolved value, or the default value
+     */
     default String resolve(
             final K view,
+            final String group,
+            final String key,
+            final String defaultValue
+    )
+    {
+        return resolve(view, false, group, key, defaultValue);
+    }
+
+    /**
+     * Resolve a data value with optional scope widening or return a default value
+     *
+     * @param view         scope
+     * @param strict       if true do not widen scope
+     * @param group        group
+     * @param key          key
+     * @param defaultValue default value
+     *
+     * @return resolved value or default value
+     */
+    default String resolve(
+            final K view,
+            final boolean strict,
             final String group,
             final String key,
             final String defaultValue
@@ -68,6 +109,9 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
                 if (null != result) {
                     return result;
                 }
+            }
+            if (strict) {
+                return defaultValue;
             }
             if (!view.isWidest()) {
                 return resolve(view.widenView().getView(), group, key, defaultValue);
