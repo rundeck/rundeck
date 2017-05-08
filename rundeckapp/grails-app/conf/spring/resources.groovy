@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
+import com.dtolabs.rundeck.server.plugins.logs.HTMLViewConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.JsonConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.MarkdownConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.PropertiesConverterPlugin
@@ -299,11 +300,13 @@ beans={
     HTMLTableViewConverterPlugin(HTMLTableViewConverterPlugin)
     markdownDataConverterPlugin(MarkdownConverterPlugin)
     tabularDataConverterPlugin(TabularDataConverterPlugin)
+    HTMLViewConverterPlugin(HTMLViewConverterPlugin)
     pluginRegistry[JsonConverterPlugin.PROVIDER_NAME] = 'jsonDataConverterPlugin'
     pluginRegistry[PropertiesConverterPlugin.PROVIDER_NAME] = 'propertiesDataConverterPlugin'
     pluginRegistry[HTMLTableViewConverterPlugin.PROVIDER_NAME] = 'HTMLTableViewConverterPlugin'
     pluginRegistry[MarkdownConverterPlugin.PROVIDER_NAME] = 'markdownDataConverterPlugin'
     pluginRegistry[TabularDataConverterPlugin.PROVIDER_NAME] = 'tabularDataConverterPlugin'
+    pluginRegistry[HTMLViewConverterPlugin.PROVIDER_NAME] = 'HTMLViewConverterPlugin'
     /**
      * Registry bean contains both kinds of plugin
      */
