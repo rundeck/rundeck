@@ -58,22 +58,6 @@ class DataContextUtilsSpec extends Specification {
     }
 
     @Unroll
-    def "parse view qualifier #input"() {
-        when:
-        def result = DataContextUtils.parseViewQualifier(input)
-        then:
-        result.isGlobal() == global
-        result.getStepNumber() == step
-        result.getNodeName() == node
-
-        where:
-        input   | global | step | node
-        null    | true   | null | null
-        "abc"   | false  | null | "abc"
-        "2/abc" | false  | 2    | "abc"
-        "2/"    | false  | 2    | null
-    }
-    @Unroll
     def "replace tokens in script duplicate start char #script"() {
         given:
         Framework fwk = null

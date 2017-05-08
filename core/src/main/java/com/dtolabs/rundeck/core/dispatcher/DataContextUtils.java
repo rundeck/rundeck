@@ -389,30 +389,6 @@ public class DataContextUtils {
         return sb.toString();
     }
 
-    /**
-     * XXX
-     *
-     * @param qual
-     *
-     * @return
-     */
-    public static ContextView parseViewQualifier(final String qual) {
-        if (null == qual) {
-            return ContextView.global();
-        }
-        if ("^".equals(qual)) {
-            return ContextView.global();
-        } else if (qual.indexOf('/', 1) > -1) {
-            String num = qual.substring(0, qual.indexOf('/'));
-            if (qual.indexOf('/') == qual.length() - 1) {
-                return ContextView.step(Integer.parseInt(num));
-            }
-            String rest = qual.substring(qual.indexOf('/') + 1);
-            return ContextView.nodeStep(Integer.parseInt(num), rest);
-        } else {
-            return ContextView.node(qual);
-        }
-    }
 
     /**
      * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
