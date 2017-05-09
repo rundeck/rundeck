@@ -380,7 +380,52 @@ public class SharedDataContextUtils {
         return (i, s) -> ContextView.nodeStep(i, s != null ? s : nodename);
     }
 
+    /**
+     * Recursively replace data references in the values in a map which contains either string, collection or Map
+     * values.
+     *
+     * @param input input map
+     * @param data  context data
+     *
+     * @return Map with all string values having references replaced
+     */
+    public static <T extends ViewTraverse<T>> Map<String, Object> replaceDataReferences(
+            final Map<String, Object> input,
+            final BiFunction<Integer, String, T> viewMap,
+            final Converter<String, String> converter,
+            final MultiDataContext<T, DataContext> data
+    )
+    {
+        final HashMap<String, Object> output = new HashMap<>();
+        for (final String s : input.keySet()) {
+            Object o = input.get(s);
+            output.put(s, replaceDataReferencesInObject(o, viewMap, converter, data));
+        }
+        return output;
+    }
 
+    public static <T extends ViewTraverse<T>> Object replaceDataReferencesInObject(
+            Object o,
+            final BiFunction<Integer, String, T> viewMap,
+            final Converter<String, String> converter,
+            final MultiDataContext<T, DataContext> data
+    )
+    {
+        if (o instanceof String) {
+            return replaceDataReferences((String) o, data, viewMap, converter, false, false);
+        } else if (o instanceof Map) {
+            Map<String, Object> sub = (Map<String, Object>) o;
+            return replaceDataReferences(sub, viewMap, converter, data);
+        } else if (o instanceof Collection) {
+            ArrayList result = new ArrayList();
+            for (final Object o1 : (Collection) o) {
+                result.add(replaceDataReferencesInObject(o1, viewMap, converter, data));
+            }
+            return result;
+        } else {
+            return o;
+        }
+    }
     @Data
     private static class VariableRef {
         private final String variableref;

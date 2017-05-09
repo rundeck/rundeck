@@ -620,6 +620,10 @@ public class DataContextUtils {
         return new BaseDataContext(data);
     }
 
+    public static MutableDataContext context(final String key, final Map<String, String> data) {
+        return new BaseDataContext(key, data);
+    }
+
     /**
      * Can be configured with environment variables
      */
