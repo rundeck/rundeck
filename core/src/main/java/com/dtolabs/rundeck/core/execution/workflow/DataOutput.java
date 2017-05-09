@@ -1,9 +1,8 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
-import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.dispatcher.MutableDataContext;
+import com.dtolabs.rundeck.core.dispatcher.SharedDataContextUtils;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,7 +15,7 @@ public class DataOutput implements ReadableSharedContext {
     private ContextView defaultView;
 
     public DataOutput(ContextView defaultView) {
-        this(defaultView, DataContextUtils.sharedContext());
+        this(defaultView, SharedDataContextUtils.sharedContext());
     }
 
     public DataOutput(ContextView defaultView, WFSharedContext context) {

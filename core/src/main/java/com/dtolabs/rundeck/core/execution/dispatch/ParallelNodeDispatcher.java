@@ -28,13 +28,11 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
-import com.dtolabs.rundeck.core.execution.workflow.ReadableOutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.ReadableSharedContext;
-import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import org.apache.tools.ant.BuildException;
@@ -43,7 +41,6 @@ import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Parallel;
 import org.apache.tools.ant.taskdefs.Sequential;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -215,7 +212,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         @Override
         public NodeStepResult call() {
             try {
-                final ReadableSharedContext outputContext = DataContextUtils.outputContext(ContextView.nodeStep(
+                final ReadableSharedContext outputContext = SharedDataContextUtils.outputContext(ContextView.nodeStep(
                         context.getStepNumber(),
                         node.getNodename()
                 ));

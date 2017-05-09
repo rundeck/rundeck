@@ -33,7 +33,6 @@ import com.dtolabs.rundeck.core.common.OrchestratorConfig;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.workflow.*;
-import com.dtolabs.rundeck.core.execution.workflow.state.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
@@ -83,7 +82,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         dataContext = new BaseDataContext();
         privateDataContext = new BaseDataContext();
         sharedDataContext = new MultiDataContextImpl<>();
-        outputContext = DataContextUtils.outputContext(ContextView.global());
+        outputContext = SharedDataContextUtils.outputContext(ContextView.global());
     }
 
     public static Builder builder() {

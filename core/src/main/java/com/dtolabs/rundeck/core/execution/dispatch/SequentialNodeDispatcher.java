@@ -28,7 +28,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase;
@@ -113,7 +113,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 NodeStepResult result;
 
                 //execute the step or dispatchable
-                final ReadableSharedContext outputContext = DataContextUtils.outputContext(
+                final ReadableSharedContext outputContext = SharedDataContextUtils.outputContext(
                         ContextView.nodeStep(
                                 context.getStepNumber(),
                                 node.getNodename()

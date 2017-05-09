@@ -40,7 +40,6 @@ import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import grails.events.EventException
 import grails.events.Listener
 import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
@@ -1067,7 +1066,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     def defStoragePath = it.defaultStoragePath
                     //search and replace ${option.
                     if (args && defStoragePath?.contains('${option.')) {
-                        defStoragePath = DataContextUtils.replaceDataReferences(defStoragePath, DataContextUtils.addContext("option", args, null)).trim()
+                        defStoragePath = DataContextUtils.replaceDataReferencesInString(defStoragePath, DataContextUtils.addContext("option", args, null)).trim()
                     }
                     def password = keystore.readPassword(defStoragePath)
                     if (it.secureExposed) {
@@ -1176,7 +1175,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         if (execMap.doNodedispatch) {
             //set nodeset for the context if doNodedispatch parameter is true
-            def filter = DataContextUtils.replaceDataReferences(execMap.asFilter(), datacontext)
+            def filter = DataContextUtils.replaceDataReferencesInString(execMap.asFilter(), datacontext)
             NodeSet nodeset = filtersAsNodeSet([
                     filter:filter,
                     nodeExcludePrecedence:execMap.nodeExcludePrecedence,
@@ -1910,7 +1909,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (props.retry?.contains('${')) {
             //replace data references
             if (optparams) {
-                props.retry = DataContextUtils.replaceDataReferences(props.retry, DataContextUtils.addContext("option", optparams, null)).trim()
+                props.retry = DataContextUtils.replaceDataReferencesInString(props.retry, DataContextUtils.addContext("option", optparams, null)).trim()
             }
         }
         if(props.retry){
@@ -1924,7 +1923,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (props.timeout?.contains('${')) {
             //replace data references
             if (optparams) {
-                props.timeout = DataContextUtils.replaceDataReferences(props.timeout, DataContextUtils.addContext("option", optparams, null))
+                props.timeout = DataContextUtils.replaceDataReferencesInString(props.timeout, DataContextUtils.addContext("option", optparams, null))
             }
         }
 
@@ -2670,7 +2669,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def nodeselector
         if (nodeFilter) {
             //set nodeset for the context if doNodedispatch parameter is true
-            def filter = DataContextUtils.replaceDataReferences(nodeFilter, origContext.dataContext)
+            def filter = DataContextUtils.replaceDataReferencesInString(nodeFilter, origContext.dataContext)
             NodeSet nodeset = filtersAsNodeSet([
                     filter               : filter,
                     nodeExcludePrecedence: true, //XXX: fix
@@ -2683,7 +2682,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(null!=nodeIntersect && nodeIntersect){
                 // Create intersection of overridden node filter and upstream job nodes
                 nodeSet = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nodeselector, origContext.nodes)
-                filter = DataContextUtils.replaceDataReferences(nodeSet.nodeNames.join(" "), origContext.dataContext)
+                filter = DataContextUtils.replaceDataReferencesInString(nodeSet.nodeNames.join(" "), origContext.dataContext)
                 nodeselector = filtersAsNodeSet([
                         filter                  : filter,
                         nodeExcludePrecedence   : true,
@@ -2715,7 +2714,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }else if(null!=nodeIntersect && nodeIntersect){
             // Create intersection of referenced job node filter and upstream job nodes
             def INodeSet nodeSet = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(newContext.nodeSelector, origContext.nodes)
-            def filter = DataContextUtils.replaceDataReferences(nodeSet.nodeNames.join(" "), origContext.dataContext)
+            def filter = DataContextUtils.replaceDataReferencesInString(nodeSet.nodeNames.join(" "), origContext.dataContext)
             nodeselector = filtersAsNodeSet([
                     filter                  : filter,
                     nodeExcludePrecedence   : true,
@@ -2782,7 +2781,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //for secAuthOpts, evaluate each in context of original private data context
         def evalSecAuthOpts = [:]
         secAuthOpts.each { k, v ->
-            def newv = DataContextUtils.replaceDataReferences(
+            def newv = DataContextUtils.replaceDataReferencesInString(
                     v,
                     executionContext.privateDataContext,
                     DataContextUtils.replaceMissingOptionsWithBlank,
@@ -2796,7 +2795,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //for secOpts, evaluate each in context of original secure option data context
         def evalSecOpts = [:]
         secOpts.each { k, v ->
-            def newv = DataContextUtils.replaceDataReferences(
+            def newv = DataContextUtils.replaceDataReferencesInString(
                     v,
                     [option: executionContext.dataContext['secureOption']],
                     DataContextUtils.replaceMissingOptionsWithBlank,
@@ -2814,7 +2813,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def plainOptsContext = executionContext.dataContext['option']?.findAll { !executionContext.dataContext['secureOption'] || null == executionContext.dataContext['secureOption'][it.key] }
         def evalPlainOpts = [:]
         plainOpts.each { k, v ->
-            evalPlainOpts[k] = DataContextUtils.replaceDataReferences(
+            evalPlainOpts[k] = DataContextUtils.replaceDataReferencesInString(
                     v,
                     [option: plainOptsContext],
                     DataContextUtils.replaceMissingOptionsWithBlank,

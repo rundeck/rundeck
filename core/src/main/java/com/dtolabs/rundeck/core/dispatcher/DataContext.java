@@ -60,7 +60,7 @@ public interface DataContext extends Map<String, Map<String, String>>, Mergable<
             boolean blankIfUnexpanded
     )
     {
-        return DataContextUtils.replaceDataReferences(args, getData(), converter, failIfUnexpanded, blankIfUnexpanded);
+        return DataContextUtils.replaceDataReferencesInArray(args, getData(), converter, failIfUnexpanded, blankIfUnexpanded);
     }
 
     /**
@@ -125,7 +125,7 @@ public interface DataContext extends Map<String, Map<String, String>>, Mergable<
      * @return string with values substituted, or original string
      */
     default String replaceDataReferences(final String input) {
-        return DataContextUtils.replaceDataReferences(input, getData());
+        return DataContextUtils.replaceDataReferencesInString(input, getData());
     }
 
     /**
@@ -165,7 +165,7 @@ public interface DataContext extends Map<String, Map<String, String>>, Mergable<
             boolean blankIfUnexpanded
     )
     {
-        return DataContextUtils.replaceDataReferences(input, getData(), converter, failOnUnexpanded, blankIfUnexpanded);
+        return DataContextUtils.replaceDataReferencesInString(input, getData(), converter, failOnUnexpanded, blankIfUnexpanded);
 
     }
 

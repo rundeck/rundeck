@@ -24,6 +24,8 @@
 package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.dispatcher.BaseDataContext;
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
@@ -183,17 +185,16 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
      * @param dataContext  data
      * @return arglist
      */
-    protected ExecArgList createScriptArgsList(final Map<String, Map<String,
-            String>> dataContext) {
+    protected ExecArgList createScriptArgsList(final Map<String, Map<String, String>> dataContext) {
 
         final ScriptPluginProvider plugin = getProvider();
         final File scriptfile = plugin.getScriptFile();
-        final String scriptargs = null!=plugin.getScriptArgs()?
-                DataContextUtils.replaceDataReferences(plugin.getScriptArgs(), dataContext) :
-                    null;
-        final String[] scriptargsarr = null!=plugin.getScriptArgsArray()?
-                DataContextUtils.replaceDataReferences(plugin.getScriptArgsArray(), dataContext) :
-                    null;
+        final String scriptargs = null != plugin.getScriptArgs() ?
+                                  DataContextUtils.replaceDataReferencesInString(plugin.getScriptArgs(), dataContext) :
+                                  null;
+        final String[] scriptargsarr = null!=plugin.getScriptArgsArray() ?
+                                       DataContextUtils.replaceDataReferencesInArray(plugin.getScriptArgsArray(), dataContext) :
+                                       null;
         final String scriptinterpreter = plugin.getScriptInterpreter();
         final boolean interpreterargsquoted = plugin.getInterpreterArgsQuoted();
 

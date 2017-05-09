@@ -228,17 +228,17 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         final int qindex = origUrl.indexOf("?");
         final StringBuilder builder = new StringBuilder();
         if (qindex > 0) {
-            builder.append(DataContextUtils.replaceDataReferences(origUrl.substring(0, qindex),
-                dataContext, urlPathEncoder, true));
+            builder.append(DataContextUtils.replaceDataReferencesInString(origUrl.substring(0, qindex),
+                                                                          dataContext, urlPathEncoder, true));
             builder.append("?");
             if (qindex < origUrl.length() - 1) {
-                builder.append(DataContextUtils.replaceDataReferences(origUrl.substring(qindex + 1),
-                    dataContext, urlQueryEncoder, true));
+                builder.append(DataContextUtils.replaceDataReferencesInString(origUrl.substring(qindex + 1),
+                                                                              dataContext, urlQueryEncoder, true));
             }
             return builder.toString();
         } else {
-            return DataContextUtils.replaceDataReferences(urlString, dataContext,
-                urlPathEncoder, false);
+            return DataContextUtils.replaceDataReferencesInString(urlString, dataContext,
+                                                                  urlPathEncoder, false);
         }
     }
 

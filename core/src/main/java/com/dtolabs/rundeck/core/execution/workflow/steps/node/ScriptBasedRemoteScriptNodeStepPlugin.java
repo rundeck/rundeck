@@ -101,7 +101,7 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
         if (null != args) {
             argsarr = args.split(" ");
         }
-        argsarr = DataContextUtils.replaceDataReferences(argsarr, finalDataContext);
+        argsarr = DataContextUtils.replaceDataReferencesInArray(argsarr, finalDataContext);
 
         boolean useOriginalFileExtension = true;
         if (provider.getMetadata().containsKey(SCRIPT_FILE_USE_EXTENSION_META_KEY)) {
