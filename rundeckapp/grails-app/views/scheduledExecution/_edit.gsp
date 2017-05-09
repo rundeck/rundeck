@@ -891,17 +891,24 @@ function getCurSEID(){
 
     <div class="form-group" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditTZ">
         <div class="${labelColSize} control-label text-form-label">
-            Timezone
+            <g:message code="scheduledExecution.property.timezone.prompt" />
         </div>
         <div class="${fieldColHalfSize}">
                 <input type='text' name="timeZone" value="${enc(attr:scheduledExecution?.timeZone)}"
                        id="timeZone" class="form-control"/>
 
                 <span class="help-block">
-                    A TimeZone, either an abbreviation such as "PST", a full name such as "America/Los_Angeles",
-                    or a custom ID such as "GMT-8:00".
+                    <g:message code="scheduledExecution.property.timezone.description" />
                 </span>
         </div>
+    <g:javascript>
+        fireWhenReady('timeZone',function(){
+            var timeZonesDataArr = loadJsonData('timeZonesData');
+            jQuery("#timeZone").devbridgeAutocomplete({
+                lookup: timeZonesDataArr
+            });
+        });
+    </g:javascript>
     </div>
 
     </div>
