@@ -28,6 +28,8 @@ import java.io.StringWriter;
 import java.util.Map;
 
 import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.dispatcher.SharedDataContextUtils;
 import org.apache.log4j.Logger;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
@@ -90,8 +92,12 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
         throws NodeStepException {
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         if (null != instanceConfiguration) {
-            instanceConfiguration = DataContextUtils.replaceDataReferences(instanceConfiguration,
-                                                                           context.getDataContext());
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                    instanceConfiguration,
+                    SharedDataContextUtils.defaultNodeView(node.getNodename()),
+                    null,
+                    context.getSharedDataContext()
+            );
         }
         final String providerName = item.getNodeStepType();
 
