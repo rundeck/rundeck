@@ -24,7 +24,7 @@
         </g:if>
         </span>
         <span class="timerel">at
-            <span data-bind="text: formatTimeAtDate(endTime()), attr: {title: endTime() }">
+            <span data-bind="text: formatTimeAtDate('${execution.dateCompleted}'), attr: {title: endTime() }">
             <g:if test="${execution.dateCompleted}">
                 <g:relativeDate atDate="${execution.dateCompleted}"/>
             </g:if>

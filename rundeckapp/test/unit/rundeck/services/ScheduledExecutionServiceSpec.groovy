@@ -1998,4 +1998,59 @@ class ScheduledExecutionServiceSpec extends Specification {
         'xyz'      | false      | false   | false     | false
     }
 
+    def "timezone validations on save"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams() +[scheduled: true,
+                                       crontabString: '0 1 2 3 4 ? *',
+                                       useCrontabString: 'true',
+                                        timeZone: timezone]
+        when:
+
+        def results = service._dovalidate(params, mockAuth())
+
+        then:
+
+        results.failed == expectFailed
+
+        where:
+        timezone    | expectFailed
+        null        | false
+        ''          | false
+        'America/Los_Angeles'   |false
+        'GMT-8:00'  | false
+        'PST'       | false
+        'XXXX'      |true
+        'AAmerica/Los_Angeles' | true
+
+    }
+
+    def "timezone validations on update"(){
+        given:
+        setupDoUpdate()
+        def params = baseJobParams() +[scheduled: true,
+                                       crontabString: '0 1 2 3 4 ? *',
+                                       useCrontabString: 'true',
+                                       timeZone: timezone]
+        def se = new ScheduledExecution(createJobParams()).save()
+        service.fileUploadService = Mock(FileUploadService)
+
+        when:
+        def results = service._doupdate([id: se.id.toString()] + params, mockAuth())
+        println(results)
+
+        then:
+        results.success == expectSuccess
+
+        where:
+        timezone    | expectSuccess
+        null        | true
+        ''          | true
+        'America/Los_Angeles'   |true
+        'GMT-8:00'  | true
+        'PST'       | true
+        'XXXX'      |false
+        'AAmerica/Los_Angeles' | false
+    }
+
 }
