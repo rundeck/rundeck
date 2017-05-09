@@ -90,7 +90,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     /**
      * @return data with exported plugin details
      */
-    public Map<String,String> createPluginDataContext() {
+    public Map<String,String> createPluginData() {
         final Map<String,String> pluginDataContext = new HashMap<String, String>();
 
         pluginDataContext.put("file", provider.getArchiveFile().getAbsolutePath());

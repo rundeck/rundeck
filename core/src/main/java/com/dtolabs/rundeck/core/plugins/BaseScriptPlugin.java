@@ -80,7 +80,7 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
             throws IOException, InterruptedException, ConfigurationException
     {
         Description pluginDesc = getDescription();
-        final Map<String, Map<String, String>> localDataContext = createScriptDataContext(
+        final DataContext localDataContext = createScriptDataContext(
                 framework,
                 executionContext.getFrameworkProject(),
                 executionContext.getDataContext()
@@ -93,13 +93,9 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
                 executionContext.getExecutionContext(),
                 pluginDesc.getProperties()
         );
+        localDataContext.merge(new BaseDataContext("config", data));
 
-        final Map<String, Map<String, String>> finalDataContext = DataContextUtils.addContext(
-                "config",
-                data,
-                localDataContext
-        );
-        final String[] finalargs = createScriptArgs(finalDataContext);
+        final String[] finalargs = createScriptArgs(localDataContext);
 
         executionContext.getLogger().log(3, "[" + getProvider().getName() + "] executing: " + Arrays.asList(
                 finalargs));
@@ -108,7 +104,7 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
         if (isMergeEnvVars()) {
             envMap.putAll(getScriptExecHelper().loadLocalEnvironment());
         }
-        envMap.putAll(DataContextUtils.generateEnvVarsFromContext(finalDataContext));
+        envMap.putAll(DataContextUtils.generateEnvVarsFromContext(localDataContext));
         return getScriptExecHelper().runLocalCommand(
                 finalargs,
                 envMap,
@@ -149,12 +145,13 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
      * @param context orig context
      * @return new data context
      */
-    protected Map<String, Map<String, String>> createScriptDataContext(final Framework framework,
-                                                                       final String project,
-                                                                       final Map<String, Map<String, String>> context) {
-        final Map<String, Map<String, String>> localDataContext
-            = ScriptDataContextUtil.createScriptDataContextForProject(framework, project);
-        localDataContext.get("plugin").putAll(createPluginDataContext());
+    protected DataContext createScriptDataContext(
+            final Framework framework,
+            final String project,
+            final Map<String, Map<String, String>> context) {
+        BaseDataContext localDataContext = new BaseDataContext();
+        localDataContext.merge(ScriptDataContextUtil.createScriptDataContextForProject(framework, project));
+        localDataContext.group("plugin").putAll(createPluginData());
         localDataContext.putAll(context);
         return localDataContext;
     }
