@@ -17,10 +17,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.cli.CLIUtils;
-import com.dtolabs.rundeck.core.dispatcher.ContextView;
-import com.dtolabs.rundeck.core.dispatcher.DataContext;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
+import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.utils.Converter;
 
 import java.util.ArrayList;
@@ -137,6 +134,7 @@ public class ExecArgList {
      *
      * @return list of strings
      */
+    @Deprecated
     public ArrayList<String> buildCommandForNode(Map<String, Map<String, String>> dataContext, String osFamily) {
         return buildCommandForNode(this, dataContext, osFamily);
     }
@@ -180,7 +178,7 @@ public class ExecArgList {
         CommandVisitor visiter = new CommandVisitor(
                 commandList,
                 CLIUtils.argumentQuoteForOperatingSystem(osFamily),
-                str -> DataContextUtils.replaceDataReferences(
+                str -> SharedDataContextUtils.replaceDataReferences(
                         str,
                         sharedContext,
                         //add node name to qualifier to read node-data first
