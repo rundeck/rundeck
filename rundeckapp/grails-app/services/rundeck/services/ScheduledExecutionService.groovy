@@ -1821,6 +1821,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                             "Invalid: {0}")
                 }
             }
+            if(scheduledExecution.timeZone){
+                TimeZone tz = TimeZone.getTimeZone(scheduledExecution.timeZone,false)
+                if(tz == null){
+                    failed = true
+                    scheduledExecution.errors.rejectValue('timeZone',
+                            'scheduledExecution.timezone.error.message', [scheduledExecution.timeZone] as Object[],
+                            "Invalid: {0}")
+                }
+            }
         } else {
             //update schedule owner, in case disabling schedule on a different node
             //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
@@ -2832,6 +2841,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     failed = true;
                     scheduledExecution.errors.rejectValue('crontabString',
                             'scheduledExecution.crontabString.noschedule.message', [genCron] as Object[], "invalid: {0}")
+                }
+            }
+            if(scheduledExecution.timeZone){
+                TimeZone tz = TimeZone.getTimeZone(scheduledExecution.timeZone,false)
+                if(tz == null){
+                    failed = true
+                    scheduledExecution.errors.rejectValue('timeZone',
+                            'scheduledExecution.timezone.error.message', [scheduledExecution.timeZone] as Object[],
+                            "Invalid: {0}")
                 }
             }
         } else {

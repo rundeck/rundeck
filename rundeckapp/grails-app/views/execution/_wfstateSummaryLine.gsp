@@ -32,7 +32,7 @@
     </span>
     <span class="timerel">
         <g:message code="at" />
-        <span data-bind="text: formatTimeAtDate(endTime()), attr: {title: endTime() }">
+        <span data-bind="text: formatTimeAtDate('${execution.dateCompleted}'), attr: {title: endTime() }">
             <g:if test="${execution.dateCompleted}">
                 <g:relativeDate atDate="${execution.dateCompleted}"/>
             </g:if>
@@ -52,7 +52,7 @@
     <span data-bind="if: !scheduled()">
         <g:message code="at" />
     </span>
-    <span data-bind="text: formatTimeAtDate(startTime()), attr: {title: startTime() }">
+    <span data-bind="text: formatTimeAtDate('${execution.dateStarted}'), attr: {title: startTime() }">
         <g:if test="${execution.dateStarted}">
             <g:relativeDate atDate="${execution.dateStarted}"/>
         </g:if>
