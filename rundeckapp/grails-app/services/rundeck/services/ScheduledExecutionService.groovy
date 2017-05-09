@@ -3205,4 +3205,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         ScheduledExecution.findByUuidAndProject(uuid, project)
     }
 
+    def getTimeZones(){
+        TimeZone.getAvailableIDs()
+    }
+
 }

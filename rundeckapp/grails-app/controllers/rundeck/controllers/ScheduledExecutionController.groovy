@@ -1914,6 +1914,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def orchestratorPlugins = orchestratorPluginService.listDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+        def timeZones = scheduledExecutionService.getTimeZones()
         return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
                 notificationPlugins : notificationPlugins,
                 orchestratorPlugins : orchestratorPlugins,
@@ -1922,7 +1923,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 authorized          :scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions    : stepTypes,
-                globalVars:globals]
+                globalVars:globals,
+                timeZones : timeZones]
     }
 
 
@@ -2192,12 +2194,14 @@ class ScheduledExecutionController  extends ControllerBase{
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+        def timeZones = scheduledExecutionService.getTimeZones()
         return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 strategyPlugins:strategyPlugins,
                 orchestratorPlugins: orchestratorPluginService.listDescriptions(),
-                globalVars:globals]
+                globalVars:globals,
+                timeZones:timeZones]
     }
 
     private clearEditSession(id='_new'){
