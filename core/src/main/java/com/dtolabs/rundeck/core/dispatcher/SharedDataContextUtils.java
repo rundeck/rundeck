@@ -370,6 +370,16 @@ public class SharedDataContextUtils {
         return temp;
     }
 
+    /**
+     * @param nodename default node name for the context
+     *
+     * @return a function to generate a ContextView given an step number and nodename, which defaults to the given
+     * nodename if null at invocation time
+     */
+    public static BiFunction<Integer, String, ContextView> defaultNodeView(final String nodename) {
+        return (i, s) -> ContextView.nodeStep(i, s != null ? s : nodename);
+    }
+
 
     @Data
     private static class VariableRef {
