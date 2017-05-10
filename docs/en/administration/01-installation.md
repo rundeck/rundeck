@@ -70,7 +70,7 @@ to have access via [sudo].
 Rundeck is a Java-Servlet based server and therefore requires the Java
 runtime.
 
-The install process requires that the latest version of Java 1.7
+The install process requires that the latest version of Java 8
 be installed. Both the [Open JDK](http://openjdk.java.net/) and [Sun/Oracle](http://java.com/) JVMs can be used.
 You must have the JAVA_HOME environment variable defined
 in your environment before running the launcher.  The RPM will use the java found on your path. See [Setting JAVA_HOME](startup-and-shutdown.html#setting-java_home) if you want to run a different version of java.
@@ -82,9 +82,9 @@ $ java -version
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-java version "1.7.0_55"
-OpenJDK Runtime Environment (rhel-2.4.7.1.el6_5-x86_64 u55-b13)
-OpenJDK 64-Bit Server VM (build 24.51-b03, mixed mode)
+java version "1.8.0_131"
+Java(TM) SE Runtime Environment (build 1.8.0_131-b11)
+Java HotSpot(TM) 64-Bit Server VM (build 25.131-b11, mixed mode)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 #### Network access
@@ -148,7 +148,7 @@ documentation as well.
 
 Note: The latest install documentation is available at <http://rundeck.org/downloads.html>.
 
-Note, the java JDK must be installed. Install any JDK that is 1.7+.
+Note, the Java 8 JDK must be installed.
 
 If you want to install Rundeck on Linux via a binary installer, you
 can generally do so through the RPM tool that comes with your distribution. 
