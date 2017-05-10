@@ -17,7 +17,11 @@
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.common.NodesSelector
+import com.dtolabs.rundeck.core.common.SelectorUtils
 import com.dtolabs.rundeck.core.dispatcher.BaseDataContext
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
@@ -872,6 +876,73 @@ class ExecutionServiceSpec extends Specification {
         null     | 'globalvalue'
         'anode'  | 'anodevalue'
         'bnode'  | 'globalvalue'
+    }
+
+    @Unroll
+    def "overrideJobReferenceNodeFilter uses shared variable expansion in #nodeFilter"() {
+        given:
+        def sharedContext = SharedDataContextUtils.sharedContext()
+        sharedContext.merge(ContextView.global(), DataContextUtils.context("shared", [nodea: "b"]))
+        sharedContext.merge(ContextView.global(), DataContextUtils.context("global", [nodea: "a"]))
+        sharedContext.merge(ContextView.node('anode'), DataContextUtils.context("shared", [nodea: "c"]))
+        sharedContext.merge(ContextView.node('anode'), DataContextUtils.context("nodecontext", [nodea: "a"]))
+
+        def makeNodeSet = { list ->
+            def nodeset = new NodeSetImpl()
+            list.each {
+                nodeset.putNode(new NodeEntryImpl(it))
+            }
+            nodeset
+        }
+        def allNodes = makeNodeSet(['a', 'b', 'c', 'x', 'y', 'z'])
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(allNodes)
+                                          .nodeSelector(SelectorUtils.nodeList(['a', 'b', 'c', 'x', 'y', 'z']))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .dataContext(DataContextUtils.context('data', [nodea: 'z']))
+                                          .mergeSharedContext(sharedContext)
+                                          .build()
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(_, _) >> { args ->
+                com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(args[0], allNodes)
+            }
+            1 * filterAuthorizedNodes(_, _, _, _) >> { args ->
+                args[2]
+            }
+            0 * _(*_)
+        }
+
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+
+        when:
+
+        def newCtxt = service.overrideJobReferenceNodeFilter(
+                context,
+                ExecutionContextImpl.builder().build(),
+                nodeFilter,
+                2,
+                true,
+                null,
+                null,
+                false
+        )
+
+        then:
+        newCtxt.nodes.nodeNames == expect as Set
+
+        where:
+        nodeFilter                       | expect
+        'x y'                            | ['x', 'y']
+        '${bad.wrong} x y'               | ['x', 'y']
+        '${data.nodea} x y'              | ['z', 'x', 'y']
+        '${global.nodea} x y'            | ['a', 'x', 'y']
+        '${shared.nodea} x y'            | ['b', 'x', 'y']
+        '${shared.nodea@anode} x y'      | ['c', 'x', 'y']
+        '${nodecontext.nodea} x y'       | ['x', 'y']
+        '${nodecontext.nodea@anode} x y' | ['a', 'x', 'y']
     }
 
 

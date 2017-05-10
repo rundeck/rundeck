@@ -2861,7 +2861,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 evalSecOpts
         )
 
-        if (null != newContext && (nodeFilter || nodeIntersect)) {
+        if (nodeFilter || nodeIntersect) {
             newContext = overrideJobReferenceNodeFilter(
                     executionContext,
                     newContext,
