@@ -22,7 +22,9 @@ import com.dtolabs.rundeck.app.support.*
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.*
+import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.dispatcher.SharedDataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
@@ -1224,9 +1226,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             .nodes(nodeSet)
             .loglevel(logLevelIntValue(execMap.loglevel))
             .charsetEncoding(charsetEncoding)
+            .sharedDataContextClear()
             .dataContext(datacontext)
             .privateDataContext(privatecontext)
-            .sharedDataContextClear()
             .executionListener(listener)
             .framework(framework)
             .authContext(authContext)
@@ -2757,18 +2759,26 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Integer nodeThreadcount,
             String nodeRankAttribute,
             Boolean nodeRankOrderAscending,
-            Boolean nodeIntersect = false,
-            dovalidate = true
+            INodeEntry node,
+            Boolean nodeIntersect,
+            dovalidate
     )
     throws ExecutionServiceValidationException
     {
 
         //substitute any data context references in the arguments
-        if (null != newargs && executionContext.dataContext) {
+        if (null != newargs && executionContext.sharedDataContext) {
             def curDate=exec?exec.dateStarted: new Date()
             newargs = newargs.collect { expandDateStrings(it, curDate) }.toArray()
 
-            newargs = executionContext.dataContext.replaceDataReferences(newargs)
+            newargs = SharedDataContextUtils.replaceDataReferences(
+                    newargs,
+                    executionContext.sharedDataContext,
+                    node ? SharedDataContextUtils.defaultNodeView(node.nodename) : ContextView.&nodeStep,
+                    null,
+                    false,
+                    false
+            )
         }
 
         def jobOptsMap = frameworkService.parseOptsFromArray(newargs)
@@ -2874,13 +2884,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param nodeSet
      * @param createFailure closure that takes {@link FailureReason} and String as arguments, and returns a {@link StepExecutionResult} or {@link NodeStepResult}
      * @param createSuccess closure that returns a {@link StepExecutionResult} or {@link NodeStepResult}
+     * @param node a node entry if this is a node step
+     *
      * @return
      */
     private def runJobRefExecutionItem(
             StepExecutionContext executionContext,
             JobExecutionItem jitem,
             Closure createFailure,
-            Closure createSuccess
+            Closure createSuccess,
+            INodeEntry node = null
     )
     {
         def id
@@ -2940,7 +2953,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         jitem.nodeThreadcount,
                         jitem.nodeRankAttribute,
                         jitem.nodeRankOrderAscending,
-                        jitem.nodeIntersect
+                        node,
+                        jitem.nodeIntersect,
+                        true
                 )
             } catch (ExecutionServiceValidationException e) {
                 executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
@@ -3298,7 +3313,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         JobExecutionItem jitem = (JobExecutionItem) executionItem
         //don't override node filters, to allow option inputs to be used in the filters
-        return runJobRefExecutionItem(executionContext, jitem, createFailure, createSuccess)
+        return runJobRefExecutionItem(executionContext, jitem, createFailure, createSuccess, node)
     }
 
     /**

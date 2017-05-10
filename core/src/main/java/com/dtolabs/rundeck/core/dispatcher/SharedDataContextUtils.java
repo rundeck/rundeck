@@ -105,6 +105,42 @@ public class SharedDataContextUtils {
      * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
      * context
      *
+     * @param args              input string array
+     * @param data              data context map
+     * @param converter         converter to encode/convert the expanded values
+     * @param failIfUnexpanded  true to fail if a reference is not found
+     * @param blankIfUnexpanded true to use blank if a reference is not found
+     *
+     * @return string with values substituted, or original string
+     */
+    public static <T extends ViewTraverse<T>> String[] replaceDataReferences(
+            final String[] args,
+            final MultiDataContext<T, DataContext> data,
+            final BiFunction<Integer, String, T> viewMap,
+            final Converter<String, String> converter,
+            boolean failIfUnexpanded,
+            boolean blankIfUnexpanded
+    )
+    {
+        if (null == data) {
+            return args;
+        }
+        if (null == args || args.length < 1) {
+            return args;
+        }
+        final String[] newargs = new String[args.length];
+
+        for (int i = 0; i < args.length; i++) {
+            final String arg = args[i];
+            newargs[i] = replaceDataReferences(arg, data, viewMap, converter, failIfUnexpanded, blankIfUnexpanded);
+        }
+
+        return newargs;
+    }
+    /**
+     * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
+     * context
+     *
      * @param input             input string
      * @param data              data context map
      * @param converter         converter to encode/convert the expanded values
