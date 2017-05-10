@@ -378,16 +378,6 @@ class EngineWorkflowExecutorSpec extends Specification {
 
     class LogListener implements ExecutionListener {
         @Override
-        boolean isTerse() {
-            return false
-        }
-
-        @Override
-        String getLogFormat() {
-            return null
-        }
-
-        @Override
         void log(final int level, final String message) {
             println(message)
         }

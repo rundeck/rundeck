@@ -56,9 +56,11 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         this.delegate=delegate;
     }
 
-    public WorkflowExecutionListenerImpl(final FailedNodesListener failedNodesListener,
-                                         final ContextLogger logger, final boolean terse, final String logFormat) {
-        super(failedNodesListener, logger, terse, logFormat);
+    public WorkflowExecutionListenerImpl(
+            final FailedNodesListener failedNodesListener,
+            final ContextLogger logger
+    ) {
+        super(failedNodesListener, logger);
     }
 
     @Override

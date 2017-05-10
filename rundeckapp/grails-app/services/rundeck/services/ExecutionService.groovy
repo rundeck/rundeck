@@ -930,9 +930,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             NodeRecorder recorder = new NodeRecorder();//TODO: use workflow-aware listener for nodes
 
-            //create listener to handle log messages and Ant build events
+            //create listener to handle log messages
             WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(
-                    recorder, new ContextLogWriter(loghandler),false,null);
+                    recorder,
+                    new ContextLogWriter(loghandler)
+            );
 
             WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(
                     execution,framework,authContext,jobcontext,extraParamsExposed)

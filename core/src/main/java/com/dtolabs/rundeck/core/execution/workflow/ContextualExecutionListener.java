@@ -44,12 +44,10 @@ class ContextualExecutionListener extends ExecutionListenerOverrideBase implemen
     }
 
     public ContextualExecutionListener(
-        final FailedNodesListener failedNodesListener,
-        final ContextLogger logger,
-        final boolean terse,
-        final String logFormat
+            final FailedNodesListener failedNodesListener,
+            final ContextLogger logger
     ) {
-        super(failedNodesListener, terse, logFormat);
+        super(failedNodesListener);
         this.logger = logger;
     }
 

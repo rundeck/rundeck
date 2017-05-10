@@ -44,16 +44,6 @@ import java.util.Map;
  */
 public interface ExecutionListener extends PluginLogger {
     /**
-     * @return true if output should be terse and not prefixed
-     */
-    public boolean isTerse();
-
-    /**
-     * @return log message format
-     */
-    public String getLogFormat();
-
-    /**
      * Log a message
      *
      * @param level   the log level

@@ -837,14 +837,6 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
 
     static class testListener implements ExecutionListenerOverride {
-        public boolean isTerse() {
-            return false;
-        }
-
-        public String getLogFormat() {
-            return null;
-        }
-
         public void log(int i, String s) {
             System.err.println(i + ": " + s);
         }

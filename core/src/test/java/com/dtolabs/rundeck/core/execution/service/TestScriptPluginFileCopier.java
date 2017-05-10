@@ -248,13 +248,6 @@ public class TestScriptPluginFileCopier {
         }
     }
     private class testListener implements ExecutionListener {
-        @Override public boolean isTerse() {
-            return false;
-        }
-
-        @Override public String getLogFormat() {
-            return null;
-        }
 
         @Override public void log(int level, String message) {
 
