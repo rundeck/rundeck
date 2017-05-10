@@ -2668,7 +2668,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     )
     {
         def builder = ExecutionContextImpl.builder(newContext);
-        def nodeselector
+
         if (nodeFilter) {
             //set nodeset for the context if doNodedispatch parameter is true
             def filter = SharedDataContextUtils.replaceDataReferences(
@@ -2679,30 +2679,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     false,
                     false
             )
-            nodeselector = filtersAsNodeSet([
+            def nodeselector = filtersAsNodeSet([
                     filter               : filter,
                     nodeExcludePrecedence: true, //XXX: fix
                     nodeThreadcount      : nodeThreadcount?:1,
                     nodeKeepgoing        : nodeKeepgoing
             ])
 
-            def INodeSet nodeSet
-            if(null!=nodeIntersect && nodeIntersect){
+
+            def INodeSet trialNodes
+            if (nodeIntersect) {
                 // Create intersection of overridden node filter and upstream job nodes
-                nodeSet = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nodeselector, origContext.nodes)
-                filter = DataContextUtils.replaceDataReferencesInString(nodeSet.nodeNames.join(" "), origContext.dataContext)
-                nodeselector = filtersAsNodeSet([
-                        filter                  : filter,
-                        nodeExcludePrecedence   : true,
-                        nodeThreadcount      : nodeThreadcount?:1,
-                        nodeKeepgoing        : nodeKeepgoing
-                ])
+                trialNodes = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(nodeselector, origContext.nodes)
+                nodeselector = SelectorUtils.nodeList(trialNodes.nodeNames)
+            } else {
+                trialNodes = frameworkService.filterNodeSet(nodeselector, newContext.frameworkProject)
             }
 
-            nodeSet = frameworkService.filterAuthorizedNodes(
+            INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
                     newContext.frameworkProject,
                     new HashSet<String>(["read", "run"]),
-                    frameworkService.filterNodeSet(nodeselector, newContext.frameworkProject),
+                    trialNodes,
                     newContext.authContext);
 
             builder.nodeSelector(nodeselector).nodes(nodeSet)
@@ -2719,21 +2716,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (null != nodeRankOrderAscending) {
                 builder.nodeRankOrderAscending(nodeRankOrderAscending)
             }
-        }else if(null!=nodeIntersect && nodeIntersect){
+        } else if (nodeIntersect) {
             // Create intersection of referenced job node filter and upstream job nodes
-            def INodeSet nodeSet = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(newContext.nodeSelector, origContext.nodes)
-            def filter = DataContextUtils.replaceDataReferencesInString(nodeSet.nodeNames.join(" "), origContext.dataContext)
-            nodeselector = filtersAsNodeSet([
-                    filter                  : filter,
-                    nodeExcludePrecedence   : true,
-                    nodeThreadcount      : newContext.threadCount,
-                    nodeKeepgoing        : newContext.keepgoing
-            ])
-
+            INodeSet nodeSet = com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(
+                    newContext.nodeSelector,
+                    origContext.nodes
+            )
+            def nodeselector = SelectorUtils.nodeList(nodeSet.nodeNames)
             nodeSet = frameworkService.filterAuthorizedNodes(
                     newContext.frameworkProject,
                     new HashSet<String>(["read", "run"]),
-                    frameworkService.filterNodeSet(nodeselector, newContext.frameworkProject),
+                    nodeSet,
                     newContext.authContext);
 
             builder.nodeSelector(nodeselector).nodes(nodeSet)

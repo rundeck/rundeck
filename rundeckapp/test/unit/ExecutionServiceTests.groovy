@@ -1541,9 +1541,6 @@ class ExecutionServiceTests  {
                 .keepgoing(false)
                 .build()
         service.frameworkService=mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                makeNodeSet(['a',])
-            }
             filterAuthorizedNodes(1..1){ final String project, final Set<String> actions, final INodeSet unfiltered,
                                          AuthContext authContext->
                 makeNodeSet(['a'])
@@ -1580,9 +1577,6 @@ class ExecutionServiceTests  {
                 .keepgoing(true)
                 .build()
         service.frameworkService=mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                makeNodeSet(['x','y'])
-            }
             filterAuthorizedNodes(1..1){ final String project, final Set<String> actions, final INodeSet unfiltered,
                                          AuthContext authContext->
                 makeNodeSet(['x','y'])
