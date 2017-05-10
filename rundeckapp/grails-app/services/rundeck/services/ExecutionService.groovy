@@ -2671,14 +2671,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def nodeselector
         if (nodeFilter) {
             //set nodeset for the context if doNodedispatch parameter is true
-            def filter = DataContextUtils.replaceDataReferencesInString(nodeFilter, origContext.dataContext)
-            NodeSet nodeset = filtersAsNodeSet([
+            def filter = SharedDataContextUtils.replaceDataReferences(
+                    nodeFilter,
+                    origContext.sharedDataContext,
+                    ContextView.&nodeStep,
+                    null,
+                    false,
+                    false
+            )
+            nodeselector = filtersAsNodeSet([
                     filter               : filter,
                     nodeExcludePrecedence: true, //XXX: fix
                     nodeThreadcount      : nodeThreadcount?:1,
                     nodeKeepgoing        : nodeKeepgoing
             ])
-            nodeselector = nodeset
 
             def INodeSet nodeSet
             if(null!=nodeIntersect && nodeIntersect){
