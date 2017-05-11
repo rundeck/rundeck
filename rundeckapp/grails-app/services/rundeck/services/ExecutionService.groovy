@@ -926,14 +926,17 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def jobcontext=exportContextForExecution(execution,grailsLinkGenerator)
             loghandler.openStream()
 
-            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
+            //manages workflow step+node context data
+            ContextManager contextmanager = new ContextManager()
+            ContextLogWriter directLogWriter = new ContextLogWriter(loghandler)
+            LoggerWithContext directLogger = new LoggerWithContext(directLogWriter, contextmanager)
 
-            NodeRecorder recorder = new NodeRecorder();//TODO: use workflow-aware listener for nodes
+            NodeRecorder recorder = new NodeRecorder()
 
             //create listener to handle log messages
             WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(
                     recorder,
-                    new ContextLogWriter(loghandler)
+                    directLogger
             );
 
             WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(
@@ -945,6 +948,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def multiListener = MultiWorkflowExecutionListener.create(
                     executionListener, //delegate for ExecutionListener
                     [
+                            contextmanager,
                             executionListener, //manages context for logging
                             wfEventListener, //emits state change events to log
                             execStateListener, //updates WF execution state model
@@ -999,6 +1003,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             sysThreadBoundErr.installThreadStream(
                     loggingService.createLogOutputStream(loghandler, LogLevel.ERROR, executionListener, logErrFlusher, inputCharset?Charset.forName(inputCharset):null)
             );
+
+            WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
             thread.start()

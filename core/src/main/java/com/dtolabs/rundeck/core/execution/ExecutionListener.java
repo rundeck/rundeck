@@ -44,24 +44,11 @@ import java.util.Map;
  */
 public interface ExecutionListener extends PluginLogger {
     /**
-     * Log a message
-     *
-     * @param level   the log level
-     * @param message Message being logged. <code>null</code> messages are not logged, however, zero-length strings
-     *                are.
-     */
-    public void log(final int level, final String message);
-
-    public void event(String eventType, final String message, final Map eventMeta);
-
-    /**
      * Return a listener for failed node list
      *
      * @return listener
      */
     public FailedNodesListener getFailedNodesListener();
-
-
 
     /**
      * Called before execution of command on node

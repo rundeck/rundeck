@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
+import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
@@ -63,6 +64,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private DataContext privateDataContext;
     private MultiDataContext<ContextView, DataContext> sharedDataContext;
     private ExecutionListener executionListener;
+    private ExecutionLogger executionLogger;
     private Framework framework;
     private AuthContext authContext;
     private String nodeRankAttribute;
@@ -74,6 +76,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private ProjectNodeService nodeService;
     private FlowControl flowControl;
     private SharedOutputContext outputContext;
+    private LoggingManager loggingManager;
 
     private OrchestratorConfig orchestrator;
     private ExecutionContextImpl() {
@@ -133,6 +136,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         return singleNodeContext;
     }
 
+    @Override
+    public LoggingManager getLoggingManager() {
+        return loggingManager;
+    }
 
 
     public static class Builder {
@@ -155,6 +162,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.dataContext = original.getDataContext();
                 ctx.privateDataContext = original.getPrivateDataContext();
                 ctx.executionListener = original.getExecutionListener();
+                ctx.executionLogger = original.getExecutionLogger();
                 ctx.framework = original.getFramework();
                 ctx.authContext = original.getAuthContext();
                 ctx.threadCount = original.getThreadCount();
@@ -167,6 +175,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.orchestrator = original.getOrchestrator();
                 ctx.outputContext = original.getOutputContext();
                 ctx.sharedDataContext = new MultiDataContextImpl<>(original.getSharedDataContext());
+                ctx.loggingManager = original.getLoggingManager();
                 if(original instanceof NodeExecutionContext){
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
                     ctx.singleNodeContext = original1.getSingleNodeContext();
@@ -174,8 +183,13 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             }
         }
 
+        public Builder loggingManager(LoggingManager loggingManager) {
+            ctx.loggingManager = loggingManager;
+            return this;
+        }
+
         public Builder storageTree(StorageTree storageTree) {
-            ctx.storageTree=storageTree;
+            ctx.storageTree = storageTree;
             return this;
         }
 
@@ -334,6 +348,12 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public Builder executionListener(ExecutionListener executionListener) {
             ctx.executionListener = executionListener;
+            ctx.executionLogger = executionListener;
+            return this;
+        }
+
+        public Builder executionLogger(ExecutionLogger executionLogger) {
+            ctx.executionLogger = executionLogger;
             return this;
         }
 
@@ -445,6 +465,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
     public ExecutionListener getExecutionListener() {
         return executionListener;
+    }
+
+    @Override
+    public ExecutionLogger getExecutionLogger() {
+        return executionLogger;
     }
 
     public Framework getFramework() {

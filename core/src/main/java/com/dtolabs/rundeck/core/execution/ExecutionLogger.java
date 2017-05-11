@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,24 @@ package com.dtolabs.rundeck.core.execution;
 import java.util.Map;
 
 /**
- * Provides a context
+ * @author greg
+ * @since 5/11/17
  */
-@FunctionalInterface
-public interface Contextual {
+public interface ExecutionLogger {
+
     /**
-     * @return the current  context, or null.
+     * Log a message at a given level
+     *
+     * @param level   the log level, from 0 to 5, where 0 is "error" and 5 is "debug"
+     * @param message Message being logged. <code>null</code> messages are not logged, however, zero-length strings
+     *                are.
      */
-    public Map<String, String> getContext();
+    public void log(final int level, final String message);
+
+    /**
+     * @param eventType
+     * @param message
+     * @param eventMeta
+     */
+    public void event(String eventType, final String message, final Map eventMeta);
 }

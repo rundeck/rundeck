@@ -55,17 +55,6 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
         this.failedNodesListener = failedNodesListener;
     }
 
-    /**
-     * Method should be overridden
-     * @return appropriate logging context data
-     */
-    public Map<String, String> getLoggingContext() {
-        if (null != delegate) {
-            return delegate.getLoggingContext();
-        }
-        return null;
-    }
-
 
     public void beginStepExecution(StepExecutor executor,StepExecutionContext context, StepExecutionItem item) {
         if (null != delegate) {

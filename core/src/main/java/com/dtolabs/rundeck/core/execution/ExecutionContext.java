@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.common.OrchestratorConfig;
+import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
@@ -145,9 +146,16 @@ public interface ExecutionContext {
 
     public ExecutionListener getExecutionListener();
 
+    public ExecutionLogger getExecutionLogger();
+
 	public OrchestratorConfig getOrchestrator();
     /**
      * @return context for emitting new data
      */
     public SharedOutputContext getOutputContext();
+
+    /**
+     * @return manager for capturing logs
+     */
+    public LoggingManager getLoggingManager();
 }
