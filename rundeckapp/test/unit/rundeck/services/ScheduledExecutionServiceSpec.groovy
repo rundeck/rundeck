@@ -2037,7 +2037,6 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         when:
         def results = service._doupdate([id: se.id.toString()] + params, mockAuth())
-        println(results)
 
         then:
         results.success == expectSuccess
@@ -2051,6 +2050,44 @@ class ScheduledExecutionServiceSpec extends Specification {
         'PST'       | true
         'XXXX'      |false
         'AAmerica/Los_Angeles' | false
+    }
+
+    @Unroll
+    def "scheduleJob with or without TimeZone shouldn't fail"() {
+        given:
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler) {
+            getListenerManager() >> Mock(ListenerManager)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckBase() >> ''
+        }
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b',
+                        crontabString: '0 0 10 0 0 ? *',
+                        useCrontabString: 'true',
+                        timeZone: timezone
+                )
+        ).save()
+        def scheduleDate = new Date()
+
+        when:
+        def result = service.scheduleJob(job, null, null)
+
+        then:
+        1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
+        1 * service.quartzScheduler.scheduleJob(_, _) >> scheduleDate
+        result == scheduleDate
+
+        where:
+        executionsAreActive | timezone
+        true                | 'America/Los_Angeles'
+        true                | null
+        true                | ''
     }
 
 }
