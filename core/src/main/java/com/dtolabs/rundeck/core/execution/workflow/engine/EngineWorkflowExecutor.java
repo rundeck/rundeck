@@ -227,10 +227,10 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 dataContextSharedData = WorkflowSystem.SharedData.with(
                 (data) -> {
                     sharedContext.merge(data);
-                    System.err.println("merge shared data: " + data + " result; " + sharedContext);
+//                    System.err.println("merge shared data: " + data + " result; " + sharedContext);
                 },
                 () -> {
-                    System.err.println("produce next shared data " + sharedContext);
+//                    System.err.println("produce next shared data " + sharedContext);
                     return new WFSharedContext(sharedContext);
                 }
         );
@@ -261,7 +261,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                     controlBehavior = result.getControlBehavior();
                     statusString = result.getStatusString();
                 }
-                System.out.println("Step result data: "+result.getResultData());//XXX
+//                System.out.println("Step result data: "+result.getResultData());//XXX
             } else {
                 workflowSuccess = false;
                 addUnknownStepFailure(executionContext, stepFailures, operation, failure);
