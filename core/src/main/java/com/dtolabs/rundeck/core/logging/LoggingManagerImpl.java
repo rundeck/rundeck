@@ -17,12 +17,8 @@
 package com.dtolabs.rundeck.core.logging;
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
-import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
-
-import java.util.Map;
 
 /**
  * Creates plugin logging managers that can override the thread's log sink
@@ -31,8 +27,8 @@ import java.util.Map;
  * @since 5/11/17
  */
 public class LoggingManagerImpl implements LoggingManager {
-    final OverridableStreamingLogWriter writer;
-    final ExecutionLogger directLogger;
+    private final OverridableStreamingLogWriter writer;
+    private final ExecutionLogger directLogger;
 
     /**
      * @param writer       log writer which can have sink swapped out
@@ -59,24 +55,30 @@ public class LoggingManagerImpl implements LoggingManager {
 
     private class MyPluginLoggingManager implements PluginLoggingManager {
         private final PluginFilteredStreamingLogWriter pluginFilteredStreamingLogWriter;
+        boolean pluginsAdded = false;
 
-        public MyPluginLoggingManager(final PluginFilteredStreamingLogWriter pluginFilteredStreamingLogWriter) {
+        MyPluginLoggingManager(final PluginFilteredStreamingLogWriter pluginFilteredStreamingLogWriter) {
             this.pluginFilteredStreamingLogWriter = pluginFilteredStreamingLogWriter;
         }
 
         @Override
         public void installPlugin(final LogFilterPlugin plugin) {
             pluginFilteredStreamingLogWriter.addPlugin(plugin);
+            pluginsAdded = true;
         }
 
         @Override
         public void begin() {
-            writer.setOverride(pluginFilteredStreamingLogWriter);
+            if (pluginsAdded) {
+                writer.setOverride(pluginFilteredStreamingLogWriter);
+            }
         }
 
         @Override
         public void end() {
-            writer.removeOverride();
+            if (pluginsAdded) {
+                writer.removeOverride();
+            }
         }
     }
 }
