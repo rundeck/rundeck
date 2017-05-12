@@ -58,6 +58,8 @@ public interface PluginStepContext {
      */
     public DataContext getDataContext();
 
+    //TODO: shared data context as well
+
     /**
      * @return the nodes used for this execution
      */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,27 +16,17 @@
 
 package com.dtolabs.rundeck.core.logging;
 
-import java.io.IOException;
-import java.util.Map;
-
 /**
- * writes log entries in a streaming manner
+ * @author greg
+ * @since 5/11/17
  */
-public interface StreamingLogWriter extends LogEventReceiver {
-    /**
-     * Open a stream, called before addEvent is called
-     * @throws java.io.IOException if an io error occurs
-     */
-    void openStream() throws IOException;
+public interface LogEventReceiver {
 
     /**
      * Add a new event
+     *
      * @param event log event
      */
     void addEvent(LogEvent event);
 
-    /**
-     * Close the stream.
-     */
-    void close();
 }

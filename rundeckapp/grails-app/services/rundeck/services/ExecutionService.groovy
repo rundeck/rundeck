@@ -35,6 +35,9 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.*
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*
 import com.dtolabs.rundeck.core.logging.ContextLogWriter
 import com.dtolabs.rundeck.core.logging.LogLevel
+import com.dtolabs.rundeck.core.logging.LoggingManager
+import com.dtolabs.rundeck.core.logging.LoggingManagerImpl
+import com.dtolabs.rundeck.core.logging.OverridableStreamingLogWriter
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -931,16 +934,34 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ContextLogWriter directLogWriter = new ContextLogWriter(loghandler)
             LoggerWithContext directLogger = new LoggerWithContext(directLogWriter, contextmanager)
 
+            //StreamingLogWriter which can override input
+            def overridableloghandler = new OverridableStreamingLogWriter(loghandler)
+
+            LoggerWithContext overridableLogger = new LoggerWithContext(
+                    new ContextLogWriter(overridableloghandler),
+                    contextmanager
+            )
+
+            //can create contexts for using log filter plugins
+            //TODO: create plugin loading service for manager
+            def logmanager = new LoggingManagerImpl(overridableloghandler,directLogger)
+
+
             NodeRecorder recorder = new NodeRecorder()
 
             //create listener to handle log messages
             WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(
                     recorder,
-                    directLogger
+                    overridableLogger
             );
 
             WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(
-                    execution,framework,authContext,jobcontext,extraParamsExposed)
+                    execution,
+                    framework,
+                    authContext,
+                    jobcontext,
+                    extraParamsExposed
+            )
 
             def wfEventListener = new WorkflowEventLoggerListener(executionListener)
             def logOutFlusher = new LogFlusher()
@@ -970,8 +991,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
             String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
 
-            StepExecutionContext executioncontext = createContext(execution, null,framework, authContext,
-                    execution.user, jobcontext, multiListener, null,extraParams, extraParamsExposed,inputCharset)
+            StepExecutionContext executioncontext = createContext(
+                    execution,
+                    null,
+                    framework,
+                    authContext,
+                    execution.user,
+                    jobcontext,
+                    multiListener,
+                    null,
+                    extraParams,
+                    extraParamsExposed,
+                    inputCharset,
+                    logmanager
+            )
 
             fileUploadService.executionBeforeStart(
                     new ExecutionPrepareEvent(
@@ -998,18 +1031,35 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //install custom outputstreams for System.out and System.err for this thread and any child threads
             //output will be sent to loghandler instead.
             sysThreadBoundOut.installThreadStream(
-                    loggingService.createLogOutputStream(loghandler, LogLevel.NORMAL, executionListener, logOutFlusher, inputCharset?Charset.forName(inputCharset):null)
+                    loggingService.createLogOutputStream(
+                            overridableloghandler,
+                            LogLevel.NORMAL,
+                            executionListener,
+                            logOutFlusher,
+                            inputCharset ? Charset.forName(inputCharset) : null
+                    )
             );
             sysThreadBoundErr.installThreadStream(
-                    loggingService.createLogOutputStream(loghandler, LogLevel.ERROR, executionListener, logErrFlusher, inputCharset?Charset.forName(inputCharset):null)
+                    loggingService.createLogOutputStream(
+                            overridableloghandler,
+                            LogLevel.ERROR,
+                            executionListener,
+                            logErrFlusher,
+                            inputCharset ? Charset.forName(inputCharset) : null
+                    )
             );
 
             WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
             //create service object for the framework and listener
-            Thread thread = new WorkflowExecutionServiceThread(framework.getWorkflowExecutionService(),item, executioncontext)
+            Thread thread = new WorkflowExecutionServiceThread(
+                    framework.getWorkflowExecutionService(),
+                    item,
+                    executioncontext
+            )
             thread.start()
             log.debug("started thread")
-            return [thread:thread, loghandler:loghandler, noderecorder:recorder, execution: execution, scheduledExecution:scheduledExecution,threshold:threshold]
+            return [thread            : thread, loghandler: loghandler, noderecorder: recorder, execution: execution,
+                    scheduledExecution: scheduledExecution, threshold: threshold]
         }catch(Exception e) {
             log.error("Failed while starting execution: ${execution.id}", e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)
@@ -1154,7 +1204,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             String[] inputargs = null,
             Map extraParams = null,
             Map extraParamsExposed = null,
-            String charsetEncoding = null
+            String charsetEncoding = null,
+            LoggingManager manager = null
     )
     {
         if (!userName) {
@@ -1162,7 +1213,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         //convert argString into Map<String,String>
         def String[] args = execMap.argString? OptsUtil.burst(execMap.argString):inputargs
-        def Map<String, String> optsmap = execMap.argString ? FrameworkService.parseOptsFromString(execMap.argString) : null!=args? frameworkService.parseOptsFromArray(args):[:]
+        def Map<String, String> optsmap = execMap.argString ? FrameworkService.parseOptsFromString(execMap.argString)
+                : null != args ? frameworkService.parseOptsFromArray(args) : [:]
         if(extraParamsExposed){
             optsmap.putAll(extraParamsExposed)
         }
@@ -1225,26 +1277,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         //create execution context
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
-            .frameworkProject(execMap.project)
-            .storageTree(storageService.storageTreeWithContext(authContext))
-            .jobService(jobStateService.jobServiceWithAuthContext(authContext))
-            .nodeService(nodeService)
-            .user(userName)
-            .nodeSelector(nodeselector)
-            .nodes(nodeSet)
-            .loglevel(logLevelIntValue(execMap.loglevel))
-            .charsetEncoding(charsetEncoding)
-            .sharedDataContextClear()
-            .dataContext(datacontext)
-            .privateDataContext(privatecontext)
-            .executionListener(listener)
-            .framework(framework)
-            .authContext(authContext)
-            .threadCount(threadCount)
-            .keepgoing(keepgoing)
-            .nodeRankAttribute(execMap.nodeRankAttribute)
-            .nodeRankOrderAscending(null == execMap.nodeRankOrderAscending || execMap.nodeRankOrderAscending)
-            .orchestrator(orchestrator)
+        builder.with {
+            frameworkProject(execMap.project)
+            storageTree(storageService.storageTreeWithContext(authContext))
+            jobService(jobStateService.jobServiceWithAuthContext(authContext))
+            nodeService(nodeService)
+            user(userName)
+            nodeSelector(nodeselector)
+            nodes(nodeSet)
+            loglevel(logLevelIntValue(execMap.loglevel))
+            sharedDataContextClear()
+            dataContext(datacontext)
+            privateDataContext(privatecontext)
+            executionListener(listener)
+        }
+        builder.charsetEncoding(charsetEncoding)
+        builder.framework(framework)
+        builder.authContext(authContext)
+        builder.threadCount(threadCount)
+        builder.keepgoing(keepgoing)
+        builder.orchestrator(orchestrator)
+        builder.with {
+            nodeRankAttribute(execMap.nodeRankAttribute)
+            nodeRankOrderAscending(null == execMap.nodeRankOrderAscending || execMap.nodeRankOrderAscending)
+            loggingManager(manager)
+        }
         if(origContext){
             //start a sub context
             builder.pushContextStep(1)
