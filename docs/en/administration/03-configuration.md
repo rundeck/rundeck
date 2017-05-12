@@ -97,7 +97,7 @@ The token_strings can be used as Authentication tokens to the [API](../api/index
 
 Entries in `framework.properties` in the form `framework.globals.X=Y` Adds a variable `X` available in all execution contexts as `${globals.X}`.
 
-Values can be overridden in the [`project.properties`](#project.properties) configuration for a project.
+Global variables can be overridden in the [`project.properties`](#project.properties) by adding a line in the form of `project.globals.X=Y` and then accessing it as `${globals.X}`.
 
 
 ## log4j.properties
