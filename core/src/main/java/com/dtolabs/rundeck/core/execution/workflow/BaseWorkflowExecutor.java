@@ -42,7 +42,9 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
+import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -685,7 +687,25 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         //execute the step item, and store the results
         StepExecutionResult stepResult = null;
         Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
-        stepResult = executeWFItem(wfRunContext.build(), stepFailedMap, c, cmd);
+
+        PluginLoggingManager pluginLogging = null;
+        if (null != executionContext.getLoggingManager()) {
+            pluginLogging = executionContext
+                    .getLoggingManager().createPluginLogging(executionContext);
+        }
+
+        //TODO: pluginLogging.installPlugin(...);
+        if (null != pluginLogging) {
+            pluginLogging.begin();
+        }
+        try {
+            stepResult = executeWFItem(wfRunContext.build(), stepFailedMap, c, cmd);
+        } finally {
+            if (null != pluginLogging) {
+                pluginLogging.end();
+            }
+        }
+
         result.setSuccess(stepResult.isSuccess());
         nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
 
