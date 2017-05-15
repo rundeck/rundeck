@@ -55,6 +55,8 @@ import java.util.concurrent.Executors
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.TimeUnit
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 
 /**
  * Manage execution file storage retrieve and store requests.
@@ -1265,11 +1267,12 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                         errorMessage="Failed to create directories for file: ${file}"
                     }
                 }
-                if (!tempfile.renameTo(file)) {
-                    errorMessage = "Failed to move temp file to location: ${file}"
-                } else {
-                    success = true
-                }
+                Files.move(
+                        tempfile.toPath(),
+                        file.toPath(),
+                        StandardCopyOption.REPLACE_EXISTING
+                )
+                success = true
             }
             log.debug("Retrieval request [ID#${ident}], result: ${success}, error? ${errorMessage}")
 
