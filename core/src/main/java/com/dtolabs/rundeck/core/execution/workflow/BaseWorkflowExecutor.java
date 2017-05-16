@@ -723,8 +723,6 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
 
         if (stepController.isControlled()) {
-
-            //TODO: halt execution without running the error-handler?
             result = WorkflowStatusResultImpl.with(stepController);
             executionContext.getExecutionListener().log(3, result.toString());
         }
@@ -876,10 +874,8 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             final WFSharedContext combinedResultData
     )
     {
-        HashMap<ContextView, DataContext> map = new HashMap<>();
         DispatcherResult dispatcherResult = NodeDispatchStepExecutor.extractDispatcherResult(stepResult);
         Map<String, ? extends NodeStepResult> results = dispatcherResult.getResults();
-        System.out.println("Finished step, node results: " + results);
         WFSharedContext noderesults = new WFSharedContext();
         for (String node : results.keySet()) {
             NodeStepResult nodeStepResult = results.get(node);

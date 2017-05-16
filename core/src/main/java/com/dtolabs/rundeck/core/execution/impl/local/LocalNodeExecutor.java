@@ -102,10 +102,7 @@ public class LocalNodeExecutor implements NodeExecutor {
             }
         }
         if(null!=context.getOutputContext()){
-            System.err.println("Setting output data "+String.valueOf(result));
             context.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
-        }else{
-            System.err.println("NO output context");
         }
         final boolean status = 0==result;
         if(status) {
