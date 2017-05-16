@@ -2889,18 +2889,22 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def id
         def result
 
+        def project = null
         def group = null
         def name = null
-        def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
+        def m = jitem.jobIdentifier =~ '(?:(.+):)?/?(.+)/([^/]+)$'
+        //def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
         if (m.matches()) {
-            group = m.group(1)
-            name = m.group(2)
+            project = m.group(1)
+            group = m.group(2)
+            name = m.group(3)
         } else {
             name = jitem.jobIdentifier
         }
-        def schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, executionContext.getFrameworkProject())
+        project = project?project:executionContext.getFrameworkProject()
+        def schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, project)
         if (!schedlist || 1 != schedlist.size()) {
-            def msg = "Job [${jitem.jobIdentifier}] not found, project: ${executionContext.getFrameworkProject()}"
+            def msg = "Job [${jitem.jobIdentifier}] not found, project: ${project}"
             executionContext.getExecutionListener().log(0, msg)
             throw new StepException(msg, JobReferenceFailureReason.NotFound)
         }

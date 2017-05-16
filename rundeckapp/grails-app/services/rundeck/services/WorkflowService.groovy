@@ -129,7 +129,8 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
             if (step instanceof JobExec) {
 
                 JobExec jexec = (JobExec) step
-                def schedlist = ScheduledExecution.findAllScheduledExecutions(jexec.jobGroup, jexec.jobName, project)
+                def searchProject = jexec.jobProject? jexec.jobProject: project
+                def schedlist = ScheduledExecution.findAllScheduledExecutions(jexec.jobGroup, jexec.jobName, searchProject)
                 if (!schedlist || 1 != schedlist.size()) {
                     //skip
                     return

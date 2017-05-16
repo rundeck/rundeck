@@ -39,22 +39,28 @@
 <section >
     <div class="form-group">
        <label class="col-sm-2 control-label" for="jobNameField${rkey}"><g:message code="Workflow.Step.jobreference.name-group.label" /></label>
-        <div class="col-sm-4">
+        <div class="col-sm-3">
 
             <input id="jobNameField${rkey}" type="text" name="jobName" value="${enc(attr: item?.jobName)}"
                 placeholder="${message(code:"scheduledExecution.jobName.label")}"
                 class="form-control"
                    size="100" autofocus/>
         </div>
-        <div class="col-sm-4">
+        <div class="col-sm-3">
             <input id="jobGroupField${rkey}"  type="text" name="jobGroup" value="${enc(attr:item?.jobGroup)}" size="100"
                 placeholder="${message(code:"scheduledExecution.groupPath.label")}"
                 class="form-control"
             />
         </div>
+        <div class="col-sm-2">
+            <input id="jobProjectField${rkey}"  type="text" name="jobProject" value="${enc(attr:item?.jobProject)}" size="100"
+                   placeholder="${message(code:"scheduledExecution.projectPath.label")} Project"
+                   class="form-control"
+            />
+        </div>
 
         <div class="col-sm-2">
-            <span class="btn btn-sm btn-default act_choose_job" onclick="loadJobChooser(this, 'jobNameField${rkey}','jobGroupField${rkey}');"
+            <span class="btn btn-sm btn-default act_choose_job" onclick="loadJobChooser(this, 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}');"
                   id="jobChooseBtn${rkey}"
                   title="${message(code:"select.an.existing.job.to.use")}"
                   data-loading-text="Loading...">
