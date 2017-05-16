@@ -661,9 +661,8 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         if (null != wlistener) {
             wlistener.beginWorkflowItem(c, cmd);
         }
-        WorkflowStatusResultImpl result = new WorkflowStatusResultImpl(null, null, false);
-
-        boolean hasHandler = cmd instanceof HasFailureHandler;
+        //collab
+        WorkflowStatusResultImpl result = WorkflowStatusResultImpl.builder().success(false).build();
 
         //wrap node failed listener (if any) and capture status results
         NodeRecorder stepCaptureFailedNodesListener = new NodeRecorder();
@@ -677,19 +676,16 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                 executionContext.getExecutionListener()
         );
 
+
         final FlowController stepController = new FlowController();
+        wfRunContext.flowControl(stepController);
+
 
         final DataOutput outputContext = new DataOutput(ContextView.step(c));
+        wfRunContext.outputContext(outputContext);
 
-        wfRunContext
-                .flowControl(stepController)
-                .outputContext(outputContext);
-
-        Map<String, NodeStepResult> nodeFailures;
 
         //execute the step item, and store the results
-        StepExecutionResult stepResult = null;
-        Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
 
         PluginLoggingManager pluginLogging = null;
         if (null != executionContext.getLoggingManager()) {
@@ -701,6 +697,8 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         if (null != pluginLogging) {
             pluginLogging.begin();
         }
+        StepExecutionResult stepResult = null;
+        Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
         try {
             stepResult = executeWFItem(wfRunContext.build(), stepFailedMap, c, cmd);
         } finally {
@@ -708,16 +706,16 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                 pluginLogging.end();
             }
         }
-
         result.setSuccess(stepResult.isSuccess());
-        nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
+
+        //node recorder report
+        Map<String, NodeStepResult> nodeFailures = stepCaptureFailedNodesListener.getFailedNodes();
+        reportNodesMatched(executionContext, stepCaptureFailedNodesListener);
 
         //collect node data results
         WFSharedContext combinedResultData = new WFSharedContext();
         combineResultData(c, outputContext, combinedResultData, stepResult);
 
-
-        reportNodesMatched(executionContext, stepCaptureFailedNodesListener);
 
         if (stepController.isControlled()) {
 
@@ -726,7 +724,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             executionContext.getExecutionListener().log(3, result.toString());
         }
         try {
-            if (!result.isSuccess() && hasHandler) {
+            if (!result.isSuccess() && cmd instanceof HasFailureHandler) {
                 final HasFailureHandler handles = (HasFailureHandler) cmd;
                 final StepExecutionItem handler = handles.getFailureHandler();
                 if (null != handler) {
@@ -761,18 +759,18 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                     //add in data context results produced by the step
                     wfHandlerContext.mergeSharedContext(outputContext.getSharedContext());
 
+                    //allow flow control
+                    final FlowController handlerController = new FlowController();
+                    wfHandlerContext.flowControl(handlerController);
+
+                    wfHandlerContext.outputContext(outputContext);
+
+                    Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<>();
 
                     if (null != wlistener) {
                         wlistener.beginWorkflowItemErrorHandler(c, cmd);
                     }
 
-                    //allow flow control
-                    final FlowController handlerController = new FlowController();
-                    wfHandlerContext
-                            .flowControl(handlerController)
-                            .outputContext(outputContext);
-
-                    Map<Integer, StepExecutionResult> handlerFailedMap = new HashMap<>();
                     StepExecutionResult handlerResult = executeWFItem(
                             wfHandlerContext.build(),
                             handlerFailedMap,
@@ -821,6 +819,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                 wlistener.finishWorkflowItem(c, cmd, stepResult);
             }
         }
+        //report data
         resultList.add(stepResult);
         failedMap.putAll(stepFailedMap);
 
