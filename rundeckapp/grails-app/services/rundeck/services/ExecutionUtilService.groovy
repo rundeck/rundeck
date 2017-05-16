@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemImpl
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowImpl
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
@@ -163,7 +164,13 @@ class ExecutionUtilService {
                 final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());
                 final String[] args = strings.toArray(new String[strings.size()]);
 
-                return ExecutionItemFactory.createExecCommand(args, handler, !!cmd.keepgoingOnSuccess, step.description);
+                return ExecutionItemFactory.createExecCommand(
+                        args,
+                        handler,
+                        !!cmd.keepgoingOnSuccess,
+                        step.description,
+                        createFilterConfigs(cmd)
+                );
             } else if (null != cmd.getAdhocLocalString()) {
                 final String script = cmd.getAdhocLocalString();
                 final String[] args;
@@ -181,7 +188,9 @@ class ExecutionUtilService {
                         args,
                         handler,
                         !!cmd.keepgoingOnSuccess,
-                        step.description);
+                        step.description,
+                        createFilterConfigs(cmd)
+                );
 
             } else if (null != cmd.getAdhocFilepath()) {
                 final String filepath = cmd.getAdhocFilepath();
@@ -201,7 +210,9 @@ class ExecutionUtilService {
                             args,
                             handler,
                             !!cmd.keepgoingOnSuccess,
-                            step.description)
+                            step.description,
+                            createFilterConfigs(cmd)
+                    )
                 }else {
                     return ExecutionItemFactory.createScriptFileItem(
                             cmd.getScriptInterpreter(),
@@ -211,7 +222,9 @@ class ExecutionUtilService {
                             args,
                             handler,
                             !!cmd.keepgoingOnSuccess,
-                            step.description);
+                            step.description,
+                            createFilterConfigs(cmd)
+                    );
 
                 }
             }else {
@@ -250,7 +263,8 @@ class ExecutionUtilService {
                         stepitem.configuration,
                         !!stepitem.keepgoingOnSuccess,
                         handler,
-                        step.description
+                        step.description,
+                        createFilterConfigs(step)
                 )
             }else {
                 return ExecutionItemFactory.createPluginStepItem(
@@ -258,11 +272,44 @@ class ExecutionUtilService {
                         stepitem.configuration,
                         !!stepitem.keepgoingOnSuccess,
                         handler,
-                        step.description
+                        step.description,
+                        createFilterConfigs(step)
                 )
             }
         } else {
             throw new IllegalArgumentException("Workflow step type was not expected: "+step);
         }
+    }
+
+    List<PluginConfiguration> createFilterConfigs(final WorkflowStep commandExec) {
+        def config = commandExec.getPluginConfig()
+        List<PluginConfiguration> configs = []
+        if (config && config['LogFilter']) {
+            List l = config['LogFilter']
+            l.each { conf ->
+                if (conf && conf instanceof Map) {
+                    String name = conf['provider']
+                    if (conf['config'] instanceof Map) {
+                        Map pluginconfig = conf['config']
+                        configs << createLogFilterConfig(name, pluginconfig)
+                    }
+                }
+            }
+        }
+        return configs;
+    }
+
+    public static PluginConfiguration createLogFilterConfig(String name, Map pluginconfig) {
+        new SimplePluginConfiguration(
+                provider: name,
+                service: 'LogFilter',
+                configuration: pluginconfig
+        )
+    }
+
+    static class SimplePluginConfiguration implements PluginConfiguration {
+        String provider;
+        String service;
+        Map<String, Object> configuration;
     }
 }

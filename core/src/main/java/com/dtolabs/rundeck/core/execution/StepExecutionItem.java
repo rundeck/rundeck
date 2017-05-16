@@ -40,5 +40,4 @@ public interface StepExecutionItem {
      */
     public String getLabel();
 
-    //TODO: config for capture plugins
 }
