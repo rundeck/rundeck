@@ -34,6 +34,7 @@ public class OverridableStreamingLogWriter extends FilterStreamingLogWriter {
     public void openStream() throws IOException {
         if (getOverride() != null) {
             getOverride().openStream();
+            return;
         }
         super.openStream();
     }
@@ -42,6 +43,7 @@ public class OverridableStreamingLogWriter extends FilterStreamingLogWriter {
     public void addEvent(final LogEvent event) {
         if (getOverride() != null) {
             getOverride().addEvent(event);
+            return;
         }
         super.addEvent(event);
     }
@@ -50,6 +52,7 @@ public class OverridableStreamingLogWriter extends FilterStreamingLogWriter {
     public void close() {
         if (getOverride() != null) {
             getOverride().close();
+            return;
         }
         super.close();
     }
