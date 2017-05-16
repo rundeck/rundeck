@@ -16,6 +16,9 @@
 
 package com.dtolabs.rundeck.core.logging;
 
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
+import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 
@@ -33,4 +36,21 @@ public interface PluginLoggingContext extends ExecutionLogger {
      * @return context for emitting new data
      */
     public SharedOutputContext getOutputContext();
+
+    /**
+     * Return data context set
+     *
+     * @return map of data contexts keyed by name
+     */
+    public DataContext getDataContext();
+
+    /**
+     * @return the scoped context data keyed by scope
+     */
+    public MultiDataContext<ContextView, DataContext> getSharedDataContext();
+
+    /**
+     * @return the data context in the private scope
+     */
+    public DataContext getPrivateDataContext();
 }

@@ -18,6 +18,8 @@ package com.dtolabs.rundeck.core.logging;
 
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
 
+import java.util.function.Supplier;
+
 
 /**
  * Allows installing plugins into the logging stream, the {@link #installPlugin(LogFilterPlugin)} method
@@ -30,13 +32,6 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
 public interface PluginLoggingManager {
 
     /**
-     * Install a plugin
-     *
-     * @param plugin
-     */
-    public void installPlugin(LogFilterPlugin plugin);
-
-    /**
      * Begin using the plugins
      */
     void begin();
@@ -45,4 +40,9 @@ public interface PluginLoggingManager {
      * End using the plugins
      */
     void end();
+
+    /**
+     * Run a function by wrapping the call with a begin/end using try/finally
+     */
+    <T> T runWith(Supplier<T> supplier);
 }

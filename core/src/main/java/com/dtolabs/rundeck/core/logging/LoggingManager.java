@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.logging;
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
 
 /**
@@ -29,5 +30,5 @@ public interface LoggingManager {
      * @param context
      * @return
      */
-    PluginLoggingManager createPluginLogging(ExecutionContext context);
+    PluginLoggingManager createPluginLogging(ExecutionContext context, StepExecutionItem step);
 }

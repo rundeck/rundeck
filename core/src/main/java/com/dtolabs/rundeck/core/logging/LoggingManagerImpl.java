@@ -18,7 +18,14 @@ package com.dtolabs.rundeck.core.logging;
 
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
+import com.dtolabs.rundeck.core.execution.HasLoggingFilterConfiguration;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
+import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader;
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
+
+import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * Creates plugin logging managers that can override the thread's log sink
@@ -29,6 +36,9 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
 public class LoggingManagerImpl implements LoggingManager {
     private final OverridableStreamingLogWriter writer;
     private final ExecutionLogger directLogger;
+    private final SimplePluginProviderLoader<LogFilterPlugin> pluginLoader;
+    private List<PluginConfiguration> globalPluginConfigs;
+
 
     /**
      * @param writer       log writer which can have sink swapped out
@@ -36,20 +46,51 @@ public class LoggingManagerImpl implements LoggingManager {
      */
     public LoggingManagerImpl(
             final OverridableStreamingLogWriter writer,
-            final ExecutionLogger directLogger
+            final ExecutionLogger directLogger,
+            final SimplePluginProviderLoader<LogFilterPlugin> pluginLoader,
+            final List<PluginConfiguration> globalPluginConfigs
     )
     {
         this.writer = writer;
         this.directLogger = directLogger;
+        this.pluginLoader = pluginLoader;
+        this.globalPluginConfigs = globalPluginConfigs;
     }
 
     @Override
-    public PluginLoggingManager createPluginLogging(ExecutionContext context) {
-        return new MyPluginLoggingManager(new PluginFilteredStreamingLogWriter(
-                writer.getWriter(),
-                context,
-                directLogger
-        ));
+    public PluginLoggingManager createPluginLogging(ExecutionContext context, StepExecutionItem step) {
+        MyPluginLoggingManager myPluginLoggingManager = new MyPluginLoggingManager(
+                new PluginFilteredStreamingLogWriter(
+                        writer.getWriter(),
+                        context,
+                        directLogger
+                )
+        );
+        installPlugins(myPluginLoggingManager, globalPluginConfigs);
+
+        if(step!=null) {
+            HasLoggingFilterConfiguration.of(step).ifPresent(filtered -> {
+                if (null != filtered.getFilterConfigurations()) {
+                    installPlugins(myPluginLoggingManager, filtered.getFilterConfigurations());
+                }
+            });
+        }
+
+        return myPluginLoggingManager;
+    }
+
+    private void installPlugins(
+            final MyPluginLoggingManager myPluginLoggingManager,
+            final List<PluginConfiguration> filterConfigurations
+    )
+    {
+        for (PluginConfiguration pluginConfiguration : filterConfigurations) {
+            LogFilterPlugin load = pluginLoader.load(
+                    pluginConfiguration.getProvider(),
+                    pluginConfiguration.getConfiguration()
+            );
+            myPluginLoggingManager.installPlugin(load);
+        }
     }
 
 
@@ -61,10 +102,19 @@ public class LoggingManagerImpl implements LoggingManager {
             this.pluginFilteredStreamingLogWriter = pluginFilteredStreamingLogWriter;
         }
 
-        @Override
-        public void installPlugin(final LogFilterPlugin plugin) {
+        private void installPlugin(final LogFilterPlugin plugin) {
             pluginFilteredStreamingLogWriter.addPlugin(plugin);
             pluginsAdded = true;
+        }
+
+        @Override
+        public <T> T runWith(final Supplier<T> supplier) {
+            begin();
+            try {
+                return supplier.get();
+            } finally {
+                end();
+            }
         }
 
         @Override
@@ -78,6 +128,7 @@ public class LoggingManagerImpl implements LoggingManager {
         public void end() {
             if (pluginsAdded) {
                 writer.removeOverride();
+                pluginFilteredStreamingLogWriter.close();
             }
         }
     }

@@ -52,6 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 /**
  * BaseWorkflowStrategy is ...
@@ -690,22 +691,26 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         PluginLoggingManager pluginLogging = null;
         if (null != executionContext.getLoggingManager()) {
             pluginLogging = executionContext
-                    .getLoggingManager().createPluginLogging(executionContext);
+                    .getLoggingManager().createPluginLogging(executionContext, cmd);
         }
 
-        //TODO: pluginLogging.installPlugin(...);
-        if (null != pluginLogging) {
-            pluginLogging.begin();
-        }
+
         StepExecutionResult stepResult = null;
-        Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
-        try {
-            stepResult = executeWFItem(wfRunContext.build(), stepFailedMap, c, cmd);
-        } finally {
-            if (null != pluginLogging) {
-                pluginLogging.end();
-            }
+        final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
+
+        Supplier<StepExecutionResult> execCall = () -> executeWFItem(
+                wfRunContext.build(),
+                stepFailedMap,
+                c,
+                cmd
+        );
+
+        if (null != pluginLogging) {
+            stepResult = pluginLogging.runWith(execCall);
+        } else {
+            stepResult = execCall.get();
         }
+
         result.setSuccess(stepResult.isSuccess());
 
         //node recorder report
@@ -804,7 +809,8 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                         if (useHandlerResults) {
                             result.setSuccess(handlerSuccess);
                             stepResult = handlerResult;
-                            stepFailedMap = handlerFailedMap;
+                            stepFailedMap.clear();
+                            stepFailedMap.putAll(handlerFailedMap);
                             nodeFailures = handlerCaptureFailedNodesListener.getFailedNodes();
                         }
                     }

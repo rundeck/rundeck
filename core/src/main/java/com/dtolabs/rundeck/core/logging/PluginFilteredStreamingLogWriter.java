@@ -16,6 +16,9 @@
 
 package com.dtolabs.rundeck.core.logging;
 
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
+import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionLogger;
 import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
@@ -230,10 +233,46 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
     private static class MyLoggingContext implements PluginLoggingContext {
         SharedOutputContext outputContext;
         ExecutionLogger logger;
+        DataContext dataContext;
+        DataContext privateDataContext;
+        MultiDataContext<ContextView, DataContext> sharedDataContext;
 
-        public MyLoggingContext(final SharedOutputContext outputContext, final ExecutionLogger logger) {
+        /**
+         * Return data context set
+         *
+         * @return map of data contexts keyed by name
+         */
+        public DataContext getDataContext() {
+            return dataContext;
+        }
+
+        /**
+         * @return the scoped context data keyed by scope
+         */
+        public MultiDataContext<ContextView, DataContext> getSharedDataContext() {
+            return sharedDataContext;
+        }
+
+        /**
+         * @return the data context in the private scope
+         */
+        public DataContext getPrivateDataContext() {
+            return privateDataContext;
+        }
+
+        public MyLoggingContext(
+                final SharedOutputContext outputContext,
+                final ExecutionLogger logger,
+                final DataContext dataContext,
+                final DataContext privateDataContext,
+                final MultiDataContext<ContextView, DataContext> sharedDataContext
+        )
+        {
             this.outputContext = outputContext;
             this.logger = logger;
+            this.dataContext = dataContext;
+            this.privateDataContext = privateDataContext;
+            this.sharedDataContext = sharedDataContext;
         }
 
         @Override
@@ -253,7 +292,13 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
     }
 
     public void addPlugin(final LogFilterPlugin plugin) {
-        plugin.init(new MyLoggingContext(context.getOutputContext(), directLogger));
+        plugin.init(new MyLoggingContext(
+                context.getOutputContext(),
+                directLogger,
+                context.getDataContext(),
+                context.getPrivateDataContext(),
+                context.getSharedDataContext()
+        ));
         plugins.add(plugin);
     }
 }
