@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import groovy.transform.ToString
 
@@ -38,28 +39,42 @@ import java.util.regex.Pattern
 class MaskPasswordsFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'mask-passwords'
     Pattern regex;
+    private boolean enabled;
 
     @Override
     void init(final PluginLoggingContext context) {
-        def parts = []
-        parts << context.privateDataContext.values().collect {
+        def privdata = context.privateDataContext?.values()?.collect {
             it.values()
-        }.flatten().collect {
+        }?.flatten()?.collect {
             Pattern.quote(it)
-        }.join("|")
-        parts << context.dataContext['secureOption']?.values().collect {
+        }
+
+        def strings = context.dataContext['secureOption']?.values()?.collect {
             Pattern.quote(it)
-        }.join("|")
-        def mask = parts.findAll { it }.join('|')
-        regex = Pattern.compile('(' + mask + ')')
+        }
+        if (!privdata) {
+            privdata = []
+        }
+        if (strings) {
+            privdata.addAll(strings)
+        }
+        if (privdata.findAll { it }) {
+            def mask = privdata.findAll { it }.join('|')
+            regex = Pattern.compile('(' + mask + ')')
+            enabled = true;
+        } else {
+            enabled = false
+        }
     }
 
     @Override
     void handleEvent(final LogFilterPlugin.Control control, final LogEventControl event) {
-        def message = event.message
-        if ((event.eventType == 'log' || !event.eventType) && message) {
-            String remessage = message.replaceAll(regex, '*****')
-            event.setMessage(remessage)
+        if (enabled) {
+            def message = event.message
+            if (event.eventType == 'log' && message) {
+                String remessage = message.replaceAll(regex, '*****')
+                event.setMessage(remessage)
+            }
         }
     }
 
