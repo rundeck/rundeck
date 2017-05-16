@@ -43,6 +43,7 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.events.Listener
@@ -110,6 +111,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def grailsEvents
     def executionUtilService
     def fileUploadService
+    def pluginService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS =
         new ThreadLocal<DateFormat>() {
@@ -934,17 +936,45 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             ContextLogWriter directLogWriter = new ContextLogWriter(loghandler)
             LoggerWithContext directLogger = new LoggerWithContext(directLogWriter, contextmanager)
 
-            //StreamingLogWriter which can override input
-            def overridableloghandler = new OverridableStreamingLogWriter(loghandler)
 
-            LoggerWithContext overridableLogger = new LoggerWithContext(
-                    new ContextLogWriter(overridableloghandler),
+            //can create contexts for using log filter plugins
+            def logFilterPluginLoader = pluginService.createSimplePluginLoader(
+                    execution.project,
+                    framework,
+                    pluginService.getRundeckPluginRegistry().createPluggableService(LogFilterPlugin)
+            )
+
+            //Root level override allows plugins to filter all output, even outside a workflow step (e.g.
+            // debug output)
+            def rootoverride = new OverridableStreamingLogWriter(loghandler)
+
+            def rootLogManager = new LoggingManagerImpl(
+                    rootoverride,
+                    directLogger,
+                    logFilterPluginLoader,
+                    //TODO:  global/project filter plugins
+                    [
+                    ]
+            )
+
+
+
+            //workflow level override selectively overrides logging with per-step plugin configurations
+            def workflowoverride = new OverridableStreamingLogWriter(rootoverride)
+
+            LoggerWithContext workflowlogger = new LoggerWithContext(
+                    new ContextLogWriter(workflowoverride),
                     contextmanager
             )
 
-            //can create contexts for using log filter plugins
-            //TODO: create plugin loading service for manager
-            def logmanager = new LoggingManagerImpl(overridableloghandler,directLogger)
+            def workflowLogManager = new LoggingManagerImpl(
+                    workflowoverride,
+                    directLogger,
+                    logFilterPluginLoader,
+                    //TODO: job specific filter plugins
+                    [
+                    ]
+            )
 
 
             NodeRecorder recorder = new NodeRecorder()
@@ -952,7 +982,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //create listener to handle log messages
             WorkflowExecutionListenerImpl executionListener = new WorkflowExecutionListenerImpl(
                     recorder,
-                    overridableLogger
+                    workflowlogger
             );
 
             WorkflowExecutionListener execStateListener = workflowService.createWorkflowStateListenerForExecution(
@@ -1004,7 +1034,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     extraParams,
                     extraParamsExposed,
                     inputCharset,
-                    logmanager
+                    workflowLogManager
             )
 
             fileUploadService.executionBeforeStart(
@@ -1033,29 +1063,29 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //output will be sent to loghandler instead.
             sysThreadBoundOut.installThreadStream(
                     loggingService.createLogOutputStream(
-                            overridableloghandler,
+                            rootoverride,
                             LogLevel.NORMAL,
-                            executionListener,
+                            contextmanager,
                             logOutFlusher,
                             inputCharset ? Charset.forName(inputCharset) : null
                     )
             );
             sysThreadBoundErr.installThreadStream(
                     loggingService.createLogOutputStream(
-                            overridableloghandler,
+                            rootoverride,
                             LogLevel.ERROR,
-                            executionListener,
+                            contextmanager,
                             logErrFlusher,
                             inputCharset ? Charset.forName(inputCharset) : null
                     )
             );
-
             WorkflowExecutionItem item = executionUtilService.createExecutionItemForWorkflow(execution.workflow)
             //create service object for the framework and listener
             Thread thread = new WorkflowExecutionServiceThread(
                     framework.getWorkflowExecutionService(),
                     item,
-                    executioncontext
+                    executioncontext,
+                    rootLogManager
             )
             thread.start()
             log.debug("started thread")
