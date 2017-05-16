@@ -32,6 +32,8 @@ import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
+import com.dtolabs.rundeck.server.plugins.logging.MaskPasswordsFilterPlugin
+import com.dtolabs.rundeck.server.plugins.logging.MaskPasswordsFilterPluginFactory
 import com.dtolabs.rundeck.server.plugins.logs.HTMLViewConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.JsonConverterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.MarkdownConverterPlugin
@@ -307,6 +309,8 @@ beans={
     pluginRegistry[MarkdownConverterPlugin.PROVIDER_NAME] = 'markdownDataConverterPlugin'
     pluginRegistry[TabularDataConverterPlugin.PROVIDER_NAME] = 'tabularDataConverterPlugin'
     pluginRegistry[HTMLViewConverterPlugin.PROVIDER_NAME] = 'HTMLViewConverterPlugin'
+    maskPasswordsFilterPlugin(MaskPasswordsFilterPluginFactory)
+    pluginRegistry[MaskPasswordsFilterPlugin.PROVIDER_NAME] = 'maskPasswordsFilterPlugin'
     /**
      * Registry bean contains both kinds of plugin
      */
