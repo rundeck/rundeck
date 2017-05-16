@@ -1007,7 +1007,7 @@ class ExecutionServiceSpec extends Specification {
         )
 
         when:
-        def val = service.createContext(se, null, null, null, null, null, null, null, null, null, charset)
+        def val = service.createContext(se, null, null, null, null, null, null, null, null, null, null, charset)
         then:
         val != null
         val.charsetEncoding == charset

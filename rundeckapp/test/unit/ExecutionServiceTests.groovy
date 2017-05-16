@@ -813,7 +813,7 @@ class ExecutionServiceTests  {
         //check datacontext, inputargs instead of argString
 
             Execution se = new Execution(user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = service.createContext(se, null,null, null, null, null,null, ['-test','args','-test2',
+            def val = service.createContext(se, null,null, null, null, null,null,null, ['-test','args','-test2',
                     'monkey args'] as String[])
             assertNotNull(val)
             assertNotNull(val.dataContext)
