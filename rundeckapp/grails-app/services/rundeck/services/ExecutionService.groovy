@@ -999,6 +999,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     execution.user,
                     jobcontext,
                     multiListener,
+                    multiListener,
                     null,
                     extraParams,
                     extraParamsExposed,
@@ -1187,8 +1188,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public StepExecutionContext createContext(ExecutionContext execMap, StepExecutionContext origContext,
                                               Map<String, String> jobcontext, String[] inputargs = null,
                                               Map extraParams = null, Map extraParamsExposed = null) {
-        createContext(execMap,origContext,origContext.framework,origContext.authContext,origContext.user,jobcontext,
-                origContext.executionListener,inputargs,extraParams,extraParamsExposed)
+        createContext(execMap, 
+                      origContext,
+                      origContext.framework,
+                      origContext.authContext,
+                      origContext.user,
+                      jobcontext,
+                      origContext.executionListener,
+                      origContext.workflowExecutionListener,
+                      inputargs,
+                      extraParams,
+                      extraParamsExposed
+        )
     }
     /**
      * Return an StepExecutionItem instance for the given workflow Execution, suitable for the ExecutionService layer
@@ -1201,6 +1212,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             String userName = null,
             Map<String, String> jobcontext,
             ExecutionListener listener,
+            WorkflowExecutionListener wlistener,
             String[] inputargs = null,
             Map extraParams = null,
             Map extraParamsExposed = null,
@@ -1290,6 +1302,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             dataContext(datacontext)
             privateDataContext(privatecontext)
             executionListener(listener)
+            workflowExecutionListener(wlistener)
         }
         builder.charsetEncoding(charsetEncoding)
         builder.framework(framework)

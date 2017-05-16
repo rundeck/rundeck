@@ -56,7 +56,10 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy))
 
         def context = Mock(StepExecutionContext) {
-            getExecutionListener() >> Stub(ExecutionListener)
+            getExecutionListener() >> Mock(ExecutionListener){
+                createOverride()>>Mock(ExecutionListenerOverride)
+            }
+            getWorkflowExecutionListener() >> new NoopWorkflowExecutionListener()
             getFrameworkProject() >> PROJECT_NAME
         }
         def item = Mock(WorkflowExecutionItem) {
@@ -510,6 +513,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         def logger = new LogListener()
         def context = ExecutionContextImpl.builder().
                 executionListener(logger).
+                workflowExecutionListener(new NoopWorkflowExecutionListener()).
                 frameworkProject(PROJECT_NAME).
                 stepNumber(1).
                 build()

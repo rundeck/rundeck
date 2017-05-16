@@ -56,12 +56,15 @@ class ExecutionServiceImpl implements ExecutionService {
     }
 
     protected WorkflowExecutionListener getWorkflowListener(final ExecutionContext executionContext) {
-        WorkflowExecutionListener wlistener = null;
+        WorkflowExecutionListener wlistener = executionContext.getWorkflowExecutionListener();
+        if(null!=wlistener){
+            return wlistener;
+        }
         final ExecutionListener elistener = executionContext.getExecutionListener();
         if (null != elistener && elistener instanceof WorkflowExecutionListener) {
-            wlistener = (WorkflowExecutionListener) elistener;
+            return (WorkflowExecutionListener) elistener;
         }
-        return wlistener;
+        return null;
     }
 
 

@@ -64,6 +64,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private DataContext privateDataContext;
     private MultiDataContext<ContextView, DataContext> sharedDataContext;
     private ExecutionListener executionListener;
+    private WorkflowExecutionListener workflowExecutionListener;
     private ExecutionLogger executionLogger;
     private Framework framework;
     private AuthContext authContext;
@@ -162,6 +163,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.dataContext = original.getDataContext();
                 ctx.privateDataContext = original.getPrivateDataContext();
                 ctx.executionListener = original.getExecutionListener();
+                ctx.workflowExecutionListener = original.getWorkflowExecutionListener();
                 ctx.executionLogger = original.getExecutionLogger();
                 ctx.framework = original.getFramework();
                 ctx.authContext = original.getAuthContext();
@@ -351,6 +353,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             ctx.executionLogger = executionListener;
             return this;
         }
+        public Builder workflowExecutionListener(WorkflowExecutionListener workflowExecutionListener) {
+            ctx.workflowExecutionListener = workflowExecutionListener;
+            return this;
+        }
 
         public Builder executionLogger(ExecutionLogger executionLogger) {
             ctx.executionLogger = executionLogger;
@@ -465,6 +471,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
     public ExecutionListener getExecutionListener() {
         return executionListener;
+    }
+
+    @Override
+    public WorkflowExecutionListener getWorkflowExecutionListener() {
+        return workflowExecutionListener;
     }
 
     @Override

@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.workflow.OutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.common.OrchestratorConfig;
 import com.dtolabs.rundeck.core.logging.LoggingManager;
@@ -145,6 +146,8 @@ public interface ExecutionContext {
     public DataContext getPrivateDataContext();
 
     public ExecutionListener getExecutionListener();
+
+    public WorkflowExecutionListener getWorkflowExecutionListener();
 
     public ExecutionLogger getExecutionLogger();
 

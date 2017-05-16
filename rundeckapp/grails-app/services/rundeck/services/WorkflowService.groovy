@@ -104,7 +104,7 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
                                                     Map secureOptions) {
         //create a context used for workflow execution
         def context = executionService.createContext(execContext, null, framework,authContext, execContext.user,
-                jobcontext,null, null, secureOptions)
+                jobcontext,null, null,null, secureOptions)
 
         def workflow = createStateForWorkflow(wf, project, framework, context, secureOptions)
 
