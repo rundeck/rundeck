@@ -32,20 +32,24 @@ import java.util.*;
  * @since 5/11/17
  */
 public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
-    final List<LogFilterPlugin> plugins;
-    final ExecutionContext context;
-    final ExecutionLogger directLogger;
+    private final List<LogFilterPlugin> plugins;
+    private final MyLoggingContext myLoggingContext;
 
-    public PluginFilteredStreamingLogWriter(
+    PluginFilteredStreamingLogWriter(
             final StreamingLogWriter writer,
             ExecutionContext context,
             ExecutionLogger directLogger
     )
     {
         super(writer);
-        this.context = context;
-        this.directLogger = directLogger;
         plugins = new ArrayList<>();
+        myLoggingContext = new MyLoggingContext(
+                context.getOutputContext(),
+                directLogger,
+                context.getDataContext(),
+                context.getPrivateDataContext(),
+                context.getSharedDataContext()
+        );
     }
 
 
@@ -62,7 +66,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         private Map<String, String> metadata;
         ControlState state = ControlState.EMIT;
 
-        public EventControl(
+        EventControl(
                 final String eventType,
                 final Date datetime,
                 final LogLevel loglevel,
@@ -166,38 +170,22 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         }
     }
 
-    static enum ControlState {
+    private enum ControlState {
         EMIT,
         QUELL,
         REMOVE
-    }
-
-    static class FilterControl implements LogFilterPlugin.Control {
-        List<LogEvent> events = new ArrayList<>();
-
-
-        @Override
-        public void addEvent(final LogEvent event) {
-            events.add(event);
-        }
-
-
     }
 
     @Override
     public void addEvent(final LogEvent orig) {
         ControlState state = ControlState.EMIT;
         EventControl eventControl = EventControl.with(orig);
-//        Map<String, String> origmeta = new HashMap<>(orig.getMetadata());
 
-        List<LogEvent> toAdd = new ArrayList<>();
         for (LogFilterPlugin plugin : plugins) {
 
-            FilterControl control = new FilterControl();
             //reset state
             eventControl.emit();
-            plugin.handleEvent(control, eventControl);
-            toAdd.addAll(control.events);
+            plugin.handleEvent(myLoggingContext, eventControl);
 
             if (eventControl.state == ControlState.REMOVE) {
                 state = eventControl.state;
@@ -209,25 +197,13 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         if (state == ControlState.EMIT) {
             getWriter().addEvent(eventControl);
         }
-        emitExtraEvents(toAdd);
-    }
-
-    public void emitExtraEvents(final List<LogEvent> toAdd) {
-        //TODO: use logger?
-        for (LogEvent logEvent : toAdd) {
-            getWriter().addEvent(logEvent);
-        }
     }
 
     @Override
     public void close() {
-        List<LogEvent> toAdd = new ArrayList<>();
         for (LogFilterPlugin plugin : plugins) {
-            FilterControl control = new FilterControl();
-            plugin.complete(control);
-            toAdd.addAll(control.events);
+            plugin.complete(myLoggingContext);
         }
-        emitExtraEvents(toAdd);
     }
 
     private static class MyLoggingContext implements PluginLoggingContext {
@@ -260,7 +236,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
             return privateDataContext;
         }
 
-        public MyLoggingContext(
+        MyLoggingContext(
                 final SharedOutputContext outputContext,
                 final ExecutionLogger logger,
                 final DataContext dataContext,
@@ -291,14 +267,8 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         }
     }
 
-    public void addPlugin(final LogFilterPlugin plugin) {
-        plugin.init(new MyLoggingContext(
-                context.getOutputContext(),
-                directLogger,
-                context.getDataContext(),
-                context.getPrivateDataContext(),
-                context.getSharedDataContext()
-        ));
+    void addPlugin(final LogFilterPlugin plugin) {
+        plugin.init(myLoggingContext);
         plugins.add(plugin);
     }
 }

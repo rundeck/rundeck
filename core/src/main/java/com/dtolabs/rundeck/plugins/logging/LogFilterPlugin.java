@@ -22,29 +22,33 @@ import com.dtolabs.rundeck.core.logging.*;
 import java.util.Map;
 
 /**
+ * Provides a filter mechanism for log events, with access to the execution context
+ *
  * @author greg
  * @since 5/10/17
  */
 public interface LogFilterPlugin {
     /**
-     * Initialize filtering for the current context
+     * Initialize filtering for the current context, optional
      */
-    void init(PluginLoggingContext context);
+    default void init(PluginLoggingContext context) {
+
+    }
 
     /**
      * Handle a log event
      *
-     * @param event event
-     *
-     * @return true if the log event should be emitted normally, false to quell it
+     * @param context the context for the plugin
+     * @param event   event
      */
-    void handleEvent(LogFilterPlugin.Control control, LogEventControl event);
+    void handleEvent(PluginLoggingContext context, LogEventControl event);
 
     /**
-     * Called when the current step/node output is complete
+     * Called when the current step/node output is complete, optional
+     *
+     * @param context the context for the plugin
      */
-    void complete(LogFilterPlugin.Control control);
+    default void complete(PluginLoggingContext context) {
 
-    public interface Control extends LogEventReceiver {
     }
 }
