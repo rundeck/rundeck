@@ -87,7 +87,7 @@ class MaskPasswordsFilterPlugin implements LogFilterPlugin {
     }
 
     @Override
-    void handleEvent(final LogFilterPlugin.Control control, final LogEventControl event) {
+    void handleEvent(final PluginLoggingContext context, final LogEventControl event) {
         if (enabled) {
             def message = event.message
             if (event.eventType == 'log' && message) {
@@ -98,7 +98,7 @@ class MaskPasswordsFilterPlugin implements LogFilterPlugin {
     }
 
     @Override
-    void complete(final LogFilterPlugin.Control control) {
+    void complete(final PluginLoggingContext context) {
 
     }
 }

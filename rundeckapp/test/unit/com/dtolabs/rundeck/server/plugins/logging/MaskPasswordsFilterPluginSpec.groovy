@@ -41,11 +41,10 @@ class MaskPasswordsFilterPluginSpec extends Specification {
             getPrivateDataContext() >> privateData
             getDataContext() >> exposeddata
         }
-        def control = Mock(LogFilterPlugin.Control)
         def event = Mock(LogEventControl)
         when:
         plugin.init(loggingContext)
-        plugin.handleEvent(control, event)
+        plugin.handleEvent(loggingContext, event)
 
         then:
         if (privatedata || secureoption) {
