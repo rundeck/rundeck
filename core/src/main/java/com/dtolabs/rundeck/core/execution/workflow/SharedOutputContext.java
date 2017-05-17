@@ -21,14 +21,33 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import java.util.Map;
 
 /**
+ * An output context which can specify the destination context view
  * @author greg
  * @since 5/4/17
  */
 public interface SharedOutputContext extends OutputContext {
 
+    /**
+     * Add to specified view
+     * @param view view
+     * @param data data
+     */
     void addOutput(ContextView view, Map<String, Map<String, String>> data);
 
+    /**
+     * Add to specified view
+     * @param view view
+     * @param key key
+     * @param data data
+     */
     void addOutput(ContextView view, String key, Map<String, String> data);
 
-    public void addOutput(ContextView view, String key, String name, String value);
+    /**
+     * Add to specified view
+     * @param view view
+     * @param key key
+     * @param name name
+     * @param value value
+     */
+    void addOutput(ContextView view, String key, String name, String value);
 }

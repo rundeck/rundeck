@@ -52,12 +52,12 @@ public class DataOutput implements ReadableSharedContext {
     }
 
     @Override
-    public void addOutput(String key, Map<String, String> data) {
-        addOutput(defaultView, key, data);
+    public void addOutput(String group, Map<String, String> data) {
+        addOutput(defaultView, group, data);
     }
 
-    public void addOutput(final String key, final String name, final String value) {
-        addOutput(defaultView, key, name, value);
+    public void addOutput(final String group, final String name, final String value) {
+        addOutput(defaultView, group, name, value);
     }
 
     public WFSharedContext getSharedContext() {

@@ -6,10 +6,28 @@ import java.util.Map;
  * Add data to a context
  */
 public interface OutputContext {
+    /**
+     * Add data
+     *
+     * @param data
+     */
     void addOutput(Map<String, Map<String, String>> data);
 
-    void addOutput(String key, Map<String, String> data);
+    /**
+     * Add data
+     *
+     * @param group
+     * @param data
+     */
+    void addOutput(String group, Map<String, String> data);
 
-    public void addOutput(String key, String name, String value);
+    /**
+     * Add a single group/name/value
+     *
+     * @param group
+     * @param name
+     * @param value
+     */
+    void addOutput(String group, String name, String value);
 
 }
