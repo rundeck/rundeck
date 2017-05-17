@@ -685,13 +685,15 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         final DataOutput outputContext = new DataOutput(ContextView.step(c));
         wfRunContext.outputContext(outputContext);
 
+        ExecutionContextImpl wfRunContextBuilt = wfRunContext.build();
+
 
         //execute the step item, and store the results
 
         PluginLoggingManager pluginLogging = null;
         if (null != executionContext.getLoggingManager()) {
             pluginLogging = executionContext
-                    .getLoggingManager().createPluginLogging(executionContext, cmd);
+                    .getLoggingManager().createPluginLogging(wfRunContextBuilt, cmd);
         }
 
 
@@ -699,7 +701,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
 
         Supplier<StepExecutionResult> execCall = () -> executeWFItem(
-                wfRunContext.build(),
+                wfRunContextBuilt,
                 stepFailedMap,
                 c,
                 cmd

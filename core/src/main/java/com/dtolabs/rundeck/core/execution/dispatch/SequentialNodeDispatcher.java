@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.execution.ServiceThreadBase;
 import com.dtolabs.rundeck.core.execution.workflow.ReadableSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
+import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -122,15 +123,28 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
 
                 ExecutionContextImpl nodeDataContext =
                         new ExecutionContextImpl.Builder(context).outputContext(outputContext).build();
-                if (null != item) {
-                    result = framework.getExecutionService().executeNodeStep(nodeDataContext, item, node);
-                    //add as node-specific data
-                    result = NodeStepDataResultImpl.with(result, outputContext.getSharedContext());
-                } else {
-                    result = toDispatch.dispatch(nodeDataContext, node);
-                    result = NodeStepDataResultImpl.with(result, outputContext.getSharedContext());
-                }
 
+                PluginLoggingManager pluginLogging = null;
+                if (null != context.getLoggingManager()) {
+                    pluginLogging = context
+                            .getLoggingManager().createPluginLogging(nodeDataContext, item);
+                }
+                if (null != pluginLogging) {
+                    pluginLogging.begin();
+                }
+                try {
+                    if (null != item) {
+                        result = framework.getExecutionService().executeNodeStep(nodeDataContext, item, node);
+                        //add as node-specific data
+                    } else {
+                        result = toDispatch.dispatch(nodeDataContext, node);
+                    }
+                } finally {
+                    if (null != pluginLogging) {
+                        pluginLogging.end();
+                    }
+                }
+                result = NodeStepDataResultImpl.with(result, outputContext.getSharedContext());
                 resultMap.put(node.getNodename(), result);
                 if (!result.isSuccess()) {
                     success = false;

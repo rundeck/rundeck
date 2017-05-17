@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.workflow.ReadableSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
+import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
@@ -217,7 +218,28 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
                         node.getNodename()
                 ));
                 ExecutionContextImpl nodeDataContext = new ExecutionContextImpl.Builder(context).outputContext(outputContext).build();
-                NodeStepResult result = framework.getExecutionService().executeNodeStep(nodeDataContext, item, node);
+
+                PluginLoggingManager pluginLogging = null;
+                if (null != context.getLoggingManager()) {
+                    pluginLogging = context
+                            .getLoggingManager().createPluginLogging(nodeDataContext, item);
+                }
+
+                NodeStepResult result = null;
+                if (null != pluginLogging) {
+                    pluginLogging.begin();
+                }
+                try {
+                    result = framework.getExecutionService().executeNodeStep(
+                            nodeDataContext,
+                            item,
+                            node
+                    );
+                } finally {
+                    if (null != pluginLogging) {
+                        pluginLogging.end();
+                    }
+                }
                 result = NodeStepDataResultImpl.with(result, outputContext.getSharedContext());
                 if (!result.isSuccess()) {
                     failureMap.put(node.getNodename(), result);
