@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.server.plugins.logging
 
+import com.dtolabs.rundeck.core.cli.CLIUtils
 import com.dtolabs.rundeck.core.logging.LogEventControl
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
@@ -45,13 +46,9 @@ class MaskPasswordsFilterPlugin implements LogFilterPlugin {
     void init(final PluginLoggingContext context) {
         def privdata = context.privateDataContext?.values()?.collect {
             it.values()
-        }?.flatten()?.collect {
-            Pattern.quote(it)
-        }
+        }?.flatten()
 
-        def strings = context.dataContext['secureOption']?.values()?.collect {
-            Pattern.quote(it)
-        }
+        def strings = context.dataContext['secureOption']?.values()
         if (!privdata) {
             privdata = []
         }
@@ -59,7 +56,24 @@ class MaskPasswordsFilterPlugin implements LogFilterPlugin {
             privdata.addAll(strings)
         }
         if (privdata.findAll { it }) {
-            def mask = privdata.findAll { it }.join('|')
+            def mask = privdata.findAll { it }.collect {
+                def vals = [Pattern.quote("'" + it + "'"), Pattern.quote('"' + it + '"')]
+                def quoted = CLIUtils.quoteUnixShellArg(it)
+                if (quoted != it) {
+                    vals << Pattern.quote(quoted)
+                }
+
+                quoted = CLIUtils.escapeUnixShellChars(it, '"' + CLIUtils.UNIX_SHELL_CHARS_NO_QUOTES)
+                if (quoted != it) {
+                    vals << Pattern.quote('"' + quoted + '"')
+                }
+                quoted = CLIUtils.escapeUnixShellChars(it, "'\\")
+                if (quoted != it) {
+                    vals << Pattern.quote("'" + quoted + "'")
+                }
+                vals << Pattern.quote(it)
+                vals
+            }.flatten().join('|')
             regex = Pattern.compile('(' + mask + ')')
             enabled = true;
         } else {

@@ -60,24 +60,32 @@ class MaskPasswordsFilterPluginTest extends Specification {
         [:]                                  | [:]                                  | 'suspense' | 'suspense'
         [secret1: 'zamboni$$']               | [:]                                  |
                 'mysql -u root -p \'zamboni$$\' '                                                |
-                'mysql -u root -p \'*****\' '
-//        [secret1: 'djasdf\'3"dlkja']         | [:]                                  |
-//                'mysql -u root -p \'djasdf\\\'3"dlkja\' '                                        |
-//                'mysql -u root -p \'*****\' '
+                'mysql -u root -p ***** '
+
+        //contains quotes, the escaped variants are replaced
+        [secret1: 'djasdf\'3"dlkja']         | [:]                                  |
+                'mysql -u root -p \'djasdf\\\'3"dlkja\' ' |
+                'mysql -u root -p ***** '
+        [secret1: 'zamboni$$']               | [:]                                  |
+                'mysql -u root -p "zamboni\\$\\$" ' |
+                'mysql -u root -p ***** '
         [:]                                  | [secret1: 'zamboni$$']               |
                 'mysql -u root -p \'zamboni$$\' '                                                |
-                'mysql -u root -p \'*****\' '
+                'mysql -u root -p ***** '
         [secret1: 'c4kq$*f9099{{j3]&jkdlf*$$^',
          secret2: '_\\asdf  \t3#*#*Djdkflj'] | [:]                                  |
                 'mysql -u root -p \'c4kq$*f9099{{j3]&jkdlf*$$^\'' +
                 ' && echo _\\asdf  \t3#*#*Djdkflj'                                               |
-                'mysql -u root -p \'*****\' ' +
+                'mysql -u root -p ***** ' +
                 '&& echo *****'
+        [secret2: '_\\asdf  \t3#*#*Djdkflj'] | [:]                                  |
+                'echo \'_\\\\asdf  \\t3#*#*Djdkflj\'' |
+                'echo *****'
         [:]                                  | [secret1: 'c4kq$*f9099{{j3]&jkdlf*$$^',
                                                 secret2: '_\\asdf  \t3#*#*Djdkflj'] |
                 'mysql -u root -p \'c4kq$*f9099{{j3]&jkdlf*$$^\' ' +
                 '&& echo _\\asdf  \t3#*#*Djdkflj'                                                |
-                'mysql -u root -p \'*****\' ' +
+                'mysql -u root -p ***** ' +
                 '&& echo *****'
         [secret1: '9090asfj0sadj0f93jfjJFKdfj',
          secret2: 'aljkdfjld']               | [secret1: 'c4kq$*f9099{{j3]&jkdlf*$$^',
@@ -86,9 +94,9 @@ class MaskPasswordsFilterPluginTest extends Specification {
                 '&& mysql -u root -p \'9090asfj0sadj0f93jfjJFKdfj\' ' +
                 '&& mysql -u root -p \'aljkdfjld\' ' +
                 '&& echo _\\asdf  \t3#*#*Djdkflj'                                                |
-                'mysql -u root -p \'*****\' ' +
-                '&& mysql -u root -p \'*****\' ' +
-                '&& mysql -u root -p \'*****\' ' +
+                'mysql -u root -p ***** ' +
+                '&& mysql -u root -p ***** ' +
+                '&& mysql -u root -p ***** ' +
                 '&& echo *****'
 
 
