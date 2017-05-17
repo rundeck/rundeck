@@ -1842,6 +1842,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def todiscard = []
         def wftodelete = []
+        def fprojects = frameworkService.projectNames(authContext)
         if (scheduledExecution.workflow && params['_sessionwf'] && params['_sessionEditWFObject']) {
             //load the session-stored modified workflow and replace the existing one
             def Workflow wf = params['_sessionEditWFObject']//session.editWF[scheduledExecution.id.toString()]
@@ -1849,17 +1850,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = true
                 scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
             } else {
+
                 def wfitemfailed = false
                 def failedlist = []
                 def i = 1;
                 wf.commands.each {WorkflowStep cexec ->
-                    WorkflowController._validateCommandExec(cexec)
+                    WorkflowController._validateCommandExec(cexec,null,fprojects)
                     if (cexec.errors.hasErrors()) {
                         wfitemfailed = true
                         failedlist << i
                     }
                     if (cexec.errorHandler) {
-                        WorkflowController._validateCommandExec(cexec.errorHandler)
+                        WorkflowController._validateCommandExec(cexec.errorHandler,null,fprojects)
                         if (cexec.errorHandler.errors.hasErrors()) {
                             wfitemfailed = true
                             failedlist << (i + 1)
@@ -1899,13 +1901,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 cexec.properties = cmdparams
                 workflow.addToCommands(cexec)
-                WorkflowController._validateCommandExec(cexec)
+                WorkflowController._validateCommandExec(cexec,null, fprojects)
                 if (cexec.errors.hasErrors()) {
                     wfitemfailed = true
                     failedlist << (i + 1)
                 }
                 if (cmdparams.errorHandler) {
-                    WorkflowController._validateCommandExec(cmdparams.errorHandler)
+                    WorkflowController._validateCommandExec(cmdparams.errorHandler, null, fprojects)
                     if (cmdparams.errorHandler.errors.hasErrors()) {
                         wfitemfailed = true
                         failedlist << (i + 1)
@@ -2479,14 +2481,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def i = 0;
             def wfitemfailed = false
             def failedlist = []
+            def fprojects = frameworkService.projectNames(authContext)
             workflow.commands.each {WorkflowStep cmdparams ->
-                WorkflowController._validateCommandExec(cmdparams)
+                WorkflowController._validateCommandExec(cmdparams, null, fprojects)
                 if (cmdparams.errors.hasErrors()) {
                     wfitemfailed = true
                     failedlist << (i + 1)
                 }
                 if (cmdparams.errorHandler) {
-                    WorkflowController._validateCommandExec(cmdparams.errorHandler)
+                    WorkflowController._validateCommandExec(cmdparams.errorHandler, null, fprojects)
                     if (cmdparams.errorHandler.errors.hasErrors()) {
                         wfitemfailed = true
                         failedlist << (i + 1)
@@ -2805,6 +2808,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
 
+        def fprojects = frameworkService.projectNames((AuthContext)userAndRoles)
+
         def valid = scheduledExecution.validate()
         if (scheduledExecution.scheduled) {
             scheduledExecution.user = userAndRoles.username
@@ -2859,14 +2864,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def i = 1
                 def failedlist = []
                 wf.commands.each {WorkflowStep cexec ->
-                    WorkflowController._validateCommandExec(cexec)
+                    WorkflowController._validateCommandExec(cexec, null, fprojects)
                     if (cexec.errors.hasErrors()) {
                         wfitemfailed = true
                         failedlist << i
                     }
 
                     if (cexec.errorHandler) {
-                        WorkflowController._validateCommandExec(cexec.errorHandler)
+                        WorkflowController._validateCommandExec(cexec.errorHandler, null, fprojects)
                         if (cexec.errorHandler.errors.hasErrors()) {
                             wfitemfailed = true
                             failedlist << (i + 1)
@@ -2889,13 +2894,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def wfitemfailed = false
             def failedlist = []
             workflow.commands.each {WorkflowStep cmdparams ->
-                WorkflowController._validateCommandExec(cmdparams)
+                WorkflowController._validateCommandExec(cmdparams, null, fprojects)
                 if (cmdparams.errors.hasErrors()) {
                     wfitemfailed = true
                     failedlist << (i + 1)
                 }
                 if (cmdparams.errorHandler) {
-                    WorkflowController._validateCommandExec(cmdparams.errorHandler)
+                    WorkflowController._validateCommandExec(cmdparams.errorHandler, null, fprojects)
                     if (cmdparams.errorHandler.errors.hasErrors()) {
                         wfitemfailed = true
                         failedlist << (i + 1)
@@ -2935,13 +2940,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 cexec.properties = cmdparams
                 workflow.addToCommands(cexec)
-                WorkflowController._validateCommandExec(cexec)
+                WorkflowController._validateCommandExec(cexec, null, fprojects)
                 if (cexec.errors.hasErrors()) {
                     wfitemfailed = true
                     failedlist << (i + 1)
                 }
                 if (cmdparams.errorHandler) {
-                    WorkflowController._validateCommandExec(cmdparams.errorHandler)
+                    WorkflowController._validateCommandExec(cmdparams.errorHandler, null, fprojects)
                     if (cmdparams.errorHandler.errors.hasErrors()) {
                         wfitemfailed = true
                         failedlist << (i + 1)

@@ -250,7 +250,8 @@ public class ExecutionItemFactory {
                 null,
                 null,
                 label,
-                false
+                false,
+                null
         );
     }
 
@@ -277,7 +278,8 @@ public class ExecutionItemFactory {
             final String nodeRankAttribute,
             final Boolean nodeRankOrderAscending,
             final String label,
-            final Boolean nodeIntersect
+            final Boolean nodeIntersect,
+            final String project
     )
     {
         return new JobRefCommandBase() {
@@ -337,6 +339,10 @@ public class ExecutionItemFactory {
 
             @Override public Boolean getNodeIntersect() {
                 return nodeIntersect;
+            }
+
+            @Override public String getProject(){
+                return project;
             }
         };
     }

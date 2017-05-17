@@ -37,6 +37,7 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.JobExecutionItem
+import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -2888,16 +2889,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     {
         def id
         def result
-
         def project = null
+        if(jitem instanceof JobRefCommand){
+            JobRefCommand jitemRef = (JobRefCommand) jitem
+            project = jitemRef.project
+        }
+
         def group = null
         def name = null
-        def m = jitem.jobIdentifier =~ '(?:(.+):)?/?(.+)/([^/]+)$'
-        //def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
+        def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
         if (m.matches()) {
-            project = m.group(1)
-            group = m.group(2)
-            name = m.group(3)
+            group = m.group(1)
+            name = m.group(2)
         } else {
             name = jitem.jobIdentifier
         }

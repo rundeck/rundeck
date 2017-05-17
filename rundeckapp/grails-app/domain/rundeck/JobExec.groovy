@@ -83,7 +83,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
 
     public String getJobIdentifier() {
-        return (null==jobProject?'':jobProject+":")+(null==jobGroup?'':jobGroup+"/")+jobName;
+        return (null==jobGroup?'':jobGroup+"/")+jobName;
     }
     public void setJobIdentifier(){
         //noop

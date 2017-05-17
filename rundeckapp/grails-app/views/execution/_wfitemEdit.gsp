@@ -54,9 +54,17 @@
         </div>
         <div class="col-sm-2">
             <input id="jobProjectField${rkey}"  type="text" name="jobProject" value="${enc(attr:item?.jobProject)}" size="100"
-                   placeholder="${message(code:"scheduledExecution.projectPath.label")} Project"
+                   placeholder="${message(code:"scheduledExecution.projectPath.label")}"
                    class="form-control"
             />
+            <g:javascript>
+                fireWhenReady('jobProjectField${rkey}',function(){
+                        var projectsArr = loadJsonData('projectNamesData');
+                        jQuery("#jobProjectField${rkey}").devbridgeAutocomplete({
+                                    lookup: projectsArr
+                        });
+                    });
+            </g:javascript>
         </div>
 
         <div class="col-sm-2">
