@@ -268,6 +268,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public Builder nodeContextData(INodeEntry node) {
             ctx.dataContext.merge(new BaseDataContext("node", DataContextUtils.nodeData(node)));
+            ctx.sharedDataContext.merge(
+                    ContextView.node(node.getNodename()),
+                    new BaseDataContext("node", DataContextUtils.nodeData(node))
+            );
             return this;
         }
 
@@ -427,7 +431,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         public Builder sharedDataContext(MultiDataContext<ContextView, DataContext> shared) {
-            ctx.sharedDataContext = new MultiDataContextImpl<>(shared);
+            ctx.sharedDataContext = new MultiDataContextImpl<>();
+            ctx.sharedDataContext.merge(ContextView.global(), ctx.dataContext);
+            ctx.sharedDataContext.merge(shared);
             return this;
         }
         public Builder mergeSharedContext(MultiDataContext<ContextView, DataContext> shared) {
