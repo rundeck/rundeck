@@ -20,12 +20,11 @@ import com.dtolabs.rundeck.core.cli.CLIUtils
 import com.dtolabs.rundeck.core.logging.LogEventControl
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import groovy.transform.ToString
 
+import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 /**
@@ -36,11 +35,15 @@ import java.util.regex.Pattern
 @Plugin(name = MaskPasswordsFilterPlugin.PROVIDER_NAME, service = 'LogFilter')
 @PluginDescription(title = 'Mask Passwords',
         description = 'Masks secure input option values from being emitted in the logs.')
-@ToString(includeNames = true)
 class MaskPasswordsFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'mask-passwords'
+
+    @PluginProperty(title = "Replacement", description = "Text to replace secure values", defaultValue = "[SECURE]")
+    String replacement = '[SECURE]'
+
     Pattern regex;
     private boolean enabled;
+    private String replacementQuoted
 
     @Override
     void init(final PluginLoggingContext context) {
@@ -55,30 +58,32 @@ class MaskPasswordsFilterPlugin implements LogFilterPlugin {
         if (strings) {
             privdata.addAll(strings)
         }
-        if (privdata.findAll { it }) {
-            def mask = privdata.findAll { it }.collect {
-                def vals = [Pattern.quote("'" + it + "'"), Pattern.quote('"' + it + '"')]
-                def quoted = CLIUtils.quoteUnixShellArg(it)
-                if (quoted != it) {
-                    vals << Pattern.quote(quoted)
-                }
-
-                quoted = CLIUtils.escapeUnixShellChars(it, '"' + CLIUtils.UNIX_SHELL_CHARS_NO_QUOTES)
-                if (quoted != it) {
-                    vals << Pattern.quote('"' + quoted + '"')
-                }
-                quoted = CLIUtils.escapeUnixShellChars(it, "'\\")
-                if (quoted != it) {
-                    vals << Pattern.quote("'" + quoted + "'")
-                }
-                vals << Pattern.quote(it)
-                vals
-            }.flatten().join('|')
-            regex = Pattern.compile('(' + mask + ')')
-            enabled = true;
-        } else {
+        if (!privdata.findAll { it }) {
             enabled = false
+            return
         }
+        def mask = privdata.findAll { it }.collect {
+            def vals = ["'" + it + "'", '"' + it + '"']
+            def quoted = CLIUtils.quoteUnixShellArg(it)
+            if (quoted != it && !vals.contains(quoted)) {
+                vals << quoted
+            }
+
+            quoted = CLIUtils.escapeUnixShellChars(it, '"' + CLIUtils.UNIX_SHELL_CHARS_NO_QUOTES)
+            if (quoted != it && !vals.contains(quoted)) {
+                vals << ('"' + quoted + '"')
+            }
+            quoted = CLIUtils.escapeUnixShellChars(it, "'\\")
+            if (quoted != it && !vals.contains(quoted)) {
+                vals << "'" + quoted + "'"
+            }
+            vals << it
+            vals
+        }.flatten().collect { Pattern.quote(it) }.join('|')
+        regex = Pattern.compile('(' + mask + ')')
+        enabled = true;
+        replacementQuoted = Matcher.quoteReplacement(replacement ?: '*****')
+
     }
 
     @Override
@@ -86,7 +91,7 @@ class MaskPasswordsFilterPlugin implements LogFilterPlugin {
         if (enabled) {
             def message = event.message
             if (event.eventType == 'log' && message) {
-                String remessage = message.replaceAll(regex, '*****')
+                String remessage = message.replaceAll(regex, replacementQuoted)
                 event.setMessage(remessage)
             }
         }

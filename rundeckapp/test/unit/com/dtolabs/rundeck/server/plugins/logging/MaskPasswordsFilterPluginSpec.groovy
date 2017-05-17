@@ -27,11 +27,12 @@ import spock.lang.Unroll
  * @author greg
  * @since 5/16/17
  */
-class MaskPasswordsFilterPluginTest extends Specification {
+class MaskPasswordsFilterPluginSpec extends Specification {
     @Unroll
     def "mask values"() {
         given:
         def plugin = new MaskPasswordsFilterPlugin()
+        plugin.replacement = '*****'
         def privateData = DataContextUtils.context("option", privatedata)
         def exposeddata = DataContextUtils.context("option", ["bogus": "fanmail"])
         exposeddata.merge(DataContextUtils.context("secureOption", secureoption))
