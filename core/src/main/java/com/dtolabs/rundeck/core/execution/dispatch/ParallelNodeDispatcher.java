@@ -219,27 +219,11 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
                 ));
                 ExecutionContextImpl nodeDataContext = new ExecutionContextImpl.Builder(context).outputContext(outputContext).build();
 
-                PluginLoggingManager pluginLogging = null;
-                if (null != context.getLoggingManager()) {
-                    pluginLogging = context
-                            .getLoggingManager().createPluginLogging(nodeDataContext, item);
-                }
-
-                NodeStepResult result = null;
-                if (null != pluginLogging) {
-                    pluginLogging.begin();
-                }
-                try {
-                    result = framework.getExecutionService().executeNodeStep(
-                            nodeDataContext,
-                            item,
-                            node
-                    );
-                } finally {
-                    if (null != pluginLogging) {
-                        pluginLogging.end();
-                    }
-                }
+                NodeStepResult result = framework.getExecutionService().executeNodeStep(
+                        nodeDataContext,
+                        item,
+                        node
+                );
                 result = NodeStepDataResultImpl.with(result, outputContext.getSharedContext());
                 if (!result.isSuccess()) {
                     failureMap.put(node.getNodename(), result);

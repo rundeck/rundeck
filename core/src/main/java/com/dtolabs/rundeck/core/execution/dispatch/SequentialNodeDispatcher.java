@@ -124,25 +124,11 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 ExecutionContextImpl nodeDataContext =
                         new ExecutionContextImpl.Builder(context).outputContext(outputContext).build();
 
-                PluginLoggingManager pluginLogging = null;
-                if (null != context.getLoggingManager()) {
-                    pluginLogging = context
-                            .getLoggingManager().createPluginLogging(nodeDataContext, item);
-                }
-                if (null != pluginLogging) {
-                    pluginLogging.begin();
-                }
-                try {
-                    if (null != item) {
-                        result = framework.getExecutionService().executeNodeStep(nodeDataContext, item, node);
-                        //add as node-specific data
-                    } else {
-                        result = toDispatch.dispatch(nodeDataContext, node);
-                    }
-                } finally {
-                    if (null != pluginLogging) {
-                        pluginLogging.end();
-                    }
+                if (null != item) {
+                    result = framework.getExecutionService().executeNodeStep(nodeDataContext, item, node);
+                    //add as node-specific data
+                } else {
+                    result = toDispatch.dispatch(nodeDataContext, node);
                 }
                 result = NodeStepDataResultImpl.with(result, outputContext.getSharedContext());
                 resultMap.put(node.getNodename(), result);

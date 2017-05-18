@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
+import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 
 import java.io.File;
@@ -82,7 +83,22 @@ class ExecutionServiceImpl implements ExecutionService {
             if (null != getWorkflowListener(context)) {
                 getWorkflowListener(context).beginStepExecution(executor, context, item);
             }
-            result = executor.executeWorkflowStep(context, item);
+
+            PluginLoggingManager pluginLogging = null;
+            if (null != context.getLoggingManager()) {
+                pluginLogging = context
+                        .getLoggingManager().createPluginLogging(context, item);
+            }
+            if (null != pluginLogging) {
+                pluginLogging.begin();
+            }
+            try {
+                result = executor.executeWorkflowStep(context, item);
+            } finally {
+                if (null != pluginLogging) {
+                    pluginLogging.end();
+                }
+            }
         } finally {
             if (null != getWorkflowListener(context)) {
                 getWorkflowListener(context).finishStepExecution(executor,result, context, item);
@@ -115,7 +131,22 @@ class ExecutionServiceImpl implements ExecutionService {
             final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context)
                     .singleNodeContext(node, true)
                     .build();
-            result = interpreter.executeNodeStep(nodeContext, item, node);
+
+            PluginLoggingManager pluginLogging = null;
+            if (null != context.getLoggingManager()) {
+                pluginLogging = context
+                        .getLoggingManager().createPluginLogging(nodeContext, item);
+            }
+            if (null != pluginLogging) {
+                pluginLogging.begin();
+            }
+            try {
+                result = interpreter.executeNodeStep(nodeContext, item, node);
+            } finally {
+                if (null != pluginLogging) {
+                    pluginLogging.end();
+                }
+            }
             if (!result.isSuccess()) {
                 context.getExecutionListener().log(0, "Failed: " + result.toString());
             }

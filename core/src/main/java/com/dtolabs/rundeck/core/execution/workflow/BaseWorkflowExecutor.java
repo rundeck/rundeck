@@ -690,28 +690,15 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
         //execute the step item, and store the results
 
-        PluginLoggingManager pluginLogging = null;
-        if (null != executionContext.getLoggingManager()) {
-            pluginLogging = executionContext
-                    .getLoggingManager().createPluginLogging(wfRunContextBuilt, cmd);
-        }
-
-
-        StepExecutionResult stepResult = null;
         final Map<Integer, StepExecutionResult> stepFailedMap = new HashMap<>();
 
-        Supplier<StepExecutionResult> execCall = () -> executeWFItem(
+
+        StepExecutionResult stepResult = executeWFItem(
                 wfRunContextBuilt,
                 stepFailedMap,
                 c,
                 cmd
         );
-
-        if (null != pluginLogging) {
-            stepResult = pluginLogging.runWith(execCall);
-        } else {
-            stepResult = execCall.get();
-        }
 
         result.setSuccess(stepResult.isSuccess());
 
