@@ -1435,7 +1435,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 execCount:stats.execCount,
                 totalFailedCount:stats.totalFailedCount,
                 recentUsers:stats.recentUsers,
-                recentProjects:stats.recentProjects,
+                recentProjects:stats.recentProjects
         ])
     }
 

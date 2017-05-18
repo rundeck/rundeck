@@ -115,11 +115,9 @@ class WorkflowControllerTests {
     private FrameworkService minimalFrameworkService(){
         mockWith(FrameworkService){
             getAuthContextForSubject(0..3){subj->
-                println('getAuthContextForSubject')
                 null
             }
             projectNames(0..3){authContext ->
-                println('projectNames')
                 null}
         }
     }
