@@ -26,9 +26,9 @@ import com.dtolabs.rundeck.core.rules.WorkflowSystem;
 /**
  * Successful result of a workflow step operation
  */
-class OperationCompleted implements WorkflowSystem.OperationCompleted<WFSharedContext> {
-    int stepNum;
-    BaseWorkflowExecutor.StepResultCapture stepResultCapture;
+public class OperationCompleted implements WorkflowSystem.OperationCompleted<WFSharedContext> {
+    private int stepNum;
+    private BaseWorkflowExecutor.StepResultCapture stepResultCapture;
     private StateObj newState;
 
     OperationCompleted(
@@ -62,5 +62,9 @@ class OperationCompleted implements WorkflowSystem.OperationCompleted<WFSharedCo
                ", stepResultCapture=" + stepResultCapture +
                ", newState=" + newState +
                '}';
+    }
+
+    public int getStepNum() {
+        return stepNum;
     }
 }

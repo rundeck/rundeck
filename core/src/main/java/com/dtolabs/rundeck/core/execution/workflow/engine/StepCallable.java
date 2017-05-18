@@ -17,15 +17,10 @@
 package com.dtolabs.rundeck.core.execution.workflow.engine;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.BaseWorkflowExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
+import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,7 +33,7 @@ import java.util.function.Function;
  * @author greg
  * @since 4/28/17
  */
-class StepCallable implements Function<WFSharedContext, BaseWorkflowExecutor.StepResultCapture> {
+public class StepCallable implements Function<WFSharedContext, BaseWorkflowExecutor.StepResultCapture> {
     private EngineWorkflowExecutor engineWorkflowExecutor;
     private final StepExecutionContext executionContext;
     private final boolean keepgoing;

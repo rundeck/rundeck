@@ -14,14 +14,16 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.execution.workflow.engine;
+package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
-import com.dtolabs.rundeck.core.execution.workflow.*;
+import com.dtolabs.rundeck.core.execution.workflow.engine.OperationCompleted;
+import com.dtolabs.rundeck.core.execution.workflow.engine.StepCallable;
+import com.dtolabs.rundeck.core.execution.workflow.engine.StepOperation;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
@@ -253,7 +255,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
             if (completed != null) {
                 StepResultCapture result = completed.getStepResultCapture();
                 if (!result.getStepResult().isSuccess()) {
-                    stepFailures.put(completed.stepNum, result.getStepResult());
+                    stepFailures.put(completed.getStepNum(), result.getStepResult());
                     workflowSuccess = false;
                 }
                 stepResults.add(result.getStepResult());
@@ -312,7 +314,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
         String message = String.format(
                 "Exception while executing step [%d]: \t[%s]",
-                operation.stepNum,
+                operation.getStepNum(),
                 failure.toString()
         );
         failure.printStackTrace(System.out);//XXX
@@ -321,11 +323,11 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
 
             message = String.format(
                     "Cancellation while running step [%d]",
-                    operation.stepNum
+                    operation.getStepNum()
             );
         }
         executionContext.getExecutionListener().log(Constants.ERR_LEVEL, message);
-        stepFailures.put(operation.stepNum, StepExecutionResultImpl.wrapStepException(
+        stepFailures.put(operation.getStepNum(), StepExecutionResultImpl.wrapStepException(
                 failure instanceof StepException ? (StepException) failure :
                 new StepException(message, failure, reason)
         ));
@@ -345,9 +347,9 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                                                    "Step [%d] did not run. " +
                                                    "start conditions: %s, skip " +
                                                    "conditions: %s",
-                                                   op.stepNum,
-                                                   op.startTriggerConditions,
-                                                   op.skipTriggerConditions
+                                                   op.getStepNum(),
+                                                   op.getStartTriggerConditions(),
+                                                   op.getSkipTriggerConditions()
                                            )
                                    )
                 );

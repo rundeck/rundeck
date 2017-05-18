@@ -18,27 +18,27 @@ package com.dtolabs.rundeck.core.execution.workflow.engine;
 
 import com.dtolabs.rundeck.core.execution.workflow.BaseWorkflowExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior;
+import com.dtolabs.rundeck.core.execution.workflow.EngineWorkflowExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.rules.*;
 
 import java.util.Set;
-import java.util.function.Function;
 
 /**
  * operation for running a step
  */
-class StepOperation implements WorkflowSystem.Operation<WFSharedContext,OperationCompleted> {
-    int stepNum;
-    String label;
-    Set<Condition> startTriggerConditions;
-    Set<Condition> skipTriggerConditions;
+public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,OperationCompleted> {
+    private int stepNum;
+    private String label;
+    private Set<Condition> startTriggerConditions;
+    private Set<Condition> skipTriggerConditions;
     private StepCallable callable;
     private StateObj startTriggerState;
     private StateObj skipTriggerState;
     private boolean didRun = false;
 
-    StepOperation(
+    public StepOperation(
             final int stepNum,
             final String label,
             final StepCallable callable,
@@ -75,7 +75,6 @@ class StepOperation implements WorkflowSystem.Operation<WFSharedContext,Operatio
         ControlBehavior controlBehavior = stepResultCapture.getControlBehavior();
         String statusString = stepResultCapture.getStatusString();
 
-        EngineWorkflowExecutor.logger.debug("StepOperation callable complete: " + stepResultCapture);
 
         MutableStateObj stateChanges = States.mutable();
         boolean success = null != result && result.isSuccess();
@@ -211,5 +210,17 @@ class StepOperation implements WorkflowSystem.Operation<WFSharedContext,Operatio
                "stepNum=" + stepNum +
                ", label='" + label + '\'' +
                '}';
+    }
+
+    public int getStepNum() {
+        return stepNum;
+    }
+
+    public Set<Condition> getStartTriggerConditions() {
+        return startTriggerConditions;
+    }
+
+    public Set<Condition> getSkipTriggerConditions() {
+        return skipTriggerConditions;
     }
 }
