@@ -467,7 +467,6 @@ class WorkflowController extends ControllerBase {
             }
 
         }
-
         AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
         def fprojects = frameworkService.projectNames(auth)
 
@@ -525,7 +524,7 @@ class WorkflowController extends ControllerBase {
             def clone = item.createClone()
             def moditem = item.createClone()
             modifyItemFromParams(moditem,input.params)
-            _validateCommandExec(moditem,input.params.origitemtype,auth, fprojects)
+            _validateCommandExec(moditem,input.params.origitemtype, fprojects)
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }

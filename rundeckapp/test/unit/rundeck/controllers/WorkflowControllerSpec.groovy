@@ -20,6 +20,7 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
 import rundeck.Workflow
+import rundeck.services.FrameworkService
 import spock.lang.Specification
 
 /**
@@ -34,6 +35,7 @@ class WorkflowControllerSpec extends Specification {
         wf.commands = new ArrayList()
         def inputparams = [(fieldname): 'blah']
         wf.commands << new CommandExec(inputparams)
+        controller.frameworkService = Mock(FrameworkService)
 
         when:
         def result = controller._applyWFEditAction(
@@ -58,6 +60,7 @@ class WorkflowControllerSpec extends Specification {
         given:
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
+        controller.frameworkService = Mock(FrameworkService)
 
         def inputparams = [(fieldname): 'blah']
         def cmd = new CommandExec(inputparams)

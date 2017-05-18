@@ -2807,8 +2807,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.description = ''
         }
 
-
-        def fprojects = frameworkService.projectNames((AuthContext)userAndRoles)
+        def fprojects = new ArrayList()
+        if(userAndRoles instanceof AuthContext){
+            fprojects = frameworkService.projectNames((AuthContext)userAndRoles)
+        }
 
         def valid = scheduledExecution.validate()
         if (scheduledExecution.scheduled) {

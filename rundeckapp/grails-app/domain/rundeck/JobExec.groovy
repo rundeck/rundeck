@@ -99,7 +99,10 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     * Return canonical map representation
      */
     public Map toMap(){
-        final Map map = [jobref: [group: jobGroup ? jobGroup : '', name: jobName, project: jobProject ? jobProject : '']]
+        final Map map = [jobref: [group: jobGroup ? jobGroup : '', name: jobName]]
+        if(jobProject){
+            map.project = jobProject
+        }
         if(argString){
             map.jobref.args=argString
         }
@@ -143,6 +146,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         JobExec exec = new JobExec()
         exec.jobGroup=map.jobref.group
         exec.jobName=map.jobref.name
+        if(map.jobref.jobProject){
+            exec.jobProject = map.jobref.jobProject
+        }
         if(map.jobref.args){
             exec.argString=map.jobref.args
         }
