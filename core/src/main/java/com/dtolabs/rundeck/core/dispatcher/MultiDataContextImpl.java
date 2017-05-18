@@ -71,6 +71,9 @@ public class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataConte
 
     @Override
     public void merge(final K k, final D data) {
+        if (data == null) {
+            throw new NullPointerException("data");
+        }
         if (map.containsKey(k)) {
             map.get(k).merge(data);
         } else {
@@ -91,7 +94,10 @@ public class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataConte
         }
         //merge map and data
         for (K k : input.getData().keySet()) {
-            merge(k, input.getData().get(k));
+            D data = input.getData().get(k);
+            if (null != data) {
+                merge(k, data);
+            }
         }
     }
 }

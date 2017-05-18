@@ -432,7 +432,9 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
 
         public Builder sharedDataContext(MultiDataContext<ContextView, DataContext> shared) {
             ctx.sharedDataContext = new MultiDataContextImpl<>();
-            ctx.sharedDataContext.merge(ContextView.global(), ctx.dataContext);
+            if (null != ctx.dataContext) {
+                ctx.sharedDataContext.merge(ContextView.global(), ctx.dataContext);
+            }
             ctx.sharedDataContext.merge(shared);
             return this;
         }
