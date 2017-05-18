@@ -85,7 +85,7 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
             } else if (item instanceof Map) {
                 out << renderSimpleMap(item, metadata)
             } else {
-                out << item.toString()
+                out << item.toString().encodeAsHTML()
             }
             closeTag(out, 'li')
         }
@@ -103,7 +103,7 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
         map.each { key, item ->
             openTag(out, 'tr')
             openTag(out, 'td')
-            out << key
+            out << key.encodeAsHTML()
             closeTag(out, 'td')
             openTag(out, 'td')
             if (item instanceof List) {
@@ -111,7 +111,7 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
             } else if (item instanceof Map) {
                 out << renderSimpleMap(item, metadata)
             } else {
-                out << item.toString()
+                out << item.toString().encodeAsHTML()
             }
             closeTag(out, 'td')
             closeTag(out, 'tr')
@@ -156,7 +156,7 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
                 } else if (item instanceof Map) {
                     out << renderSimpleMap(item, metadata)
                 } else {
-                    out << item.toString()
+                    out << item.toString().encodeAsHTML()
                 }
                 closeTag(out, 'td')
             }
@@ -169,7 +169,7 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
     private static void renderTableHeaders(out, List<String> headerNames) {
         openTag(out, 'tr')
         headerNames.each { key ->
-            out << '<th class="table-header">' + key + '</th>'
+            out << '<th class="table-header">' + key.encodeAsHTML() + '</th>'
         }
         closeTag(out, 'tr')
     }
@@ -177,7 +177,7 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
     private static void renderTableTitle(out, String title, int colspan) {
         openTag(out, "tr")
         openTag(out, "th colspan=\"$colspan\" class=\"table-header\"")
-        out << title
+        out << title.encodeAsHTML()
         closeTag(out, 'th')
         closeTag(out, 'tr')
     }
