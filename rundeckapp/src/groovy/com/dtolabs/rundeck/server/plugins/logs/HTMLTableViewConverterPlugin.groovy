@@ -96,6 +96,9 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
     public static String renderSimpleMap(Map map, Map<String, String> metadata) {
         def out = new StringBuffer()
         renderTableStart(out, metadata['css-class'])
+        if (metadata['table-title']) {
+            renderTableTitle(out, metadata['table-title'], 2)
+        }
         renderTableHeaders(out, ['Key', 'Value'])
         map.each { key, item ->
             openTag(out, 'tr')
@@ -136,6 +139,9 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
         }
         def out = new StringBuffer()
         renderTableStart(out, metadata['css-class'])
+        if (metadata['table-title']) {
+            renderTableTitle(out, metadata['table-title'], keys.size())
+        }
         renderTableHeaders(out, keys)
         list.each { dataObj ->
 
@@ -165,6 +171,14 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
         headerNames.each { key ->
             out << '<th class="table-header">' + key + '</th>'
         }
+        closeTag(out, 'tr')
+    }
+
+    private static void renderTableTitle(out, String title, int colspan) {
+        openTag(out, "tr")
+        openTag(out, "th colspan=\"$colspan\" class=\"table-header\"")
+        out << title
+        closeTag(out, 'th')
         closeTag(out, 'tr')
     }
 }
