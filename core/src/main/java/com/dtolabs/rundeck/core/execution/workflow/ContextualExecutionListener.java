@@ -76,6 +76,15 @@ class ContextualExecutionListener extends ExecutionListenerOverrideBase {
 
     }
 
+    @Override
+    public void log(final int level, final String message, final Map eventMeta) {
+        if (null != delegate) {
+            delegate.log(level, message, eventMeta);
+        } else if (null != logger) {
+            logger.log(level, message, eventMeta);
+        }
+    }
+
     public ExecutionListenerOverride createOverride() {
         return new ContextualExecutionListener(this, logger);
     }

@@ -257,6 +257,11 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         }
 
         @Override
+        public void log(final int level, final String message, final Map eventMeta) {
+            logger.log(level, message, eventMeta);
+        }
+
+        @Override
         public void event(final String eventType, final String message, final Map eventMeta) {
             logger.event(eventType, message, eventMeta);
         }

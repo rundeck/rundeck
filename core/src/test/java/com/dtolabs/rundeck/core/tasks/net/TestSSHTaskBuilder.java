@@ -433,6 +433,11 @@ public class TestSSHTaskBuilder extends TestCase {
         }
 
         @Override
+        public void log(final int level, final String message, final Map eventMeta) {
+
+        }
+
+        @Override
         public void event(final String eventType, final String message, final Map eventMeta) {
 
         }

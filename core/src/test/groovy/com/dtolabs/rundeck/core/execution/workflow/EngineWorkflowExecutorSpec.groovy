@@ -386,6 +386,11 @@ class EngineWorkflowExecutorSpec extends Specification {
         }
 
         @Override
+        void log(final int level, final String message, final Map eventMeta) {
+            println(message)
+        }
+
+        @Override
         void event(final String eventType, final String message, final Map eventMeta) {
 
         }

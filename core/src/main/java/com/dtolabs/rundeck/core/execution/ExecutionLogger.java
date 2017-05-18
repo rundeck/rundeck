@@ -34,9 +34,20 @@ public interface ExecutionLogger {
     public void log(final int level, final String message);
 
     /**
-     * @param eventType
-     * @param message
-     * @param eventMeta
+     * Log a message at a given level, with additional metadata
+     *
+     * @param level     the log level, from 0 to 5, where 0 is "error" and 5 is "debug"
+     * @param message   Message being logged. <code>null</code> messages are not logged, however, zero-length strings
+     *                  are.
+     * @param eventMeta metadata
+     */
+    public void log(final int level, final String message, final Map eventMeta);
+
+    /**
+     * @param eventType event type
+     * @param message   Message being logged. <code>null</code> messages are not logged, however, zero-length strings
+     *                  are.
+     * @param eventMeta metadata
      */
     public void event(String eventType, final String message, final Map eventMeta);
 }

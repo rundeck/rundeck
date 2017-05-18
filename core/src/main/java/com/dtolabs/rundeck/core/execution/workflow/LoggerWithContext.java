@@ -41,7 +41,12 @@ public class LoggerWithContext implements ExecutionLogger {
     }
 
     public final void log(final int level, final String message) {
-        log(level, message, contextual.getContext());
+        logInternal(level, message, contextual.getContext());
+    }
+
+    @Override
+    public void log(final int level, final String message, final Map eventMeta) {
+        logInternal(level, message, mergeMap(eventMeta, contextual.getContext()));
     }
 
     private Map<String, String> mergeMap(Map a, Map<String, String> b) {
@@ -62,7 +67,7 @@ public class LoggerWithContext implements ExecutionLogger {
         contextLogger.emit(eventType, LogLevel.NORMAL, message, mergeMap(eventMeta, contextual.getContext()));
     }
 
-    public void log(final int level, final String message, Map<String, String> data) {
+    public void logInternal(final int level, final String message, Map<String, String> data) {
         if (level >= Constants.DEBUG_LEVEL) {
             contextLogger.verbose(message, data);
         } else if (level >= Constants.VERBOSE_LEVEL) {

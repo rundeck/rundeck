@@ -119,6 +119,10 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
         public void log(int i, String s) {
             System.err.println(i + ": " + s);
         }
+        @Override
+        public void log(final int level, final String message, final Map eventMeta) {
+            System.err.println(level + ": " + message);
+        }
 
         @Override
         public void event(String eventType, String message, Map eventMeta) {

@@ -252,6 +252,9 @@ public class TestScriptPluginFileCopier {
         @Override public void log(int level, String message) {
 
         }
+        @Override
+        public void log(final int level, final String message, final Map eventMeta) {
+        }
 
         @Override public void event(String eventType, String message, Map eventMeta) {
 

@@ -842,6 +842,11 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
         }
 
         @Override
+        public void log(final int level, final String message, final Map eventMeta) {
+            System.err.println(level + ": " + message);
+        }
+
+        @Override
         public void event(String eventType, String message, Map eventMeta) {
             System.err.println(eventType + ": " + message);
         }

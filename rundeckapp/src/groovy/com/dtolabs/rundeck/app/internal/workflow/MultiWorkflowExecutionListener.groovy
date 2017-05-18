@@ -115,6 +115,11 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
     }
 
     @Override
+    void log(final int level, final String message, final Map eventMeta) {
+        delegate.log(level, message, eventMeta)
+    }
+
+    @Override
     void event(String eventType, String message, Map eventMeta) {
         delegate.event(eventType,message,eventMeta)
     }
