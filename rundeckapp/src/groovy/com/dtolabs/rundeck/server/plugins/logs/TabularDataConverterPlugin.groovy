@@ -27,7 +27,7 @@ import java.util.regex.Pattern
  * @since 5/8/17
  */
 
-@Plugin(name = TabularDataConverterPlugin.PROVIDER_NAME, service = 'ContentDataTypeViewPlugin')
+@Plugin(name = TabularDataConverterPlugin.PROVIDER_NAME, service = 'ContentConverter')
 @PluginDescription(title = 'Tabular Data Converter', description = '''Parses Tabular text (csv) into a a Java object.
 
 The "HTML Table View Converter" plugin can render this as a HTML Table.

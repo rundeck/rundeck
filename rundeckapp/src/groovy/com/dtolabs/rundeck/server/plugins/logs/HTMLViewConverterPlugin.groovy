@@ -25,7 +25,7 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
  * @since 5/8/17
  */
 
-@Plugin(name = HTMLViewConverterPlugin.PROVIDER_NAME, service = 'ContentDataTypeViewPlugin')
+@Plugin(name = HTMLViewConverterPlugin.PROVIDER_NAME, service = 'ContentConverter')
 @PluginDescription(title = 'HTML View Converter',
         description = '''Allows HTML embedded in log data to be rendered.
 

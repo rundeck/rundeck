@@ -25,7 +25,7 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
  * @since 5/5/17
  */
 
-@Plugin(name = MarkdownConverterPlugin.PROVIDER_NAME, service = 'ContentDataTypeViewPlugin')
+@Plugin(name = MarkdownConverterPlugin.PROVIDER_NAME, service = 'ContentConverter')
 @PluginDescription(title = 'Markdown View Converter',
         description = 'Renders Markdown as HTML')
 class MarkdownConverterPlugin implements ContentConverterPlugin {

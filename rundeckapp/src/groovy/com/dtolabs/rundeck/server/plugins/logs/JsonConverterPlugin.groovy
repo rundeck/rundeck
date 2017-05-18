@@ -27,7 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
  * @author greg
  * @since 5/5/17
  */
-@Plugin(name = JsonConverterPlugin.PROVIDER_NAME, service = 'ContentDataTypeViewPlugin')
+@Plugin(name = JsonConverterPlugin.PROVIDER_NAME, service = 'ContentConverter')
 @PluginDescription(title = 'JSON Data Converter',
         description = '''Parses JSON text into a a Java object.\n\nThe "HTML Table View Converter" plugin can render 
 this as a HTML Table.''')

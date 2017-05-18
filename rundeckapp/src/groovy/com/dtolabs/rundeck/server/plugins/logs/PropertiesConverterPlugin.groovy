@@ -24,7 +24,7 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
  * @author greg
  * @since 5/5/17
  */
-@Plugin(name = PropertiesConverterPlugin.PROVIDER_NAME, service = 'ContentDataTypeViewPlugin')
+@Plugin(name = PropertiesConverterPlugin.PROVIDER_NAME, service = 'ContentConverter')
 @PluginDescription(title = 'Properties Data Converter',
         description = '''Parses Java style Properties data into a Java object.
 
