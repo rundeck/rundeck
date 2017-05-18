@@ -28,12 +28,14 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.dispatcher.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.workflow.ReadableSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 import org.apache.tools.ant.BuildException;
@@ -213,18 +215,25 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         @Override
         public NodeStepResult call() {
             try {
-                final ReadableSharedContext outputContext = SharedDataContextUtils.outputContext(ContextView.nodeStep(
+                ContextView stepContextView = ContextView.nodeStep(
                         context.getStepNumber(),
                         node.getNodename()
-                ));
-                ExecutionContextImpl nodeDataContext = new ExecutionContextImpl.Builder(context).outputContext(outputContext).build();
+                );
+                final ReadableSharedContext outputContext = SharedDataContextUtils.outputContext(stepContextView);
+                ExecutionContextImpl nodeDataContext = new ExecutionContextImpl.Builder(context).outputContext(
+                        outputContext).build();
 
                 NodeStepResult result = framework.getExecutionService().executeNodeStep(
                         nodeDataContext,
                         item,
                         node
                 );
-                result = NodeStepDataResultImpl.with(result, outputContext.getSharedContext());
+                WFSharedContext sharedContext = outputContext.getSharedContext();
+                DataContext data = sharedContext.getData(stepContextView);
+                if (data != null) {
+                    sharedContext.merge(ContextView.node(node.getNodename()), data);
+                }
+                result = NodeStepDataResultImpl.with(result, sharedContext);
                 if (!result.isSuccess()) {
                     failureMap.put(node.getNodename(), result);
                 }
