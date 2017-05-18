@@ -53,6 +53,7 @@ class SimpleDataFilterPluginSpec extends Specification {
         then:
         if (expect) {
             sharedoutput.getSharedContext().getData(ContextView.global()) == ['data': expect]
+            1 * context.log(2, _, _)
         } else {
             sharedoutput.getSharedContext().getData(ContextView.global()) == [:]
         }

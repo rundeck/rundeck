@@ -16,18 +16,11 @@
 
 package com.dtolabs.rundeck.server.plugins.logging
 
-import com.dtolabs.rundeck.core.dispatcher.DataContext
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
-import com.dtolabs.rundeck.core.dispatcher.MutableDataContext
 import com.dtolabs.rundeck.core.execution.workflow.OutputContext
-import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext
 import com.dtolabs.rundeck.core.logging.LogEventControl
-import com.dtolabs.rundeck.core.logging.LogLevel
-import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
-import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 
@@ -51,10 +44,12 @@ Where `(key)` is the key name, and `(value)` is the value.
 class SimpleDataFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'key-value-data'
     public static final String PATTERN = '^RUNDECK:DATA:(.+)\\s*=\\s*(.+)$'
+    public static final int MIN_MESSAGE_LENGTH = 15
 
 
     Pattern dataPattern;
     OutputContext outputContext
+    Map<String, String> allData
     private ObjectMapper mapper
 
     @Override
@@ -62,26 +57,35 @@ class SimpleDataFilterPlugin implements LogFilterPlugin {
         dataPattern = Pattern.compile(PATTERN)
         outputContext = context.getOutputContext()
         mapper = new ObjectMapper()
+        allData = [:]
     }
 
     @Override
     void handleEvent(final PluginLoggingContext context, final LogEventControl event) {
-        if (event.eventType == 'log' && event.message?.length() > 15) {
+        if (event.eventType == 'log' && event.message?.length() > MIN_MESSAGE_LENGTH) {
             Matcher match = dataPattern.matcher(event.message)
             if (match.matches()) {
                 def key = match.group(1)
                 def value = match.group(2)
                 if (key && value) {
-                    outputContext.addOutput("data", key, value)
+                    allData[key] = value
                 }
-
-                context.event(
-                        'log',
-                        mapper.writeValueAsString([data: [(key): value]]),
-                        ['content-data-type': 'application/json']
-                )
             }
         }
     }
 
+    @Override
+    void complete(final PluginLoggingContext context) {
+        if (allData) {
+            outputContext.addOutput("data", allData)
+            context.log(
+                    2,
+                    mapper.writeValueAsString(allData),
+                    [
+                            'content-data-type'       : 'application/json',
+                            'content-meta:table-title': 'Key Value Data: Results'
+                    ]
+            )
+        }
+    }
 }
