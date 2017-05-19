@@ -665,10 +665,9 @@ class WorkflowControllerTests {
         assertEquals(['elf': 'monkey'], result.undo.params.configuration)
     }
 
-    public void testUndoWFEditActions() {
+    public void testUndoWFEditActionsInsert() {
         WorkflowController ctrl = new WorkflowController()
         //test insert & then undo
-        test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             wf.commands = new ArrayList()
 
@@ -690,8 +689,9 @@ class WorkflowControllerTests {
             assertNull result2.error
             assertEquals 0, wf.commands.size()
         }
+    public void testUndoWFEditActionsRemove() {
+        WorkflowController ctrl = new WorkflowController()
         //test remove & undo
-        test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
             wf.addToCommands(je)
@@ -720,8 +720,9 @@ class WorkflowControllerTests {
 
         }
 
+    public void testUndoWFEditActionsModify() {
+        WorkflowController ctrl = new WorkflowController()
         //test modify & undo
-        test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
             wf.addToCommands(je)
@@ -757,8 +758,9 @@ class WorkflowControllerTests {
 
         }
 
+    public void testUndoWFEditActionsMove() {
+        WorkflowController ctrl = new WorkflowController()
         //test move
-        test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
             CommandExec ce = new CommandExec(adhocExecution: true, adhocRemoteString: 'echo something')
@@ -797,7 +799,6 @@ class WorkflowControllerTests {
             assertEquals ce, xitem1
             final Object xitem2 = wf.commands.get(2)
             assertEquals ce2, xitem2
-        }
     }
 
     public void testUndoWFErrorHandlerEditActionsAddHandler() {

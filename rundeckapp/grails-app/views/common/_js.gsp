@@ -69,6 +69,7 @@
         userRenderApiToken: "${g.createLink(controller: 'user', action: 'renderApiToken')}",
 
         workflowEdit: '${createLink(controller:"workflow",action:"edit",params:projParams)}',
+        workflowCopy: '${createLink(controller:"workflow",action:"copy",params:projParams)}',
         workflowRender: '${createLink(controller:"workflow",action:"render",params:projParams)}',
         workflowSave: '${createLink(controller:"workflow",action:"save",params:projParams)}',
         workflowReorder: '${createLink(controller:"workflow",action:"reorder",params:projParams)}',

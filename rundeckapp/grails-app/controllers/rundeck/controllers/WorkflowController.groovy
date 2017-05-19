@@ -110,6 +110,39 @@ class WorkflowController extends ControllerBase {
                   ]
         )
     }
+    /**
+     * Reorder items
+     */
+    def copy() {
+        withForm {
+            if (!params.num) {
+                log.error("num parameter required")
+                return renderErrorFragment("num parameter required")
+            }
+
+            def Workflow editwf = _getSessionWorkflow()
+
+            def num = Integer.parseInt(params.num)
+            def result = _applyWFEditAction(editwf, [action: 'copy', num: num])
+            if (result.error) {
+                log.error(result.error)
+                return renderErrorFragment(result.error)
+            }
+            _pushUndoAction(params.scheduledExecutionId, result.undo)
+            _clearRedoStack(params.scheduledExecutionId)
+
+            return render(template: "/execution/wflistContent", model: [
+                    workflow : editwf,
+                    edit     : params.edit,
+                    highlight: num + 1,
+                    project  : params.project
+            ]
+            )
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
+        }
+    }
 
     /**
      * Return a Description for a plugin type, if available
@@ -483,6 +516,17 @@ class WorkflowController extends ControllerBase {
                 editwf.commands.add(toi, wfitem)
             }
             result['undo'] = [action: 'move', from: toi, to: fromi]
+        } else if (input.action == 'copy') {
+            def num = input.num
+            def newi = num + 1
+            if (num >= editwf.commands.size() || num < 0) {
+                result.error = "fromnum parameter is invalid: ${num}"
+                return result
+            }
+
+            def wfitem = editwf.commands.get(num).createClone()
+            editwf.commands.add(newi, wfitem)
+            result['undo'] = [action: 'remove', num: newi]
         } else if (input.action == 'remove') {
             def numi = input.num
             def item = editwf.commands.remove(numi)

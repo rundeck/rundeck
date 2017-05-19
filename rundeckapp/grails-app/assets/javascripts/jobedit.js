@@ -374,6 +374,10 @@ function _wfiedit(key,num,isErrorHandler) {
     });
 }
 
+function _wficopy(key,num,isErrorHandler) {
+    _ajaxWFAction(appLinks.workflowCopy,{num:num,edit:true});
+}
+
 function _wfiview(key,num,isErrorHandler) {
     var params = {num:num,edit:true,key:key, isErrorHandler:isErrorHandler?true:false};
     if (getCurSEID()) {

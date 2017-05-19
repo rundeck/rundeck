@@ -70,9 +70,12 @@
                   title="${g.message(code:'Workflow.'+(isErrorHandler?'stepErrorHandler':'step')+'.action.delete.label')}">
                 <i class="glyphicon glyphicon-remove"></i></span>
 
+            <span class="textbtn textbtn-info wfitem_copy"  title="${message(code:"workflow.step.action.duplicate.title")}">
+                <g:icon name="duplicate"/>
+            </span>
             <span class="textbtn textbtn-info wfitem_edit" >
                 <i class="glyphicon glyphicon-edit"></i>
-                edit
+                <g:message code="edit" />
             </span>
             <g:unless test="${isErrorHandler}">
                 <span class="dragHandle"  title="Drag to reorder"><g:icon name="resize-vertical"/></span>
@@ -96,6 +99,14 @@
                     var f=$('workflowContent').down('form');
                     if(!f || 0==f.length){
                         _wfiedit("${enc(js: i)}","${enc(js:stepNum)}",${isErrorHandler?true:false});
+                    }
+                });
+            });
+            $('pfctrls_${enc(js: i)}').select('span.wfitem_copy').each(function(e){
+                Event.observe(e,'click',function(evt){
+                    var f=$('workflowContent').down('form');
+                    if(!f || 0==f.length){
+                        _wficopy("${enc(js: i)}","${enc(js:stepNum)}",${isErrorHandler?true:false});
                     }
                 });
             });
