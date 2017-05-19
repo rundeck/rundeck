@@ -18,6 +18,9 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import rundeck.WorkflowStep
 import rundeck.Workflow
 import rundeck.JobExec
@@ -26,11 +29,13 @@ import rundeck.ScheduledExecution
 import rundeck.PluginStep
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import rundeck.services.ExecutionService
+import rundeck.services.PluginService
 
 import javax.servlet.http.HttpServletResponse
 
-class WorkflowController extends ControllerBase {
+class WorkflowController extends ControllerBase implements PluginListRequired {
     def frameworkService
+    PluginService pluginService
     static allowedMethods = [
             redo:'POST',
             remove:'POST',
@@ -43,11 +48,12 @@ class WorkflowController extends ControllerBase {
         return redirect(controller: 'menu', action: 'index')
     }
 
+    Map<String, Class> requiredPluginTypes = [logFilterPlugins: LogFilterPlugin]
 
     /**
      * Render the edit form for a workflow item
      */
-    def edit = {
+    def edit() {
         if (!params.num && !params['newitemtype']) {
             log.error("num parameter is required")
             return renderErrorFragment("num parameter is required")
@@ -93,22 +99,19 @@ class WorkflowController extends ControllerBase {
             }
         }
 
-        return render(
-                template: "/execution/wfitemEdit",
-                  model: [
-                          item                : item,
-                          key                 : params.key,
-                          num                 : numi,
-                          scheduledExecutionId: params.scheduledExecutionId,
-                          newitemtype         : newitemtype,
-                          origitemtype         : origitemtype,
-                          newitemDescription  : newitemDescription,
-                          pluginNotFound      : null == newitemDescription,
-                          edit                : true,
-                          isErrorHandler      : isErrorHandler,
-                          newitemnodestep     : params.newitemnodestep
-                  ]
-        )
+        [
+                item                : item,
+                key                 : params.key,
+                num                 : numi,
+                scheduledExecutionId: params.scheduledExecutionId,
+                newitemtype         : newitemtype,
+                origitemtype        : origitemtype,
+                newitemDescription  : newitemDescription,
+                pluginNotFound      : null == newitemDescription,
+                edit                : true,
+                isErrorHandler      : isErrorHandler,
+                newitemnodestep     : params.newitemnodestep
+        ]
     }
     /**
      * Reorder items
@@ -144,6 +147,53 @@ class WorkflowController extends ControllerBase {
         }
     }
 
+    def editStepFilter() {
+        if (!params.num) {
+            log.error("num parameter is required")
+            return renderErrorFragment("num parameter is required")
+        }
+        if (!params.num) {
+            log.error("num parameter is required")
+            return renderErrorFragment("num parameter is required")
+        }
+        if (!params.index && !params.newfiltertype) {
+            log.error("index parameter is required")
+            return renderErrorFragment("index parameter is required")
+        }
+
+        def Workflow editwf = _getSessionWorkflow()
+        def numi = Integer.parseInt(params.num);
+        if (numi >= editwf.commands.size()) {
+            log.error("num parameter is invalid: ${numi}")
+            return renderErrorFragment("num parameter is invalid: ${numi}")
+        }
+        def item = null != numi ? editwf.commands.get(numi) : null
+        def pluginconfigs = item.getPluginConfigForType('LogFilter')
+        def filterPlugins = pluginService.listPlugins(LogFilterPlugin)
+        def newfilterdesc
+        def filtertype
+        def config = [:]
+        if (params.index) {
+            def filteri = Integer.parseInt(params.index);
+            if (!pluginconfigs || !(pluginconfigs instanceof List && pluginconfigs[filteri])) {
+                log.error("index parameter is invalid: ${filteri}")
+                return renderErrorFragment("index parameter is invalid: ${filteri}")
+            }
+            filtertype = pluginconfigs[filteri].type
+            config = pluginconfigs[filteri].config
+        } else {
+            filtertype = params.newfiltertype
+            newfilterdesc = filterPlugins[params.newfiltertype].description
+        }
+        [
+                num          : params.num,
+                index        : params.index,
+                type         : filtertype,
+                description  : newfilterdesc,
+                config       : config,
+                newfiltertype: params.newfiltertype
+        ]
+    }
     /**
      * Return a Description for a plugin type, if available
      * @param type
@@ -554,6 +604,111 @@ class WorkflowController extends ControllerBase {
                 num = 0
             }
             result['undo'] = [action: 'remove', num: num]
+        } else if (input.action == 'insertFilter') {
+            def numi = input.num
+            def indexi = input.index ?: 0
+            def config = input.config
+            def filtertype = input.filtertype
+
+            if (numi >= (editwf.commands ? editwf.commands.size() : 1)) {
+                result.error = "num parameter is invalid: ${numi}"
+                return result
+            }
+
+            def validation = _validateLogFilter(config, filtertype)
+            if (!validation.valid) {
+                return [error: "Plugin configuration was not valid: ${validation.report}", item: config, report:
+                        validation.report]
+            }
+            config = validation.props
+
+            def WorkflowStep item = editwf.commands.get(numi)
+            def filterConfig = item.getPluginConfigForType(ServiceNameConstants.LogFilter)
+            if (filterConfig instanceof List) {
+                List configs = (List) filterConfig
+                configs.add(indexi, [type: filtertype, config: config])
+            } else {
+                filterConfig = [[type: filtertype, config: config]]
+                indexi = 0;
+            }
+            item.storePluginConfigForType(ServiceNameConstants.LogFilter, filterConfig)
+
+            result['undo'] = [action: 'removeFilter', num: input.num, index: indexi]
+        } else if (input.action == 'removeFilter') {
+            def numi = input.num
+            int indexi = input.index
+            if (numi >= (editwf.commands ? editwf.commands.size() : 1)) {
+                result.error = "num parameter is invalid: ${numi}"
+                return result
+            }
+            def WorkflowStep item = editwf.commands.get(numi)
+            def filterConfig = item.getPluginConfigForType(ServiceNameConstants.LogFilter)
+
+            if (!(filterConfig instanceof List)) {
+                result.error = "index parameter is invalid: ${indexi}"
+                return result
+            }
+            List filterConfigs = (List) filterConfig
+
+            if (indexi >= filterConfigs.size()) {
+                result.error = "index parameter is invalid: ${indexi}"
+                return result
+            }
+            def filterdef = filterConfigs.remove(indexi)
+
+            item.storePluginConfigForType(ServiceNameConstants.LogFilter, filterConfig)
+
+            result['undo'] = [
+                    action    : 'insertFilter',
+                    num       : input.num,
+                    index     : indexi,
+                    config    : filterdef.config,
+                    filtertype: filterdef.type
+            ]
+        } else if (input.action == 'modifyFilter') {
+            def numi = input.num
+            int indexi = input.index
+            def config = input.config
+            def filtertype = input.filtertype
+
+            if (numi >= (editwf.commands ? editwf.commands.size() : 1)) {
+                result.error = "num parameter is invalid: ${numi}"
+                return result
+            }
+            def WorkflowStep item = editwf.commands.get(numi)
+            def filterConfig = item.getPluginConfigForType(ServiceNameConstants.LogFilter)
+
+            if (!(filterConfig instanceof List)) {
+                result.error = "index parameter is invalid: ${indexi}"
+                return result
+            }
+            List filterConfigs = (List) filterConfig
+
+            if (indexi >= filterConfigs.size()) {
+                result.error = "index parameter is invalid: ${indexi}"
+                return result
+            }
+
+            def validation = _validateLogFilter(config, filtertype)
+            if (!validation.valid) {
+                return [error: "Plugin configuration was not valid: ${validation.report}", item: config, report:
+                        validation.report]
+            }
+            config = validation.props
+
+            def origfilter = filterConfigs.get(indexi)
+
+            filterConfigs.set(indexi, [type: filtertype, config: config])
+
+            item.storePluginConfigForType(ServiceNameConstants.LogFilter, filterConfig)
+
+            result['undo'] = [
+                    action    : 'modifyFilter',
+                    num       : numi,
+                    index     : indexi,
+                    config    : origfilter.config,
+                    filtertype: origfilter.type
+            ]
         } else if (input.action == 'modify') {
             def numi = input.num
             if (numi >= (editwf.commands ? editwf.commands.size() : 1)) {
@@ -823,5 +978,21 @@ class WorkflowController extends ControllerBase {
             step.configuration=validation.props
         }
     }
-    
+
+    /**
+     * Validate a LogFilterPlugin configuration.
+     * @param config the config
+     * @param type plugin type
+     */
+    protected Map _validateLogFilter(Map config, String type) {
+        def described = pluginService.getPluginDescriptor(type, LogFilterPlugin)
+        return frameworkService.validateDescription(
+                described.description,
+                '',
+                config,
+                null,
+                PropertyScope.Instance,
+                PropertyScope.Project
+        )
+    }
 }

@@ -16,12 +16,19 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.Workflow
+import rundeck.services.FrameworkService
+import rundeck.services.PluginService
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Created by greg on 2/16/16.
@@ -157,5 +164,150 @@ class WorkflowControllerSpec extends Specification {
         0        | _
         1        | _
         2        | _
+    }
+
+    @Unroll
+    def "test edit action insertFilter"() {
+
+        given:
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        JobExec item1 = new JobExec(jobName: 'blah', jobGroup: 'blee')
+        CommandExec item2 = new CommandExec(adhocExecution: true, adhocRemoteString: 'echo something')
+        CommandExec item3 = new CommandExec(adhocExecution: true, adhocFilepath: '/xy/z', argString: 'test what')
+        wf.addToCommands(item1)
+        wf.addToCommands(item2)
+        wf.addToCommands(item3)
+        item2.storePluginConfigForType(ServiceNameConstants.LogFilter, [[type: 'xyz', config: [:]]])
+        item3.storePluginConfigForType(
+                ServiceNameConstants.LogFilter,
+                [[type: 'xyz', config: [:]], [type: 'xyz', config: [:]]]
+        )
+
+
+        controller.pluginService = Mock(PluginService)
+        controller.frameworkService = Mock(FrameworkService)
+        def description = DescriptionBuilder.builder().name(filtertype).build()
+        when:
+
+
+        def result = controller._applyWFEditAction(
+                wf,
+                [action: 'insertFilter', num: stepnum, index: index, filtertype: filtertype, config: config]
+        )
+
+        then:
+        1 * controller.pluginService.getPluginDescriptor(filtertype, LogFilterPlugin) >>
+                new DescribedPlugin(null, description, filtertype)
+        1 * controller.frameworkService.validateDescription(description, '', config, _, _, _) >> [
+                valid: true, desc: description, props: validconfig
+        ]
+
+        result.undo == [action: 'removeFilter', num: stepnum, index: index ?: 0]
+        def pluginconf = wf.commands[stepnum].getPluginConfigForType(ServiceNameConstants.LogFilter)
+        pluginconf[index ?: 0] == [type: filtertype, config: validconfig]
+
+
+        where:
+        stepnum | index | filtertype  | config | validconfig
+        0       | null  | 'test-type' | [:]    | [a: 'b']
+        0       | 0     | 'test-type' | [:]    | [a: 'b']
+        1       | 0     | 'test-type' | [:]    | [a: 'b']
+        1       | 1     | 'test-type' | [:]    | [a: 'b']
+        2       | 0     | 'test-type' | [:]    | [a: 'b']
+        2       | 1     | 'test-type' | [:]    | [a: 'b']
+        2       | 2     | 'test-type' | [:]    | [a: 'b']
+    }
+
+    @Unroll
+    def "test edit action modifyFilter"() {
+
+        given:
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        JobExec item1 = new JobExec(jobName: 'blah', jobGroup: 'blee')
+        CommandExec item2 = new CommandExec(adhocExecution: true, adhocRemoteString: 'echo something')
+        CommandExec item3 = new CommandExec(adhocExecution: true, adhocFilepath: '/xy/z', argString: 'test what')
+        wf.addToCommands(item1)
+        wf.addToCommands(item2)
+        wf.addToCommands(item3)
+        item2.storePluginConfigForType(ServiceNameConstants.LogFilter, [[type: 'xyz', config: [a: 'b']]])
+        item3.storePluginConfigForType(
+                ServiceNameConstants.LogFilter,
+                [[type: 'cba', config: [b: 'c']], [type: 'twf', config: [c: 'd']]]
+        )
+
+
+        controller.pluginService = Mock(PluginService)
+        controller.frameworkService = Mock(FrameworkService)
+        def description = DescriptionBuilder.builder().name(filtertype).build()
+        when:
+
+
+        def result = controller._applyWFEditAction(
+                wf,
+                [action: 'modifyFilter', num: stepnum, index: index, filtertype: filtertype, config: config]
+        )
+
+        then:
+        1 * controller.pluginService.getPluginDescriptor(filtertype, LogFilterPlugin) >>
+                new DescribedPlugin(null, description, filtertype)
+        1 * controller.frameworkService.validateDescription(description, '', config, _, _, _) >> [
+                valid: true, desc: description, props: validconfig
+        ]
+
+        result.undo == [action: 'modifyFilter', num: stepnum, index: index, filtertype: origtype, config: origconfig]
+        def pluginconf = wf.commands[stepnum].getPluginConfigForType(ServiceNameConstants.LogFilter)
+        pluginconf[index] == [type: filtertype, config: validconfig]
+
+
+
+        where:
+        stepnum | index | filtertype  | config | validconfig | origtype | origconfig
+        1       | 0     | 'test-type' | [:]    | [a: 'b']    | 'xyz'    | [a: 'b']
+        2       | 0     | 'test-type' | [:]    | [a: 'b']    | 'cba'    | [b: 'c']
+        2       | 1     | 'test-type' | [:]    | [a: 'b']    | 'twf'    | [c: 'd']
+    }
+
+    @Unroll
+    def "test edit action removeFilter"() {
+
+        given:
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        JobExec item1 = new JobExec(jobName: 'blah', jobGroup: 'blee')
+        CommandExec item2 = new CommandExec(adhocExecution: true, adhocRemoteString: 'echo something')
+        CommandExec item3 = new CommandExec(adhocExecution: true, adhocFilepath: '/xy/z', argString: 'test what')
+        wf.addToCommands(item1)
+        wf.addToCommands(item2)
+        wf.addToCommands(item3)
+        item2.storePluginConfigForType(ServiceNameConstants.LogFilter, [[type: 'xyz', config: [a: 'b']]])
+        item3.storePluginConfigForType(
+                ServiceNameConstants.LogFilter,
+                [[type: 'cba', config: [b: 'c']], [type: 'twf', config: [c: 'd']]]
+        )
+
+
+        controller.pluginService = Mock(PluginService)
+        controller.frameworkService = Mock(FrameworkService)
+        def description = DescriptionBuilder.builder().name(filtertype).build()
+        when:
+
+
+        def result = controller._applyWFEditAction(
+                wf,
+                [action: 'removeFilter', num: stepnum, index: index]
+        )
+
+        then:
+
+        result.undo == [action: 'insertFilter', num: stepnum, index: index, filtertype: filtertype, config: config]
+        def pluginconf = wf.commands[stepnum].getPluginConfigForType(ServiceNameConstants.LogFilter)
+        pluginconf.size() == expectsize
+
+
+
+        where:
+        stepnum | index | filtertype | config   | expectsize
+        1       | 0     | 'xyz'      | [a: 'b'] | 0
+        2       | 0     | 'cba'      | [b: 'c'] | 1
+        2       | 1     | 'twf'      | [c: 'd'] | 1
     }
 }

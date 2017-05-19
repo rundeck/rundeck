@@ -677,10 +677,10 @@ function RDNode(name, steps,flow){
     self.flow= flow;
     self.name=name;
     self.state=ko.observable();
-    self.steps=ko.observableArray([]).extend({ rateLimit: 200 });
+    self.scriptSteps=ko.observableArray([]).extend({ rateLimit: 200 });
     self.expanded=ko.observable(false);
     var mapping = {
-        'steps': {
+        "scriptSteps": {
             key: function (data) {
                 return ko.utils.unwrapObservable(data.stepctx);
             },
@@ -703,7 +703,7 @@ function RDNode(name, steps,flow){
         //sum up duration of all completed steps
        var ms=self.durationMs();
         if(ms<0) {
-            ko.utils.arrayForEach(self.steps(), function (x) {
+            ko.utils.arrayForEach(self.scriptSteps(), function (x) {
                 if (!x.parameterizedStep()) {
                     var ms2 = x.duration();
                     if (ms2 >= 0 && ms < 0) {
@@ -726,7 +726,7 @@ function RDNode(name, steps,flow){
     self.lastUpdated=ko.observable(null);
     self.findStepForCtx=function(stepctx){
 
-        var found=ko.utils.arrayFilter(self.steps(),function(e){
+        var found=ko.utils.arrayFilter(self.scriptSteps(),function(e){
             return e.stepctx==stepctx;
         });
         if(found && found.length==1){
@@ -786,7 +786,7 @@ function RDNode(name, steps,flow){
 
         var testStates= ['SUCCEEDED', 'FAILED', 'WAITING', 'NOT_STARTED', 'RUNNING', 'RUNNING_HANDLER'];
         //determine count for step states
-        ko.utils.arrayForEach(self.steps(),function(step){
+        ko.utils.arrayForEach(self.scriptSteps(),function(step){
             var z = step.executionState();
 
             if(!step.parameterizedStep()) {
@@ -870,10 +870,10 @@ function RDNode(name, steps,flow){
      */
     self.loadData=function(data){
         self.updateSummary(data.summary);
-        self.updateSteps(data.steps);
+        self.updateSteps(data.scriptSteps);
     };
     self.updateSteps=function(steps){
-        ko.mapping.fromJS({steps: steps}, mapping, this);
+        ko.mapping.fromJS({scriptSteps: steps}, mapping, this);
         self.summarize();
     };
     if(steps){
@@ -1085,7 +1085,7 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
             }
             nodestep.followingOutput(true);
             ko.utils.arrayForEach(self.nodes(), function (n) {
-                ko.utils.arrayForEach(n.steps(), function (step) {
+                ko.utils.arrayForEach(n.scriptSteps(), function (step) {
                     //disable following for every other nodestep
                     if(step != nodestep){
                         step.followingOutput(false);
@@ -1151,7 +1151,7 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
 
         var ndx = RDWorkflow.workflowIndexForContextId(stepid);
         var params = RDWorkflow.paramsForContextId(stepid);
-        var step = model.steps[ndx];
+        var step = model.scriptSteps[ndx];
         if(params && step.parameterStates && step.parameterStates[params]){
             step = step.parameterStates[params];
         }
@@ -1182,8 +1182,8 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
         if(typeof(pending)=='undefined'){
             pending = {};
         }
-        for (var k = 0; k < workflowData.steps.length; k++) {
-            var step = workflowData.steps[k];
+        for (var k = 0; k < workflowData.scriptSteps.length; k++) {
+            var step = workflowData.scriptSteps[k];
 
             if (step.hasSubworkflow) {
                 self.countPendingStepsForNodes(step.workflow, nodes, pending);

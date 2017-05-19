@@ -78,6 +78,7 @@
         workflowRedo: '${createLink(controller:"workflow",action:"redo",params:projParams)}',
         workflowRevert: '${createLink(controller:"workflow",action:"revert",params:projParams)}',
         workflowRenderUndo: '${createLink(controller:"workflow",action:"renderUndo",params:projParams)}',
+        workflowEditStepFilter: '${createLink(controller:"workflow",action:"editStepFilter",params:projParams)}',
 
         editOptsRenderUndo: '${createLink(controller:"editOpts",action:"renderUndo",params:projParams)}',
         editOptsEdit: '${createLink(controller:"editOpts",action:"edit",params:projParams)}',

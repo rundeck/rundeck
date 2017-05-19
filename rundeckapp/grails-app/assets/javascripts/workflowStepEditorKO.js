@@ -34,7 +34,7 @@ function WorkflowEditor() {
      * Steps keyed by identifier string
      * @type {*}
      */
-    self.steps = ko.observable({});
+    self.scriptSteps = ko.observable({});
 
     /**
      * Return the step given the key
@@ -42,7 +42,63 @@ function WorkflowEditor() {
      * @returns {*}
      */
     self.step = function (key) {
-        return self.steps()[key];
+        return self.scriptSteps()[key];
+    };
+
+    self.filterPlugins = ko.observableArray([]);
+    self.loadStepFilterPlugins = function (data) {
+        //bind in the input data
+        ko.mapping.fromJS({filterPlugins: data}, {
+            filterPlugins: {
+                key: function (data) {
+                    return ko.utils.unwrapObservable(data.type);
+                },
+                create: function (options) {
+                    return new StepFilterPlugin(options.data);
+                }
+            }
+        }, self);
+    };
+
+    self.modalStepFilters = ko.observable();
+    self.modalFilterEdit = ko.observable();
+    self.modalFilterEditNewType = ko.observable();
+    self.addFilterPopup = function (step) {
+        "use strict";
+        self.modalStepFilters(step);
+        //show modal dialog to add a filter to the given step
+        jQuery('#addLogFilterPluginModal').modal('show');
+    };
+    //use selected filter plugin to add a filter for the current modal step
+    self.addSelectedFilterPopup = function (filter) {
+        "use strict";
+        jQuery('#addLogFilterPluginModal').modal('hide');
+        self.editFilterPopup(self.modalStepFilters(), null, filter.type());
+    };
+
+
+    self.editFilterPopup = function (step, stepfilter, newtype) {
+        "use strict";
+        self.modalStepFilters(step);
+        self.modalFilterEdit(stepfilter);
+        self.modalFilterEditNewType(newtype);
+        //show modal dialog to add a filter to the given step
+
+        var params = {num: step.num()};
+        if (getCurSEID()) {
+            params['scheduledExecutionId'] = getCurSEID();
+        }
+        if (stepfilter) {
+            params.index = stepfilter.index();
+        } else {
+            params.newfiltertype = newtype;
+        }
+        jQuery('#editLogFilterPluginModalForm').load(
+            _genUrl(appLinks.workflowEditStepFilter, params),
+            function (data) {
+                jQuery('#editLogFilterPluginModal').modal('show');
+            }
+        );
     };
 
     /**
@@ -51,10 +107,38 @@ function WorkflowEditor() {
      * @param elemId dom element ID
      * @param data binding data
      */
-    self.bindKey = function (key, elemId, data) {
+    self.bindScriptStepKey = function (key, elemId, data) {
         var step = new ScriptStep(data);
-        self.steps()[key] = step;
+        self.scriptSteps()[key] = step;
         ko.applyBindings(step, document.getElementById(elemId));
+    };
+    /**
+     * Filters for steps by identifier string
+     * @type {*}
+     */
+    self.stepFilters = ko.observable({});
+
+
+    /**
+     * Return the step filters the key
+     * @param key
+     * @returns {*}
+     */
+    self.stepFilter = function (key) {
+        return self.stepFilters()[key];
+    };
+
+    self.bindStepFilters = function (key, elemId, data) {
+        "use strict";
+        var filters = new WorkflowStep(data);
+        self.stepFilters()[key] = filters;
+        ko.applyBindings(filters, document.getElementById(elemId));
+    };
+
+    self.reset = function () {
+        "use strict";
+        self.scriptSteps({});
+        self.stepFilters({});
     };
 }
 /**
@@ -125,4 +209,73 @@ function ScriptStep(data) {
 
     //bind in the input data
     ko.mapping.fromJS(data, {}, this);
+}
+/**
+ * plugin description info
+ * @param data
+ * @constructor
+ */
+function StepFilterPlugin(data) {
+    "use strict";
+    var self = this;
+    self.type = ko.observable(data.type);
+    self.title = ko.observable(data.title);
+    self.description = ko.observable(data.description);
+    self.selected = ko.observable(false);
+    self.descriptionFirstLine = ko.computed(function () {
+        var desc = self.description();
+        if (desc) {
+            return desc.indexOf('\n') ? desc.substring(0, desc.indexOf('\n')) : desc;
+        }
+        return desc;
+    });
+    ko.mapping.fromJS(data, {}, this);
+}
+/**
+ * A single filter instance,
+ * @param data
+ * @constructor
+ */
+function StepFilter(data) {
+    "use strict";
+    var self = this;
+    self.type = ko.observable(data.type);
+    self.config = ko.observable(data.config);
+    self.index = ko.observable(data.index);
+    ko.mapping.fromJS(data, {}, this);
+}
+/**
+ * A list of filters for a step
+ * @param data
+ * @constructor
+ */
+function WorkflowStep(data) {
+    "use strict";
+    var self = this;
+    self.num = ko.observable(data.num);
+    self.filters = ko.observableArray([]);
+    self.addFilter = function (type, config) {
+        self.filters.push(new StepFilter({type: type, config: config}));
+    };
+    self.addFilterPopup = function () {
+        workflowEditor.addFilterPopup(self);
+    };
+    self.addFilterTest = function () {
+        self.addFilter('mask-passwords', {});
+    };
+    self.editFilter = function (filter) {
+        workflowEditor.editFilterPopup(self, filter);
+    };
+
+    //bind in the input data
+    ko.mapping.fromJS(data, {
+        filters: {
+            // key: function (data) {
+            //     return ko.utils.unwrapObservable(data.stepctx);
+            // },
+            create: function (options) {
+                return new StepFilter(options.data);
+            }
+        }
+    }, this);
 }

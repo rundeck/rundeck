@@ -51,6 +51,19 @@ class WorkflowStep {
         }
     }
 
+    public Object getPluginConfigForType(String type) {
+        return getPluginConfig()?.get(type)
+    }
+    /**
+     * store plugin configuration for a type
+     */
+    public void storePluginConfigForType(String key, Object obj) {
+        def config = getPluginConfig() ?: [:]
+        config.put(key, obj)
+        setPluginConfig(config)
+    }
+
+
     public void setPluginConfig(Map obj) {
         //serialize json and store into field
         if (null != obj) {

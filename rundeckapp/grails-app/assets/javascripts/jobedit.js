@@ -175,7 +175,7 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         if (isscriptStep) {
             var key = liitem.find('._wfiedit').data('rkey');
             if (key) {
-                workflowEditor.steps()[key].guessAceMode.subscribe(function (val) {
+                workflowEditor.scriptSteps()[key].guessAceMode.subscribe(function (val) {
                     setAceSyntaxMode(val, editor);
                 });
             }
@@ -184,7 +184,7 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         var obj = jQuery(elem);
         if (obj.hasClass('context_env_autocomplete')) {
             var key = liitem.find('._wfiedit').data('rkey');
-            return (key && workflowEditor.steps()[key] && workflowEditor.steps()[key].guessAceMode() || 'sh');
+            return (key && workflowEditor.scriptSteps()[key] && workflowEditor.scriptSteps()[key].guessAceMode() || 'sh');
         }
         return null;
     });

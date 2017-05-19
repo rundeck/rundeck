@@ -64,6 +64,14 @@
                 <span class="textbtn textbtn-success wfitem_add_errorhandler">
                     <i class="glyphicon glyphicon-plus"></i><g:message code="Workflow.stepErrorHandler.label"/></span>
             </g:if>
+
+            <g:if test="${!isErrorHandler}">
+                <span class="textbtn textbtn-info wfitem_add_filter"
+                      data-stepnum="${stepNum}"
+                      title="Add Log Filter">
+                    <g:icon name="filter"/>
+                </span>
+            </g:if>
             <span class="textbtn textbtn-danger "
                   data-toggle="collapse"
                   data-target="#itemdel_${enc(attr:i)}"
