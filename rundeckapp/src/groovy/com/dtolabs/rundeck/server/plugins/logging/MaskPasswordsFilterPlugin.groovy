@@ -38,8 +38,13 @@ import java.util.regex.Pattern
 class MaskPasswordsFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'mask-passwords'
 
-    @PluginProperty(title = "Replacement", description = "Text to replace secure values", defaultValue = "[SECURE]")
-    String replacement = '[SECURE]'
+    @PluginProperty(
+            title = "Replacement",
+            description = "Text to replace secure values",
+            defaultValue = "[SECURE]",
+            required = true
+    )
+    String replacement
 
     Pattern regex;
     private boolean enabled;
