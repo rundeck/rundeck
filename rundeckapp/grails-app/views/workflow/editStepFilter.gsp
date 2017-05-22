@@ -23,11 +23,8 @@
 
 <g:set var="serviceName" value="LogFilter"/>
 <div class="container">
-    <g:hiddenField name="num" value="${num}"/>
     <g:hiddenField name="type" value="${type}"/>
-    <g:if test="${index}">
-        <g:hiddenField name="index" value="${index}"/>
-    </g:if>
+
     <g:if test="${newfiltertype}">
         <g:hiddenField name="newfiltertype" value="${newfiltertype}"/>
     </g:if>

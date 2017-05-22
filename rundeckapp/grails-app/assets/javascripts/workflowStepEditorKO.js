@@ -59,6 +59,12 @@ function WorkflowEditor() {
             }
         }, self);
     };
+    self.pluginOfType = function (type) {
+        "use strict";
+        return ko.utils.arrayFirst(self.filterPlugins(), function (obj) {
+            return obj.type() === type;
+        });
+    };
 
     self.modalStepFilters = ko.observable();
     self.modalFilterEdit = ko.observable();
@@ -70,14 +76,28 @@ function WorkflowEditor() {
         jQuery('#addLogFilterPluginModal').modal('show');
     };
     //use selected filter plugin to add a filter for the current modal step
-    self.addSelectedFilterPopup = function (filter) {
+    self.addSelectedFilterPopup = function (plugin) {
         "use strict";
         jQuery('#addLogFilterPluginModal').modal('hide');
-        self.editFilterPopup(self.modalStepFilters(), null, filter.type());
+        self.editFilterPopup(self.modalStepFilters(), null, plugin.type());
     };
 
 
-    self.editFilterPopup = function (step, stepfilter, newtype) {
+    self.loadFilterPluginEditor = function (params, data) {
+        return jQuery.ajax({
+            type: 'post',
+            url: _genUrl(appLinks.workflowEditStepFilter, params),
+            data: data,
+            success: function (resdata, status, xhr) {
+                jQuery('#editLogFilterPluginModalForm').html(resdata);
+
+            },
+            error: function (xhr, status, err) {
+
+            }
+        });
+    };
+    self.editFilterPopup = function (step, stepfilter, newtype, validate, validatedata) {
         "use strict";
         self.modalStepFilters(step);
         self.modalFilterEdit(stepfilter);
@@ -89,16 +109,88 @@ function WorkflowEditor() {
             params['scheduledExecutionId'] = getCurSEID();
         }
         if (stepfilter) {
-            params.index = stepfilter.index();
+            params.index = step.filters().indexOf(stepfilter);
         } else {
             params.newfiltertype = newtype;
         }
-        jQuery('#editLogFilterPluginModalForm').load(
-            _genUrl(appLinks.workflowEditStepFilter, params),
-            function (data) {
-                jQuery('#editLogFilterPluginModal').modal('show');
+        var data = null;
+        if (validate) {
+            params.validate = true;
+            data = validatedata;
+        }
+        return self.loadFilterPluginEditor(params, data).success(function () {
+            jQuery('#editLogFilterPluginModal').modal('show');
+        });
+    };
+
+    self.removeFilter = function (step, stepfilter) {
+        "use strict";
+
+        var params = {num: step.num()};
+        if (getCurSEID()) {
+            params['scheduledExecutionId'] = getCurSEID();
+        }
+        params.index = step.filters().indexOf(stepfilter);
+        jQuery.ajax({
+            type: 'post',
+            url: _genUrl(appLinks.workflowRemoveStepFilter, params),
+            beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
+            success: function (data, status, xhr) {
+                if (data.valid) {
+                    step.deleteFilter(stepfilter);
+                } else {
+                    console.log("error: ", data);
+                }
+            },
+            error: function (xhr, status, err) {
+
             }
-        );
+        })
+            .success(_ajaxReceiveTokens.curry('job_edit_tokens'))
+        ;
+    };
+
+    self.saveFilterPopup = function () {
+        "use strict";
+        //show modal dialog to add a filter to the given step
+        var step = self.modalStepFilters();
+        var stepfilter = self.modalFilterEdit();
+        var newtype = self.modalFilterEditNewType();
+        var params = {num: step.num()};
+        if (getCurSEID()) {
+            params['scheduledExecutionId'] = getCurSEID();
+        }
+        if (stepfilter) {
+            params.index = step.filters().indexOf(stepfilter);
+        }
+        var validateparams = jQuery.extend(params,{validate:true});
+        var formdata = jQuery('#editLogFilterPluginModalForm').find('input').serialize();
+        jQuery.ajax({
+            url: _genUrl(appLinks.workflowSaveStepFilter, params),
+            type: 'post',
+            data: formdata,
+            dataType: 'json',
+            beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
+            success: function (data, status, xhr) {
+                if (data.valid) {
+                    //goody
+                    jQuery('#editLogFilterPluginModal').modal('hide');
+                    if(!stepfilter) {
+                        step.addFilter(newtype, {});
+                    }
+                    self.modalStepFilters(null);
+                    self.modalFilterEdit(null);
+                    self.modalFilterEditNewType(null);
+                } else if (data.error) {
+                    return self.loadFilterPluginEditor(validateparams, formdata);
+                }
+            },
+            error: function (xhr, status, err) {
+                console.log("error: ", err);
+            }
+        })
+            .success(_ajaxReceiveTokens.curry('job_edit_tokens'))
+        ;
     };
 
     /**
@@ -130,9 +222,10 @@ function WorkflowEditor() {
 
     self.bindStepFilters = function (key, elemId, data) {
         "use strict";
-        var filters = new WorkflowStep(data);
-        self.stepFilters()[key] = filters;
-        ko.applyBindings(filters, document.getElementById(elemId));
+        var workflowStep = new WorkflowStep(data);
+        self.stepFilters()[key] = workflowStep;
+        ko.applyBindings(workflowStep, document.getElementById(elemId));
+        return workflowStep;
     };
 
     self.reset = function () {
@@ -241,7 +334,12 @@ function StepFilter(data) {
     var self = this;
     self.type = ko.observable(data.type);
     self.config = ko.observable(data.config);
-    self.index = ko.observable(data.index);
+    // self.index = ko.observable(data.index);
+    self.title = ko.computed(function () {
+        var type = self.type();
+        var plugin = workflowEditor.pluginOfType(type);
+        return plugin && plugin.title() || type;
+    });
     ko.mapping.fromJS(data, {}, this);
 }
 /**
@@ -265,6 +363,13 @@ function WorkflowStep(data) {
     };
     self.editFilter = function (filter) {
         workflowEditor.editFilterPopup(self, filter);
+    };
+    self.removeFilter = function (filter) {
+        workflowEditor.removeFilter(self, filter);
+    };
+    self.deleteFilter = function (filter) {
+        var index = self.filters.indexOf(filter);
+        self.filters.splice(index, 1);
     };
 
     //bind in the input data

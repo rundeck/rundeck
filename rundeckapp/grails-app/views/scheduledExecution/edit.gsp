@@ -33,6 +33,7 @@
         jQuery(function () {
             workflowEditor.loadStepFilterPlugins(loadJsonData('logFilterPluginsData'));
             ko.applyBindings(workflowEditor, jQuery('#addLogFilterPluginModal')[0]);
+            ko.applyBindings(workflowEditor, jQuery('#editLogFilterPluginModal')[0]);
         });
     </g:javascript>
     <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
@@ -117,7 +118,7 @@
                 <button type="submit" class="btn btn-default  " data-dismiss="modal">
                     Cancel
                 </button>
-                <button type="submit" class="btn btn-success  " data-dismiss="modal">
+                <button type="submit" class="btn btn-success  " data-bind="click: $root.saveFilterPopup">
                     Save
                 </button>
             </div>

@@ -22,7 +22,8 @@
 
 
  --%><div id="wfivis_${enc(attr:i)}" style="${i==highlight?'opacity: 0':''}">
-    <div class="pflowitem wfctrlholder"><span class="pflow item " id="wfitem_${enc(attr:i)}" >
+    <div class="pflowitem wfctrlholder">
+        <span class="pflow item " id="wfitem_${enc(attr:i)}" >
         <g:if test="${isErrorHandler}">
             <span class="text-muted"><g:message code="Workflow.stepErrorHandler.label.on.error" /></span>
         </g:if>
@@ -66,7 +67,8 @@
             </g:if>
 
             <g:if test="${!isErrorHandler}">
-                <span class="textbtn textbtn-info wfitem_add_filter"
+                <span class="textbtn textbtn-info"
+                      data-bind="click: addFilterPopup"
                       data-stepnum="${stepNum}"
                       title="Add Log Filter">
                     <g:icon name="filter"/>
@@ -130,5 +132,32 @@
         </g:javascript>
     </g:if>
         <div class="clear"></div>
+
+            <g:if test="${!isErrorHandler && edit}">
+                <div id="logFilter_${enc(attr:i)}">
+                <!-- ko foreach: filters -->
+                <span class="btn btn-xs btn-info"
+                      data-bind="click: $root.editFilter">
+                    <g:icon name="transfer"/>
+                    <span data-bind="text: title"></span>
+                </span>
+                <span class="textbtn textbtn-danger"
+                      data-bind="click: $root.removeFilter"
+                      title="Remove Filter"
+                >
+                    <g:icon name="remove"/>
+                </span>
+
+                <!-- /ko -->
+                <g:embedJSON id="logFilterData_${enc(attr:i)}" data="${[num:i,filters:item?.getPluginConfigForType('LogFilter')?:[]]}"/>
+                <g:javascript>
+                fireWhenReady("pfctrls_${enc(attr:i)}",function(){
+                    var step=workflowEditor.bindStepFilters('${rkey}','logFilter_${enc(attr:i)}',loadJsonData('logFilterData_${enc(attr:i)}'));
+                    var elemId="pfctrls_${enc(attr:i)}";
+                    ko.applyBindings(step,document.getElementById(elemId));
+                });
+                </g:javascript>
+                </div>
+            </g:if>
 </div>
 </div>

@@ -70,7 +70,7 @@
 
         workflowEdit: '${createLink(controller:"workflow",action:"edit",params:projParams)}',
         workflowCopy: '${createLink(controller:"workflow",action:"copy",params:projParams)}',
-        workflowRender: '${createLink(controller:"workflow",action:"render",params:projParams)}',
+        workflowRender: '${createLink(controller:"workflow",action:"renderItem",params:projParams)}',
         workflowSave: '${createLink(controller:"workflow",action:"save",params:projParams)}',
         workflowReorder: '${createLink(controller:"workflow",action:"reorder",params:projParams)}',
         workflowRemove: '${createLink(controller:"workflow",action:"remove",params:projParams)}',
@@ -79,6 +79,9 @@
         workflowRevert: '${createLink(controller:"workflow",action:"revert",params:projParams)}',
         workflowRenderUndo: '${createLink(controller:"workflow",action:"renderUndo",params:projParams)}',
         workflowEditStepFilter: '${createLink(controller:"workflow",action:"editStepFilter",params:projParams)}',
+        workflowValidateStepFilter: '${createLink(controller:"workflow",action:"validateStepFilter",params:projParams)}',
+        workflowSaveStepFilter: '${createLink(controller:"workflow",action:"saveStepFilter",params:projParams)}',
+        workflowRemoveStepFilter: '${createLink(controller:"workflow",action:"removeStepFilter",params:projParams)}',
 
         editOptsRenderUndo: '${createLink(controller:"editOpts",action:"renderUndo",params:projParams)}',
         editOptsEdit: '${createLink(controller:"editOpts",action:"edit",params:projParams)}',

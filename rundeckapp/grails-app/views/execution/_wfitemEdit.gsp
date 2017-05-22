@@ -606,7 +606,7 @@
             <%-- filter plugins --%>
             <div class="form-group" id="logFilter_${rkey}">
                 <label class="col-sm-2 control-label">
-                    Log Filters <g:icon name="filter"/>
+                    Log Filters
                 </label>
                 <div class="col-sm-10">
                     <a href="#" title="Add" class="btn btn-sm btn-success" data-bind="click: addFilterPopup">
@@ -614,14 +614,22 @@
                     </a>
                     <%-- list configured filters --%>
                     <!-- ko foreach: filters -->
-                    <span data-bind="click: $root.editFilter">
-                        <span data-bind="text: type"></span>
+                    <span class="btn btn-xs btn-info"
+                        data-bind="click: $root.editFilter">
+                        <g:icon name="transfer"/>
+                        <span data-bind="text: title"></span>
+                    </span>
+                    <span class="textbtn textbtn-danger"
+                          data-bind="click: $root.removeFilter"
+                        title="Remove Filter"
+                    >
+                        <g:icon name="remove"/>
                     </span>
 
                     <!-- /ko -->
                 </div>
             </div>
-            <g:embedJSON id="logFilterData_${rkey}" data="${[num:num,filters:item.getPluginConfigForType('LogFilter')?:[]]}"/>
+            <g:embedJSON id="logFilterData_${rkey}" data="${[num:num,filters:item?.getPluginConfigForType('LogFilter')?:[]]}"/>
             <g:javascript>
                 fireWhenReady("logFilter_${rkey}",function(){
                     workflowEditor.bindStepFilters('${rkey}','logFilter_${rkey}',loadJsonData('logFilterData_${rkey}'));

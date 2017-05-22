@@ -152,10 +152,6 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             log.error("num parameter is required")
             return renderErrorFragment("num parameter is required")
         }
-        if (!params.num) {
-            log.error("num parameter is required")
-            return renderErrorFragment("num parameter is required")
-        }
         if (!params.index && !params.newfiltertype) {
             log.error("index parameter is required")
             return renderErrorFragment("index parameter is required")
@@ -173,7 +169,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         def newfilterdesc
         def filtertype
         def config = [:]
-        if (params.index) {
+        if (params.index != null) {
             def filteri = Integer.parseInt(params.index);
             if (!pluginconfigs || !(pluginconfigs instanceof List && pluginconfigs[filteri])) {
                 log.error("index parameter is invalid: ${filteri}")
@@ -183,7 +179,12 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             config = pluginconfigs[filteri].config
         } else {
             filtertype = params.newfiltertype
-            newfilterdesc = filterPlugins[params.newfiltertype].description
+        }
+        newfilterdesc = filterPlugins[filtertype].description
+        def validation
+        if (params.validate) {
+            config = params.pluginConfig
+            validation = _validateLogFilter(config, filtertype)
         }
         [
                 num          : params.num,
@@ -191,8 +192,118 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
                 type         : filtertype,
                 description  : newfilterdesc,
                 config       : config,
-                newfiltertype: params.newfiltertype
+                newfiltertype: params.newfiltertype,
+                report       : validation?.report,
+                valid        : validation?.valid
         ]
+    }
+
+    def saveStepFilter() {
+        def results
+        def valid = false
+        withForm {
+            g.refreshFormTokensHeader()
+            if (!params.num) {
+                log.error("num parameter is required")
+                return renderErrorFragment("num parameter is required")
+            }
+            if (!params.index && !params.newfiltertype) {
+                log.error("index parameter is required")
+                return renderErrorFragment("index parameter is required")
+            }
+
+            def Workflow editwf = _getSessionWorkflow()
+            def numi = Integer.parseInt(params.num);
+            if (numi >= editwf.commands.size()) {
+                log.error("num parameter is invalid: ${numi}")
+                return renderErrorFragment("num parameter is invalid: ${numi}")
+            }
+            def indexi = null != params.index ? Integer.parseInt(params.index) : 0;
+
+            def actionName = params.newfiltertype ? 'insertFilter' : 'modifyFilter'
+
+            Map config = params.pluginConfig
+
+
+            def result = _applyWFEditAction(
+                    editwf,
+                    [action    : actionName,
+                     num       : numi,
+                     index     : indexi,
+                     filtertype: params.newfiltertype ?: params.type,
+                     config    : config]
+            )
+            if (result.error) {
+                log.error(result.error)
+            } else {
+                _pushUndoAction(params.scheduledExecutionId, result.undo)
+                if (result.undo) {
+                    _clearRedoStack(params.scheduledExecutionId)
+                }
+            }
+
+            results = [error: result.error, valid: !result.error]
+            valid = true
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
+        }
+
+        if (valid) {
+            return respond((Object) results, [formats: ['json']])
+        }
+    }
+
+    def removeStepFilter() {
+        def results
+        def valid = false
+        withForm {
+            g.refreshFormTokensHeader()
+            if (!params.num) {
+                log.error("num parameter is required")
+                return renderErrorFragment("num parameter is required")
+            }
+            if (!params.index && !params.newfiltertype) {
+                log.error("index parameter is required")
+                return renderErrorFragment("index parameter is required")
+            }
+
+            def Workflow editwf = _getSessionWorkflow()
+            def numi = Integer.parseInt(params.num);
+            if (numi >= editwf.commands.size()) {
+                log.error("num parameter is invalid: ${numi}")
+                return renderErrorFragment("num parameter is invalid: ${numi}")
+            }
+            def indexi =  Integer.parseInt(params.index)
+
+            def actionName = 'removeFilter'
+
+            def result = _applyWFEditAction(
+                    editwf,
+                    [action: actionName,
+                     num   : numi,
+                     index : indexi
+                    ]
+            )
+            if (result.error) {
+                log.error(result.error)
+            } else {
+                _pushUndoAction(params.scheduledExecutionId, result.undo)
+                if (result.undo) {
+                    _clearRedoStack(params.scheduledExecutionId)
+                }
+            }
+
+            results = [error: result.error, valid: !result.error]
+            valid = true
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
+        }
+
+        if (valid) {
+            return respond((Object) results, [formats: ['json']])
+        }
     }
     /**
      * Return a Description for a plugin type, if available
@@ -606,8 +717,8 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             result['undo'] = [action: 'remove', num: num]
         } else if (input.action == 'insertFilter') {
             def numi = input.num
-            def indexi = input.index ?: 0
-            def config = input.config
+            def indexi = input.index
+            Map config = input.config
             def filtertype = input.filtertype
 
             if (numi >= (editwf.commands ? editwf.commands.size() : 1)) {
@@ -617,8 +728,9 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
 
             def validation = _validateLogFilter(config, filtertype)
             if (!validation.valid) {
-                return [error: "Plugin configuration was not valid: ${validation.report}", item: config, report:
-                        validation.report]
+                return [error : "Plugin configuration was not valid: ${validation.report}",
+                        config: config,
+                        report: validation.report]
             }
             config = validation.props
 
@@ -636,7 +748,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             result['undo'] = [action: 'removeFilter', num: input.num, index: indexi]
         } else if (input.action == 'removeFilter') {
             def numi = input.num
-            int indexi = input.index
+            def indexi = input.index
             if (numi >= (editwf.commands ? editwf.commands.size() : 1)) {
                 result.error = "num parameter is invalid: ${numi}"
                 return result
@@ -667,7 +779,8 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             ]
         } else if (input.action == 'modifyFilter') {
             def numi = input.num
-            int indexi = input.index
+            def indexi = input.index
+
             def config = input.config
             def filtertype = input.filtertype
 
@@ -691,8 +804,9 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
 
             def validation = _validateLogFilter(config, filtertype)
             if (!validation.valid) {
-                return [error: "Plugin configuration was not valid: ${validation.report}", item: config, report:
-                        validation.report]
+                return [error : "Plugin configuration was not valid: ${validation.report}",
+                        config: config,
+                        report: validation.report]
             }
             config = validation.props
 
