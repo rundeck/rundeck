@@ -301,9 +301,7 @@
                        value="${(tokenAdmin) ? rundeck.AuthToken.findAll() :
                                rundeck.AuthToken.findAllByCreator(user.login)}"/>
 
-                <g:if test="${tokens}">
                     <g:render template="tokenList" model="${[user:user, tokenList:tokens,flashToken:flash.newtoken]}"/>
-                </g:if>
 
 
                 <div style="display:none" class="gentokenerror alert alert-danger alert-dismissable">
