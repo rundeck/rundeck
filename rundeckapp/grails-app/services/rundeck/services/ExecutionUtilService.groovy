@@ -288,7 +288,7 @@ class ExecutionUtilService {
             List l = config['LogFilter']
             l.each { conf ->
                 if (conf && conf instanceof Map) {
-                    String name = conf['provider']
+                    String name = conf['type']
                     if (conf['config'] instanceof Map) {
                         Map pluginconfig = conf['config']
                         configs << createLogFilterConfig(name, pluginconfig)
