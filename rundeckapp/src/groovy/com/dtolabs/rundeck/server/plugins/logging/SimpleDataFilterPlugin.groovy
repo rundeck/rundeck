@@ -20,12 +20,16 @@ import com.dtolabs.rundeck.core.execution.workflow.OutputContext
 import com.dtolabs.rundeck.core.logging.LogEventControl
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.fasterxml.jackson.databind.ObjectMapper
 
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 
 /**
  * @author greg
@@ -33,19 +37,53 @@ import java.util.regex.Pattern
  */
 @Plugin(name = SimpleDataFilterPlugin.PROVIDER_NAME, service = 'LogFilter')
 @PluginDescription(title = 'Key Value Data',
-        description = '''Captures simple Key/Value data using a simple text format.\n\n
-To produce a key/value entry, echo a line similar to this:
+        description = '''Captures simple Key/Value data using a simple text format
+from a regular expresssion.\n\n
+By default, to produce a key/value entry, echo a line similar to this:
 
     RUNDECK:DATA:(key) = (value)
 
 Where `(key)` is the key name, and `(value)` is the value.
+
+You can define the regular expression used.
 ''')
 
 class SimpleDataFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'key-value-data'
     public static final String PATTERN = '^RUNDECK:DATA:(.+)\\s*=\\s*(.+)$'
-    public static final int MIN_MESSAGE_LENGTH = 15
 
+    @PluginProperty(
+            title = "Pattern",
+            description = '''Regular Expression for matching key/value data.
+
+The regular expression must define two Capturing Groups. The first group matched defines
+the data key, and the second group defines the data value.
+
+See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html) documentation.''',
+            defaultValue = SimpleDataFilterPlugin.PATTERN,
+            required = true,
+            validatorClass = SimpleDataFilterPlugin.RegexValidator
+    )
+    String regex
+
+    @PluginProperty(
+            title = 'Log Data',
+            description = '''If true, log the captured data''',
+            defaultValue = 'false'
+    )
+    Boolean logData
+
+    static class RegexValidator implements PropertyValidator {
+        @Override
+        boolean isValid(final String value) throws ValidationException {
+            try {
+                def compile = Pattern.compile(value)
+                return true
+            } catch (PatternSyntaxException e) {
+                throw new ValidationException(e.message, e)
+            }
+        }
+    }
 
     Pattern dataPattern;
     OutputContext outputContext
@@ -54,7 +92,7 @@ class SimpleDataFilterPlugin implements LogFilterPlugin {
 
     @Override
     void init(final PluginLoggingContext context) {
-        dataPattern = Pattern.compile(PATTERN)
+        dataPattern = Pattern.compile(regex)
         outputContext = context.getOutputContext()
         mapper = new ObjectMapper()
         allData = [:]
@@ -62,7 +100,7 @@ class SimpleDataFilterPlugin implements LogFilterPlugin {
 
     @Override
     void handleEvent(final PluginLoggingContext context, final LogEventControl event) {
-        if (event.eventType == 'log' && event.message?.length() > MIN_MESSAGE_LENGTH) {
+        if (event.eventType == 'log' && event.message?.length() > 0) {
             Matcher match = dataPattern.matcher(event.message)
             if (match.matches()) {
                 def key = match.group(1)
@@ -78,14 +116,16 @@ class SimpleDataFilterPlugin implements LogFilterPlugin {
     void complete(final PluginLoggingContext context) {
         if (allData) {
             outputContext.addOutput("data", allData)
-            context.log(
-                    2,
-                    mapper.writeValueAsString(allData),
-                    [
-                            'content-data-type'       : 'application/json',
-                            'content-meta:table-title': 'Key Value Data: Results'
-                    ]
-            )
+            if (logData) {
+                context.log(
+                        2,
+                        mapper.writeValueAsString(allData),
+                        [
+                                'content-data-type'       : 'application/json',
+                                'content-meta:table-title': 'Key Value Data: Results'
+                        ]
+                )
+            }
         }
     }
 }

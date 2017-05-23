@@ -33,6 +33,8 @@ class SimpleDataFilterPluginSpec extends Specification {
     def "test"() {
         given:
         def plugin = new SimpleDataFilterPlugin()
+        plugin.regex = regex
+        plugin.logData = dolog
         def sharedoutput = new DataOutput(ContextView.global())
         def context = Mock(PluginLoggingContext) {
             getOutputContext() >> sharedoutput
@@ -53,21 +55,31 @@ class SimpleDataFilterPluginSpec extends Specification {
         then:
         if (expect) {
             sharedoutput.getSharedContext().getData(ContextView.global()) == ['data': expect]
-            1 * context.log(2, _, _)
+            if (dolog) {
+                1 * context.log(2, _, _)
+            } else {
+                0 * context.log(*_)
+            }
         } else {
             sharedoutput.getSharedContext().getData(ContextView.global()) == [:]
         }
 
 
         where:
-        lines                                                 | expect
-        ['blah', 'blee']                                      | [:]
-        ['RUNDECK:DATA:wimple=']                              | [:]
-        ['RUNDECK:DATA:=asdf']                                | [:]
-        ['RUNDECK:DATA:wimple=zangief']                       | [wimple: 'zangief']
-        ['RUNDECK:DATA:awayward wingling samzait = bogarting: sailboat heathen',
-         'RUNDECK:DATA:simple digital salad : = ::djkjdf= ',] | ['awayward wingling samzait': 'bogarting: sailboat ' +
-                'heathen',
-                                                                 'simple digital salad :'   : '::djkjdf= ']
+        dolog | regex                          | lines                           | expect
+        true  | SimpleDataFilterPlugin.PATTERN | ['blah', 'blee']                | [:]
+        true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=']        | [:]
+        true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:=asdf']          | [:]
+        true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=zangief'] | [wimple: 'zangief']
+        false | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=zangief'] | [wimple: 'zangief']
+        true  | SimpleDataFilterPlugin.PATTERN |
+                [
+                        'RUNDECK:DATA:awayward wingling samzait = bogarting: sailboat heathen',
+                        'RUNDECK:DATA:simple digital salad : = ::djkjdf= ',
+                ]                                                                |
+                [
+                        'awayward wingling samzait': 'bogarting: sailboat heathen',
+                        'simple digital salad :'   : '::djkjdf= '
+                ]
     }
 }
