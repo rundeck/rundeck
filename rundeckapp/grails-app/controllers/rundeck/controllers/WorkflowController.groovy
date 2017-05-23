@@ -325,7 +325,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
     /**
      * Render workflow item
      */
-    def render = {
+    def renderItem() {
         if (!params.num) {
             log.error("num parameter is required")
             return renderErrorFragment("num parameter is required")
@@ -354,7 +354,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
     /**
      * Save workflow item
      */
-    def save = {
+    def save() {
         withForm{
             g.refreshFormTokensHeader()
         if (!params.num && !params.newitem) {
@@ -427,7 +427,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
     /**
      * Reorder items
      */
-    def reorder = {
+    def reorder() {
         withForm{
         if (!params.fromnum) {
             log.error("fromnum parameter required")
@@ -495,7 +495,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
     /**
      * Undo change
      */
-    def undo = {
+    def undo() {
         withForm{
         def Workflow editwf = _getSessionWorkflow()
         def action = _popUndoAction(params.scheduledExecutionId)
@@ -531,7 +531,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
     /**
      * redo change
      */
-    def redo = {
+    def redo() {
         withForm{
         def Workflow editwf = _getSessionWorkflow()
         def action = _popRedoAction(params.scheduledExecutionId)
@@ -561,7 +561,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
     /**
      * revert all changes
      */
-    def revert = {
+    def revert() {
         withForm{
         final String uid = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
         session.editWF?.remove(uid)
@@ -581,7 +581,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
     /**
      * display undo/redo buttons for current stack state
      */
-    def renderUndo = {
+    def renderUndo() {
         final String id = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
         return render(template: '/common/undoRedoControls', model: [undo: session.undoWF ? session.undoWF[id]?.size() : 0, redo: session.redoWF ? session.redoWF[id]?.size() : 0, key: 'workflow'])
     }
