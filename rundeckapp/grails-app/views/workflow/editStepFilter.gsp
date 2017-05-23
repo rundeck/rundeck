@@ -29,7 +29,14 @@
         <g:hiddenField name="newfiltertype" value="${newfiltertype}"/>
     </g:if>
     <div>
-        <span class="h4"><stepplugin:message
+        <span class="h4">
+            <stepplugin:pluginIcon service="${serviceName}"
+                                   name="${description.name}"
+                                   width="16px"
+                                   height="16px">
+                <i class="rdicon icon-small plugin"></i>
+            </stepplugin:pluginIcon>
+            <stepplugin:message
                 service="${serviceName}"
                 name="${description.name}"
                 code="plugin.title"

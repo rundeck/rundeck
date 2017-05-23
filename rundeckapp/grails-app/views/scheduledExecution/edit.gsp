@@ -40,6 +40,7 @@
     <g:embedJSON data="${logFilterPlugins?.entrySet().collect {
         [
                 type       : it.value.name,
+                iconSrc    : stepplugin.pluginIconSrc(service: 'LogFilter', name: it.value.name),
                 title      :
                         stepplugin.messageText(
                                 service: 'LogFilter',
@@ -69,19 +70,42 @@
                         aria-hidden="true">&times;</button>
                 <h4 class="modal-title" id="addLogFilterPluginModaltitle">
                     Add Log Filter Plugin
+
+                    <!-- ko if: modalFilterEditStep()-->
+                    <!-- ko with: modalFilterEditStep()-->
+                    for Step: <span data-bind="text: displayNum"></span>
+                    <!-- ko if: description -->
+                    <span class="text-info" data-bind="text: description"></span>
+                    <!-- /ko -->
+                    <!-- /ko -->
+                    <!-- /ko -->
                 </h4>
             </div>
 
             <div class="modal-body">
+                
                 <div class="list-group">
+
                     <!-- ko foreach: filterPlugins -->
-                    <a class="list-group-item" href="#"
-                       data-bind="click: $root.addSelectedFilterPopup, attr: {'data-type':type}">
-                        <span data-bind="text: title" class="em"></span>
-                        :
-                        <span data-bind="text: descriptionFirstLine" class="text-muted"></span>
+                    <a class="list-group-item textbtn" href="#"
+                       data-bind="click: $root.addSelectedFilterPopup, attr: {'data-plugin-type':type}">
+                        <!-- ko if: iconSrc -->
+                        <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
+                        <!-- /ko -->
+                        <!-- ko if: !iconSrc() -->
+                        <i class="rdicon icon-small plugin"></i>
+                         <!-- /ko -->
+                        <span data-bind="text: title"></span>
+                        <span class="text-info">
+                            -
+                            <span data-bind="text: descriptionFirstLine"></span>
+                        </span>
                     </a>
                     <!-- /ko -->
+
+                </div>
+                <div class="help-block">
+                    Choose Log Filter Plugin to add to the Step
                 </div>
 
             </div>
@@ -89,7 +113,7 @@
             <div class="modal-footer">
 
                 <button type="submit" class="btn btn-default  " data-dismiss="modal">
-                    Cancel
+                    <g:message code="button.action.Cancel" />
                 </button>
             </div>
         </div>
@@ -104,7 +128,21 @@
                 <button type="button" class="close" data-dismiss="modal"
                         aria-hidden="true">&times;</button>
                 <h4 class="modal-title" id="editLogFilterPluginModaltitle">
+                    <!-- ko if: modalFilterEdit() -->
                     Edit Log Filter Plugin
+                    <!-- /ko -->
+                    <!-- ko if: !modalFilterEdit() -->
+                    Add Log Filter Plugin
+                    <!-- /ko -->
+
+                    <!-- ko if: modalFilterEditStep()-->
+                    <!-- ko with: modalFilterEditStep()-->
+                        for Step: <span data-bind="text: displayNum"></span>
+                        <!-- ko if: description -->
+                        <span class="text-info" data-bind="text: description"></span>
+                        <!-- /ko -->
+                    <!-- /ko -->
+                    <!-- /ko -->
                 </h4>
             </div>
 
@@ -116,10 +154,10 @@
             <div class="modal-footer">
 
                 <button type="submit" class="btn btn-default  " data-dismiss="modal">
-                    Cancel
+                    <g:message code="button.action.Cancel" />
                 </button>
                 <button type="submit" class="btn btn-success  " data-bind="click: $root.saveFilterPopup">
-                    Save
+                    <g:message code="button.action.Save" />
                 </button>
             </div>
         </div>

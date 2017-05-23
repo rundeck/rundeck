@@ -93,7 +93,7 @@
         </span>
 
 
-        <g:javascript>
+        <script type="text/javascript">
 
         fireWhenReady('wfitem_${enc(js:i)}',function(){
             $('wfitem_${enc(js: i)}').select('span.autoedit').each(function(e){
@@ -129,16 +129,30 @@
                 });
             });
             });
-        </g:javascript>
+        </script>
     </g:if>
         <div class="clear"></div>
 
             <g:if test="${!isErrorHandler && edit}">
                 <div id="logFilter_${enc(attr:i)}">
+                <!-- ko if: filters().length -->
+                    <span class="text-muted">Log Filters:</span>
+                <!-- /ko -->
                 <!-- ko foreach: filters -->
-                <span class="btn btn-xs btn-info"
+                <span class="btn btn-xs btn-info-hollow"
                       data-bind="click: $root.editFilter">
-                    <g:icon name="transfer"/>
+                    <!-- ko if: plugin() -->
+                    <!-- ko with: plugin() -->
+                    <!-- ko if: iconSrc -->
+                    <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
+                    <!-- /ko -->
+                    <!-- ko if: !iconSrc() -->
+                    <i class="rdicon icon-small plugin"></i>
+                    <!-- /ko -->
+                    <!-- /ko -->
+                    <!-- /ko -->
+
+
                     <span data-bind="text: title"></span>
                 </span>
                 <span class="textbtn textbtn-danger"
@@ -149,14 +163,24 @@
                 </span>
 
                 <!-- /ko -->
-                <g:embedJSON id="logFilterData_${enc(attr:i)}" data="${[num:i,filters:item?.getPluginConfigForType('LogFilter')?:[]]}"/>
-                <g:javascript>
+                <!-- ko if: filters().length -->
+                    <span class="textbtn textbtn-success" data-bind="click: addFilterPopup">
+                      <g:icon name="plus"/>
+                      add
+                    </span>
+                    <!-- /ko -->
+                <g:embedJSON id="logFilterData_${enc(attr:i)}" data="${[
+                        num:i,
+                        description:item.description,
+                        filters:item?.getPluginConfigForType('LogFilter')?:[]]
+                }"/>
+                <script type="text/javascript">
                 fireWhenReady("pfctrls_${enc(attr:i)}",function(){
-                    var step=workflowEditor.bindStepFilters('${rkey}','logFilter_${enc(attr:i)}',loadJsonData('logFilterData_${enc(attr:i)}'));
+                    var step=workflowEditor.bindStepFilters('logfilter_${i}','logFilter_${enc(attr:i)}',loadJsonData('logFilterData_${enc(attr:i)}'));
                     var elemId="pfctrls_${enc(attr:i)}";
                     ko.applyBindings(step,document.getElementById(elemId));
                 });
-                </g:javascript>
+                </script>
                 </div>
             </g:if>
 </div>

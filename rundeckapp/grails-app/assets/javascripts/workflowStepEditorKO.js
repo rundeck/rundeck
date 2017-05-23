@@ -66,12 +66,12 @@ function WorkflowEditor() {
         });
     };
 
-    self.modalStepFilters = ko.observable();
+    self.modalFilterEditStep = ko.observable();
     self.modalFilterEdit = ko.observable();
     self.modalFilterEditNewType = ko.observable();
     self.addFilterPopup = function (step) {
         "use strict";
-        self.modalStepFilters(step);
+        self.modalFilterEditStep(step);
         //show modal dialog to add a filter to the given step
         jQuery('#addLogFilterPluginModal').modal('show');
     };
@@ -79,7 +79,7 @@ function WorkflowEditor() {
     self.addSelectedFilterPopup = function (plugin) {
         "use strict";
         jQuery('#addLogFilterPluginModal').modal('hide');
-        self.editFilterPopup(self.modalStepFilters(), null, plugin.type());
+        self.editFilterPopup(self.modalFilterEditStep(), null, plugin.type());
     };
 
 
@@ -99,7 +99,7 @@ function WorkflowEditor() {
     };
     self.editFilterPopup = function (step, stepfilter, newtype, validate, validatedata) {
         "use strict";
-        self.modalStepFilters(step);
+        self.modalFilterEditStep(step);
         self.modalFilterEdit(stepfilter);
         self.modalFilterEditNewType(newtype);
         //show modal dialog to add a filter to the given step
@@ -138,6 +138,9 @@ function WorkflowEditor() {
             success: function (data, status, xhr) {
                 if (data.valid) {
                     step.deleteFilter(stepfilter);
+                    if (typeof(_updateWFUndoRedo) === 'function') {
+                        _updateWFUndoRedo();
+                    }
                 } else {
                     console.log("error: ", data);
                 }
@@ -153,7 +156,7 @@ function WorkflowEditor() {
     self.saveFilterPopup = function () {
         "use strict";
         //show modal dialog to add a filter to the given step
-        var step = self.modalStepFilters();
+        var step = self.modalFilterEditStep();
         var stepfilter = self.modalFilterEdit();
         var newtype = self.modalFilterEditNewType();
         var params = {num: step.num()};
@@ -178,9 +181,12 @@ function WorkflowEditor() {
                     if(!stepfilter) {
                         step.addFilter(newtype, {});
                     }
-                    self.modalStepFilters(null);
+                    self.modalFilterEditStep(null);
                     self.modalFilterEdit(null);
                     self.modalFilterEditNewType(null);
+                    if (typeof(_updateWFUndoRedo) === 'function') {
+                        _updateWFUndoRedo();
+                    }
                 } else if (data.error) {
                     return self.loadFilterPluginEditor(validateparams, formdata);
                 }
@@ -314,11 +320,12 @@ function StepFilterPlugin(data) {
     self.type = ko.observable(data.type);
     self.title = ko.observable(data.title);
     self.description = ko.observable(data.description);
+    self.iconSrc = ko.observable(data.iconSrc);
     self.selected = ko.observable(false);
     self.descriptionFirstLine = ko.computed(function () {
         var desc = self.description();
         if (desc) {
-            return desc.indexOf('\n') ? desc.substring(0, desc.indexOf('\n')) : desc;
+            return desc.indexOf('\n') > 0 ? desc.substring(0, desc.indexOf('\n')) : desc;
         }
         return desc;
     });
@@ -340,6 +347,11 @@ function StepFilter(data) {
         var plugin = workflowEditor.pluginOfType(type);
         return plugin && plugin.title() || type;
     });
+    self.plugin = ko.computed(function () {
+        var type = self.type();
+        var plugin = workflowEditor.pluginOfType(type);
+        return plugin;
+    });
     ko.mapping.fromJS(data, {}, this);
 }
 /**
@@ -351,6 +363,7 @@ function WorkflowStep(data) {
     "use strict";
     var self = this;
     self.num = ko.observable(data.num);
+    self.description = ko.observable(data.description);
     self.filters = ko.observableArray([]);
     self.addFilter = function (type, config) {
         self.filters.push(new StepFilter({type: type, config: config}));
@@ -371,6 +384,10 @@ function WorkflowStep(data) {
         var index = self.filters.indexOf(filter);
         self.filters.splice(index, 1);
     };
+
+    self.displayNum = ko.computed(function () {
+        return parseInt(self.num()) + 1;
+    });
 
     //bind in the input data
     ko.mapping.fromJS(data, {
