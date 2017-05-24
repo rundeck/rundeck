@@ -23,7 +23,7 @@ import lombok.Value;
  * @since 5/1/17
  */
 @Value
-public class ContextView implements ViewTraverse<ContextView> {
+public class ContextView implements ViewTraverse<ContextView>, Comparable<ContextView> {
     boolean global;
     Integer stepNumber;
     String nodeName;
@@ -69,5 +69,42 @@ public class ContextView implements ViewTraverse<ContextView> {
     @Override
     public ContextView getView() {
         return this;
+    }
+
+    @Override
+    public int compareTo(final ContextView o) {
+        if (isGlobal()) {
+            return o.isGlobal() ? 0 : -1;
+        } else if (o.isGlobal()) {
+            return 1;
+        }
+        if (null != getStepNumber()) {
+            if (null != o.getStepNumber()) {
+                int compstep = getStepNumber().compareTo(o.getStepNumber());
+                if (compstep != 0) {
+                    return compstep;
+                }
+            } else {
+                return -1;
+            }
+            return compareNodeName(o);
+        } else if (null != o.getStepNumber()) {
+            return 1;
+        }
+
+        return compareNodeName(o);
+    }
+
+    public int compareNodeName(final ContextView o) {
+        if (null != getNodeName()) {
+            if (null != o.getNodeName()) {
+                return getNodeName().compareTo(o.getNodeName());
+            } else {
+                return 1;
+            }
+        } else if (null != o.getNodeName()) {
+            return -1;
+        }
+        return 0;
     }
 }
