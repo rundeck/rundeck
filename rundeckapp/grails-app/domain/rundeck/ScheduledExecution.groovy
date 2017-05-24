@@ -531,7 +531,7 @@ class ScheduledExecution extends ExecutionContext {
     }
 
     def boolean shouldScheduleExecution() {
-        return scheduled && hasExecutionEnabled() && hasScheduleEnabled();
+        return scheduled && hasExecutionEnabled() && hasScheduleEnabled()
     }
 
     def boolean hasExecutionEnabled() {

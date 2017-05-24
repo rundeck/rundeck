@@ -44,6 +44,7 @@ import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.PasswordFieldsService
+import rundeck.services.ScheduledExecutionService
 import rundeck.services.framework.RundeckProjectConfigurable
 
 import javax.servlet.http.HttpServletRequest
@@ -80,6 +81,7 @@ import rundeck.filters.ApiRequestFilters
 class FrameworkController extends ControllerBase implements ApplicationContextAware {
     FrameworkService frameworkService
     ExecutionService executionService
+    ScheduledExecutionService scheduledExecutionService
     UserService userService
 
     PasswordFieldsService resourcesPasswordFieldsService
@@ -1252,6 +1254,20 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }else{
                 projProps['project.description']=''
             }
+
+            def isExecutionDisabledNow = !scheduledExecutionService.isProjectExecutionEnabled(project)
+            def isScheduleDisabledNow = !scheduledExecutionService.isProjectScheduledEnabled(project)
+
+            def newExecutionDisabledStatus = (params.disableExecutionMode && params.disableExecutionMode == 'true')
+            def newScheduleDisabledStatus = (params.disableScheduleMode && params.disableScheduleMode == 'true')
+
+            projProps['project.disable.executions']=newExecutionDisabledStatus?'true':'false'
+            projProps['project.disable.schedule']=newScheduleDisabledStatus?'true':'false'
+
+            def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
+                    || (isScheduleDisabledNow != newScheduleDisabledStatus))
+            def active = (!newExecutionDisabledStatus && !newScheduleDisabledStatus)
+
             def Set<String> removePrefixes=[]
             removePrefixes<< FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY
             if (params.defaultNodeExec) {
@@ -1384,6 +1400,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             if (!errors) {
 
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
+                if(reschedule){
+                    if(active){
+                        scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+                    }else{
+                        scheduledExecutionService.unscheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+                    }
+                }
                 if (!result.success) {
                     errors << result.error
                 }
@@ -1499,6 +1522,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         [
             project: project,
             projectDescription:fwkProject.getProjectProperties().get("project.description"),
+            disableExecutionMode:fwkProject.getProjectProperties().get("project.disable.executions"),
+            disableScheduleMode:fwkProject.getProjectProperties().get("project.disable.schedule"),
             resourceModelConfigDescriptions: resourceDescs,
             configs: resourceConfig,
             nodeexecconfig:nodeConfig,

@@ -64,6 +64,9 @@ import java.text.SimpleDateFormat
  */
 class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, RundeckProjectConfigurable {
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
+    public static final String CONF_DISABLE_EXECUTION = 'project.disable.executions'
+    public static final String CONF_DISABLE_SCHEDULE = 'project.disable.schedule'
+
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
                 integer 'groupExpandLevel'
@@ -75,6 +78,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 defaultValue '1'
             }.build(),
     ]
+
     public static
     final LinkedHashMap<String, String> ConfigPropertiesMapping = ['groupExpandLevel': CONF_GROUP_EXPAND_LEVEL]
     boolean transactional = true
@@ -912,6 +916,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return null
         }
 
+        if(!isProjectExecutionEnabled(se.project)){
+            log.warn("Attempt to schedule job ${se} ${se.extid} in project ${se.project}, but project executions are disabled.")
+            return null
+        }
+
         if (!se.shouldScheduleExecution()) {
             log.warn(
                     "Attempt to schedule job ${se} ${se.extid} in project ${se.project}, but job execution is disabled."
@@ -963,6 +972,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.warn("Attempt to schedule job ${se}, but executions are disabled.")
             return null
         }
+        if(!isProjectExecutionEnabled(se.project)){
+            log.warn("Attempt to schedule job ${se}, but project executions are disabled.")
+            return null
+        }
+
 
         if (startTime == null) {
             throw new IllegalArgumentException("Scheduled date and time must be present")
@@ -1145,6 +1159,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def Map scheduleTempJob(AuthContext authContext, Execution e) {
         if(!executionService.getExecutionsAreActive()){
             def msg=g.message(code:'disabled.execution.run')
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
+
+        if(!isProjectExecutionEnabled(e.project)){
+            def msg=g.message(code:'project.execution.disabled')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
@@ -3196,6 +3215,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def getScheduledExecutionByUUIDAndProject(String uuid, String project){
         ScheduledExecution.findByUuidAndProject(uuid, project)
+    }
+
+    def isProjectExecutionEnabled(String project){
+        def fwProject = frameworkService.getFrameworkProject(project)
+        def disableEx = fwProject.getProjectProperties().get("project.disable.executions")
+        ((!disableEx)||disableEx.toLowerCase()!='true')
+    }
+
+    def isProjectScheduledEnabled(String project){
+        def fwProject = frameworkService.getFrameworkProject(project)
+        def disableSe = fwProject.getProjectProperties().get("project.disable.schedule")
+        ((!disableSe)||disableSe.toLowerCase()!='true')
     }
 
 }

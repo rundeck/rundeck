@@ -2330,8 +2330,14 @@ class ScheduledExecutionController  extends ControllerBase{
             return [success:false,error:'unauthorized',message:msg]
         }
 
+
         if(!executionService.executionsAreActive){
             def msg=g.message(code:'disabled.execution.run')
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
+
+        if(!scheduledExecutionService.isProjectExecutionEnabled(scheduledExecution.project)){
+            def msg=g.message(code:'project.execution.disabled')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
@@ -2872,6 +2878,11 @@ class ScheduledExecutionController  extends ControllerBase{
         if(!executionService.executionsAreActive){
             def msg=g.message(code:'disabled.execution.run')
             return [success:false,failed:true,error:'disabled',message: msg]
+        }
+
+        if(!scheduledExecutionService.isProjectExecutionEnabled(scheduledExecution.project)){
+            def msg=g.message(code:'project.execution.disabled')
+            return [success:false,failed:true,error:'disabled',message:msg]
         }
 
         if (!scheduledExecution.hasExecutionEnabled()) {

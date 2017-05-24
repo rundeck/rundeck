@@ -769,6 +769,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     nodeErrorsMap:nodeErrorsMap,
                 resourceModelConfigDescriptions:descriptions,
                 nodeexecconfig:nodeexec,
+                    disableExecutionMode:fproject.getProjectProperties().get("project.disable.executions"),
+                    disableScheduleMode:fproject.getProjectProperties().get("project.disable.schedule"),
                 fcopyconfig:fcopy,
                 defaultNodeExec: defaultNodeExec,
                 defaultFileCopy: defaultFileCopy,
