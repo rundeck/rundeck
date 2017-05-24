@@ -94,10 +94,12 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
     }
 
     public static String renderSimpleMap(Map map, Map<String, String> metadata) {
+        def md = new HashMap(metadata)
         def out = new StringBuffer()
-        renderTableStart(out, metadata['css-class'])
-        if (metadata['table-title']) {
-            renderTableTitle(out, metadata['table-title'], 2)
+        renderTableStart(out, md['css-class'])
+        if (md['table-title']) {
+            renderTableTitle(out, md['table-title'], 2)
+            md.remove('table-title')
         }
         renderTableHeaders(out, ['Key', 'Value'])
         map.each { key, item ->
@@ -107,9 +109,9 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
             closeTag(out, 'td')
             openTag(out, 'td')
             if (item instanceof List) {
-                out << renderSimpleList(item, metadata)
+                out << renderSimpleList(item, md)
             } else if (item instanceof Map) {
-                out << renderSimpleMap(item, metadata)
+                out << renderSimpleMap(item, md)
             } else {
                 out << item.toString().encodeAsHTML()
             }
@@ -133,14 +135,16 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
     }
 
     public static String renderTableHtml(List<Map<String, ?>> list, Map<String, String> metadata) {
+        def md = new HashMap(metadata)
         def keys = list?.first()?.keySet()?.sort()
         if (!keys) {
             return null
         }
         def out = new StringBuffer()
-        renderTableStart(out, metadata['css-class'])
-        if (metadata['table-title']) {
-            renderTableTitle(out, metadata['table-title'], keys.size())
+        renderTableStart(out, md['css-class'])
+        if (md['table-title']) {
+            renderTableTitle(out, md['table-title'], keys.size())
+            md.remove('table-title')
         }
         renderTableHeaders(out, keys)
         list.each { dataObj ->
@@ -152,9 +156,9 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
 
                 closeTag(out, 'td')
                 if (item instanceof List) {
-                    out << renderSimpleList(item, metadata)
+                    out << renderSimpleList(item, md)
                 } else if (item instanceof Map) {
-                    out << renderSimpleMap(item, metadata)
+                    out << renderSimpleMap(item, md)
                 } else {
                     out << item.toString().encodeAsHTML()
                 }
