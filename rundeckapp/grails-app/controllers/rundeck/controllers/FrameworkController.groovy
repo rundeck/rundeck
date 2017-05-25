@@ -1092,6 +1092,17 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             projProps.putAll(inputProps)
             def inputMap = new HashMap(inputProps)
 
+            def isExecutionDisabledNow = !scheduledExecutionService.isProjectExecutionEnabled(project)
+            def isScheduleDisabledNow = !scheduledExecutionService.isProjectScheduledEnabled(project)
+
+
+            def newExecutionDisabledStatus = (projProps['project.disable.executions'] && projProps['project.disable.executions'] == 'true')
+            def newScheduleDisabledStatus = (projProps['project.disable.schedule'] && projProps['project.disable.schedule'] == 'true')
+
+            def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
+                    || (isScheduleDisabledNow != newScheduleDisabledStatus))
+            def active = (!newExecutionDisabledStatus && !newScheduleDisabledStatus)
+
             final nodeExecType = frameworkService.getDefaultNodeExecutorService(projProps)
             final nodeConfig = frameworkService.getNodeExecConfigurationForType(nodeExecType, projProps)
 
@@ -1181,6 +1192,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 def result = frameworkService.setFrameworkProjectConfig(project, projProps)
                 if (!result.success) {
                     errors << result.error
+                }
+                if(reschedule){
+                    if(active){
+                        scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+                    }else{
+                        scheduledExecutionService.unscheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+                    }
                 }
             }
 

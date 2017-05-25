@@ -541,7 +541,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup) {
-        if (scheduledExecution.shouldScheduleExecution()) {
+        if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
             //verify cluster member is schedule owner
 
             def nextdate = null
@@ -916,7 +916,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return null
         }
 
-        if(!isProjectExecutionEnabled(se.project)){
+        if(!shouldScheduleInThisProject(se.project)){
             log.warn("Attempt to schedule job ${se} ${se.extid} in project ${se.project}, but project executions are disabled.")
             return null
         }
@@ -2131,7 +2131,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         if (!failed && scheduledExecution.save(true)) {
-            if (scheduledExecution.shouldScheduleExecution()) {
+            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
                 try {
                     nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
@@ -2622,7 +2622,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         if (!failed && scheduledExecution.save(flush:true)) {
-            if (scheduledExecution.shouldScheduleExecution()) {
+            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
                 try {
                     nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
@@ -3227,6 +3227,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def fwProject = frameworkService.getFrameworkProject(project)
         def disableSe = fwProject.getProjectProperties().get("project.disable.schedule")
         ((!disableSe)||disableSe.toLowerCase()!='true')
+    }
+
+    def shouldScheduleInThisProject(String project){
+        isProjectExecutionEnabled(project) && isProjectScheduledEnabled(project)
     }
 
 }
