@@ -301,7 +301,9 @@ class ExecutionServiceSpec extends Specification {
             getServerUUID() >> null
             authorizeProjectJobAll(*_) >> true
         }
-        service.scheduledExecutionService = Mock(ScheduledExecutionService)
+        service.scheduledExecutionService = Mock(ScheduledExecutionService){
+            isProjectExecutionEnabled(_) >> true
+        }
         service.configurationService = Stub(ConfigurationService) {
             isExecutionModeActive() >> true
         }

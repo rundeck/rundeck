@@ -530,6 +530,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> true
         }
 
 
@@ -585,6 +586,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> true
         }
 
 
@@ -648,6 +650,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> true
         }
 
 
@@ -712,6 +715,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> true
         }
 
 

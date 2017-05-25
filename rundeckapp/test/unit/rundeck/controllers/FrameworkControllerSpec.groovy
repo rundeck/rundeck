@@ -29,6 +29,7 @@ import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
 import rundeck.services.PasswordFieldsService
+import rundeck.services.ScheduledExecutionService
 import rundeck.services.StorageManager
 import rundeck.services.UserService
 import spock.lang.Specification
@@ -613,6 +614,9 @@ class FrameworkControllerSpec extends Specification {
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            isProjectExecutionEnabled(_) >> true
+        }
 
         params.project = "TestSaveProject"
         params.description='abc'
@@ -642,6 +646,9 @@ class FrameworkControllerSpec extends Specification {
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            isProjectExecutionEnabled(_) >> true
+        }
 
         params.project = "TestSaveProject"
 
