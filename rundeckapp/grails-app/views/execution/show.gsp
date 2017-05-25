@@ -397,7 +397,7 @@
                                             </g:link>
                                         </g:if>
                                         %{--run again links--}%
-                                        <g:if test="${adhocRunAllowed && g.executionMode(active:true)}">
+                                        <g:if test="${adhocRunAllowed && g.executionMode(active:true,project:execution.project)}">
                                             %{--run again only--}%
                                             <g:link
                                                     controller="framework"
@@ -469,7 +469,7 @@
                                     %{--job buttons--}%
                                     <div class="pull-right">
 
-                                        <g:if test="${authChecks[AuthConstants.ACTION_RUN] && g.executionMode(active:true)}">
+                                        <g:if test="${authChecks[AuthConstants.ACTION_RUN] && g.executionMode(active:true,project:execution.project)}">
                                             %{--Run again link--}%
                                             <g:link controller="scheduledExecution"
                                                     action="execute"

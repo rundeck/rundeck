@@ -63,8 +63,8 @@
                         </label>
                     </div>
                     <div class="checkbox">
-                        <label for="scheduleMode">
-                            <g:checkBox name="scheduleMode" value="true"
+                        <label for="disableScheduleMode">
+                            <g:checkBox name="disableScheduleMode" value="true"
                                         checked="${disableScheduleMode&&disableScheduleMode=='true'}"/>
                             <g:message code="disable.schedule.this.job"/>
                         </label>
