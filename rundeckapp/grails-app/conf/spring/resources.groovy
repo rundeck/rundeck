@@ -301,6 +301,7 @@ beans={
             //log filters
             MaskPasswordsFilterPlugin,
             SimpleDataFilterPlugin,
+            RenderDatatypeFilterPlugin
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }
