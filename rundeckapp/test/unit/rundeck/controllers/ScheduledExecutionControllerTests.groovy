@@ -39,6 +39,7 @@ import rundeck.services.ApiService
 import rundeck.services.FileUploadService
 import rundeck.services.NotificationService
 import rundeck.services.OrchestratorPluginService
+import rundeck.services.PluginService
 
 import javax.security.auth.Subject
 import com.dtolabs.rundeck.core.authentication.Username
@@ -609,7 +610,9 @@ class ScheduledExecutionControllerTests  {
 			def oServiceControl = mockFor(OrchestratorPluginService, true)
 			oServiceControl.demand.listDescriptions{[]}
 			sec.orchestratorPluginService = oServiceControl.createMock()
-			
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
+        }
             def params = [
                     jobName: 'monkey1',
                     project: 'testProject',
@@ -673,6 +676,9 @@ class ScheduledExecutionControllerTests  {
 			def oServiceControl = mockFor(OrchestratorPluginService, true)
 			oServiceControl.demand.listDescriptions{[]}
 			sec.orchestratorPluginService = oServiceControl.createMock()
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
+        }
 			
             def params = [
                     jobName: 'monkey1',
@@ -2138,7 +2144,9 @@ class ScheduledExecutionControllerTests  {
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
         }
-
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
+        }
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
@@ -2235,6 +2243,9 @@ class ScheduledExecutionControllerTests  {
         }
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
+        }
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2334,6 +2345,9 @@ class ScheduledExecutionControllerTests  {
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
         }
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
+        }
 
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2432,6 +2446,9 @@ class ScheduledExecutionControllerTests  {
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
         }
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
+        }
 
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2528,6 +2545,9 @@ class ScheduledExecutionControllerTests  {
         }
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
+        }
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2652,6 +2672,9 @@ class ScheduledExecutionControllerTests  {
         }
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
+        }
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
         }
 
         def params = [id: se.id.toString(),project:'project1',retryExecId:exec.id.toString()]

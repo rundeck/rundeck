@@ -83,14 +83,14 @@ function WorkflowEditor() {
     };
 
 
-    self.loadFilterPluginEditor = function (params, data) {
+    self.loadFilterPluginEditor = function (params, data, ctype) {
         return jQuery.ajax({
             type: 'post',
             url: _genUrl(appLinks.workflowEditStepFilter, params),
             data: data,
+            contentType: ctype,
             success: function (resdata, status, xhr) {
                 jQuery('#editLogFilterPluginModalForm').html(resdata);
-
             },
             error: function (xhr, status, err) {
 
@@ -104,99 +104,42 @@ function WorkflowEditor() {
         self.modalFilterEditNewType(newtype);
         //show modal dialog to add a filter to the given step
 
-        var params = {num: step.num()};
-        if (getCurSEID()) {
-            params['scheduledExecutionId'] = getCurSEID();
-        }
-        if (stepfilter) {
-            params.index = step.filters().indexOf(stepfilter);
-        } else {
-            params.newfiltertype = newtype;
-        }
-        var data = null;
-        if (validate) {
-            params.validate = true;
-            data = validatedata;
-        }
-        return self.loadFilterPluginEditor(params, data).success(function () {
-            jQuery('#editLogFilterPluginModal').modal('show');
+        return step.editor.editFilter(step, stepfilter, newtype, validate, validatedata, function (params, data, type) {
+
+            return self.loadFilterPluginEditor(params, data, type).success(function () {
+                jQuery('#editLogFilterPluginModal').modal('show');
+            });
         });
     };
 
     self.removeFilter = function (step, stepfilter) {
         "use strict";
 
-        var params = {num: step.num()};
-        if (getCurSEID()) {
-            params['scheduledExecutionId'] = getCurSEID();
-        }
-        params.index = step.filters().indexOf(stepfilter);
-        jQuery.ajax({
-            type: 'post',
-            url: _genUrl(appLinks.workflowRemoveStepFilter, params),
-            beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
-            success: function (data, status, xhr) {
-                if (data.valid) {
-                    step.deleteFilter(stepfilter);
-                    if (typeof(_updateWFUndoRedo) === 'function') {
-                        _updateWFUndoRedo();
-                    }
-                } else {
-                    console.log("error: ", data);
-                }
-            },
-            error: function (xhr, status, err) {
-
+        step.editor.removeFilter(stepfilter, function (err) {
+            if (err) {
+                console.log("error: ", err);
             }
-        })
-            .success(_ajaxReceiveTokens.curry('job_edit_tokens'))
-        ;
+        });
     };
 
     self.saveFilterPopup = function () {
         "use strict";
-        //show modal dialog to add a filter to the given step
-        var step = self.modalFilterEditStep();
-        var stepfilter = self.modalFilterEdit();
-        var newtype = self.modalFilterEditNewType();
-        var params = {num: step.num()};
-        if (getCurSEID()) {
-            params['scheduledExecutionId'] = getCurSEID();
-        }
-        if (stepfilter) {
-            params.index = step.filters().indexOf(stepfilter);
-        }
-        var validateparams = jQuery.extend(params,{validate:true});
-        var formdata = jQuery('#editLogFilterPluginModalForm').find('input').serialize();
-        jQuery.ajax({
-            url: _genUrl(appLinks.workflowSaveStepFilter, params),
-            type: 'post',
-            data: formdata,
-            dataType: 'json',
-            beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
-            success: function (data, status, xhr) {
-                if (data.valid) {
-                    //goody
+        var formdata = jQuery('#editLogFilterPluginModalForm').find('input, textarea, select').serialize();
+        self.modalFilterEditStep().editor.saveFilter(self.modalFilterEdit(), self.modalFilterEditNewType(), function (err, valid, validateparams) {
+            if (!err) {
+                if (valid) {
+
                     jQuery('#editLogFilterPluginModal').modal('hide');
-                    if(!stepfilter) {
-                        step.addFilter(newtype, {});
-                    }
                     self.modalFilterEditStep(null);
                     self.modalFilterEdit(null);
                     self.modalFilterEditNewType(null);
-                    if (typeof(_updateWFUndoRedo) === 'function') {
-                        _updateWFUndoRedo();
-                    }
-                } else if (data.error) {
+                } else {
                     return self.loadFilterPluginEditor(validateparams, formdata);
                 }
-            },
-            error: function (xhr, status, err) {
+            } else {
                 console.log("error: ", err);
             }
-        })
-            .success(_ajaxReceiveTokens.curry('job_edit_tokens'))
-        ;
+        });
     };
 
     /**
@@ -226,8 +169,10 @@ function WorkflowEditor() {
         return self.stepFilters()[key];
     };
 
-    self.bindStepFilters = function (key, elemId, data) {
+    self.bindStepFilters = function (key, elemId, data, ext) {
         "use strict";
+        data = jQuery.extend(data, ext);
+        console.log("bindStepFilters, data:", data);
         var workflowStep = new WorkflowStep(data);
         self.stepFilters()[key] = workflowStep;
         ko.applyBindings(workflowStep, document.getElementById(elemId));
@@ -239,6 +184,175 @@ function WorkflowEditor() {
         self.scriptSteps({});
         self.stepFilters({});
     };
+}
+
+function WorkflowGlobalLogFilterEditor(data) {
+    "use strict";
+
+    var self = this;
+    self.step = data.step;
+
+    self.removeFilter = function (stepfilter, callback) {
+        //no need for ajax
+        self.step.deleteFilter(stepfilter);
+        callback(null);
+    };
+    self.saveFilter = function (stepfilter, newtype, callback) {
+        "use strict";
+        //validate the filter, but do not save in the session data
+        var params = {num: self.step.num()};
+        if (getCurSEID()) {
+            params['scheduledExecutionId'] = getCurSEID();
+        }
+        if (stepfilter) {
+            params.index = self.step.filters().indexOf(stepfilter);
+        }
+        var validateparams = jQuery.extend(params, {validate: true});
+        var formdata = jQuery('#editLogFilterPluginModalForm').find('input, textarea, select').serialize();
+        return jQuery.ajax({
+            url: _genUrl(appLinks.workflowValidateStepFilter, params),
+            type: 'post',
+            data: formdata,
+            dataType: 'json',
+            success: function (data, status, xhr) {
+                if (data.valid) {
+                    if (!stepfilter) {
+                        self.step.addFilter(newtype, data.saved && data.saved.config || {});
+                    } else {
+                        stepfilter.config(data.saved && data.saved.config || {});
+                    }
+                }
+                callback(null, data.valid, validateparams);
+            },
+            error: function (xhr, status, err) {
+                console.log("error: ", err);
+                callback(err);
+            }
+        })
+            ;
+    };
+
+
+    self.editFilter = function (step, stepfilter, newtype, validate, validatedata, callback) {
+        var params = {editconfig: true};
+        if (getCurSEID()) {
+            params['scheduledExecutionId'] = getCurSEID();
+        }
+        var data = null;
+        var ctype = null;
+        if (stepfilter) {
+            ctype = 'application/json; charset=UTF-8';
+            data = JSON.stringify({pluginConfig: stepfilter.config()});
+            params.newfiltertype = stepfilter.type();
+        } else {
+            params.newfiltertype = newtype;
+        }
+
+        if (validate) {
+            params.validate = true;
+            data = validatedata;
+            ctype = null;
+        }
+
+        callback(params, data, ctype);
+    };
+}
+function WorkflowStepLogFilterEditor(data) {
+    "use strict";
+    var self = this;
+    self.step = data.step;
+
+    self.removeFilter = function (stepfilter, callback) {
+        "use strict";
+
+        var params = {num: self.step.num()};
+        if (getCurSEID()) {
+            params['scheduledExecutionId'] = getCurSEID();
+        }
+        params.index = self.step.filters().indexOf(stepfilter);
+        return jQuery.ajax({
+            type: 'post',
+            url: _genUrl(appLinks.workflowRemoveStepFilter, params),
+            beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
+            success: function (data, status, xhr) {
+                if (data.valid) {
+                    self.step.deleteFilter(stepfilter);
+                    callback(null);
+
+                    if (typeof(_updateWFUndoRedo) === 'function') {
+                        _updateWFUndoRedo();
+                    }
+                } else {
+                    console.log("error: ", data);
+                    callback(data.error);
+                }
+            },
+            error: function (xhr, status, err) {
+                callback(err);
+            }
+        })
+            .success(_ajaxReceiveTokens.curry('job_edit_tokens'))
+            ;
+    };
+
+    self.saveFilter = function (stepfilter, newtype, callback) {
+        "use strict";
+        //show modal dialog to add a filter to the given step
+        var params = {num: self.step.num()};
+        if (getCurSEID()) {
+            params['scheduledExecutionId'] = getCurSEID();
+        }
+        if (stepfilter) {
+            params.index = self.step.filters().indexOf(stepfilter);
+        }
+        var validateparams = jQuery.extend(params, {validate: true});
+        var formdata = jQuery('#editLogFilterPluginModalForm').find('input, textarea, select').serialize();
+        return jQuery.ajax({
+            url: _genUrl(appLinks.workflowSaveStepFilter, params),
+            type: 'post',
+            data: formdata,
+            dataType: 'json',
+            beforeSend: _ajaxSendTokens.curry('job_edit_tokens'),
+            success: function (data, status, xhr) {
+                if (data.valid) {
+                    if (!stepfilter) {
+                        self.step.addFilter(newtype, data.saved && data.saved.config || {});
+                    } else {
+                        stepfilter.config(data.saved && data.saved.config || {});
+                    }
+                    if (typeof(_updateWFUndoRedo) === 'function') {
+                        _updateWFUndoRedo();
+                    }
+                }
+                callback(null, data.valid, validateparams);
+            },
+            error: function (xhr, status, err) {
+                console.log("error: ", err);
+                callback(err);
+            }
+        })
+            .success(_ajaxReceiveTokens.curry('job_edit_tokens'))
+            ;
+    };
+
+    self.editFilter = function (step, stepfilter, newtype, validate, validatedata, callback) {
+        var params = {num: step.num()};
+        if (getCurSEID()) {
+            params['scheduledExecutionId'] = getCurSEID();
+        }
+        if (stepfilter) {
+            params.index = step.filters().indexOf(stepfilter);
+        } else {
+            params.newfiltertype = newtype;
+        }
+        var data = null;
+        if (validate) {
+            params.validate = true;
+            data = validatedata;
+        }
+        callback(params, data);
+    };
+
 }
 /**
  * Manage preview string for script invocation
@@ -339,6 +453,7 @@ function StepFilterPlugin(data) {
 function StepFilter(data) {
     "use strict";
     var self = this;
+    self.step = ko.observable(data.step);
     self.type = ko.observable(data.type);
     self.config = ko.observable(data.config);
     // self.index = ko.observable(data.index);
@@ -352,6 +467,13 @@ function StepFilter(data) {
         var plugin = workflowEditor.pluginOfType(type);
         return plugin;
     });
+    self.index = ko.computed(function () {
+        var step = self.step();
+        if (step) {
+            return step.filters().indexOf(self);
+        }
+        return -1;
+    });
     ko.mapping.fromJS(data, {}, this);
 }
 /**
@@ -362,17 +484,18 @@ function StepFilter(data) {
 function WorkflowStep(data) {
     "use strict";
     var self = this;
+    self.global = ko.observable(data.global);
     self.num = ko.observable(data.num);
     self.description = ko.observable(data.description);
     self.filters = ko.observableArray([]);
+    self.editor = data.editor ? data.editor({step: self}) : new WorkflowStepLogFilterEditor({step: self});
     self.addFilter = function (type, config) {
-        self.filters.push(new StepFilter({type: type, config: config}));
+        var filter = new StepFilter({type: type, config: config});
+        self.filters.push(filter);
+        filter.step(self);
     };
     self.addFilterPopup = function () {
         workflowEditor.addFilterPopup(self);
-    };
-    self.addFilterTest = function () {
-        self.addFilter('mask-passwords', {});
     };
     self.editFilter = function (filter) {
         workflowEditor.editFilterPopup(self, filter);
@@ -386,6 +509,10 @@ function WorkflowStep(data) {
     };
 
     self.displayNum = ko.computed(function () {
+        var global = self.global();
+        if (global) {
+            return "";
+        }
         return parseInt(self.num()) + 1;
     });
 
@@ -396,8 +523,9 @@ function WorkflowStep(data) {
             //     return ko.utils.unwrapObservable(data.stepctx);
             // },
             create: function (options) {
-                return new StepFilter(options.data);
+                return new StepFilter(jQuery.extend(options.data, {step: self}));
             }
-        }
+        },
+        ignore: ['editor']
     }, this);
 }

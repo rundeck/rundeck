@@ -966,14 +966,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     new ContextLogWriter(workflowoverride),
                     contextmanager
             )
-
             def workflowLogManager = new LoggingManagerImpl(
                     workflowoverride,
                     directLogger,
                     logFilterPluginLoader,
-                    //TODO: job specific filter plugins
-                    [
-                    ]
+                    scheduledExecution ?
+                            ExecutionUtilService.createLogFilterConfigs(
+                                    execution.workflow.pluginConfigMap?.get('LogFilter')
+                            ) :
+                            []
             )
 
 

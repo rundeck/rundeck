@@ -18,7 +18,6 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
-import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemImpl
@@ -28,7 +27,6 @@ import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
-import grails.transaction.NotTransactional
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.PluginStep
@@ -169,7 +167,7 @@ class ExecutionUtilService {
                         handler,
                         !!cmd.keepgoingOnSuccess,
                         step.description,
-                        createFilterConfigs(cmd)
+                        createLogFilterConfigs(step.getPluginConfig()?.get('LogFilter'))
                 );
             } else if (null != cmd.getAdhocLocalString()) {
                 final String script = cmd.getAdhocLocalString();
@@ -189,7 +187,7 @@ class ExecutionUtilService {
                         handler,
                         !!cmd.keepgoingOnSuccess,
                         step.description,
-                        createFilterConfigs(cmd)
+                        createLogFilterConfigs(step.getPluginConfig()?.get('LogFilter'))
                 );
 
             } else if (null != cmd.getAdhocFilepath()) {
@@ -211,7 +209,7 @@ class ExecutionUtilService {
                             handler,
                             !!cmd.keepgoingOnSuccess,
                             step.description,
-                            createFilterConfigs(cmd)
+                            createLogFilterConfigs(step.getPluginConfig()?.get('LogFilter'))
                     )
                 }else {
                     return ExecutionItemFactory.createScriptFileItem(
@@ -223,7 +221,7 @@ class ExecutionUtilService {
                             handler,
                             !!cmd.keepgoingOnSuccess,
                             step.description,
-                            createFilterConfigs(cmd)
+                            createLogFilterConfigs(step.getPluginConfig()?.get('LogFilter'))
                     );
 
                 }
@@ -264,7 +262,7 @@ class ExecutionUtilService {
                         !!stepitem.keepgoingOnSuccess,
                         handler,
                         step.description,
-                        createFilterConfigs(step)
+                        createLogFilterConfigs(step.getPluginConfig()?.get('LogFilter'))
                 )
             }else {
                 return ExecutionItemFactory.createPluginStepItem(
@@ -273,7 +271,7 @@ class ExecutionUtilService {
                         !!stepitem.keepgoingOnSuccess,
                         handler,
                         step.description,
-                        createFilterConfigs(step)
+                        createLogFilterConfigs(step.getPluginConfig()?.get('LogFilter'))
                 )
             }
         } else {
@@ -281,12 +279,15 @@ class ExecutionUtilService {
         }
     }
 
-    List<PluginConfiguration> createFilterConfigs(final WorkflowStep commandExec) {
-        def config = commandExec.getPluginConfig()
+    /**
+     * Create the list of plugin configuration, given the configuration for LogFilter type
+     * @param config configuration list for LogFilter
+     * @return list of configurations, or empty list
+     */
+    public static List<PluginConfiguration> createLogFilterConfigs(Object configurations) {
         List<PluginConfiguration> configs = []
-        if (config && config['LogFilter']) {
-            List l = config['LogFilter']
-            l.each { conf ->
+        if (configurations && configurations instanceof Collection) {
+            configurations.each { conf ->
                 if (conf && conf instanceof Map) {
                     String name = conf['type']
                     if (conf['config'] instanceof Map) {

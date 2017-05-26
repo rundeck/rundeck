@@ -148,28 +148,28 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
     }
 
     def editStepFilter() {
-        if (!params.num) {
-            log.error("num parameter is required")
-            return renderErrorFragment("num parameter is required")
-        }
         if (!params.index && !params.newfiltertype) {
             log.error("index parameter is required")
             return renderErrorFragment("index parameter is required")
         }
 
-        def Workflow editwf = _getSessionWorkflow()
-        def numi = Integer.parseInt(params.num);
-        if (numi >= editwf.commands.size()) {
-            log.error("num parameter is invalid: ${numi}")
-            return renderErrorFragment("num parameter is invalid: ${numi}")
-        }
-        def item = null != numi ? editwf.commands.get(numi) : null
-        def pluginconfigs = item.getPluginConfigForType('LogFilter')
         def filterPlugins = pluginService.listPlugins(LogFilterPlugin)
         def newfilterdesc
         def filtertype
         def config = [:]
         if (params.index != null) {
+            if (!params.num) {
+                log.error("num parameter is required")
+                return renderErrorFragment("num parameter is required")
+            }
+            def Workflow editwf = _getSessionWorkflow()
+            def numi = Integer.parseInt(params.num);
+            if (numi >= editwf.commands.size()) {
+                log.error("num parameter is invalid: ${numi}")
+                return renderErrorFragment("num parameter is invalid: ${numi}")
+            }
+            def item = null != numi ? editwf.commands.get(numi) : null
+            def pluginconfigs = item.getPluginConfigForType('LogFilter')
             def filteri = Integer.parseInt(params.index);
             if (!pluginconfigs || !(pluginconfigs instanceof List && pluginconfigs[filteri])) {
                 log.error("index parameter is invalid: ${filteri}")
@@ -185,6 +185,12 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         if (params.validate) {
             config = params.pluginConfig
             validation = _validateLogFilter(config, filtertype)
+        } else if (params.editconfig) {
+            if(request.JSON){
+                config=request.JSON.pluginConfig
+            }else{
+                config = params.pluginConfig
+            }
         }
         [
                 num          : params.num,
@@ -242,7 +248,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
                 }
             }
 
-            results = [error: result.error, valid: !result.error]
+            results = [error: result.error, valid: !result.error, saved: result.saved]
             valid = true
         }.invalidToken {
             response.status = HttpServletResponse.SC_BAD_REQUEST
@@ -252,6 +258,27 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         if (valid) {
             return respond((Object) results, [formats: ['json']])
         }
+    }
+
+    def validateStepFilter() {
+        if (!params.newfiltertype) {
+            log.error("newfiltertype parameter is required")
+            return renderErrorFragment("newfiltertype parameter is required")
+        }
+
+        Map config = params.pluginConfig
+
+        def validation = _validateLogFilter(config, params.newfiltertype)
+
+        def results = [
+                report: validation?.report,
+                valid : validation?.valid,
+                saved : [
+                        type  : params.newfiltertype,
+                        config: config
+                ]
+        ]
+        return respond((Object) results, [formats: ['json']])
     }
 
     def removeStepFilter() {
@@ -745,6 +772,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             }
             item.storePluginConfigForType(ServiceNameConstants.LogFilter, filterConfig)
 
+            result['saved'] = [type: filtertype, config: config]
             result['undo'] = [action: 'removeFilter', num: input.num, index: indexi]
         } else if (input.action == 'removeFilter') {
             def numi = input.num
@@ -815,7 +843,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             filterConfigs.set(indexi, [type: filtertype, config: config])
 
             item.storePluginConfigForType(ServiceNameConstants.LogFilter, filterConfig)
-
+            result['saved'] = [type: filtertype, config: config]
             result['undo'] = [
                     action    : 'modifyFilter',
                     num       : numi,
@@ -1062,6 +1090,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         }else if(exec instanceof PluginStep){
             //TODO: validate
         }
+        //TODO: validate log filter plugins
     }
     /**
      * Validate a WorkflowStep object.  will call Errors.rejectValue for

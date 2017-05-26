@@ -80,6 +80,7 @@
         workflowRenderUndo: '${createLink(controller:"workflow",action:"renderUndo",params:projParams)}',
         workflowEditStepFilter: '${createLink(controller:"workflow",action:"editStepFilter",params:projParams)}',
         workflowSaveStepFilter: '${createLink(controller:"workflow",action:"saveStepFilter",params:projParams)}',
+        workflowValidateStepFilter: '${createLink(controller:"workflow",action:"validateStepFilter",params:projParams)}',
         workflowRemoveStepFilter: '${createLink(controller:"workflow",action:"removeStepFilter",params:projParams)}',
 
         editOptsRenderUndo: '${createLink(controller:"editOpts",action:"renderUndo",params:projParams)}',
