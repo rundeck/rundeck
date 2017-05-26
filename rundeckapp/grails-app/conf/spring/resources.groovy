@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
@@ -30,41 +31,29 @@ import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
-import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
+import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.logging.MaskPasswordsFilterPlugin
-import com.dtolabs.rundeck.server.plugins.logging.MaskPasswordsFilterPluginFactory
+import com.dtolabs.rundeck.server.plugins.logging.PluginFactoryBean
+import com.dtolabs.rundeck.server.plugins.logging.RenderDatatypeFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logging.SimpleDataFilterPlugin
-import com.dtolabs.rundeck.server.plugins.logging.SimpleDataFilterPluginFactory
-import com.dtolabs.rundeck.server.plugins.logs.HTMLViewConverterPlugin
-import com.dtolabs.rundeck.server.plugins.logs.JsonConverterPlugin
-import com.dtolabs.rundeck.server.plugins.logs.MarkdownConverterPlugin
-import com.dtolabs.rundeck.server.plugins.logs.PropertiesConverterPlugin
-import com.dtolabs.rundeck.server.plugins.logs.HTMLTableViewConverterPlugin
-import com.dtolabs.rundeck.server.plugins.logs.TabularDataConverterPlugin
+import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
-import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.PluggableStoragePluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
+import groovy.io.FileType
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
 import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
-import groovy.io.FileType
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
+import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import rundeck.services.PasswordFieldsService
 import rundeck.services.scm.ScmJobImporter
 
 beans={
+    xmlns context: "http://www.springframework.org/schema/context"
     log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
         targetClass = "org.springframework.util.Log4jConfigurer"
         targetMethod = "initLogging"
@@ -299,28 +288,34 @@ beans={
         basePath = uploadsDir.absolutePath
     }
     pluginRegistry['filesystem-temp'] = 'fsFileUploadPlugin'
-    jsonDataConverterPlugin(JsonConverterPlugin)
-    propertiesDataConverterPlugin(PropertiesConverterPlugin)
-    HTMLTableViewConverterPlugin(HTMLTableViewConverterPlugin)
-    markdownDataConverterPlugin(MarkdownConverterPlugin)
-    tabularDataConverterPlugin(TabularDataConverterPlugin)
-    HTMLViewConverterPlugin(HTMLViewConverterPlugin)
-    pluginRegistry[JsonConverterPlugin.PROVIDER_NAME] = 'jsonDataConverterPlugin'
-    pluginRegistry[PropertiesConverterPlugin.PROVIDER_NAME] = 'propertiesDataConverterPlugin'
-    pluginRegistry[HTMLTableViewConverterPlugin.PROVIDER_NAME] = 'HTMLTableViewConverterPlugin'
-    pluginRegistry[MarkdownConverterPlugin.PROVIDER_NAME] = 'markdownDataConverterPlugin'
-    pluginRegistry[TabularDataConverterPlugin.PROVIDER_NAME] = 'tabularDataConverterPlugin'
-    pluginRegistry[HTMLViewConverterPlugin.PROVIDER_NAME] = 'HTMLViewConverterPlugin'
-    maskPasswordsFilterPlugin(MaskPasswordsFilterPluginFactory)
-    pluginRegistry[MaskPasswordsFilterPlugin.PROVIDER_NAME] = 'maskPasswordsFilterPlugin'
-    simpleDataFilterPluginFactory(SimpleDataFilterPluginFactory)
-    pluginRegistry[SimpleDataFilterPlugin.PROVIDER_NAME] = 'simpleDataFilterPluginFactory'
+
+    //list of plugin classes to generate factory beans for
+    [
+            //log converters
+            JsonConverterPlugin,
+            PropertiesConverterPlugin,
+            HTMLTableViewConverterPlugin,
+            MarkdownConverterPlugin,
+            TabularDataConverterPlugin,
+            HTMLViewConverterPlugin,
+            //log filters
+            MaskPasswordsFilterPlugin,
+            SimpleDataFilterPlugin,
+    ].each {
+        "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
+    }
+
+    //TODO: scan defined plugins:
+    //    context.'component-scan'('base-package': "com.dtolabs.rundeck.server.plugins.logging")
+    rundeckPluginRegistryMap(MapFactoryBean) {
+        sourceMap = pluginRegistry
+    }
     /**
      * Registry bean contains both kinds of plugin
      */
     rundeckPluginRegistry(RundeckPluginRegistry){
         rundeckEmbeddedPluginExtractor = ref('rundeckEmbeddedPluginExtractor')
-        pluginRegistryMap=pluginRegistry
+        pluginRegistryMap = ref('rundeckPluginRegistryMap')
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
         pluginDirectory=pluginDir
         pluginCacheDirectory=cacheDir
