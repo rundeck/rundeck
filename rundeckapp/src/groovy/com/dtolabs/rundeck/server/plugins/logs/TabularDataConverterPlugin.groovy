@@ -89,7 +89,9 @@ class TabularDataConverterPlugin implements ContentConverterPlugin {
         }
 
         List<Map> result = []
-
+        while(content.size()>0 && !content.first().trim()) {
+            content.remove(0)
+        }
         List first = content.remove(0).split(quotedSep)
         if (content.size() > 0 && content.first().matches('^-+$')) {
             hasHeader = true
