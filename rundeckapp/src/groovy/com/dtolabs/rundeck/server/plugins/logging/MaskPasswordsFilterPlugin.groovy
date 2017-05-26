@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 
 import java.util.regex.Matcher
@@ -46,10 +47,40 @@ class MaskPasswordsFilterPlugin implements LogFilterPlugin {
     )
     String replacement
 
+    @PluginProperty(
+            title = "Color",
+            description = "ANSI color applied to replacement text.",
+            required = false
+    )
+    @SelectValues(values = [
+            'green',
+            'red',
+            'yellow',
+            'blue',
+            'magenta',
+            'cyan',
+            'white',
+    ])
+    String color
+
     Pattern regex;
     private boolean enabled;
     private String replacementQuoted
-
+    static def ESC = '\u001B'
+    static def RESET = ESC + '[0m'
+//    def rgb={r,g,b-> 16 + b + 6*g + 36*r }
+    static def COLORS = [
+            red    : ESC + '[31m',
+//            orange:ESC+'[38;5;'+rgb(5, 2, 0)+'m',
+            green  : ESC + '[32m',
+            yellow : ESC + '[33m',
+            blue   : ESC + '[34m',
+//            indigo:ESC+'[38;5;'+rgb(2, 0, 2)+'m',
+//            violet:ESC+'[38;5;'+rgb(4, 0, 5)+'m',
+            magenta: ESC + '[35m',
+            cyan   : ESC + '[36m',
+            white  : ESC + '[37m',
+    ]
     @Override
     void init(final PluginLoggingContext context) {
         def privdata = context.privateDataContext?.values()?.collect {
@@ -88,7 +119,9 @@ class MaskPasswordsFilterPlugin implements LogFilterPlugin {
         regex = Pattern.compile('(' + mask + ')')
         enabled = true;
         replacementQuoted = Matcher.quoteReplacement(replacement ?: '*****')
-
+        if (color) {
+            replacementQuoted = COLORS[color] + replacementQuoted + RESET
+        }
     }
 
     @Override
