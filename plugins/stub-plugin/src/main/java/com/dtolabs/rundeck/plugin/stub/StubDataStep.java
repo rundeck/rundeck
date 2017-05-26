@@ -87,28 +87,14 @@ public class StubDataStep implements StepPlugin {
 
         if ("properties".equals(format)) {
             HashMap<String, String> meta = new HashMap<>();
-            meta.put("content:data-type", "application/x-java-properties");
+            meta.put("content-data-type", "application/x-java-properties");
             context.getExecutionContext().getExecutionListener().event("log", data, meta);
         } else if ("json".equals(format)) {
             HashMap<String, String> meta = new HashMap<>();
-            meta.put("content:data-type", "application/json");
+            meta.put("content-data-type", "application/json");
             context.getExecutionContext().getExecutionListener().event("log", data, meta);
         }
-        context.getLogger().log(2, "Input data:");
-        MultiDataContext<ContextView, DataContext> sharedDataContext = context.getExecutionContext()
-                                                                              .getSharedDataContext();
-        DataContext data = sharedDataContext.getData(ContextView.global());
-        ObjectMapper objectMapper = new ObjectMapper();
-        StringWriter stringWriter = new StringWriter();
-        try {
-            objectMapper.writeValue(stringWriter, data.getData());
 
-            HashMap<String, String> meta = new HashMap<>();
-            meta.put("content:data-type", "application/json");
-            context.getExecutionContext().getExecutionListener().event("log", stringWriter.toString(), meta);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
     }
 
     public static void addData(
