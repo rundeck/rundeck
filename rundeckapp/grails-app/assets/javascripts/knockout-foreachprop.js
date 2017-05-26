@@ -18,6 +18,17 @@
 /*
  source: http://stackoverflow.com/questions/14838135/how-to-use-knockout-to-iterate-over-an-object-not-array
  */
+/**
+ *
+ * binding: foreachprop:
+ * can also define "unsorted:" binding to not sort keys.
+ * <pre><code>
+ *      &lt;span data-bind="foreachprop: execution().jobArguments"&gt;
+ &lt;span data-bind="text: key"&gt;&lt;/span&gt;:
+ &lt;span data-bind="text: value" class="optvalue"&gt;&lt;/span&gt;
+ &lt;/span&gt;
+ </code></pre>
+ */
 ko.bindingHandlers.foreachprop = {
     transformObject: function (obj,unsorted) {
         var properties = [];
