@@ -816,4 +816,78 @@ class FrameworkControllerSpec extends Specification {
         params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
         params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
     }
+
+    def "save project updating passive mode"(){
+        setup:
+        def fwkService=Mock(FrameworkService)
+        controller.frameworkService = fwkService
+        controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.userService = Mock(UserService)
+        def sEService=Mock(ScheduledExecutionService){
+            isProjectExecutionEnabled(_) >> !currentExecutionDisabled
+            isProjectScheduledEnabled(_) >> !currentScheduleDisabled
+        }
+        controller.scheduledExecutionService = sEService
+
+        params.project = "TestSaveProject"
+        params.description='abc'
+        params.disableExecutionMode = disableExecution
+        params.disableScheduleMode = disableSchedule
+        println('currentExecutionDisabled / currentScheduleDisabled / disableExecution / disableSchedule')
+        print(currentExecutionDisabled)
+        print('/')
+        print(currentScheduleDisabled)
+        print('/')
+        print(disableExecution)
+        print('/')
+        println(disableSchedule)
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.saveProject()
+
+        then:
+        response.status==302
+        request.errors == null
+        1 * fwkService.authResourceForProject(_)
+        1 * fwkService.getAuthContextForSubject(_)
+        1 * fwkService.authorizeApplicationResourceAll(null,null,['admin']) >> true
+        1 * fwkService.listDescriptions() >> [null,null,null]
+        1 * fwkService.updateFrameworkProjectConfig(_,{
+            it['project.description'] == 'abc'
+        },_) >> [success:true]
+        if(shouldReSchedule){
+            1 * sEService.rescheduleJobs(_)
+        }else{
+            0 * sEService.rescheduleJobs(_)
+        }
+        if(shouldUnSchedule){
+            1 * sEService.unscheduleJobs(_)
+        }else{
+            0 * sEService.unscheduleJobs(_)
+        }
+
+        where:
+        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldReSchedule | shouldUnSchedule
+        false                    | false                   | 'false'          | 'false'         | false            | false
+        false                    | false                   | 'true'           | 'false'         | false            | true
+        false                    | false                   | 'false'          | 'true'          | false            | true
+        false                    | false                   | 'true'           | 'true'          | false            | true
+        true                     | false                   | 'false'          | 'false'         | true             | false
+        true                     | false                   | 'true'           | 'false'         | false            | false
+        true                     | false                   | 'false'          | 'true'          | false            | true
+        true                     | false                   | 'true'           | 'true'          | false            | true
+        false                    | true                    | 'false'          | 'false'         | true             | false
+        false                    | true                    | 'true'           | 'false'         | false            | true
+        false                    | true                    | 'false'          | 'true'          | false            | false
+        false                    | true                    | 'true'           | 'true'          | false            | true
+        true                     | true                    | 'false'          | 'false'         | true             | false
+        true                     | true                    | 'true'           | 'false'         | false            | true
+        true                     | true                    | 'false'          | 'true'          | false            | true
+        true                     | true                    | 'true'           | 'true'          | false            | false
+
+    }
 }

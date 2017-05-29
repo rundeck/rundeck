@@ -2031,4 +2031,79 @@ class ScheduledExecutionServiceSpec extends Specification {
         'xyz'      | false      | false   | false     | false
     }
 
+
+    def "project passive mode execution"() {
+        given:
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.executions':property]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
+        when:
+        def result = service.isProjectExecutionEnabled(null)
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        property   | expect
+        null       | true
+        ''         | true
+        'true'     | false
+        'false'    | true
+    }
+
+    def "project passive mode schedule"() {
+        given:
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.schedule':property]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
+        when:
+        def result = service.isProjectScheduledEnabled(null)
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        property   | expect
+        null       | true
+        ''         | true
+        'true'     | false
+        'false'    | true
+    }
+
+    def "project passive mode should schedule"() {
+        given:
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.schedule':disableSchedule,
+                                       'project.disable.executions':disableExecution]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
+        when:
+        def result = service.shouldScheduleInThisProject(null)
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        disableSchedule   |disableExecution   | expect
+        null              |null               | true
+        ''                |''                 | true
+        'true'            |'true'             | false
+        'true'            |'false'            | false
+        'false'           |'false'            | true
+        'false'           |'true'             | false
+
+
+
+    }
 }
