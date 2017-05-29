@@ -1197,7 +1197,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     if(active){
                         scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
                     }else{
-                        scheduledExecutionService.unscheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+                        scheduledExecutionService.unscheduleJobsForProject(project, frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
                     }
                 }
             }
@@ -1422,7 +1422,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     if(active){
                         scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
                     }else{
-                        scheduledExecutionService.unscheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+                        scheduledExecutionService.unscheduleJobsForProject(project,frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
                     }
                 }
                 if (!result.success) {

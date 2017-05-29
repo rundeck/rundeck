@@ -534,6 +534,34 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
+    /**
+     * Remove all scheduling for job executions, triggered when passive mode is enabled
+     * @param serverUUID
+     */
+    def unscheduleJobsForProject(String project,String serverUUID=null){
+        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUIDAndProject(true, serverUUID, project) : ScheduledExecution.findAllByScheduledAndProject(true, project)
+        schedJobs.each { ScheduledExecution se ->
+            def jobname = se.generateJobScheduledName()
+            def groupname = se.generateJobGroupName()
+
+            quartzScheduler.deleteJob(new JobKey(jobname,groupname))
+            log.info("Unscheduled job: ${se.id}")
+        }
+
+        def results = Execution.isScheduledAdHoc()
+        if (serverUUID) {
+            results = results.withServerNodeUUID(serverUUID)
+        }
+        results = results.withProject(project)
+
+        results.list().each { Execution e ->
+            ScheduledExecution se = e.scheduledExecution
+            def identity = getJobIdent(se, e)
+            quartzScheduler.deleteJob(new JobKey(identity.jobname, identity.groupname))
+            log.info("Unscheduled job: ${se.id}")
+        }
+    }
+
     def rescheduleJob(ScheduledExecution scheduledExecution) {
         rescheduleJob(scheduledExecution, false, null, null)
     }

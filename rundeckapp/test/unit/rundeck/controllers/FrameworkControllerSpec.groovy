@@ -835,14 +835,6 @@ class FrameworkControllerSpec extends Specification {
         params.description='abc'
         params.disableExecutionMode = disableExecution
         params.disableScheduleMode = disableSchedule
-        println('currentExecutionDisabled / currentScheduleDisabled / disableExecution / disableSchedule')
-        print(currentExecutionDisabled)
-        print('/')
-        print(currentScheduleDisabled)
-        print('/')
-        print(disableExecution)
-        print('/')
-        println(disableSchedule)
 
         setupFormTokens(params)
         when:
@@ -865,9 +857,9 @@ class FrameworkControllerSpec extends Specification {
             0 * sEService.rescheduleJobs(_)
         }
         if(shouldUnSchedule){
-            1 * sEService.unscheduleJobs(_)
+            1 * sEService.unscheduleJobsForProject(_,_)
         }else{
-            0 * sEService.unscheduleJobs(_)
+            0 * sEService.unscheduleJobsForProject(_,_)
         }
 
         where:
