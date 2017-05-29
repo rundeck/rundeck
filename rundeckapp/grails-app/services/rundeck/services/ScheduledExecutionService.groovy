@@ -64,8 +64,6 @@ import java.text.SimpleDateFormat
  */
 class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, RundeckProjectConfigurable {
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
-    public static final String CONF_DISABLE_EXECUTION = 'project.disable.executions'
-    public static final String CONF_DISABLE_SCHEDULE = 'project.disable.schedule'
 
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
