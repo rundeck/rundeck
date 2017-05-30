@@ -122,7 +122,7 @@ class RenderDatatypeFilterPlugin implements LogFilterPlugin {
             freeSelect = true
     )
     @SelectLabels(values = ['JSON', 'Java Properties', 'CSV', 'HTML', 'Markdown'])
-    private String datatype = null
+    String datatype = null
     private StringBuilder buffer;
 
     @Override
@@ -166,7 +166,7 @@ class RenderDatatypeFilterPlugin implements LogFilterPlugin {
     }
 
     private emitData(PluginLoggingContext context) {
-        if (started && datatype) {
+        if (started && datatype && buffer.length() > 0) {
             if (buffer.length() > 0) {
                 buffer.append("\n")
             }
@@ -178,6 +178,7 @@ class RenderDatatypeFilterPlugin implements LogFilterPlugin {
                     ]
             )
         }
+        buffer = new StringBuilder()
         started = false
         datatype = null
     }
