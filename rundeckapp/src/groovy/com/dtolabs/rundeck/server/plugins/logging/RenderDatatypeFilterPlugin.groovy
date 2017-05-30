@@ -82,7 +82,7 @@ class RenderDatatypeFilterPlugin implements LogFilterPlugin {
 
     @Override
     void handleEvent(final PluginLoggingContext context, final LogEventControl event) {
-        if (event.getEventType() == 'log' && event.message) {
+        if (event.getEventType() == 'log' && event.loglevel == LogLevel.NORMAL) {
             if (!started) {
                 if (event.message.startsWith(START_PREFIX)) {
                     started = true;
