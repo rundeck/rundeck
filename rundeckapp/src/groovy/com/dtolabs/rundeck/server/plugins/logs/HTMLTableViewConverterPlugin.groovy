@@ -71,29 +71,58 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
         }
     }
 
+    public static String renderPlaceholder(String message) {
+        '<span class="text-muted">' + message + '</span>'
+    }
     public static String renderSimpleList(List list, Map<String, String> metadata) {
-        def first = list.first()
-        if (first instanceof Map) {
-            return renderTableHtml(list, metadata)
+        if (!list) {
+            return renderPlaceholder('Empty List')
+        }
+        def md = new HashMap(metadata)
+        if (list.size() > 1) {
+            def first = list.first()
+            if (first instanceof Map) {
+                def second = list[1]
+                if (second instanceof Map) {
+                    if (first.keySet() == second.keySet()) {
+                        //
+                        return renderTableHtml(list, metadata)
+                    }
+                }
+            }
         }
         def out = new StringBuffer()
-        openTag(out, 'ol')
-        list.each { item ->
-            openTag(out, 'li')
+        renderTableStart(out, md['css-class'])
+        if (md['table-title']) {
+            renderTableTitle(out, md['table-title'], 2)
+            md.remove('table-title')
+        }
+        list.eachWithIndex { item, index ->
+            openTag(out, 'tr')
+            openTag(out, 'td class="data-list-index"')
+            out << renderPlaceholder((index + 1).toString())
+            closeTag(out, 'td')
+            openTag(out, 'td')
             if (item instanceof List) {
                 out << renderSimpleList(item, metadata)
             } else if (item instanceof Map) {
                 out << renderSimpleMap(item, metadata)
+            } else if (null == item) {
+                out << renderPlaceholder('Null Value')
             } else {
                 out << item.toString().encodeAsHTML()
             }
-            closeTag(out, 'li')
+            closeTag(out, 'td')
+            closeTag(out, 'tr')
         }
-        closeTag(out, 'ol')
+        closeTag(out, 'table')
         return out.toString()
     }
 
     public static String renderSimpleMap(Map map, Map<String, String> metadata) {
+        if (!map) {
+            return renderPlaceholder('Empty Map')
+        }
         def md = new HashMap(metadata)
         def out = new StringBuffer()
         renderTableStart(out, md['css-class'])
@@ -112,6 +141,8 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
                 out << renderSimpleList(item, md)
             } else if (item instanceof Map) {
                 out << renderSimpleMap(item, md)
+            } else if (null == item) {
+                out << renderPlaceholder('Null Value')
             } else {
                 out << item.toString().encodeAsHTML()
             }
@@ -159,6 +190,8 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
                     out << renderSimpleList(item, md)
                 } else if (item instanceof Map) {
                     out << renderSimpleMap(item, md)
+                } else if (null == item) {
+                    out << renderPlaceholder('Null Value')
                 } else {
                     out << item.toString().encodeAsHTML()
                 }
@@ -179,7 +212,7 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
     }
 
     private static void renderTableTitle(out, String title, int colspan) {
-        openTag(out, "tr")
+        openTag(out, 'tr')
         openTag(out, "th colspan=\"$colspan\" class=\"table-header\"")
         out << title.encodeAsHTML()
         closeTag(out, 'th')
