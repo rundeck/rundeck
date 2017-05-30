@@ -21,6 +21,9 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
+import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 
 /**
@@ -33,15 +36,31 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 
 Some supported datatypes:
 
-* `application/json` [JSON][]
-* `application/x-java-properties` [Java Properties][]
-* `text/csv` CSV 
-* `text/html` HTML
-* `text/x-markdown` [Markdown][]
+* `application/json` [JSON][] (synonyms: `json`)
+* `application/x-java-properties` [Java Properties][] (synonyms: `properties`)
+* `text/csv` CSV (synonyms: `csv`)
+* `text/html` HTML (synonyms: `html`)
+* `text/x-markdown` [Markdown][] (synonyms: `markdown`,`md`)
 
 [JSON]: http://json.org
 [Markdown]: https://en.wikipedia.org/wiki/Markdown
 [Java Properties]: https://docs.oracle.com/javase/7/docs/api/java/util/Properties.html#load(java.io.Reader)
+
+To mark a section of output with a datatype, echo this marker defining it:
+
+    #BEGIN:RUNDECK:DATATYPE:<datatype>
+
+Replacing `<datatype>` with one of the supported data types.
+
+You can mark the section as ending by echoing:
+
+    #END:RUNDECK:DATATYPE
+
+Otherwise, when the step ends the plugin will treat it as ended.
+
+You can also choose a value for the `Data Type` property, to preset
+a datatype to use for the entire output log data.  If this is set, then
+no "BEGIN" marker is looked for.
 
 The data can then be rendered in the Rundeck Log output GUI.
 The specific renderer for the data type is determined by available
@@ -69,15 +88,50 @@ class RenderDatatypeFilterPlugin implements LogFilterPlugin {
     public static final String START_PREFIX = '#BEGIN:RUNDECK:DATATYPE:'
     public static final String END_PREFIX = '#END:RUNDECK:DATATYPE'
 
+    static final def KNOWN_TYPES = [
+            JSON_TYPE,
+            PROPERTIES_TYPE,
+            CSV_TYPE,
+            HTML_TYPE,
+            MARKDOWN_TYPE
+    ]
+    static final def SYNONYMS = [
+            json      : JSON_TYPE,
+            properties: PROPERTIES_TYPE,
+            csv       : CSV_TYPE,
+            html      : HTML_TYPE,
+            markdown  : MARKDOWN_TYPE,
+            md        : MARKDOWN_TYPE,
+    ]
+    public static final String JSON_TYPE = 'application/json'
+    public static final String PROPERTIES_TYPE = 'application/x-java-properties'
+    public static final String CSV_TYPE = 'text/csv'
+    public static final String HTML_TYPE = 'text/html'
+    public static final String MARKDOWN_TYPE = 'text/x-markdown'
+
     private boolean started = false;
+
+    @PluginProperty(
+            title = "Data type",
+            description = '''Enter a data type to use by default for all output from the
+ step.  If not set, the BEGIN and END markers will be looked for.''',
+            required = false
+    )
+    @SelectValues(
+            values = ['application/json', 'application/x-java-properties', 'text/csv', 'text/html', 'text/x-markdown'],
+            freeSelect = true
+    )
+    @SelectLabels(values = ['JSON', 'Java Properties', 'CSV', 'HTML', 'Markdown'])
     private String datatype = null
     private StringBuilder buffer;
 
     @Override
     void init(final PluginLoggingContext context) {
         started = false
-        datatype = null
         buffer = new StringBuilder()
+        if (datatype) {
+            started = true
+        }
     }
 
     @Override
@@ -120,11 +174,12 @@ class RenderDatatypeFilterPlugin implements LogFilterPlugin {
                     2,
                     buffer.toString(),
                     [
-                            'content-data-type': datatype
+                            'content-data-type': SYNONYMS[datatype.toLowerCase()] ?: datatype
                     ]
             )
         }
         started = false
         datatype = null
     }
+
 }
