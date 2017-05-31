@@ -17,9 +17,9 @@
 package com.dtolabs.rundeck.core.execution.workflow;
 
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
-import com.dtolabs.rundeck.core.dispatcher.DataContext;
-import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
-import com.dtolabs.rundeck.core.dispatcher.MultiDataContextImpl;
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.data.MultiDataContext;
+import com.dtolabs.rundeck.core.data.MultiDataContextImpl;
 
 import java.util.Map;
 

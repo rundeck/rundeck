@@ -17,8 +17,8 @@
 package com.dtolabs.rundeck.plugin.stub;
 
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
-import com.dtolabs.rundeck.core.dispatcher.DataContext;
-import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.data.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;

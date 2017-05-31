@@ -1,6 +1,6 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.core.dispatcher.BaseDataContext
+import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin

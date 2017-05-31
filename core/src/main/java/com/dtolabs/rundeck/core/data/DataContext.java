@@ -1,5 +1,22 @@
-package com.dtolabs.rundeck.core.dispatcher;
+/*
+ * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
+package com.dtolabs.rundeck.core.data;
+
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.utils.Converter;
 
 import java.util.Map;
@@ -7,7 +24,7 @@ import java.util.Map;
 /**
  * Created by greg on 5/25/16.
  */
-public interface DataContext extends Map<String, Map<String, String>>, Mergable<DataContext>{
+public interface DataContext extends Map<String, Map<String, String>>, Mergable<DataContext> {
     Map<String,Map<String,String>> getData();
 
     default Converter<String, String> replaceDataReferencesConverter() {

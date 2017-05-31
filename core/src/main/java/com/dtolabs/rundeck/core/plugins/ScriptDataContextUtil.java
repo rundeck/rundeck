@@ -25,13 +25,10 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
-import com.dtolabs.rundeck.core.common.IRundeckProject;
-import com.dtolabs.rundeck.core.dispatcher.BaseDataContext;
-import com.dtolabs.rundeck.core.dispatcher.DataContext;
+import com.dtolabs.rundeck.core.data.BaseDataContext;
+import com.dtolabs.rundeck.core.data.DataContext;
 
 import java.io.File;
-import java.util.*;
 
 /**
  * ScriptDataContextUtil is ...

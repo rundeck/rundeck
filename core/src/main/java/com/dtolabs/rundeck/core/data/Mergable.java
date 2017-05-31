@@ -14,25 +14,11 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.dispatcher
-
-import com.dtolabs.rundeck.core.data.DataContext
-import com.dtolabs.rundeck.core.data.MultiDataContextImpl
-import spock.lang.Specification
+package com.dtolabs.rundeck.core.data;
 
 /**
- * @author greg
- * @since 5/18/17
+ * Created by greg on 6/3/16.
  */
-class MultiDataContextImplSpec extends Specification {
-    def "merge null data"() {
-
-        given:
-        def impl = new MultiDataContextImpl<ContextView, DataContext>()
-        when:
-        impl.merge(ContextView.global(), null)
-        then:
-        NullPointerException e = thrown()
-
-    }
+public interface Mergable<T> {
+    void merge(T input);
 }

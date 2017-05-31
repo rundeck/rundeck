@@ -25,7 +25,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node.impl;
 
 import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
-import com.dtolabs.rundeck.core.dispatcher.BaseDataContext;
+import com.dtolabs.rundeck.core.data.BaseDataContext;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;

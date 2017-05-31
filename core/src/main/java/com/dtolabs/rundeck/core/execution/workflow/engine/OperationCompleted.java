@@ -16,8 +16,6 @@
 
 package com.dtolabs.rundeck.core.execution.workflow.engine;
 
-import com.dtolabs.rundeck.core.dispatcher.DataContext;
-import com.dtolabs.rundeck.core.dispatcher.MultiDataContext;
 import com.dtolabs.rundeck.core.execution.workflow.BaseWorkflowExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.rules.StateObj;

@@ -16,6 +16,9 @@
 
 package com.dtolabs.rundeck.core.dispatcher
 
+import com.dtolabs.rundeck.core.data.BaseDataContext
+import com.dtolabs.rundeck.core.data.DataContext
+import com.dtolabs.rundeck.core.data.MultiDataContextImpl
 import spock.lang.Specification
 import spock.lang.Unroll
 

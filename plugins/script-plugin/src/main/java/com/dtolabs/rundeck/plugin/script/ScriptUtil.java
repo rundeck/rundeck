@@ -24,7 +24,6 @@
 package com.dtolabs.rundeck.plugin.script;
 
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.dispatcher.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.utils.StringArrayUtil;
 

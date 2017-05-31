@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.dispatcher;
 
+import com.dtolabs.rundeck.core.data.ViewTraverse;
 import lombok.Value;
 
 /**

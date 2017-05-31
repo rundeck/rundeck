@@ -21,16 +21,15 @@
 * Created: Aug 16, 2010 6:27:40 PM
 * $Id$
 */
-package com.dtolabs.rundeck.core.dispatcher;
+package com.dtolabs.rundeck.core.data;
 
 import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.DataOutput;
 import com.dtolabs.rundeck.core.utils.Converter;
 import lombok.Data;
-import org.apache.tools.ant.taskdefs.ExecTask;
-import org.apache.tools.ant.types.Environment;
 
 import java.io.*;
 import java.util.*;
@@ -192,6 +191,15 @@ public class SharedDataContextUtils {
         return sb.toString();
     }
 
+    /**
+     * Expand the variable reference
+     * @param data multi context data set
+     * @param viewMap
+     * @param parser
+     * @param variableref
+     * @param <T>
+     * @return
+     */
     public static <T extends ViewTraverse<T>> String expandVariable(
             final MultiDataContext<T, DataContext> data,
             final BiFunction<Integer, String, T> viewMap,
@@ -235,6 +243,17 @@ public class SharedDataContextUtils {
         return new VariableRef(variableref, step, group, key, qual);
     }
 
+    /**
+     * Expand a variable reference
+     * @param data multi context data
+     * @param viewMap factory of ViewTraverse type
+     * @param step step text
+     * @param group
+     * @param key
+     * @param node
+     * @param <T>
+     * @return
+     */
     public static <T extends ViewTraverse<T>> String expandVariable(
             final MultiDataContext<T, DataContext> data,
             final BiFunction<Integer, String, T> viewMap,

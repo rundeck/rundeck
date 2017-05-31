@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.dispatcher;
+package com.dtolabs.rundeck.core.data;
 
 /**
  * Allows a contextual view to produce a widened view

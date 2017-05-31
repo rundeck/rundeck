@@ -17,6 +17,8 @@
 package com.dtolabs.rundeck.core.dispatcher
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.data.BaseDataContext
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils
 import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import spock.lang.Specification
