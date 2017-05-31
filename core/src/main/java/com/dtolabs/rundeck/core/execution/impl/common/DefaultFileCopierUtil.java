@@ -145,7 +145,6 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
                     SharedDataContextUtils.replaceTokensInScript(
                             script,
                             sharedContext,
-                            framework,
                             style,
                             tempfile,
                             node.getNodename()
@@ -158,7 +157,6 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
                     SharedDataContextUtils.replaceTokensInStream(
                             input,
                             sharedContext,
-                            framework,
                             style,
                             tempfile,
                             node.getNodename()

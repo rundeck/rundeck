@@ -72,77 +72,7 @@ class SharedDataContextUtilsSpec extends Specification {
         '${2:a.globalval}'         | ''
     }
 
-    @Unroll
-    def "parse arg string var valid"() {
-        given:
-        when:
-        def result = SharedDataContextUtils.parseArgStringVariable(str)
-        then:
-        result.step == step
-        result.group == group
-        result.key == key
-        result.node == node
 
-        where:
-        str           | step | group | key | node
-//        'abc'                 | 'abc'
-        'a.b'         | null | 'a'   | 'b' | null
-        'a.b@badnode' | null | 'a'   | 'b' | 'badnode'
-        '2:a.b'       | "2"    | 'a'   | 'b' | null
-        '2:a.b@node1' | "2"    | 'a'   | 'b' | 'node1'
-    }
-    @Unroll
-    def "parse arg string var invalid"() {
-        given:
-        when:
-        def result = SharedDataContextUtils.parseArgStringVariable(str)
-        then:
-        result==null
-
-        where:
-        str           | _
-//        'abc'         _
-        'a'         | _
-        'a .b@node' | _
-        '2: a.b'       | _
-        '2:a.b @node1' | _
-    }
-
-    @Unroll
-    def "parse script var valid"() {
-        given:
-        when:
-        def result = SharedDataContextUtils.parseScriptTemplateVariable(str)
-        then:
-        result.step == step
-        result.group == group
-        result.key == key
-        result.node == node
-
-        where:
-        str           | step | group | key | node
-//        'abc'                 | 'abc'
-        'a.b'         | null | 'a'   | 'b' | null
-        'a.b/badnode' | null | 'a'   | 'b' | 'badnode'
-        '2:a.b'       | "2"    | 'a'   | 'b' | null
-        '2:a.b/node1' | "2"    | 'a'   | 'b' | 'node1'
-    }
-    @Unroll
-    def "parse script var invalid"() {
-        given:
-        when:
-        def result = SharedDataContextUtils.parseScriptTemplateVariable(str)
-        then:
-        result==null
-
-        where:
-        str           | _
-//        'abc'         _
-        'a'         | _
-        'a .b/node' | _
-        '2: a.b'       | _
-        '2:a.b /node1' | _
-    }
     @Unroll
     def "replace tokens in script duplicate start char #script"() {
         given:

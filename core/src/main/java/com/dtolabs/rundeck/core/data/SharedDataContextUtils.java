@@ -23,18 +23,15 @@
 */
 package com.dtolabs.rundeck.core.data;
 
-import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.DataOutput;
 import com.dtolabs.rundeck.core.utils.Converter;
-import lombok.Data;
 
 import java.io.*;
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,39 +44,6 @@ import java.util.regex.Pattern;
  */
 public class SharedDataContextUtils {
     public static final String PROPERTY_REF_REGEX = "\\$\\{([^\\s.]+)\\.([^\\s}]+)\\}";
-    public static final String PROPERTY_VIEW_VAR_NODE_CHAR = "@";
-    public static final String PROPERTY_VIEW_VAR_FINAL_CHAR = "}";
-    /**
-     * Match a variable in the form "1:group.key@node"
-     */
-    public static final String PROPERTY_VIEW_KEY_REGEX = "(?:(?<STEP>\\d+):)?(?<GROUP>[^\\s.]+)\\." +
-                                                         "(?<KEY>[^\\s" +
-                                                         PROPERTY_VIEW_VAR_NODE_CHAR +
-                                                         "]+)" +
-                                                         "(?:" +
-                                                         PROPERTY_VIEW_VAR_NODE_CHAR +
-                                                         "(?<QUAL>[^\\s" + PROPERTY_VIEW_VAR_FINAL_CHAR + "]+)" +
-                                                         ")?";
-
-    public static final String PROPERTY_SCRIPT_VAR_NODE_CHAR = "/";
-    /**
-     * Match a variable in the form "1:group.key/node"
-     */
-    public static final String PROPERTY_SCRIPT_TEMPLATE_KEY_REGEX = "(?:(?<STEP>\\d+):)?(?<GROUP>[^\\s.]+)\\." +
-                                                                    "(?<KEY>[^\\s" +
-                                                                    PROPERTY_SCRIPT_VAR_NODE_CHAR +
-                                                                    "]+)" +
-                                                                    "(?:" +
-                                                                    PROPERTY_SCRIPT_VAR_NODE_CHAR +
-                                                                    "(?<QUAL>[^\\s" +
-                                                                    PROPERTY_VIEW_VAR_FINAL_CHAR +
-                                                                    "]+)" +
-                                                                    ")?";
-    public static final Pattern PROPERTY_VAR_PATTERN = Pattern.compile("^" + PROPERTY_VIEW_KEY_REGEX + "$");
-    public static final Pattern PROPERTY_SCRIPT_TEMPLATE_PATTERN = Pattern.compile("^" +
-                                                                                   PROPERTY_SCRIPT_TEMPLATE_KEY_REGEX +
-                                                                                   "$");
-//    public static final String PROPERTY_VIEW_REF_REGEX = "\\$\\{" + PROPERTY_VIEW_KEY_REGEX + "\\}";
     public static final String PROPERTY_VIEW_REF_REGEX = "\\$\\{([^\\s}]+)\\}";
     public static final Pattern PROPERTY_REF_PATTERN = Pattern.compile(PROPERTY_REF_REGEX);
     private static final Pattern PROPERTY_VIEW_REF_PATTERN = Pattern.compile(PROPERTY_VIEW_REF_REGEX);
@@ -162,12 +126,12 @@ public class SharedDataContextUtils {
         }
         final Matcher m = PROPERTY_VIEW_REF_PATTERN.matcher(input);
         final StringBuffer sb = new StringBuffer();
+        ArgumentVarExpander argExpander = new ArgumentVarExpander();
         while (m.find()) {
             final String variableRef = m.group(1);
-            String value = expandVariable(
+            String value = argExpander.expandVariable(
                     data,
                     viewMap,
-                    SharedDataContextUtils::parseArgStringVariable,
                     variableRef
             );
             if (null != value) {
@@ -189,58 +153,6 @@ public class SharedDataContextUtils {
         }
         m.appendTail(sb);
         return sb.toString();
-    }
-
-    /**
-     * Expand the variable reference
-     * @param data multi context data set
-     * @param viewMap
-     * @param parser
-     * @param variableref
-     * @param <T>
-     * @return
-     */
-    public static <T extends ViewTraverse<T>> String expandVariable(
-            final MultiDataContext<T, DataContext> data,
-            final BiFunction<Integer, String, T> viewMap,
-            final Function<String, VariableRef> parser,
-            final String variableref
-    )
-    {
-        //expand variable reference into step,group,key,node
-        VariableRef variableRef = parser.apply(variableref);
-        if (null == variableRef) {
-            return null;
-        }
-        String step = variableRef.getStep();
-        String group = variableRef.getGroup();
-        String key = variableRef.getKey();
-        String qual = variableRef.getNode();
-        return expandVariable(data, viewMap, step, group, key, qual);
-    }
-
-     static VariableRef parseScriptTemplateVariable(String variableref) {
-        final Matcher m = PROPERTY_SCRIPT_TEMPLATE_PATTERN.matcher(variableref);
-        if (!m.matches()) {
-            return null;
-        }
-        String step = m.group("STEP");
-        String group = m.group("GROUP");
-        String key = m.group("KEY");
-        String qual = m.group("QUAL");
-        return new VariableRef(variableref, step, group, key, qual);
-    }
-
-     static VariableRef parseArgStringVariable(String variableref) {
-        final Matcher m = PROPERTY_VAR_PATTERN.matcher(variableref);
-        if (!m.matches()) {
-            return null;
-        }
-        String step = m.group("STEP");
-        String group = m.group("GROUP");
-        String key = m.group("KEY");
-        String qual = m.group("QUAL");
-        return new VariableRef(variableref, step, group, key, qual);
     }
 
     /**
@@ -323,18 +235,14 @@ public class SharedDataContextUtils {
      *
      * @param script      source file path
      * @param dataContext input data context
-     * @param framework   the framework
      * @param style       line ending style
      * @param destination destination file, or null to create a temp file
      *
-     * @return the token replaced temp file, or null if an error occurs.
-     *
      * @throws java.io.IOException on io error
      */
-    public static File replaceTokensInScript(
+    public static void replaceTokensInScript(
             final String script,
             final MultiDataContext<ContextView, DataContext> dataContext,
-            final Framework framework,
             final ScriptfileUtils.LineEndingStyle style,
             final File destination,
             final String nodeName
@@ -344,34 +252,12 @@ public class SharedDataContextUtils {
         if (null == script) {
             throw new NullPointerException("script cannot be null");
         }
-        //use ReplaceTokens to replace tokens within the content
-        final Reader read = new StringReader(script);
-
-        final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(
-                read,
-                variable -> SharedDataContextUtils.expandVariable(
-                        dataContext,
-                        (stepNum, nodeCtx) -> ContextView.nodeStep(stepNum, nodeCtx != null ? nodeCtx : nodeName),
-//                        DataContextUtils::parseArgStringVariable,
-                        SharedDataContextUtils::parseScriptTemplateVariable,
-                        variable
-                ),
-                true,
-                '@',
-                '@'
+        replaceTokensInReader(
+                new StringReader(script),
+                dataContext,
+                style,
+                destination, nodeName
         );
-        final File temp;
-        if (null != destination) {
-            ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination);
-            temp = destination;
-        } else {
-            if (null == framework) {
-                throw new NullPointerException("framework cannot be null");
-            }
-            temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens, style);
-        }
-        ScriptfileUtils.setExecutePermissions(temp);
-        return temp;
     }
 
 
@@ -382,17 +268,45 @@ public class SharedDataContextUtils {
      *
      * @param stream      source stream
      * @param dataContext input data context
-     * @param framework   the framework
      * @param style       script file line ending style to use
      * @param destination destination file
      *
-     * @return the token replaced temp file, or null if an error occurs.
      * @throws java.io.IOException on io error
      */
-    public static File replaceTokensInStream(
+    public static void replaceTokensInStream(
             final InputStream stream,
             final MultiDataContext<ContextView, DataContext> dataContext,
-            final Framework framework,
+            final ScriptfileUtils.LineEndingStyle style,
+            final File destination,
+            final String nodeName
+    )
+            throws IOException
+    {
+        if (null == stream) {
+            throw new NullPointerException("stream cannot be null");
+        }
+        replaceTokensInReader(
+                new InputStreamReader(stream),
+                dataContext,
+                style,
+                destination, nodeName
+        );
+    }
+
+    /**
+     * Copies the source stream to a temp file or specific destination, replacing the @key.X@ tokens
+     * with the values from the data context
+     *
+     * @param reader      reader
+     * @param dataContext input data context
+     * @param style       script file line ending style to use
+     * @param destination destination file
+     *
+     * @throws java.io.IOException on io error
+     */
+    public static void replaceTokensInReader(
+            final Reader reader,
+            final MultiDataContext<ContextView, DataContext> dataContext,
             final ScriptfileUtils.LineEndingStyle style,
             final File destination,
             final String nodeName
@@ -401,28 +315,19 @@ public class SharedDataContextUtils {
     {
 
         //use ReplaceTokens to replace tokens within the stream
+        ScriptVarExpander scriptVarExpander = new ScriptVarExpander();
         final ReplaceTokenReader replaceTokens = new ReplaceTokenReader(
-                new InputStreamReader(stream),
-                variable -> SharedDataContextUtils.expandVariable(
+                reader,
+                variable -> scriptVarExpander.expandVariable(
                         dataContext,
-                        (stepNum, nodeCtx) -> ContextView.nodeStep(stepNum, nodeCtx != null ? nodeCtx : nodeName),
-//                        DataContextUtils::parseArgStringVariable,
-                        SharedDataContextUtils::parseScriptTemplateVariable,
+                        defaultNodeView(nodeName),
                         variable
                 ),
                 true,
                 '@',
                 '@'
         );
-        final File temp;
-        if (null != destination) {
-            ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination);
-            temp = destination;
-        } else {
-            temp = ScriptfileUtils.writeScriptTempfile(framework, replaceTokens, style);
-        }
-        ScriptfileUtils.setExecutePermissions(temp);
-        return temp;
+        ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination);
     }
 
     /**
@@ -481,14 +386,5 @@ public class SharedDataContextUtils {
             return o;
         }
     }
-    @Data
-    private static class VariableRef {
-        private final String variableref;
-        private final String step;
-        private final String group;
-        private final String key;
-        private final String node;
 
-
-    }
 }
