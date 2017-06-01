@@ -271,7 +271,23 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.projectManager.loadProjectConfig(params.project)
         results.jobExpandLevel = scheduledExecutionService.getJobExpandLevel(rdprojectconfig)
-
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                params.project
+        )
+        def projectNames = frameworkService.projectNames(authContext)
+        def authProjectstoCreate = []
+        projectNames.each{
+            if(it != attrs.project && frameworkService.authorizeProjectResource(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    AuthConstants.ACTION_CREATE,
+                    it
+            )){
+                authProjectstoCreate.add(it)
+            }
+        }
+        results.projectNames = authProjectstoCreate
         withFormat{
             html {
                 results
