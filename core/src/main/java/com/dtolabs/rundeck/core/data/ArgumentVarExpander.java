@@ -26,21 +26,39 @@ import java.util.regex.Pattern;
  */
 public class ArgumentVarExpander extends BaseVarExpander {
     public static final String PROPERTY_VIEW_VAR_NODE_CHAR = "@";
-    public static final String PROPERTY_VIEW_VAR_FINAL_CHAR = "}";
+    public static final String PROPERTY_VIEW_VAR_GLOB_CHAR = "*";
 
     /**
      * Match a variable in the form "1:group.key@node"
+     * Match a glob expansion in the form "1:group.key*(format)?"
      */
-    public static final String PROPERTY_VIEW_KEY_REGEX = "(?:(?<STEP>\\d+):)?(?<GROUP>[^\\s.]+)\\." +
-                                                         "(?<KEY>[^\\s" +
-                                                         PROPERTY_VIEW_VAR_NODE_CHAR +
-                                                         "]+)" +
-                                                         "(?:" +
-                                                         PROPERTY_VIEW_VAR_NODE_CHAR +
-                                                         "(?<QUAL>[^\\s" + PROPERTY_VIEW_VAR_FINAL_CHAR + "]+)" +
-                                                         ")?";
+    public static final String PROPERTY_VIEW_KEY_REGEX =
+            "^" +
+            "(?:(?<STEP>\\d+):)?" +
+            "(?<GROUP>[^\\s.]+)\\." +
+            "(?<KEY>[^\\s"
+            + PROPERTY_VIEW_VAR_NODE_CHAR
+            + PROPERTY_VIEW_VAR_GLOB_CHAR
+            + "]+)" +
 
-    public static final Pattern PROPERTY_VAR_PATTERN = Pattern.compile("^" + PROPERTY_VIEW_KEY_REGEX + "$");
+            "(?:" +
+
+            "(?:" +
+            PROPERTY_VIEW_VAR_NODE_CHAR +
+            "(?<QUAL>[^\\s]+)" +
+            ")" +
+
+            "|" +
+
+            "(?<GLOB>" +
+            Pattern.quote(PROPERTY_VIEW_VAR_GLOB_CHAR) +
+            "[^\\s]*" +
+            ")" +
+
+            ")?"
+            + "$";
+
+    public static final Pattern PROPERTY_VAR_PATTERN = Pattern.compile(PROPERTY_VIEW_KEY_REGEX);
 
     public VariableRef parseVariable(String variableref) {
         final Matcher m = PROPERTY_VAR_PATTERN.matcher(variableref);
@@ -51,7 +69,12 @@ public class ArgumentVarExpander extends BaseVarExpander {
         String group = m.group("GROUP");
         String key = m.group("KEY");
         String qual = m.group("QUAL");
-        return new VariableRef(variableref, step, group, key, qual);
+        String glob = m.group("GLOB");
+        String globstr = null;
+        if (glob != null && glob.startsWith("*") && glob.length() > 1) {
+            globstr = glob.substring(1);
+        }
+        return new VariableRef(variableref, step, group, key, qual, glob != null, globstr);
     }
 
 }

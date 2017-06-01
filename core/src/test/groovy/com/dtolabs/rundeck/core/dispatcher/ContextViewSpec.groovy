@@ -18,6 +18,10 @@ package com.dtolabs.rundeck.core.dispatcher
 
 import spock.lang.Specification
 
+import static com.dtolabs.rundeck.core.dispatcher.ContextView.global
+import static com.dtolabs.rundeck.core.dispatcher.ContextView.node
+import static com.dtolabs.rundeck.core.dispatcher.ContextView.nodeStep
+
 /**
  * @author greg
  * @since 5/2/17
@@ -25,39 +29,49 @@ import spock.lang.Specification
 class ContextViewSpec extends Specification {
     def "widen"() {
         expect:
-        ContextView.global().isGlobal()
-        ContextView.global().isWidest()
+        global().isGlobal()
+        global().isWidest()
         !ContextView.step(1).isGlobal()
         !ContextView.step(1).isWidest()
-        !ContextView.nodeStep(1, "node").isGlobal()
-        !ContextView.nodeStep(1, "node").isWidest()
-        !ContextView.node("node").isGlobal()
-        !ContextView.node("node").isWidest()
+        !nodeStep(1, "node").isGlobal()
+        !nodeStep(1, "node").isWidest()
+        !node("node").isGlobal()
+        !node("node").isWidest()
 
-        ContextView.global().widenView().isGlobal()
-        ContextView.global().widenView().isWidest()
+        global().widenView().isGlobal()
+        global().widenView().isWidest()
         ContextView.step(1).widenView().isGlobal()
         ContextView.step(1).widenView().isWidest()
 
-        !ContextView.nodeStep(1, "node").widenView().isGlobal()
-        !ContextView.nodeStep(1, "node").widenView().isWidest()
-        ContextView.nodeStep(1, "node").widenView().getStepNumber() == null
-        ContextView.nodeStep(1, "node").widenView().getNodeName() == "node"
+        !nodeStep(1, "node").widenView().isGlobal()
+        !nodeStep(1, "node").widenView().isWidest()
+        nodeStep(1, "node").widenView().getStepNumber() == null
+        nodeStep(1, "node").widenView().getNodeName() == "node"
 
-        ContextView.node("node").widenView().isGlobal()
-        ContextView.node("node").widenView().isWidest()
+        node("node").widenView().isGlobal()
+        node("node").widenView().isWidest()
+
+    }
+
+    def "isContainerOf"() {
+        expect:
+        global().globExpandTo(node('blah'))
+        node('blah1').globExpandTo(node('blah'))
+        !nodeStep(1, 'blah1').globExpandTo(node('blah'))
+        !nodeStep(1, 'blah1').globExpandTo(nodeStep(2, 'blah'))
+        nodeStep(1, 'blah1').globExpandTo(nodeStep(1, 'blah'))
 
     }
 
     def "compare"() {
         given:
-        def global = ContextView.global()
-        def nodea = ContextView.node('nodea')
-        def step1nodea = ContextView.nodeStep(1, 'nodea')
-        def step2nodea = ContextView.nodeStep(2, 'nodea')
-        def nodeb = ContextView.node('nodeb')
-        def step1nodeb = ContextView.nodeStep(1, 'nodeb')
-        def step2nodeb = ContextView.nodeStep(2, 'nodeb')
+        def global = global()
+        def nodea = node('nodea')
+        def step1nodea = nodeStep(1, 'nodea')
+        def step2nodea = nodeStep(2, 'nodea')
+        def nodeb = node('nodeb')
+        def step1nodeb = nodeStep(1, 'nodeb')
+        def step2nodeb = nodeStep(2, 'nodeb')
         def step1 = ContextView.step(1)
         def step2 = ContextView.step(2)
         expect:

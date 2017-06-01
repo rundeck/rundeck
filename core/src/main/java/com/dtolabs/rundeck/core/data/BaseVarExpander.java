@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.data;
 
 import lombok.Data;
 
+import java.util.List;
 import java.util.function.BiFunction;
 
 /**
@@ -41,9 +42,93 @@ public abstract class BaseVarExpander implements VarExpander {
         String group = variableRef.getGroup();
         String key = variableRef.getKey();
         String qual = variableRef.getNode();
-        return SharedDataContextUtils.expandVariable(data, viewMap, step, group, key, qual);
-
+        Boolean glob = variableRef.getNodeglob();
+        String format = variableRef.getFormat();
+        if (glob) {
+            List<String> strings = expandAllNodesVariable(data, viewMap, step, group, key);
+            if (strings == null) {
+                return null;
+            }
+            //todo:FORMAT
+            String delimiter = ",";
+            if (format != null && format.length() == 1) {
+                delimiter = format;
+            }
+            return String.join(delimiter, strings);
+        } else {
+            return expandVariable(data, viewMap, step, group, key, qual);
+        }
     }
+
+
+    /**
+     * Expand a variable reference
+     *
+     * @param data    multi context data
+     * @param viewMap factory of ViewTraverse type
+     * @param step    step text
+     * @param group
+     * @param key
+     * @param node
+     * @param <T>
+     *
+     * @return
+     */
+    public static <T extends ViewTraverse<T>> String expandVariable(
+            final MultiDataContext<T, DataContext> data,
+            final BiFunction<Integer, String, T> viewMap,
+            final String step,
+            final String group,
+            final String key,
+            final String node
+    )
+    {
+        Integer t = null;
+        if (null != step) {
+            try {
+                t = Integer.parseInt(step);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        T view = viewMap.apply(t, node);
+        boolean strict = null != step || null != node;
+        return data.resolve(view, strict, group, key, null);
+    }
+
+    /**
+     * Expand a variable reference
+     *
+     * @param data  multi context data
+     * @param step  step text
+     * @param group
+     * @param key
+     * @param <T>
+     *
+     * @return list of values, or empty list
+     */
+    public static <T extends ViewTraverse<T>> List<String> expandAllNodesVariable(
+            final MultiDataContext<T, DataContext> data,
+            final BiFunction<Integer, String, T> viewMap,
+            final String step,
+            final String group,
+            final String key
+    )
+    {
+        final Integer t;
+        if (null != step) {
+            try {
+                t = Integer.parseInt(step);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        } else {
+            t = null;
+        }
+        T containerView = viewMap.apply(t, null);
+        return data.collect(containerView::globExpandTo, group, key);
+    }
+
 
     /**
      * Parse a string defining a variable reference into a VariableRef object
@@ -66,5 +151,7 @@ public abstract class BaseVarExpander implements VarExpander {
         private final String group;
         private final String key;
         private final String node;
+        private final Boolean nodeglob;
+        private final String format;
     }
 }

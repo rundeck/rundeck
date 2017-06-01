@@ -34,9 +34,14 @@ class SharedDataContextUtilsSpec extends Specification {
         WFSharedContext shared = new WFSharedContext()
         shared.merge(ContextView.global(), new BaseDataContext([a: [b: "global", globalval: "aglobalval"]]))
         shared.merge(ContextView.node("node1"), new BaseDataContext([a: [b: "node1", nodeval: "anodeval"]]))
+        shared.merge(ContextView.node("node2"), new BaseDataContext([a: [b: "node2", nodeval: "anodeval2"]]))
         shared.merge(
                 ContextView.nodeStep(2, "node1"),
                 new BaseDataContext([a: [b: "step2 node1", nodestepval: "anodestepval"]])
+        )
+        shared.merge(
+                ContextView.nodeStep(2, "node2"),
+                new BaseDataContext([a: [b: "step2 node2", nodestepval: "anodestepval2"]])
         )
         shared.merge(ContextView.step(2), new BaseDataContext([a: [b: "step2", stepval: "astepval"]]))
         when:
@@ -70,6 +75,9 @@ class SharedDataContextUtilsSpec extends Specification {
         '${2:a.nodeval}'           | ''
         '${2:a.nodestepval}'       | ''
         '${2:a.globalval}'         | ''
+        '${2:a.b*}'                | 'step2 node1,step2 node2'
+        '${a.b*}'                  | 'node1,node2'
+        '${a.nodeval*}'            | 'anodeval,anodeval2'
     }
 
 

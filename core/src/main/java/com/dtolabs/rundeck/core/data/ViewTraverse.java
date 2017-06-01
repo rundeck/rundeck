@@ -27,6 +27,10 @@ public interface ViewTraverse<T> {
         return true;
     }
 
+    default boolean globExpandTo(T x) {
+        return true;
+    }
+
     default ViewTraverse<T> widenView() {
         return null;
     }

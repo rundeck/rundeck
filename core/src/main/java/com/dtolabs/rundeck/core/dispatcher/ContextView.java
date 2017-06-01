@@ -57,6 +57,20 @@ public class ContextView implements ViewTraverse<ContextView>, Comparable<Contex
     }
 
     @Override
+    public boolean globExpandTo(final ContextView x) {
+        return
+                //this is global, and x is a node context
+                //this is a node context, and so is x
+                null == getStepNumber() && null == x.getStepNumber()
+                && null != x.getNodeName()
+                ||
+                //this is a step context, and x is a sub node step context
+                null != getStepNumber() && getStepNumber().equals(x.getStepNumber())
+                && null != x.getNodeName()
+                ;
+    }
+
+    @Override
     public ContextView widenView() {
         if (isGlobal()) {
             return this;

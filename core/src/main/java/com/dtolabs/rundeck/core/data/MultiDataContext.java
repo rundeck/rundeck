@@ -16,8 +16,11 @@
 
 package com.dtolabs.rundeck.core.data;
 
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Keyed data with optional base data set
@@ -136,5 +139,51 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
         }
         DataContext data = getBase();
         return data != null ? data.resolve(group, key, defaultValue) : defaultValue;
+    }
+
+    /**
+     * Resolve all data values for the matching views
+     *
+     * @param viewFilter view filter
+     * @param group      group
+     * @param key        key
+     *
+     * @return List of all resolved values, or null
+     */
+    default List<String> collect(
+            final Predicate<K> viewFilter,
+            final String group,
+            final String key
+    )
+    {
+        return new TreeSet<>(getKeys())
+                .stream()
+                .filter(viewFilter)
+                .map(v -> Optional.ofNullable(resolve(v, group, key)))
+                .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Resolve all data values for the matching views
+     *
+     * @param viewFilter view filter
+     * @param group      group
+     * @param key        key
+     *
+     * @return List of all resolved values, or null
+     */
+    default Map<String, String> collectMap(
+            final Predicate<K> viewFilter,
+            final Function<K, String> keyMapper,
+            final String group,
+            final String key
+    )
+    {
+        return new TreeSet<>(getKeys())
+                .stream()
+                .filter(viewFilter)
+                .filter(v -> null != resolve(v, group, key))
+                .collect(Collectors.toMap(keyMapper, v -> resolve(v, group, key)));
     }
 }
