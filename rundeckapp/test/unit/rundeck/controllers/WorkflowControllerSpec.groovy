@@ -310,4 +310,36 @@ class WorkflowControllerSpec extends Specification {
         2       | 0     | 'cba'      | [b: 'c'] | 1
         2       | 1     | 'twf'      | [c: 'd'] | 1
     }
+
+    def "test validate filter step"() {
+        given:
+        controller.pluginService = Mock(PluginService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.newfiltertype = type
+        params.pluginConfig = config
+        when:
+        def result = controller.validateStepFilter()
+        then:
+        response.json == [
+                report: 'report',
+                valid : true,
+                saved : [
+                        type  : type,
+                        config: expectconfig
+
+                ]
+        ]
+        1 * controller.pluginService.getPluginDescriptor(type, LogFilterPlugin) >>
+                new DescribedPlugin(null, null, type)
+        1 * controller.frameworkService.validateDescription(null, '', config, null, _, _) >> [
+                valid: true, desc: null, props: expectconfig,
+                report:'report'
+        ]
+
+
+        where:
+        type  | config   | expectconfig
+        'abc' | [a: 'b'] | [c: 'd']
+
+    }
 }

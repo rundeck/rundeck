@@ -275,7 +275,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
                 valid : validation?.valid,
                 saved : [
                         type  : params.newfiltertype,
-                        config: config
+                        config: validation.props
                 ]
         ]
         return respond((Object) results, [formats: ['json']])
