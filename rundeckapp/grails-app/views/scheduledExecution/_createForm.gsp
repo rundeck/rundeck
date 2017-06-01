@@ -17,7 +17,7 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
     <g:render template="/common/errorFragment"/>
-
+    <g:render template="editLogFilterModal"/>
     <g:form method="POST"
             onsubmit="if(typeof(validateJobEditForm)=='function'){return validateJobEditForm(this);}"
             useToken="true"
