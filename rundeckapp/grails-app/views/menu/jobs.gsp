@@ -632,6 +632,9 @@
                          jQuery("#jobProject").devbridgeAutocomplete({
                                      lookup: projectsArr
                          });
+                        jQuery("#jobProject").on('keyup blur', function(){
+                            jQuery('#submittbn').prop('disabled', this.value.trim().length == 0);
+                        });
                      });
                     </g:javascript>
                 </div>
@@ -643,6 +646,8 @@
 
                     <g:actionSubmit action="copy"
                                     value="${message(code:'yes')}"
+                                    id="submittbn"
+                                    disabled="disabled"
                                     class="btn btn-default"/>
                 </div>
             </g:form>

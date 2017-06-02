@@ -278,7 +278,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def projectNames = frameworkService.projectNames(authContext)
         def authProjectstoCreate = []
         projectNames.each{
-            if(it != attrs.project && frameworkService.authorizeProjectResource(
+            if(it != params.project && frameworkService.authorizeProjectResource(
                     authContext,
                     AuthConstants.RESOURCE_TYPE_JOB,
                     AuthConstants.ACTION_CREATE,
