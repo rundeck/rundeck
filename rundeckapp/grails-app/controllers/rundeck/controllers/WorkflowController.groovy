@@ -339,7 +339,15 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
      * @return
      */
     private Description getPluginStepDescription(boolean isNodeStep, String type) {
-        getPluginStepDescription(frameworkService, isNodeStep, type)
+        if (type && !(type in ['command', 'script', 'scriptfile', 'job'])) {
+            try {
+                return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) :
+                        frameworkService.getStepPluginDescription(type)
+            } catch (MissingProviderException e) {
+                log.warn("step provider not found: ${type}: ${e.message}", e)
+            }
+        }
+        return null
     }
     /**
      * Return a Description for a plugin type, if available
@@ -354,12 +362,8 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
     )
     {
         if (type && !(type in ['command', 'script', 'scriptfile', 'job'])) {
-            try {
-                return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) :
-                        frameworkService.getStepPluginDescription(type)
-            } catch (MissingProviderException e) {
-                log.warn("step provider not found: ${type}: ${e.message}", e)
-            }
+            return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) :
+                    frameworkService.getStepPluginDescription(type)
         }
         return null
     }
