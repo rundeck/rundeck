@@ -65,6 +65,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         private String message;
         private Map<String, String> metadata;
         ControlState state = ControlState.EMIT;
+        private boolean modified;
 
         EventControl(
                 final String eventType,
@@ -88,6 +89,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
 
         @Override
         public LogEventControl setEventType(String eventType) {
+            modified |= !this.eventType.equals(eventType);
             this.eventType = eventType;
             return this;
         }
@@ -97,10 +99,6 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
             return datetime;
         }
 
-        public void setDatetime(Date datetime) {
-            this.datetime = datetime;
-        }
-
         @Override
         public LogLevel getLoglevel() {
             return loglevel;
@@ -108,6 +106,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
 
         @Override
         public LogEventControl setLoglevel(LogLevel loglevel) {
+            modified |= !this.loglevel.equals(loglevel);
             this.loglevel = loglevel;
             return this;
         }
@@ -119,6 +118,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
 
         @Override
         public LogEventControl setMessage(String message) {
+            modified |= !this.message.equals(message);
             this.message = message;
             return this;
         }
@@ -129,12 +129,14 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         }
 
         public void setMetadata(Map<String, String> metadata) {
+            modified = true;
             this.metadata = metadata;
         }
 
         @Override
         public LogEventControl addMetadata(final Map<String, String> data) {
             this.metadata.putAll(data);
+            modified = true;
             return this;
         }
 
@@ -151,11 +153,13 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
 
         @Override
         public void quell() {
+            modified = true;
             state = ControlState.QUELL;
         }
 
         @Override
         public void remove() {
+            modified = true;
             state = ControlState.REMOVE;
         }
 
@@ -168,6 +172,10 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
                     event.getMetadata()
             );
         }
+
+        public boolean isModified() {
+            return modified;
+        }
     }
 
     private enum ControlState {
@@ -178,6 +186,10 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
 
     @Override
     public void addEvent(final LogEvent orig) {
+        if (!"log".equals(orig.getEventType())) {
+            getWriter().addEvent(orig);
+            return;
+        }
         ControlState state = ControlState.EMIT;
         EventControl eventControl = EventControl.with(orig);
 
@@ -195,7 +207,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
             }
         }
         if (state == ControlState.EMIT) {
-            getWriter().addEvent(eventControl);
+            getWriter().addEvent(eventControl.modified ? eventControl : orig);
         }
     }
 
