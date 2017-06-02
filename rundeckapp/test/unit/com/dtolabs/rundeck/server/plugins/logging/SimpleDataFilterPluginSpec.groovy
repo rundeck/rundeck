@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.server.plugins.logging
 import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.workflow.DataOutput
 import com.dtolabs.rundeck.core.logging.LogEventControl
+import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import spock.lang.Specification
@@ -44,6 +45,7 @@ class SimpleDataFilterPluginSpec extends Specification {
             events << Mock(LogEventControl) {
                 getMessage() >> line
                 getEventType() >> 'log'
+                getLoglevel() >> LogLevel.NORMAL
             }
         }
         when:
@@ -53,25 +55,24 @@ class SimpleDataFilterPluginSpec extends Specification {
         }
         plugin.complete(context)
         then:
+
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() == (expect ? ['data': expect] : null)
         if (expect) {
-            sharedoutput.getSharedContext().getData(ContextView.global()) == ['data': expect]
             if (dolog) {
                 1 * context.log(2, _, _)
             } else {
                 0 * context.log(*_)
             }
-        } else {
-            sharedoutput.getSharedContext().getData(ContextView.global()) == [:]
         }
 
 
         where:
         dolog | regex                          | lines                           | expect
+        true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=zangief'] | [wimple: 'zangief']
+        false | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=zangief'] | [wimple: 'zangief']
         true  | SimpleDataFilterPlugin.PATTERN | ['blah', 'blee']                | [:]
         true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=']        | [:]
         true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:=asdf']          | [:]
-        true  | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=zangief'] | [wimple: 'zangief']
-        false | SimpleDataFilterPlugin.PATTERN | ['RUNDECK:DATA:wimple=zangief'] | [wimple: 'zangief']
         true  | SimpleDataFilterPlugin.PATTERN |
                 [
                         'RUNDECK:DATA:awayward wingling samzait = bogarting: sailboat heathen',
@@ -81,5 +82,41 @@ class SimpleDataFilterPluginSpec extends Specification {
                         'awayward wingling samzait': 'bogarting: sailboat heathen',
                         'simple digital salad :'   : '::djkjdf= '
                 ]
+    }
+
+    @Unroll
+    def "only filter NORMAL log level"() {
+        given:
+        def plugin = new SimpleDataFilterPlugin()
+        plugin.regex = SimpleDataFilterPlugin.PATTERN
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+        def events = []
+        events << Mock(LogEventControl) {
+            getMessage() >> 'RUNDECK:DATA:a=b'
+            getEventType() >> 'log'
+            getLoglevel() >> level
+        }
+        when:
+        plugin.init(context)
+        events.each {
+            plugin.handleEvent(context, it)
+        }
+        plugin.complete(context)
+        then:
+
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() ==
+                (expect ? ['data': expect] : null)
+
+
+        where:
+        level            | expect
+        LogLevel.ERROR   | null
+        LogLevel.WARN    | null
+        LogLevel.NORMAL  | [a: 'b']
+        LogLevel.DEBUG   | null
+        LogLevel.VERBOSE | null
     }
 }

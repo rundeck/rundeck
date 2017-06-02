@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.server.plugins.logging
 
 import com.dtolabs.rundeck.core.execution.workflow.OutputContext
 import com.dtolabs.rundeck.core.logging.LogEventControl
+import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
@@ -50,7 +51,7 @@ You can define the regular expression used.
 
 class SimpleDataFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'key-value-data'
-    public static final String PATTERN = '^RUNDECK:DATA:(.+)\\s*=\\s*(.+)$'
+    public static final String PATTERN = '^RUNDECK:DATA:(.+?)\\s*=\\s*(.+)$'
 
     @PluginProperty(
             title = "Pattern",
@@ -100,7 +101,7 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
 
     @Override
     void handleEvent(final PluginLoggingContext context, final LogEventControl event) {
-        if (event.eventType == 'log' && event.message?.length() > 0) {
+        if (event.eventType == 'log' && event.loglevel == LogLevel.NORMAL && event.message?.length() > 0) {
             Matcher match = dataPattern.matcher(event.message)
             if (match.matches()) {
                 def key = match.group(1)
