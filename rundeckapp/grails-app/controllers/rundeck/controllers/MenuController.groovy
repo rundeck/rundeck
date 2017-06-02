@@ -276,7 +276,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 params.project
         )
         def projectNames = frameworkService.projectNames(authContext)
-        def authProjectstoCreate = []
+        def authProjectsToCreate = []
         projectNames.each{
             if(it != params.project && frameworkService.authorizeProjectResource(
                     authContext,
@@ -284,10 +284,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     AuthConstants.ACTION_CREATE,
                     it
             )){
-                authProjectstoCreate.add(it)
+                authProjectsToCreate.add(it)
             }
         }
-        results.projectNames = authProjectstoCreate
+        results.projectNames = authProjectsToCreate
         withFormat{
             html {
                 results
