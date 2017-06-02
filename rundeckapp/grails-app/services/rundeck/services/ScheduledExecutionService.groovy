@@ -1738,7 +1738,25 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 return false
             }
         }
-        //TODO: validate log filters
+
+        def pluginConfig = step.pluginConfig
+        if (pluginConfig?.LogFilter && pluginConfig?.LogFilter instanceof List) {
+            def allvalid = true
+            pluginConfig?.LogFilter.eachWithIndex { Map plugindef, int index ->
+                def validation = WorkflowController._validateLogFilter(
+                        frameworkService, pluginService, plugindef.config, plugindef.type
+                )
+                if (!validation.valid) {
+                    step.errors.reject('Workflow.step.logFilter.configuration.invalid',
+                                       [index, plugindef.type, validation.report.toString()].toArray(),
+                                       'log filter {0} type {1} not valid: {2}'
+                    )
+
+                    allvalid = false
+                }
+            }
+            return allvalid
+        }
 
         true
     }
@@ -2939,10 +2957,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     i++
                 }
                 if (!wfitemfailed) {
+
                     final Workflow workflow = new Workflow(wf)
                     scheduledExecution.workflow = workflow
                     wf.discard()
                 } else {
+                    scheduledExecution.workflow = wf
                     failed = true
                     scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', [failedlist.toString()].toArray(), "Invalid workflow steps: {0}")
                 }

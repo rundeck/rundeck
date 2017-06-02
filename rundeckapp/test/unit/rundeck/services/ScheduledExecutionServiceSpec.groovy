@@ -346,6 +346,146 @@ class ScheduledExecutionServiceSpec extends Specification {
 
     }
 
+    def "validate workflow step log filter"() {
+        given:
+        def step = new CommandExec([
+                adhocRemoteString: 'test buddy',
+                pluginConfig     : [
+                        LogFilter: [
+                                [
+                                        type  : 'abc',
+                                        config: [a: 'b']
+                                ]
+                        ]
+                ]]
+        )
+        service.pluginService = Mock(PluginService)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        valid
+        !step.hasErrors()
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true
+        ]
+
+    }
+
+    def "validate workflow step log filter invalid"() {
+        given:
+        def step = new CommandExec([
+                adhocRemoteString: 'test buddy',
+                pluginConfig     : [
+                        LogFilter: [
+                                [
+                                        type  : 'abc',
+                                        config: [a: 'b']
+                                ]
+                        ]
+                ]]
+        )
+        service.pluginService = Mock(PluginService)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        !valid
+        step.hasErrors()
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+
+    }
+
+    def "do validate step log filter"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams()
+        params.workflow.strategy = 'node-first'
+        params = params + [
+                '_sessionwf'          : 'true',
+                '_sessionEditWFObject': new Workflow(
+                        keepgoing: true,
+                        strategy: 'node-first',
+                        commands: [new CommandExec([
+                                adhocRemoteString: 'test buddy',
+                                pluginConfig     : [
+                                        LogFilter: [
+                                                [
+                                                        type  : 'abc',
+                                                        config: [a: 'b']
+                                                ]
+                                        ]
+                                ]]
+                        )]
+                ),
+        ]
+        when:
+        def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+        !results.failed
+        !results.scheduledExecution.workflow.commands[0].hasErrors()
+        results.scheduledExecution.workflow.commands[0].pluginConfig.LogFilter != null
+        results.scheduledExecution.workflow.commands[0].pluginConfig.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true
+        ]
+
+    }
+
+    def "do validate step log filter invalid"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams()
+        params.workflow.strategy = 'node-first'
+        params = params + [
+                '_sessionwf'          : 'true',
+                '_sessionEditWFObject': new Workflow(
+                        keepgoing: true,
+                        strategy: 'node-first',
+                        commands: [new CommandExec([
+                                adhocRemoteString: 'filter test',
+                                pluginConfig     : [
+                                        LogFilter: [
+                                                [
+                                                        type  : 'abc',
+                                                        config: [a: 'b']
+                                                ]
+                                        ]
+                                ]]
+                        )]
+                ),
+        ]
+        when:
+        def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+        results.failed
+        results.scheduledExecution.workflow.commands[0].hasErrors()
+
+        results.scheduledExecution.workflow.commands[0].pluginConfig.LogFilter != null
+        results.scheduledExecution.workflow.commands[0].pluginConfig.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+
+    }
     def "do validate workflow log filters"() {
         given:
         setupDoValidate()

@@ -1152,6 +1152,20 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
      * @param type plugin type
      */
     protected Map _validateLogFilter(Map config, String type) {
+        _validateLogFilter(frameworkService, pluginService, config, type)
+    }
+    /**
+     * Validate a LogFilterPlugin configuration.
+     * @param config the config
+     * @param type plugin type
+     */
+    static Map _validateLogFilter(
+            FrameworkService frameworkService,
+            PluginService pluginService,
+            Map config,
+            String type
+    )
+    {
         def described = pluginService.getPluginDescriptor(type, LogFilterPlugin)
         return frameworkService.validateDescription(
                 described.description,
