@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import rundeck.WorkflowStep
 import rundeck.Workflow
 import rundeck.JobExec
@@ -29,6 +28,7 @@ import rundeck.ScheduledExecution
 import rundeck.PluginStep
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import rundeck.services.ExecutionService
+import rundeck.services.FrameworkService
 import rundeck.services.PluginService
 
 import javax.servlet.http.HttpServletResponse
@@ -339,11 +339,26 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
      * @return
      */
     private Description getPluginStepDescription(boolean isNodeStep, String type) {
+        getPluginStepDescription(frameworkService, isNodeStep, type)
+    }
+    /**
+     * Return a Description for a plugin type, if available
+     * @param type
+     * @param framework
+     * @return
+     */
+    static private Description getPluginStepDescription(
+            FrameworkService frameworkService,
+            boolean isNodeStep,
+            String type
+    )
+    {
         if (type && !(type in ['command', 'script', 'scriptfile', 'job'])) {
-            try{
-                return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) : frameworkService.getStepPluginDescription(type)
-            }catch(MissingProviderException e){
-                log.warn("step provider not found: ${type}: ${e.message}",e)
+            try {
+                return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) :
+                        frameworkService.getStepPluginDescription(type)
+            } catch (MissingProviderException e) {
+                log.warn("step provider not found: ${type}: ${e.message}", e)
             }
         }
         return null
@@ -730,7 +745,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             if (item.errors.hasErrors()) {
                 return [error: item.errors.allErrors.collect {g.message(error: it)}.join(","), item: item]
             }
-            def validation=_validatePluginStep(item, params.newitemtype)
+            def validation = _doValidatePluginStep(item)
             if(!validation.valid){
                 return [error: "Plugin configuration was not valid: ${validation.report}", item: item,report: validation.report]
             }
@@ -866,7 +881,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }
-            def validation = _validatePluginStep(moditem, params.newitemtype)
+            def validation = _doValidatePluginStep(moditem)
             if (!validation.valid) {
                 return [error: "Plugin configuration was not valid", item: moditem, report: validation.report]
             }
@@ -895,7 +910,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             if (ehitem.errors.hasErrors()) {
                 return [error: ehitem.errors.allErrors.collect {g.message(error: it)}.join(","), item: ehitem]
             }
-            def validation = _validatePluginStep(ehitem, params.newitemtype)
+            def validation = _doValidatePluginStep(ehitem)
             if (!validation.valid) {
                 return [error: "Plugin configuration was not valid", item: ehitem, report: validation.report]
             }
@@ -924,7 +939,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }
-            def validation = _validatePluginStep(moditem, params.newitemtype)
+            def validation = _doValidatePluginStep(moditem)
             if (!validation.valid) {
                 return [error: "Plugin configuration was not valid", item: moditem, report: validation.report]
             }
@@ -1098,10 +1113,10 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-     protected Map _validatePluginStep(WorkflowStep exec, String type = null) {
-        if(exec instanceof PluginStep){
+    static Map _validatePluginStep(FrameworkService frameworkService, WorkflowStep exec) {
+        if (exec instanceof PluginStep) {
             PluginStep item = exec as PluginStep
-            def description=getPluginStepDescription(item.nodeStep, item.type)
+            def description = getPluginStepDescription(frameworkService, item.nodeStep, item.type)
             return frameworkService.validateDescription(
                     description,
                     '',
@@ -1110,9 +1125,18 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
                     PropertyScope.Instance,
                     PropertyScope.Project
             )
-        }else{
-            return [valid:true]
+        } else {
+            return [valid: true]
         }
+    }
+    /**
+     * Validate a WorkflowStep object.  will call Errors.rejectValue for
+     * any invalid fields for the object.
+     * @param exec the WorkflowStep
+     * @param type type if specified in params
+     */
+    protected Map _doValidatePluginStep(WorkflowStep exec) {
+        _validatePluginStep(frameworkService, exec)
     }
     private void _sanitizePluginStep(WorkflowStep item, Map validation){
         if (item instanceof PluginStep) {
