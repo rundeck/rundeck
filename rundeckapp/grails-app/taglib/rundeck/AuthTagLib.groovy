@@ -185,8 +185,11 @@ class AuthTagLib {
             def projectNames = frameworkService.projectNames(authContext)
             projectNames.each{
                 env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), it))
-                if(it != attrs.project && authContext.evaluate(resources, tests as Set, env)){
-                    isAuth = true
+                if(it != attrs.project){
+                    def decision=  authContext.evaluate(resources, tests as Set, env)
+                    if(!decision.find{has^it.authorized}){
+                        isAuth = true
+                    }
                 }
             }
             return isAuth
