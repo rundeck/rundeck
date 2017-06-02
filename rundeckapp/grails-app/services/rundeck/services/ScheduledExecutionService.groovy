@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -1960,18 +1961,28 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = true
             }
         }
-        if (scheduledExecution.workflow && params.workflow?.globalLogFilters) {
+        if (scheduledExecution.workflow) {
             //filter configs
             def i = 0;
             def configs = []
-            while (params.workflow.globalLogFilters["$i"]?.type) {
-                configs << [
-                        type  : params.workflow.globalLogFilters["$i"]?.type,
-                        config: params.workflow.globalLogFilters["$i"]?.config
-                ]
-                i++
+            if (params.workflow?.globalLogFilters) {
+                while (params.workflow?.globalLogFilters["$i"]?.type) {
+                    configs << [
+                            type  : params.workflow.globalLogFilters["$i"]?.type,
+                            config: params.workflow.globalLogFilters["$i"]?.config
+                    ]
+                    i++
+                }
             }
             scheduledExecution.workflow.setPluginConfigData('LogFilter', configs)
+            def reports = validateLogFilterPlugins(
+                    scheduledExecution,
+                    configs
+            )
+            if (null != reports && reports.any { !it.valid }) {
+                rejectLogFilterPluginsInput(scheduledExecution, params, reports)
+                failed = true
+            }
         }
         if (( params.options || params['_nooptions']) && scheduledExecution.options) {
             def todelete = []
@@ -2521,6 +2532,35 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             failed = true
             scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
         }
+        //validate strategy plugin config
+        if (params.workflow instanceof Workflow) {
+            Map pluginConfigMap = params.workflow.pluginConfigMap
+            def report = validateWorkflowStrategyPlugin(
+                    scheduledExecution,
+                    projectProps,
+                    scheduledExecution.workflow.getPluginConfigData(
+                            'WorkflowStrategy',
+                            scheduledExecution.workflow.strategy
+                    )
+            )
+            if (null != report && !report.valid) {
+                rejectWorkflowStrategyInput(scheduledExecution, params, report)
+                failed = true
+            }
+
+            //validate log filters
+            if (pluginConfigMap && pluginConfigMap['LogFilter'] && pluginConfigMap['LogFilter'] instanceof List) {
+                List configs = pluginConfigMap['LogFilter']
+                def reports = validateLogFilterPlugins(
+                        scheduledExecution,
+                        configs
+                )
+                if (null != reports && reports.any { !it.valid }) {
+                    rejectLogFilterPluginsInput(scheduledExecution, null, reports)
+                    failed = true
+                }
+            }
+        }
 
         //validate error handler types
         if (!validateWorkflow(scheduledExecution.workflow,scheduledExecution)) {
@@ -3027,8 +3067,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //validate
             if (configs) {
                 scheduledExecution.workflow.setPluginConfigData('LogFilter', configs)
+            } else {
+                scheduledExecution.workflow.setPluginConfigData('LogFilter', null)
+            }
+            def reports = validateLogFilterPlugins(
+                    scheduledExecution,
+                    configs
+            )
+            if (null != reports && reports.any { !it.valid }) {
+                rejectLogFilterPluginsInput(scheduledExecution, params, reports)
+                failed = true
             }
         }
+
+        //TODO: validate individual step filter configs
 
         if (scheduledExecution.argString) {
             try {
@@ -3211,7 +3263,50 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
     }
 
-     def listWorkflows(HashMap query) {
+    protected List validateLogFilterPlugins(ScheduledExecution scheduledExecution, List configs) {
+        return configs.collect { filterdef ->
+            validateLogFilterPlugin(filterdef.config, filterdef.type)
+        }
+    }
+
+    protected Map validateLogFilterPlugin(Map config, String type) {
+        def described = pluginService.getPluginDescriptor(type, LogFilterPlugin)
+        return frameworkService.validateDescription(
+                described.description,
+                '',
+                config,
+                null,
+                PropertyScope.Instance,
+                PropertyScope.Project
+        )
+    }
+
+    private def rejectLogFilterPluginsInput(scheduledExecution, params, reports) {
+        def invalid = []
+
+        if (params instanceof Map) {
+            if (!params['logFilterValidation']) {
+                params['logFilterValidation'] = [:]
+            }
+            reports.eachWithIndex { report, index ->
+                if (!report.valid) {
+                    if (!params['logFilterValidation']["$index"]) {
+                        params['logFilterValidation']["$index"] = [:]
+                    }
+                    params['logFilterValidation']["$index"] = report.report
+                    invalid << index
+                }
+            }
+        }
+        scheduledExecution?.errors.rejectValue('workflow',
+                                               'Workflow.logFilter.plugin.config.invalid',
+                                               [invalid.join(",")] as Object[],
+                                               "Workflow Log Filters: {0}: Some config values were not valid"
+        )
+
+    }
+
+    def listWorkflows(HashMap query) {
         ScheduledExecutionQuery nquery = new ScheduledExecutionQuery()
         nquery.setIdlist(query.idlist)
         nquery.setGroupPath(query.groupPath)
