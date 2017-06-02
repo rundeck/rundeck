@@ -1133,6 +1133,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         def se = new ScheduledExecution(createJobParams(orig)).save()
         def newJob = new ScheduledExecution(createJobParams(inparams))
+        service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
 
 
 
