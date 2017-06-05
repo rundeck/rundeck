@@ -1058,7 +1058,7 @@ section{
     td.node.empty {
       color: #eee;
     }
-    tr.node-new td{
+    tr.node-new > td{
       border-top: 2px solid white;
     }
     td.node{
@@ -1232,6 +1232,17 @@ section{
     }
   }
 
+table.table-data-embed {
+  font-size: @font-size-base;
+  white-space: normal;
+  &.invert {
+    background-color: @well-bg;
+    border: 1px solid white;
+    td, th {
+      border: 1px solid white;
+    }
+  }
+}
   .stepident, .stepnum {
 //    color: @brand-light;
   }
@@ -1783,3 +1794,10 @@ a {
 .autocomplete-suggestions strong { font-weight: normal; color: #3399FF; }
 .autocomplete-group { padding: 2px 5px; }
 .autocomplete-group strong { display: block; border-bottom: 1px solid #000; }
+
+//other buttons
+
+// hollow button variant
+.btn-info-hollow {
+  .button-variant(@brand-info ; transparent; @btn-info-border);
+}

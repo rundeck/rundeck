@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +14,12 @@
  * limitations under the License.
  */
 
-/*
-* PlugProviderLoader.java
-* 
-* User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
-* Created: 4/12/11 4:10 PM
-* 
-*/
-package com.dtolabs.rundeck.core.plugins;
+package com.dtolabs.rundeck.core.execution.workflow;
 
 /**
- * PlugProviderLoader is ...
- *
- * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
+ * @author greg
+ * @since 5/4/17
  */
-interface PluginServiceProviderCreator {
-    public void load(PluggableService service);
+public interface HasSharedContext {
+    public WFSharedContext getSharedContext();
 }

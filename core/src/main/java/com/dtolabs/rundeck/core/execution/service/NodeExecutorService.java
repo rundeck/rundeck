@@ -60,7 +60,7 @@ public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> impl
     }
 
     public List<String> getBundledProviderNames() {
-        return Collections.unmodifiableList(new ArrayList<String>(registry.keySet()));
+        return Collections.unmodifiableList(new ArrayList<>(registry.keySet()));
     }
     NodeExecutorService(Framework framework) {
         super(framework);

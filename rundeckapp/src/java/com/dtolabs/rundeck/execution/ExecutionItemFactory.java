@@ -27,8 +27,10 @@ import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandBase;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandBase;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandBase;
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 
 import java.io.File;
+import java.util.List;
 import java.util.Map;
 
 
@@ -45,7 +47,33 @@ public class ExecutionItemFactory {
             final String script,
             final String[] strings,
             final StepExecutionItem handler,
-            final boolean keepgoingOnSuccess, final String label
+            final boolean keepgoingOnSuccess,
+            final String label
+    )
+    {
+        return createScriptFileItem(
+                scriptInterpreter,
+                fileExtension,
+                interpreterArgsQuoted,
+                script,
+                strings,
+                handler,
+                keepgoingOnSuccess,
+                label,
+                null
+        );
+    }
+
+    public static StepExecutionItem createScriptFileItem(
+            final String scriptInterpreter,
+            final String fileExtension,
+            final boolean interpreterArgsQuoted,
+            final String script,
+            final String[] strings,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String label,
+            final List<PluginConfiguration> filterConfigs
     )
     {
         return new ScriptFileCommandBase() {
@@ -86,6 +114,11 @@ public class ExecutionItemFactory {
             public boolean getInterpreterArgsQuoted() {
                 return interpreterArgsQuoted;
             }
+
+            @Override
+            public List<PluginConfiguration> getFilterConfigurations() {
+                return filterConfigs;
+            }
         };
     }
 
@@ -97,6 +130,31 @@ public class ExecutionItemFactory {
             final String[] strings,
             final StepExecutionItem handler,
             final boolean keepgoingOnSuccess, final String label
+    )
+    {
+        return createScriptFileItem(
+                scriptInterpreter,
+                fileExtension,
+                interpreterArgsQuoted,
+                file,
+                strings,
+                handler,
+                keepgoingOnSuccess,
+                label,
+                null
+        );
+    }
+
+    public static StepExecutionItem createScriptFileItem(
+            final String scriptInterpreter,
+            final String fileExtension,
+            final boolean interpreterArgsQuoted,
+            final File file,
+            final String[] strings,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String label,
+            final List<PluginConfiguration> filterConfigs
     )
     {
         final String filepath = file.getAbsolutePath();
@@ -138,6 +196,11 @@ public class ExecutionItemFactory {
             public boolean getInterpreterArgsQuoted() {
                 return interpreterArgsQuoted;
             }
+
+            @Override
+            public List<PluginConfiguration> getFilterConfigurations() {
+                return filterConfigs;
+            }
         };
     }
 
@@ -147,6 +210,30 @@ public class ExecutionItemFactory {
             final boolean interpreterArgsQuoted,
             final String urlString, final String[] strings,
             final StepExecutionItem handler, final boolean keepgoingOnSuccess, final String label
+    )
+    {
+        return createScriptURLItem(
+                scriptInterpreter,
+                fileExtension,
+                interpreterArgsQuoted,
+                urlString,
+                strings,
+                handler,
+                keepgoingOnSuccess,
+                label,
+                null
+        );
+    }
+
+    public static StepExecutionItem createScriptURLItem(
+            final String scriptInterpreter,
+            final String fileExtension,
+            final boolean interpreterArgsQuoted,
+            final String urlString, final String[] strings,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String label,
+            final List<PluginConfiguration> filterConfigs
     )
     {
         return new ScriptURLCommandBase() {
@@ -185,12 +272,31 @@ public class ExecutionItemFactory {
             public String getScriptInterpreter() {
                 return scriptInterpreter;
             }
+
+            @Override
+            public List<PluginConfiguration> getFilterConfigurations() {
+                return filterConfigs;
+            }
         };
     }
 
     public static StepExecutionItem createExecCommand(
             final String[] command,
-            final StepExecutionItem handler, final boolean keepgoingOnSuccess, final String label
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String label
+    )
+    {
+        return createExecCommand(command, handler, keepgoingOnSuccess, label, null);
+
+    }
+
+    public static StepExecutionItem createExecCommand(
+            final String[] command,
+            final StepExecutionItem handler,
+            final boolean keepgoingOnSuccess,
+            final String label,
+            final List<PluginConfiguration> filterConfigs
     )
     {
 
@@ -212,6 +318,11 @@ public class ExecutionItemFactory {
             @Override
             public boolean isKeepgoingOnSuccess() {
                 return keepgoingOnSuccess;
+            }
+
+            @Override
+            public List<PluginConfiguration> getFilterConfigurations() {
+                return filterConfigs;
             }
         };
     }
@@ -351,8 +462,30 @@ public class ExecutionItemFactory {
             final StepExecutionItem handler, final String label
     )
     {
+        return createPluginNodeStepItem(type, configuration, keepgoingOnSuccess, handler, label, null);
+    }
 
-        return new PluginNodeStepExecutionItemImpl(type, configuration, keepgoingOnSuccess, handler, label);
+    /**
+     * Create a workflow execution item for a plugin node step.
+     */
+    public static StepExecutionItem createPluginNodeStepItem(
+            final String type,
+            final Map configuration,
+            final boolean keepgoingOnSuccess,
+            final StepExecutionItem handler,
+            final String label,
+            final List<PluginConfiguration> filterConfigurations
+    )
+    {
+
+        return new PluginNodeStepExecutionItemImpl(
+                type,
+                configuration,
+                keepgoingOnSuccess,
+                handler,
+                label,
+                filterConfigurations
+        );
     }
 
     /**
@@ -365,7 +498,29 @@ public class ExecutionItemFactory {
             final StepExecutionItem handler, final String label
     )
     {
+        return createPluginStepItem(type, configuration, keepgoingOnSuccess, handler, label, null);
+    }
 
-        return new PluginStepExecutionItemImpl(type, configuration, keepgoingOnSuccess, handler, label);
+    /**
+     * Create a workflow execution item for a plugin step.
+     */
+    public static StepExecutionItem createPluginStepItem(
+            final String type,
+            final Map configuration,
+            final boolean keepgoingOnSuccess,
+            final StepExecutionItem handler,
+            final String label,
+            final List<PluginConfiguration> filterConfigurations
+    )
+    {
+
+        return new PluginStepExecutionItemImpl(
+                type,
+                configuration,
+                keepgoingOnSuccess,
+                handler,
+                label,
+                filterConfigurations
+        );
     }
 }

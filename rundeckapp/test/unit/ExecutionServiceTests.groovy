@@ -813,7 +813,7 @@ class ExecutionServiceTests  {
         //check datacontext, inputargs instead of argString
 
             Execution se = new Execution(user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = service.createContext(se, null,null, null, null, null,null, ['-test','args','-test2',
+            def val = service.createContext(se, null,null, null, null, null,null,null, ['-test','args','-test2',
                     'monkey args'] as String[])
             assertNotNull(val)
             assertNotNull(val.dataContext)
@@ -1541,9 +1541,6 @@ class ExecutionServiceTests  {
                 .keepgoing(false)
                 .build()
         service.frameworkService=mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                makeNodeSet(['a',])
-            }
             filterAuthorizedNodes(1..1){ final String project, final Set<String> actions, final INodeSet unfiltered,
                                          AuthContext authContext->
                 makeNodeSet(['a'])
@@ -1580,9 +1577,6 @@ class ExecutionServiceTests  {
                 .keepgoing(true)
                 .build()
         service.frameworkService=mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                makeNodeSet(['x','y'])
-            }
             filterAuthorizedNodes(1..1){ final String project, final Set<String> actions, final INodeSet unfiltered,
                                          AuthContext authContext->
                 makeNodeSet(['x','y'])
@@ -1650,7 +1644,7 @@ class ExecutionServiceTests  {
                 null
             }
         }
-        def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],null,null,null,null,null,false);
+        def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],null,null,null,null,null,null, false,true);
 
         //verify nodeset
         assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)
@@ -1726,7 +1720,7 @@ class ExecutionServiceTests  {
         }
         assertEquals(null, context.nodeRankAttribute)
         assertEquals(true, context.nodeRankOrderAscending)
-        def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],'z p',true,3, 'rank', false,false);
+        def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],'z p',true,3, 'rank', false,null, false,true);
 
         //verify nodeset
         assertEquals(['z','p'] as Set,newCtxt.nodes.nodeNames as Set)
@@ -1808,7 +1802,7 @@ class ExecutionServiceTests  {
                 null
             }
         }
-        def newCtxt=service.createJobReferenceContext(job,null,context,['test1','${option.monkey}'] as String[],null,null,null, null, null,false);
+        def newCtxt=service.createJobReferenceContext(job,null,context,['test1','${option.monkey}'] as String[],null,null,null, null, null,null, false,true);
 
         //verify nodeset
         assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)
@@ -1903,7 +1897,7 @@ class ExecutionServiceTests  {
         }
         def newCtxt=service.createJobReferenceContext(job,null,context,
                                                       ['test1','${option.monkey}','test2','${option.balloon}'] as String[],
-                                                      null,null,null, null, null,false);
+                                                      null,null,null, null, null,null, false,true);
 
         //verify nodeset
         assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)

@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
@@ -405,6 +406,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 notificationPlugins: notificationService.listNotificationPlugins(),
 				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
                 strategyPlugins: scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
+                logFilterPlugins: pluginService.listPlugins(LogFilterPlugin),
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
         if (params.opt && (params.opt instanceof Map)) {
@@ -1914,6 +1916,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def orchestratorPlugins = orchestratorPluginService.listDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
         return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
                 notificationPlugins : notificationPlugins,
                 orchestratorPlugins : orchestratorPlugins,
@@ -1922,7 +1925,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 authorized          :scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions    : stepTypes,
-                globalVars:globals]
+                logFilterPlugins    : logFilterPlugins,
+                globalVars          :globals]
     }
 
 
@@ -1974,6 +1978,7 @@ class ScheduledExecutionController  extends ControllerBase{
             def stepTypes = frameworkService.getStepPluginDescriptions()
             def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
             def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+            def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
             return render(view:'edit', model: [scheduledExecution:scheduledExecution,
                        nextExecutionTime:scheduledExecutionService.nextExecutionTime(scheduledExecution),
                     notificationValidation: params['notificationValidation'],
@@ -1983,7 +1988,8 @@ class ScheduledExecutionController  extends ControllerBase{
                     notificationPlugins: notificationService.listNotificationPlugins(),
                     orchestratorPlugins: orchestratorPluginService.listDescriptions(),
                     params:params,
-                    globalVars:globals
+                    globalVars:globals,
+                    logFilterPlugins:logFilterPlugins
                    ])
         }else{
 
@@ -2059,7 +2065,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
-                                      strategyPlugins: strategyPlugins,
+                strategyPlugins: strategyPlugins,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 orchestratorPlugins: orchestratorPluginService.listDescriptions()])
 
@@ -2192,11 +2198,13 @@ class ScheduledExecutionController  extends ControllerBase{
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
         return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
                 strategyPlugins:strategyPlugins,
                 orchestratorPlugins: orchestratorPluginService.listDescriptions(),
+                logFilterPlugins: logFilterPlugins,
                 globalVars:globals]
     }
 
@@ -2390,13 +2398,16 @@ class ScheduledExecutionController  extends ControllerBase{
         def nodeStepTypes = frameworkService.getNodeStepPluginDescriptions()
         def stepTypes = frameworkService.getStepPluginDescriptions()
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
+
+            def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
         render(view: 'create', model: [scheduledExecution: scheduledExecution, params: params,
                                        nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions: stepTypes,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-                   strategyPlugins:strategyPlugins,
+                strategyPlugins:strategyPlugins,
                 orchestratorPlugins: orchestratorPluginService.listDescriptions(),
-                notificationValidation:params['notificationValidation']
+                notificationValidation:params['notificationValidation'],
+                logFilterPlugins:logFilterPlugins
         ])
         }.invalidToken{
             request.errorCode='request.error.invalidtoken.message'

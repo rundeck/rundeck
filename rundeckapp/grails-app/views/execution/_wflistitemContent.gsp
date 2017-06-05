@@ -22,7 +22,8 @@
 
 
  --%><div id="wfivis_${enc(attr:i)}" style="${i==highlight?'opacity: 0':''}">
-    <div class="pflowitem wfctrlholder"><span class="pflow item " id="wfitem_${enc(attr:i)}" >
+    <div class="pflowitem wfctrlholder">
+        <span class="pflow item " id="wfitem_${enc(attr:i)}" >
         <g:if test="${isErrorHandler}">
             <span class="text-muted"><g:message code="Workflow.stepErrorHandler.label.on.error" /></span>
         </g:if>
@@ -64,15 +65,27 @@
                 <span class="textbtn textbtn-success wfitem_add_errorhandler">
                     <i class="glyphicon glyphicon-plus"></i><g:message code="Workflow.stepErrorHandler.label"/></span>
             </g:if>
+
+            <g:if test="${!isErrorHandler}">
+                <span class="textbtn textbtn-info"
+                      data-bind="click: addFilterPopup"
+                      data-stepnum="${stepNum}"
+                      title="Add Log Filter">
+                    <g:icon name="filter"/>
+                </span>
+            </g:if>
             <span class="textbtn textbtn-danger "
                   data-toggle="collapse"
                   data-target="#itemdel_${enc(attr:i)}"
                   title="${g.message(code:'Workflow.'+(isErrorHandler?'stepErrorHandler':'step')+'.action.delete.label')}">
                 <i class="glyphicon glyphicon-remove"></i></span>
 
+            <span class="textbtn textbtn-info wfitem_copy"  title="${message(code:"workflow.step.action.duplicate.title")}">
+                <g:icon name="duplicate"/>
+            </span>
             <span class="textbtn textbtn-info wfitem_edit" >
                 <i class="glyphicon glyphicon-edit"></i>
-                edit
+                <g:message code="edit" />
             </span>
             <g:unless test="${isErrorHandler}">
                 <span class="dragHandle"  title="Drag to reorder"><g:icon name="resize-vertical"/></span>
@@ -80,7 +93,7 @@
         </span>
 
 
-        <g:javascript>
+        <script type="text/javascript">
 
         fireWhenReady('wfitem_${enc(js:i)}',function(){
             $('wfitem_${enc(js: i)}').select('span.autoedit').each(function(e){
@@ -99,6 +112,14 @@
                     }
                 });
             });
+            $('pfctrls_${enc(js: i)}').select('span.wfitem_copy').each(function(e){
+                Event.observe(e,'click',function(evt){
+                    var f=$('workflowContent').down('form');
+                    if(!f || 0==f.length){
+                        _wficopy("${enc(js: i)}","${enc(js:stepNum)}",${isErrorHandler?true:false});
+                    }
+                });
+            });
             $('pfctrls_${enc(js: i)}').select('span.wfitem_add_errorhandler').each(function(e){
                 Event.observe(e,'click',function(evt){
                     var f=$('workflowContent').down('form');
@@ -108,8 +129,59 @@
                 });
             });
             });
-        </g:javascript>
+        </script>
     </g:if>
         <div class="clear"></div>
+
+            <g:if test="${!isErrorHandler && edit}">
+                <div id="logFilter_${enc(attr:i)}">
+                <!-- ko if: filters().length -->
+                    <span class="text-muted">Log Filters:</span>
+                <!-- /ko -->
+                <!-- ko foreach: filters -->
+                <span class="btn btn-xs btn-info-hollow"
+                      data-bind="click: $root.editFilter">
+                    <!-- ko if: plugin() -->
+                    <!-- ko with: plugin() -->
+                    <!-- ko if: iconSrc -->
+                    <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
+                    <!-- /ko -->
+                    <!-- ko if: !iconSrc() -->
+                    <i class="rdicon icon-small plugin"></i>
+                    <!-- /ko -->
+                    <!-- /ko -->
+                    <!-- /ko -->
+
+
+                    <span data-bind="text: title"></span>
+                </span>
+                <span class="textbtn textbtn-danger"
+                      data-bind="click: $root.removeFilter"
+                      title="Remove Filter"
+                >
+                    <g:icon name="remove"/>
+                </span>
+
+                <!-- /ko -->
+                <!-- ko if: filters().length -->
+                    <span class="textbtn textbtn-success" data-bind="click: addFilterPopup">
+                      <g:icon name="plus"/>
+                      add
+                    </span>
+                    <!-- /ko -->
+                <g:embedJSON id="logFilterData_${enc(attr:i)}" data="${[
+                        num:i,
+                        description:item.description,
+                        filters:item?.getPluginConfigForType('LogFilter')?:[]]
+                }"/>
+                <script type="text/javascript">
+                fireWhenReady("pfctrls_${enc(attr:i)}",function(){
+                    var step=workflowEditor.bindStepFilters('logfilter_${i}','logFilter_${enc(attr:i)}',loadJsonData('logFilterData_${enc(attr:i)}'));
+                    var elemId="pfctrls_${enc(attr:i)}";
+                    ko.applyBindings(step,document.getElementById(elemId));
+                });
+                </script>
+                </div>
+            </g:if>
 </div>
 </div>

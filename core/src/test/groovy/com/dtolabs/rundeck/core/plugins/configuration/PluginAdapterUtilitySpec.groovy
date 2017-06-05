@@ -18,7 +18,9 @@ package com.dtolabs.rundeck.core.plugins.configuration
 
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import spock.lang.Specification
 
 /**
@@ -52,6 +54,27 @@ class PluginAdapterUtilitySpec extends Specification {
         @PluginProperty
         @SelectValues(values = ["a", "b", "c"], multiOption = true)
         List<String> testSelect6;
+
+        @PluginProperty(description = 'String select with labels')
+        @SelectValues(values = ["a", "b", "c"])
+        @SelectLabels(values = ["A", "B", "C"])
+        String testSelect7;
+
+        @PluginProperty(description = 'List String multioption select with labels')
+        @SelectValues(values = ["a", "b", "c"])
+        @SelectLabels(values = ["A", "B", "C"])
+        List<String> testSelect8;
+
+        @PluginProperty(description = 'String multioption select with labels')
+        @SelectValues(values = ["a", "b", "c"], multiOption = true)
+        @SelectLabels(values = ["A", "B", "C"])
+        String testSelect9;
+
+        @PluginProperty(description = 'String free select with labels')
+        @SelectValues(values = ["a", "b", "c"], freeSelect = true)
+        @SelectLabels(values = ["A", "B", "C"])
+        String testSelect10;
+
         @PluginProperty
         Boolean testbool1;
         @PluginProperty
@@ -156,6 +179,65 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,b'   | ['a', 'b']
         'a,b,c' | ['a', 'b', 'c']
         'a,c'   | ['a', 'c']
+    }
+
+    def "build String select property with value labels"() {
+        given:
+
+        when:
+        def list = PluginAdapterUtility.buildFieldProperties(Configuretest1)
+
+        then:
+        def t7 = list.find { it.name == 'testSelect7' }
+        t7 != null
+        t7.type == Property.Type.Select
+        t7.selectValues == ['a', 'b', 'c']
+        t7.selectLabels == [a: 'A', b: 'B', c: 'C']
+    }
+
+
+    def "build List of String select property with value labels"() {
+        given:
+
+        when:
+        def list = PluginAdapterUtility.buildFieldProperties(Configuretest1)
+
+        then:
+        def t7 = list.find { it.name == 'testSelect8' }
+        t7 != null
+        t7.type == Property.Type.Options
+        t7.selectValues == ['a', 'b', 'c']
+        t7.selectLabels == [a: 'A', b: 'B', c: 'C']
+    }
+
+
+    def "build multioption String select property with value labels"() {
+        given:
+
+        when:
+        def list = PluginAdapterUtility.buildFieldProperties(Configuretest1)
+
+        then:
+        def t7 = list.find { it.name == 'testSelect9' }
+        t7 != null
+        t7.type == Property.Type.Options
+        t7.selectValues == ['a', 'b', 'c']
+        t7.selectLabels == [a: 'A', b: 'B', c: 'C']
+    }
+
+
+    def "build String free select property with value labels"() {
+        given:
+
+        when:
+        def list = PluginAdapterUtility.buildFieldProperties(Configuretest1)
+
+        then:
+        def t7 = list.find { it.name == 'testSelect10' }
+        t7 != null
+        t7.type == Property.Type.FreeSelect
+        t7.selectValues == ['a', 'b', 'c']
+        t7.selectLabels == [a: 'A', b: 'B', c: 'C']
     }
 
     def "configure options invalid"() {

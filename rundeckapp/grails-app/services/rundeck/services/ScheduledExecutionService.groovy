@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -1721,6 +1722,45 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
+    def validateWorkflowStep(WorkflowStep step) {
+        WorkflowController._validateCommandExec(step)
+        if (step.errors.hasErrors()) {
+            return false
+        } else if (step instanceof PluginStep) {
+            def validation = WorkflowController._validatePluginStep(frameworkService, step)
+            if (!validation.valid) {
+                step.errors.rejectValue(
+                        'type',
+                        'Workflow.step.plugin.configuration.invalid',
+                        [step.type, validation.report.toString()].toArray(),
+                        'Invalid configuration for {0}: {1}'
+                )
+                return false
+            }
+        }
+
+        def pluginConfig = step.pluginConfig
+        if (pluginConfig?.LogFilter && pluginConfig?.LogFilter instanceof List) {
+            def allvalid = true
+            pluginConfig?.LogFilter.eachWithIndex { Map plugindef, int index ->
+                def validation = WorkflowController._validateLogFilter(
+                        frameworkService, pluginService, plugindef.config, plugindef.type
+                )
+                if (!validation.valid) {
+                    step.errors.reject('Workflow.step.logFilter.configuration.invalid',
+                                       [index, plugindef.type, validation.report.toString()].toArray(),
+                                       'log filter {0} type {1} not valid: {2}'
+                    )
+
+                    allvalid = false
+                }
+            }
+            return allvalid
+        }
+
+        true
+    }
+
     def _doupdate ( params, UserAndRolesAuthContext authContext, changeinfo = [:] ){
         log.debug("ScheduledExecutionController: update : attempting to update: " + params.id +
                   ". params: " + params)
@@ -1842,25 +1882,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def todiscard = []
         def wftodelete = []
+
         if (scheduledExecution.workflow && params['_sessionwf'] && params['_sessionEditWFObject']) {
             //load the session-stored modified workflow and replace the existing one
             def Workflow wf = params['_sessionEditWFObject']//session.editWF[scheduledExecution.id.toString()]
-            if (!wf.commands || wf.commands.size() < 1) {
-                failed = true
-                scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
-            } else {
+            if (wf.commands) {
                 def wfitemfailed = false
                 def failedlist = []
                 def i = 1;
                 wf.commands.each {WorkflowStep cexec ->
-                    WorkflowController._validateCommandExec(cexec)
-                    if (cexec.errors.hasErrors()) {
+                    if (!validateWorkflowStep(cexec)) {
                         wfitemfailed = true
                         failedlist << i
                     }
+
                     if (cexec.errorHandler) {
-                        WorkflowController._validateCommandExec(cexec.errorHandler)
-                        if (cexec.errorHandler.errors.hasErrors()) {
+                        if (!validateWorkflowStep(cexec.errorHandler)) {
                             wfitemfailed = true
                             failedlist << (i + 1)
                         }
@@ -1899,14 +1936,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 cexec.properties = cmdparams
                 workflow.addToCommands(cexec)
-                WorkflowController._validateCommandExec(cexec)
-                if (cexec.errors.hasErrors()) {
+                if (!validateWorkflowStep(cexec)) {
                     wfitemfailed = true
                     failedlist << (i + 1)
                 }
+
                 if (cmdparams.errorHandler) {
-                    WorkflowController._validateCommandExec(cmdparams.errorHandler)
-                    if (cmdparams.errorHandler.errors.hasErrors()) {
+                    if (!validateWorkflowStep(cmdparams.errorHandler)) {
                         wfitemfailed = true
                         failedlist << (i + 1)
                     }
@@ -1919,11 +1955,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = true
                 scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', [failedlist.toString()].toArray(), "Invalid workflow steps: {0}")
             }
-            if (!workflow.commands || workflow.commands.size() < 1) {
-                failed = true
-                scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
-            }
-        } else if (!scheduledExecution.workflow || !scheduledExecution.workflow.commands || scheduledExecution.workflow.commands.size() < 1) {
+        }
+        if (!scheduledExecution.workflow ||
+                !scheduledExecution.workflow.commands ||
+                scheduledExecution.workflow.commands.isEmpty()
+        ) {
             failed = true
             scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
         }
@@ -1957,6 +1993,29 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             )
             if(null!=report && !report.valid) {
                 rejectWorkflowStrategyInput(scheduledExecution,params,report)
+                failed = true
+            }
+        }
+        if (scheduledExecution.workflow) {
+            //filter configs
+            def i = 0;
+            def configs = []
+            if (params.workflow?.globalLogFilters) {
+                while (params.workflow?.globalLogFilters["$i"]?.type) {
+                    configs << [
+                            type  : params.workflow.globalLogFilters["$i"]?.type,
+                            config: params.workflow.globalLogFilters["$i"]?.config
+                    ]
+                    i++
+                }
+            }
+            scheduledExecution.workflow.setPluginConfigData('LogFilter', configs)
+            def reports = validateLogFilterPlugins(
+                    scheduledExecution,
+                    configs
+            )
+            if (null != reports && reports.any { !it.valid }) {
+                rejectLogFilterPluginsInput(scheduledExecution, params, reports)
                 failed = true
             }
         }
@@ -2479,19 +2538,19 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def i = 0;
             def wfitemfailed = false
             def failedlist = []
-            workflow.commands.each {WorkflowStep cmdparams ->
-                WorkflowController._validateCommandExec(cmdparams)
-                if (cmdparams.errors.hasErrors()) {
+            workflow.commands.each { WorkflowStep cexec ->
+                if (!validateWorkflowStep(cexec)) {
                     wfitemfailed = true
                     failedlist << (i + 1)
                 }
-                if (cmdparams.errorHandler) {
-                    WorkflowController._validateCommandExec(cmdparams.errorHandler)
-                    if (cmdparams.errorHandler.errors.hasErrors()) {
+
+                if (cexec.errorHandler) {
+                    if (!validateWorkflowStep(cexec.errorHandler)) {
                         wfitemfailed = true
                         failedlist << (i + 1)
                     }
                 }
+
                 i++
             }
             scheduledExecution.workflow = workflow
@@ -2500,13 +2559,41 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = true
                 scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', [failedlist.toString()].toArray(), "Invalid workflow steps: {0}")
             }
-            if (!workflow.commands || workflow.commands.size() < 1) {
-                failed = true
-                scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
-            }
-        } else if (!scheduledExecution.workflow || !scheduledExecution.workflow.commands || scheduledExecution.workflow.commands.size() < 1) {
+        }
+        if (!scheduledExecution.workflow || !scheduledExecution.workflow.commands ||
+                scheduledExecution.workflow.commands.size() <
+                1) {
             failed = true
             scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
+        }
+        //validate strategy plugin config
+        if (params.workflow instanceof Workflow) {
+            Map pluginConfigMap = params.workflow.pluginConfigMap
+            def report = validateWorkflowStrategyPlugin(
+                    scheduledExecution,
+                    projectProps,
+                    scheduledExecution.workflow.getPluginConfigData(
+                            'WorkflowStrategy',
+                            scheduledExecution.workflow.strategy
+                    )
+            )
+            if (null != report && !report.valid) {
+                rejectWorkflowStrategyInput(scheduledExecution, params, report)
+                failed = true
+            }
+
+            //validate log filters
+            if (pluginConfigMap && pluginConfigMap['LogFilter'] && pluginConfigMap['LogFilter'] instanceof List) {
+                List configs = pluginConfigMap['LogFilter']
+                def reports = validateLogFilterPlugins(
+                        scheduledExecution,
+                        configs
+                )
+                if (null != reports && reports.any { !it.valid }) {
+                    rejectLogFilterPluginsInput(scheduledExecution, null, reports)
+                    failed = true
+                }
+            }
         }
 
         //validate error handler types
@@ -2850,35 +2937,32 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def Workflow wf = params['_sessionEditWFObject']
             wf.keepgoing = params.workflow.keepgoing == 'true'
             wf.strategy = params.workflow.strategy
-            if (!wf.commands || wf.commands.size() < 1) {
-                failed = true
-                scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
-            } else {
-
+            if (wf.commands) {
                 def wfitemfailed = false
                 def i = 1
                 def failedlist = []
                 wf.commands.each {WorkflowStep cexec ->
-                    WorkflowController._validateCommandExec(cexec)
-                    if (cexec.errors.hasErrors()) {
+                    if (!validateWorkflowStep(cexec)) {
                         wfitemfailed = true
                         failedlist << i
                     }
 
                     if (cexec.errorHandler) {
-                        WorkflowController._validateCommandExec(cexec.errorHandler)
-                        if (cexec.errorHandler.errors.hasErrors()) {
+                        if (!validateWorkflowStep(cexec.errorHandler)) {
                             wfitemfailed = true
-                            failedlist << (i + 1)
+                            failedlist << i
                         }
                     }
+
                     i++
                 }
                 if (!wfitemfailed) {
+
                     final Workflow workflow = new Workflow(wf)
                     scheduledExecution.workflow = workflow
                     wf.discard()
                 } else {
+                    scheduledExecution.workflow = wf
                     failed = true
                     scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', [failedlist.toString()].toArray(), "Invalid workflow steps: {0}")
                 }
@@ -2889,18 +2973,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def wfitemfailed = false
             def failedlist = []
             workflow.commands.each {WorkflowStep cmdparams ->
-                WorkflowController._validateCommandExec(cmdparams)
-                if (cmdparams.errors.hasErrors()) {
+                if (!validateWorkflowStep(cmdparams)) {
                     wfitemfailed = true
                     failedlist << (i + 1)
                 }
+
                 if (cmdparams.errorHandler) {
-                    WorkflowController._validateCommandExec(cmdparams.errorHandler)
-                    if (cmdparams.errorHandler.errors.hasErrors()) {
+                    if (!validateWorkflowStep(cmdparams.errorHandler)) {
                         wfitemfailed = true
                         failedlist << (i + 1)
                     }
                 }
+
                 i++
             }
             scheduledExecution.workflow = workflow
@@ -2908,10 +2992,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             if (wfitemfailed) {
                 failed = true
                 scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', [failedlist.toString()].toArray(), "Invalid workflow steps: {0}")
-            }
-            if (!workflow.commands || workflow.commands.size() < 1) {
-                failed = true
-                scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
             }
         } else if (params.workflow) {
             //use input parameters to define workflow
@@ -2935,31 +3015,31 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 cexec.properties = cmdparams
                 workflow.addToCommands(cexec)
-                WorkflowController._validateCommandExec(cexec)
-                if (cexec.errors.hasErrors()) {
+                if (!validateWorkflowStep(cexec)) {
                     wfitemfailed = true
                     failedlist << (i + 1)
                 }
+
                 if (cmdparams.errorHandler) {
-                    WorkflowController._validateCommandExec(cmdparams.errorHandler)
-                    if (cmdparams.errorHandler.errors.hasErrors()) {
+                    if (!validateWorkflowStep(cmdparams.errorHandler)) {
                         wfitemfailed = true
                         failedlist << (i + 1)
                     }
                 }
+
                 i++
             }
             scheduledExecution.workflow = workflow
 
             if (wfitemfailed) {
                 failed = true
-                scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist.message', [failedlist.toString()].toArray(), "Invalid workflow steps: {0}")
+                scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.invalidstepslist' +
+                        '.message', [failedlist.toString()].toArray(), "Invalid workflow steps: {0}"
+                )
             }
-            if (!workflow.commands || workflow.commands.size() < 1) {
-                failed = true
-                scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
-            }
-        } else if (!scheduledExecution.workflow || !scheduledExecution.workflow.commands || scheduledExecution.workflow.commands.size() < 1) {
+        }
+        if (!scheduledExecution.workflow || !scheduledExecution.workflow.commands ||
+                scheduledExecution.workflow.commands.isEmpty()) {
             failed = true
             scheduledExecution.errors.rejectValue('workflow', 'scheduledExecution.workflow.empty.message')
         }
@@ -3000,6 +3080,33 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = true
             }
         }
+        if (params.workflow instanceof Map && params.workflow.globalLogFilters) {
+            //filter configs
+            def i = 0;
+            def configs = []
+            while (params.workflow.globalLogFilters["$i"]?.type) {
+                configs << [
+                        type  : params.workflow.globalLogFilters["$i"]?.type,
+                        config: params.workflow.globalLogFilters["$i"]?.config
+                ]
+                i++
+            }
+            //validate
+            if (configs) {
+                scheduledExecution.workflow.setPluginConfigData('LogFilter', configs)
+            } else {
+                scheduledExecution.workflow.setPluginConfigData('LogFilter', null)
+            }
+            def reports = validateLogFilterPlugins(
+                    scheduledExecution,
+                    configs
+            )
+            if (null != reports && reports.any { !it.valid }) {
+                rejectLogFilterPluginsInput(scheduledExecution, params, reports)
+                failed = true
+            }
+        }
+
 
         if (scheduledExecution.argString) {
             try {
@@ -3182,7 +3289,50 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         )
     }
 
-     def listWorkflows(HashMap query) {
+    protected List validateLogFilterPlugins(ScheduledExecution scheduledExecution, List configs) {
+        return configs.collect { filterdef ->
+            validateLogFilterPlugin(filterdef.config, filterdef.type)
+        }
+    }
+
+    protected Map validateLogFilterPlugin(Map config, String type) {
+        def described = pluginService.getPluginDescriptor(type, LogFilterPlugin)
+        return frameworkService.validateDescription(
+                described.description,
+                '',
+                config,
+                null,
+                PropertyScope.Instance,
+                PropertyScope.Project
+        )
+    }
+
+    private def rejectLogFilterPluginsInput(scheduledExecution, params, reports) {
+        def invalid = []
+
+        if (params instanceof Map) {
+            if (!params['logFilterValidation']) {
+                params['logFilterValidation'] = [:]
+            }
+            reports.eachWithIndex { report, index ->
+                if (!report.valid) {
+                    if (!params['logFilterValidation']["$index"]) {
+                        params['logFilterValidation']["$index"] = [:]
+                    }
+                    params['logFilterValidation']["$index"] = report.report
+                    invalid << index
+                }
+            }
+        }
+        scheduledExecution?.errors.rejectValue('workflow',
+                                               'Workflow.logFilter.plugin.config.invalid',
+                                               [invalid.join(",")] as Object[],
+                                               "Workflow Log Filters: {0}: Some config values were not valid"
+        )
+
+    }
+
+    def listWorkflows(HashMap query) {
         ScheduledExecutionQuery nquery = new ScheduledExecutionQuery()
         nquery.setIdlist(query.idlist)
         nquery.setGroupPath(query.groupPath)

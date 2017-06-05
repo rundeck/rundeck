@@ -38,10 +38,10 @@ public class StepContextWorkflowExecutionListener<NODE, STEP> implements StepNod
     /**
      * Thread local context stack, inherited by sub threads.
      */
-    private InheritableThreadLocal<STEP> localStep = new InheritableThreadLocal<STEP>();
-    private InheritableThreadLocal<NODE> localNode = new InheritableThreadLocal<NODE>();
+    private InheritableThreadLocal<STEP> localStep = new InheritableThreadLocal<>();
+    private InheritableThreadLocal<NODE> localNode = new InheritableThreadLocal<>();
     private InheritableThreadLocal<ContextStack<ctxPair>> contextStack = new
-            InheritableThreadLocal<ContextStack<ctxPair>>();
+            InheritableThreadLocal<>();
 
     public void beginContext() {
         STEP info = localStep.get();
@@ -132,7 +132,7 @@ public class StepContextWorkflowExecutionListener<NODE, STEP> implements StepNod
     }
 
     private List<Pair<STEP, NODE>> getPairs(List<ctxPair> stack) {
-        ArrayList<Pair<STEP, NODE>> pairs = new ArrayList<Pair<STEP, NODE>>();
+        ArrayList<Pair<STEP, NODE>> pairs = new ArrayList<>();
         for (ctxPair ctxPair : stack) {
             pairs.add(ctxPair);
         }

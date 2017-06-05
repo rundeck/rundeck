@@ -28,10 +28,10 @@ import java.io.StringWriter;
 import java.util.Map;
 
 import com.dtolabs.rundeck.core.Constants;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import org.apache.log4j.Logger;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
@@ -90,8 +90,12 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
         throws NodeStepException {
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         if (null != instanceConfiguration) {
-            instanceConfiguration = DataContextUtils.replaceDataReferences(instanceConfiguration,
-                                                                           context.getDataContext());
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                    instanceConfiguration,
+                    SharedDataContextUtils.defaultNodeView(node.getNodename()),
+                    null,
+                    context.getSharedDataContext()
+            );
         }
         final String providerName = item.getNodeStepType();
 

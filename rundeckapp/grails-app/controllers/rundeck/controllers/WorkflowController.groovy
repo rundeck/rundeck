@@ -18,6 +18,8 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import rundeck.WorkflowStep
 import rundeck.Workflow
 import rundeck.JobExec
@@ -26,11 +28,14 @@ import rundeck.ScheduledExecution
 import rundeck.PluginStep
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import rundeck.services.ExecutionService
+import rundeck.services.FrameworkService
+import rundeck.services.PluginService
 
 import javax.servlet.http.HttpServletResponse
 
-class WorkflowController extends ControllerBase {
+class WorkflowController extends ControllerBase implements PluginListRequired {
     def frameworkService
+    PluginService pluginService
     static allowedMethods = [
             redo:'POST',
             remove:'POST',
@@ -43,11 +48,12 @@ class WorkflowController extends ControllerBase {
         return redirect(controller: 'menu', action: 'index')
     }
 
+    Map<String, Class> requiredPluginTypes = [logFilterPlugins: LogFilterPlugin]
 
     /**
      * Render the edit form for a workflow item
      */
-    def edit = {
+    def edit() {
         if (!params.num && !params['newitemtype']) {
             log.error("num parameter is required")
             return renderErrorFragment("num parameter is required")
@@ -93,24 +99,239 @@ class WorkflowController extends ControllerBase {
             }
         }
 
-        return render(
-                template: "/execution/wfitemEdit",
-                  model: [
-                          item                : item,
-                          key                 : params.key,
-                          num                 : numi,
-                          scheduledExecutionId: params.scheduledExecutionId,
-                          newitemtype         : newitemtype,
-                          origitemtype         : origitemtype,
-                          newitemDescription  : newitemDescription,
-                          pluginNotFound      : null == newitemDescription,
-                          edit                : true,
-                          isErrorHandler      : isErrorHandler,
-                          newitemnodestep     : params.newitemnodestep
-                  ]
-        )
+        [
+                item                : item,
+                key                 : params.key,
+                num                 : numi,
+                scheduledExecutionId: params.scheduledExecutionId,
+                newitemtype         : newitemtype,
+                origitemtype        : origitemtype,
+                newitemDescription  : newitemDescription,
+                pluginNotFound      : null == newitemDescription,
+                edit                : true,
+                isErrorHandler      : isErrorHandler,
+                newitemnodestep     : params.newitemnodestep
+        ]
+    }
+    /**
+     * Reorder items
+     */
+    def copy() {
+        withForm {
+            if (!params.num) {
+                log.error("num parameter required")
+                return renderErrorFragment("num parameter required")
+            }
+
+            def Workflow editwf = _getSessionWorkflow()
+
+            def num = Integer.parseInt(params.num)
+            def result = _applyWFEditAction(editwf, [action: 'copy', num: num])
+            if (result.error) {
+                log.error(result.error)
+                return renderErrorFragment(result.error)
+            }
+            _pushUndoAction(params.scheduledExecutionId, result.undo)
+            _clearRedoStack(params.scheduledExecutionId)
+
+            return render(template: "/execution/wflistContent", model: [
+                    workflow : editwf,
+                    edit     : params.edit,
+                    highlight: num + 1,
+                    project  : params.project
+            ]
+            )
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
+        }
     }
 
+    def editStepFilter() {
+        if (!params.index && !params.newfiltertype) {
+            log.error("index parameter is required")
+            return renderErrorFragment("index parameter is required")
+        }
+
+        def filterPlugins = pluginService.listPlugins(LogFilterPlugin)
+        def newfilterdesc
+        def filtertype
+        def config = [:]
+        if (params.index != null) {
+            if (!params.num) {
+                log.error("num parameter is required")
+                return renderErrorFragment("num parameter is required")
+            }
+            def Workflow editwf = _getSessionWorkflow()
+            def numi = Integer.parseInt(params.num);
+            if (numi >= editwf.commands.size()) {
+                log.error("num parameter is invalid: ${numi}")
+                return renderErrorFragment("num parameter is invalid: ${numi}")
+            }
+            def item = null != numi ? editwf.commands.get(numi) : null
+            def pluginconfigs = item.getPluginConfigForType('LogFilter')
+            def filteri = Integer.parseInt(params.index);
+            if (!pluginconfigs || !(pluginconfigs instanceof List && pluginconfigs[filteri])) {
+                log.error("index parameter is invalid: ${filteri}")
+                return renderErrorFragment("index parameter is invalid: ${filteri}")
+            }
+            filtertype = pluginconfigs[filteri].type
+            config = pluginconfigs[filteri].config
+        } else {
+            filtertype = params.newfiltertype
+        }
+        newfilterdesc = filterPlugins[filtertype].description
+        def validation
+        if (params.validate) {
+            config = params.pluginConfig
+            validation = _validateLogFilter(config, filtertype)
+        } else if (params.editconfig) {
+            if(request.JSON){
+                config=request.JSON.pluginConfig
+            }else{
+                config = params.pluginConfig
+            }
+        }
+        [
+                num          : params.num,
+                index        : params.index,
+                type         : filtertype,
+                description  : newfilterdesc,
+                config       : config,
+                newfiltertype: params.newfiltertype,
+                report       : validation?.report,
+                valid        : validation?.valid
+        ]
+    }
+
+    def saveStepFilter() {
+        def results
+        def valid = false
+        withForm {
+            g.refreshFormTokensHeader()
+            if (!params.num) {
+                log.error("num parameter is required")
+                return renderErrorFragment("num parameter is required")
+            }
+            if (!params.index && !params.newfiltertype) {
+                log.error("index parameter is required")
+                return renderErrorFragment("index parameter is required")
+            }
+
+            def Workflow editwf = _getSessionWorkflow()
+            def numi = Integer.parseInt(params.num);
+            if (numi >= editwf.commands.size()) {
+                log.error("num parameter is invalid: ${numi}")
+                return renderErrorFragment("num parameter is invalid: ${numi}")
+            }
+            def indexi = null != params.index ? Integer.parseInt(params.index) : 0;
+
+            def actionName = params.newfiltertype ? 'insertFilter' : 'modifyFilter'
+
+            Map config = params.pluginConfig
+
+
+            def result = _applyWFEditAction(
+                    editwf,
+                    [action    : actionName,
+                     num       : numi,
+                     index     : indexi,
+                     filtertype: params.newfiltertype ?: params.type,
+                     config    : config]
+            )
+            if (result.error) {
+                log.error(result.error)
+            } else {
+                _pushUndoAction(params.scheduledExecutionId, result.undo)
+                if (result.undo) {
+                    _clearRedoStack(params.scheduledExecutionId)
+                }
+            }
+
+            results = [error: result.error, valid: !result.error, saved: result.saved]
+            valid = true
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
+        }
+
+        if (valid) {
+            return respond((Object) results, [formats: ['json']])
+        }
+    }
+
+    def validateStepFilter() {
+        if (!params.newfiltertype) {
+            log.error("newfiltertype parameter is required")
+            return renderErrorFragment("newfiltertype parameter is required")
+        }
+
+        Map config = params.pluginConfig
+
+        def validation = _validateLogFilter(config, params.newfiltertype)
+
+        def results = [
+                report: validation?.report,
+                valid : validation?.valid,
+                saved : [
+                        type  : params.newfiltertype,
+                        config: validation.props
+                ]
+        ]
+        return respond((Object) results, [formats: ['json']])
+    }
+
+    def removeStepFilter() {
+        def results
+        def valid = false
+        withForm {
+            g.refreshFormTokensHeader()
+            if (!params.num) {
+                log.error("num parameter is required")
+                return renderErrorFragment("num parameter is required")
+            }
+            if (!params.index && !params.newfiltertype) {
+                log.error("index parameter is required")
+                return renderErrorFragment("index parameter is required")
+            }
+
+            def Workflow editwf = _getSessionWorkflow()
+            def numi = Integer.parseInt(params.num);
+            if (numi >= editwf.commands.size()) {
+                log.error("num parameter is invalid: ${numi}")
+                return renderErrorFragment("num parameter is invalid: ${numi}")
+            }
+            def indexi =  Integer.parseInt(params.index)
+
+            def actionName = 'removeFilter'
+
+            def result = _applyWFEditAction(
+                    editwf,
+                    [action: actionName,
+                     num   : numi,
+                     index : indexi
+                    ]
+            )
+            if (result.error) {
+                log.error(result.error)
+            } else {
+                _pushUndoAction(params.scheduledExecutionId, result.undo)
+                if (result.undo) {
+                    _clearRedoStack(params.scheduledExecutionId)
+                }
+            }
+
+            results = [error: result.error, valid: !result.error]
+            valid = true
+        }.invalidToken {
+            response.status = HttpServletResponse.SC_BAD_REQUEST
+            return renderErrorFragment(g.message(code: 'request.error.invalidtoken.message'))
+        }
+
+        if (valid) {
+            return respond((Object) results, [formats: ['json']])
+        }
+    }
     /**
      * Return a Description for a plugin type, if available
      * @param type
@@ -119,11 +340,30 @@ class WorkflowController extends ControllerBase {
      */
     private Description getPluginStepDescription(boolean isNodeStep, String type) {
         if (type && !(type in ['command', 'script', 'scriptfile', 'job'])) {
-            try{
-                return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) : frameworkService.getStepPluginDescription(type)
-            }catch(MissingProviderException e){
-                log.warn("step provider not found: ${type}: ${e.message}",e)
+            try {
+                return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) :
+                        frameworkService.getStepPluginDescription(type)
+            } catch (MissingProviderException e) {
+                log.warn("step provider not found: ${type}: ${e.message}", e)
             }
+        }
+        return null
+    }
+    /**
+     * Return a Description for a plugin type, if available
+     * @param type
+     * @param framework
+     * @return
+     */
+    static private Description getPluginStepDescription(
+            FrameworkService frameworkService,
+            boolean isNodeStep,
+            String type
+    )
+    {
+        if (type && !(type in ['command', 'script', 'scriptfile', 'job'])) {
+            return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) :
+                    frameworkService.getStepPluginDescription(type)
         }
         return null
     }
@@ -131,7 +371,7 @@ class WorkflowController extends ControllerBase {
     /**
      * Render workflow item
      */
-    def render = {
+    def renderItem() {
         if (!params.num) {
             log.error("num parameter is required")
             return renderErrorFragment("num parameter is required")
@@ -160,7 +400,7 @@ class WorkflowController extends ControllerBase {
     /**
      * Save workflow item
      */
-    def save = {
+    def save() {
         withForm{
             g.refreshFormTokensHeader()
         if (!params.num && !params.newitem) {
@@ -233,7 +473,7 @@ class WorkflowController extends ControllerBase {
     /**
      * Reorder items
      */
-    def reorder = {
+    def reorder() {
         withForm{
         if (!params.fromnum) {
             log.error("fromnum parameter required")
@@ -301,7 +541,7 @@ class WorkflowController extends ControllerBase {
     /**
      * Undo change
      */
-    def undo = {
+    def undo() {
         withForm{
         def Workflow editwf = _getSessionWorkflow()
         def action = _popUndoAction(params.scheduledExecutionId)
@@ -337,7 +577,7 @@ class WorkflowController extends ControllerBase {
     /**
      * redo change
      */
-    def redo = {
+    def redo() {
         withForm{
         def Workflow editwf = _getSessionWorkflow()
         def action = _popRedoAction(params.scheduledExecutionId)
@@ -367,7 +607,7 @@ class WorkflowController extends ControllerBase {
     /**
      * revert all changes
      */
-    def revert = {
+    def revert() {
         withForm{
         final String uid = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
         session.editWF?.remove(uid)
@@ -387,7 +627,7 @@ class WorkflowController extends ControllerBase {
     /**
      * display undo/redo buttons for current stack state
      */
-    def renderUndo = {
+    def renderUndo() {
         final String id = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
         return render(template: '/common/undoRedoControls', model: [undo: session.undoWF ? session.undoWF[id]?.size() : 0, redo: session.redoWF ? session.redoWF[id]?.size() : 0, key: 'workflow'])
     }
@@ -483,6 +723,17 @@ class WorkflowController extends ControllerBase {
                 editwf.commands.add(toi, wfitem)
             }
             result['undo'] = [action: 'move', from: toi, to: fromi]
+        } else if (input.action == 'copy') {
+            def num = input.num
+            def newi = num + 1
+            if (num >= editwf.commands.size() || num < 0) {
+                result.error = "fromnum parameter is invalid: ${num}"
+                return result
+            }
+
+            def wfitem = editwf.commands.get(num).createClone()
+            editwf.commands.add(newi, wfitem)
+            result['undo'] = [action: 'remove', num: newi]
         } else if (input.action == 'remove') {
             def numi = input.num
             def item = editwf.commands.remove(numi)
@@ -498,7 +749,7 @@ class WorkflowController extends ControllerBase {
             if (item.errors.hasErrors()) {
                 return [error: item.errors.allErrors.collect {g.message(error: it)}.join(","), item: item]
             }
-            def validation=_validatePluginStep(item, params.newitemtype)
+            def validation = _doValidatePluginStep(item)
             if(!validation.valid){
                 return [error: "Plugin configuration was not valid: ${validation.report}", item: item,report: validation.report]
             }
@@ -510,6 +761,115 @@ class WorkflowController extends ControllerBase {
                 num = 0
             }
             result['undo'] = [action: 'remove', num: num]
+        } else if (input.action == 'insertFilter') {
+            def numi = input.num
+            def indexi = input.index
+            Map config = input.config
+            def filtertype = input.filtertype
+
+            if (numi >= (editwf.commands ? editwf.commands.size() : 1)) {
+                result.error = "num parameter is invalid: ${numi}"
+                return result
+            }
+
+            def validation = _validateLogFilter(config, filtertype)
+            if (!validation.valid) {
+                return [error : "Plugin configuration was not valid: ${validation.report}",
+                        config: config,
+                        report: validation.report]
+            }
+            config = validation.props
+
+            def WorkflowStep item = editwf.commands.get(numi)
+            def filterConfig = item.getPluginConfigForType(ServiceNameConstants.LogFilter)
+            if (filterConfig instanceof List) {
+                List configs = (List) filterConfig
+                configs.add(indexi, [type: filtertype, config: config])
+            } else {
+                filterConfig = [[type: filtertype, config: config]]
+                indexi = 0;
+            }
+            item.storePluginConfigForType(ServiceNameConstants.LogFilter, filterConfig)
+
+            result['saved'] = [type: filtertype, config: config]
+            result['undo'] = [action: 'removeFilter', num: input.num, index: indexi]
+        } else if (input.action == 'removeFilter') {
+            def numi = input.num
+            def indexi = input.index
+            if (numi >= (editwf.commands ? editwf.commands.size() : 1)) {
+                result.error = "num parameter is invalid: ${numi}"
+                return result
+            }
+            def WorkflowStep item = editwf.commands.get(numi)
+            def filterConfig = item.getPluginConfigForType(ServiceNameConstants.LogFilter)
+
+            if (!(filterConfig instanceof List)) {
+                result.error = "index parameter is invalid: ${indexi}"
+                return result
+            }
+            List filterConfigs = (List) filterConfig
+
+            if (indexi >= filterConfigs.size()) {
+                result.error = "index parameter is invalid: ${indexi}"
+                return result
+            }
+            def filterdef = filterConfigs.remove(indexi)
+
+            item.storePluginConfigForType(ServiceNameConstants.LogFilter, filterConfig)
+
+            result['undo'] = [
+                    action    : 'insertFilter',
+                    num       : input.num,
+                    index     : indexi,
+                    config    : filterdef.config,
+                    filtertype: filterdef.type
+            ]
+        } else if (input.action == 'modifyFilter') {
+            def numi = input.num
+            def indexi = input.index
+
+            def config = input.config
+            def filtertype = input.filtertype
+
+            if (numi >= (editwf.commands ? editwf.commands.size() : 1)) {
+                result.error = "num parameter is invalid: ${numi}"
+                return result
+            }
+            def WorkflowStep item = editwf.commands.get(numi)
+            def filterConfig = item.getPluginConfigForType(ServiceNameConstants.LogFilter)
+
+            if (!(filterConfig instanceof List)) {
+                result.error = "index parameter is invalid: ${indexi}"
+                return result
+            }
+            List filterConfigs = (List) filterConfig
+
+            if (indexi >= filterConfigs.size()) {
+                result.error = "index parameter is invalid: ${indexi}"
+                return result
+            }
+
+            def validation = _validateLogFilter(config, filtertype)
+            if (!validation.valid) {
+                return [error : "Plugin configuration was not valid: ${validation.report}",
+                        config: config,
+                        report: validation.report]
+            }
+            config = validation.props
+
+            def origfilter = filterConfigs.get(indexi)
+
+            filterConfigs.set(indexi, [type: filtertype, config: config])
+
+            item.storePluginConfigForType(ServiceNameConstants.LogFilter, filterConfig)
+            result['saved'] = [type: filtertype, config: config]
+            result['undo'] = [
+                    action    : 'modifyFilter',
+                    num       : numi,
+                    index     : indexi,
+                    config    : origfilter.config,
+                    filtertype: origfilter.type
+            ]
         } else if (input.action == 'modify') {
             def numi = input.num
             if (numi >= (editwf.commands ? editwf.commands.size() : 1)) {
@@ -525,7 +885,7 @@ class WorkflowController extends ControllerBase {
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }
-            def validation = _validatePluginStep(moditem, params.newitemtype)
+            def validation = _doValidatePluginStep(moditem)
             if (!validation.valid) {
                 return [error: "Plugin configuration was not valid", item: moditem, report: validation.report]
             }
@@ -554,7 +914,7 @@ class WorkflowController extends ControllerBase {
             if (ehitem.errors.hasErrors()) {
                 return [error: ehitem.errors.allErrors.collect {g.message(error: it)}.join(","), item: ehitem]
             }
-            def validation = _validatePluginStep(ehitem, params.newitemtype)
+            def validation = _doValidatePluginStep(ehitem)
             if (!validation.valid) {
                 return [error: "Plugin configuration was not valid", item: ehitem, report: validation.report]
             }
@@ -583,7 +943,7 @@ class WorkflowController extends ControllerBase {
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }
-            def validation = _validatePluginStep(moditem, params.newitemtype)
+            def validation = _doValidatePluginStep(moditem)
             if (!validation.valid) {
                 return [error: "Plugin configuration was not valid", item: moditem, report: validation.report]
             }
@@ -749,6 +1109,7 @@ class WorkflowController extends ControllerBase {
         }else if(exec instanceof PluginStep){
             //TODO: validate
         }
+        //TODO: validate log filter plugins
     }
     /**
      * Validate a WorkflowStep object.  will call Errors.rejectValue for
@@ -756,10 +1117,10 @@ class WorkflowController extends ControllerBase {
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-     protected Map _validatePluginStep(WorkflowStep exec, String type = null) {
-        if(exec instanceof PluginStep){
+    static Map _validatePluginStep(FrameworkService frameworkService, WorkflowStep exec) {
+        if (exec instanceof PluginStep) {
             PluginStep item = exec as PluginStep
-            def description=getPluginStepDescription(item.nodeStep, item.type)
+            def description = getPluginStepDescription(frameworkService, item.nodeStep, item.type)
             return frameworkService.validateDescription(
                     description,
                     '',
@@ -768,9 +1129,18 @@ class WorkflowController extends ControllerBase {
                     PropertyScope.Instance,
                     PropertyScope.Project
             )
-        }else{
-            return [valid:true]
+        } else {
+            return [valid: true]
         }
+    }
+    /**
+     * Validate a WorkflowStep object.  will call Errors.rejectValue for
+     * any invalid fields for the object.
+     * @param exec the WorkflowStep
+     * @param type type if specified in params
+     */
+    protected Map _doValidatePluginStep(WorkflowStep exec) {
+        _validatePluginStep(frameworkService, exec)
     }
     private void _sanitizePluginStep(WorkflowStep item, Map validation){
         if (item instanceof PluginStep) {
@@ -779,5 +1149,35 @@ class WorkflowController extends ControllerBase {
             step.configuration=validation.props
         }
     }
-    
+
+    /**
+     * Validate a LogFilterPlugin configuration.
+     * @param config the config
+     * @param type plugin type
+     */
+    protected Map _validateLogFilter(Map config, String type) {
+        _validateLogFilter(frameworkService, pluginService, config, type)
+    }
+    /**
+     * Validate a LogFilterPlugin configuration.
+     * @param config the config
+     * @param type plugin type
+     */
+    static Map _validateLogFilter(
+            FrameworkService frameworkService,
+            PluginService pluginService,
+            Map config,
+            String type
+    )
+    {
+        def described = pluginService.getPluginDescriptor(type, LogFilterPlugin)
+        return frameworkService.validateDescription(
+                described.description,
+                '',
+                config,
+                null,
+                PropertyScope.Instance,
+                PropertyScope.Project
+        )
+    }
 }

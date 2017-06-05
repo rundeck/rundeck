@@ -111,7 +111,7 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
         INodeSet nodes = context.getNodes();
         boolean keepgoing = context.isKeepgoing();
 
-        final HashSet<String> nodeNames = new HashSet<String>();
+        final HashSet<String> nodeNames = new HashSet<>();
         FailedNodesListener failedListener = context.getExecutionListener().getFailedNodesListener();
 
         context.getExecutionListener().log(3,
@@ -119,22 +119,22 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
             + context.getThreadCount()
             + ")");
         //to not have 2 orchestrator within one run when it processed the inner node
-        Map<String,String> orchestratorData = new HashMap<String, String>();
+        Map<String,String> orchestratorData = new HashMap<>();
         context.getDataContext().put(ORCHESTRATOR_DATA, orchestratorData);
         boolean success = false;
-        final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
-        final HashMap<String, NodeStepResult> failureMap = new HashMap<String, NodeStepResult>();
+        final HashMap<String, NodeStepResult> resultMap = new HashMap<>();
+        final HashMap<String, NodeStepResult> failureMap = new HashMap<>();
         final Collection<INodeEntry> nodes1 = nodes.getNodes();
         //reorder based on configured rank property and order
         final String rankProperty = null != context.getNodeRankAttribute() ? context.getNodeRankAttribute() : "nodename";
         final boolean rankAscending = context.isNodeRankOrderAscending();
         final INodeEntryComparator comparator = new INodeEntryComparator(rankProperty);
-        final TreeSet<INodeEntry> orderedNodes = new TreeSet<INodeEntry>(
-            rankAscending ? comparator : Collections.reverseOrder(comparator));
+        final TreeSet<INodeEntry> orderedNodes = new TreeSet<>(
+                rankAscending ? comparator : Collections.reverseOrder(comparator));
 
         orderedNodes.addAll(nodes1);
         
-        Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<INodeEntry, Callable<NodeStepResult>>();
+        Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<>();
         for (final INodeEntry node: orderedNodes) {
             final Callable<NodeStepResult> tocall;
             if (null != item) {

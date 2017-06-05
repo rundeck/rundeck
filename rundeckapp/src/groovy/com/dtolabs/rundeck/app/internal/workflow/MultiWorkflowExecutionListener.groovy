@@ -110,18 +110,13 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
     }
 
     @Override
-    boolean isTerse() {
-        return delegate.isTerse()
-    }
-
-    @Override
-    String getLogFormat() {
-        return delegate.getLogFormat()
-    }
-
-    @Override
     void log(int level, String message) {
         delegate.log(level,message)
+    }
+
+    @Override
+    void log(final int level, final String message, final Map eventMeta) {
+        delegate.log(level, message, eventMeta)
     }
 
     @Override
