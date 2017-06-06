@@ -2008,7 +2008,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
-    def copy = {
+    def copy() {
         def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID( params.id )
 
         if (notFoundResponse(scheduledExecution, 'Job', params.id)) {
@@ -2059,15 +2059,23 @@ class ScheduledExecutionController  extends ControllerBase{
         def stepTypes = frameworkService.getStepPluginDescriptions()
 
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
-
-        render(view:'create',model: [ scheduledExecution:newScheduledExecution, crontab:crontab,params:params,
-                iscopy:true,
-                authorized:scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
-                nodeStepDescriptions: nodeStepTypes,
-                stepDescriptions: stepTypes,
-                strategyPlugins: strategyPlugins,
-                notificationPlugins: notificationService.listNotificationPlugins(),
-                orchestratorPlugins: orchestratorPluginService.listDescriptions()])
+        def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
+        render(
+                view: 'create',
+                model: [
+                        scheduledExecution  : newScheduledExecution,
+                        crontab: crontab,
+                        params: params,
+                        iscopy              :true,
+                        authorized          :scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
+                        nodeStepDescriptions: nodeStepTypes,
+                        stepDescriptions    : stepTypes,
+                        strategyPlugins     : strategyPlugins,
+                        notificationPlugins : notificationService.listNotificationPlugins(),
+                        orchestratorPlugins : orchestratorPluginService.listDescriptions(),
+                        logFilterPlugins    : logFilterPlugins,
+                ]
+        )
 
     }
     /**
