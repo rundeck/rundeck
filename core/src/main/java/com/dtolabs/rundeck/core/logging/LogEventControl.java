@@ -16,7 +16,6 @@
 
 package com.dtolabs.rundeck.core.logging;
 
-import java.util.Date;
 import java.util.Map;
 
 /**
@@ -29,48 +28,46 @@ public interface LogEventControl extends LogEvent {
     /**
      * Set even type
      *
-     * @param type
+     * @param type new type
      *
-     * @return
+     * @return this
      */
     LogEventControl setEventType(String type);
 
-    //    Date getDatetime();
-
     /**
-     * Set level
+     * Force a certain log level
      *
-     * @param level
+     * @param level log level
      *
-     * @return
+     * @return this
      */
     LogEventControl setLoglevel(LogLevel level);
 
     /**
      * set Message
      *
-     * @param message
+     * @param message new message
      *
-     * @return
+     * @return this
      */
     LogEventControl setMessage(String message);
 
     /**
      * Add metadata
      *
-     * @param data
+     * @param data data to add
      *
-     * @return
+     * @return this
      */
     LogEventControl addMetadata(Map<String, String> data);
 
     /**
      * Add a single item to metadata
      *
-     * @param key
-     * @param value
+     * @param key key
+     * @param value value
      *
-     * @return
+     * @return this
      */
     LogEventControl addMetadata(String key, String value);
 
@@ -79,19 +76,27 @@ public interface LogEventControl extends LogEvent {
      *
      * @return this
      */
-    void emit();
+    LogEventControl emit();
 
     /**
      * The log should be quelled from final writing, but not from further processing
      *
      * @return this
      */
-    void quell();
+    LogEventControl quell();
 
     /**
-     * The event should be removed from processing
+     * The log should be quieted in final writing, but does not modify the log level
+     * for further processing
      *
-     * @return
+     * @return this
      */
-    void remove();
+    LogEventControl quiet();
+
+    /**
+     * The event should be removed from processing by later filters
+     *
+     * @return this
+     */
+    LogEventControl remove();
 }

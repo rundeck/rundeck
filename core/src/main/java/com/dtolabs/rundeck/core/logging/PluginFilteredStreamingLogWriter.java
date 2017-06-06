@@ -147,20 +147,30 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         }
 
         @Override
-        public void emit() {
+        public LogEventControl emit() {
             state = ControlState.EMIT;
+            return this;
         }
 
         @Override
-        public void quell() {
+        public LogEventControl quell() {
             modified = true;
             state = ControlState.QUELL;
+            return this;
         }
 
         @Override
-        public void remove() {
+        public LogEventControl remove() {
             modified = true;
             state = ControlState.REMOVE;
+            return this;
+        }
+
+        @Override
+        public LogEventControl quiet() {
+            modified = true;
+            state = ControlState.QUIET;
+            return this;
         }
 
         static EventControl with(LogEvent event) {
@@ -181,6 +191,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
     private enum ControlState {
         EMIT,
         QUELL,
+        QUIET,
         REMOVE
     }
 
@@ -202,11 +213,14 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
             if (eventControl.state == ControlState.REMOVE) {
                 state = eventControl.state;
                 break;
-            } else if (state == ControlState.EMIT && eventControl.state == ControlState.QUELL) {
+            } else if (state == ControlState.EMIT && eventControl.state != ControlState.EMIT) {
                 state = eventControl.state;
             }
         }
-        if (state == ControlState.EMIT) {
+        if (state != ControlState.REMOVE && state != ControlState.QUELL) {
+            if (state == ControlState.QUIET) {
+                eventControl.setLoglevel(LogLevel.VERBOSE);
+            }
             getWriter().addEvent(eventControl.modified ? eventControl : orig);
         }
     }

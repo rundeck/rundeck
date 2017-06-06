@@ -127,10 +127,13 @@ class PluginFilteredStreamingLogWriterSpec extends Specification {
         } else if (action == 'emit') {
             1 * plugin2.handleEvent(_, { it.message == 'blah' })
             1 * sink.addEvent(_)
+        } else if (action == 'quiet') {
+            1 * plugin2.handleEvent(_, { it.message == 'blah' && it.loglevel == LogLevel.NORMAL })
+            1 * sink.addEvent({ it.loglevel == LogLevel.VERBOSE })
         }
 
         where:
-        action << ['quell', 'emit', 'remove']
+        action << ['quell', 'emit', 'remove', 'quiet']
         type = 'log'
         level = LogLevel.NORMAL
         message = 'blah'
