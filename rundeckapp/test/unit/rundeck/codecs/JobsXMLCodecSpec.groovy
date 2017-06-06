@@ -280,6 +280,44 @@ inside]]></aproperty>
         result[0].workflow.pluginConfigMap == [WorkflowStrategy: [teststrateg: [aproperty: 'multiline\ndata\ninside']]]
 
     }
+    def "decode workflow global log filter plugin config"(){
+        given:
+        def xml = '''<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+      </command>
+      <pluginConfig>
+        <LogFilter>
+          <config>
+            <color>red</color>
+            <replacement>[SECURE]</replacement>
+          </config>
+          <type>mask-passwords</type>
+        </LogFilter>
+      </pluginConfig>
+    </sequence>
+
+  </job>
+</joblist>'''
+
+        when:
+        def result = JobsXMLCodec.decode(xml)
+
+        then:
+        result.size()==1
+        result[0].jobName=='test job 1'
+        result[0].workflow.pluginConfigMap == [LogFilter: [[type:'mask-passwords',config:[color:'red',replacement:'[SECURE]']]]]
+        result[0].workflow.getPluginConfigData('LogFilter') == [[type:'mask-passwords',config:[color:'red',replacement:'[SECURE]']]]
+
+    }
 
     def "encode option type file"() {
         given:

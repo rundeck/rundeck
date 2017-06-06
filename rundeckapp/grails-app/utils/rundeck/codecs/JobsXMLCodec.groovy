@@ -423,6 +423,9 @@ class JobsXMLCodec {
         if(null!=data.keepgoing && data.keepgoing instanceof String){
             data.keepgoing = XmlParserUtil.stringToBool(data.keepgoing,false)
         }
+        if (data.pluginConfig?.LogFilter && !(data.pluginConfig?.LogFilter instanceof Collection)) {
+            data.pluginConfig.LogFilter = [data.pluginConfig.remove('LogFilter')]
+        }
     }
     /**
      * Convert structure returned by job.toMap into correct structure for jobs xml
