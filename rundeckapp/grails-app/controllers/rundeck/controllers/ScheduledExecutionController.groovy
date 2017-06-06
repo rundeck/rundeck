@@ -2060,6 +2060,7 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
+        def globals = frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         render(
                 view: 'create',
                 model: [
@@ -2074,6 +2075,7 @@ class ScheduledExecutionController  extends ControllerBase{
                         notificationPlugins : notificationService.listNotificationPlugins(),
                         orchestratorPlugins : orchestratorPluginService.listDescriptions(),
                         logFilterPlugins    : logFilterPlugins,
+                        globalVars          : globals
                 ]
         )
 
