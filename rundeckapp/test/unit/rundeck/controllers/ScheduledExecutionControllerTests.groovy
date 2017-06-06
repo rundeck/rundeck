@@ -2056,6 +2056,7 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.getNodeStepPluginDescriptions { [] }
             fwkControl.demand.getStepPluginDescriptions { [] }
+            fwkControl.demand.getProjectGlobals { [:] }
             sec.frameworkService = fwkControl.createMock()
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
@@ -2074,6 +2075,9 @@ class ScheduledExecutionControllerTests  {
                 []
             }
             sec.notificationService = pControl.createMock()
+            sec.pluginService = mockWith(PluginService){
+                listPlugins(){[]}
+            }
 
             def params = [id: se.id.toString()]
             sec.params.putAll(params)
