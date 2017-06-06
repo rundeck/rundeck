@@ -38,29 +38,15 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
-import com.dtolabs.rundeck.server.plugins.loader.PluginFileManifest
-import com.dtolabs.rundeck.server.plugins.loader.PluginFileSource
-import com.dtolabs.utils.Streams
-import grails.spring.BeanBuilder
 import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.springframework.beans.factory.NoSuchBeanDefinitionException
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory
-import org.springframework.beans.factory.groovy.GroovyBeanDefinitionReader
-import org.springframework.beans.factory.support.BeanDefinitionBuilder
-import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
-import org.springframework.scripting.config.LangNamespaceUtils
-import org.springframework.scripting.groovy.GroovyScriptFactory
-import org.springframework.scripting.support.ScriptFactoryPostProcessor
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
 
 import javax.security.auth.Subject
-import java.nio.charset.Charset
 
 /**
  * Interfaces with the core Framework object
