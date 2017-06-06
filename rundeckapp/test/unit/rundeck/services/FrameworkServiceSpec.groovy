@@ -21,8 +21,12 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
+import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
+import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.test.mixin.TestFor
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Created by greg on 8/14/15.
@@ -84,5 +88,73 @@ class FrameworkServiceSpec extends Specification {
         'UTF-8'      | 'ISO-8859-2' | 'ISO-8859-2' | _
 
 
+    }
+
+    def "parse plugin config input no desc"() {
+
+        when:
+        def result = service.parsePluginConfigInput(null, prefix, params)
+
+        then:
+        result == expect
+
+        where:
+        prefix | params                   || expect
+        ''     | [:]                      || [:]
+        ''     | null                     || [:]
+        ''     | [a: 'b']                 || [a: 'b']
+        ''     | [a: 'b', x: 'y']         || [a: 'b', x: 'y']
+        'z.'   | [a: 'b']                 || [:]
+        'z.'   | ['z.a': 'b']             || [a: 'b']
+        'z.'   | ['z.a': 'b', 'z.x': 'y'] || [a: 'b', x: 'y']
+    }
+
+    @Unroll
+    def "parse plugin config input with plugin"() {
+        given:
+        Description desc = DescriptionBuilder.builder()
+                                             .name('abc')
+                                             .property(PropertyBuilder.builder().string('a').build())
+                                             .property(PropertyBuilder.builder().string('x').build())
+                                             .build()
+        when:
+        def result = service.parsePluginConfigInput(desc, prefix, params)
+
+        then:
+        result == expect
+
+        where:
+        prefix | params                                    || expect
+        ''     | [:]                                       || [:]
+        ''     | null                                      || [:]
+        ''     | [a: 'b']                                  || [a: 'b']
+        ''     | [a: 'b', x: 'y']                          || [a: 'b', x: 'y']
+        ''     | [a: 'b', x: 'y', nada: 'nothing']         || [a: 'b', x: 'y']
+        'z.'   | [a: 'b']                                  || [:]
+        'z.'   | ['z.a': 'b']                              || [a: 'b']
+        'z.'   | ['z.a': 'b', 'z.x': 'y']                  || [a: 'b', x: 'y']
+        'z.'   | ['z.a': 'b', 'z.x': 'y', nada: 'nothing'] || [a: 'b', x: 'y']
+    }
+
+    @Unroll
+    def "parse plugin config input boolean property value"() {
+        given:
+        Description desc = DescriptionBuilder.builder()
+                                             .name('abc')
+                                             .property(PropertyBuilder.builder().booleanType('a').build())
+                                             .build()
+        when:
+        def result = service.parsePluginConfigInput(desc, prefix, [a: avalue])
+
+        then:
+        result == [a: expect]
+
+        where:
+        avalue         || expect
+        'true'         || 'true'
+        'on'           || 'true'
+        'b'            || 'false'
+        'anythingelse' || 'false'
+        prefix = ''
     }
 }

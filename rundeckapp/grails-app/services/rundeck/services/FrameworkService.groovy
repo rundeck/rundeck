@@ -793,7 +793,7 @@ class FrameworkService implements ApplicationContextAware {
         def result=[:]
         result.valid=false
         result.desc = description
-        result.props = parseResourceModelConfigInput(description, prefix, params)
+        result.props = parsePluginConfigInput(description, prefix, params)
 
         if (description) {
             def report = Validator.validate(result.props as Properties, description)
@@ -828,7 +828,7 @@ class FrameworkService implements ApplicationContextAware {
         def result = [:]
         result.valid = false
         result.desc = description
-        result.props = parseResourceModelConfigInput(result.desc, prefix, params)
+        result.props = parsePluginConfigInput(result.desc, prefix, params)
         def resolver = getFrameworkPropertyResolver(project, result.props)
         if (result.desc) {
             def report = Validator.validate(resolver, description, defaultScope, ignored)
@@ -847,11 +847,11 @@ class FrameworkService implements ApplicationContextAware {
      * @param params input parameter map
      * @return map of property name to value based on correct property types.
      */
-    public Map parseResourceModelConfigInput(Description desc, String prefix, final Map params) {
+    public Map parsePluginConfigInput(Description desc, String prefix, final Map params) {
         Map props = [:]
         if (desc) {
             desc.properties.each {prop ->
-                def v = params[prefix  + prop.name]
+                def v = params ? params[prefix + prop.name] : null
                 if (prop.type == Property.Type.Boolean) {
                     props.put(prop.name, (v == 'true' || v == 'on') ? 'true' : 'false')
                 } else if (v) {
@@ -861,7 +861,7 @@ class FrameworkService implements ApplicationContextAware {
         } else {
             final cfgprefix = prefix
             //just parse all properties with the given prefix
-            params.keySet().each {String k ->
+            params?.keySet()?.each { String k ->
                 if (k.startsWith(cfgprefix)) {
                     def key = k.substring(cfgprefix.length())
                     props.put(key, params[k])
