@@ -54,6 +54,16 @@ class WorkflowStep {
     public Object getPluginConfigForType(String type) {
         return getPluginConfig()?.get(type)
     }
+
+    /**
+     *
+     * @param type
+     * @return
+     */
+    public List getPluginConfigListForType(String type) {
+        def val = getPluginConfig()?.get(type)
+        val && !(val instanceof Collection) ? [val] : val
+    }
     /**
      * store plugin configuration for a type
      */

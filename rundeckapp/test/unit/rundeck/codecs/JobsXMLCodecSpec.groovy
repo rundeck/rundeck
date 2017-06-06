@@ -280,7 +280,347 @@ inside]]></aproperty>
         result[0].workflow.pluginConfigMap == [WorkflowStrategy: [teststrateg: [aproperty: 'multiline\ndata\ninside']]]
 
     }
-    def "decode workflow global log filter plugin config"(){
+
+    def "encode step log filter plugin config single"() {
+        given:
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new CommandExec(
+                                        [adhocRemoteString               : 'test buddy', argString: '-delay 12 ' +
+                                                '-monkey cheese ' +
+                                                '-particle', pluginConfig:
+                                                 [LogFilter: [
+                                                         [type  : 'mask-passwords',
+                                                          config: [
+                                                                  color      : 'red',
+                                                                  replacement: '[SECURE]'
+                                                          ]]
+                                                 ]]]
+                                )],
+                                strategy: 'test',
+
+                                ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true
+                )
+        ]
+        when:
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+
+        then:
+        null != xmlstr
+        xmlstr instanceof String
+        def doc = parser.parse(new StringReader(xmlstr))
+        doc.name() == 'joblist'
+        doc.job.size() == 1
+        doc.job[0].name[0].text() == 'test job 1'
+        doc.job[0].sequence[0].command.size() == 1
+        doc.job[0].sequence[0].command[0].plugins.size() == 1
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter.size() == 1
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[0].'@type'.text() == 'mask-passwords'
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[0].config.size() == 1
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[0].config[0].color.size() == 1
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[0].config[0].color.text() == 'red'
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[0].config[0].replacement.size() == 1
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[0].config[0].replacement.text() == '[SECURE]'
+    }
+
+    def "encode step log filter plugin config multi"() {
+        given:
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new CommandExec(
+                                        [adhocRemoteString               : 'test buddy', argString: '-delay 12 ' +
+                                                '-monkey cheese ' +
+                                                '-particle', pluginConfig:
+                                                 [LogFilter: [
+                                                         [type  : 'mask-passwords',
+                                                          config: [
+                                                                  color      : 'red',
+                                                                  replacement: '[SECURE]'
+                                                          ]],
+                                                         [type  : 'key-value-data',
+                                                          config: [
+                                                                  regex    : 'something',
+                                                                  debugOnly: 'true'
+                                                          ]]
+                                                 ]]]
+                                )],
+                                strategy: 'test',
+
+                                ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true
+                )
+        ]
+        when:
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+
+        then:
+        null != xmlstr
+        xmlstr instanceof String
+        def doc = parser.parse(new StringReader(xmlstr))
+        doc.name() == 'joblist'
+        doc.job.size() == 1
+        doc.job[0].name[0].text() == 'test job 1'
+        doc.job[0].sequence[0].command.size() == 1
+        doc.job[0].sequence[0].command[0].plugins.size() == 1
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter.size() == 2
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[0].'@type'.text() == 'mask-passwords'
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[0].config.size() == 1
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[0].config[0].color.size() == 1
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[0].config[0].color.text() == 'red'
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[0].config[0].replacement.size() == 1
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[0].config[0].replacement.text() == '[SECURE]'
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[1].'@type'.text() == 'key-value-data'
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[1].config.size() == 1
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[1].config[0].regex.size() == 1
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[1].config[0].regex.text() == 'something'
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[1].config[0].debugOnly.size() == 1
+        doc.job[0].sequence[0].command[0].plugins[0].LogFilter[1].config[0].debugOnly.text() == 'true'
+    }
+
+
+    def "decode step log filter plugin config single entry"() {
+        given:
+        def xml = '''<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+        <plugins>
+          <LogFilter type='mask-passwords'>
+            <config>
+              <color>red</color>
+              <replacement>[SECURE]</replacement>
+            </config>
+          </LogFilter>
+        </plugins>
+      </command>
+      
+    </sequence>
+
+  </job>
+</joblist>'''
+
+        when:
+        def result = JobsXMLCodec.decode(xml)
+
+        then:
+        result.size() == 1
+        result[0].jobName == 'test job 1'
+        result[0].workflow.commands[0].pluginConfig ==
+                [LogFilter: [[type: 'mask-passwords', config: [color: 'red', replacement: '[SECURE]']]]]
+        result[0].workflow.commands[0].getPluginConfigForType('LogFilter') ==
+                [[type: 'mask-passwords', config: [color      : 'red',
+                                                   replacement:
+                                                           '[SECURE]']]]
+        result[0].workflow.commands[0].getPluginConfigListForType('LogFilter') ==
+                [[type: 'mask-passwords', config: [color      : 'red',
+                                                   replacement:
+                                                           '[SECURE]']]]
+
+    }
+
+
+    def "decode step log filter plugin config multi entry"() {
+        given:
+        def xml = '''<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+        <plugins>
+          <LogFilter type='mask-passwords'>
+            <config>
+              <color>red</color>
+              <replacement>[SECURE]</replacement>
+            </config>
+          </LogFilter>
+          <LogFilter type='key-value-data'>
+              <config>
+                <debugOnly>true</debugOnly>
+                <regex>something</regex>
+              </config>
+            </LogFilter>
+        </plugins>
+      </command>
+      
+    </sequence>
+
+  </job>
+</joblist>'''
+
+        when:
+        def result = JobsXMLCodec.decode(xml)
+
+        then:
+        result.size() == 1
+        result[0].jobName == 'test job 1'
+        result[0].workflow.commands[0].pluginConfig ==
+                [LogFilter: [[type  : 'mask-passwords',
+                              config: [color: 'red', replacement: '[SECURE]']],
+                             [type  : 'key-value-data',
+                              config: [regex: 'something', debugOnly: 'true']]
+                ]]
+        result[0].workflow.commands[0].getPluginConfigForType('LogFilter') ==
+                [[type  : 'mask-passwords',
+                  config: [color: 'red', replacement: '[SECURE]']],
+                 [type  : 'key-value-data',
+                  config: [regex: 'something', debugOnly: 'true']]
+                ]
+        result[0].workflow.commands[0].getPluginConfigListForType('LogFilter') ==
+                [[type  : 'mask-passwords',
+                  config: [color: 'red', replacement: '[SECURE]']],
+                 [type  : 'key-value-data',
+                  config: [regex: 'something', debugOnly: 'true']]
+                ]
+
+    }
+
+    def "encode workflow global log filter plugin config single"() {
+        given:
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new CommandExec(
+                                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese ' +
+                                                '-particle']
+                                )],
+                                strategy: 'test',
+                                pluginConfigMap:
+                                        [LogFilter: [
+                                                [type  : 'mask-passwords',
+                                                 config: [
+                                                         color      : 'red',
+                                                         replacement: '[SECURE]'
+                                                 ]]
+                                        ]]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true
+                )
+        ]
+        when:
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+
+        then:
+        null != xmlstr
+        xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+        doc.name() == 'joblist'
+        doc.job.size() == 1
+        doc.job[0].name[0].text() == 'test job 1'
+        doc.job[0].sequence[0].pluginConfig.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].'@type'.text() == 'mask-passwords'
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].config.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].config[0].color.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].config[0].color.text() == 'red'
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].config[0].replacement.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].config[0].replacement.text() == '[SECURE]'
+    }
+
+    def "encode workflow global log filter plugin config multi"() {
+        given:
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new CommandExec(
+                                        [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese ' +
+                                                '-particle']
+                                )],
+                                strategy: 'test',
+                                pluginConfigMap:
+                                        [LogFilter: [
+                                                [type  : 'mask-passwords',
+                                                 config: [
+                                                         color      : 'red',
+                                                         replacement: '[SECURE]'
+                                                 ]],
+                                                [type  : 'key-value-data',
+                                                 config: [
+                                                         regex    : 'something',
+                                                         debugOnly: 'true'
+                                                 ]]
+                                        ]]
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true
+                )
+        ]
+        when:
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+
+        then:
+        null != xmlstr
+        xmlstr instanceof String
+        def doc = parser.parse(new StringReader(xmlstr))
+        doc.name() == 'joblist'
+        doc.job.size() == 1
+        doc.job[0].name[0].text() == 'test job 1'
+        doc.job[0].sequence[0].pluginConfig.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter.size() == 2
+//        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].'@type'.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].'@type'.text() == 'mask-passwords'
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].config.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].config[0].color.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].config[0].color.text() == 'red'
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].config[0].replacement.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[0].config[0].replacement.text() == '[SECURE]'
+//        doc.job[0].sequence[0].pluginConfig[0].LogFilter[1].type.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[1].'@type'.text() == 'key-value-data'
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[1].config.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[1].config[0].regex.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[1].config[0].regex.text() == 'something'
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[1].config[0].debugOnly.size() == 1
+        doc.job[0].sequence[0].pluginConfig[0].LogFilter[1].config[0].debugOnly.text() == 'true'
+    }
+
+    def "decode workflow global log filter plugin config single entry"() {
         given:
         def xml = '''<joblist>
   <job>
@@ -315,10 +655,81 @@ inside]]></aproperty>
         result.size()==1
         result[0].jobName=='test job 1'
         result[0].workflow.pluginConfigMap == [LogFilter: [[type:'mask-passwords',config:[color:'red',replacement:'[SECURE]']]]]
-        result[0].workflow.getPluginConfigData('LogFilter') == [[type:'mask-passwords',config:[color:'red',replacement:'[SECURE]']]]
-        result[0].workflow.getPluginConfigDataList('LogFilter') == [[type:'mask-passwords',config:[color:'red',replacement:'[SECURE]']]]
+        result[0].workflow.getPluginConfigData('LogFilter') == [[type: 'mask-passwords', config: [color      : 'red',
+                                                                                                  replacement:
+                                                                                                          '[SECURE]']]]
+        result[0].workflow.getPluginConfigDataList('LogFilter') == [[type: 'mask-passwords', config: [color      :
+                                                                                                              'red',
+                                                                                                      replacement:
+                                                                                                              '[SECURE]']]]
 
     }
+
+    def "decode workflow global log filter plugin config multi entry"() {
+        given:
+        def xml = '''<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+      </command>
+      <pluginConfig>
+        <LogFilter>
+          <config>
+            <color>red</color>
+            <replacement>[SECURE]</replacement>
+          </config>
+          <type>mask-passwords</type>
+        </LogFilter>
+        <LogFilter>
+          <config>
+            <debugOnly>true</debugOnly>
+            <regex>something</regex>
+          </config>
+          <type>key-value-data</type>
+        </LogFilter>
+      </pluginConfig>
+    </sequence>
+
+  </job>
+</joblist>'''
+
+        when:
+        def result = JobsXMLCodec.decode(xml)
+
+        then:
+        result.size() == 1
+        result[0].jobName == 'test job 1'
+        result[0].workflow.pluginConfigMap ==
+                [LogFilter: [[type: 'mask-passwords', config: [color: 'red', replacement: '[SECURE]']],
+                             [type  : 'key-value-data',
+                              config: [
+                                      regex    : 'something',
+                                      debugOnly: 'true'
+                              ]]]]
+        result[0].workflow.getPluginConfigData('LogFilter') ==
+                [[type: 'mask-passwords', config: [color: 'red', replacement: '[SECURE]']],
+                 [type  : 'key-value-data',
+                  config: [
+                          regex    : 'something',
+                          debugOnly: 'true'
+                  ]]]
+        result[0].workflow.getPluginConfigDataList('LogFilter') ==
+                [[type: 'mask-passwords', config: [color: 'red', replacement: '[SECURE]']],
+                 [type  : 'key-value-data',
+                  config: [
+                          regex    : 'something',
+                          debugOnly: 'true'
+                  ]]]
+
+    }
+
 
     def "encode option type file"() {
         given:

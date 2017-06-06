@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.PluginStep
@@ -167,7 +168,7 @@ class ExecutionUtilService {
                         handler,
                         !!cmd.keepgoingOnSuccess,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfig()?.get('LogFilter'))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
                 );
             } else if (null != cmd.getAdhocLocalString()) {
                 final String script = cmd.getAdhocLocalString();
@@ -187,7 +188,7 @@ class ExecutionUtilService {
                         handler,
                         !!cmd.keepgoingOnSuccess,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfig()?.get('LogFilter'))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
                 );
 
             } else if (null != cmd.getAdhocFilepath()) {
@@ -209,7 +210,7 @@ class ExecutionUtilService {
                             handler,
                             !!cmd.keepgoingOnSuccess,
                             step.description,
-                            createLogFilterConfigs(step.getPluginConfig()?.get('LogFilter'))
+                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
                     )
                 }else {
                     return ExecutionItemFactory.createScriptFileItem(
@@ -221,7 +222,7 @@ class ExecutionUtilService {
                             handler,
                             !!cmd.keepgoingOnSuccess,
                             step.description,
-                            createLogFilterConfigs(step.getPluginConfig()?.get('LogFilter'))
+                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
                     );
 
                 }
@@ -262,7 +263,7 @@ class ExecutionUtilService {
                         !!stepitem.keepgoingOnSuccess,
                         handler,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfig()?.get('LogFilter'))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
                 )
             }else {
                 return ExecutionItemFactory.createPluginStepItem(
@@ -271,7 +272,7 @@ class ExecutionUtilService {
                         !!stepitem.keepgoingOnSuccess,
                         handler,
                         step.description,
-                        createLogFilterConfigs(step.getPluginConfig()?.get('LogFilter'))
+                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
                 )
             }
         } else {
@@ -303,7 +304,7 @@ class ExecutionUtilService {
     public static PluginConfiguration createLogFilterConfig(String name, Map pluginconfig) {
         new SimplePluginConfiguration(
                 provider: name,
-                service: 'LogFilter',
+                service: ServiceNameConstants.LogFilter,
                 configuration: pluginconfig
         )
     }
