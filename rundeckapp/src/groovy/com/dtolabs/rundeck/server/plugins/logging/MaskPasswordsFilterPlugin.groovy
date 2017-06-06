@@ -70,16 +70,13 @@ class MaskPasswordsFilterPlugin implements LogFilterPlugin {
     static def RESET = ESC + '[0m'
 //    def rgb={r,g,b-> 16 + b + 6*g + 36*r }
     static def COLORS = [
-            red    : ESC + '[31m',
-//            orange:ESC+'[38;5;'+rgb(5, 2, 0)+'m',
-            green  : ESC + '[32m',
-            yellow : ESC + '[33m',
-            blue   : ESC + '[34m',
-//            indigo:ESC+'[38;5;'+rgb(2, 0, 2)+'m',
-//            violet:ESC+'[38;5;'+rgb(4, 0, 5)+'m',
-            magenta: ESC + '[35m',
-            cyan   : ESC + '[36m',
-            white  : ESC + '[37m',
+            red    :  '[31',
+            green  :  '[32',
+            yellow :  '[33',
+            blue   :  '[34',
+            magenta:  '[35',
+            cyan   :  '[36',
+            white  :  '[37',
     ]
     @Override
     void init(final PluginLoggingContext context) {
@@ -120,7 +117,7 @@ class MaskPasswordsFilterPlugin implements LogFilterPlugin {
         enabled = true;
         replacementQuoted = Matcher.quoteReplacement(replacement ?: '*****')
         if (color) {
-            replacementQuoted = COLORS[color] + replacementQuoted + RESET
+            replacementQuoted = ESC+COLORS[color] + 'm' + replacementQuoted + RESET
         }
     }
 

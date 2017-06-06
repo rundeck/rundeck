@@ -33,6 +33,7 @@ import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
+import com.dtolabs.rundeck.server.plugins.logging.HighlightFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logging.MaskPasswordsFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logging.PluginFactoryBean
 import com.dtolabs.rundeck.server.plugins.logging.QuietFilterPlugin
@@ -304,6 +305,7 @@ beans={
             SimpleDataFilterPlugin,
             RenderDatatypeFilterPlugin,
             QuietFilterPlugin,
+            HighlightFilterPlugin,
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }
