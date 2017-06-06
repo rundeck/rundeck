@@ -75,6 +75,19 @@ public class Workflow {
         map?.get(type)
     }
     /**
+     * Get the config for a type, wraps the value as a list if it is not a collection
+     * @param type
+     * @return available config data, as a List, or null
+     */
+    public def getPluginConfigDataList(String type) {
+        def map = getPluginConfigMap()
+        def val = map?.get(type)
+        if (val && !(val instanceof Collection)) {
+            val = [val]
+        }
+        val
+    }
+    /**
      * Get the config for a type expecting a map, and an entry in the map
      * @param type
      * @param name

@@ -96,7 +96,7 @@ jQuery(function(){
 </g:javascript>
 
 </div>
-    <g:set var="workflowLogFilterPluginConfigs" value="${workflow?.getPluginConfigData('LogFilter')}"/>
+    <g:set var="workflowLogFilterPluginConfigs" value="${workflow?.getPluginConfigDataList('LogFilter')}"/>
     <g:if test="${logFilterPlugins}">
         <div id="logfilterplugins_wf">
             <div class="form-inline">
@@ -251,7 +251,7 @@ jQuery(function(){
     </span>
 
     </div>
-    <g:set var="workflowLogFilterPluginConfigs" value="${workflow?.getPluginConfigData('LogFilter')}"/>
+    <g:set var="workflowLogFilterPluginConfigs" value="${workflow?.getPluginConfigDataList('LogFilter')}"/>
     <g:if test="${workflowLogFilterPluginConfigs}">
         <div>
 

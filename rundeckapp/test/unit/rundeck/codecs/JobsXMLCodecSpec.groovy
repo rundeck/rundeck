@@ -316,6 +316,7 @@ inside]]></aproperty>
         result[0].jobName=='test job 1'
         result[0].workflow.pluginConfigMap == [LogFilter: [[type:'mask-passwords',config:[color:'red',replacement:'[SECURE]']]]]
         result[0].workflow.getPluginConfigData('LogFilter') == [[type:'mask-passwords',config:[color:'red',replacement:'[SECURE]']]]
+        result[0].workflow.getPluginConfigDataList('LogFilter') == [[type:'mask-passwords',config:[color:'red',replacement:'[SECURE]']]]
 
     }
 
