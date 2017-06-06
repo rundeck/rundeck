@@ -35,6 +35,7 @@ import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.logging.MaskPasswordsFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logging.PluginFactoryBean
+import com.dtolabs.rundeck.server.plugins.logging.QuietFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logging.RenderDatatypeFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logging.SimpleDataFilterPlugin
 import com.dtolabs.rundeck.server.plugins.logs.*
@@ -301,7 +302,8 @@ beans={
             //log filters
             MaskPasswordsFilterPlugin,
             SimpleDataFilterPlugin,
-            RenderDatatypeFilterPlugin
+            RenderDatatypeFilterPlugin,
+            QuietFilterPlugin,
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }
