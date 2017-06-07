@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
@@ -1739,10 +1740,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
 
-        def pluginConfig = step.pluginConfig
-        if (pluginConfig?.LogFilter && pluginConfig?.LogFilter instanceof List) {
+        def pluginConfig = step.getPluginConfigListForType(ServiceNameConstants.LogFilter)
+        if (pluginConfig && pluginConfig instanceof List) {
             def allvalid = true
-            pluginConfig?.LogFilter.eachWithIndex { Map plugindef, int index ->
+            pluginConfig.eachWithIndex { Map plugindef, int index ->
                 def validation = WorkflowController._validateLogFilter(
                         frameworkService, pluginService, plugindef.config, plugindef.type
                 )
