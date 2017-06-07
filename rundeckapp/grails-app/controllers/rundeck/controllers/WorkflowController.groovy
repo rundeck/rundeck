@@ -270,14 +270,16 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
 
         def validation = _validateLogFilter(config, params.newfiltertype)
 
-        def results = [
+        Map results = [
                 report: validation?.report,
                 valid : validation?.valid,
-                saved : [
-                        type  : params.newfiltertype,
-                        config: validation.props
-                ]
         ]
+        if (validation?.valid) {
+            results.saved = [
+                    type  : params.newfiltertype,
+                    config: validation.props
+            ]
+        }
         return respond((Object) results, [formats: ['json']])
     }
 
@@ -1171,6 +1173,9 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
     )
     {
         def described = pluginService.getPluginDescriptor(type, LogFilterPlugin)
+        if (!described) {
+            return [valid: false, report: "The LogFilter provider \"$type\" was not found"]
+        }
         return frameworkService.validateDescription(
                 described.description,
                 '',

@@ -342,4 +342,28 @@ class WorkflowControllerSpec extends Specification {
         'abc' | [a: 'b'] | [c: 'd']
 
     }
+
+    def "test validate filter step not found"() {
+        given:
+        controller.pluginService = Mock(PluginService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.newfiltertype = type
+        params.pluginConfig = config
+        when:
+        def result = controller.validateStepFilter()
+        then:
+        response.json == [
+                report: 'The LogFilter provider "' + type + '" was not found',
+                valid : false
+        ]
+        1 * controller.pluginService.getPluginDescriptor(type, LogFilterPlugin) >>
+                null
+        0 * controller.frameworkService.validateDescription(null, '', config, null, _, _)
+
+
+        where:
+        type  | config   | expectconfig
+        'abc' | [a: 'b'] | [c: 'd']
+
+    }
 }
