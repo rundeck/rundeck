@@ -707,7 +707,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param type
      * @return
      */
-    def Description getNodeStepPluginDescription(String type){
+    def Description getNodeStepPluginDescription(String type) throws MissingProviderException {
         rundeckFramework.getNodeStepExecutorService().providerOfType(type).description
     }
     /**
@@ -716,7 +716,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param type
      * @return
      */
-    def Description getStepPluginDescription(String type){
+    def Description getStepPluginDescription(String type) throws MissingProviderException{
         rundeckFramework.getStepExecutionService().providerOfType(type).description
     }
     /**

@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
@@ -80,9 +81,9 @@ class WorkflowControllerTests {
     private FrameworkService createMockFrameworkService(boolean nodestep,Map expectedParams=null) {
         def fwmock = mockFor(FrameworkService)
         if(nodestep){
-            fwmock.demand.getNodeStepPluginDescription { type -> null }
+            fwmock.demand.getNodeStepPluginDescription { type -> DescriptionBuilder.builder().name('blah').build() }
         }else{
-            fwmock.demand.getStepPluginDescription { type -> null }
+            fwmock.demand.getStepPluginDescription { type -> DescriptionBuilder.builder().name('blah').build() }
         }
         fwmock.demand.validateDescription { Description description,
                                             String prefix,

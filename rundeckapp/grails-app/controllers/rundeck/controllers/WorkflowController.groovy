@@ -364,8 +364,12 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
     )
     {
         if (type && !(type in ['command', 'script', 'scriptfile', 'job'])) {
-            return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) :
-                    frameworkService.getStepPluginDescription(type)
+            try {
+                return isNodeStep ? frameworkService.getNodeStepPluginDescription(type) :
+                        frameworkService.getStepPluginDescription(type)
+            } catch (MissingProviderException e) {
+                return null
+            }
         }
         return null
     }
@@ -1123,6 +1127,9 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         if (exec instanceof PluginStep) {
             PluginStep item = exec as PluginStep
             def description = getPluginStepDescription(frameworkService, item.nodeStep, item.type)
+            if (!description) {
+                return [valid: false, report: "Plugin not found: " + item.type]
+            }
             return frameworkService.validateDescription(
                     description,
                     '',

@@ -20,9 +20,11 @@ import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
@@ -31,6 +33,7 @@ import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
 import org.quartz.Scheduler
 import org.quartz.core.QuartzScheduler
+import org.springframework.context.MessageSource
 import rundeck.Execution
 import rundeck.CommandExec
 import rundeck.JobExec
@@ -375,6 +378,29 @@ class ScheduledExecutionServiceSpec extends Specification {
 
     }
 
+    def "validate workflow step missing plugin type"() {
+        given:
+        def step = new PluginStep([
+                type         : 'atype',
+                configuration: [
+                        a: 'b'
+                ]]
+        )
+        service.pluginService = Mock(PluginService)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        !valid
+        step.hasErrors()
+        step.errors.hasFieldErrors('type')
+        service.frameworkService.getStepPluginDescription('atype') >> {
+            throw new MissingProviderException('NodeStep', 'atype')
+        }
+
+    }
+
     def "validate workflow step log filter invalid"() {
         given:
         def step = new CommandExec([
@@ -602,6 +628,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         def params = baseJobParams() + [
                 workflow: [threadcount: 1, keepgoing: true, "commands[0]": cmd],
         ]
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
         when:
         def results = service._dovalidate(params, Mock(UserAndRoles))
 
@@ -1093,6 +1122,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         setupDoUpdate()
         def se = new ScheduledExecution(createJobParams(orig)).save()
         service.fileUploadService = Mock(FileUploadService)
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -1127,6 +1159,9 @@ class ScheduledExecutionServiceSpec extends Specification {
             getRoles() >> new HashSet<String>(['test'])
         }
 
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
 
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
@@ -1273,6 +1308,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         def se = new ScheduledExecution(createJobParams(orig)).save()
         def newJob = new ScheduledExecution(createJobParams(inparams))
+        service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
 
 
