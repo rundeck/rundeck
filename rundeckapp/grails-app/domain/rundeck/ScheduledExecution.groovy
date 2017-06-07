@@ -45,6 +45,8 @@ class ScheduledExecution extends ExecutionContext {
 
     Workflow workflow
 
+    def scheduledExecutionService
+
     Date nextExecution
     boolean scheduled = false
     Boolean nodesSelectedByDefault = true
@@ -528,6 +530,10 @@ class ScheduledExecution extends ExecutionContext {
 
     def boolean hasScheduleEnabled() {
         return (null == scheduleEnabled || scheduleEnabled)
+    }
+
+    def shouldScheduleExecutionProject(){
+        return scheduledExecutionService.shouldScheduleInThisProject(project)
     }
 
     def boolean shouldScheduleExecution() {

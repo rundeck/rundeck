@@ -3256,7 +3256,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def shouldScheduleInThisProject(String project){
-        isProjectExecutionEnabled(project) && isProjectScheduledEnabled(project)
+        try {
+            return isProjectExecutionEnabled(project) && isProjectScheduledEnabled(project)
+        }catch (Exception e){
+            return true
+        }
     }
 
 }
