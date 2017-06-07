@@ -414,6 +414,12 @@ class JobsXMLCodec {
                 }
                 if (cmd.plugins?.LogFilter && !(cmd.plugins?.LogFilter instanceof Collection)) {
                     cmd.plugins.LogFilter = [cmd.plugins.remove('LogFilter')]
+                    cmd.plugins.LogFilter.each {
+                        if (!it.config) {
+                            //empty string result
+                            it.remove('config')
+                        }
+                    }
                 }
             }
             data.commands.each(fixup)
@@ -428,6 +434,12 @@ class JobsXMLCodec {
         }
         if (data.pluginConfig?.LogFilter && !(data.pluginConfig?.LogFilter instanceof Collection)) {
             data.pluginConfig.LogFilter = [data.pluginConfig.remove('LogFilter')]
+            data.pluginConfig.LogFilter.each {
+                if (!it.config) {
+                    //remove potential empty string result
+                    it.remove('config')
+                }
+            }
         }
     }
     /**
@@ -625,6 +637,10 @@ class JobsXMLCodec {
         if(map.pluginConfig?.LogFilter) {
             map.pluginConfig.LogFilter.each { Map plugindef ->
                 BuilderUtil.makeAttribute(plugindef, 'type')
+                if (!plugindef.config) {
+                    //remove null or empty config map
+                    plugindef.remove('config')
+                }
             }
         }
 
@@ -688,6 +704,10 @@ class JobsXMLCodec {
             if(cmd.plugins?.LogFilter) {
                 cmd.plugins.LogFilter.each { Map plugindef ->
                     BuilderUtil.makeAttribute(plugindef, 'type')
+                    if (!plugindef.config) {
+                        //remove null or empty config map
+                        plugindef.remove('config')
+                    }
                 }
             }
         }
