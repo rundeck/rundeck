@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.data.BaseDataContext;
 import com.dtolabs.rundeck.core.data.DataContext;
 
 import java.io.File;
+import java.util.Map;
 
 /**
  * ScriptDataContextUtil is ...
@@ -75,7 +76,29 @@ public class ScriptDataContextUtil {
      * @param framework fwk
      * @param projectName project
      */
-    public static DataContext createScriptDataContextForProject(final Framework framework, final String projectName) {
+    public static Map<String, Map<String, String>> createScriptDataContextForProject(
+            final Framework framework,
+            final String projectName
+    )
+    {
+        return createScriptDataContextObjectForProject(framework, projectName);
+    }
+
+    /**
+     * @param framework   fwk
+     * @param projectName project
+     *
+     * @return Create a data context for executing a script plugin or provider, for a project context. Extends the
+     * context
+     * provided by {@link #createScriptDataContext(com.dtolabs.rundeck.core.common.Framework)} by setting the
+     * plugin.vardir to be
+     * a dir specific to the project's basedir.
+     */
+    public static DataContext createScriptDataContextObjectForProject(
+            final Framework framework,
+            final String projectName
+    )
+    {
         BaseDataContext data = new BaseDataContext();
 
         //add script-plugin context data

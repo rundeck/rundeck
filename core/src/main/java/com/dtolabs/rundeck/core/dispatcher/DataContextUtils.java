@@ -222,6 +222,21 @@ public class DataContextUtils {
     }
 
     /**
+     *
+     * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
+     * context
+     *
+     * @param input input string
+     * @param data  data context map
+     *
+     * @return string with values substituted, or original string
+     * @deprecated use {@link #replaceDataReferencesInString(String, Map)}
+     */
+    public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data) {
+        return replaceDataReferencesInString(input, data);
+    }
+
+    /**
      * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
      * context
      *
@@ -234,6 +249,23 @@ public class DataContextUtils {
      * @return string with values substituted, or original string
      */
     public static String replaceDataReferencesInString(final String input, final Map<String, Map<String, String>> data,
+                                                       final Converter<String, String> converter, boolean failOnUnexpanded) {
+        return replaceDataReferencesInString(input, data, converter, failOnUnexpanded, false);
+    }
+    /**
+     * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
+     * context
+     *
+     *
+     * @param input input string
+     * @param data  data context map
+     *              @param converter converter to encode/convert the expanded values
+     *
+     * @param failOnUnexpanded true to fail if a reference is not found
+     * @return string with values substituted, or original string
+     * @deprecated use {@link #replaceDataReferencesInString(String, Map, Converter, boolean)}
+     */
+    public static String replaceDataReferences(final String input, final Map<String, Map<String, String>> data,
                                                        final Converter<String, String> converter, boolean failOnUnexpanded) {
         return replaceDataReferencesInString(input, data, converter, failOnUnexpanded, false);
     }
@@ -348,6 +380,29 @@ public class DataContextUtils {
         return map;
     }
 
+    /**
+     * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
+     * context
+     *
+     * @param input             input string
+     * @param data              data context map
+     * @param converter         converter to encode/convert the expanded values
+     * @param failOnUnexpanded  true to fail if a reference is not found
+     * @param blankIfUnexpanded true to use blank if a reference is not found
+     *
+     * @return string with values substituted, or original string
+     * @deprecated use {@link #replaceDataReferencesInString(String, Map, Converter, boolean, boolean)}
+     */
+    public static String replaceDataReferences(
+            final String input,
+            final Map<String, Map<String, String>> data,
+            final Converter<String, String> converter,
+            boolean failOnUnexpanded,
+            boolean blankIfUnexpanded
+    )
+    {
+        return replaceDataReferencesInString(input, data, converter, failOnUnexpanded, blankIfUnexpanded);
+    }
     /**
      * Replace the embedded  properties of the form '${key.name}' in the input Strings with the value from the data
      * context

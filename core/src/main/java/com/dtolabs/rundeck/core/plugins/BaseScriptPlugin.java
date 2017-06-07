@@ -150,7 +150,7 @@ public abstract class BaseScriptPlugin extends AbstractDescribableScriptPlugin {
             final String project,
             final Map<String, Map<String, String>> context) {
         BaseDataContext localDataContext = new BaseDataContext();
-        localDataContext.merge(ScriptDataContextUtil.createScriptDataContextForProject(framework, project));
+        localDataContext.merge(ScriptDataContextUtil.createScriptDataContextObjectForProject(framework, project));
         localDataContext.group("plugin").putAll(createPluginData());
         localDataContext.putAll(context);
         return localDataContext;
