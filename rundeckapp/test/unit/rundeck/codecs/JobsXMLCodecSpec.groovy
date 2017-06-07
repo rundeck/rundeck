@@ -488,10 +488,44 @@ inside]]></aproperty>
         ''                            | [type: 'mask-passwords']
     }
 
+    def "decode step empty plugins config"() {
+        given:
+        def xml = """<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+        <plugins>
+        </plugins>
+      </command>
+      
+    </sequence>
+
+  </job>
+</joblist>
+""".toString()
+        when:
+        def result = JobsXMLCodec.decode(xml)
+
+        then:
+        result.size() == 1
+        result[0].jobName == 'test job 1'
+        result[0].workflow.commands[0].pluginConfig == null
+        result[0].workflow.commands[0].getPluginConfigForType('LogFilter') == null
+        result[0].workflow.commands[0].getPluginConfigListForType('LogFilter') == null
+
+    }
+
 
     def "decode step log filter plugin config multi entry"() {
         given:
-        def xml = '''<joblist>
+        def xml = """<joblist>
   <job>
     <description>ddddd</description>
     <executionEnabled>true</executionEnabled>
@@ -504,10 +538,7 @@ inside]]></aproperty>
         <exec>echo hi</exec>
         <plugins>
           <LogFilter type='mask-passwords'>
-            <config>
-              <color>red</color>
-              <replacement>[SECURE]</replacement>
-            </config>
+            $configxml
           </LogFilter>
           <LogFilter type='key-value-data'>
               <config>
@@ -521,8 +552,8 @@ inside]]></aproperty>
     </sequence>
 
   </job>
-</joblist>'''
-
+</joblist>
+""".toString()
         when:
         def result = JobsXMLCodec.decode(xml)
 
@@ -530,23 +561,28 @@ inside]]></aproperty>
         result.size() == 1
         result[0].jobName == 'test job 1'
         result[0].workflow.commands[0].pluginConfig ==
-                [LogFilter: [[type  : 'mask-passwords',
-                              config: [color: 'red', replacement: '[SECURE]']],
+                [LogFilter: [expected,
                              [type  : 'key-value-data',
                               config: [regex: 'something', debugOnly: 'true']]
                 ]]
         result[0].workflow.commands[0].getPluginConfigForType('LogFilter') ==
-                [[type  : 'mask-passwords',
-                  config: [color: 'red', replacement: '[SECURE]']],
+                [expected,
                  [type  : 'key-value-data',
                   config: [regex: 'something', debugOnly: 'true']]
                 ]
         result[0].workflow.commands[0].getPluginConfigListForType('LogFilter') ==
-                [[type  : 'mask-passwords',
-                  config: [color: 'red', replacement: '[SECURE]']],
+                [expected,
                  [type  : 'key-value-data',
                   config: [regex: 'something', debugOnly: 'true']]
                 ]
+        where:
+        configxml                     | expected
+        '<config>\n' +
+                '            <color>red</color>\n' +
+                '            <replacement>[SECURE]</replacement>\n' +
+                '          </config>' | [type: 'mask-passwords', config: [color: 'red', replacement: '[SECURE]']]
+        '<config></config>'           | [type: 'mask-passwords']
+        ''                            | [type: 'mask-passwords']
 
     }
 
@@ -708,10 +744,43 @@ inside]]></aproperty>
         ''                            | [type: 'mask-passwords']
 
     }
+    def "decode workflow global empty plugin config "() {
+        given:
+        def xml = """<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+      </command>
+      <pluginConfig>
+      </pluginConfig>
+    </sequence>
+
+  </job>
+</joblist>
+""".toString()
+        when:
+        def result = JobsXMLCodec.decode(xml)
+
+        then:
+        result.size()==1
+        result[0].jobName=='test job 1'
+        result[0].workflow.pluginConfigMap == null
+        result[0].workflow.getPluginConfigData('LogFilter') == null
+        result[0].workflow.getPluginConfigDataList('LogFilter') == null
+
+
+    }
 
     def "decode workflow global log filter plugin config multi entry"() {
         given:
-        def xml = '''<joblist>
+        def xml = """<joblist>
   <job>
     <description>ddddd</description>
     <executionEnabled>true</executionEnabled>
@@ -725,10 +794,7 @@ inside]]></aproperty>
       </command>
       <pluginConfig>
         <LogFilter type='mask-passwords'>
-          <config>
-            <color>red</color>
-            <replacement>[SECURE]</replacement>
-          </config>
+          $configxml
         </LogFilter>
         <LogFilter type='key-value-data'>
           <config>
@@ -740,8 +806,8 @@ inside]]></aproperty>
     </sequence>
 
   </job>
-</joblist>'''
-
+</joblist>
+""".toString()
         when:
         def result = JobsXMLCodec.decode(xml)
 
@@ -749,27 +815,35 @@ inside]]></aproperty>
         result.size() == 1
         result[0].jobName == 'test job 1'
         result[0].workflow.pluginConfigMap ==
-                [LogFilter: [[type: 'mask-passwords', config: [color: 'red', replacement: '[SECURE]']],
+                [LogFilter: [expected,
                              [type  : 'key-value-data',
                               config: [
                                       regex    : 'something',
                                       debugOnly: 'true'
                               ]]]]
         result[0].workflow.getPluginConfigData('LogFilter') ==
-                [[type: 'mask-passwords', config: [color: 'red', replacement: '[SECURE]']],
+                [expected,
                  [type  : 'key-value-data',
                   config: [
                           regex    : 'something',
                           debugOnly: 'true'
                   ]]]
         result[0].workflow.getPluginConfigDataList('LogFilter') ==
-                [[type: 'mask-passwords', config: [color: 'red', replacement: '[SECURE]']],
+                [expected,
                  [type  : 'key-value-data',
                   config: [
                           regex    : 'something',
                           debugOnly: 'true'
                   ]]]
 
+        where:
+        configxml                     | expected
+        '<config>\n' +
+                '            <color>red</color>\n' +
+                '            <replacement>[SECURE]</replacement>\n' +
+                '          </config>' | [type: 'mask-passwords', config: [color: 'red', replacement: '[SECURE]']]
+        '<config></config>'           | [type: 'mask-passwords']
+        ''                            | [type: 'mask-passwords']
     }
 
 

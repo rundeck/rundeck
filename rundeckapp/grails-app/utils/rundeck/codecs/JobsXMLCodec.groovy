@@ -412,11 +412,13 @@ class JobsXMLCodec {
                 if(null!= cmd.keepgoingOnSuccess){
                     cmd.keepgoingOnSuccess= XmlParserUtil.stringToBool(cmd.keepgoingOnSuccess,false)
                 }
-                if (cmd.plugins?.LogFilter && !(cmd.plugins?.LogFilter instanceof Collection)) {
-                    cmd.plugins.LogFilter = [cmd.plugins.remove('LogFilter')]
+                if (cmd.plugins && cmd.plugins instanceof Map && cmd.plugins.LogFilter ) {
+                    if(!(cmd.plugins.LogFilter instanceof Collection)){
+                        cmd.plugins.LogFilter = [cmd.plugins.remove('LogFilter')]
+                    }
                     cmd.plugins.LogFilter.each {
                         if (!it.config) {
-                            //empty string result
+                            //remove potential empty string result
                             it.remove('config')
                         }
                     }
@@ -432,8 +434,11 @@ class JobsXMLCodec {
         if(null!=data.keepgoing && data.keepgoing instanceof String){
             data.keepgoing = XmlParserUtil.stringToBool(data.keepgoing,false)
         }
-        if (data.pluginConfig?.LogFilter && !(data.pluginConfig?.LogFilter instanceof Collection)) {
-            data.pluginConfig.LogFilter = [data.pluginConfig.remove('LogFilter')]
+        if (data.pluginConfig && data.pluginConfig instanceof Map
+                && data.pluginConfig?.LogFilter ) {
+            if(!(data.pluginConfig?.LogFilter instanceof Collection)){
+                data.pluginConfig.LogFilter = [data.pluginConfig.remove('LogFilter')]
+            }
             data.pluginConfig.LogFilter.each {
                 if (!it.config) {
                     //remove potential empty string result
