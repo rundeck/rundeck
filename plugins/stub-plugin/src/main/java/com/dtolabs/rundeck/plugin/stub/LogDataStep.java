@@ -52,7 +52,8 @@ public class LogDataStep implements StepPlugin {
     ) throws StepException
     {
         MultiDataContext<ContextView, DataContext> sharedDataContext = context.getExecutionContext()
-                                                                              .getSharedDataContext();
+                                                                              .getSharedDataContext()
+                                                                              .consolidate();
         ObjectMapper objectMapper = new ObjectMapper();
         Set<ContextView> keys = new TreeSet<>(sharedDataContext.getKeys());
         for (ContextView view : keys) {

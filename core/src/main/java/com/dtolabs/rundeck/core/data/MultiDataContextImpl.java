@@ -100,4 +100,14 @@ public class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataConte
             }
         }
     }
+
+    @Override
+    public MultiDataContext<K, D> consolidate() {
+        MultiDataContextImpl<K, D> consolidated = new MultiDataContextImpl<>();
+        if (null != base) {
+            consolidated.merge(base.consolidate());
+        }
+        consolidated.merge(this);
+        return consolidated;
+    }
 }

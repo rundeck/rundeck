@@ -45,6 +45,8 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
 
     Set<K> getKeys();
 
+    MultiDataContext<K, D> consolidate();
+
 
     /**
      * Merge the data into the key
