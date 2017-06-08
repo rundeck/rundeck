@@ -223,8 +223,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
 
 
-        final WFSharedContext sharedContext
-                = WFSharedContext.withBase(new BaseDataContext());
+        final WFSharedContext sharedContext = WFSharedContext.withBase(null);
 
         WorkflowSystem.SharedData<WFSharedContext>
                 dataContextSharedData = WorkflowSystem.SharedData.with(
@@ -482,17 +481,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         return operations;
     }
 
-    private WorkflowSystem.SharedData<WFSharedContext> prepareWorkflowDataContext() {
-
-        final WFSharedContext sharedContext
-                = WFSharedContext.withBase(new BaseDataContext());
-
-        return WorkflowSystem.SharedData.with(
-                sharedContext::merge,
-                () -> new WFSharedContext(sharedContext)
-        );
-
-    }
 
 
     private StateObj createTriggerControlStateForStep(final int stepNum) {

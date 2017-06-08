@@ -329,7 +329,9 @@ class ExecutionServiceImpl implements ExecutionService {
         }
 
         //create node context for node and substitute data references in command
-        final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).nodeContextData(node).build();
+        final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context)
+                .nodeContextData(node)
+                .build();
 
         final ArrayList<String> commandList = command.buildCommandForNode(
                 nodeContext.getSharedDataContext(),

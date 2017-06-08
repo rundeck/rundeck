@@ -195,15 +195,6 @@ public class WorkflowEngine implements WorkflowSystem {
     }
 
 
-    static <X, Y extends OperationCompleted<X>> Callable<Y> operationCallable(
-            final Operation<X, Y> operation,
-            final X input
-    )
-    {
-
-        return () -> operation.apply(input);
-    }
-
     static <T> OperationCompleted<T> dummyResult(final StateObj state) {
         return new OperationCompleted<T>() {
             @Override
