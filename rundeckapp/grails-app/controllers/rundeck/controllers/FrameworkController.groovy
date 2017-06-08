@@ -1195,9 +1195,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 }
                 if(reschedule){
                     if(active){
-                        scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+                        scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null, project)
                     }else{
-                        scheduledExecutionService.unscheduleJobsForProject(project, frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+                        scheduledExecutionService.unscheduleJobsForProject(project, frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null, project)
                     }
                 }
             }
@@ -1420,7 +1420,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
                 if(reschedule){
                     if(active){
-                        scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
+                        scheduledExecutionService.rescheduleJobs(frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null, project)
                     }else{
                         scheduledExecutionService.unscheduleJobsForProject(project,frameworkService.isClusterModeEnabled()?frameworkService.getServerUUID():null)
                     }

@@ -596,16 +596,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             rescheduleJobs(serverUUID)
         }
     }
+
     /**
      * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
      * @param serverUUID
      * @return
      */
-    def rescheduleJobs(String serverUUID = null) {
+    def rescheduleJobs(String serverUUID = null, String project = null) {
         Date now = new Date()
         def results = ScheduledExecution.isScheduled()
         if (serverUUID) {
             results = results.withServerUUID(serverUUID)
+        }
+        if(project) {
+            results = results.withProject(project)
         }
         def succeededJobs = []
         def failedJobs = []
@@ -627,6 +631,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         results = Execution.isScheduledAdHoc()
         if (serverUUID) {
             results = results.withServerNodeUUID(serverUUID)
+        }
+        if(project) {
+            results = results.withProject(project)
         }
 
         List<Execution> cleanupExecutions   = []

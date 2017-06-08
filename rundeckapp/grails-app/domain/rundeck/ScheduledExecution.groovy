@@ -185,6 +185,9 @@ class ScheduledExecution extends ExecutionContext {
 				eq 'status', 'scheduled'
 			}
 		}
+        withProject { project ->
+            eq 'project', project
+        }
     }
 
 

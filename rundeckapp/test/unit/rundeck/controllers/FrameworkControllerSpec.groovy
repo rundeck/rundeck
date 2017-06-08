@@ -852,9 +852,9 @@ class FrameworkControllerSpec extends Specification {
             it['project.description'] == 'abc'
         },_) >> [success:true]
         if(shouldReSchedule){
-            1 * sEService.rescheduleJobs(_)
+            1 * sEService.rescheduleJobs(_,_)
         }else{
-            0 * sEService.rescheduleJobs(_)
+            0 * sEService.rescheduleJobs(_,_)
         }
         if(shouldUnSchedule){
             1 * sEService.unscheduleJobsForProject(_,_)
