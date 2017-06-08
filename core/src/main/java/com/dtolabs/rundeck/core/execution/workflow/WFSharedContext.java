@@ -29,7 +29,7 @@ import java.util.Map;
  */
 public class WFSharedContext extends MultiDataContextImpl<ContextView, DataContext>
 {
-    public WFSharedContext(final DataContext base) {
+    public WFSharedContext(final MultiDataContextImpl<ContextView, DataContext> base) {
         super(base);
     }
 
@@ -54,7 +54,7 @@ public class WFSharedContext extends MultiDataContextImpl<ContextView, DataConte
         kdMultiDataContext.merge(key, data);
         return kdMultiDataContext;
     }
-    public static WFSharedContext withBase(final DataContext base) {
+    public static WFSharedContext withBase(final MultiDataContextImpl<ContextView, DataContext> base) {
         WFSharedContext kdMultiDataContext = new WFSharedContext();
         kdMultiDataContext.setBase(base);
         return kdMultiDataContext;

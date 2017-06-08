@@ -29,7 +29,7 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
     /**
      * @return base data set, or null
      */
-    D getBase();
+    MultiDataContext<K, D> getBase();
 
     /**
      * @return keyed data
@@ -100,7 +100,10 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
     }
 
     /**
-     * Resolve a data value with optional scope widening or return a default value
+     * Resolve a data value with optional scope widening or return a default value.
+     * If no local value is found for the current scope,
+     * the base data set will be queried for the current scope, and
+     * any base value will be returned, before widening the search scope.
      *
      * @param view         scope
      * @param strict       if true do not widen scope
@@ -118,27 +121,33 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
             final String defaultValue
     )
     {
-        if (null != view) {
-            DataContext data = getData(view);
-
-            //expand view if no data at this scope
-            if (null != data) {
-                String result = data.resolve(group, key, null);
-
-                if (null != result) {
-                    return result;
-                }
-            }
-            if (strict) {
-                return defaultValue;
-            }
-            if (!view.isWidest()) {
-                return resolve(view.widenView().getView(), group, key, defaultValue);
-            }
-            return resolve(null, group, key, defaultValue);
+        if (null == view) {
+            throw new NullPointerException("view is null");
         }
-        DataContext data = getBase();
-        return data != null ? data.resolve(group, key, defaultValue) : defaultValue;
+        DataContext data = getData(view);
+
+        //expand view if no data at this scope
+        if (null != data) {
+            String result = data.resolve(group, key, null);
+
+            if (null != result) {
+                return result;
+            }
+        }
+        MultiDataContext<K, D> base = getBase();
+        if (base != null) {
+            String resolve = base.resolve(view, true, group, key, null);
+            if (null != resolve) {
+                return resolve;
+            }
+        }
+        if (strict) {
+            return defaultValue;
+        }
+        if (!view.isWidest()) {
+            return resolve(view.widenView().getView(), group, key, defaultValue);
+        }
+        return defaultValue;
     }
 
     /**

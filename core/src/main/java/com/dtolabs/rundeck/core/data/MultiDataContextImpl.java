@@ -19,8 +19,11 @@ package com.dtolabs.rundeck.core.data;
 import lombok.ToString;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Created by greg on 6/3/16.
@@ -28,15 +31,7 @@ import java.util.Set;
 @ToString
 public class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataContext> implements MultiDataContext<K, D> {
     Map<K, D> map;
-    private D base;
-
-    /**
-     * Has a base data set but not multi
-     */
-    public MultiDataContextImpl(final D base) {
-        this();
-        this.base = base;
-    }
+    private MultiDataContext<K, D> base;
 
     public MultiDataContextImpl(final Map<K, D> map) {
         this.map = map;
@@ -48,20 +43,12 @@ public class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataConte
 
     public MultiDataContextImpl(MultiDataContext<K, D> orig) {
         this(new HashMap<>());
-        merge(orig);
+        this.base = orig;
     }
 
-    public static <K extends ViewTraverse<K>, D extends DataContext> MultiDataContextImpl<K, D> withBase(final D base) {
-        MultiDataContextImpl<K, D> kdMultiDataContext = new MultiDataContextImpl<>();
-        kdMultiDataContext.setBase(base);
-        return kdMultiDataContext;
-
-    }
 
     public static <K extends ViewTraverse<K>, D extends DataContext> MultiDataContextImpl<K, D> with(MultiDataContext<K, D> original) {
-        MultiDataContextImpl<K, D> kdMultiDataContext = new MultiDataContextImpl<>(original.getBase());
-        kdMultiDataContext.getData().putAll(original.getData());
-        return kdMultiDataContext;
+        return new MultiDataContextImpl<>(original);
     }
 
     @Override
@@ -80,7 +67,7 @@ public class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataConte
     }
 
     @Override
-    public D getBase() {
+    public MultiDataContext<K, D> getBase() {
         return base;
     }
 
@@ -97,16 +84,13 @@ public class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataConte
         }
     }
 
-    protected void setBase(D base) {
+    protected void setBase(MultiDataContext<K, D> base) {
         this.base = base;
     }
 
     public void merge(MultiDataContext<K, D> input) {
         if (null == input) {
             return;
-        }
-        if (null != base && null != input.getBase()) {
-            base.merge(input.getBase());
         }
         //merge map and data
         for (K k : input.getData().keySet()) {
