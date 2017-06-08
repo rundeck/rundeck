@@ -233,7 +233,7 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 },
                 () -> {
 //                    System.err.println("produce next shared data " + sharedContext);
-                    return new WFSharedContext(sharedContext);
+                    return sharedContext;
                 }
         );
 
