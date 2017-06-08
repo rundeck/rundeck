@@ -177,7 +177,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.nodeService = original.getNodeService();
                 ctx.orchestrator = original.getOrchestrator();
                 ctx.outputContext = original.getOutputContext();
-                ctx.sharedDataContext = new MultiDataContextImpl<>(original.getSharedDataContext());
+                ctx.sharedDataContext = MultiDataContextImpl.with(original.getSharedDataContext());
                 ctx.loggingManager = original.getLoggingManager();
                 if(original instanceof NodeExecutionContext){
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
@@ -432,11 +432,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         public Builder sharedDataContext(MultiDataContext<ContextView, DataContext> shared) {
-            ctx.sharedDataContext = new MultiDataContextImpl<>();
+            ctx.sharedDataContext = new MultiDataContextImpl<>(shared);
             if (null != ctx.dataContext) {
                 ctx.sharedDataContext.merge(ContextView.global(), ctx.dataContext);
             }
-            ctx.sharedDataContext.merge(shared);
             return this;
         }
         public Builder mergeSharedContext(MultiDataContext<ContextView, DataContext> shared) {
