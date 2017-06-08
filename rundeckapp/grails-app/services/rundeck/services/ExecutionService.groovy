@@ -1064,7 +1064,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //output will be sent to loghandler instead.
             sysThreadBoundOut.installThreadStream(
                     loggingService.createLogOutputStream(
-                            rootoverride,
+                            workflowoverride,
                             LogLevel.NORMAL,
                             contextmanager,
                             logOutFlusher,
@@ -1073,7 +1073,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             );
             sysThreadBoundErr.installThreadStream(
                     loggingService.createLogOutputStream(
-                            rootoverride,
+                            workflowoverride,
                             LogLevel.ERROR,
                             contextmanager,
                             logErrFlusher,
