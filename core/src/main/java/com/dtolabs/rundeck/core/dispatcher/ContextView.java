@@ -122,4 +122,15 @@ public class ContextView implements ViewTraverse<ContextView>, Comparable<Contex
         }
         return 0;
     }
+
+    public String toString() {
+        Integer step = getStepNumber();
+        return "ContextView(" +
+               (isGlobal() ? "global" : (
+                       (null != step ? "step:" + step : "")
+                       + (null != getNodeName() ? (null != step ? ", " : "") + "node:" + getNodeName() : "")
+               ))
+               + ")"
+                ;
+    }
 }
