@@ -122,7 +122,7 @@ public class BaseDataContext implements MutableDataContext {
     @Override
     public String toString() {
         return "BaseDataContext{" +
-               "data=" + data +
+                data +
                '}';
     }
 }
