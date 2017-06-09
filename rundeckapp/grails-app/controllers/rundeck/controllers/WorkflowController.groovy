@@ -224,7 +224,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
                 log.error("num parameter is invalid: ${numi}")
                 return renderErrorFragment("num parameter is invalid: ${numi}")
             }
-            def indexi = null != params.index ? Integer.parseInt(params.index) : 0;
+            def indexi = null != params.index ? Integer.parseInt(params.index) : -1;
 
             def actionName = params.newfiltertype ? 'insertFilter' : 'modifyFilter'
 
@@ -790,6 +790,9 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             def filterConfig = item.getPluginConfigForType(ServiceNameConstants.LogFilter)
             if (filterConfig instanceof List) {
                 List configs = (List) filterConfig
+                if(indexi<0){
+                    indexi=configs.size()
+                }
                 configs.add(indexi, [type: filtertype, config: config])
             } else {
                 filterConfig = [[type: filtertype, config: config]]

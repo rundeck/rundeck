@@ -202,20 +202,23 @@ class WorkflowControllerSpec extends Specification {
                 valid: true, desc: description, props: validconfig
         ]
 
-        result.undo == [action: 'removeFilter', num: stepnum, index: index ?: 0]
+        result.undo == [action: 'removeFilter', num: stepnum, index: expectindex]
         def pluginconf = wf.commands[stepnum].getPluginConfigForType(ServiceNameConstants.LogFilter)
         pluginconf[index ?: 0] == [type: filtertype, config: validconfig]
 
 
         where:
-        stepnum | index | filtertype  | config | validconfig
-        0       | null  | 'test-type' | [:]    | [a: 'b']
-        0       | 0     | 'test-type' | [:]    | [a: 'b']
-        1       | 0     | 'test-type' | [:]    | [a: 'b']
-        1       | 1     | 'test-type' | [:]    | [a: 'b']
-        2       | 0     | 'test-type' | [:]    | [a: 'b']
-        2       | 1     | 'test-type' | [:]    | [a: 'b']
-        2       | 2     | 'test-type' | [:]    | [a: 'b']
+        stepnum | index | filtertype  | config | validconfig | expectindex
+        0       | null  | 'test-type' | [:]    | [a: 'b']    | 0
+        0       | 0     | 'test-type' | [:]    | [a: 'b']    | 0
+        0       | -1    | 'test-type' | [:]    | [a: 'b']    | 0
+        1       | 0     | 'test-type' | [:]    | [a: 'b']    | 0
+        1       | 1     | 'test-type' | [:]    | [a: 'b']    | 1
+        1       | -1    | 'test-type' | [:]    | [a: 'b']    | 1
+        2       | 0     | 'test-type' | [:]    | [a: 'b']    | 0
+        2       | 1     | 'test-type' | [:]    | [a: 'b']    | 1
+        2       | 2     | 'test-type' | [:]    | [a: 'b']    | 2
+        2       | -1    | 'test-type' | [:]    | [a: 'b']    | 2
     }
 
     @Unroll
