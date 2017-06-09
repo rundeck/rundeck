@@ -35,15 +35,23 @@ import java.util.regex.Pattern
 
 @Plugin(name = HighlightFilterPlugin.PROVIDER_NAME, service = 'LogFilter')
 @PluginDescription(title = 'Highlight Output',
-        description = '''Highlights all output which matches the given reqular expression.
-
-If no capture groups are supplied, it will highlight the entire line.
-Otherwise, each individual capture group will be highlighted.''')
+        description = '''Highlights all output which matches the given reqular expression.''')
 class HighlightFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'highlight-output'
     @PluginProperty(
             title = "Pattern",
-            description = '''Regular Expression to test.
+            description = '''Regular Expression to test. Use groups to selectively highlight.
+
+Use a non-grouped pattern to highlight entire match:
+
+* regex: `test`
+* message: `this is a test`
+* result: this is a *test*
+
+Use regex groups to only highlight grouped sections:
+
+* regex: `this (is) a (test)`
+* result: this *is* a *test*
 
 See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html) documentation.''',
             required = false,
@@ -152,11 +160,13 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     void handleEvent(final PluginLoggingContext context, final LogEventControl event) {
         if (event.eventType == 'log' && event.loglevel == LogLevel.NORMAL && event.message) {
             Matcher match = dataPattern.matcher(event.message)
-            if (match.find()) {
+            int start = 0
+            def sb = new StringBuilder()
+            boolean found=false
+            while (match.find()) {
+                found=true
                 if (match.groupCount()) {
                     match.group(1)
-                    def sb = new StringBuilder()
-                    int start = 0
 
                     for (int i = 1; i <= match.groupCount(); i++) {
                         sb.append(event.message.substring(start, match.start(i)))
@@ -165,11 +175,17 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
                         sb.append(endMark)
                         start = match.end(i)
                     }
-                    sb.append(event.message.substring(start, event.message.length()))
-                    event.message = sb.toString()
                 } else {
-                    event.message = mark + event.message + endMark
+                    sb.append(event.message.substring(0, match.start()))
+                    sb.append(mark)
+                    sb.append(event.message.substring(match.start(), match.end()))
+                    sb.append(endMark)
+                    start = match.end()
                 }
+            }
+            sb.append(event.message.substring(start, event.message.length()))
+            if(found){
+                event.message = sb.toString()
             }
         }
     }

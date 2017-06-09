@@ -48,7 +48,7 @@ class HighlightFilterPluginSpec extends Specification {
 
         where:
         regex                         | message                   || expected
-        'test'                        | 'this is a test'          || 'Xthis is a testX'
+        'test'                        | 'this is a test'          || 'this is a XtestX'
         'this is a (test)'            | 'this is a test'          || 'this is a XtestX'
         'this is a (test) whatever'   | 'this is a test whatever' || 'this is a XtestX whatever'
         'this (is) a (test) whatever' | 'this is a test whatever' || 'this XisX a XtestX whatever'
