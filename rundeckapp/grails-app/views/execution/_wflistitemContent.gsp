@@ -29,25 +29,7 @@
         </g:if>
         <g:render template="/execution/wfItemView" model="${[item:item,edit:edit,noimgs:noimgs, workflow: workflow, project: project]}"/>
         <g:if test="${edit}">
-        <div id="itemdel_${i}" class="panel panel-danger collapse">
-            <div class="panel-heading">
-                <g:message code="${'Workflow.' + (isErrorHandler ? 'stepErrorHandler' : 'step') + '.action.delete.label'}"/>
-            </div>
-            <div class="panel-body">
-                <g:if test="${isErrorHandler}">
-                    <g:message code="Workflow.stepErrorHandler.label.action.confirmDelete" args="${[stepNum + 1]}"/>
-                </g:if>
-                <g:else>
-                    <g:message code="Workflow.step.action.confirmDelete.label" args="${[stepNum + 1]}"/>
-                </g:else>
-            </div>
 
-            <div class="panel-footer">
-                <span class="btn btn-default btn-xs"
-                      onclick="jQuery('#itemdel_${i}').collapse('toggle');"><g:message code="cancel"/></span>
-                <span class="btn btn-danger btn-xs" onclick=" _doRemoveItem('${i}', '${stepNum}', ${isErrorHandler?true:false});"><g:message code="delete"/></span>
-            </div>
-        </div>
         </g:if>
         <g:if test="${isErrorHandler}">
             <g:if test="${item.keepgoingOnSuccess}">
@@ -61,34 +43,50 @@
 
     <g:if test="${edit}">
         <span class="wfitemcontrols controls " id="pfctrls_${enc(attr:i)}" >
-            <g:if test="${!isErrorHandler && !item.errorHandler}">
-                <span class="textbtn textbtn-success wfitem_add_errorhandler">
-                    <i class="glyphicon glyphicon-plus"></i><g:message code="Workflow.stepErrorHandler.label"/></span>
-            </g:if>
+            <div class="btn-group" role="group" aria-label="item controls">
+                <g:if test="${!isErrorHandler}">
+            <div class="btn-group">
 
-            <g:if test="${!isErrorHandler}">
-                <span class="textbtn textbtn-info"
+                <button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"
+                        aria-haspopup="true" aria-expanded="false">
+                    <g:icon name="cog"/> <span class="caret"></span>
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-right">
+
+                <g:if test="${!item.errorHandler}">
+                    <li><a class=" wfitem_add_errorhandler">
+
+                        Add Error Handler
+                    </a>
+                    </li>
+                </g:if>
+
+                <li>
+                    <a class=""
                       data-bind="click: addFilterPopup"
                       data-stepnum="${stepNum}"
                       title="Add Log Filter">
-                    <g:icon name="filter"/>
-                </span>
+                    Add Log Filter
+                    </a>
+                </li>
+                </ul>
+            </div>
             </g:if>
-            <span class="textbtn textbtn-danger "
-                  data-toggle="collapse"
-                  data-target="#itemdel_${enc(attr:i)}"
+            <span class="btn btn-sm btn-default "
+                  onclick="_doRemoveItem('${i}', '${stepNum}', ${isErrorHandler?true:false});"
                   title="${g.message(code:'Workflow.'+(isErrorHandler?'stepErrorHandler':'step')+'.action.delete.label')}">
                 <i class="glyphicon glyphicon-remove"></i></span>
 
-            <span class="textbtn textbtn-info wfitem_copy"  title="${message(code:"workflow.step.action.duplicate.title")}">
-                <g:icon name="duplicate"/>
-            </span>
-            <span class="textbtn textbtn-info wfitem_edit" >
-                <i class="glyphicon glyphicon-edit"></i>
-                <g:message code="edit" />
-            </span>
+
             <g:unless test="${isErrorHandler}">
-                <span class="dragHandle"  title="Drag to reorder"><g:icon name="resize-vertical"/></span>
+                <span class="btn btn-sm btn-default wfitem_copy"  title="${message(code:"workflow.step.action.duplicate.title")}">
+                    <g:icon name="duplicate"/>
+                </span>
+            </g:unless>
+        </div>
+            <g:unless test="${isErrorHandler}">
+            <span class="btn btn-sm btn-link dragHandle"  title="Drag to reorder"><g:icon name="resize-vertical"/></span>
             </g:unless>
         </span>
 
@@ -96,7 +94,7 @@
         <script type="text/javascript">
 
         fireWhenReady('wfitem_${enc(js:i)}',function(){
-            $('wfitem_${enc(js: i)}').select('span.autoedit').each(function(e){
+            $('wfitem_${enc(js: i)}').select('.autoedit').each(function(e){
                 Event.observe(e,'click',function(evt){
                     var f=$('workflowContent').down('form');
                     if(!f || 0==f.length){
@@ -104,7 +102,7 @@
                     }
                 });
             });
-            $('pfctrls_${enc(js: i)}').select('span.wfitem_edit').each(function(e){
+            $('pfctrls_${enc(js: i)}').select('.wfitem_edit').each(function(e){
                 Event.observe(e,'click',function(evt){
                     var f=$('workflowContent').down('form');
                     if(!f || 0==f.length){
@@ -112,7 +110,7 @@
                     }
                 });
             });
-            $('pfctrls_${enc(js: i)}').select('span.wfitem_copy').each(function(e){
+            $('pfctrls_${enc(js: i)}').select('.wfitem_copy').each(function(e){
                 Event.observe(e,'click',function(evt){
                     var f=$('workflowContent').down('form');
                     if(!f || 0==f.length){
@@ -120,7 +118,7 @@
                     }
                 });
             });
-            $('pfctrls_${enc(js: i)}').select('span.wfitem_add_errorhandler').each(function(e){
+            $('pfctrls_${enc(js: i)}').select('.wfitem_add_errorhandler').each(function(e){
                 Event.observe(e,'click',function(evt){
                     var f=$('workflowContent').down('form');
                     if(!f || 0==f.length){
@@ -131,7 +129,6 @@
             });
         </script>
     </g:if>
-        <div class="clear"></div>
 
             <g:if test="${!isErrorHandler && edit}">
                 <div id="logFilter_${enc(attr:i)}">
