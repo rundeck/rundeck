@@ -139,8 +139,8 @@
                     <span class="text-muted">Log Filters:</span>
                 <!-- /ko -->
                 <!-- ko foreach: filters -->
-                <span class="btn btn-xs btn-info-hollow"
                       data-bind="click: $root.editFilter">
+                <span class="btn btn-xs btn-info-hollow autohilite"
                     <!-- ko if: plugin() -->
                     <!-- ko with: plugin() -->
                     <!-- ko if: iconSrc -->
