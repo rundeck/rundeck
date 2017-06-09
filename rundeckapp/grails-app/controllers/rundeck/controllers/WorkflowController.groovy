@@ -635,7 +635,15 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
      */
     def renderUndo() {
         final String id = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
-        return render(template: '/common/undoRedoControls', model: [undo: session.undoWF ? session.undoWF[id]?.size() : 0, redo: session.redoWF ? session.redoWF[id]?.size() : 0, key: 'workflow'])
+        return render(
+                template: '/common/undoRedoControls',
+                model: [
+                        undo         : session.undoWF ? session.undoWF[id]?.size() : 0,
+                        redo         : session.redoWF ? session.redoWF[id]?.size() : 0,
+                        key          : 'workflow',
+                        highlightundo: session.undoWFstate?.get(id)
+                ]
+        )
     }
 
     /**
@@ -980,6 +988,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         }
         if (!session.undoWF) {
             session.undoWF = [:]
+            session.undoWFstate = [:]
         }
         def uid = id ? id : '_new'
         if (!session.undoWF[uid]) {
@@ -990,6 +999,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         if (session.undoWF[uid].size() > UNDO_MAX) {
             session.undoWF[uid].remove(0);
         }
+        session.undoWFstate[uid] = true
     }
 
     /**
@@ -1015,6 +1025,9 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         if (!session.redoWF) {
             session.redoWF = [:]
         }
+        if (!session.undoWFstate) {
+            session.undoWFstate = [:]
+        }
         def uid = id ? id : '_new'
         if (!session.redoWF[uid]) {
             session.redoWF[uid] = [input]
@@ -1024,6 +1037,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         if (session.redoWF[uid].size() > UNDO_MAX) {
             session.redoWF[uid].remove(0);
         }
+        session.undoWFstate[uid] = false
     }
     /**
      * pop item from redo stack

@@ -566,6 +566,21 @@
   .textbtn-variant(@brand-info,transparent,lighten(@brand-info, 40%));
 }
 
+
+// muted button variant
+.btn-muted {
+  .button-variant(@text-muted; transparent; lighten(@text-muted, 20%));
+}
+// link version
+.btn-link.btn-muted {
+
+  color: @text-muted;
+  font-weight: normal;
+  border-radius: 0;
+  border: 1px solid transparent;
+}
+
+
 //represent textual query
 
     /* query output showing */
@@ -1800,4 +1815,15 @@ a {
 // hollow button variant
 .btn-info-hollow {
   .button-variant(@brand-info ; transparent; @btn-info-border);
+}
+
+@keyframes pulse {
+  50% {
+    background-color: #3399FF;
+    border-color: #3399FF;
+  }
+}
+
+.flash_undo {
+  animation: pulse .75s ease 1 normal;
 }
