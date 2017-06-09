@@ -172,7 +172,6 @@ function WorkflowEditor() {
     self.bindStepFilters = function (key, elemId, data, ext) {
         "use strict";
         data = jQuery.extend(data, ext);
-        console.log("bindStepFilters, data:", data);
         var workflowStep = new WorkflowStep(data);
         self.stepFilters()[key] = workflowStep;
         ko.applyBindings(workflowStep, document.getElementById(elemId));
