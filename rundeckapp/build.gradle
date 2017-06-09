@@ -70,7 +70,11 @@ configurations{
     }
     pluginFiles.extendsFrom(runtime)
 }
-
+allprojects {
+    repositories {
+        maven { url "https://jitpack.io" }
+    }
+}
 dependencies {
     pluginFiles project(':plugins:script-plugin'),
             project(':plugins:stub-plugin'),
@@ -81,7 +85,8 @@ dependencies {
             project(':plugins:jasypt-encryption-plugin'),
             project(':plugins:orchestrator-plugin'),
             project(':plugins:git-plugin'),
-            project(':plugins:source-refresh-plugin')
+            project(':plugins:source-refresh-plugin'),
+            "com.github.Batix:rundeck-ansible-plugin:2.0.2"
 }
 
 task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
