@@ -737,7 +737,11 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
                 return result
             }
 
-            def wfitem = editwf.commands.get(num).createClone()
+            def origStep = editwf.commands.get(num)
+            def wfitem = origStep.createClone()
+            if(origStep.errorHandler){
+                wfitem.errorHandler=origStep.errorHandler.createClone()
+            }
             editwf.commands.add(newi, wfitem)
             result['undo'] = [action: 'remove', num: newi]
         } else if (input.action == 'remove') {
