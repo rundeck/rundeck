@@ -105,7 +105,7 @@ class WorkflowControllerSpec extends Specification {
         wf.addToCommands(item3)
         def origlist = [item1, item2, item3]
 
-
+        controller.frameworkService = Mock(FrameworkService)
         when:
 
 
@@ -141,7 +141,7 @@ class WorkflowControllerSpec extends Specification {
         wf.addToCommands(item3)
         def origlist = [item1, item2, item3]
 
-
+        controller.frameworkService = Mock(FrameworkService)
         when:
 
 

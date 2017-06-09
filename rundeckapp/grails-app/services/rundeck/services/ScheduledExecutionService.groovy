@@ -1723,8 +1723,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
-    def validateWorkflowStep(WorkflowStep step) {
-        WorkflowController._validateCommandExec(step)
+    def validateWorkflowStep(WorkflowStep step, List projects = []) {
+        WorkflowController._validateCommandExec(step, null, projects)
         if (step.errors.hasErrors()) {
             return false
         } else if (step instanceof PluginStep) {
@@ -1893,7 +1893,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def failedlist = []
                 def i = 1;
                 wf.commands.each {WorkflowStep cexec ->
-                    if (!validateWorkflowStep(cexec,fprojects)) {
+                    if (!validateWorkflowStep(cexec, fprojects)) {
                         wfitemfailed = true
 
                         failedlist << "$i: " + cexec.errors.allErrors.collect {
@@ -1902,7 +1902,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
 
                     if (cexec.errorHandler) {
-                        if (!validateWorkflowStep(cexec.errorHandler,fprojects)) {
+                        if (!validateWorkflowStep(cexec.errorHandler, fprojects)) {
                             wfitemfailed = true
                             failedlist << "$i: " + cexec.errorHandler.errors.allErrors.collect {
                                 messageSource.getMessage(it,Locale.default)
@@ -1943,7 +1943,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 cexec.properties = cmdparams
                 workflow.addToCommands(cexec)
-                if (!validateWorkflowStep(cexec,fprojects)) {
+                if (!validateWorkflowStep(cexec, fprojects)) {
                     wfitemfailed = true
                     failedlist << (i + 1)+ ": " + cexec.errors.allErrors.collect {
                         messageSource.getMessage(it,Locale.default)
@@ -1951,7 +1951,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
 
                 if (cmdparams.errorHandler) {
-                    if (!validateWorkflowStep(cmdparams.errorHandler,fprojects)) {
+                    if (!validateWorkflowStep(cmdparams.errorHandler, fprojects)) {
                         wfitemfailed = true
                         failedlist << (i + 1)+ ": " + cmdparams.errorHandler.errors.allErrors.collect {
                             messageSource.getMessage(it,Locale.default)

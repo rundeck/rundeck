@@ -1113,7 +1113,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-    public static boolean _validateCommandExec(WorkflowStep exec, String type = null, ArrayList authProjects = null) {
+    public static boolean _validateCommandExec(WorkflowStep exec, String type = null, List authProjects = null) {
         if (exec instanceof JobExec) {
             if (!exec.jobName) {
                 exec.errors.rejectValue('jobName', 'commandExec.jobName.blank.message')

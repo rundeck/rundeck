@@ -2057,6 +2057,7 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.getNodeStepPluginDescriptions { [] }
             fwkControl.demand.getStepPluginDescriptions { [] }
             fwkControl.demand.getProjectGlobals { [:] }
+            fwkControl.demand.projectNames { [] }
             sec.frameworkService = fwkControl.createMock()
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
