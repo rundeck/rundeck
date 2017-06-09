@@ -152,4 +152,101 @@ class SharedDataContextUtilsSpec extends Specification {
         'echo \'hello\\@milk@option.domain@\''  | [option: [domain: 'peabody']] | 'echo \'hello\\option.domain@\'\n'
         'echo \'hello@@milk@option.domain@\''   | [option: [domain: 'peabody']] | 'echo \'hello@milkpeabody\'\n'
     }
+
+    @Unroll
+    def "shared replace tokens in script #script"() {
+        given:
+        File dest = File.createTempFile('test', 'tmp')
+        def sharedContext = WFSharedContext.with(ContextView.global(), DataContextUtils.context(context))
+        def node = null
+
+        when:
+        SharedDataContextUtils.replaceTokensInScript(
+                script,
+                sharedContext,
+                ScriptfileUtils.LineEndingStyle.UNIX,
+                dest,
+                node
+        )
+
+
+        then:
+        dest.text == expect
+
+        where:
+
+        script                                  | context                       | expect
+        'abc'                                   | [a: [b: 'bcd']]               | 'abc\n'
+        'a\\\\bc'                               | [a: [b: 'bcd']]               | 'a\\\\bc\n'
+        'a@@bc'                                 | [a: [b: 'bcd']]               | 'a@bc\n'
+        'echo \'hello\\@@option.domain@\''      | [:]                           | 'echo \'hello\\@option.domain@\'\n'
+        'echo \'hello@@@option.domain@\''       | [:]                           | 'echo \'hello@\'\n'
+        'echo \'hello\\@milk @option.domain@\'' | [:]                           | 'echo \'hello\\@milk \'\n'
+        'echo \'hello@@milk @option.domain@\''  | [:]                           | 'echo \'hello@milk \'\n'
+        'echo \'hello\\@@option.domain@\''      | [option: [domain: 'peabody']] | 'echo \'hello\\@option.domain@\'\n'
+        'echo \'hello@@@option.domain@\''       | [option: [domain: 'peabody']] | 'echo \'hello@peabody\'\n'
+        'echo \'hello\\@milk@option.domain@\''  | [option: [domain: 'peabody']] | 'echo \'hello\\option.domain@\'\n'
+        'echo \'hello@@milk@option.domain@\''   | [option: [domain: 'peabody']] | 'echo \'hello@milkpeabody\'\n'
+    }
+
+    @Unroll
+    def "shared replace tokens node context in script #script"() {
+        given:
+        File dest = File.createTempFile('test', 'tmp')
+        def sharedContext = WFSharedContext.with(ContextView.global(), DataContextUtils.context(context))
+        sharedContext.merge(ContextView.node('mynode'), DataContextUtils.context(nodedata))
+        def node = 'mynode'
+
+        when:
+        SharedDataContextUtils.replaceTokensInScript(
+                script,
+                sharedContext,
+                ScriptfileUtils.LineEndingStyle.UNIX,
+                dest,
+                node
+        )
+
+
+        then:
+        dest.text == expect
+
+        where:
+
+        script                     | context                       | nodedata                    | expect
+        'echo \'@option.domain@\'' | [:]                           | [:]                         | 'echo \'\'\n'
+        'echo \'@option.domain@\'' | [option: [domain: 'peabody']] | [:]                         | 'echo \'peabody\'\n'
+        'echo \'@option.domain@\'' | [option: [domain: 'peabody']] | [option: [domain: 'olive']] | 'echo \'olive\'\n'
+        'echo \'@option.domain@\'' | [:]                           | [option: [domain: 'olive']] | 'echo \'olive\'\n'
+    }
+
+    @Unroll
+    def "shared replace tokens node context with global base in script #script"() {
+        given:
+        File dest = File.createTempFile('test', 'tmp')
+        def base = WFSharedContext.with(ContextView.global(), DataContextUtils.context(context))
+        def sharedContext = WFSharedContext.with(base)
+        sharedContext.merge(ContextView.node('mynode'), DataContextUtils.context(nodedata))
+        def node = 'mynode'
+
+        when:
+        SharedDataContextUtils.replaceTokensInScript(
+                script,
+                sharedContext,
+                ScriptfileUtils.LineEndingStyle.UNIX,
+                dest,
+                node
+        )
+
+
+        then:
+        dest.text == expect
+
+        where:
+
+        script                     | context                       | nodedata                    | expect
+        'echo \'@option.domain@\'' | [:]                           | [:]                         | 'echo \'\'\n'
+        'echo \'@option.domain@\'' | [option: [domain: 'peabody']] | [:]                         | 'echo \'peabody\'\n'
+        'echo \'@option.domain@\'' | [option: [domain: 'peabody']] | [option: [domain: 'olive']] | 'echo \'olive\'\n'
+        'echo \'@option.domain@\'' | [:]                           | [option: [domain: 'olive']] | 'echo \'olive\'\n'
+    }
 }
