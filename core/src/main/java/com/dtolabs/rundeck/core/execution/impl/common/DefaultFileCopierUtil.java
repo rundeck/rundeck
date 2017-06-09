@@ -116,12 +116,11 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
         //create new dataContext with the node data, and write the script (file,
         // content or strea) to a temp file
         //using the dataContext for substitution.
-        final MultiDataContext<ContextView, DataContext> sharedContext = new WFSharedContext();
+        final MultiDataContext<ContextView, DataContext> sharedContext = new WFSharedContext(context.getSharedDataContext());
         sharedContext.merge(
                 ContextView.node(node.getNodename()),
                 new BaseDataContext("node", DataContextUtils.nodeData(node))
         );
-        sharedContext.merge(context.getSharedDataContext());
 
 
         final File tempfile;
