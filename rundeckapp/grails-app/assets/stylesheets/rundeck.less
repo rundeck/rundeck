@@ -493,7 +493,11 @@
   &.textbtn-on-hover:hover,
   &.textbtn-on-hover:focus,
   &.textbtn-on-hover:active,
-  &.textbtn-on-hover.active
+  &.textbtn-on-hover.active,
+  &.textbtn-deemphasize:hover,
+  &.textbtn-deemphasize:focus,
+  &.textbtn-deemphasize:active,
+  &.textbtn-deemphasize.active
    {
     color: darken(@color, 8%);
     background-color: @background-higlight;
@@ -533,6 +537,9 @@
   }
   &.textbtn-on-hover{
     .textbtn-on-hover();
+  }
+  &.textbtn-deemphasize {
+    color: lighten(@gray, 30%);
   }
 
 }

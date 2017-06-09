@@ -133,11 +133,11 @@
             <g:if test="${!isErrorHandler && edit}">
                 <div id="logFilter_${enc(attr:i)}">
                 <!-- ko if: filters().length -->
-                    <span class="text-muted">Log Filters:</span>
+                    <span class="text-muted"><g:message code="log.filters" /></span>
                 <!-- /ko -->
                 <!-- ko foreach: filters -->
-                      data-bind="click: $root.editFilter">
                 <span class="btn btn-xs btn-info-hollow autohilite"
+                      data-bind="click: $root.editFilter" title="${message(code:"click.to.edit.filter")}">
                     <!-- ko if: plugin() -->
                     <!-- ko with: plugin() -->
                     <!-- ko if: iconSrc -->
@@ -152,18 +152,16 @@
 
                     <span data-bind="text: title"></span>
                 </span>
-                <span class="textbtn textbtn-danger"
+                <span class="textbtn textbtn-danger textbtn-deemphasize"
                       data-bind="click: $root.removeFilter"
-                      title="Remove Filter"
-                >
-                    <g:icon name="remove"/>
-                </span>
+                      title="${message(code:"remove.filter")}"
+                ><g:icon name="remove"/></span>
 
                 <!-- /ko -->
                 <!-- ko if: filters().length -->
                     <span class="textbtn textbtn-success" data-bind="click: addFilterPopup">
                       <g:icon name="plus"/>
-                      add
+                      <g:message code="add" />
                     </span>
                     <!-- /ko -->
                 <g:embedJSON id="logFilterData_${enc(attr:i)}" data="${[

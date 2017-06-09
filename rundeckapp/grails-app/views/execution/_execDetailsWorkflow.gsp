@@ -101,13 +101,13 @@ jQuery(function(){
         <div id="logfilterplugins_wf">
             <div class="form-inline">
                 <div class="form-group ${hasErrors(bean: workflow, field: 'strategy', 'has-error')}">
-                    <label class="">Global Log Filters:</label>
+                    <label class=""><g:message code="global.log.filters" /></label>
 
                     <div class="">
                         <!-- ko foreach: {data: filters, as: 'filter' } -->
-                        <span class="btn btn-xs btn-info-hollow"
+                        <span class="btn btn-xs btn-info-hollow autohilite"
                               data-bind="click: $root.editFilter"
-                              title="Click to edit">
+                              title="${message(code:"click.to.edit.filter")}">
                             <!-- ko if: plugin() -->
                             <!-- ko with: plugin() -->
                             <!-- ko if: iconSrc -->
@@ -122,11 +122,10 @@ jQuery(function(){
 
                             <span data-bind="text: title"></span>
                         </span>
-                        <span class="textbtn textbtn-danger"
+                        <span class="textbtn textbtn-danger textbtn-deemphasize"
                               data-bind="click: $root.removeFilter"
-                              title="Remove Filter">
-                            <g:icon name="remove"/>
-                        </span>
+                              title="${message(code:"remove.filter")}">
+                            <g:icon name="remove"/></span>
 
                         <!--define hidden inputs for the configured filter -->
                         <input type="hidden"
@@ -142,7 +141,7 @@ jQuery(function(){
                         <!-- /ko -->
                         <span class="textbtn textbtn-success" data-bind="click: addFilterPopup">
                             <g:icon name="plus"/>
-                            add
+                            <g:message code="add" />
                         </span>
                         <g:embedJSON id="logFilterData_wf" data="${[
                                 global: true,
