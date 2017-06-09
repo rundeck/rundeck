@@ -1917,6 +1917,7 @@ class ScheduledExecutionController  extends ControllerBase{
         def orchestratorPlugins = orchestratorPluginService.listDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
+        def fprojects = frameworkService.projectNames(authContext)
         return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
                 notificationPlugins : notificationPlugins,
                 orchestratorPlugins : orchestratorPlugins,
@@ -1926,7 +1927,9 @@ class ScheduledExecutionController  extends ControllerBase{
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions    : stepTypes,
                 logFilterPlugins    : logFilterPlugins,
-                globalVars          :globals]
+                projectNames        : fprojects,
+                globalVars          : globals
+        ]
     }
 
 
@@ -2209,13 +2212,15 @@ class ScheduledExecutionController  extends ControllerBase{
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
         def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
-        return ['scheduledExecution':scheduledExecution,params:params,crontab:[:],
+        def fprojects = frameworkService.projectNames(authContext)
+        return ['scheduledExecution':scheduledExecution, params:params, crontab:[:],
                 nodeStepDescriptions: nodeStepTypes, stepDescriptions: stepTypes,
-                notificationPlugins: notificationService.listNotificationPlugins(),
-                strategyPlugins:strategyPlugins,
-                orchestratorPlugins: orchestratorPluginService.listDescriptions(),
-                logFilterPlugins: logFilterPlugins,
-                globalVars:globals]
+                notificationPlugins : notificationService.listNotificationPlugins(),
+                strategyPlugins     :strategyPlugins,
+                orchestratorPlugins : orchestratorPluginService.listDescriptions(),
+                logFilterPlugins    : logFilterPlugins,
+                projectNames        : fprojects,
+                globalVars          :globals]
     }
 
     private clearEditSession(id='_new'){

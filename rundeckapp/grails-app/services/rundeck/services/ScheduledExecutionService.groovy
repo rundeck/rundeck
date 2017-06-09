@@ -1883,6 +1883,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def todiscard = []
         def wftodelete = []
+        def fprojects = frameworkService.projectNames(authContext)
 
         if (scheduledExecution.workflow && params['_sessionwf'] && params['_sessionEditWFObject']) {
             //load the session-stored modified workflow and replace the existing one
@@ -1892,7 +1893,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def failedlist = []
                 def i = 1;
                 wf.commands.each {WorkflowStep cexec ->
-                    if (!validateWorkflowStep(cexec)) {
+                    if (!validateWorkflowStep(cexec,fprojects)) {
                         wfitemfailed = true
 
                         failedlist << "$i: " + cexec.errors.allErrors.collect {
@@ -1901,7 +1902,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
 
                     if (cexec.errorHandler) {
-                        if (!validateWorkflowStep(cexec.errorHandler)) {
+                        if (!validateWorkflowStep(cexec.errorHandler,fprojects)) {
                             wfitemfailed = true
                             failedlist << "$i: " + cexec.errorHandler.errors.allErrors.collect {
                                 messageSource.getMessage(it,Locale.default)
@@ -1942,7 +1943,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 cexec.properties = cmdparams
                 workflow.addToCommands(cexec)
-                if (!validateWorkflowStep(cexec)) {
+                if (!validateWorkflowStep(cexec,fprojects)) {
                     wfitemfailed = true
                     failedlist << (i + 1)+ ": " + cexec.errors.allErrors.collect {
                         messageSource.getMessage(it,Locale.default)
@@ -1950,7 +1951,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
 
                 if (cmdparams.errorHandler) {
-                    if (!validateWorkflowStep(cmdparams.errorHandler)) {
+                    if (!validateWorkflowStep(cmdparams.errorHandler,fprojects)) {
                         wfitemfailed = true
                         failedlist << (i + 1)+ ": " + cmdparams.errorHandler.errors.allErrors.collect {
                             messageSource.getMessage(it,Locale.default)
@@ -2540,7 +2541,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
         def frameworkProject = frameworkService.getFrameworkProject(scheduledExecution.project)
         def projectProps = frameworkProject.getProperties()
-
+        def fprojects = frameworkService.projectNames(authContext)
         if (params.workflow) {
             //use the input params to define the workflow
             //create workflow and CommandExecs
@@ -2549,7 +2550,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def wfitemfailed = false
             def failedlist = []
             workflow.commands.each { WorkflowStep cexec ->
-                if (!validateWorkflowStep(cexec)) {
+                if (!validateWorkflowStep(cexec, fprojects)) {
                     wfitemfailed = true
                     failedlist <<  "$i: " + cexec.errors.allErrors.collect {
                         messageSource.getMessage(it,Locale.default)
@@ -2557,7 +2558,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
 
                 if (cexec.errorHandler) {
-                    if (!validateWorkflowStep(cexec.errorHandler)) {
+                    if (!validateWorkflowStep(cexec.errorHandler, fprojects)) {
                         wfitemfailed = true
                         failedlist << "$i: " + cexec.errorHandler.errors.allErrors.collect {
                             messageSource.getMessage(it,Locale.default)
@@ -2905,6 +2906,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             scheduledExecution.description = ''
         }
 
+        def fprojects = new ArrayList()
+        if(userAndRoles instanceof AuthContext){
+            fprojects = frameworkService.projectNames((AuthContext)userAndRoles)
+        }
 
         def valid = scheduledExecution.validate()
         if (scheduledExecution.scheduled) {
@@ -2956,7 +2961,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 def i = 1
                 def failedlist = []
                 wf.commands.each {WorkflowStep cexec ->
-                    if (!validateWorkflowStep(cexec)) {
+                    if (!validateWorkflowStep(cexec, fprojects)) {
                         wfitemfailed = true
                         failedlist << "$i: " + cexec.errors.allErrors.collect {
                             messageSource.getMessage(it,Locale.default)
@@ -2964,7 +2969,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     }
 
                     if (cexec.errorHandler) {
-                        if (!validateWorkflowStep(cexec.errorHandler)) {
+                        if (!validateWorkflowStep(cexec.errorHandler, fprojects)) {
                             wfitemfailed = true
                             failedlist << "$i: " + cexec.errorHandler.errors.allErrors.collect {
                                 messageSource.getMessage(it,Locale.default)
@@ -2991,7 +2996,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def wfitemfailed = false
             def failedlist = []
             workflow.commands.each {WorkflowStep cexec ->
-                if (!validateWorkflowStep(cexec)) {
+                if (!validateWorkflowStep(cexec, fprojects)) {
                     wfitemfailed = true
                     failedlist << "$i: " + cexec.errors.allErrors.collect {
                         messageSource.getMessage(it,Locale.default)
@@ -2999,7 +3004,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
 
                 if (cexec.errorHandler) {
-                    if (!validateWorkflowStep(cexec.errorHandler)) {
+                    if (!validateWorkflowStep(cexec.errorHandler, fprojects)) {
                         wfitemfailed = true
                         failedlist << "$i: " + cexec.errorHandler.errors.allErrors.collect {
                             messageSource.getMessage(it,Locale.default)
@@ -3037,7 +3042,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
                 cexec.properties = cmdparams
                 workflow.addToCommands(cexec)
-                if (!validateWorkflowStep(cexec)) {
+                if (!validateWorkflowStep(cexec, fprojects)) {
                     wfitemfailed = true
                     failedlist << (i+1 )+ ": " + cexec.errors.allErrors.collect {
                         messageSource.getMessage(it,Locale.default)
@@ -3045,7 +3050,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
 
                 if (cmdparams.errorHandler) {
-                    if (!validateWorkflowStep(cmdparams.errorHandler)) {
+                    if (!validateWorkflowStep(cmdparams.errorHandler, fprojects)) {
                         wfitemfailed = true
                         failedlist << (i+1 )+ ": " + cmdparams.errorHandler.errors.allErrors.collect {
                             messageSource.getMessage(it,Locale.default)

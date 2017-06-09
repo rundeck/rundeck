@@ -190,6 +190,7 @@ class ScheduledExServiceTests {
                 assertEquals 'testProject', project
                 return projectMock
             }
+            projectNames{authContext -> []}
         }
     }
     def setupDoUpdateJob(sec){
@@ -462,6 +463,7 @@ class ScheduledExServiceTests {
                 assertEquals 'testProject', project
                 return projectMock
             }
+            projectNames{authContext -> []}
         }
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
@@ -600,6 +602,7 @@ class ScheduledExServiceTests {
             getFrameworkFromUserSession { session, request -> return null }
             getFrameworkFromUserSession { session, request -> return null }
             isClusterModeEnabled{->false}
+            projectNames{authContext -> []}
         }
 
 

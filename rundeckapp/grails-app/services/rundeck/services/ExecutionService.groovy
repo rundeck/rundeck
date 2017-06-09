@@ -42,6 +42,7 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.JobExecutionItem
+import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
@@ -3006,6 +3007,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     {
         def id
         def result
+        def project = null
+        if(jitem instanceof JobRefCommand){
+            JobRefCommand jitemRef = (JobRefCommand) jitem
+            project = jitemRef.project
+        }
 
         def group = null
         def name = null
@@ -3016,9 +3022,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         } else {
             name = jitem.jobIdentifier
         }
-        def schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, executionContext.getFrameworkProject())
+        project = project?project:executionContext.getFrameworkProject()
+        def schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, project)
         if (!schedlist || 1 != schedlist.size()) {
-            def msg = "Job [${jitem.jobIdentifier}] not found, project: ${executionContext.getFrameworkProject()}"
+            def msg = "Job [${jitem.jobIdentifier}] not found, project: ${project}"
             executionContext.getExecutionListener().log(0, msg)
             throw new StepException(msg, JobReferenceFailureReason.NotFound)
         }

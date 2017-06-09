@@ -462,6 +462,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(query && !query.projFilter && params.project) {
             query.projFilter = params.project
             authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        } else if(query && query.projFilter){
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, query.projFilter)
         } else {
             authContext = frameworkService.getAuthContextForSubject(session.subject)
         }

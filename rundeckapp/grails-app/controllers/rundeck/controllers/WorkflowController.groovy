@@ -16,6 +16,7 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
@@ -719,6 +720,8 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             }
 
         }
+        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
+        def fprojects = frameworkService.projectNames(auth)
 
         if (input.action == 'move') {
             def fromi = input.from
@@ -763,7 +766,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         } else if (input.action == 'insert') {
             def num = input.num
             def item= createItemFromParams(input.params)
-            _validateCommandExec(item, params.newitemtype)
+            _validateCommandExec(item, params.newitemtype, fprojects)
             if (item.errors.hasErrors()) {
                 return [error: item.errors.allErrors.collect {g.message(error: it)}.join(","), item: item]
             }
@@ -901,8 +904,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             def clone = item.createClone()
             def moditem = item.createClone()
             modifyItemFromParams(moditem,input.params)
-
-            _validateCommandExec(moditem,input.params.origitemtype)
+            _validateCommandExec(moditem,input.params.origitemtype, fprojects)
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }
@@ -931,7 +933,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             }
             def WorkflowStep item = editwf.commands.get(numi)
             def ehitem= createItemFromParams(input.params)
-            _validateCommandExec(ehitem, params.newitemtype)
+            _validateCommandExec(ehitem, params.newitemtype, fprojects)
             if (ehitem.errors.hasErrors()) {
                 return [error: ehitem.errors.allErrors.collect {g.message(error: it)}.join(","), item: ehitem]
             }
@@ -960,7 +962,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
 
             modifyItemFromParams(moditem, input.params)
 
-            _validateCommandExec(moditem,input.params.origitemtype)
+            _validateCommandExec(moditem,input.params.origitemtype, fprojects)
             if (moditem.errors.hasErrors()) {
                 return [error: moditem.errors.allErrors.collect {g.message(error: it)}.join(","), item: moditem]
             }
@@ -1111,10 +1113,15 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
      * @param exec the WorkflowStep
      * @param type type if specified in params
      */
-    public static boolean _validateCommandExec(WorkflowStep exec, String type = null) {
+    public static boolean _validateCommandExec(WorkflowStep exec, String type = null, ArrayList authProjects = null) {
         if (exec instanceof JobExec) {
             if (!exec.jobName) {
                 exec.errors.rejectValue('jobName', 'commandExec.jobName.blank.message')
+            }
+            if(exec.jobProject){
+                if(authProjects && !authProjects.contains(exec.jobProject)){
+                    exec.errors.rejectValue('jobProject', 'commandExec.jobProject.unauth.message')
+                }
             }
         }else if(exec instanceof CommandExec){
             if (!exec.adhocRemoteString && 'command' == type) {

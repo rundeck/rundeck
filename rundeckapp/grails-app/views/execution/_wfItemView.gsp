@@ -26,21 +26,20 @@
             <g:set var="pluginitem" value="${item.instanceOf(PluginStep)}"/>
             <span class="${edit?'autohilite autoedit':''} wfitem ${jobitem?'jobtype':pluginitem?'plugintype':'exectype'}" title="${edit?'Click to edit':''}">
             <g:if test="${jobitem}">
-
                 %{--Display job icon and name--}%
-                <g:set var="foundjob" value="${edit?null:ScheduledExecution.findScheduledExecution(item.jobGroup?item.jobGroup:null,item.jobName,project)}"/>
+                <g:set var="foundjob" value="${edit?null:ScheduledExecution.findScheduledExecution(item.jobGroup?item.jobGroup:null,item.jobName,item.jobProject?item.jobProject:project)}"/>
                 <g:if test="${foundjob}">
                 <g:link controller="scheduledExecution" action="show" id="${foundjob.extid}">
                     <g:if test="${!noimgs }">
                         <i class="glyphicon glyphicon-book"></i>
                     </g:if>
-                    <g:enc>${(item.jobGroup?item.jobGroup+'/':'')+item.jobName}</g:enc></g:link>
+                    <g:enc>${(item.jobGroup?item.jobGroup+'/':'')+item.jobName + (item.jobProject?' (' + item.jobProject+') ':'') }</g:enc></g:link>
                 </g:if>
                 <g:else>
                     <g:if test="${!noimgs }">
                         <i class="glyphicon glyphicon-book"></i>
                     </g:if>
-                    <g:enc>${(item.jobGroup?item.jobGroup+'/':'')+item.jobName}</g:enc>
+                    <g:enc>${(item.jobGroup?item.jobGroup+'/':'')+item.jobName + (item.jobProject?' (' + item.jobProject+') ':'') }</g:enc>
                 </g:else>
 
                 %{--display step description--}%

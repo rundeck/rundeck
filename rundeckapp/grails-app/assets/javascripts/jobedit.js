@@ -1070,7 +1070,7 @@ function jobChosen(name, group) {
     }
     hideJobChooser();
 }
-function loadJobChooser(elem, nameid, groupid) {
+function loadJobChooser(elem, nameid, groupid, projectid) {
     if (jQuery(elem).hasClass('active')) {
         hideJobChooser();
         return;
@@ -1078,10 +1078,15 @@ function loadJobChooser(elem, nameid, groupid) {
     jobNameFieldId = nameid;
     jobGroupFieldId = groupid;
     var project = selFrameworkProject;
+
+    if(projectid){
+        project = jQuery('#' + projectid).val();
+    }
     jQuery(elem).button('loading').addClass('active');
     jQuery.ajax({
-        url:_genUrl(appLinks.menuJobsPicker, {jobsjscallback: 'true', runAuthRequired: true}),
+        url:_genUrl(appLinks.menuJobsPicker, {jobsjscallback: 'true', runAuthRequired: true, projFilter: project}),
         success: function (resp, status, jqxhr){
+            jQuery(elem).popover('destroy');
             jQuery(elem).popover({html: true, container: 'body', placement: 'left', content: resp, trigger: 'manual'}).popover('show');
             jQuery(elem).button('reset');
         },
