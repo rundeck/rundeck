@@ -66,6 +66,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             isClusterModeEnabled()>>enabled
             getServerUUID()>>TEST_UUID1
             getFrameworkPropertyResolverWithProps(*_)>>Mock(PropertyResolver)
+            projectNames(*_)>>[]
         }
         service.pluginService=Mock(PluginService)
         service.executionServiceBean=Mock(ExecutionService)

@@ -253,7 +253,8 @@ class ExecutionUtilService {
                     jobcmditem.nodeRankAttribute,
                     jobcmditem.nodeRankOrderAscending,
                     step.description,
-                    jobcmditem.nodeIntersect
+                    jobcmditem.nodeIntersect,
+                    jobcmditem.jobProject
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
