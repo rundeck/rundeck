@@ -18,10 +18,7 @@ package com.dtolabs.rundeck.core.data;
 
 import lombok.ToString;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -64,6 +61,16 @@ public class MultiDataContextImpl<K extends ViewTraverse<K>, D extends DataConte
     @Override
     public Set<K> getKeys() {
         return map.keySet();
+    }
+
+    @Override
+    public Set<K> getConsolidatedKeys() {
+        HashSet<K> ks = new HashSet<>();
+        if (getBase() != null) {
+            ks.addAll(getBase().getConsolidatedKeys());
+        }
+        ks.addAll(getKeys());
+        return ks;
     }
 
     @Override

@@ -44,6 +44,7 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
     D getData(K key);
 
     Set<K> getKeys();
+    Set<K> getConsolidatedKeys();
 
     MultiDataContext<K, D> consolidate();
 
@@ -167,7 +168,7 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
             final String key
     )
     {
-        return new TreeSet<>(getKeys())
+        return new TreeSet<>(getConsolidatedKeys())
                 .stream()
                 .filter(viewFilter)
                 .map(v -> Optional.ofNullable(resolve(v, group, key)))
@@ -191,7 +192,7 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
             final String key
     )
     {
-        return new TreeSet<>(getKeys())
+        return new TreeSet<>(getConsolidatedKeys())
                 .stream()
                 .filter(viewFilter)
                 .filter(v -> null != resolve(v, group, key))

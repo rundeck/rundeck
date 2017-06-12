@@ -109,4 +109,49 @@ class ScriptVarExpanderSpec extends Specification {
         '2:a.b*'  | 'step2 node1,step2 node2'
         '2:a.b*-' | 'step2 node1-step2 node2'
     }
+    @Unroll
+    def "expand glob multi level"() {
+        given:
+        def expander = new ScriptVarExpander()
+        WFSharedContext base = new WFSharedContext()
+
+        base.merge(
+                ContextView.node("node1"),
+                new BaseDataContext([a: [b: "node1", nodeval: "anodeval"]])
+        )
+
+        WFSharedContext shared = new WFSharedContext(base)
+
+        shared.merge(ContextView.global(), new BaseDataContext([a: [b: "global", globalval: "aglobalval"]]))
+        shared.merge(
+                ContextView.node("node2"),
+                new BaseDataContext([a: [b: "node2", nodeval: "anodeval2"]])
+        )
+        shared.merge(
+                ContextView.step(2),
+                new BaseDataContext([a: [b: "step2", stepval: "astepval"]])
+        )
+        shared.merge(
+                ContextView.nodeStep(2, "node1"),
+                new BaseDataContext([a: [b: "step2 node1", nodestepval: "anodestepval"]])
+        )
+        shared.merge(
+                ContextView.nodeStep(2, "node2"),
+                new BaseDataContext([a: [b: "step2 node2", nodestepval: "anodestepval2"]])
+        )
+
+        when:
+        def result = expander.expandVariable(shared, ContextView.&nodeStep, str)
+        then:
+        result == expected
+        where:
+        str       | expected
+        'a.b'     | 'global'
+        'a.b*'    | 'node1,node2'
+        'a.b*+'   | 'node1+node2'
+        '1:a.b'   | null
+        '2:a.b'   | 'step2'
+        '2:a.b*'  | 'step2 node1,step2 node2'
+        '2:a.b*-' | 'step2 node1-step2 node2'
+    }
 }
