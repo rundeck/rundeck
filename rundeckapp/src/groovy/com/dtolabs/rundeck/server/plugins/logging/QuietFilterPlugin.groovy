@@ -22,9 +22,9 @@ import com.dtolabs.rundeck.core.logging.PluginLoggingContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 
-import java.util.regex.Matcher
 import java.util.regex.Pattern
 
 /**
@@ -34,16 +34,13 @@ import java.util.regex.Pattern
 
 @Plugin(name = QuietFilterPlugin.PROVIDER_NAME, service = 'LogFilter')
 @PluginDescription(title = 'Quiet Output',
-        description = '''Quiets all output which does or does not match a certain pattern.
-
-Any log output that is chosen will be changed to VERBOSE level logging, which 
-will only show up when running in DEBUG mode.''')
+        description = '''Quiets all output which does or does not match a certain pattern by changing its log level.''')
 class QuietFilterPlugin implements LogFilterPlugin {
     public static final String PROVIDER_NAME = 'quiet-output'
 
     @PluginProperty(
             title = "Pattern",
-            description = '''Regular Expression to test.
+            description = '''Regular Expression to test. If blank, all lines will match.
 
 See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex/Pattern.html) documentation.''',
             required = false,
@@ -51,6 +48,16 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     )
     String regex
 
+    @PluginProperty(
+            title = "Test Log Level",
+            description = '''Test the pattern against only log lines of the given log level. (Default: normal).
+
+If `any` is specified, all log levels will be tested.''',
+            defaultValue = 'normal',
+            required = false
+    )
+    @SelectValues(values = ['error', 'warn', 'normal', 'verbose', 'debug', 'all'])
+    String matchLoglevel
 
     @PluginProperty(
             title = 'Quiet Matched Output',
@@ -59,22 +66,42 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     )
     Boolean quietMatch
 
+    @PluginProperty(
+            title = "Result Log Level",
+            description = "Quieted lines will be changed to this log level. (Default: verbose)",
+            defaultValue = 'verbose',
+            required = false
+    )
+    @SelectValues(values = ['error', 'warn', 'normal', 'verbose', 'debug'])
+    String loglevel
+
 
     private Pattern dataPattern
+    private LogLevel matchLevel
+    private LogLevel resultLevel
 
     @Override
     void init(final PluginLoggingContext context) {
-        dataPattern = Pattern.compile(regex)
+        dataPattern = regex ? Pattern.compile(regex) : null
+        matchLevel = (matchLoglevel == 'all' || !matchLoglevel) ? null : LogLevel.valueOf(matchLoglevel.toUpperCase())
+        resultLevel = (loglevel) ? LogLevel.valueOf(loglevel.toUpperCase()) : null
     }
 
     @Override
     void handleEvent(final PluginLoggingContext context, final LogEventControl event) {
-        if (event.eventType == 'log' && event.loglevel == LogLevel.NORMAL) {
-            Matcher match = dataPattern.matcher(event.message)
-            def matches = match.find()
+        if (event.eventType == 'log' && matchLevel(event)) {
+            def matches = dataPattern ? dataPattern.matcher(event.message).find() : true
             if (matches && quietMatch || !matches && !quietMatch) {
-                event.quiet();
+                if (resultLevel) {
+                    event.loglevel = resultLevel
+                } else {
+                    event.quiet();
+                }
             }
         }
+    }
+
+    private boolean matchLevel(LogEventControl event) {
+        !matchLevel || event.loglevel == matchLevel
     }
 }
