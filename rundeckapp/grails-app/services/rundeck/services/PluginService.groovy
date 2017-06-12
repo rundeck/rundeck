@@ -129,7 +129,8 @@ class PluginService {
     )
     {
         return { String provider, Map<String, Object> config ->
-            configurePlugin(provider, (Map) config, projectName, framework, service).instance
+            def plugin = configurePlugin(provider, (Map) config, projectName, framework, service)
+            plugin?.instance
         } as SimplePluginProviderLoader<T>
     }
     /**
@@ -143,6 +144,10 @@ class PluginService {
                                                 Framework framework,
                               PluggableProviderService<T> service) {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service, framework, projectName, configuration)
+        if (!validation) {
+            logValidationErrors(service.name, name, Validator.errorReport('provider', 'Not found: ' + name))
+            return null
+        }
         if (!validation.valid) {
             logValidationErrors(service.name, name, validation.report)
             return null

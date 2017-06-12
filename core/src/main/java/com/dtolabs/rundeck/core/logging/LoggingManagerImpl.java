@@ -89,7 +89,13 @@ public class LoggingManagerImpl implements LoggingManager {
                     pluginConfiguration.getProvider(),
                     pluginConfiguration.getConfiguration()
             );
-            myPluginLoggingManager.installPlugin(load);
+            if (load != null) {
+                myPluginLoggingManager.installPlugin(load);
+            }else{
+                throw new RuntimeException("Could not configure log filter plugin: " +
+                                           pluginConfiguration +
+                                           ": not found");
+            }
         }
     }
 
