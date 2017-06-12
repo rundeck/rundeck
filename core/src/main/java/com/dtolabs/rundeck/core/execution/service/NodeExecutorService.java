@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.impl.jsch.JschNodeExecutor;
 import com.dtolabs.rundeck.core.execution.impl.local.LocalNodeExecutor;
+import com.dtolabs.rundeck.core.execution.impl.local.NewLocalNodeExecutor;
 import com.dtolabs.rundeck.core.plugins.PluginException;
 import com.dtolabs.rundeck.core.plugins.ProviderIdent;
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider;
@@ -67,6 +68,7 @@ public class NodeExecutorService extends NodeSpecifiedService<NodeExecutor> impl
 
         registry.put(JschNodeExecutor.SERVICE_PROVIDER_TYPE, JschNodeExecutor.class);
         registry.put(LocalNodeExecutor.SERVICE_PROVIDER_TYPE, LocalNodeExecutor.class);
+        registry.put(NewLocalNodeExecutor.SERVICE_PROVIDER_TYPE, NewLocalNodeExecutor.class);
     }
 
     @Override
