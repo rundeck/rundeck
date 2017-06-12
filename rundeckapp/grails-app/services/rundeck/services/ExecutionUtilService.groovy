@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import groovy.transform.ToString
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.PluginStep
@@ -309,6 +310,7 @@ class ExecutionUtilService {
         )
     }
 
+    @ToString(includeFields = true, includeNames = true, excludes = ['configuration'])
     static class SimplePluginConfiguration implements PluginConfiguration {
         String provider;
         String service;
