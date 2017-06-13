@@ -35,7 +35,7 @@ args.each{
 def tag="-SNAPSHOT"
 if(props.'release'){
     tag= props.releaseTag && props.releaseTag!='GA' ? '-'+props.releaseTag : ''
-} 
+}
 def debug=Boolean.getBoolean('debug')?:("-debug" in args)
 def version=props.currentVersion+tag
 //versions of dependency we want to verify
@@ -51,6 +51,7 @@ def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${ve
 
 //the list of bundled plugins to verify in the war and jar
 def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','orchestrator', 'source-refresh']
+def externalPlugins=['rundeck-ansible-plugin']
 
 //manifest describing expected build results
 def manifest=[
@@ -127,6 +128,9 @@ plugins.each{plugin->
       ])
     pluginsum+=2
 }
+externalPlugins.each{plugin->
+  pluginsum+=2
+}
 //require correct plugin files count in dir
 manifest.get(launcherJarFile).add("pkgs/webapp/WEB-INF/rundeck/plugins/#${pluginsum}")
 
@@ -163,7 +167,7 @@ getSha256={fis->
 
     byte[] dataBytes = new byte[1024];
 
-    int nread = 0; 
+    int nread = 0;
     while ((nread = fis.read(dataBytes)) != -1) {
       md.update(dataBytes, 0, nread);
     };
