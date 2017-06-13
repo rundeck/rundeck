@@ -102,7 +102,7 @@ class QuietFilterPluginSpec extends Specification {
         LogLevel.ERROR   | 'error'       || true
         LogLevel.VERBOSE | 'verbose'     || true
         LogLevel.DEBUG   | 'debug'       || true
-        LogLevel.WARN    | 'any'         || true
+        LogLevel.WARN    | 'all'         || true
         quietMatch = true
         regex = 'test'
         message = 'this is a test'
