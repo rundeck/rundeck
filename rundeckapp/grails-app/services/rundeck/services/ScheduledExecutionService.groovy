@@ -2596,12 +2596,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 failed = true
             }
 
+            def logFilterConfig = params.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
             //validate log filters
-            if (pluginConfigMap && pluginConfigMap['LogFilter'] && pluginConfigMap['LogFilter'] instanceof List) {
-                List configs = pluginConfigMap['LogFilter']
+            if (logFilterConfig && logFilterConfig instanceof List) {
                 def reports = validateLogFilterPlugins(
                         scheduledExecution,
-                        configs
+                        logFilterConfig
                 )
                 if (null != reports && reports.any { !it.valid }) {
                     rejectLogFilterPluginsInput(scheduledExecution, null, reports)

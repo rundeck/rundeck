@@ -1959,7 +1959,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         where:
         pluginConfigMap                                | _
-//        [LogFilter: [type: 'abc', config: [a: 'b']]]   | _
+        [LogFilter: [type: 'abc', config: [a: 'b']]]   | _
         [LogFilter: [[type: 'abc', config: [a: 'b']]]] | _
     }
 
@@ -2002,7 +2002,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         where:
         pluginConfigMap                                 | _
-//        [LogFilter: [type: 'abc', config: [a: 'b']]]    | _
+        [LogFilter: [type: 'abc', config: [a: 'b']]]    | _
         [LogFilter: [[type: 'abc', config: [a: 'b']]]]  | _
     }
 
