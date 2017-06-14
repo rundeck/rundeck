@@ -1111,6 +1111,48 @@ class ScheduledExecutionServiceSpec extends Specification {
         uuid
     }
 
+    def setupDoUpdateJob(enabled = false) {
+        def uuid = UUID.randomUUID().toString()
+
+        def projectMock = Mock(IRundeckProject) {
+            getProperties() >> [:]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            _ * authorizeProjectJobAll(*_) >> true
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * existsFrameworkProject('AProject') >> true
+            _ * getFrameworkProject('AProject') >> projectMock
+            _ * existsFrameworkProject('BProject') >> true
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
+            _ * isClusterModeEnabled() >> enabled
+            _ * getServerUUID() >> uuid
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                    _ * getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy) {
+                        _ * validate(_)
+                    }
+                }
+            }
+            _ * getFrameworkPropertyResolverWithProps(_, _)
+        }
+        service.executionServiceBean = Mock(ExecutionService) {
+            _ * getExecutionsAreActive() >> false
+        }
+        service.pluginService = Mock(PluginService) {
+            _ * validatePlugin('node-first', _ as WorkflowStrategyService, _, _)
+        }
+
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            _ * createExecutionItemForWorkflow(_) >> Mock(WorkflowExecutionItem) {
+                _ * getWorkflow()
+            }
+        }
+        service.quartzScheduler = Mock(Scheduler)
+        uuid
+    }
+
     private UserAndRolesAuthContext mockAuth() {
         Mock(UserAndRolesAuthContext) {
             getUsername() >> 'test'
@@ -1884,7 +1926,7 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "do update job workflow log filters"() {
         given:
-        setupDoUpdate()
+        setupDoUpdateJob()
         def se = new ScheduledExecution(createJobParams()).save()
         def newJob = new ScheduledExecution(
                 createJobParams(
@@ -1897,33 +1939,36 @@ class ScheduledExecutionServiceSpec extends Specification {
                         ]
                 )
         )
-
+        def pluginService = service.pluginService
+        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
+        0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
+        1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true,
+        ]
+        0 * service.frameworkService.validateDescription(*_)
+        0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
 
 
         then:
         results.success
-
-
         results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
         results.scheduledExecution.workflow.pluginConfigMap.LogFilter == pluginConfigMap.LogFilter
         !results.scheduledExecution.errors.hasFieldErrors('workflow')
-        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
-        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
-                valid: true,
-        ]
+
+
         where:
-        pluginConfigMap                              | _
-        [LogFilter: [type: 'abc', config: [a: 'b']]] | _
+        pluginConfigMap                                | _
+        [LogFilter: [type: 'abc', config: [a: 'b']]]   | _
+        [LogFilter: [[type: 'abc', config: [a: 'b']]]] | _
     }
 
 
     @Unroll
     def "do update job workflow log filters invalid"() {
         given:
-        setupDoUpdate()
+        setupDoUpdateJob()
         def se = new ScheduledExecution(createJobParams()).save()
         def newJob = new ScheduledExecution(
                 createJobParams(
@@ -1937,25 +1982,29 @@ class ScheduledExecutionServiceSpec extends Specification {
                 )
         )
 
+        def pluginService = service.pluginService
+
+        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
+        0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
+        1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+        0 * service.frameworkService.validateDescription(*_)
+        0 * _
         when:
         def results = service._doupdateJob(se.id, newJob, mockAuth())
 
 
         then:
         !results.success
-
-
         results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
         results.scheduledExecution.workflow.pluginConfigMap.LogFilter == pluginConfigMap.LogFilter
         results.scheduledExecution.errors.hasFieldErrors('workflow')
-        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
-                new DescribedPlugin(null, null, 'abc', null)
-        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
-                valid: false, report: 'bogus'
-        ]
+
         where:
-        pluginConfigMap                              | _
-        [LogFilter: [type: 'abc', config: [a: 'b']]] | _
+        pluginConfigMap                                 | _
+        [LogFilter: [type: 'abc', config: [a: 'b']]]    | _
+        [LogFilter: [[type: 'abc', config: [a: 'b']]]]  | _
     }
 
 
