@@ -100,7 +100,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             }
         }
         AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
-        def fprojects = frameworkService.projectNames(auth)
+        def fprojects = frameworkService.projectNames(auth).findAll{it != params.project}
         [
                 item                : item,
                 key                 : params.key,
@@ -421,7 +421,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         def numi
         def wfEditAction = 'true' == params.newitem ? 'insert' : 'modify'
         AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
-        def fprojects = frameworkService.projectNames(auth)
+        def fprojects = frameworkService.projectNames(auth).findAll{it != params.project}
         if (null != params.num) {
             try {
                 numi = Integer.parseInt(params.num)
