@@ -53,18 +53,8 @@
                         />
                     </div>
                     <div class="col-sm-2">
-                        <input id="jobProjectField${rkey}"  type="text" name="jobProject" value="${enc(attr:item?.jobProject)}" size="100"
-                               placeholder="${message(code:"scheduledExecution.projectPath.label")}"
-                               class="form-control"
-                        />
-                        <g:javascript>
-                fireWhenReady('jobProjectField${rkey}',function(){
-                        var projectsArr = loadJsonData('projectNamesData');
-                        jQuery("#jobProjectField${rkey}").devbridgeAutocomplete({
-                                    lookup: projectsArr
-                        });
-                    });
-                        </g:javascript>
+                        <g:select name="jobProject" from="${fprojects}" id="jobProjectField${rkey}" value="${enc(attr:item?.jobProject)}" noSelection="${['':message(code:'scheduledExecution.projectPath.label')]}"
+                                  class="form-control input-sm"/>
                     </div>
 
                     <div class="col-sm-2">

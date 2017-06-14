@@ -99,7 +99,8 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
                 origitemtype=item.adhocLocalString?'script':item.adhocRemoteString?'command':'scriptfile'
             }
         }
-
+        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
+        def fprojects = frameworkService.projectNames(auth)
         [
                 item                : item,
                 key                 : params.key,
@@ -111,7 +112,8 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
                 pluginNotFound      : null == newitemDescription,
                 edit                : true,
                 isErrorHandler      : isErrorHandler,
-                newitemnodestep     : params.newitemnodestep
+                newitemnodestep     : params.newitemnodestep,
+                fprojects           : fprojects
         ]
     }
     /**
@@ -418,13 +420,15 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         def item
         def numi
         def wfEditAction = 'true' == params.newitem ? 'insert' : 'modify'
+        AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
+        def fprojects = frameworkService.projectNames(auth)
         if (null != params.num) {
             try {
                 numi = Integer.parseInt(params.num)
             } catch (NumberFormatException e) {
                 log.error("num parameter is invalid: " + params.num)
                 flash.'error' = "num parameter is invalid: " + params.num
-                return render(template: "/execution/wfitemEdit", model: [item: null, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true])
+                return render(template: "/execution/wfitemEdit", model: [item: null, num: numi, scheduledExecutionId: params.scheduledExecutionId, newitemtype: params['newitemtype'], edit: true, fprojects: fprojects])
             }
         } else {
             numi = editwf.commands ? editwf.commands.size() : 0
@@ -454,7 +458,8 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
                             edit                : true,
                             isErrorHandler      : isErrorHandler,
                             newitemDescription  : itemDescription,
-                            report              : result.report
+                            report              : result.report,
+                            fprojects           : fprojects
                     ]
             )
         }

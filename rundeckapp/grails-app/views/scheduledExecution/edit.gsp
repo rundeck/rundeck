@@ -32,8 +32,6 @@
         _onJobEdit(confirm.setNeedsConfirm);
     </g:javascript>
     <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
-
-    <g:embedJSON data="${projectNames ?: []}" id="projectNamesData"/>
 </head>
 <body>
 
