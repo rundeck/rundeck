@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
@@ -1126,6 +1127,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             _ * getAuthContextWithProject(_, _) >> { args ->
                 return args[0]
             }
+            _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
             _ * isClusterModeEnabled() >> enabled
             _ * getServerUUID() >> uuid
             _ * getRundeckFramework() >> Mock(Framework) {
