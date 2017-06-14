@@ -719,7 +719,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def map=step.toMap()
             if(step instanceof JobExec) {
                 ScheduledExecution refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
-                        project,
+                        step.jobProject?step.jobProject:project,
                         step.jobName,
                         step.jobGroup
                 )
@@ -739,7 +739,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
             if(eh instanceof JobExec) {
                 ScheduledExecution refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
-                        project,
+                        eh.jobProject?eh.jobProject:project,
                         eh.jobName,
                         eh.jobGroup
                 )
