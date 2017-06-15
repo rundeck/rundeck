@@ -26,12 +26,10 @@
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
     <asset:javascript src="menu/jobs.js"/>
-    <asset:javascript src="jquery.autocomplete.min.js"/>
     <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
         <asset:javascript src="menu/joboptionsTest.js"/>
         <asset:javascript src="menu/job-remote-optionsTest.js"/>
     </g:if>
-    <g:embedJSON id="pageParams" data="${[project:params.project?:request.project]}"/>
     <g:embedJSON data="${projectNames ?: []}" id="projectNamesData"/>
     <g:jsMessages code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
@@ -610,49 +608,8 @@
 </div>
 </div>
 
-<div class="modal fade" id="selectProject" role="dialog" aria-labelledby="selectProjectLabel" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="selectProjectLabel"><g:message code="select.project" /></h4>
-            </div>
-            <g:form controller="scheduledExecution">
-                <div class="modal-body" id="selectProjectContent">
-
-                    <input type="hidden" id="jobid" name="id"/>
-                    <input id="jobProject"  type="text" name="project" value="" size="100"
-                                              placeholder="${message(code:"select.project")}"
-                                              class="form-control"
-                                       />
-                    <g:javascript>
-                    fireWhenReady('jobProject',function(){
-                         var projectsArr = loadJsonData('projectNamesData');
-                         jQuery("#jobProject").devbridgeAutocomplete({
-                                     lookup: projectsArr
-                         });
-                        jQuery("#jobProject").on('keyup blur', function(){
-                            jQuery('#submittbn').prop('disabled', this.value.trim().length == 0);
-                        });
-                     });
-                    </g:javascript>
-                </div>
-                <div class="modal-footer">
-                    <button type="button"
-                            class="btn btn-danger"
-                            data-bind="click: cancel"
-                            data-dismiss="modal" ><g:message code="cancel"/></button>
-
-                    <g:actionSubmit action="copy"
-                                    value="${message(code:'yes')}"
-                                    id="submittbn"
-                                    disabled="disabled"
-                                    class="btn btn-default"/>
-                </div>
-            </g:form>
-        </div>
-    </div>
-</div>
+<g:render template="/menu/copyModal"
+          model="[projectNames: projectNames]"/>
 
 <div class="row row-space" id="activity_section">
     <div class="col-sm-12 ">
