@@ -2125,6 +2125,7 @@ class ScheduledExecutionControllerTests  {
             isClusterModeEnabled{-> false }
             authResourceForProject{p->null}
             authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
+            projectNames { _ -> return []}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2225,6 +2226,7 @@ class ScheduledExecutionControllerTests  {
             }
             authResourceForProject{p->null}
             authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
+            projectNames { _ -> return []}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2326,6 +2328,7 @@ class ScheduledExecutionControllerTests  {
             }
             authResourceForProject{p->null}
             authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
+            projectNames { _ -> return []}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2427,6 +2430,7 @@ class ScheduledExecutionControllerTests  {
             }
             authResourceForProject{p->null}
             authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
+            projectNames { _ -> return []}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2527,6 +2531,7 @@ class ScheduledExecutionControllerTests  {
             }
             authResourceForProject{p->null}
             authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
+            projectNames { _ -> return []}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
@@ -2654,6 +2659,7 @@ class ScheduledExecutionControllerTests  {
             }
             authResourceForProject{p->null}
             authorizeApplicationResourceAny(2..2){AuthContext authContext, Map resource, List actions->false}
+            projectNames { _ -> return []}
             projects { return [] }
             authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
