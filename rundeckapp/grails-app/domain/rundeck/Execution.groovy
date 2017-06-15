@@ -144,6 +144,9 @@ class Execution extends ExecutionContext {
         withServerNodeUUID { uuid ->
             eq 'serverNodeUUID', uuid
         }
+        withProject{ project ->
+            eq 'project', project
+        }
 	}
 
 

@@ -37,6 +37,7 @@ import rundeck.WorkflowStep
 import rundeck.services.FrameworkService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.PasswordFieldsServiceTests
+import rundeck.services.ScheduledExecutionService
 import rundeck.services.UserService
 
 /**
@@ -277,7 +278,7 @@ class FrameworkControllerTest {
         fwk.demand.getFileCopyConfigurationForType { -> null }
 
         def proj = mockFor(IRundeckProject,true)
-        proj.demand.getProjectProperties{-> [:]}
+        proj.demand.getProjectProperties(1..3){-> [:]}
 
         fwk.demand.getFrameworkProject { name-> proj.createMock() }
 
@@ -294,9 +295,11 @@ class FrameworkControllerTest {
         fcopyPFmck.demand.reset{ -> return null}
         fcopyPFmck.demand.track{a, b -> return null}
 
+
         controller.resourcesPasswordFieldsService = resourcePFmck.createMock()
         controller.execPasswordFieldsService = execPFmck.createMock()
         controller.fcopyPasswordFieldsService = fcopyPFmck.createMock()
+
 
         def passwordFieldsService = new PasswordFieldsService()
         passwordFieldsService.fields.put("dummy", "stuff")
@@ -420,6 +423,12 @@ class FrameworkControllerTest {
         controller.userService = mockWith(UserService){
             storeFilterPref { -> true }
         }
+
+        def seServiceControl = mockFor(ScheduledExecutionService)
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
+        seServiceControl.demand.isProjectScheduledEnabled{ project -> true}
+        controller.scheduledExecutionService = seServiceControl.createMock()
 
         request.method = "POST"
 

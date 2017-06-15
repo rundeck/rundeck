@@ -754,6 +754,8 @@ class ScheduledExecutionControllerTests  {
                 [id:exec.id,execution:exec,success:true]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
+            seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+            }
         controller.scheduledExecutionService = seServiceControl.createMock()
 
             def eServiceControl = mockFor(ExecutionService, true)
@@ -902,6 +904,9 @@ class ScheduledExecutionControllerTests  {
             [id:exec.id,execution:exec,success:true]
         }
         seServiceControl.demand.logJobChange {changeinfo, properties ->}
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
+
         controller.scheduledExecutionService = seServiceControl.createMock()
 
         def eServiceControl = mockFor(ExecutionService, true)
@@ -1459,6 +1464,7 @@ class ScheduledExecutionControllerTests  {
     public void testApiRunScriptUrl_v14() {
         def sec = new ScheduledExecutionController()
 
+
         //try to do api job run
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework(1..2) {-> return null }
@@ -1484,6 +1490,8 @@ class ScheduledExecutionControllerTests  {
 
         seServiceControl.demand.scheduleTempJob { auth, exec ->
             [id:'fakeid',execution:exec,success:true]
+        }
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
         }
 
         sec.scheduledExecutionService = seServiceControl.createMock()
@@ -1579,6 +1587,9 @@ class ScheduledExecutionControllerTests  {
         seServiceControl.demand.scheduleTempJob { auth, exec ->
             [id:'fakeid',execution:exec,success:true]
         }
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
+
 
         sec.scheduledExecutionService = seServiceControl.createMock()
 
@@ -1660,6 +1671,8 @@ class ScheduledExecutionControllerTests  {
 
         seServiceControl.demand.scheduleTempJob { auth, exec ->
             [id:'fakeid',execution:exec,success:true]
+        }
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
         }
 
         sec.scheduledExecutionService = seServiceControl.createMock()
@@ -1816,6 +1829,9 @@ class ScheduledExecutionControllerTests  {
             [id:'fakeid',execution:exec,success:true]
         }
 
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
+
         sec.scheduledExecutionService = seServiceControl.createMock()
 
         def eServiceControl = mockFor(ExecutionService, true)
@@ -1897,6 +1913,9 @@ class ScheduledExecutionControllerTests  {
             [id:'fakeid',execution:exec,success:true]
         }
 
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
+
         sec.scheduledExecutionService = seServiceControl.createMock()
 
         def eServiceControl = mockFor(ExecutionService, true)
@@ -1969,6 +1988,8 @@ class ScheduledExecutionControllerTests  {
 
         seServiceControl.demand.scheduleTempJob { auth, exec ->
             [id:'fakeid',execution:exec,success:true]
+        }
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
         }
 
         sec.scheduledExecutionService = seServiceControl.createMock()
