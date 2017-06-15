@@ -49,30 +49,6 @@
             <g:textField name="description" size="50"  value="${projectDescription}" class="form-control"/>
         </div>
     </div>
-    <div class="list-group-item">
-        <span class="h4"><g:message code="passive.mode"/></span>
-        <div class="help-block"><g:message code="project.passive.mode.description"/></div>
-        <div class="form-horizontal">
-            <div class="form-group ">
-                <div class="col-sm-10 col-sm-offset-2">
-                    <div class="checkbox">
-                        <label for="disableExecutionMode">
-                            <g:checkBox name="disableExecutionMode" value="true"
-                                        checked="${disableExecutionMode&&disableExecutionMode=='true'}"/>
-                            <g:message code="disable.execution.this.job"/>
-                        </label>
-                    </div>
-                    <div class="checkbox">
-                        <label for="disableScheduleMode">
-                            <g:checkBox name="disableScheduleMode" value="true"
-                                        checked="${disableScheduleMode&&disableScheduleMode=='true'}"/>
-                            <g:message code="disable.schedule.this.job"/>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 <g:if test="${resourceModelConfigDescriptions}">
     <div class="list-group-item">
     <span class="h4 ">

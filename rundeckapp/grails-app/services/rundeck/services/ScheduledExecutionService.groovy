@@ -66,6 +66,8 @@ import java.text.SimpleDateFormat
  */
 class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, RundeckProjectConfigurable {
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
+    public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
+    public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
 
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
@@ -76,11 +78,29 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                                     '* `-1`: expand all Groups.'
                 required(false)
                 defaultValue '1'
+                renderingOption('projectConfigCategory', 'gui')
+            }.build(),
+            PropertyBuilder.builder().with {
+                booleanType 'disableExecution'
+                title 'Disable Execution'
+                required(false)
+                defaultValue null
+                renderingOption('booleanTrueDisplayValueClass', 'text-warning')
+            }.build(),
+            PropertyBuilder.builder().with {
+                booleanType 'disableSchedule'
+                title 'Disable Schedule'
+                required(false)
+                defaultValue null
+                renderingOption('booleanTrueDisplayValueClass', 'text-warning')
             }.build(),
     ]
 
-    public static
-    final LinkedHashMap<String, String> ConfigPropertiesMapping = ['groupExpandLevel': CONF_GROUP_EXPAND_LEVEL]
+    public static final LinkedHashMap<String, String> ConfigPropertiesMapping = [
+            groupExpandLevel: CONF_GROUP_EXPAND_LEVEL,
+            disableExecution: CONF_PROJECT_DISABLE_EXECUTION,
+            disableSchedule: CONF_PROJECT_DISABLE_SCHEDULE,
+    ]
     boolean transactional = true
 
     def FrameworkService frameworkService
@@ -3435,13 +3455,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def isProjectExecutionEnabled(String project){
         def fwProject = frameworkService.getFrameworkProject(project)
-        def disableEx = fwProject.getProjectProperties().get("project.disable.executions")
+        def disableEx = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_EXECUTION)
         ((!disableEx)||disableEx.toLowerCase()!='true')
     }
 
     def isProjectScheduledEnabled(String project){
         def fwProject = frameworkService.getFrameworkProject(project)
-        def disableSe = fwProject.getProjectProperties().get("project.disable.schedule")
+        def disableSe = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_SCHEDULE)
         ((!disableSe)||disableSe.toLowerCase()!='true')
     }
 

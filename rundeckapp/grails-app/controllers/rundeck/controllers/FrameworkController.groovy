@@ -1093,8 +1093,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def isScheduleDisabledNow = !scheduledExecutionService.isProjectScheduledEnabled(project)
 
 
-            def newExecutionDisabledStatus = (projProps['project.disable.executions'] && projProps['project.disable.executions'] == 'true')
-            def newScheduleDisabledStatus = (projProps['project.disable.schedule'] && projProps['project.disable.schedule'] == 'true')
+            def newExecutionDisabledStatus =
+                    (projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION]
+                            && projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION] == 'true')
+            def newScheduleDisabledStatus =
+                    (projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE]
+                            && projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true')
 
             def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
                     || (isScheduleDisabledNow != newScheduleDisabledStatus))
@@ -1270,18 +1274,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 projProps['project.description']=''
             }
 
-            def isExecutionDisabledNow = !scheduledExecutionService.isProjectExecutionEnabled(project)
-            def isScheduleDisabledNow = !scheduledExecutionService.isProjectScheduledEnabled(project)
 
-            def newExecutionDisabledStatus = (params.disableExecutionMode && params.disableExecutionMode == 'true')
-            def newScheduleDisabledStatus = (params.disableScheduleMode && params.disableScheduleMode == 'true')
-
-            projProps['project.disable.executions']=newExecutionDisabledStatus?'true':'false'
-            projProps['project.disable.schedule']=newScheduleDisabledStatus?'true':'false'
-
-            def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
-                    || (isScheduleDisabledNow != newScheduleDisabledStatus))
-            def active = (!newExecutionDisabledStatus && !newScheduleDisabledStatus)
 
             def Set<String> removePrefixes=[]
             removePrefixes<< FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY
@@ -1412,6 +1405,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 extraConfig[k]=beanData
             }
 
+            def isExecutionDisabledNow = !scheduledExecutionService.isProjectExecutionEnabled(project)
+            def isScheduleDisabledNow = !scheduledExecutionService.isProjectScheduledEnabled(project)
+
+            def newExecutionDisabledStatus =
+                    projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_EXECUTION] == 'true'
+            def newScheduleDisabledStatus =
+                    projProps[ScheduledExecutionService.CONF_PROJECT_DISABLE_SCHEDULE] == 'true'
+
+            def reschedule = ((isExecutionDisabledNow != newExecutionDisabledStatus)
+                    || (isScheduleDisabledNow != newScheduleDisabledStatus))
+            def active = (!newExecutionDisabledStatus && !newScheduleDisabledStatus)
+
             if (!errors) {
 
                 def result = frameworkService.updateFrameworkProjectConfig(project, projProps, removePrefixes)
@@ -1528,7 +1533,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             def values=Validator.demapProperties(fwkProject.getProjectProperties(),v.getPropertiesMapping(), true)
             extraConfig[k]=[
                     name        : k,
-                    configurable:v,
+                    configurable: v,
                     values      : values,
                     prefix      : "extraConfig.${k}."
             ]
@@ -1537,8 +1542,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         [
             project: project,
             projectDescription:fwkProject.getProjectProperties().get("project.description"),
-            disableExecutionMode:fwkProject.getProjectProperties().get("project.disable.executions"),
-            disableScheduleMode:fwkProject.getProjectProperties().get("project.disable.schedule"),
             resourceModelConfigDescriptions: resourceDescs,
             configs: resourceConfig,
             nodeexecconfig:nodeConfig,
