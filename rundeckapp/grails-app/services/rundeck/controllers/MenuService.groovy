@@ -23,7 +23,7 @@ class MenuService implements RundeckProjectConfigurable {
                 values("projectList", "projectHome")
                 labels([projectList: "Projects List", projectHome: "Project Home Page"])
                 required(false)
-                defaultValue 'false'
+                defaultValue null
             }.build(),
 
     ]
