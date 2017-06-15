@@ -36,8 +36,8 @@ class MenuService implements RundeckProjectConfigurable {
     ]
 
     @Override
-    String getCategory() {
-        "gui"
+    Map<String, String> getCategories() {
+        [readmeDisplay: "gui", motdDisplay: 'gui']
     }
 
     @Override

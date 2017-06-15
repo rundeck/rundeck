@@ -108,7 +108,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     @Override
-    String getCategory() { return "gui" }
+    Map<String, String> getCategories() {
+        [groupExpandLevel: 'gui', disableExecution: 'executionMode', disableSchedule: 'executionMode',]
+    }
 
     @Override
     List<Property> getProjectConfigProperties() { ProjectConfigProperties }
