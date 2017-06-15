@@ -1140,6 +1140,7 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         def projectMock = Mock(IRundeckProject) {
             getProperties() >> [:]
+            getProjectProperties() >> [:]
         }
         service.frameworkService = Mock(FrameworkService) {
             _ * authorizeProjectJobAll(*_) >> true

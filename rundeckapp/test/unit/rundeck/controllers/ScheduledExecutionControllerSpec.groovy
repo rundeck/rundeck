@@ -1064,6 +1064,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
             1 * listOrchestratorPlugins()
         }
+        controller.pluginService = Mock(PluginService)
         when:
         params.project = 'testProject'
         request.method = 'POST'
