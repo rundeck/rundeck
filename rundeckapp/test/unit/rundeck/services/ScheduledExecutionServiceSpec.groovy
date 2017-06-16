@@ -2533,7 +2533,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             getFrameworkProject(_) >> projectMock
         }
         when:
-        def result = service.shouldScheduleInThisProject(null)
+        def result = service.shouldScheduleInThisProject('proj')
 
         then:
         null != result
