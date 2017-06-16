@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.data.BaseDataContext;
+import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
@@ -74,8 +75,14 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
      *
      * @return result with the given input
      */
-    protected static WorkflowStatusResult workflowResult(boolean status, String statusString, ControlBehavior behavior) {
-        return new BaseWorkflowStatusResult(status, statusString, behavior);
+    protected static WorkflowStatusDataResult workflowResult(
+            boolean status,
+            String statusString,
+            ControlBehavior behavior,
+            WFSharedContext sharedContext
+    )
+    {
+        return new BaseWorkflowStatusResult(status, statusString, behavior, sharedContext);
     }
 
     /**
@@ -84,7 +91,8 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     protected static final WorkflowStatusResult WorkflowResultFailed = new BaseWorkflowStatusResult(
             false,
             null,
-            ControlBehavior.Continue
+            ControlBehavior.Continue,
+            null
     );
 
     static boolean isInnerLoop(final WorkflowExecutionItem item) {
@@ -95,21 +103,30 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         return framework;
     }
 
-    static class BaseWorkflowStatusResult implements WorkflowStatusResult {
+    static class BaseWorkflowStatusResult implements WorkflowStatusDataResult {
         private boolean status;
         private String statusString;
         private ControlBehavior controlBehavior;
+        private WFSharedContext sharedContext;
 
-        public BaseWorkflowStatusResult(boolean status, String statusString, ControlBehavior controlBehavior) {
+        public BaseWorkflowStatusResult(
+                boolean status,
+                String statusString,
+                ControlBehavior controlBehavior,
+                WFSharedContext sharedContext
+        )
+        {
             this.status = status;
             this.statusString = statusString;
             this.controlBehavior = controlBehavior;
+            this.sharedContext = sharedContext;
         }
 
-        public BaseWorkflowStatusResult(WorkflowStatusResult result) {
+        public BaseWorkflowStatusResult(WorkflowStatusResult result, WFSharedContext sharedContext) {
             this.status = result.isSuccess();
             this.statusString = result.getStatusString();
             this.controlBehavior = result.getControlBehavior();
+            this.sharedContext = sharedContext;
         }
 
         public boolean isSuccess() {
@@ -122,6 +139,10 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
 
         public ControlBehavior getControlBehavior() {
             return controlBehavior;
+        }
+
+        public WFSharedContext getSharedContext() {
+            return sharedContext;
         }
     }
 
@@ -136,10 +157,11 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                 Map<String, Collection<StepExecutionResult>> failures,
                 final Map<Integer, StepExecutionResult> stepFailures,
                 Exception orig,
-                final WorkflowStatusResult status
+                final WorkflowStatusResult status,
+                WFSharedContext sharedContext
         )
         {
-            super(status);
+            super(status, sharedContext);
             this.results = results;
             this.failures = failures;
             this.stepFailures = stepFailures;
@@ -283,37 +305,11 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
      * @param resultList        results
      * @param iWorkflowCmdItems list of steps
      * @param keepgoing         true to keepgoing on step failure
-     *
-     * @return true if successful
-     *
-     * @deprecated
-     */
-    protected WorkflowStatusResult executeWorkflowItemsForNodeSet(
-            final StepExecutionContext executionContext,
-            final Map<Integer, StepExecutionResult> failedMap,
-            final List<StepExecutionResult> resultList,
-            final List<StepExecutionItem> iWorkflowCmdItems,
-            final boolean keepgoing
-    )
-    {
-        return executeWorkflowItemsForNodeSet(executionContext, failedMap, resultList, iWorkflowCmdItems, keepgoing,
-                                              executionContext.getStepNumber()
-        );
-    }
-
-    /**
-     * Execute the sequence of ExecutionItems within the context, and with the given keepgoing value
-     *
-     * @param executionContext  context
-     * @param failedMap         failures
-     * @param resultList        results
-     * @param iWorkflowCmdItems list of steps
-     * @param keepgoing         true to keepgoing on step failure
      * @param beginStepIndex    beginning step index
      *
      * @return true if successful
      *
-     * @deprecated
+     * @deprecated should invoke engine workflow executor
      */
     protected WorkflowStatusResult executeWorkflowItemsForNodeSet(
             final StepExecutionContext executionContext,
@@ -321,7 +317,8 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             final List<StepExecutionResult> resultList,
             final List<StepExecutionItem> iWorkflowCmdItems,
             final boolean keepgoing,
-            final int beginStepIndex
+            final int beginStepIndex,
+            WFSharedContext sharedContext
     )
     {
 
@@ -330,9 +327,15 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         ControlBehavior controlBehavior = null;
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
         int c = beginStepIndex;
+        WFSharedContext currentData = new WFSharedContext(sharedContext);
+
+        StepExecutionContext newContext =
+                ExecutionContextImpl.builder(executionContext)
+                                    .sharedDataContext(currentData)
+                                    .build();
         for (final StepExecutionItem cmd : iWorkflowCmdItems) {
             StepResultCapture stepResultCapture = executeWorkflowStep(
-                    executionContext,
+                    newContext,
                     failedMap,
                     resultList,
                     keepgoing,
@@ -342,6 +345,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             );
             statusString = stepResultCapture.getStatusString();
             controlBehavior = stepResultCapture.getControlBehavior();
+            currentData.merge(stepResultCapture.getResultData());
             if (!stepResultCapture.isSuccess()) {
                 workflowsuccess = false;
             }
@@ -354,30 +358,9 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         return workflowResult(
                 workflowsuccess,
                 statusString,
-                null != controlBehavior ? controlBehavior : ControlBehavior.Continue
+                null != controlBehavior ? controlBehavior : ControlBehavior.Continue,
+                currentData
         );
-    }
-
-    /**
-     * @param stepContext    the context
-     * @param stepController a flow control object
-     *
-     * @return new context using the flow controller
-     */
-    private StepExecutionContext withFlowControl(
-            final StepExecutionContext stepContext,
-            final FlowController stepController
-    )
-    {
-        return new ExecutionContextImpl.Builder(stepContext).flowControl(stepController).build();
-    }
-
-    private StepExecutionContext withDataOutput(
-            final StepExecutionContext stepContext,
-            final DataOutput dataOutput
-    )
-    {
-        return new ExecutionContextImpl.Builder(stepContext).outputContext(dataOutput).build();
     }
 
     /**
@@ -633,7 +616,7 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
     }
 
     /**
-     * Execute a step and handle flow control and error handler.
+     * Execute a step and handle flow control and error handler and log filter.
      *
      * @param executionContext context
      * @param failedMap        map for placing failure results
@@ -864,12 +847,9 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
         WFSharedContext noderesults = new WFSharedContext();
         for (String node : results.keySet()) {
             NodeStepResult nodeStepResult = results.get(node);
-            if (nodeStepResult instanceof HasSharedContext) {
-                WFSharedContext dataContext = ((HasSharedContext) nodeStepResult).getSharedContext();
-                noderesults.merge(dataContext);
-                //XXX: also including node data in nodestep data??
-//                map.put(ContextView.nodeStep(c, node), dataContext);
-            }
+            WFSharedContext dataContext = nodeStepResult.getSharedContext();
+            noderesults.merge(dataContext);
+            //XXX: also including node data in nodestep data??
         }
         combinedResultData.merge(noderesults);
     }

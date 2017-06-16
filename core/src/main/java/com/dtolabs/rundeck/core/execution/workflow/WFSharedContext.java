@@ -54,7 +54,7 @@ public class WFSharedContext extends MultiDataContextImpl<ContextView, DataConte
         kdMultiDataContext.merge(key, data);
         return kdMultiDataContext;
     }
-    public static WFSharedContext withBase(final MultiDataContextImpl<ContextView, DataContext> base) {
+    public static WFSharedContext withBase(final MultiDataContext<ContextView, DataContext> base) {
         WFSharedContext kdMultiDataContext = new WFSharedContext();
         kdMultiDataContext.setBase(base);
         return kdMultiDataContext;

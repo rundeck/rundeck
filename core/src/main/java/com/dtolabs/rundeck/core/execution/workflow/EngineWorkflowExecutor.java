@@ -178,6 +178,8 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         final WorkflowExecutionListener wlistener = getWorkflowListener(executionContext);
         String strategy = workflow.getStrategy();
 
+        //define a new shared context inheriting from any injected data context
+        final WFSharedContext sharedContext = WFSharedContext.withBase(executionContext.getSharedDataContext());
         WorkflowStrategy strategyForWorkflow;
         try {
             strategyForWorkflow = setupWorkflowStrategy(executionContext, item, workflow, strategy);
@@ -186,7 +188,14 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                     Constants.ERR_LEVEL,
                     "Exception: " + e.getClass() + ": " + e.getMessage()
             );
-            return new BaseWorkflowExecutionResult(stepResults, new HashMap<>(), stepFailures, e, WorkflowResultFailed);
+            return new BaseWorkflowExecutionResult(
+                    stepResults,
+                    new HashMap<>(),
+                    stepFailures,
+                    e,
+                    WorkflowResultFailed,
+                    sharedContext
+            );
         }
 
         MutableStateObj mutable = States.mutable(DataContextUtils.flattenDataContext(
@@ -223,7 +232,6 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         );
 
 
-        final WFSharedContext sharedContext = WFSharedContext.withBase(null);
 
         WorkflowSystem.SharedData<WFSharedContext>
                 dataContextSharedData = WorkflowSystem.SharedData.with(
@@ -274,11 +282,19 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
         WorkflowStatusResult workflowResult = workflowResult(
                 workflowSuccess,
                 statusString,
-                null != controlBehavior ? controlBehavior : ControlBehavior.Continue
+                null != controlBehavior ? controlBehavior : ControlBehavior.Continue,
+                sharedContext
         );
 
         final Map<String, Collection<StepExecutionResult>> nodeFailures = convertFailures(stepFailures);
-        return new BaseWorkflowExecutionResult(stepResults, nodeFailures, stepFailures, null, workflowResult);
+        return new BaseWorkflowExecutionResult(
+                stepResults,
+                nodeFailures,
+                stepFailures,
+                null,
+                workflowResult,
+                sharedContext
+        );
     }
 
     public WorkflowSystem buildWorkflowSystem(
