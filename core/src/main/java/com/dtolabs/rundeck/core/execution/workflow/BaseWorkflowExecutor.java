@@ -817,9 +817,15 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
             final StepExecutionResult handlerResult
     )
     {
-        combinedResultData.merge(outputContext.getSharedContext());
+        WFSharedContext sharedContext = outputContext.getSharedContext();
+        combinedResultData.merge(sharedContext);
         if (NodeDispatchStepExecutor.isWrappedDispatcherResult(handlerResult)) {
             combineNodeResultData(c, handlerResult, combinedResultData);
+        }
+        //combine individual step context data to the global level
+        DataContext data = sharedContext.getData(ContextView.step(c));
+        if (data != null) {
+            combinedResultData.merge(ContextView.global(), data);
         }
     }
 
