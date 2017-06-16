@@ -43,6 +43,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * NewExecutionServiceImpl is ...
@@ -168,35 +169,46 @@ class ExecutionServiceImpl implements ExecutionService {
                                                                                                       DispatcherException,
                                                                                                       ExecutionServiceException {
 
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginNodeDispatch(context, item);
-        }
-        final NodeDispatcher dispatcher = framework.getNodeDispatcherForContext(context);
-        DispatcherResult result = null;
-        try {
-            result = dispatcher.dispatch(context, item);
-        } finally {
-            if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishNodeDispatch(result, context, item);
-            }
-        }
-        return result;
+        return dispatchToNodesWith(context, null, item);
     }
 
     public DispatcherResult dispatchToNodes(StepExecutionContext context, Dispatchable item) throws
                                                                                              DispatcherException,
                                                                                              ExecutionServiceException {
 
+        return dispatchToNodesWith(context, item, null);
+    }
+
+    private DispatcherResult dispatchToNodesWith(
+            StepExecutionContext context,
+            Dispatchable dispatchable,
+            NodeStepExecutionItem item
+    ) throws
+            DispatcherException,
+            ExecutionServiceException
+    {
         if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginNodeDispatch(context, item);
+            if (null != item) {
+                context.getExecutionListener().beginNodeDispatch(context, item);
+            } else if (null != dispatchable) {
+                context.getExecutionListener().beginNodeDispatch(context, dispatchable);
+            }
         }
         final NodeDispatcher dispatcher = framework.getNodeDispatcherForContext(context);
         DispatcherResult result = null;
         try {
-            result = dispatcher.dispatch(context, item);
+            if (null != item) {
+                result = dispatcher.dispatch(context, item);
+            } else {
+                result = dispatcher.dispatch(context, dispatchable);
+            }
         } finally {
             if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishNodeDispatch(result, context, item);
+                if (null != item) {
+                    context.getExecutionListener().finishNodeDispatch(result, context, item);
+                } else if (null != dispatchable) {
+                    context.getExecutionListener().finishNodeDispatch(result, context, dispatchable);
+                }
             }
         }
         return result;

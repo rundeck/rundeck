@@ -207,7 +207,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                            ))
                     .stepNumber(1)
                     .build();
-            itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context, map, resultList, items, keepgoing);
+            itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context, map, resultList, items, keepgoing, 1, null);
             assertFalse(expectStepException);
         } catch (NodeFileParserException e) {
             e.printStackTrace();

@@ -19,6 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
@@ -141,6 +142,11 @@ class ExecutionUtilServiceTests {
             @Override
             String toString() {
                 "abcd"
+            }
+
+            @Override
+            WFSharedContext getSharedContext() {
+                return null
             }
         }
         def logcontrol = mockFor(ExecutionLogWriter)
