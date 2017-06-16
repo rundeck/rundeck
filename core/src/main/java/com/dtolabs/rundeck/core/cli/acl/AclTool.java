@@ -1333,9 +1333,10 @@ public class AclTool extends BaseTool {
         final Map<String, Object> resourceMap;HashMap<String, Object> res = new HashMap<>();
         int nx = argAppStorage.lastIndexOf("/");
         if (nx >= 0) {
-            res.put("path", argAppStorage.substring(0, nx));
+            res.put("path", argAppStorage);
             res.put("name", argAppStorage.substring(nx + 1));
         } else {
+            res.put("path", argAppStorage);
             res.put("name", argAppStorage);
         }
         resourceMap = AuthorizationUtil.resourceRule(ACLConstants.TYPE_STORAGE, res);
