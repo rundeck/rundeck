@@ -58,6 +58,12 @@
                     </div>
 
                     <div class="col-sm-2">
+                        <g:javascript>
+                        fireWhenReady('jobProjectField${rkey}',function(){
+                            _initJobPickerAutocomplete('jobNameField${rkey}','jobGroupField${rkey}','jobProjectField${rkey}');
+                        });
+                        </g:javascript>
+
                         <span class="btn btn-sm btn-default act_choose_job" onclick="loadJobChooser(this, 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}');"
                               id="jobChooseBtn${rkey}"
                               title="${message(code:"select.an.existing.job.to.use")}"

@@ -359,6 +359,31 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
         })
     });
 }
+function _initJobPickerAutocomplete(nameid, groupid, projid) {
+    "use strict";
+    var currentProject = jQuery('#schedEditFrameworkProject').val();
+    jQuery("#" + nameid).devbridgeAutocomplete({
+        minChars: 0,
+        deferRequestBy: 500,
+        lookup: function (q, callback) {
+            var project = projid && jQuery('#' + projid).val() || currentProject;
+            var results = jQuery.ajax({
+                url: _genUrl(appLinks.menuJobSearchJson, {jobFilter: q, project: project, runAuthRequired: true}),
+                success: function (data, x) {
+                    callback({
+                        suggestions: jQuery.map(data, function (item) {
+                            return {value: item.name, data: item};
+                        })
+                    });
+                }
+            });
+        },
+        onSelect: function (selected) {
+            //set group from selected job
+            jQuery('#' + groupid).val(selected.data.group);
+        }
+    });
+}
 var _iseditting=null;
 function _wfiedit(key,num,isErrorHandler) {
     if(_iseditting){

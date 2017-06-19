@@ -467,9 +467,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * Presents the jobs tree and can pass the jobsjscallback parameter
      * to the be a javascript callback for clicked jobs, instead of normal behavior.
      */
-    def jobsPicker = {ScheduledExecutionQuery query ->
+    def jobsPicker(ScheduledExecutionQuery query) {
 
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext
         def usedFilter=null
         if(!query){
@@ -493,6 +492,34 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             results.jobsjscallback=params.jobsjscallback
         }
         return results + [runAuthRequired:params.runAuthRequired]
+    }
+
+    public def jobsSearchJson(ScheduledExecutionQuery query) {
+        AuthContext authContext
+        def usedFilter = null
+        if (!query) {
+            query = new ScheduledExecutionQuery()
+        }
+        if (query && !query.projFilter && params.project) {
+            query.projFilter = params.project
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        } else if (query && query.projFilter) {
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, query.projFilter)
+        } else {
+            authContext = frameworkService.getAuthContextForSubject(session.subject)
+        }
+        def results = listWorkflows(query, authContext, session.user)
+        def runRequired = params.runAuthRequired
+        def jobs = runRequired == 'true' ? results.nextScheduled.findAll { se ->
+            results.jobauthorizations[AuthConstants.ACTION_RUN]?.contains(se.id.toString())
+        } : results.nextScheduled
+        def formatted = jobs.collect {ScheduledExecution job->
+            [name: job.jobName, group: job.groupPath, project: job.project, id: job.extid]
+        }
+        respond(
+                [formats: ['json']],
+                formatted,
+        )
     }
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
         long start=System.currentTimeMillis()
