@@ -1556,6 +1556,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       timeout:params.timeout?:null,
                                       retryAttempt:params.retryAttempt?:0,
                                       retry:params.retry?:null,
+                                      retryDelay: params.retryDelay?:null,
                                       serverNodeUUID: frameworkService.getServerUUID()
             )
 
@@ -1867,7 +1868,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 'argString',
                 'timeout',
                 'orchestrator',
-                'retry'
+                'retry',
+                'retryDelay'
         ]
         propset.each{k->
             props.put(k,se[k])
@@ -1924,6 +1926,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //replace data references
             if (optparams) {
                 props.timeout = DataContextUtils.replaceDataReferences(props.timeout, DataContextUtils.addContext("option", optparams, null))
+            }
+        }
+        if (props.retryDelay?.contains('${')) {
+            //replace data references
+            if (optparams) {
+                props.retryDelay = DataContextUtils.replaceDataReferences(props.retryDelay, DataContextUtils.addContext("option", optparams, null))
             }
         }
 

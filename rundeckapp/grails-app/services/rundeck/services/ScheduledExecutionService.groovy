@@ -39,6 +39,7 @@ import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException
 import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.*
+import org.rundeck.util.Sizes
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
@@ -58,6 +59,7 @@ import rundeck.services.framework.RundeckProjectConfigurable
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
+import java.util.concurrent.TimeUnit
 
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
@@ -1129,6 +1131,13 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
         def Trigger trigger = TriggerBuilder.newTrigger().startNow().withIdentity(quartzJobName + "Trigger").build()
 
+        if(retryAttempt && retryAttempt > 0 && e.retryDelay){
+            long retryTime = Sizes.parseTimeDuration(e.retryDelay,TimeUnit.MILLISECONDS)
+            Date now = new Date()
+            now.setTime(now.getTime()+retryTime)
+            trigger = TriggerBuilder.newTrigger().startAt(now)
+                    .withIdentity(quartzJobName + "Trigger").build()
+        }
         def nextTime
         try {
             log.info("scheduling immediate job run: " + quartzJobName)
