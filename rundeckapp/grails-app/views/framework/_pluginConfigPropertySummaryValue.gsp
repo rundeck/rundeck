@@ -36,7 +36,11 @@
                     name="${provider}"
                     code="${messagePrefix}property.${prop.name}.title"
                     default="${prop.title ?: prop.name}"/>:</span>
-            <span class="text-success"><g:message code="yes"/></span>
+            <g:set var="textclass" value="text-success"/>
+            <g:if test="${prop.renderingOptions['booleanTrueDisplayValueClass']}">
+                <g:set var="textclass" value="${prop.renderingOptions['booleanTrueDisplayValueClass']}"/>
+            </g:if>
+            <span class="${textclass}"><g:message code="yes"/></span>
         </span>
     </g:if>
 </g:if>

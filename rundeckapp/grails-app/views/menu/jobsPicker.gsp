@@ -18,3 +18,6 @@
 <g:if test="${ jobgroups}">
     <g:render template="groupTree" model="${[small:params.compact?true:false,jobgroups:jobgroups,currentJobs:jobgroups['']?jobgroups['']:[],wasfiltered:wasfiltered?true:false,jobauthorizations:jobauthorizations,nowrunning:nowrunning,nextExecutions:nextExecutions,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,jobsjscallback:jobsjscallback,runAuthRequired:runAuthRequired]}"/>
 </g:if>
+<g:if test="${total < 1 && showemptymessage}">
+    <span class="text-muted"><g:message code="no.jobs.in.this.project" /></span>
+</g:if>

@@ -218,7 +218,7 @@ function getCurSEID(){
     /*** ***/
     div.wfctrlholder{
         position:relative;
-        padding-right:200px;
+        padding-right:150px;
     }
     .wfitem{
         display: block;
@@ -229,7 +229,7 @@ function getCurSEID(){
         position:absolute;
         right:0;
         top:0;
-        width:250px;
+        width:150px;
         text-align:right;
     }
     .controls.autohide{
@@ -416,7 +416,7 @@ function getCurSEID(){
                 </span>
             </div>
 
-            <script type="text/javascript" src="${resource(dir:'js',file:'yellowfade.js')}"></script>
+
         </div>
     </div>
 

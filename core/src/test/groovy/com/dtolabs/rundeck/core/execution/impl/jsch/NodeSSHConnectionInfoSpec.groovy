@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
@@ -622,8 +623,8 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 framework,
                 Mock(ExecutionContext) {
                     getFrameworkProject() >> 'NodeSSHConnectionInfoTest'
-                    getPrivateDataContext() >> privateDataContext
-                    getDataContext() >> dataContext
+                    getPrivateDataContext() >> DataContextUtils.context(privateDataContext)
+                    getDataContext() >> DataContextUtils.context(dataContext)
                 }
         )
     }

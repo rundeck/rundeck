@@ -476,7 +476,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
-
+        controller.pluginService = Mock(PluginService)
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -530,6 +530,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> true
         }
 
 
@@ -585,6 +586,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> true
         }
 
 
@@ -648,6 +650,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> true
         }
 
 
@@ -712,6 +715,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
             1 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> true
         }
 
 
@@ -852,6 +856,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
             1 * listOrchestratorPlugins()
         }
+        controller.pluginService = Mock(PluginService)
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -995,10 +1000,81 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
             1 * listDescriptions()
         }
+        controller.pluginService = Mock(PluginService)
         when:
         def result = controller.createFromExecution()
         then:
         response.status == 200
         model.scheduledExecution != null
+    }
+
+
+    def "run job now project passive mode"() {
+        given:
+        def se = new ScheduledExecution(
+                jobName: 'monkey1', project: 'testProject', description: 'blah',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        se.save()
+
+        def exec = new Execution(
+                user: "testuser", project: "testproj", loglevel: 'WARN',
+                workflow: new Workflow(
+                        commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]
+                ).save()
+        )
+        def testcontext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'test'
+            getRoles() >> (['test'] as Set)
+        }
+
+        controller.frameworkService = Mock(FrameworkService) {
+            getAuthContextForSubjectAndProject(*_) >> testcontext
+            authorizeProjectJobAll(*_) >> true
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+        }
+
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            2 * getByIDorUUID(_) >> se
+            isProjectExecutionEnabled(_) >> false
+        }
+
+
+        controller.executionService = Mock(ExecutionService) {
+            1 * getExecutionsAreActive() >> true
+            0 * executeJob(se, testcontext, _, _) >> [executionId: exec.id]
+        }
+        controller.fileUploadService = Mock(FileUploadService)
+
+        def command = new RunJobCommand()
+        command.id = se.id.toString()
+        def extra = new ExtraCommand()
+
+
+        request.subject = new Subject()
+        setupFormTokens(params)
+        //called by show()
+        controller.notificationService = Mock(NotificationService) {
+            1 * listNotificationPlugins() >> [:]
+        }
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
+            1 * listOrchestratorPlugins()
+        }
+        controller.pluginService = Mock(PluginService)
+        when:
+        params.project = 'testProject'
+        request.method = 'POST'
+        def resp = controller.runJobNow(command, extra)
+
+        then:
+        response.status == 200
+        response.redirectedUrl == null
+        !model.success
+        model.failed
+        model.error == 'project.execution.disabled'
     }
 }

@@ -114,13 +114,17 @@
     </div>
 
 </g:if>
-    <g:set var="otherconfigs" value="${extraConfig?.values()?.groupBy { it.configurable.category }}"/>
-    <g:each in="${otherconfigs}" var="otherconfig">
+    <g:set var="categories"
+           value="${new HashSet(extraConfig?.values()?.collect { it.configurable.categories?.values() }.flatten())}"/>
+
+    <g:each in="${categories.sort()}" var="category">
+
 
         <g:render template="projectConfigurableForm"
-                  model="${[extraConfigSet: otherconfig.value,
-                            titleCode     : 'project.configuration.extra.category.'+otherconfig.key+'.title',
-                            helpCode      : 'project.configuration.extra.category.'+otherconfig.key+'.description'
+                  model="${[extraConfigSet: extraConfig?.values(),
+                            category      : category,
+                            titleCode     : 'project.configuration.extra.category.' + category + '.title',
+                            helpCode      : 'project.configuration.extra.category.' + category + '.description'
                   ]}"/>
 
     </g:each>

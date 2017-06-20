@@ -271,7 +271,23 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.projectManager.loadProjectConfig(params.project)
         results.jobExpandLevel = scheduledExecutionService.getJobExpandLevel(rdprojectconfig)
-
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                params.project
+        )
+        def projectNames = frameworkService.projectNames(authContext)
+        def authProjectsToCreate = []
+        projectNames.each{
+            if(it != params.project && frameworkService.authorizeProjectResource(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    AuthConstants.ACTION_CREATE,
+                    it
+            )){
+                authProjectsToCreate.add(it)
+            }
+        }
+        results.projectNames = authProjectsToCreate
         withFormat{
             html {
                 results
@@ -451,9 +467,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * Presents the jobs tree and can pass the jobsjscallback parameter
      * to the be a javascript callback for clicked jobs, instead of normal behavior.
      */
-    def jobsPicker = {ScheduledExecutionQuery query ->
+    def jobsPicker(ScheduledExecutionQuery query) {
 
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext
         def usedFilter=null
         if(!query){
@@ -462,6 +477,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(query && !query.projFilter && params.project) {
             query.projFilter = params.project
             authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        } else if(query && query.projFilter){
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, query.projFilter)
         } else {
             authContext = frameworkService.getAuthContextForSubject(session.subject)
         }
@@ -474,7 +491,36 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(params.jobsjscallback){
             results.jobsjscallback=params.jobsjscallback
         }
+        results.showemptymessage=true
         return results + [runAuthRequired:params.runAuthRequired]
+    }
+
+    public def jobsSearchJson(ScheduledExecutionQuery query) {
+        AuthContext authContext
+        def usedFilter = null
+        if (!query) {
+            query = new ScheduledExecutionQuery()
+        }
+        if (query && !query.projFilter && params.project) {
+            query.projFilter = params.project
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        } else if (query && query.projFilter) {
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, query.projFilter)
+        } else {
+            authContext = frameworkService.getAuthContextForSubject(session.subject)
+        }
+        def results = listWorkflows(query, authContext, session.user)
+        def runRequired = params.runAuthRequired
+        def jobs = runRequired == 'true' ? results.nextScheduled.findAll { se ->
+            results.jobauthorizations[AuthConstants.ACTION_RUN]?.contains(se.id.toString())
+        } : results.nextScheduled
+        def formatted = jobs.collect {ScheduledExecution job->
+            [name: job.jobName, group: job.groupPath, project: job.project, id: job.extid]
+        }
+        respond(
+                [formats: ['json']],
+                formatted,
+        )
     }
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
         long start=System.currentTimeMillis()
@@ -769,6 +815,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     nodeErrorsMap:nodeErrorsMap,
                 resourceModelConfigDescriptions:descriptions,
                 nodeexecconfig:nodeexec,
+                    disableExecutionMode:fproject.getProjectProperties().get("project.disable.executions"),
+                    disableScheduleMode:fproject.getProjectProperties().get("project.disable.schedule"),
                 fcopyconfig:fcopy,
                 defaultNodeExec: defaultNodeExec,
                 defaultFileCopy: defaultFileCopy,

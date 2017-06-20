@@ -102,7 +102,7 @@
             multiworkflow:multiworkflow,
             appLinks:appLinks,
 
-            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}",
+            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}&renderContent=${enc(js:enc(url: params.renderContent))}",
             lastlines: '${enc(js:params.int('lastlines') ?: defaultLastLines)}',
             maxLastLines:'${enc(js:params.int('maxlines') ?: maxLastLines)}',
             collapseCtx: {value:${enc(js:null == execution?.dateCompleted)},changed:false},
@@ -218,6 +218,11 @@
                 _applyAce(this);
             });
             followControl.bindActions('outputappendform');
+
+            PageActionHandlers.registerHandler('copy_other_project',function(el){
+                jQuery('#jobid').val(el.data('jobId'));
+                jQuery('#selectProject').modal();
+            });
         }
         jQuery(init);
       </g:javascript>
@@ -397,7 +402,7 @@
                                             </g:link>
                                         </g:if>
                                         %{--run again links--}%
-                                        <g:if test="${adhocRunAllowed && g.executionMode(active:true)}">
+                                        <g:if test="${adhocRunAllowed && g.executionMode(active:true,project:execution.project)}">
                                             %{--run again only--}%
                                             <g:link
                                                     controller="framework"
@@ -469,7 +474,7 @@
                                     %{--job buttons--}%
                                     <div class="pull-right">
 
-                                        <g:if test="${authChecks[AuthConstants.ACTION_RUN] && g.executionMode(active:true)}">
+                                        <g:if test="${authChecks[AuthConstants.ACTION_RUN] && g.executionMode(active:true,project:execution.project)}">
                                             %{--Run again link--}%
                                             <g:link controller="scheduledExecution"
                                                     action="execute"
@@ -766,6 +771,8 @@
             </div>
         </div>
     </g:if>
+<g:render template="/menu/copyModal"
+          model="[projectNames: projectNames]"/>
 
   <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
 

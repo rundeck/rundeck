@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.workflow.HasSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 
 
@@ -32,7 +33,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface NodeStepResult extends StepExecutionResult {
+public interface NodeStepResult extends StepExecutionResult, HasSharedContext {
     /**
      * @return the node
      */

@@ -292,7 +292,22 @@ class ExecutionJob implements InterruptableJob {
                     }
                 }
             }
+
             FrameworkService frameworkService = initMap.frameworkService
+            def project = initMap.scheduledExecution.project
+            def fwProject = frameworkService.getFrameworkProject(project)
+            def disableEx = fwProject.getProjectProperties().get("project.disable.executions")
+            def disableSe = fwProject.getProjectProperties().get("project.disable.schedule")
+            def isProjectExecutionEnabled = ((!disableEx)||disableEx.toLowerCase()!='true')
+            def isProjectScheduledEnabled = ((!disableSe)||disableSe.toLowerCase()!='true')
+
+            if(!(isProjectExecutionEnabled && isProjectScheduledEnabled)){
+                initMap.jobShouldNotRun = "Job ${initMap.scheduledExecution.extid} schedule has been disabled, removing schedule on this project (${initMap.scheduledExecution.project})."
+                context.getScheduler().deleteJob(context.jobDetail.key)
+                return initMap
+            }
+
+
             initMap.framework = frameworkService.rundeckFramework
             def rolelist = initMap.scheduledExecution.userRoles
             initMap.authContext = frameworkService.getAuthContextForUserAndRoles(initMap.scheduledExecution.user, rolelist)

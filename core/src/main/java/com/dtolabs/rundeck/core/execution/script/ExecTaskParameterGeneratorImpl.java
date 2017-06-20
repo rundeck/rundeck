@@ -62,13 +62,13 @@ public class ExecTaskParameterGeneratorImpl implements ExecTaskParameterGenerato
             //TODO: escape args properly for windows
             commandexecutable = "cmd.exe";
             if (command) {
-                ArrayList<String> list = new ArrayList<String>();
+                ArrayList<String> list = new ArrayList<>();
                 list.add(0, "/c");
                 list.addAll(Arrays.asList(args));
                 commandargs = list.toArray(new String[list.size()]);
             } else if (null != scriptfile) {
                 //commandString is the script file location
-                ArrayList<String> list = new ArrayList<String>();
+                ArrayList<String> list = new ArrayList<>();
                 list.add(scriptfile.getAbsolutePath());
                 if(args!=null && args.length>0){
                     list.addAll(Arrays.asList(args));

@@ -23,7 +23,7 @@
     <meta name="tabpage" content="adhoc"/>
     <title><g:message code="gui.menu.Adhoc"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
     <g:javascript library="executionControl"/>
-    <g:javascript library="yellowfade"/>
+    <asset:javascript src="util/yellowfade.js"/>
     <g:javascript library="pagehistory"/>
     <asset:javascript src="framework/adhoc.js"/>
     <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
@@ -54,7 +54,7 @@
     <g:render template="/common/messages"/>
         <div id="tabsarea">
             <div class="row ">
-                <g:ifExecutionMode active="true">
+                <g:ifExecutionMode active="true" project="${params.project ?: request.project}">
                 <div class="col-sm-10" >
                     <div class="" id="runtab">
                             <div class="form form-horizontal clearfix" id="runbox">
@@ -259,7 +259,7 @@
                     </button>
                 </div>
                 </g:ifExecutionMode>
-                <g:ifExecutionMode active="false">
+                <g:ifExecutionMode active="false" project="${params.project ?: request.project}">
                     <div class="col-sm-12">
                         <div class="alert alert-warning ">
                             <g:message code="disabled.execution.run"/>

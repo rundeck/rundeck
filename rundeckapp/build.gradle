@@ -54,7 +54,8 @@ def grailsZipFileLocation = "${grailsZipFileBasePath}/${grailsZipFile}"
 def grailsInstallLocation = "${rootProject.projectDir}/local"
 def grailsLocalRepo = hasProperty('grailsLocalRepo') ? grailsLocalRepo : 'grails-app/plugins'
 def grailsCentral = hasProperty('disableGrailsCentral') && disableGrailsCentral=='true' ? "-Ddisable.grails.central=${disableGrailsCentral}" : "-Dgrails.central.url=${grailsCentralUrl}"
-def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
+//def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
+def grailsDownloadUrl = "https://github.com/grails/grails-core/releases/download/v${grailsVersion}/grails-${grailsVersion}.zip"
 def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
 def grailsCommandLine = "${grailsHome}/bin/grails"
 def mavenCredsDefined = hasProperty('mavenUser') && hasProperty('mavenPassword') && hasProperty('mavenRealm') && hasProperty('mavenHost')

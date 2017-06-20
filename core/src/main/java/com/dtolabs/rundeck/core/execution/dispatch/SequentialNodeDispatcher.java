@@ -27,13 +27,16 @@ import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase;
+import com.dtolabs.rundeck.core.execution.workflow.ReadableSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -76,8 +79,8 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
 
         context.getExecutionListener()
             .log(4, "preparing for sequential execution on " + nodes.getNodes().size() + " nodes");
-        final HashSet<String> nodeNames = new HashSet<String>(nodes.getNodeNames());
-        final HashMap<String, NodeStepResult> failures = new HashMap<String, NodeStepResult>();
+        final HashSet<String> nodeNames = new HashSet<>(nodes.getNodeNames());
+        final HashMap<String, NodeStepResult> failures = new HashMap<>();
         FailedNodesListener failedListener = context.getExecutionListener().getFailedNodesListener();
         if (null != failedListener) {
             failedListener.matchedNodes(nodeNames);
@@ -85,7 +88,7 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
         boolean interrupted = false;
         final Thread thread = Thread.currentThread();
         boolean success = true;
-        final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
+        final HashMap<String, NodeStepResult> resultMap = new HashMap<>();
         final List<INodeEntry> nodes1 = INodeEntryComparator.rankOrderedNodes(nodes, context
                 .getNodeRankAttribute(),
                 context.isNodeRankOrderAscending());
@@ -109,15 +112,34 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                     interrupted = true;
                     break;
                 }
-                final NodeStepResult result;
+                NodeStepResult result;
 
                 //execute the step or dispatchable
-                if (null != item) {
-                    result = framework.getExecutionService().executeNodeStep(context, item, node);
-                } else {
-                    result = toDispatch.dispatch(context, node);
+                ContextView stepContextView = ContextView.nodeStep(
+                        context.getStepNumber(),
+                        node.getNodename()
+                );
+                final ReadableSharedContext outputContext = SharedDataContextUtils.outputContext(
+                        stepContextView
+                );
 
+                ExecutionContextImpl nodeDataContext =
+                        new ExecutionContextImpl.Builder(context).outputContext(outputContext).build();
+
+                if (null != item) {
+                    result = framework.getExecutionService().executeNodeStep(nodeDataContext, item, node);
+                    //add as node-specific data
+                } else {
+                    result = toDispatch.dispatch(nodeDataContext, node);
                 }
+                //merge step+node context output data into the node context
+                WFSharedContext sharedContext = outputContext.getSharedContext();
+                DataContext data = sharedContext.getData(stepContextView);
+                if (data != null) {
+                    sharedContext.merge(ContextView.node(node.getNodename()), data);
+                }
+
+                result = NodeStepDataResultImpl.with(result, sharedContext);
                 resultMap.put(node.getNodename(), result);
                 if (!result.isSuccess()) {
                     success = false;

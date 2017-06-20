@@ -64,6 +64,10 @@ public class JobStateWorkflowStep implements StepPlugin {
     public static final String EXEC_STATE_FAILED_WITH_RETRY = "Failed-with-retry";
     public static final String PROVIDER_NAME = "job-state-conditional";
 
+    @PluginProperty(title = "Job Project",
+            description = "The project name (needed only if is an external project).")
+    String jobProject;
+
     @PluginProperty(title = "Job Name",
                     description = "Group and Name for the Job in the form \"group/name\".")
     String jobName;
@@ -129,11 +133,15 @@ public class JobStateWorkflowStep implements StepPlugin {
         final JobState jobState;
         final JobReference jobReference;
         try {
+            String project = context.getFrameworkProject();
+            if(null != jobProject){
+                project = jobProject;
+            }
 
             if (null != jobUUID) {
-                jobReference = jobService.jobForID(jobUUID, context.getFrameworkProject());
+                jobReference = jobService.jobForID(jobUUID, project);
             } else {
-                jobReference = jobService.jobForName(jobName, context.getFrameworkProject());
+                jobReference = jobService.jobForName(jobName, project);
             }
             jobState = jobService.getJobState(jobReference);
         } catch (JobNotFound jobNotFound) {
