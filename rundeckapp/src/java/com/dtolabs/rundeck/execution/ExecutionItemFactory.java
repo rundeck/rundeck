@@ -76,50 +76,18 @@ public class ExecutionItemFactory {
             final List<PluginConfiguration> filterConfigs
     )
     {
-        return new ScriptFileCommandBase() {
-            @Override
-            public String getLabel() {
-                return label;
-            }
-
-            @Override
-            public String getScript() {
-                return script;
-            }
-
-            @Override
-            public String[] getArgs() {
-                return strings;
-            }
-
-            @Override
-            public StepExecutionItem getFailureHandler() {
-                return handler;
-            }
-
-            @Override
-            public boolean isKeepgoingOnSuccess() {
-                return keepgoingOnSuccess;
-            }
-
-            public String getScriptInterpreter() {
-                return scriptInterpreter;
-            }
-
-            @Override
-            public String getFileExtension() {
-                return fileExtension;
-            }
-
-            public boolean getInterpreterArgsQuoted() {
-                return interpreterArgsQuoted;
-            }
-
-            @Override
-            public List<PluginConfiguration> getFilterConfigurations() {
-                return filterConfigs;
-            }
-        };
+        return new ScriptFileItem(
+                label,
+                null,
+                script,
+                strings,
+                handler,
+                keepgoingOnSuccess,
+                fileExtension,
+                scriptInterpreter,
+                interpreterArgsQuoted,
+                filterConfigs
+        );
     }
 
     public static StepExecutionItem createScriptFileItem(
@@ -158,50 +126,18 @@ public class ExecutionItemFactory {
     )
     {
         final String filepath = file.getAbsolutePath();
-        return new ScriptFileCommandBase() {
-            @Override
-            public String getLabel() {
-                return label;
-            }
-
-            @Override
-            public String getServerScriptFilePath() {
-                return filepath;
-            }
-
-            @Override
-            public String[] getArgs() {
-                return strings;
-            }
-
-            @Override
-            public StepExecutionItem getFailureHandler() {
-                return handler;
-            }
-
-            @Override
-            public boolean isKeepgoingOnSuccess() {
-                return keepgoingOnSuccess;
-            }
-
-            @Override
-            public String getFileExtension() {
-                return fileExtension;
-            }
-
-            public String getScriptInterpreter() {
-                return scriptInterpreter;
-            }
-
-            public boolean getInterpreterArgsQuoted() {
-                return interpreterArgsQuoted;
-            }
-
-            @Override
-            public List<PluginConfiguration> getFilterConfigurations() {
-                return filterConfigs;
-            }
-        };
+        return new ScriptFileItem(
+                label,
+                filepath,
+                null,
+                strings,
+                handler,
+                keepgoingOnSuccess,
+                fileExtension,
+                scriptInterpreter,
+                interpreterArgsQuoted,
+                filterConfigs
+        );
     }
 
     public static StepExecutionItem createScriptURLItem(
@@ -236,48 +172,17 @@ public class ExecutionItemFactory {
             final List<PluginConfiguration> filterConfigs
     )
     {
-        return new ScriptURLCommandBase() {
-            @Override
-            public String getLabel() {
-                return label;
-            }
-
-            public String getURLString() {
-                return urlString;
-            }
-
-            public String[] getArgs() {
-                return strings;
-            }
-
-            @Override
-            public StepExecutionItem getFailureHandler() {
-                return handler;
-            }
-
-            @Override
-            public boolean isKeepgoingOnSuccess() {
-                return keepgoingOnSuccess;
-            }
-
-            public boolean getInterpreterArgsQuoted() {
-                return interpreterArgsQuoted;
-            }
-
-            @Override
-            public String getFileExtension() {
-                return fileExtension;
-            }
-
-            public String getScriptInterpreter() {
-                return scriptInterpreter;
-            }
-
-            @Override
-            public List<PluginConfiguration> getFilterConfigurations() {
-                return filterConfigs;
-            }
-        };
+        return new ScriptURLItem(
+                label,
+                urlString,
+                strings,
+                handler,
+                keepgoingOnSuccess,
+                interpreterArgsQuoted,
+                fileExtension,
+                scriptInterpreter,
+                filterConfigs
+        );
     }
 
     public static StepExecutionItem createExecCommand(
@@ -300,31 +205,7 @@ public class ExecutionItemFactory {
     )
     {
 
-        return new ExecCommandBase() {
-            @Override
-            public String getLabel() {
-                return label;
-            }
-
-            public String[] getCommand() {
-                return command;
-            }
-
-            @Override
-            public StepExecutionItem getFailureHandler() {
-                return handler;
-            }
-
-            @Override
-            public boolean isKeepgoingOnSuccess() {
-                return keepgoingOnSuccess;
-            }
-
-            @Override
-            public List<PluginConfiguration> getFilterConfigurations() {
-                return filterConfigs;
-            }
-        };
+        return new CommandItem(label, command, handler, keepgoingOnSuccess, filterConfigs);
     }
 
     /**
@@ -391,65 +272,20 @@ public class ExecutionItemFactory {
             final Boolean nodeIntersect
     )
     {
-        return new JobRefCommandBase() {
-            @Override
-            public String getLabel() {
-                return label;
-            }
-
-            public String getJobIdentifier() {
-                return jobIdentifier;
-            }
-
-            @Override
-            public String[] getArgs() {
-                return args;
-            }
-
-            @Override
-            public boolean isNodeStep() {
-                return nodeStep;
-            }
-
-            @Override
-            public StepExecutionItem getFailureHandler() {
-                return handler;
-            }
-
-            @Override
-            public boolean isKeepgoingOnSuccess() {
-                return keepgoingOnSuccess;
-            }
-
-            @Override
-            public Boolean getNodeKeepgoing() {
-                return nodeKeepgoing;
-            }
-
-            @Override
-            public String getNodeFilter() {
-                return nodeFilter;
-            }
-
-            @Override
-            public Integer getNodeThreadcount() {
-                return nodeThreadcount;
-            }
-
-            @Override
-            public String getNodeRankAttribute() {
-                return nodeRankAttribute;
-            }
-
-            @Override
-            public Boolean getNodeRankOrderAscending() {
-                return nodeRankOrderAscending;
-            }
-
-            @Override public Boolean getNodeIntersect() {
-                return nodeIntersect;
-            }
-        };
+        return new JobReferenceItem(
+                label,
+                jobIdentifier,
+                args,
+                nodeStep,
+                handler,
+                keepgoingOnSuccess,
+                nodeKeepgoing,
+                nodeFilter,
+                nodeThreadcount,
+                nodeRankAttribute,
+                nodeRankOrderAscending,
+                nodeIntersect
+        );
     }
 
     /**
@@ -522,5 +358,353 @@ public class ExecutionItemFactory {
                 label,
                 filterConfigurations
         );
+    }
+
+    private static class ScriptFileItem extends ScriptFileCommandBase {
+        private final String label;
+        private final String filepath;
+        private final String script;
+        private final String[] strings;
+        private final StepExecutionItem handler;
+        private final boolean keepgoingOnSuccess;
+        private final String fileExtension;
+        private final String scriptInterpreter;
+        private final boolean interpreterArgsQuoted;
+        private final List<PluginConfiguration> filterConfigs;
+
+        public ScriptFileItem(
+                final String label,
+                final String filepath,
+                final String script,
+                final String[] strings,
+                final StepExecutionItem handler,
+                final boolean keepgoingOnSuccess,
+                final String fileExtension,
+                final String scriptInterpreter,
+                final boolean interpreterArgsQuoted,
+                final List<PluginConfiguration> filterConfigs
+        )
+        {
+            this.label = label;
+            this.filepath = filepath;
+            this.script = script;
+            this.strings = strings;
+            this.handler = handler;
+            this.keepgoingOnSuccess = keepgoingOnSuccess;
+            this.fileExtension = fileExtension;
+            this.scriptInterpreter = scriptInterpreter;
+            this.interpreterArgsQuoted = interpreterArgsQuoted;
+            this.filterConfigs = filterConfigs;
+        }
+
+        @Override
+        public String getLabel() {
+            return label;
+        }
+
+        @Override
+        public String getServerScriptFilePath() {
+            return filepath;
+        }
+
+        @Override
+        public String[] getArgs() {
+            return strings;
+        }
+
+        @Override
+        public StepExecutionItem getFailureHandler() {
+            return handler;
+        }
+
+        @Override
+        public boolean isKeepgoingOnSuccess() {
+            return keepgoingOnSuccess;
+        }
+
+        @Override
+        public String getFileExtension() {
+            return fileExtension;
+        }
+
+        public String getScriptInterpreter() {
+            return scriptInterpreter;
+        }
+
+        public boolean getInterpreterArgsQuoted() {
+            return interpreterArgsQuoted;
+        }
+
+        @Override
+        public List<PluginConfiguration> getFilterConfigurations() {
+            return filterConfigs;
+        }
+
+        @Override
+        public String getScript() {
+            return script;
+        }
+
+        @Override
+        public String toString() {
+            return "ScriptFileItem{" +
+                   (label != null ? "label='" + label + "', " : "") +
+                   (null != filepath ?
+                    "filepath='" + filepath + '\'' :
+                    "script=[" + script.length() + " chars]") +
+                   "}";
+        }
+
+    }
+
+    private static class ScriptURLItem extends ScriptURLCommandBase {
+        private final String label;
+        private final String urlString;
+        private final String[] strings;
+        private final StepExecutionItem handler;
+        private final boolean keepgoingOnSuccess;
+        private final boolean interpreterArgsQuoted;
+        private final String fileExtension;
+        private final String scriptInterpreter;
+        private final List<PluginConfiguration> filterConfigs;
+
+        public ScriptURLItem(
+                final String label,
+                final String urlString,
+                final String[] strings,
+                final StepExecutionItem handler,
+                final boolean keepgoingOnSuccess,
+                final boolean interpreterArgsQuoted,
+                final String fileExtension,
+                final String scriptInterpreter,
+                final List<PluginConfiguration> filterConfigs
+        )
+        {
+            this.label = label;
+            this.urlString = urlString;
+            this.strings = strings;
+            this.handler = handler;
+            this.keepgoingOnSuccess = keepgoingOnSuccess;
+            this.interpreterArgsQuoted = interpreterArgsQuoted;
+            this.fileExtension = fileExtension;
+            this.scriptInterpreter = scriptInterpreter;
+            this.filterConfigs = filterConfigs;
+        }
+
+        @Override
+        public String getLabel() {
+            return label;
+        }
+
+        public String getURLString() {
+            return urlString;
+        }
+
+        public String[] getArgs() {
+            return strings;
+        }
+
+        @Override
+        public StepExecutionItem getFailureHandler() {
+            return handler;
+        }
+
+        @Override
+        public boolean isKeepgoingOnSuccess() {
+            return keepgoingOnSuccess;
+        }
+
+        public boolean getInterpreterArgsQuoted() {
+            return interpreterArgsQuoted;
+        }
+
+        @Override
+        public String getFileExtension() {
+            return fileExtension;
+        }
+
+        public String getScriptInterpreter() {
+            return scriptInterpreter;
+        }
+
+        @Override
+        public List<PluginConfiguration> getFilterConfigurations() {
+            return filterConfigs;
+        }
+
+        @Override
+        public String toString() {
+            return "ScriptURLItem{" +
+                   (label != null ? "label='" + label + ", " : "") +
+                   "urlString='" + urlString + '\'' +
+                   "}";
+        }
+    }
+
+    private static class CommandItem extends ExecCommandBase {
+        private final String label;
+        private final String[] command;
+        private final StepExecutionItem handler;
+        private final boolean keepgoingOnSuccess;
+        private final List<PluginConfiguration> filterConfigs;
+
+        public CommandItem(
+                final String label,
+                final String[] command,
+                final StepExecutionItem handler,
+                final boolean keepgoingOnSuccess,
+                final List<PluginConfiguration> filterConfigs
+        )
+        {
+            this.label = label;
+            this.command = command;
+            this.handler = handler;
+            this.keepgoingOnSuccess = keepgoingOnSuccess;
+            this.filterConfigs = filterConfigs;
+        }
+
+        @Override
+        public String getLabel() {
+            return label;
+        }
+
+        public String[] getCommand() {
+            return command;
+        }
+
+        @Override
+        public StepExecutionItem getFailureHandler() {
+            return handler;
+        }
+
+        @Override
+        public boolean isKeepgoingOnSuccess() {
+            return keepgoingOnSuccess;
+        }
+
+        @Override
+        public List<PluginConfiguration> getFilterConfigurations() {
+            return filterConfigs;
+        }
+
+        @Override
+        public String toString() {
+            return "CommandItem{" +
+                   (label != null ? "label='" + label + "', " : "") +
+                   (command != null ? "command=[" + command.length + " words]" : "") +
+                   "}";
+        }
+    }
+
+    private static class JobReferenceItem extends JobRefCommandBase {
+        private final String label;
+        private final String jobIdentifier;
+        private final String[] args;
+        private final boolean nodeStep;
+        private final StepExecutionItem handler;
+        private final boolean keepgoingOnSuccess;
+        private final Boolean nodeKeepgoing;
+        private final String nodeFilter;
+        private final Integer nodeThreadcount;
+        private final String nodeRankAttribute;
+        private final Boolean nodeRankOrderAscending;
+        private final Boolean nodeIntersect;
+
+        public JobReferenceItem(
+                final String label,
+                final String jobIdentifier,
+                final String[] args,
+                final boolean nodeStep,
+                final StepExecutionItem handler,
+                final boolean keepgoingOnSuccess,
+                final Boolean nodeKeepgoing,
+                final String nodeFilter,
+                final Integer nodeThreadcount,
+                final String nodeRankAttribute,
+                final Boolean nodeRankOrderAscending,
+                final Boolean nodeIntersect
+        )
+        {
+            this.label = label;
+            this.jobIdentifier = jobIdentifier;
+            this.args = args;
+            this.nodeStep = nodeStep;
+            this.handler = handler;
+            this.keepgoingOnSuccess = keepgoingOnSuccess;
+            this.nodeKeepgoing = nodeKeepgoing;
+            this.nodeFilter = nodeFilter;
+            this.nodeThreadcount = nodeThreadcount;
+            this.nodeRankAttribute = nodeRankAttribute;
+            this.nodeRankOrderAscending = nodeRankOrderAscending;
+            this.nodeIntersect = nodeIntersect;
+        }
+
+        @Override
+        public String getLabel() {
+            return label;
+        }
+
+        public String getJobIdentifier() {
+            return jobIdentifier;
+        }
+
+        @Override
+        public String[] getArgs() {
+            return args;
+        }
+
+        @Override
+        public boolean isNodeStep() {
+            return nodeStep;
+        }
+
+        @Override
+        public StepExecutionItem getFailureHandler() {
+            return handler;
+        }
+
+        @Override
+        public boolean isKeepgoingOnSuccess() {
+            return keepgoingOnSuccess;
+        }
+
+        @Override
+        public Boolean getNodeKeepgoing() {
+            return nodeKeepgoing;
+        }
+
+        @Override
+        public String getNodeFilter() {
+            return nodeFilter;
+        }
+
+        @Override
+        public Integer getNodeThreadcount() {
+            return nodeThreadcount;
+        }
+
+        @Override
+        public String getNodeRankAttribute() {
+            return nodeRankAttribute;
+        }
+
+        @Override
+        public Boolean getNodeRankOrderAscending() {
+            return nodeRankOrderAscending;
+        }
+
+        @Override
+        public Boolean getNodeIntersect() {
+            return nodeIntersect;
+        }
+
+        @Override
+        public String toString() {
+            return "JobReferenceItem{" +
+                   (label != null ? "label='" + label + '\'' : "") +
+                   ", jobIdentifier='" + jobIdentifier + '\'' +
+                   ", nodeStep=" + nodeStep +
+                   "}";
+        }
     }
 }
