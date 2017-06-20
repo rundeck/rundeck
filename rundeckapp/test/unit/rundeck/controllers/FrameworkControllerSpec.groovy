@@ -29,6 +29,7 @@ import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
 import rundeck.services.PasswordFieldsService
+import rundeck.services.ScheduledExecutionService
 import rundeck.services.StorageManager
 import rundeck.services.UserService
 import spock.lang.Specification
@@ -613,6 +614,9 @@ class FrameworkControllerSpec extends Specification {
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            isProjectExecutionEnabled(_) >> true
+        }
 
         params.project = "TestSaveProject"
         params.description='abc'
@@ -642,6 +646,9 @@ class FrameworkControllerSpec extends Specification {
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
         controller.execPasswordFieldsService = Mock(PasswordFieldsService)
         controller.userService = Mock(UserService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService){
+            isProjectExecutionEnabled(_) >> true
+        }
 
         params.project = "TestSaveProject"
 
@@ -808,5 +815,71 @@ class FrameworkControllerSpec extends Specification {
         def token = SynchronizerTokensHolder.store(session)
         params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')
         params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
+    }
+
+    def "save project updating passive mode"(){
+        setup:
+        def fwkService=Mock(FrameworkService)
+        controller.frameworkService = fwkService
+        controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.execPasswordFieldsService = Mock(PasswordFieldsService)
+        controller.userService = Mock(UserService)
+        def sEService=Mock(ScheduledExecutionService){
+            isProjectExecutionEnabled(_) >> !currentExecutionDisabled
+            isProjectScheduledEnabled(_) >> !currentScheduleDisabled
+        }
+        controller.scheduledExecutionService = sEService
+
+        params.project = "TestSaveProject"
+        params.description='abc'
+        params.disableExecutionMode = disableExecution
+        params.disableScheduleMode = disableSchedule
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.saveProject()
+
+        then:
+        response.status==302
+        request.errors == null
+        1 * fwkService.authResourceForProject(_)
+        1 * fwkService.getAuthContextForSubject(_)
+        1 * fwkService.authorizeApplicationResourceAll(null,null,['admin']) >> true
+        1 * fwkService.listDescriptions() >> [null,null,null]
+        1 * fwkService.updateFrameworkProjectConfig(_,{
+            it['project.description'] == 'abc'
+        },_) >> [success:true]
+        if(shouldReSchedule){
+            1 * sEService.rescheduleJobs(_,_)
+        }else{
+            0 * sEService.rescheduleJobs(_,_)
+        }
+        if(shouldUnSchedule){
+            1 * sEService.unscheduleJobsForProject(_,_)
+        }else{
+            0 * sEService.unscheduleJobsForProject(_,_)
+        }
+
+        where:
+        currentExecutionDisabled | currentScheduleDisabled | disableExecution | disableSchedule | shouldReSchedule | shouldUnSchedule
+        false                    | false                   | 'false'          | 'false'         | false            | false
+        false                    | false                   | 'true'           | 'false'         | false            | true
+        false                    | false                   | 'false'          | 'true'          | false            | true
+        false                    | false                   | 'true'           | 'true'          | false            | true
+        true                     | false                   | 'false'          | 'false'         | true             | false
+        true                     | false                   | 'true'           | 'false'         | false            | false
+        true                     | false                   | 'false'          | 'true'          | false            | true
+        true                     | false                   | 'true'           | 'true'          | false            | true
+        false                    | true                    | 'false'          | 'false'         | true             | false
+        false                    | true                    | 'true'           | 'false'         | false            | true
+        false                    | true                    | 'false'          | 'true'          | false            | false
+        false                    | true                    | 'true'           | 'true'          | false            | true
+        true                     | true                    | 'false'          | 'false'         | true             | false
+        true                     | true                    | 'true'           | 'false'         | false            | true
+        true                     | true                    | 'false'          | 'true'          | false            | true
+        true                     | true                    | 'true'           | 'true'          | false            | false
+
     }
 }

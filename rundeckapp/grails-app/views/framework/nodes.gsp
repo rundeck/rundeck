@@ -140,7 +140,7 @@
                             </a>
                         </li>
                         <li class="divider" ></li>
-                        <g:if test="${g.executionMode(is:'active')}">
+                        <g:if test="${g.executionMode(is:'active',project:params.project)}">
 
                             <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
                                 <a href="#" data-bind="${run_authorized?'click: runCommand':''}"

@@ -431,6 +431,20 @@ class ScheduledExecutionController  extends ControllerBase{
                 dataMap.scmImportStatus = scmService.importStatusForJobs([scheduledExecution])
             }
         }
+
+        def projectNames = frameworkService.projectNames(authContext)
+        def authProjectsToCreate = []
+        projectNames.each{
+            if(it != params.project && frameworkService.authorizeProjectResource(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    AuthConstants.ACTION_CREATE,
+                    it
+            )){
+                authProjectsToCreate.add(it)
+            }
+        }
+        dataMap.projectNames = authProjectsToCreate
         withFormat{
             html{
                 dataMap
@@ -2348,8 +2362,14 @@ class ScheduledExecutionController  extends ControllerBase{
             return [success:false,error:'unauthorized',message:msg]
         }
 
+
         if(!executionService.executionsAreActive){
             def msg=g.message(code:'disabled.execution.run')
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
+
+        if(!scheduledExecutionService.isProjectExecutionEnabled(scheduledExecution.project)){
+            def msg=g.message(code:'project.execution.disabled')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
@@ -2893,6 +2913,11 @@ class ScheduledExecutionController  extends ControllerBase{
         if(!executionService.executionsAreActive){
             def msg=g.message(code:'disabled.execution.run')
             return [success:false,failed:true,error:'disabled',message: msg]
+        }
+
+        if(!scheduledExecutionService.isProjectExecutionEnabled(scheduledExecution.project)){
+            def msg=g.message(code:'project.execution.disabled')
+            return [success:false,failed:true,error:'disabled',message:msg]
         }
 
         if (!scheduledExecution.hasExecutionEnabled()) {

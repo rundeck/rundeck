@@ -1793,6 +1793,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             return [success:false,failed:true,error:'disabled',message:lookupMessage('disabled.execution.run',null)]
         }
 
+        if(!scheduledExecutionService.isProjectExecutionEnabled(scheduledExecution.project)){
+            return [success:false,failed:true,error:'disabled',message:lookupMessage('project.execution.disabled',null)]
+        }
+
         if (!scheduledExecution.hasExecutionEnabled()) {
             return [success:false,failed:true,error:'disabled',message:lookupMessage('scheduleExecution.execution.disabled',null)]
         }

@@ -66,6 +66,7 @@ import java.text.SimpleDateFormat
  */
 class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, RundeckProjectConfigurable {
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
+
     public static final List<Property> ProjectConfigProperties = [
             PropertyBuilder.builder().with {
                 integer 'groupExpandLevel'
@@ -77,6 +78,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 defaultValue '1'
             }.build(),
     ]
+
     public static
     final LinkedHashMap<String, String> ConfigPropertiesMapping = ['groupExpandLevel': CONF_GROUP_EXPAND_LEVEL]
     boolean transactional = true
@@ -534,12 +536,40 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
     }
 
+    /**
+     * Remove all scheduling for job executions, triggered when passive mode is enabled
+     * @param serverUUID
+     */
+    def unscheduleJobsForProject(String project,String serverUUID=null){
+        def schedJobs = serverUUID ? ScheduledExecution.findAllByScheduledAndServerNodeUUIDAndProject(true, serverUUID, project) : ScheduledExecution.findAllByScheduledAndProject(true, project)
+        schedJobs.each { ScheduledExecution se ->
+            def jobname = se.generateJobScheduledName()
+            def groupname = se.generateJobGroupName()
+
+            quartzScheduler.deleteJob(new JobKey(jobname,groupname))
+            log.info("Unscheduled job: ${se.id}")
+        }
+
+        def results = Execution.isScheduledAdHoc()
+        if (serverUUID) {
+            results = results.withServerNodeUUID(serverUUID)
+        }
+        results = results.withProject(project)
+
+        results.list().each { Execution e ->
+            ScheduledExecution se = e.scheduledExecution
+            def identity = getJobIdent(se, e)
+            quartzScheduler.deleteJob(new JobKey(identity.jobname, identity.groupname))
+            log.info("Unscheduled job: ${se.id}")
+        }
+    }
+
     def rescheduleJob(ScheduledExecution scheduledExecution) {
         rescheduleJob(scheduledExecution, false, null, null)
     }
 
     def rescheduleJob(ScheduledExecution scheduledExecution, wasScheduled, oldJobName, oldJobGroup) {
-        if (scheduledExecution.shouldScheduleExecution()) {
+        if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
             //verify cluster member is schedule owner
 
             def nextdate = null
@@ -568,16 +598,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             rescheduleJobs(serverUUID)
         }
     }
+
     /**
      * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
      * @param serverUUID
      * @return
      */
-    def rescheduleJobs(String serverUUID = null) {
+    def rescheduleJobs(String serverUUID = null, String project = null) {
         Date now = new Date()
         def results = ScheduledExecution.isScheduled()
         if (serverUUID) {
             results = results.withServerUUID(serverUUID)
+        }
+        if(project) {
+            results = results.withProject(project)
         }
         def succeededJobs = []
         def failedJobs = []
@@ -599,6 +633,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         results = Execution.isScheduledAdHoc()
         if (serverUUID) {
             results = results.withServerNodeUUID(serverUUID)
+        }
+        if(project) {
+            results = results.withProject(project)
         }
 
         List<Execution> cleanupExecutions   = []
@@ -914,6 +951,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return null
         }
 
+        if(!shouldScheduleInThisProject(se.project)){
+            log.warn("Attempt to schedule job ${se} ${se.extid} in project ${se.project}, but project executions are disabled.")
+            return null
+        }
+
         if (!se.shouldScheduleExecution()) {
             log.warn(
                     "Attempt to schedule job ${se} ${se.extid} in project ${se.project}, but job execution is disabled."
@@ -965,6 +1007,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.warn("Attempt to schedule job ${se}, but executions are disabled.")
             return null
         }
+        if(!isProjectExecutionEnabled(se.project)){
+            log.warn("Attempt to schedule job ${se}, but project executions are disabled.")
+            return null
+        }
+
 
         if (startTime == null) {
             throw new IllegalArgumentException("Scheduled date and time must be present")
@@ -1147,6 +1194,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def Map scheduleTempJob(AuthContext authContext, Execution e) {
         if(!executionService.getExecutionsAreActive()){
             def msg=g.message(code:'disabled.execution.run')
+            return [success:false,failed:true,error:'disabled',message:msg]
+        }
+
+        if(!isProjectExecutionEnabled(e.project)){
+            def msg=g.message(code:'project.execution.disabled')
             return [success:false,failed:true,error:'disabled',message:msg]
         }
 
@@ -2181,7 +2233,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             }
         }
         if (!failed && scheduledExecution.save(true)) {
-            if (scheduledExecution.shouldScheduleExecution()) {
+            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
                 try {
                     nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
@@ -2704,7 +2756,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         }
 
         if (!failed && scheduledExecution.save(flush:true)) {
-            if (scheduledExecution.shouldScheduleExecution()) {
+            if (scheduledExecution.shouldScheduleExecution() && shouldScheduleInThisProject(scheduledExecution.project)) {
                 def nextdate = null
                 try {
                     nextdate = scheduleJob(scheduledExecution, renamed ? oldjobname : null, renamed ? oldjobgroup : null);
@@ -3372,6 +3424,22 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     def getScheduledExecutionByUUIDAndProject(String uuid, String project){
         ScheduledExecution.findByUuidAndProject(uuid, project)
+    }
+
+    def isProjectExecutionEnabled(String project){
+        def fwProject = frameworkService.getFrameworkProject(project)
+        def disableEx = fwProject.getProjectProperties().get("project.disable.executions")
+        ((!disableEx)||disableEx.toLowerCase()!='true')
+    }
+
+    def isProjectScheduledEnabled(String project){
+        def fwProject = frameworkService.getFrameworkProject(project)
+        def disableSe = fwProject.getProjectProperties().get("project.disable.schedule")
+        ((!disableSe)||disableSe.toLowerCase()!='true')
+    }
+
+    def shouldScheduleInThisProject(String project){
+        return isProjectExecutionEnabled(project) && isProjectScheduledEnabled(project)
     }
 
 }

@@ -271,7 +271,23 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def framework = frameworkService.getRundeckFramework()
         def rdprojectconfig = framework.projectManager.loadProjectConfig(params.project)
         results.jobExpandLevel = scheduledExecutionService.getJobExpandLevel(rdprojectconfig)
-
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
+                session.subject,
+                params.project
+        )
+        def projectNames = frameworkService.projectNames(authContext)
+        def authProjectsToCreate = []
+        projectNames.each{
+            if(it != params.project && frameworkService.authorizeProjectResource(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    AuthConstants.ACTION_CREATE,
+                    it
+            )){
+                authProjectsToCreate.add(it)
+            }
+        }
+        results.projectNames = authProjectsToCreate
         withFormat{
             html {
                 results
@@ -769,6 +785,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     nodeErrorsMap:nodeErrorsMap,
                 resourceModelConfigDescriptions:descriptions,
                 nodeexecconfig:nodeexec,
+                    disableExecutionMode:fproject.getProjectProperties().get("project.disable.executions"),
+                    disableScheduleMode:fproject.getProjectProperties().get("project.disable.schedule"),
                 fcopyconfig:fcopy,
                 defaultNodeExec: defaultNodeExec,
                 defaultFileCopy: defaultFileCopy,
