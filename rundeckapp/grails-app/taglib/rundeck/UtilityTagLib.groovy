@@ -16,6 +16,7 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.core.common.FrameworkResourceException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import grails.util.Environment
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
@@ -57,6 +58,7 @@ class UtilityTagLib{
     private static Random rand=new java.util.Random()
     def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
     def configurationService
+    def scheduledExecutionService
     /**
      * Return a new random string every time it is called.  Attrs are:
      * len: number of random bytes to use
@@ -1096,8 +1098,33 @@ class UtilityTagLib{
         }else if(null!=attrs.is){
             testIsActive=attrs.is =='active'
         }
+        if(null!=attrs.project){
+            try {
+                def projectExec = scheduledExecutionService.isProjectExecutionEnabled(attrs.project)
+                if(!projectExec){
+                    return testIsActive==projectExec
+                }
+            }catch (FrameworkResourceException e){
+                log.warn(e.message)
+            }
+        }
         return testIsActive==configurationService.executionModeActive
     }
+
+    def scheduleMode={attrs,body->
+        def testIsActive = true
+        if(null!=attrs.is){
+            testIsActive=attrs.is =='active'
+        }
+        if(null!=attrs.project){
+            try {
+                return testIsActive==scheduledExecutionService.isProjectScheduledEnabled(attrs.project)
+            }catch (FrameworkResourceException e){
+                log.warn(e.message)
+            }
+        }
+    }
+
     def ifExecutionMode={attrs,body->
         if(executionMode(attrs,body)){
             out<<body()

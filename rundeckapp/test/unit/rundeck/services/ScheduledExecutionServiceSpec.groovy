@@ -155,8 +155,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
         }
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+
         service.frameworkService = Mock(FrameworkService) {
             getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
         }
         def job = new ScheduledExecution(
                 createJobParams(
@@ -188,8 +193,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
         }
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
         service.frameworkService = Mock(FrameworkService) {
             getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
         }
         def job = new ScheduledExecution(
                 createJobParams(
@@ -220,8 +229,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
         }
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+
         service.frameworkService = Mock(FrameworkService) {
             getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
         }
         def job = new ScheduledExecution(
                 createJobParams(
@@ -263,8 +277,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
         }
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+
         service.frameworkService = Mock(FrameworkService) {
             getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
         }
         def job = new ScheduledExecution(
                 createJobParams(
@@ -855,6 +874,9 @@ class ScheduledExecutionServiceSpec extends Specification {
     }
     def setupDoUpdate(enabled=false){
         def uuid=UUID.randomUUID().toString()
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
         service.frameworkService=Mock(FrameworkService){
             authorizeProjectJobAll(*_)>>true
             authorizeProjectResourceAll(*_)>>true
@@ -870,6 +892,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                     getStrategyForWorkflow(*_)>>Mock(WorkflowStrategy)
                 }
             }
+            getFrameworkProject(_) >> projectMock
         }
         service.executionServiceBean=Mock(ExecutionService){
             executionsAreActive()>>false
@@ -1804,7 +1827,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob')).save()
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler)
-        service.frameworkService = Mock(FrameworkService)
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
         when:
         def result = service.rescheduleJobs(null)
 
@@ -1831,7 +1859,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         ).save(flush: true)
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler)
-        service.frameworkService = Mock(FrameworkService)
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
         service.fileUploadService = Mock(FileUploadService)
         when:
         def result = service.rescheduleJobs(null)
@@ -1998,4 +2031,79 @@ class ScheduledExecutionServiceSpec extends Specification {
         'xyz'      | false      | false   | false     | false
     }
 
+
+    def "project passive mode execution"() {
+        given:
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.executions':property]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
+        when:
+        def result = service.isProjectExecutionEnabled(null)
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        property   | expect
+        null       | true
+        ''         | true
+        'true'     | false
+        'false'    | true
+    }
+
+    def "project passive mode schedule"() {
+        given:
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.schedule':property]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
+        when:
+        def result = service.isProjectScheduledEnabled(null)
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        property   | expect
+        null       | true
+        ''         | true
+        'true'     | false
+        'false'    | true
+    }
+
+    def "project passive mode should schedule"() {
+        given:
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.schedule':disableSchedule,
+                                       'project.disable.executions':disableExecution]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
+        when:
+        def result = service.shouldScheduleInThisProject('proj')
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        disableSchedule   |disableExecution   | expect
+        null              |null               | true
+        ''                |''                 | true
+        'true'            |'true'             | false
+        'true'            |'false'            | false
+        'false'           |'false'            | true
+        'false'           |'true'             | false
+
+
+
+    }
 }

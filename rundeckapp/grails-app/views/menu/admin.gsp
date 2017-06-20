@@ -181,7 +181,33 @@
                 ${hasmotd?'Edit':'Add'} Message of the Day
             </g:link>
          </li>
-
+         <li class="list-group-item">
+             <h4><g:message code="passive.mode"/></h4>
+             <div class="inpageconfig">
+                 <span class="configpair">
+                     <span><g:message code="disable.execution.this.job"/>:</span>
+                     <span class="text-${disableExecutionMode&&disableExecutionMode=='true'?'warning':'success'}">
+                         <g:if test="${disableExecutionMode&&disableExecutionMode=='true'}">
+                             <g:message code="yes"/>
+                         </g:if>
+                         <g:if test="${(!disableExecutionMode)||disableExecutionMode!='true'}">
+                             <g:message code="no"/>
+                         </g:if>
+                     </span>
+                 </span>
+                 <span class="configpair">
+                     <span><g:message code="disable.schedule.this.job"/>:</span>
+                     <span class="text-${disableScheduleMode&&disableScheduleMode=='true'?'warning':'success'}">
+                         <g:if test="${disableScheduleMode&&disableScheduleMode=='true'}">
+                             <g:message code="yes"/>
+                         </g:if>
+                         <g:if test="${(!disableScheduleMode)||disableScheduleMode!='true'}">
+                             <g:message code="no"/>
+                         </g:if>
+                     </span>
+                 </span>
+             </div>
+         </li>
         <li class="list-group-item">
             <h4 class="list-group-item-heading">
                 <g:message code="framework.service.ResourceModelSource.label"/>

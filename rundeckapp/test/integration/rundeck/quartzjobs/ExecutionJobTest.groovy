@@ -19,6 +19,7 @@ package rundeck.quartzjobs
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import grails.test.GrailsMock
 import org.junit.Assert
@@ -106,6 +107,11 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.assertEquals(input.executionType, 'scheduled')
             'fakeExecution'
         }
+        def proj = new GrailsMock(IRundeckProject)
+        proj.demand.getProjectProperties(2..2){-> [:]}
+        mockfs.demand.getFrameworkProject(1..1){project->
+            proj.createMock()
+        }
         mockfs.demand.getRundeckFramework(1..1){->
             'fakeFramework'
         }
@@ -157,6 +163,11 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.assertEquals(input.executionType, 'scheduled')
             'fakeExecution'
         }
+        def proj = new GrailsMock(IRundeckProject)
+        proj.demand.getProjectProperties(2..2){-> [:]}
+        mockfs.demand.getFrameworkProject(1..1){project->
+            proj.createMock()
+        }
         mockfs.demand.getRundeckFramework(1..1){->
             'fakeFramework'
         }
@@ -168,6 +179,7 @@ class ExecutionJobTest extends GroovyTestCase{
         mockfs.demand.getAuthContextForUserAndRoles(1..1) { user, rolelist ->
             authcontext
         }
+
         ExecutionService es = mockes.createMock()
         ExecutionUtilService eus = mockeus.createMock()
         FrameworkService fs = mockfs.createMock()

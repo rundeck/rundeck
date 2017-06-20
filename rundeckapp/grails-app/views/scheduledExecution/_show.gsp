@@ -28,7 +28,7 @@
               ]"/>
 </div>
 <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
-<g:set var="runEnabled" value="${g.executionMode(is:'active')}"/>
+<g:set var="runEnabled" value="${g.executionMode(is:'active',project:scheduledExecution.project)}"/>
 <g:set var="canRunJob" value="${runAccess && runEnabled}"/>
 <g:set var="extendeddesc" value="${g.textRemainingLines(text: scheduledExecution.description)}"/>
 <g:set var="rundoctext" value="${extendeddesc?g.textAfterLine(text: extendeddesc, marker:ScheduledExecution.RUNBOOK_MARKER):null}"/>
