@@ -64,6 +64,8 @@ class ScheduledExecution extends ExecutionContext {
     Boolean multipleExecutions = false
     Orchestrator orchestrator
 
+    String timeZone
+
     Boolean scheduleEnabled = true
     Boolean executionEnabled = true
 
@@ -140,6 +142,7 @@ class ScheduledExecution extends ExecutionContext {
         logOutputThreshold(maxSize: 256, blank:true, nullable: true)
         logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['halt','truncate'])
         logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true)
+        timeZone(maxSize: 256, blank: true, nullable: true)
     }
 
     static mapping = {
@@ -230,6 +233,9 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(orchestrator){
             map.orchestrator=orchestrator.toMap();
+        }
+        if(timeZone){
+            map.timeZone=timeZone
         }
 
         if(options){
@@ -324,6 +330,7 @@ class ScheduledExecution extends ExecutionContext {
             se.uuid = data.uuid
         }
         se.timeout = data.timeout?data.timeout.toString():null
+        se.timeZone = data.timeZone?data.timeZone.toString():null
         se.retry = data.retry?data.retry.toString():null
         if(data.options){
             TreeSet options=new TreeSet()

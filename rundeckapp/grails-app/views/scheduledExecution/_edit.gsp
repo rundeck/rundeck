@@ -880,11 +880,37 @@ function getCurSEID(){
             <g:javascript>
                 <wdgt:eventHandlerJS for="scheduledTrue" state="unempty">
                     <wdgt:action visible="true" targetSelector="#scheduledExecutionEditCrontab"/>
+                    <wdgt:action visible="true" targetSelector="#scheduledExecutionEditTZ"/>
                 </wdgt:eventHandlerJS>
                 <wdgt:eventHandlerJS for="scheduledFalse" state="unempty" >
                     <wdgt:action visible="false" target="scheduledExecutionEditCrontab"/>
+                    <wdgt:action visible="false" targetSelector="#scheduledExecutionEditTZ"/>
                 </wdgt:eventHandlerJS>
             </g:javascript>
+    </div>
+
+    <div class="form-group" style="${wdgt.styleVisible(if:scheduledExecution?.scheduled)}" id="scheduledExecutionEditTZ">
+        <div class="${labelColSize} control-label text-form-label">
+            <g:message code="scheduledExecution.property.timezone.prompt" />
+        </div>
+        <div class="${fieldColHalfSize}">
+                <input type='text' name="timeZone" value="${enc(attr:scheduledExecution?.timeZone)}"
+                       id="timeZone" class="form-control"/>
+
+                <span class="help-block">
+                    <g:message code="scheduledExecution.property.timezone.description" />
+                </span>
+        </div>
+    <g:javascript>
+        fireWhenReady('timeZone',function(){
+            var timeZonesDataArr = loadJsonData('timeZonesData');
+            jQuery("#timeZone").devbridgeAutocomplete({
+                lookup: timeZonesDataArr
+            });
+        });
+    </g:javascript>
+    </div>
+
     </div>
     %{-- scheduleEnabled --}%
     <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_TOGGLE_SCHEDULE)}">

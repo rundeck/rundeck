@@ -33,6 +33,7 @@
         _onJobEdit(confirm.setNeedsConfirm);
     </g:javascript>
     <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
+    <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
 </head>
 <body>
 
