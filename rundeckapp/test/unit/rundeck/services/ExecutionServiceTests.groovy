@@ -33,7 +33,7 @@ import rundeck.controllers.ExecutionController
  * Time: 3:07 PM
  */
 @TestFor(ExecutionService)
-@Mock([Execution, FrameworkService, Workflow, ScheduledExecution,CommandExec])
+@Mock([Execution, FrameworkService, Workflow, ScheduledExecution])
 class ExecutionServiceTests {
     private List createTestExecs() {
 

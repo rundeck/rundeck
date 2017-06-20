@@ -207,7 +207,7 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
                            ))
                     .stepNumber(1)
                     .build();
-            itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context, map, resultList, items, keepgoing, 1, null);
+            itemsSuccess = strategy.executeWorkflowItemsForNodeSet(context, map, resultList, items, keepgoing);
             assertFalse(expectStepException);
         } catch (NodeFileParserException e) {
             e.printStackTrace();
@@ -837,13 +837,16 @@ public class TestBaseWorkflowStrategy extends AbstractBaseTest {
 
 
     static class testListener implements ExecutionListenerOverride {
-        public void log(int i, String s) {
-            System.err.println(i + ": " + s);
+        public boolean isTerse() {
+            return false;
         }
 
-        @Override
-        public void log(final int level, final String message, final Map eventMeta) {
-            System.err.println(level + ": " + message);
+        public String getLogFormat() {
+            return null;
+        }
+
+        public void log(int i, String s) {
+            System.err.println(i + ": " + s);
         }
 
         @Override

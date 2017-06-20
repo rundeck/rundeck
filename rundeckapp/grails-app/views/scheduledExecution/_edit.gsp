@@ -218,7 +218,7 @@ function getCurSEID(){
     /*** ***/
     div.wfctrlholder{
         position:relative;
-        padding-right:150px;
+        padding-right:200px;
     }
     .wfitem{
         display: block;
@@ -229,7 +229,7 @@ function getCurSEID(){
         position:absolute;
         right:0;
         top:0;
-        width:150px;
+        width:250px;
         text-align:right;
     }
     .controls.autohide{

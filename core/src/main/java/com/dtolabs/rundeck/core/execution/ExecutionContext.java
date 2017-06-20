@@ -27,16 +27,13 @@ import com.dtolabs.rundeck.core.authorization.AuthContext;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodesSelector;
-import com.dtolabs.rundeck.core.dispatcher.ContextView;
-import com.dtolabs.rundeck.core.data.DataContext;
-import com.dtolabs.rundeck.core.data.MultiDataContext;
-import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
-import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.common.OrchestratorConfig;
-import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
+
+import java.io.File;
+import java.util.Map;
 
 /**
  * ExecutionContext is ...
@@ -130,31 +127,14 @@ public interface ExecutionContext {
      *
      * @return map of data contexts keyed by name
      */
-    public DataContext getDataContext();
-    /**
-     * @return the node specific context data keyed by node name
-     */
-    public MultiDataContext<ContextView, DataContext> getSharedDataContext();
+    public Map<String, Map<String, String>> getDataContext();
 
     /**
      * @return the data context in the private scope
      */
-    public DataContext getPrivateDataContext();
+    public Map<String, Map<String, String>> getPrivateDataContext();
 
     public ExecutionListener getExecutionListener();
 
-    public WorkflowExecutionListener getWorkflowExecutionListener();
-
-    public ExecutionLogger getExecutionLogger();
-
 	public OrchestratorConfig getOrchestrator();
-    /**
-     * @return context for emitting new data
-     */
-    public SharedOutputContext getOutputContext();
-
-    /**
-     * @return manager for capturing logs
-     */
-    public LoggingManager getLoggingManager();
 }

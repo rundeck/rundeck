@@ -26,7 +26,6 @@ package com.dtolabs.rundeck.execution;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.steps.NodeDispatchStepExecutor;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
-import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 
 import java.util.*;
 
@@ -43,18 +42,8 @@ public class PluginNodeStepExecutionItemImpl extends PluginStepExecutionItemImpl
                                            final Map stepConfiguration,
                                            final boolean keepgoingOnSuccess,
                                            final StepExecutionItem handler,
-                                           final String label,
-                                           final List<PluginConfiguration> filterConfigurations
-    )
-    {
-        super(
-                NodeDispatchStepExecutor.STEP_EXECUTION_TYPE,
-                stepConfiguration,
-                keepgoingOnSuccess,
-                handler,
-                label,
-                filterConfigurations
-        );
+                                           final String label) {
+        super(NodeDispatchStepExecutor.STEP_EXECUTION_TYPE, stepConfiguration, keepgoingOnSuccess, handler, label);
         this.nodeStepType = type;
     }
 

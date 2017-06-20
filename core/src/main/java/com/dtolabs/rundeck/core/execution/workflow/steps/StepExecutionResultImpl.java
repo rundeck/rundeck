@@ -40,13 +40,15 @@ public class StepExecutionResultImpl implements StepExecutionResult, HasSourceRe
     private boolean success;
     private Throwable exception;
     private StatusResult sourceResult;
+    private Map<String, Object> resultData;
     private Map<String, Object> failureData;
     private FailureReason failureReason;
     private String failureMessage;
 
     public StepExecutionResultImpl() {
         this.success = true;
-        failureData = new HashMap<>();
+        resultData = new HashMap<String, Object>();
+        failureData = new HashMap<String, Object>();
     }
 
     public StepExecutionResultImpl(Throwable exception, FailureReason failureReason, String failureMessage) {
@@ -85,8 +87,14 @@ public class StepExecutionResultImpl implements StepExecutionResult, HasSourceRe
 
         if (success != result.success) { return false; }
         if (exception != null ? !exception.equals(result.exception) : result.exception != null) { return false; }
+//        if (sourceResult != null ? !sourceResult.equals(result.sourceResult) : result.sourceResult != null) {
+//            return false;
+//        }
         if (failureData != null ? !failureData.equals(result.failureData)
                                 : result.failureData != null) {
+            return false;
+        }
+        if (resultData != null ? !resultData.equals(result.resultData) : result.resultData != null) {
             return false;
         }
 
@@ -97,6 +105,8 @@ public class StepExecutionResultImpl implements StepExecutionResult, HasSourceRe
     public int hashCode() {
         int result = (success ? 1 : 0);
         result = 31 * result + (exception != null ? exception.hashCode() : 0);
+//        result = 31 * result + (sourceResult != null ? sourceResult.hashCode() : 0);
+        result = 31 * result + (resultData != null ? resultData.hashCode() : 0);
         result = 31 * result + (failureData != null ? failureData.hashCode() : 0);
         return result;
     }
@@ -116,6 +126,14 @@ public class StepExecutionResultImpl implements StepExecutionResult, HasSourceRe
 
     public void setSourceResult(StatusResult sourceResult) {
         this.sourceResult = sourceResult;
+    }
+
+    public Map<String, Object> getResultData() {
+        return resultData;
+    }
+
+    public void setResultData(Map<String, Object> resultData) {
+        this.resultData = resultData;
     }
 
     public Map<String, Object> getFailureData() {

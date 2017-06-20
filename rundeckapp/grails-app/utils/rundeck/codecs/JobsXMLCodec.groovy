@@ -412,17 +412,6 @@ class JobsXMLCodec {
                 if(null!= cmd.keepgoingOnSuccess){
                     cmd.keepgoingOnSuccess= XmlParserUtil.stringToBool(cmd.keepgoingOnSuccess,false)
                 }
-                if (cmd.plugins && cmd.plugins instanceof Map && cmd.plugins.LogFilter ) {
-                    if(!(cmd.plugins.LogFilter instanceof Collection)){
-                        cmd.plugins.LogFilter = [cmd.plugins.remove('LogFilter')]
-                    }
-                    cmd.plugins.LogFilter.each {
-                        if (!it.config) {
-                            //remove potential empty string result
-                            it.remove('config')
-                        }
-                    }
-                }
             }
             data.commands.each(fixup)
             data.commands.each {
@@ -433,18 +422,6 @@ class JobsXMLCodec {
         }
         if(null!=data.keepgoing && data.keepgoing instanceof String){
             data.keepgoing = XmlParserUtil.stringToBool(data.keepgoing,false)
-        }
-        if (data.pluginConfig && data.pluginConfig instanceof Map
-                && data.pluginConfig?.LogFilter ) {
-            if(!(data.pluginConfig?.LogFilter instanceof Collection)){
-                data.pluginConfig.LogFilter = [data.pluginConfig.remove('LogFilter')]
-            }
-            data.pluginConfig.LogFilter.each {
-                if (!it.config) {
-                    //remove potential empty string result
-                    it.remove('config')
-                }
-            }
         }
     }
     /**
@@ -639,16 +616,6 @@ class JobsXMLCodec {
         BuilderUtil.makeAttribute(map, 'keepgoing')
         BuilderUtil.makeAttribute(map, 'strategy')
         map.command = map.remove('commands')
-        if(map.pluginConfig?.LogFilter) {
-            map.pluginConfig.LogFilter.each { Map plugindef ->
-                BuilderUtil.makeAttribute(plugindef, 'type')
-                if (!plugindef.config) {
-                    //remove null or empty config map
-                    plugindef.remove('config')
-                }
-            }
-        }
-
         //convert script args values to idiosyncratic label
 
         def gencmd= { cmd, iseh=false ->
@@ -705,15 +672,6 @@ class JobsXMLCodec {
             }
             if(iseh){
                 BuilderUtil.makeAttribute(cmd, 'keepgoingOnSuccess')
-            }
-            if(cmd.plugins?.LogFilter) {
-                cmd.plugins.LogFilter.each { Map plugindef ->
-                    BuilderUtil.makeAttribute(plugindef, 'type')
-                    if (!plugindef.config) {
-                        //remove null or empty config map
-                        plugindef.remove('config')
-                    }
-                }
             }
         }
         map.command.each(gencmd)

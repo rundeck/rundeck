@@ -26,12 +26,7 @@ archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
 ext.rundeckToolsDependencies=''
 apply plugin: "groovy"
-configurations {
-    provided
-}
-sourceSets {
-    main { compileClasspath += configurations.provided }
-}
+
 dependencies {
     compile project(":rundeck-storage:rundeck-storage-api")
     compile project(":rundeck-storage:rundeck-storage-conf")
@@ -69,7 +64,6 @@ dependencies {
     compile ('commons-httpclient:commons-httpclient:3.0.1') {
         exclude group:'junit', module: 'junit'
     }
-    provided "org.projectlombok:lombok:1.16.16"
     testCompile 'junit:junit:4.8.1',
         'org.mockito:mockito-all:1.8.5'
 

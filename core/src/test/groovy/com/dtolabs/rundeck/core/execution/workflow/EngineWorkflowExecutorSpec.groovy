@@ -4,7 +4,6 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.execution.ExecutionContext
-import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.ExecutionListenerOverride
 import com.dtolabs.rundeck.core.execution.FailedNodesListener
@@ -13,7 +12,6 @@ import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
-import com.dtolabs.rundeck.core.execution.workflow.steps.StepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutor
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason
@@ -55,10 +53,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy))
 
         def context = Mock(StepExecutionContext) {
-            getExecutionListener() >> Mock(ExecutionListener){
-                createOverride()>>Mock(ExecutionListenerOverride)
-            }
-            getWorkflowExecutionListener() >> new NoopWorkflowExecutionListener()
+            getExecutionListener() >> Stub(ExecutionListener)
             getFrameworkProject() >> PROJECT_NAME
         }
         def item = Mock(WorkflowExecutionItem) {
@@ -157,7 +152,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy) {
             getProfile() >> new SkipProfile(skipConditions: [
                     (3): Rules.conditionSet(
-                            Condition.not(
+                            Rules.not(
                                     Rules.equalsCondition('step.1.state', 'failed')
                             )
                     )
@@ -219,8 +214,8 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy) {
             getProfile() >> new SkipProfile(skipConditions: [
                     (3): Rules.conditionSet(
-                            Condition.not(
-                                    Condition.and(
+                            Rules.not(
+                                    Rules.and(
                                             Rules.equalsCondition('step.1.state', 'success'),
                                             Rules.equalsCondition('step.2.state', 'success')
                                     )
@@ -278,7 +273,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy) {
             getProfile() >> new SkipProfile(skipConditions: [
                     (2): Rules.conditionSet(
-                            Condition.not(
+                            Rules.not(
                                     Rules.equalsCondition('step.1.state', 'success')
                             )
                     )
@@ -380,12 +375,17 @@ class EngineWorkflowExecutorSpec extends Specification {
 
     class LogListener implements ExecutionListener {
         @Override
-        void log(final int level, final String message) {
-            println(message)
+        boolean isTerse() {
+            return false
         }
 
         @Override
-        void log(final int level, final String message, final Map eventMeta) {
+        String getLogFormat() {
+            return null
+        }
+
+        @Override
+        void log(final int level, final String message) {
             println(message)
         }
 
@@ -502,25 +502,19 @@ class EngineWorkflowExecutorSpec extends Specification {
                         println('-> 2 Starting...')
                         //trigger thread interrupt
                         latch.countDown()
-                        try {
-                            Thread.sleep(20000)
-                            println('-> 2 Finishing...')
-                            new StepExecutionResultImpl()
-                        } catch (InterruptedException e) {
-                            Thread.currentThread().interrupt()
-                            throw new StepException("interrupted", e, new MyReason("test"))
-                        }
+                        Thread.sleep(2000)
+                        println('-> 2 Finishing...')
+                        new StepExecutionResultImpl()
                     }
                 }
         )
         framework.getWorkflowStrategyService().registerInstance('test-strategy', Mock(WorkflowStrategy))
         def logger = new LogListener()
-        def context = ExecutionContextImpl.builder().
-                executionListener(logger).
-                workflowExecutionListener(new NoopWorkflowExecutionListener()).
-                frameworkProject(PROJECT_NAME).
-                stepNumber(1).
-                build()
+        def context = Mock(StepExecutionContext) {
+            getExecutionListener() >> logger
+            getFrameworkProject() >> PROJECT_NAME
+            getStepNumber() >> 1
+        }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
                 getCommands() >> [
@@ -537,28 +531,21 @@ class EngineWorkflowExecutorSpec extends Specification {
 
 
         when:
-        def result
-        def t = new Thread({
-            result = engine.executeWorkflowImpl(context, item)
-            println("finished execute workflow")
-        }
-        )
-
+        def t = Thread.currentThread()
         new Thread({
             latch.await(20, TimeUnit.SECONDS)
             println "causing interrupt..."
             t.interrupt()
         }
         ).start()
-        t.start()
-        t.join()
+        def result = engine.executeWorkflowImpl(context, item)
 
         then:
         null != result
+        !result.success
         result.stepFailures.size() == 1
         result.stepFailures.keySet() == [2] as Set
         result.stepFailures[2].failureReason == StepFailureReason.Interrupted
         result.stepFailures[2].failureMessage == 'Cancellation while running step [2]'
-        !result.success
     }
 }

@@ -98,8 +98,8 @@ class ScriptPluginResourceModelSource implements ResourceModelSource, Configurab
             final String k = (String) o;
             configData.put(k, configuration.getProperty(k));
         }
-        executionDataContext = ScriptDataContextUtil.createScriptDataContextObjectForProject(framework, project);
-        executionDataContext.get("plugin").putAll(factory.createPluginData());
+        executionDataContext = ScriptDataContextUtil.createScriptDataContextForProject(framework, project);
+        executionDataContext.get("plugin").putAll(factory.createPluginDataContext());
         executionDataContext.put("config", configData);
     }
 

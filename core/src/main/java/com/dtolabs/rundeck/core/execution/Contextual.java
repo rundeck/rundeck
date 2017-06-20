@@ -21,7 +21,6 @@ import java.util.Map;
 /**
  * Provides a context
  */
-@FunctionalInterface
 public interface Contextual {
     /**
      * @return the current  context, or null.

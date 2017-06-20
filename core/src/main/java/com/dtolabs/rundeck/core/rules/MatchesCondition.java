@@ -26,9 +26,9 @@ public class MatchesCondition extends KeyValueEqualsCondition {
     }
 
     @Override
-    public boolean test(final StateObj input) {
+    public boolean apply(final StateObj input) {
         if (null == keyPattern && null == valuePattern) {
-            return super.test(input);
+            return super.apply(input);
         }
         Map<String, String> state = input.getState();
         for (String key : state.keySet()) {

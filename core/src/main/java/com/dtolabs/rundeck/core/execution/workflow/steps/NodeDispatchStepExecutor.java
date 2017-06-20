@@ -105,7 +105,7 @@ public class NodeDispatchStepExecutor implements StepExecutor {
                                                             Reason.NodeDispatchFailure,
                                                             "Node dispatch failed");
             //extract failed nodes
-            ArrayList<String> nodeNames = new ArrayList<>();
+            ArrayList<String> nodeNames = new ArrayList<String>();
             for (String nodeName : dispatcherResult.getResults().keySet()) {
                 NodeStepResult nodeStepResult = dispatcherResult.getResults().get(nodeName);
                 if(!nodeStepResult.isSuccess()) {

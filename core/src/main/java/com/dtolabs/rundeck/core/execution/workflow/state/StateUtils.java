@@ -193,7 +193,7 @@ public class StateUtils {
         if(null==input){
             return null;
         }
-        List<StepContextId> ids = new ArrayList<>();
+        List<StepContextId> ids = new ArrayList<StepContextId>();
         for (String s : TextUtils.splitUnescape(input, '/', '\\', new char[]{'/'})) {
             ids.add(stepContextIdFromString(s));
         }
@@ -339,8 +339,9 @@ public class StateUtils {
     }
 
     private static List<StepContextId> asStepContextIds(int[] ids) {
-        ArrayList<StepContextId> stepContextIds = new ArrayList<>(ids.length);
-        for (int id : ids) {
+        ArrayList<StepContextId> stepContextIds = new ArrayList<StepContextId>(ids.length);
+        for (int i = 0; i < ids.length; i++) {
+            int id = ids[i];
             stepContextIds.add(stepContextId(id, false));
         }
         return stepContextIds;
@@ -352,7 +353,7 @@ public class StateUtils {
     }
 
     public static StepIdentifier stepIdentifierAppend(StepIdentifier identifier, StepIdentifier identifier2) {
-        ArrayList<StepContextId> context = new ArrayList<>();
+        ArrayList<StepContextId> context = new ArrayList<StepContextId>();
         if (null != identifier && null != identifier.getContext() && identifier.getContext().size() > 0) {
             context.addAll(identifier.getContext());
         }
@@ -413,12 +414,12 @@ public class StateUtils {
      */
     private static void setupNodeStates(WorkflowState current, WorkflowStateImpl parent, StepIdentifier ident) {
         //create a new mutable map
-        HashMap<String, WorkflowNodeState> nodeStates = new HashMap<>();
+        HashMap<String, WorkflowNodeState> nodeStates = new HashMap<String, WorkflowNodeState>();
         if (null != parent.getNodeStates()) {
             //include original states
             nodeStates.putAll(parent.getNodeStates());
         }
-        ArrayList<String> allNodes = new ArrayList<>();
+        ArrayList<String> allNodes = new ArrayList<String>();
         if(null!=parent.getNodeSet()) {
             allNodes.addAll(parent.getNodeSet());
         }
@@ -431,7 +432,7 @@ public class StateUtils {
                 //add node states for this step
                 for (String nodeName : current.getNodeSet()) {
                     //new mutable map to store step states for this node
-                    HashMap<StepIdentifier, StepState> stepStatesForNode = new HashMap<>();
+                    HashMap<StepIdentifier, StepState> stepStatesForNode = new HashMap<StepIdentifier, StepState>();
 
                     //get node state for this step
                     StepState state = workflowStepState.getNodeStateMap().get(nodeName);

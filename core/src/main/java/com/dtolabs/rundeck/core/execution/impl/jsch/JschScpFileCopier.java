@@ -207,7 +207,7 @@ public class JschScpFileCopier extends BaseFileCopier implements MultiFileCopier
     ) throws FileCopierException {
 
         Project project = new Project();
-        ArrayList<String> ret = new ArrayList<>();
+        ArrayList<String> ret = new ArrayList<String>();
 
         if(null==remotePath) {
             throw new FileCopierException("[jsch-scp] remotePath cant be null on multiple files",StepFailureReason.ConfigurationFailure);

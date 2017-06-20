@@ -18,7 +18,6 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
@@ -81,9 +80,9 @@ class WorkflowControllerTests {
     private FrameworkService createMockFrameworkService(boolean nodestep,Map expectedParams=null) {
         def fwmock = mockFor(FrameworkService)
         if(nodestep){
-            fwmock.demand.getNodeStepPluginDescription { type -> DescriptionBuilder.builder().name('blah').build() }
+            fwmock.demand.getNodeStepPluginDescription { type -> null }
         }else{
-            fwmock.demand.getStepPluginDescription { type -> DescriptionBuilder.builder().name('blah').build() }
+            fwmock.demand.getStepPluginDescription { type -> null }
         }
         fwmock.demand.validateDescription { Description description,
                                             String prefix,
@@ -666,9 +665,10 @@ class WorkflowControllerTests {
         assertEquals(['elf': 'monkey'], result.undo.params.configuration)
     }
 
-    public void testUndoWFEditActionsInsert() {
+    public void testUndoWFEditActions() {
         WorkflowController ctrl = new WorkflowController()
         //test insert & then undo
+        test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             wf.commands = new ArrayList()
 
@@ -690,9 +690,8 @@ class WorkflowControllerTests {
             assertNull result2.error
             assertEquals 0, wf.commands.size()
         }
-    public void testUndoWFEditActionsRemove() {
-        WorkflowController ctrl = new WorkflowController()
         //test remove & undo
+        test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
             wf.addToCommands(je)
@@ -721,9 +720,8 @@ class WorkflowControllerTests {
 
         }
 
-    public void testUndoWFEditActionsModify() {
-        WorkflowController ctrl = new WorkflowController()
         //test modify & undo
+        test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
             wf.addToCommands(je)
@@ -759,9 +757,8 @@ class WorkflowControllerTests {
 
         }
 
-    public void testUndoWFEditActionsMove() {
-        WorkflowController ctrl = new WorkflowController()
         //test move
+        test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
             CommandExec ce = new CommandExec(adhocExecution: true, adhocRemoteString: 'echo something')
@@ -800,6 +797,7 @@ class WorkflowControllerTests {
             assertEquals ce, xitem1
             final Object xitem2 = wf.commands.get(2)
             assertEquals ce2, xitem2
+        }
     }
 
     public void testUndoWFErrorHandlerEditActionsAddHandler() {

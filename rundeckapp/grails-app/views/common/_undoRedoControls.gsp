@@ -23,27 +23,27 @@
 <g:set var="rkey" value="${g.rkey()}"/>
 <div style="margin-bottom:10px; " id="undoredo${rkey}">
     <g:if test="${undo}">
-        <span class="btn btn-xs btn-default act_undo ${highlightundo?'flash_undo':''}"  data-undo-key="${enc(attr:key)}">
+        <span class="btn btn-xs btn-default act_undo"  data-undo-key="${enc(attr:key)}">
             <i class="glyphicon glyphicon-step-backward"></i>
-            <g:message code="undo" />
+            Undo
         </span>
     </g:if>
     <g:else>
         <span class="btn btn-xs btn-default disabled "><i class="glyphicon glyphicon-step-backward"></i> Undo</span>
     </g:else>
     <g:if test="${redo}">
-        <span class="btn btn-xs btn-default act_redo ${!highlightundo?'flash_undo':''}" data-undo-key="${enc(attr: key)}">
-            <g:message code="redo" />
+        <span class="btn btn-xs btn-default act_redo" data-undo-key="${enc(attr: key)}">
+            Redo
             <i class="glyphicon glyphicon-step-forward"></i>
         </span>
     </g:if>
     <g:else>
-        <span class="btn btn-xs btn-default disabled "><g:message code="redo" /> <i class="glyphicon glyphicon-step-forward"></i></span>
+        <span class="btn btn-xs btn-default disabled ">Redo <i class="glyphicon glyphicon-step-forward"></i></span>
     </g:else>
     <g:jsonToken id="reqtoken_undo_${key}" url="${request.forwardURI}"/>
     <g:if test="${undo || redo}">
         %{--popover trigger is initialized on click, defined in jquery init from scheduledExecution/_edit.gsp --}%
-        <span class="btn btn-xs btn-link btn-muted act_revert_popover"
+        <span class="btn btn-xs btn-default act_revert_popover"
               data-toggle="popover"
               data-popover-content-ref="#revert_${enc(attr:rkey)}"
               data-placement="bottom"
@@ -52,13 +52,13 @@
               id="revertall_${enc(attr:rkey)}"
         >
             <i class="glyphicon glyphicon-fast-backward"></i>
-            <g:message code="revert.all.changes" /></span>
+            Revert All Changes</span>
 
         <div id="revert_${enc(attr:rkey)}" class="confirmMessage popout confirmbox" style="display:none">
-            <div class="text-warning"><g:message code="really.revert.0" args="${[revertConfirm?:'all changes']}"/></div>
+            <div class="text-warning">Really revert <g:enc>${revertConfirm?:'all changes'}</g:enc>?</div>
 
-            <span class="btn btn-xs btn-default act_revert_cancel" data-popover-key="${enc(attr: rkey)}" data-undo-key="${enc(attr: key)}"><g:message code="no" /></span>
-            <span class="btn btn-xs btn-warning act_revert_confirm" data-popover-key="${enc(attr: rkey)}" data-undo-key="${enc(attr: key)}"><g:message code="yes" /></span>
+            <span class="btn btn-xs btn-default act_revert_cancel" data-popover-key="${enc(attr: rkey)}" data-undo-key="${enc(attr: key)}">No</span>
+            <span class="btn btn-xs btn-warning act_revert_confirm" data-popover-key="${enc(attr: rkey)}" data-undo-key="${enc(attr: key)}">Yes</span>
         </div>
     </g:if>
 </div>

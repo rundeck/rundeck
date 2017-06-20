@@ -23,8 +23,10 @@
 */
 package com.dtolabs.rundeck.execution;
 
-import com.dtolabs.rundeck.core.execution.*;
-import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
+import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
+import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
+import com.dtolabs.rundeck.core.execution.HasFailureHandler;
+import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 
 import java.util.*;
 
@@ -36,34 +38,24 @@ import java.util.*;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class PluginStepExecutionItemImpl implements StepExecutionItem, ConfiguredStepExecutionItem, HandlerExecutionItem,
-        HasFailureHandler, HasLoggingFilterConfiguration
-{
+                                                    HasFailureHandler {
     private String type;
     private Map stepConfiguration;
     private boolean keepgoingOnSuccess;
     private StepExecutionItem failureHandler;
     private String label;
-    private List<PluginConfiguration> filterConfigurations;
 
     public PluginStepExecutionItemImpl(
             final String type,
             final Map stepConfiguration,
             final boolean keepgoingOnSuccess,
-            final StepExecutionItem failureHandler,
-            final String label,
-            final List<PluginConfiguration> filterConfigurations
+            final StepExecutionItem failureHandler, final String label
     ) {
         this.type = type;
         this.stepConfiguration = stepConfiguration;
         this.keepgoingOnSuccess = keepgoingOnSuccess;
         this.failureHandler = failureHandler;
         this.label= label;
-        this.filterConfigurations=filterConfigurations;
-    }
-
-    @Override
-    public List<PluginConfiguration> getFilterConfigurations() {
-        return filterConfigurations;
     }
 
     public Map getStepConfiguration() {

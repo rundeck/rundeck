@@ -39,17 +39,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.TreeSet;
 
-public class TestSharedDataContextUtils extends AbstractBaseTest {
+public class TestDataContextUtils extends AbstractBaseTest {
     private static final String TEST_PROJECT = "TestDataContextUtils";
 
     File testfile1;
 
-    public TestSharedDataContextUtils(String name) {
+    public TestDataContextUtils(String name) {
         super(name);
     }
 
     public static Test suite() {
-        return new TestSuite(TestSharedDataContextUtils.class);
+        return new TestSuite(TestDataContextUtils.class);
     }
 
     protected void setUp() {
@@ -127,11 +127,115 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
         assertEquals("b", DataContextUtils.resolve(dataContext, "test", "a", "defval"));
 
     }
+    public void testReplaceDataReferences() throws Exception {
+        //null input, null data
+        assertEquals(null, DataContextUtils.replaceDataReferences((String)null, null));
 
+        //null data
+        assertEquals("test ${test.key1}", DataContextUtils.replaceDataReferences("test ${test.key1}", null));
+        assertEquals("${test2.key2}", DataContextUtils.replaceDataReferences("${test2.key2}", null));
+        
+        Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+
+        //null input, data
+        assertEquals(null, DataContextUtils.replaceDataReferences((String)null, dataContext));
+
+        //empty data
+        assertEquals("test ${test.key1}", DataContextUtils.replaceDataReferences("test ${test.key1}", dataContext));
+        assertEquals("${test2.key2}", DataContextUtils.replaceDataReferences("${test2.key2}", dataContext));
+
+        //add context but no data for the keys
+        dataContext.put("test", new HashMap<String, String>());
+
+        assertEquals("test ${test.key1}", DataContextUtils.replaceDataReferences("test ${test.key1}", dataContext));
+        assertEquals("${test2.key2}", DataContextUtils.replaceDataReferences("${test2.key2}", dataContext));
+
+        //put in null value
+        dataContext.get("test").put("key1", null);
+        assertEquals("test ${test.key1}", DataContextUtils.replaceDataReferences("test ${test.key1}", dataContext));
+        assertEquals("${test2.key2}", DataContextUtils.replaceDataReferences("${test2.key2}", dataContext));
+
+        //put in some data
+        dataContext.get("test").put("key1", "123");
+        assertEquals("test 123", DataContextUtils.replaceDataReferences("test ${test.key1}", dataContext));
+
+        //test null value for context
+        dataContext.get("test").put("key1", "123");
+        dataContext.put("test2", null);
+        assertEquals("test ${test2.key1}", DataContextUtils.replaceDataReferences("test ${test2.key1}", dataContext));
+
+        //test null value for data
+        dataContext.get("test").put("key2", null);
+        assertEquals("test ${test.key2}", DataContextUtils.replaceDataReferences("test ${test.key2}", dataContext));
+    }
+
+    public void testReplaceDataReferencesArray() throws Exception {
+
+        {
+            Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+            String[] arr1 = null;
+
+            assertNull("should be null", DataContextUtils.replaceDataReferences(arr1, dataContext));
+        }
+        {
+            Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+            String[] arr1 = {};
+            assertNotNull("should not be null", DataContextUtils.replaceDataReferences(arr1, dataContext));
+            assertEquals("wrong length", 0, DataContextUtils.replaceDataReferences(arr1, dataContext).length);
+        }
+        {
+            Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+            String[] arr1 = {"a"};
+            assertNotNull("should not be null", DataContextUtils.replaceDataReferences(arr1, dataContext));
+            assertEquals("wrong length", 1, DataContextUtils.replaceDataReferences(arr1, dataContext).length);
+            assertEquals("wrong value", "a", DataContextUtils.replaceDataReferences(arr1, dataContext)[0]);
+        }
+        {
+            Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+            String[] arr1 = {"a", "test ${test.key1}"};
+            assertNotNull("should not be null", DataContextUtils.replaceDataReferences(arr1, dataContext));
+            assertEquals("wrong length", 2, DataContextUtils.replaceDataReferences(arr1, dataContext).length);
+            assertEquals("wrong value", "a", DataContextUtils.replaceDataReferences(arr1, dataContext)[0]);
+            assertEquals("wrong value", "test ${test.key1}", DataContextUtils.replaceDataReferences(arr1,
+                dataContext)[1]);
+        }
+        {
+            Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+            dataContext.put("test", new HashMap<String, String>());
+            String[] arr1 = {"a", "test ${test.key1}"};
+            assertNotNull("should not be null", DataContextUtils.replaceDataReferences(arr1, dataContext));
+            assertEquals("wrong length", 2, DataContextUtils.replaceDataReferences(arr1, dataContext).length);
+            assertEquals("wrong value", "a", DataContextUtils.replaceDataReferences(arr1, dataContext)[0]);
+            assertEquals("wrong value", "test ${test.key1}", DataContextUtils.replaceDataReferences(arr1,
+                dataContext)[1]);
+        }
+        {
+            Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+            dataContext.put("test", new HashMap<String, String>());
+            dataContext.get("test").put("key1", null);
+            String[] arr1 = {"a", "test ${test.key1}"};
+            assertNotNull("should not be null", DataContextUtils.replaceDataReferences(arr1, dataContext));
+            assertEquals("wrong length", 2, DataContextUtils.replaceDataReferences(arr1, dataContext).length);
+            assertEquals("wrong value", "a", DataContextUtils.replaceDataReferences(arr1, dataContext)[0]);
+            assertEquals("wrong value", "test ${test.key1}", DataContextUtils.replaceDataReferences(arr1,
+                dataContext)[1]);
+        }
+        {
+            Map<String, Map<String, String>> dataContext = new HashMap<String, Map<String, String>>();
+            dataContext.put("test", new HashMap<String, String>());
+            dataContext.get("test").put("key1", "123");
+            String[] arr1 = {"a", "test ${test.key1}"};
+            assertNotNull("should not be null", DataContextUtils.replaceDataReferences(arr1, dataContext));
+            assertEquals("wrong length", 2, DataContextUtils.replaceDataReferences(arr1, dataContext).length);
+            assertEquals("wrong value", "a", DataContextUtils.replaceDataReferences(arr1, dataContext)[0]);
+            assertEquals("wrong value", "test 123", DataContextUtils.replaceDataReferences(arr1, dataContext)[1]);
+        }
+
+    }
 
     public void testReplaceTokensInScript_nullScript() throws Exception {
         try {
-            DataContextUtils.replaceTokensInScript(null, (Map)null, null, null, null);
+            DataContextUtils.replaceTokensInScript(null, null, null, null,null);
             fail("Should have thrown an Exception");
         }
         catch (NullPointerException ex) {
@@ -139,7 +243,7 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
     }
     public void testReplaceTokensInScript_nullFramework() throws Exception {
         try {
-            DataContextUtils.replaceTokensInScript("test script", (Map)null, null, null, null);
+            DataContextUtils.replaceTokensInScript("test script", null, null, null,null);
             fail("Should have thrown an Exception");
         }
         catch (NullPointerException ex) {
@@ -150,7 +254,7 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
         //null data context is ok
         File temp = null;
         try {
-            temp = DataContextUtils.replaceTokensInScript("test script", (Map)null, fwk, null, null);
+            temp = DataContextUtils.replaceTokensInScript("test script", null, fwk, null,null);
         } catch (IOException e) {
             e.printStackTrace(System.out);
             fail("Unexpected IO Exception: " + e.getMessage());
@@ -165,8 +269,8 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
 
         //test empty data context
         File temp = DataContextUtils.replaceTokensInScript("test script",
-                                                           new HashMap<String, Map<String, String>>(),
-                                                           fwk, null, null);
+            new HashMap<String, Map<String, String>>(),
+            fwk, null,null);
         assertNotNull(temp);
         assertTrue(temp.length() > 0);
         temp.delete();
@@ -177,8 +281,8 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
         //test content
         File temp = DataContextUtils.replaceTokensInScript("test script some data @test.data@\n"
                                                            + "test line 2 some data @test.data2@\n",
-                                                           new HashMap<String, Map<String, String>>(),
-                                                           fwk, null, null);
+            new HashMap<String, Map<String, String>>(),
+            fwk, null,null);
         assertNotNull(temp);
         assertTrue(temp.length() > 0);
         //test content
@@ -251,9 +355,9 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
         dataContext.put("test", new HashMap<String, String>());
         dataContext.get("test").put("some:data", "test1");
         File temp = DataContextUtils.replaceTokensInScript("test script some data @test.some:data@\n"
-                                                           + "test line 2 some data @test.some:data2@\n",
-                                                           dataContext,
-                                                           fwk, null, null);
+                                                               + "test line 2 some data @test.some:data2@\n",
+                dataContext,
+                fwk, null,null);
             assertNotNull(temp);
             assertTrue(temp.length() > 0);
             //test content
@@ -278,8 +382,8 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
             data.put("test", new HashMap<String, String>());
             File temp = DataContextUtils.replaceTokensInScript("test script some data @test.data@\n"
                                                                + "test line 2 some data @test.data2@\n",
-                                                               data,
-                                                               fwk, null, null);
+                data,
+                fwk, null,null);
             assertNotNull(temp);
             assertTrue(temp.length() > 0);
             //test content
@@ -307,7 +411,7 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
         File temp = DataContextUtils.replaceTokensInScript("test script some data @test.data1/data1@\n"
                                                            + "test line 2 some data @test.data2/data2@\n",
                                                            data,
-                                                           fwk, null, null
+                                                           fwk, null,null
         );
         assertNotNull(temp);
         assertTrue(temp.length() > 0);
@@ -335,8 +439,8 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
             data.put("test", testdata);
             File temp = DataContextUtils.replaceTokensInScript("test script some data @test.data@\n"
                                                                + "test line 2 some data @test.data2@\n",
-                                                               data,
-                                                               fwk, null, null);
+                data,
+                fwk, null,null);
             assertNotNull(temp);
             assertTrue(temp.length() > 0);
             //test content
@@ -364,8 +468,8 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
         data.put("test", testdata);
         File temp = DataContextUtils.replaceTokensInScript("test script some data @test.data@\n"
                                                            + "test line 2 some data @test.data2@\n",
-                                                           data,
-                                                           fwk, null, null);
+            data,
+            fwk, null,null);
         assertNotNull(temp);
         assertTrue(temp.length() > 0);
         //test content
@@ -464,8 +568,8 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
     public void testAddContext() throws Exception {
         {
             final Map<String, Map<String, String>> map = DataContextUtils.addContext("test1",
-                                                                                     new HashMap<String, String>(),
-                                                                                     new HashMap<String, Map<String, String>>());
+                new HashMap<String, String>(),
+                new HashMap<String, Map<String, String>>());
 
             assertNotNull(map);
             assertEquals(1, map.size());
@@ -476,8 +580,8 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
             final HashMap<String, Map<String, String>> origContext = new HashMap<String, Map<String, String>>();
             origContext.put("test1", new HashMap<String, String>());
             final Map<String, Map<String, String>> map = DataContextUtils.addContext("test2",
-                                                                                     new HashMap<String, String>(),
-                                                                                     origContext);
+                new HashMap<String, String>(),
+                origContext);
 
             assertNotNull(map);
             assertEquals(2, map.size());
@@ -492,8 +596,8 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
             test1data.put("key1", "value1");
             origContext.put("test1", test1data);
             final Map<String, Map<String, String>> map = DataContextUtils.addContext("test2",
-                                                                                     new HashMap<String, String>(),
-                                                                                     origContext);
+                new HashMap<String, String>(),
+                origContext);
 
             assertNotNull(map);
             assertEquals(2, map.size());
@@ -506,5 +610,31 @@ public class TestSharedDataContextUtils extends AbstractBaseTest {
         }
     }
 
+    public void testMerge(){
+        final HashMap<String, Map<String, String>> origContext = new HashMap<String, Map<String, String>>();
+        final HashMap<String, String> test1data = new HashMap<String, String>();
+        test1data.put("key1", "value1");
+        origContext.put("test1", test1data);
+        final HashMap<String, String> test2data = new HashMap<String, String>();
+        test2data.put("key2", "value2");
+        origContext.put("test2", test2data);
 
+
+        final HashMap<String, Map<String, String>> newContext = new HashMap<String, Map<String, String>>();
+        final HashMap<String, String> test3data = new HashMap<String, String>();
+        test3data.put("key1", "value2");
+        newContext.put("test1", test3data);
+        final Map<String, Map<String, String>> result = DataContextUtils.merge(origContext, newContext);
+
+        assertNotNull(result);
+        assertEquals(2, result.size());
+        assertNotNull(result.get("test1"));
+        assertEquals(1, result.get("test1").size());
+        assertNotNull(result.get("test1").get("key1"));
+        assertEquals("value2", result.get("test1").get("key1"));
+        assertNotNull(result.get("test2"));
+        assertEquals(1, result.get("test2").size());
+        assertNotNull(result.get("test2").get("key2"));
+        assertEquals("value2", result.get("test2").get("key2"));
+    }
 }

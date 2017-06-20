@@ -23,8 +23,9 @@
 */
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
-import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+
+import java.util.Map;
 
 
 /**
@@ -34,7 +35,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContext;
  */
 public interface NodeExecutionContext extends ExecutionContext {
     /**
-     * @return current node if in single node context
+     * @return the node specific context data keyed by node name
      */
-    public INodeEntry getSingleNodeContext();
+    public Map<String, Map<String, Map<String, String>>> getNodeDataContext();
 }

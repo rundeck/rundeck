@@ -174,11 +174,7 @@ environments{
         rundeck.feature.workflowDynamicStepSummaryGUI.enabled = true
     }
 }
-beans {
-    cacheManager {
-        shared = true
-    }
-}
+
 rundeck.metrics.enabled=true
 rundeck.metrics.jmxEnabled=true
 rundeck.metrics.requestFilterEnabled=true

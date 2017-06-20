@@ -48,5 +48,4 @@ public interface StepExecutionContext extends ExecutionContext {
      * @return object to control workflow
      */
     public FlowControl getFlowControl();
-
 }

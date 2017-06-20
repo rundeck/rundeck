@@ -128,8 +128,6 @@ class SanitizedHTMLCodec {
                             'hr'
                     ).allowAttributes('style').onElements(
                             'td','th',
-                    ).allowAttributes('colspan').onElements(
-                            'th',
                     )
 
                                 .toFactory()
