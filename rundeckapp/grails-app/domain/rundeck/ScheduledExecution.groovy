@@ -263,7 +263,10 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(doNodedispatch){
             map.nodesSelectedByDefault = hasNodesSelectedByDefault()
-            map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,keepgoing:nodeKeepgoing?true:false,excludePrecedence:nodeExcludePrecedence?true:false]]
+            map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,
+                                       keepgoing:nodeKeepgoing?true:false,
+                                       successOnEmptyNodeFilter:successOnEmptyNodeFilter?true:false,
+                                       excludePrecedence:nodeExcludePrecedence?true:false]]
             if(nodeRankAttribute){
                 map.nodefilters.dispatch.rankAttribute= nodeRankAttribute
             }
@@ -413,6 +416,9 @@ class ScheduledExecution extends ExecutionContext {
                 }
                 if(data.nodefilters.dispatch.containsKey('rankOrder')){
                     se.nodeRankOrderAscending = data.nodefilters.dispatch.rankOrder=='ascending'
+                }
+                if(data.nodefilters.dispatch.containsKey('successOnEmptyNodeFilter')){
+                    se.successOnEmptyNodeFilter = data.nodefilters.dispatch.successOnEmptyNodeFilter
                 }
             }
             if(data.nodefilters.filter){

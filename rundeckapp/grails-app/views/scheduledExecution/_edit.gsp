@@ -806,6 +806,36 @@ function getCurSEID(){
                 </div>
             </div>
         </div>
+        <div class="form-group">
+            <label class="${labelColClass}"><g:message code="scheduledExecution.property.successOnEmptyNodeFilter.prompt"/></label>
+
+            <div class="${fieldColSize}">
+                <div class="radio">
+                    <label>
+                        <g:radio name="successOnEmptyNodeFilter"
+                                 value="false"
+
+                                 checked="${!scheduledExecution?.successOnEmptyNodeFilter}"
+
+                                 id="successOnEmptyNodeFilterFalse"/>
+                        <g:message code="scheduledExecution.property.successOnEmptyNodeFilter.false.description"/>
+                    </label>
+                </div>
+
+                <div class="radio">
+                    <label>
+                        <g:radio
+                                name="successOnEmptyNodeFilter"
+                                value="true"
+
+                                checked="${scheduledExecution?.successOnEmptyNodeFilter}"
+
+                                id="successOnEmptyNodeFilterTrue"/>
+                        <g:message code="scheduledExecution.property.successOnEmptyNodeFilter.true.description"/>
+                    </label>
+                </div>
+            </div>
+        </div>
 
         <div class="form-group">
             <label class="${labelColClass}"><g:message code="scheduledExecution.property.nodesSelectedByDefault.label"/></label>

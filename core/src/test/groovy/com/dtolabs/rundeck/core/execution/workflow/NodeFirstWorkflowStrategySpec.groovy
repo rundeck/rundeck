@@ -114,4 +114,51 @@ class NodeFirstWorkflowStrategySpec extends Specification {
         NodeStepFailureReason.NonZeroResultCode == result.nodeFailures['node1'][0].failureReason
 
     }
+
+    def "node step fails on empty node list"() {
+        given:
+        def strategy = new NodeFirstWorkflowExecutor(framework)
+        def nodeSet = new NodeSetImpl()
+        Map<String,String> dataContext = new HashMap<>()
+        Map<String,String> job = new HashMap<>()
+        job.put("successOnEmptyNodeFilter",String.valueOf(success))
+        dataContext.put("job",job)
+        def context = Mock(StepExecutionContext) {
+            getExecutionListener() >> Mock(ExecutionListener) {
+                log(*_) >> { args ->
+                    System.err.println(args[1])
+                }
+            }
+            getNodes() >> nodeSet
+            getFrameworkProject()>>TEST_PROJ
+            getDataContext()>>dataContext
+        }
+        def item = Mock(WorkflowExecutionItem) {
+            getWorkflow() >> Mock(IWorkflow) {
+                isKeepgoing() >> true
+                getCommands() >> [
+                        Mock(StepExecutionItem) {
+                            getType() >> 'typeA'
+                        },
+                        Mock(StepExecutionItem) {
+                            getType() >> 'typeB'
+                        }
+                ]
+            }
+        }
+
+        when:
+        def result = strategy.executeWorkflowImpl(context, item)
+
+
+        then:
+        result.isSuccess() == success
+
+
+        where:
+        success | _
+        true    | _
+        false   | _
+
+    }
 }
