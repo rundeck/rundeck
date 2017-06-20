@@ -491,6 +491,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(params.jobsjscallback){
             results.jobsjscallback=params.jobsjscallback
         }
+        results.showemptymessage=true
         return results + [runAuthRequired:params.runAuthRequired]
     }
 

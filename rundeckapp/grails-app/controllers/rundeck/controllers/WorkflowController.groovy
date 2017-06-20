@@ -113,7 +113,8 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
                 edit                : true,
                 isErrorHandler      : isErrorHandler,
                 newitemnodestep     : params.newitemnodestep,
-                fprojects           : fprojects
+                fprojects           : fprojects,
+                project             : params.project
         ]
     }
     /**

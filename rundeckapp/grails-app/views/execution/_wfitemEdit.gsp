@@ -53,8 +53,8 @@
                         />
                     </div>
                     <div class="col-sm-2">
-                        <g:select name="jobProject" from="${fprojects}" id="jobProjectField${rkey}" value="${enc(attr:item?.jobProject)}" noSelection="${['':message(code:'scheduledExecution.projectPath.label')]}"
-                                  class="form-control input-sm"/>
+                        <g:select name="jobProject" from="${fprojects}" id="jobProjectField${rkey}" value="${enc(attr:item?.jobProject)}" noSelection="${['':message(code:'step.type.jobreference.project.label',args:[project])]}"
+                                  class="form-control "/>
                     </div>
 
                     <div class="col-sm-2">
@@ -64,14 +64,15 @@
                         });
                         </g:javascript>
 
-                        <span class="btn btn-sm btn-default act_choose_job" onclick="loadJobChooser(this, 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}');"
+                        <span class="btn  btn-default act_choose_job" onclick="loadJobChooserModal(this, 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}','jobrefpicker${rkey}','jobrefpicker${rkey}_content');"
                               id="jobChooseBtn${rkey}"
                               title="${message(code:"select.an.existing.job.to.use")}"
                               data-loading-text="Loading...">
                             <g:message code="choose.a.job..." />
-                            <i class="caret"></i>
+                            %{--<i class="caret"></i>--}%
                         </span>
                         <span id="jobChooseSpinner"></span>
+                        <g:render template="/common/modal" model="${[modalid:'jobrefpicker'+rkey,modalsize:'modal-lg',title:message(code:"choose.a.job..."),buttons:[]]}"/>
                     </div>
                 </div>
                 <div class="form-group" >

@@ -1087,42 +1087,44 @@ function _doRevertOptsAction() {
 //job chooser
 var jobNameFieldId;
 var jobGroupFieldId;
-function jobChosen(name, group) {
+function jobChosen(name, group, elem) {
     jobWasEdited();
     if (jobNameFieldId && jobGroupFieldId) {
         jQuery('#' + jobNameFieldId).val(name);
         jQuery('#' + jobGroupFieldId).val(group);
+        doyftsuccess(jobNameFieldId);
+        doyftsuccess(jobGroupFieldId);
     }
-    hideJobChooser();
+    if (jQuery(elem).closest('.modal').length === 1) {
+        jQuery(elem).closest('.modal').modal('hide');
+    }
 }
-function loadJobChooser(elem, nameid, groupid, projectid) {
+
+function loadJobChooserModal(elem, nameid, groupid, projectid, modalid, modalcontentid) {
     if (jQuery(elem).hasClass('active')) {
-        hideJobChooser();
+        jQuery('#' + modalid).modal('hide');
         return;
     }
     jobNameFieldId = nameid;
     jobGroupFieldId = groupid;
     var project = selFrameworkProject;
 
-    if(projectid){
+    if (projectid) {
         project = jQuery('#' + projectid).val();
     }
     jQuery(elem).button('loading').addClass('active');
     jQuery.ajax({
-        url:_genUrl(appLinks.menuJobsPicker, {jobsjscallback: 'true', runAuthRequired: true, projFilter: project}),
-        success: function (resp, status, jqxhr){
-            jQuery(elem).popover('destroy');
-            jQuery(elem).popover({html: true, container: 'body', placement: 'left', content: resp, trigger: 'manual'}).popover('show');
-            jQuery(elem).button('reset');
+        url: _genUrl(appLinks.menuJobsPicker, {jobsjscallback: 'true', runAuthRequired: true, projFilter: project}),
+        success: function (resp, status, jqxhr) {
+            jQuery(elem).button('reset').removeClass('active');
+            jQuery('#' + modalcontentid).html(resp);
+            jQuery('#' + modalid).modal('show');
         },
-        error: function (resp, status, jqxhr){
+        error: function (resp, status, jqxhr) {
             showError("Error performing request: menuJobsPicker: " + transport);
-            jQuery(elem).button('reset');
+            jQuery(elem).button('reset').removeClass('active');
         }
     });
-}
-function hideJobChooser() {
-    jQuery('.btn.act_choose_job').removeClass('active').button('reset').popover('hide');
 }
 
 //group chooser
