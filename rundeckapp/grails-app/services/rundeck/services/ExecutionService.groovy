@@ -2050,12 +2050,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 props.retryDelay = DataContextUtils.replaceDataReferences(props.retryDelay, DataContextUtils.addContext("option", optparams, null))
             }
         }
-        if (props.retryDelay?.contains('${')) {
-            //replace data references
-            if (optparams) {
-                props.retryDelay = DataContextUtils.replaceDataReferences(props.retryDelay, DataContextUtils.addContext("option", optparams, null))
-            }
-        }
 
         Workflow workflow = new Workflow(se.workflow)
         //create duplicate workflow
