@@ -310,10 +310,14 @@ class ExecutionUtilService {
         )
     }
 
-    @ToString(includeFields = true, includeNames = true, excludes = ['configuration'])
     static class SimplePluginConfiguration implements PluginConfiguration {
         String provider;
         String service;
         Map<String, Object> configuration;
+
+        @Override
+        String toString() {
+            return "Plugin: $service:$provider"
+        }
     }
 }
