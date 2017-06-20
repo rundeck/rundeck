@@ -403,7 +403,7 @@ class RuleEvaluatorSpec extends Specification {
         //regex fail
         'zingle'      | 'asdf'             | 'bob.*'    | ['asdf', 'ghij'] | false
     }
-    
+
     def "matches any pattern"() {
         expect:
         RuleEvaluator.matchesAnyPatterns(["abc"], "abc")
