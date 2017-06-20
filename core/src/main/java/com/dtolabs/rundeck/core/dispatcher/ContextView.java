@@ -56,17 +56,65 @@ public class ContextView implements ViewTraverse<ContextView>, Comparable<Contex
         return isGlobal();
     }
 
+    /**
+     * @return true if the context has both step and node
+     */
+    public boolean isNodeStep() {
+        return null != getNodeName() && null != getStepNumber();
+    }
+
+    /**
+     * @return true if the context has only node
+     */
+    public boolean isNodeOnly() {
+        return null != getNodeName() && null == getStepNumber();
+    }
+
+    /**
+     * @return true if the context has only step
+     */
+    public boolean isStepOnly() {
+        return null != getStepNumber() && null == getNodeName();
+    }
+
     @Override
     public boolean globExpandTo(final ContextView x) {
         return
                 //this is global, and x is a node context
                 //this is a node context, and so is x
-                null == getStepNumber() && null == x.getStepNumber()
-                && null != x.getNodeName()
+                null == getStepNumber() && x.isNodeOnly()
                 ||
                 //this is a step context, and x is a sub node step context
-                null != getStepNumber() && getStepNumber().equals(x.getStepNumber())
-                && null != x.getNodeName()
+                x.isNodeStep() && x.getStepNumber().equals(getStepNumber())
+                ;
+    }
+
+    @Override
+    public ViewTraverse<ContextView> merge(final ContextView source) {
+        if (source.isWidest()) {
+            return this;
+        } else if (null == getNodeName() && null != source.getNodeName()) {
+            if (null != getStepNumber()) {
+                return nodeStep(getStepNumber(), source.getNodeName());
+            } else if (null != source.getStepNumber()) {
+                return nodeStep(source.getStepNumber(), source.getNodeName());
+            } else {
+                return node(source.getNodeName());
+            }
+        }
+        return this;
+    }
+
+    @Override
+    public boolean isWider(final ContextView source) {
+        if (source.isGlobal()) {
+            return !isGlobal();
+        }
+        return
+
+                isNodeStep() && !source.isNodeStep()
+                || isStepOnly() && null == source.getStepNumber()
+                || isNodeOnly() && source.isGlobal()
                 ;
     }
 
@@ -76,7 +124,7 @@ public class ContextView implements ViewTraverse<ContextView>, Comparable<Contex
             return this;
         }
         if (null != getNodeName() && null != getStepNumber()) {
-            return node(getNodeName());
+            return step(getStepNumber());
         }
         return global();
     }

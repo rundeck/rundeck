@@ -123,7 +123,7 @@ class MultiDataContextSpec extends Specification {
 
 
         when:
-        def result = context.resolve(view, true, "test", key, defval)
+        def result = context.resolve(view, view, "test", key, defval)
         then:
         result == expect
 
@@ -168,11 +168,11 @@ class MultiDataContextSpec extends Specification {
         ContextView.node("znode")        | "blee" | "base"
         ContextView.step(2)              | "blah" | "global"
         ContextView.step(2)              | "blee" | "base"
-        ContextView.nodeStep(2, "anode") | "blah" | "anode"
+        ContextView.nodeStep(2, "anode") | "blah" | "global"
         ContextView.nodeStep(2, "anode") | "blee" | "base"
         ContextView.nodeStep(2, "bnode") | "blah" | "global"
         ContextView.nodeStep(2, "bnode") | "blee" | "base"
-        ContextView.nodeStep(1, "znode") | "blah" | "global"
+        ContextView.nodeStep(1, "znode") | "blah" | "step1"
         ContextView.nodeStep(1, "znode") | "blee" | "base"
         ContextView.nodeStep(2, "znode") | "blah" | "global"
         ContextView.nodeStep(2, "znode") | "blee" | "base"
@@ -189,7 +189,7 @@ class MultiDataContextSpec extends Specification {
         )
         context.merge(ContextView.global(), new BaseDataContext([test: [blah: "global", "global": "global value"]]))
         context.merge(ContextView.node("anode"), new BaseDataContext([test: [blah: "anode", "node": "node value"]]))
-//        context.merge(ContextView.step(1), new BaseDataContext([test: [blah: "step1", "step": "step value"]]))
+        context.merge(ContextView.step(1), new BaseDataContext([test: [blah: "step1", "step": "step value"]]))
         context.merge(
                 ContextView.nodeStep(1, "bnode"),
                 new BaseDataContext([test: [blah: "bnode step 1", "nodestep": "nodestep value"]])
@@ -206,7 +206,8 @@ class MultiDataContextSpec extends Specification {
         ContextView.nodeStep(1, "bnode") | "global"   | "global value"
 //        ContextView.nodeStep(1, "bnode") | "step"     | "step value"
         ContextView.nodeStep(1, "anode") | "nodestep" | null
-        ContextView.nodeStep(1, "anode") | "node"     | "node value"
+        ContextView.nodeStep(1, "anode") | "node"     | null
+        ContextView.nodeStep(1, "anode") | "step"     | "step value"
         ContextView.nodeStep(1, "anode") | "global"   | "global value"
         ContextView.nodeStep(1, "anode") | "base"     | "base value"
     }

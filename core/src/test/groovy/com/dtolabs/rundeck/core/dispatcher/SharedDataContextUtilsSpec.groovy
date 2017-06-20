@@ -48,6 +48,7 @@ class SharedDataContextUtilsSpec extends Specification {
         def result = SharedDataContextUtils.replaceDataReferences(
                 str,
                 shared,
+                ContextView.global(),
                 ContextView.&nodeStep,
                 null,
                 false,
@@ -80,6 +81,86 @@ class SharedDataContextUtilsSpec extends Specification {
         '${a.nodeval*}'            | 'anodeval,anodeval2'
     }
 
+    @Unroll
+    def "replace data references in #str default node context #nodeName expect #expected"() {
+        given:
+        WFSharedContext shared = new WFSharedContext()
+        shared.merge(ContextView.global(), new BaseDataContext([a: [b: "global", globalval: "aglobalval"]]))
+        shared.merge(
+                ContextView.nodeStep(1, "node1"),
+                new BaseDataContext([a: [b: "nodestep1", nodeval: "anodestepval"]])
+        )
+        shared.merge(
+                ContextView.nodeStep(1, "node2"),
+                new BaseDataContext([a: [b: "nodestep2", nodeval: "anodestepval2"]])
+        )
+        shared.merge(ContextView.node("node1"), new BaseDataContext([a: [b: "node1", nodeval: "anodeval"]]))
+        shared.merge(ContextView.node("node2"), new BaseDataContext([a: [b: "node2", nodeval: "anodeval2"]]))
+        shared.merge(ContextView.step(1), new BaseDataContext([a: [b: "step1", stepval: "astepval1"]]))
+        when:
+        def result = SharedDataContextUtils.replaceDataReferences(
+                str,
+                shared,
+                ContextView.node(nodeName),
+                ContextView.&nodeStep,
+                null,
+                false,
+                true
+        )
+        then:
+        result == expected
+
+        where:
+        str              | nodeName | expected
+        '${a.b}'         | 'node1'  | 'node1'
+        '${a.b@node1}'   | 'node1'  | 'node1'
+        '${a.b@node2}'   | 'node1'  | 'node2'
+        '${1:a.b}'       | 'node1'  | 'nodestep1'
+        '${1:a.b@node1}' | 'node1'  | 'nodestep1'
+        '${1:a.b*}'      | 'node1'  | 'nodestep1,nodestep2'
+        '${a.b*}'        | 'node1'  | 'node1,node2'
+//        '${1:a.b@}'      | 'node1'  | 'node1'
+//        '${1:a.b@.}'     | 'node1'  | 'node1'
+        '${1:a.stepval}' | 'node1'  | 'astepval1'
+        '${1:a.b@node1}' | 'node1'  | 'nodestep1'
+        '${1:a.b@node2}' | 'node1'  | 'nodestep2'
+        '${1:a.b@node3}' | 'node1'  | ''
+
+    }
+
+    @Unroll
+    def "replace data references in #str no node context expect #expected"() {
+        given:
+        WFSharedContext shared = new WFSharedContext()
+        shared.merge(ContextView.global(), new BaseDataContext([a: [b: "global", globalval: "aglobalval"]]))
+        shared.merge(ContextView.node("node1"), new BaseDataContext([a: [b: "node1", nodeval: "anodeval"]]))
+        shared.merge(ContextView.node("node2"), new BaseDataContext([a: [b: "node2", nodeval: "anodeval2"]]))
+        shared.merge(ContextView.step(1), new BaseDataContext([a: [b: "step1", stepval: "astepval1"]]))
+        when:
+        def result = SharedDataContextUtils.replaceDataReferences(
+                str,
+                shared,
+                ContextView.global(),
+                ContextView.&nodeStep,
+                null,
+                false,
+                true
+        )
+        then:
+        result == expected
+
+        where:
+        str              | expected
+        '${a.b}'         | 'global'
+        '${a.b@node1}'   | 'node1'
+        '${a.b@node2}'   | 'node2'
+        '${a.b*}'        | 'node1,node2'
+        '${1:a.b}'       | 'step1'
+        '${1:a.stepval}' | 'astepval1'
+        '${1:a.b@node1}' | ''
+        '${1:a.b@node2}' | ''
+
+    }
 
     @Unroll
     def "replace tokens in script duplicate start char #script"() {

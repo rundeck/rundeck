@@ -2771,6 +2771,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @return
      */
     StepExecutionContext overrideJobReferenceNodeFilter(
+            INodeEntry node,
             StepExecutionContext origContext,
             StepExecutionContext newContext,
             String nodeFilter,
@@ -2788,6 +2789,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def filter = SharedDataContextUtils.replaceDataReferences(
                     nodeFilter,
                     origContext.sharedDataContext,
+                    node ? ContextView.node(node.nodename) : ContextView.global(),
                     ContextView.&nodeStep,
                     null,
                     false,
@@ -2887,7 +2889,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             newargs = SharedDataContextUtils.replaceDataReferences(
                     newargs,
                     executionContext.sharedDataContext,
-                    node ? SharedDataContextUtils.defaultNodeView(node.nodename) : ContextView.&nodeStep,
+                    node ? ContextView.node(node.nodename) : ContextView.global(),
+                    ContextView.&nodeStep,
                     null,
                     false,
                     false
@@ -2976,6 +2979,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         if (nodeFilter || nodeIntersect) {
             newContext = overrideJobReferenceNodeFilter(
+                    node,
                     executionContext,
                     newContext,
                     nodeFilter,

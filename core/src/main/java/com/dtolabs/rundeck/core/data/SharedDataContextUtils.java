@@ -79,6 +79,7 @@ public class SharedDataContextUtils {
     public static <T extends ViewTraverse<T>> String[] replaceDataReferences(
             final String[] args,
             final MultiDataContext<T, DataContext> data,
+            final T currentContext,
             final BiFunction<Integer, String, T> viewMap,
             final Converter<String, String> converter,
             boolean failIfUnexpanded,
@@ -95,7 +96,15 @@ public class SharedDataContextUtils {
 
         for (int i = 0; i < args.length; i++) {
             final String arg = args[i];
-            newargs[i] = replaceDataReferences(arg, data, viewMap, converter, failIfUnexpanded, blankIfUnexpanded);
+            newargs[i] = replaceDataReferences(
+                    arg,
+                    data,
+                    currentContext,
+                    viewMap,
+                    converter,
+                    failIfUnexpanded,
+                    blankIfUnexpanded
+            );
         }
 
         return newargs;
@@ -115,6 +124,7 @@ public class SharedDataContextUtils {
     public static <T extends ViewTraverse<T>> String replaceDataReferences(
             final String input,
             final MultiDataContext<T, DataContext> data,
+            final T currentContext,
             final BiFunction<Integer, String, T> viewMap,
             final Converter<String, String> converter,
             boolean failOnUnexpanded,
@@ -131,6 +141,7 @@ public class SharedDataContextUtils {
             final String variableRef = m.group(1);
             String value = argExpander.expandVariable(
                     data,
+                    currentContext,
                     viewMap,
                     variableRef
             );
@@ -155,38 +166,6 @@ public class SharedDataContextUtils {
         return sb.toString();
     }
 
-    /**
-     * Expand a variable reference
-     * @param data multi context data
-     * @param viewMap factory of ViewTraverse type
-     * @param step step text
-     * @param group
-     * @param key
-     * @param node
-     * @param <T>
-     * @return
-     */
-    public static <T extends ViewTraverse<T>> String expandVariable(
-            final MultiDataContext<T, DataContext> data,
-            final BiFunction<Integer, String, T> viewMap,
-            final String step,
-            final String group,
-            final String key,
-            final String node
-    )
-    {
-        Integer t = null;
-        if (null != step) {
-            try {
-                t = Integer.parseInt(step);
-            } catch (NumberFormatException e) {
-                return null;
-            }
-        }
-        T view = viewMap.apply(t, node);
-        boolean strict = null != step || null != node;
-        return data.resolve(view, strict, group, key, null);
-    }
 
 
 
@@ -320,7 +299,8 @@ public class SharedDataContextUtils {
                 reader,
                 variable -> scriptVarExpander.expandVariable(
                         dataContext,
-                        defaultNodeView(nodeName),
+                        ContextView.node(nodeName),
+                        ContextView::nodeStep,
                         variable
                 ),
                 true,
@@ -328,16 +308,6 @@ public class SharedDataContextUtils {
                 '@'
         );
         ScriptfileUtils.writeScriptFile(null, null, replaceTokens, style, destination);
-    }
-
-    /**
-     * @param nodename default node name for the context
-     *
-     * @return a function to generate a ContextView given an step number and nodename, which defaults to the given
-     * nodename if null at invocation time
-     */
-    public static BiFunction<Integer, String, ContextView> defaultNodeView(final String nodename) {
-        return (i, s) -> ContextView.nodeStep(i, s != null ? s : nodename);
     }
 
     /**
@@ -351,6 +321,7 @@ public class SharedDataContextUtils {
      */
     public static <T extends ViewTraverse<T>> Map<String, Object> replaceDataReferences(
             final Map<String, Object> input,
+            final T currentContext,
             final BiFunction<Integer, String, T> viewMap,
             final Converter<String, String> converter,
             final MultiDataContext<T, DataContext> data
@@ -359,27 +330,28 @@ public class SharedDataContextUtils {
         final HashMap<String, Object> output = new HashMap<>();
         for (final String s : input.keySet()) {
             Object o = input.get(s);
-            output.put(s, replaceDataReferencesInObject(o, viewMap, converter, data));
+            output.put(s, replaceDataReferencesInObject(o, currentContext, viewMap, converter, data));
         }
         return output;
     }
 
     public static <T extends ViewTraverse<T>> Object replaceDataReferencesInObject(
             Object o,
+            final T currentContext,
             final BiFunction<Integer, String, T> viewMap,
             final Converter<String, String> converter,
             final MultiDataContext<T, DataContext> data
     )
     {
         if (o instanceof String) {
-            return replaceDataReferences((String) o, data, viewMap, converter, false, false);
+            return replaceDataReferences((String) o, data, currentContext, viewMap, converter, false, false);
         } else if (o instanceof Map) {
             Map<String, Object> sub = (Map<String, Object>) o;
-            return replaceDataReferences(sub, viewMap, converter, data);
+            return replaceDataReferences(sub, currentContext, viewMap, converter, data);
         } else if (o instanceof Collection) {
             ArrayList result = new ArrayList();
             for (final Object o1 : (Collection) o) {
-                result.add(replaceDataReferencesInObject(o1, viewMap, converter, data));
+                result.add(replaceDataReferencesInObject(o1, currentContext, viewMap, converter, data));
             }
             return result;
         } else {

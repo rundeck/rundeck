@@ -917,6 +917,7 @@ class ExecutionServiceSpec extends Specification {
         when:
 
         def newCtxt = service.overrideJobReferenceNodeFilter(
+                null,
                 context,
                 ExecutionContextImpl.builder().build(),
                 nodeFilter,
