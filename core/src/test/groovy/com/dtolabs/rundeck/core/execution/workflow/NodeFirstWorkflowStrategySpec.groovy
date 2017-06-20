@@ -131,7 +131,7 @@ class NodeFirstWorkflowStrategySpec extends Specification {
             }
             getNodes() >> nodeSet
             getFrameworkProject()>>TEST_PROJ
-            getDataContext()>>dataContext
+            getDataContext()>>new BaseDataContext(dataContext)
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {

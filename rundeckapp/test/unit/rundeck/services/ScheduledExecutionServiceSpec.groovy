@@ -2538,8 +2538,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
         }
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
         service.frameworkService = Mock(FrameworkService) {
             getRundeckBase() >> ''
+            getFrameworkProject('AProject') >> projectMock
         }
         def job = new ScheduledExecution(
                 createJobParams(
