@@ -732,7 +732,7 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         }
 
         public boolean test(final String o) {
-            return o != null && regex.matcher(o).matches();
+            return regex.matcher(o).matches();
         }
 
     }
