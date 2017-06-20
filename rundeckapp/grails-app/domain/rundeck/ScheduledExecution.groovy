@@ -166,6 +166,7 @@ class ScheduledExecution extends ExecutionContext {
         options lazy: false
         timeout(type: 'text')
         retry(type: 'text')
+        retryDelay(type: 'text')
     }
 
     static namedQueries = {
