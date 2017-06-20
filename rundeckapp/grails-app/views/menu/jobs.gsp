@@ -279,14 +279,13 @@
         function showJobDetails(elem){
             //get url
             var href=elem.href || elem.getAttribute('data-href');
-            var match=href.match(/\/job\/.+?\/(.+)$/);
-            if(!match){
-                return;
-            }
             lastHref=href;
             doshow=true;
             //match is id
-            var matchId=match[1];
+            var matchId = jQuery(elem).data('jobId');
+            if(!matchId){
+                return;
+            }
             var viewdom=$('jobIdDetailHolder');
             var bcontent=$('jobIdDetailContent');
             if(viewdom){

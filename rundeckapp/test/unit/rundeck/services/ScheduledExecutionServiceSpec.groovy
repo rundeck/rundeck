@@ -20,15 +20,20 @@ import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
 import org.quartz.Scheduler
 import org.quartz.core.QuartzScheduler
+import org.springframework.context.MessageSource
 import rundeck.Execution
 import rundeck.CommandExec
 import rundeck.JobExec
@@ -362,6 +367,225 @@ class ScheduledExecutionServiceSpec extends Specification {
          "commands[2]": [jobName: 'test1', jobGroup: 'a/test']] | _
 
     }
+
+    def "validate workflow step log filter"() {
+        given:
+        def step = new CommandExec([
+                adhocRemoteString: 'test buddy',
+                pluginConfig     : [
+                        LogFilter: [
+                                [
+                                        type  : 'abc',
+                                        config: [a: 'b']
+                                ]
+                        ]
+                ]]
+        )
+        service.pluginService = Mock(PluginService)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        valid
+        !step.hasErrors()
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true
+        ]
+
+    }
+
+    def "validate workflow step missing plugin type"() {
+        given:
+        def step = new PluginStep([
+                type         : 'atype',
+                configuration: [
+                        a: 'b'
+                ]]
+        )
+        service.pluginService = Mock(PluginService)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        !valid
+        step.hasErrors()
+        step.errors.hasFieldErrors('type')
+        service.frameworkService.getStepPluginDescription('atype') >> {
+            throw new MissingProviderException('NodeStep', 'atype')
+        }
+
+    }
+
+    def "validate workflow step log filter invalid"() {
+        given:
+        def step = new CommandExec([
+                adhocRemoteString: 'test buddy',
+                pluginConfig     : [
+                        LogFilter: [
+                                [
+                                        type  : 'abc',
+                                        config: [a: 'b']
+                                ]
+                        ]
+                ]]
+        )
+        service.pluginService = Mock(PluginService)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        !valid
+        step.hasErrors()
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+
+    }
+
+    def "do validate step log filter"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams()
+        params.workflow.strategy = 'node-first'
+        params = params + [
+                '_sessionwf'          : 'true',
+                '_sessionEditWFObject': new Workflow(
+                        keepgoing: true,
+                        strategy: 'node-first',
+                        commands: [new CommandExec([
+                                adhocRemoteString: 'test buddy',
+                                pluginConfig     : [
+                                        LogFilter: [
+                                                [
+                                                        type  : 'abc',
+                                                        config: [a: 'b']
+                                                ]
+                                        ]
+                                ]]
+                        )]
+                ),
+        ]
+        when:
+        def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+        !results.failed
+        !results.scheduledExecution.workflow.commands[0].hasErrors()
+        results.scheduledExecution.workflow.commands[0].pluginConfig.LogFilter != null
+        results.scheduledExecution.workflow.commands[0].pluginConfig.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true
+        ]
+
+    }
+
+    def "do validate step log filter invalid"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams()
+        params.workflow.strategy = 'node-first'
+        params = params + [
+                '_sessionwf'          : 'true',
+                '_sessionEditWFObject': new Workflow(
+                        keepgoing: true,
+                        strategy: 'node-first',
+                        commands: [new CommandExec([
+                                adhocRemoteString: 'filter test',
+                                pluginConfig     : [
+                                        LogFilter: [
+                                                [
+                                                        type  : 'abc',
+                                                        config: [a: 'b']
+                                                ]
+                                        ]
+                                ]]
+                        )]
+                ),
+        ]
+        when:
+        def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+        results.failed
+        results.scheduledExecution.workflow.commands[0].hasErrors()
+
+        results.scheduledExecution.workflow.commands[0].pluginConfig.LogFilter != null
+        results.scheduledExecution.workflow.commands[0].pluginConfig.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+
+    }
+    def "do validate workflow log filters"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams()
+        params.workflow.globalLogFilters = [
+                '0': [
+                        type  : 'abc',
+                        config: [a: 'b']
+                ]
+        ]
+        when:
+        def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+        !results.failed
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true
+        ]
+
+    }
+
+    def "do validate workflow log filters invalid"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams()
+        params.workflow.globalLogFilters = [
+                '0': [
+                        type  : 'abc',
+                        config: [a: 'b']
+                ]
+        ]
+        when:
+        def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+        results.failed
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        results.scheduledExecution.errors.hasFieldErrors('workflow')
+        params['logFilterValidation']["0"] == 'bogus'
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+
+    }
     @Unroll
     def "do validate node-first strategy error handlers"() {
         given:
@@ -423,6 +647,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         def params = baseJobParams() + [
                 workflow: [threadcount: 1, keepgoing: true, "commands[0]": cmd],
         ]
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
         when:
         def results = service._dovalidate(params, Mock(UserAndRoles))
 
@@ -906,6 +1133,48 @@ class ScheduledExecutionServiceSpec extends Specification {
         uuid
     }
 
+    def setupDoUpdateJob(enabled = false) {
+        def uuid = UUID.randomUUID().toString()
+
+        def projectMock = Mock(IRundeckProject) {
+            getProperties() >> [:]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            _ * authorizeProjectJobAll(*_) >> true
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * existsFrameworkProject('AProject') >> true
+            _ * getFrameworkProject('AProject') >> projectMock
+            _ * existsFrameworkProject('BProject') >> true
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
+            _ * isClusterModeEnabled() >> enabled
+            _ * getServerUUID() >> uuid
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                    _ * getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy) {
+                        _ * validate(_)
+                    }
+                }
+            }
+            _ * getFrameworkPropertyResolverWithProps(_, _)
+        }
+        service.executionServiceBean = Mock(ExecutionService) {
+            _ * getExecutionsAreActive() >> false
+        }
+        service.pluginService = Mock(PluginService) {
+            _ * validatePlugin('node-first', _ as WorkflowStrategyService, _, _)
+        }
+
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            _ * createExecutionItemForWorkflow(_) >> Mock(WorkflowExecutionItem) {
+                _ * getWorkflow()
+            }
+        }
+        service.quartzScheduler = Mock(Scheduler)
+        uuid
+    }
+
     private UserAndRolesAuthContext mockAuth() {
         Mock(UserAndRolesAuthContext) {
             getUsername() >> 'test'
@@ -918,6 +1187,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         setupDoUpdate()
         def se = new ScheduledExecution(createJobParams(orig)).save()
         service.fileUploadService = Mock(FileUploadService)
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -952,6 +1224,9 @@ class ScheduledExecutionServiceSpec extends Specification {
             getRoles() >> new HashSet<String>(['test'])
         }
 
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
 
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
@@ -1098,6 +1373,8 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         def se = new ScheduledExecution(createJobParams(orig)).save()
         def newJob = new ScheduledExecution(createJobParams(inparams))
+        service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
+        service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
 
 
 
@@ -1426,8 +1703,18 @@ class ScheduledExecutionServiceSpec extends Specification {
             isClusterModeEnabled() >> false
             existsFrameworkProject(projectName) >> true
             getFrameworkProject(projectName) >> projectMock
+
+            getRundeckFramework()>>Mock(Framework){
+                getWorkflowStrategyService()>>Mock(WorkflowStrategyService){
+                    getStrategyForWorkflow(*_)>>Mock(WorkflowStrategy)
+                }
+            }
         }
         service.fileUploadService = Mock(FileUploadService)
+        service.pluginService = Mock(PluginService)
+        service.executionUtilService=Mock(ExecutionUtilService){
+            createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
+        }
 
 
 
@@ -1588,6 +1875,160 @@ class ScheduledExecutionServiceSpec extends Specification {
         [jobName: 'newName', scheduled: false] | true
         [jobName: 'newName', scheduled: false] | false
     }
+
+    @Unroll
+    def "do update workflow log filters"() {
+        given:
+        setupDoUpdate()
+        def se = new ScheduledExecution(createJobParams()).save()
+        def passparams = [id: se.id.toString()] + inparams
+        when:
+        def results = service._doupdate(passparams, mockAuth())
+
+
+        then:
+        results.success
+
+
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        !results.scheduledExecution.errors.hasFieldErrors('workflow')
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true,
+        ]
+        where:
+        inparams | orig | expect
+        [workflow: [globalLogFilters: [
+                '0': [
+                        type  : 'abc',
+                        config: [a: 'b']
+                ]
+        ]]]      | _    | _
+    }
+
+    @Unroll
+    def "do update workflow log filters invalid"() {
+        given:
+        setupDoUpdate()
+        def se = new ScheduledExecution(createJobParams()).save()
+        def passparams = [id: se.id.toString()] + inparams
+        when:
+        def results = service._doupdate(passparams, mockAuth())
+
+
+        then:
+        !results.success
+
+
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        results.scheduledExecution.errors.hasFieldErrors('workflow')
+        passparams['logFilterValidation']["0"] == 'bogus'
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+        where:
+        inparams | orig | expect
+        [workflow: [globalLogFilters: [
+                '0': [
+                        type  : 'abc',
+                        config: [a: 'b']
+                ]
+        ]]]      | _    | _
+    }
+
+    @Unroll
+    def "do update job workflow log filters"() {
+        given:
+        setupDoUpdateJob()
+        def se = new ScheduledExecution(createJobParams()).save()
+        def newJob = new ScheduledExecution(
+                createJobParams(
+                        [
+                                workflow: new Workflow(
+                                        keepgoing: true,
+                                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])],
+                                        pluginConfigMap: pluginConfigMap
+                                )
+                        ]
+                )
+        )
+        def pluginService = service.pluginService
+        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
+        0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
+        1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true,
+        ]
+        0 * service.frameworkService.validateDescription(*_)
+        0 * _
+        when:
+        def results = service._doupdateJob(se.id, newJob, mockAuth())
+
+
+        then:
+        results.success
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == pluginConfigMap.LogFilter
+        !results.scheduledExecution.errors.hasFieldErrors('workflow')
+
+
+        where:
+        pluginConfigMap                                | _
+        [LogFilter: [type: 'abc', config: [a: 'b']]]   | _
+        [LogFilter: [[type: 'abc', config: [a: 'b']]]] | _
+    }
+
+
+    @Unroll
+    def "do update job workflow log filters invalid"() {
+        given:
+        setupDoUpdateJob()
+        def se = new ScheduledExecution(createJobParams()).save()
+        def newJob = new ScheduledExecution(
+                createJobParams(
+                        [
+                                workflow: new Workflow(
+                                        keepgoing: true,
+                                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])],
+                                        pluginConfigMap: pluginConfigMap
+                                )
+                        ]
+                )
+        )
+
+        def pluginService = service.pluginService
+
+        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
+        0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
+        1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+        0 * service.frameworkService.validateDescription(*_)
+        0 * _
+        when:
+        def results = service._doupdateJob(se.id, newJob, mockAuth())
+
+
+        then:
+        !results.success
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == pluginConfigMap.LogFilter
+        results.scheduledExecution.errors.hasFieldErrors('workflow')
+
+        where:
+        pluginConfigMap                                 | _
+        [LogFilter: [type: 'abc', config: [a: 'b']]]    | _
+        [LogFilter: [[type: 'abc', config: [a: 'b']]]]  | _
+    }
+
 
     def "do validate cluster mode sets serverNodeUUID when enabled"(){
         given:

@@ -123,7 +123,8 @@
                                             controller="scheduledExecution"
                                             id="${scheduledExecution.extid}"
                                             class="hover_show_job_info"
-                                            params="[project: scheduledExecution.project]">
+                                            params="[project: scheduledExecution.project]"
+                                            data-job-id="${scheduledExecution.extid}">
                                         <g:if test="${showIcon}">
                                             <i class="glyphicon glyphicon-book"></i>
                                         </g:if>

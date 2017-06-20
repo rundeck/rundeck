@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.app.api.scm
 
+import com.dtolabs.rundeck.util.JsonUtil
 import grails.validation.Validateable
 import org.codehaus.groovy.grails.web.json.JSONObject
 import org.grails.databinding.BindUsing
@@ -94,17 +95,17 @@ class ScmAction {
     }
     static Closure validateJson = { data, boolean inputOnly=false ->
         String errormsg = ''
-        if (JSONObject.NULL != data.input && !(data.input instanceof Map)) {
+        if (JsonUtil.jsonNull(data.input) != null && !(data.input instanceof Map)) {
             errormsg += " json: expected 'input' to be a map"
         }
         if(!inputOnly) {
-            if (JSONObject.NULL != data.jobs && !(data.jobs instanceof Collection)) {
+            if (JsonUtil.jsonNull(data.jobs) != null && !(data.jobs instanceof Collection)) {
                 errormsg += " json: expected 'jobs' to be a list"
             }
-            if (JSONObject.NULL != data.items && !(data.items instanceof Collection)) {
+            if (JsonUtil.jsonNull(data.items) != null && !(data.items instanceof Collection)) {
                 errormsg += " json: expected 'items' to be a list"
             }
-            if (JSONObject.NULL != data.deleted && !(data.deleted instanceof Collection)) {
+            if (JsonUtil.jsonNull(data.deleted) != null && !(data.deleted instanceof Collection)) {
                 errormsg += " json: expected 'deleted' to be a list"
             }
         }
@@ -124,7 +125,7 @@ class ScmAction {
 
     private static List<String> stringList(data) {
         def data2=[]
-        if(data && data!=JSONObject.NULL && data instanceof Collection) {
+        if (data && JsonUtil.jsonNull(data) != null && data instanceof Collection) {
             for (i in data) {
                 data2 << i.toString()
             }

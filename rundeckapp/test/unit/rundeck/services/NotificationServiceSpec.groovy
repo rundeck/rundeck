@@ -16,13 +16,13 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import grails.plugin.mail.MailMessageBuilder
 import grails.plugin.mail.MailService
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
-import org.springframework.mail.MailSender
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification
@@ -90,9 +90,7 @@ class NotificationServiceSpec extends Specification {
         def content = [
                 execution: execution,
                 context  : Mock(ExecutionContext) {
-                    getDataContext() >> [
-                            globals: globals
-                    ]
+                    getDataContext() >> new BaseDataContext([globals: globals])
                 }
         ]
         job.notifications = [
@@ -143,9 +141,7 @@ class NotificationServiceSpec extends Specification {
         def content = [
                 execution: execution,
                 context  : Mock(ExecutionContext) {
-                    getDataContext() >> [
-                            globals: [testmail: 'bob@example.com']
-                    ]
+                    getDataContext() >> new BaseDataContext([globals: [testmail: 'bob@example.com']])
                 }
         ]
         job.notifications = [

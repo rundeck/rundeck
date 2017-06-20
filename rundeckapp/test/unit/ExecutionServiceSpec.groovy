@@ -17,12 +17,17 @@
 import com.dtolabs.rundeck.app.support.QueueQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.common.SelectorUtils
+import com.dtolabs.rundeck.core.dispatcher.ContextView
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import org.aspectj.weaver.ast.Not
 import org.grails.plugins.metricsweb.MetricService
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.StorageException
@@ -511,7 +516,7 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 context,
                 ['-test1', '${option.test1}', '-test2', '${option.test2}'] as String[],
-                null, null, null, null, null, false
+                null, null, null, null, null, null, false, true
         )
 
         then:
@@ -567,7 +572,7 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 context,
                 [] as String[],
-                null, null, null, null, null, false
+                null, null, null, null, null, null, false, true
         )
 
         then:
@@ -630,7 +635,7 @@ class ExecutionServiceSpec extends Specification {
                 exec,
                 context,
                 args as String[],
-                null, null, null, null, null, false
+                null, null, null, null, null, null, false, true
         )
 
         then:
@@ -708,7 +713,7 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 context,
                 [] as String[],//null values for the input options
-                null, null, null, null, null, false
+                null, null, null, null, null, null, false, true
         )
 
         then:
@@ -781,7 +786,7 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 context,
                 ['-test1', '${option.zilch}', '-test2', '${option.test2}'] as String[],
-                null, null, null, null, null, false
+                null, null, null, null, null, null, false, true
         )
 
         then:
@@ -790,6 +795,154 @@ class ExecutionServiceSpec extends Specification {
         newCtxt.dataContext['option'] == ['test2': 'zimbo']
         newCtxt.privateDataContext['option'] == ['test1': 'phoenix']
     }
+
+    @Unroll
+    def "createJobReferenceContext shared variable expansion in args with node? #nodename"() {
+        given:
+        def sharedContext = SharedDataContextUtils.sharedContext()
+        sharedContext.merge(ContextView.global(), DataContextUtils.context("rarity", [globular: "globalvalue"]))
+        sharedContext.merge(ContextView.node('anode'), DataContextUtils.context("rarity", [globular: "anodevalue"]))
+        def context = ExecutionContextImpl
+                .builder()
+                .threadCount(1)
+                .keepgoing(false)
+
+                .dataContext(
+                ['option': ['monkey': 'wakeful'], 'secureOption': ['test2': 'zimbo'], 'job': ['execid': '123']]
+        )
+                .privateDataContext(['option': ['zilch': 'phoenix'],])
+                .mergeSharedContext(sharedContext)
+                .user('aUser')
+                .build()
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                )
+        null != se
+        def opt1 = new Option(name: 'test1', enforced: false, required: false, secureInput: true)
+        def opt2 = new Option(name: 'test2', enforced: false, required: false, secureInput: true, secureExposed: true)
+        def opt3 = new Option(name: 'test3', enforced: false, required: false, secureInput: false)
+        assertTrue(opt1.validate())
+        assertTrue(opt2.validate())
+        assertTrue(opt3.validate())
+        se.addToOptions(opt1)
+        se.addToOptions(opt2)
+        se.addToOptions(opt3)
+        null != se.save()
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'AProject')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
+            0 * _(*_)
+        }
+
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        def contextNode = nodename ? new NodeEntryImpl(nodename) : null
+
+        when:
+
+        def newCtxt = service.createJobReferenceContext(
+                se,
+                null,
+                context,
+                ['-test3', '${rarity.globular}', '-test1', '${option.zilch}', '-test2', '${option.test2}'] as String[],
+                null, null, null, null, null,
+                contextNode,
+                false, true
+        )
+
+        then:
+        sharedContext.resolve(ContextView.global(), 'rarity', 'globular') == 'globalvalue'
+        newCtxt.dataContext['secureOption'] == ['test2': 'zimbo']
+        newCtxt.dataContext['option'] == ['test2': 'zimbo', 'test3': expect]
+        newCtxt.privateDataContext['option'] == ['test1': 'phoenix']
+
+        where:
+        nodename | expect
+        null     | 'globalvalue'
+        'anode'  | 'anodevalue'
+        'bnode'  | 'globalvalue'
+    }
+
+    @Unroll
+    def "overrideJobReferenceNodeFilter uses shared variable expansion in #nodeFilter"() {
+        given:
+        def sharedContext = SharedDataContextUtils.sharedContext()
+        sharedContext.merge(ContextView.global(), DataContextUtils.context("shared", [nodea: "b"]))
+        sharedContext.merge(ContextView.global(), DataContextUtils.context("global", [nodea: "a"]))
+        sharedContext.merge(ContextView.node('anode'), DataContextUtils.context("shared", [nodea: "c"]))
+        sharedContext.merge(ContextView.node('anode'), DataContextUtils.context("nodecontext", [nodea: "a"]))
+
+        def makeNodeSet = { list ->
+            def nodeset = new NodeSetImpl()
+            list.each {
+                nodeset.putNode(new NodeEntryImpl(it))
+            }
+            nodeset
+        }
+        def allNodes = makeNodeSet(['a', 'b', 'c', 'x', 'y', 'z'])
+        def context = ExecutionContextImpl.builder()
+                                          .nodes(allNodes)
+                                          .nodeSelector(SelectorUtils.nodeList(['a', 'b', 'c', 'x', 'y', 'z']))
+                                          .threadCount(1)
+                                          .keepgoing(false)
+                                          .dataContext(DataContextUtils.context('data', [nodea: 'z']))
+                                          .mergeSharedContext(sharedContext)
+                                          .build()
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(_, _) >> { args ->
+                com.dtolabs.rundeck.core.common.NodeFilter.filterNodes(args[0], allNodes)
+            }
+            1 * filterAuthorizedNodes(_, _, _, _) >> { args ->
+                args[2]
+            }
+            0 * _(*_)
+        }
+
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+
+        when:
+
+        def newCtxt = service.overrideJobReferenceNodeFilter(
+                null,
+                context,
+                ExecutionContextImpl.builder().build(),
+                nodeFilter,
+                2,
+                true,
+                null,
+                null,
+                false
+        )
+
+        then:
+        newCtxt.nodes.nodeNames == expect as Set
+
+        where:
+        nodeFilter                       | expect
+        'x y'                            | ['x', 'y']
+        '${bad.wrong} x y'               | ['x', 'y']
+        '${data.nodea} x y'              | ['z', 'x', 'y']
+        '${global.nodea} x y'            | ['a', 'x', 'y']
+        '${shared.nodea} x y'            | ['b', 'x', 'y']
+        '${shared.nodea@anode} x y'      | ['c', 'x', 'y']
+        '${nodecontext.nodea} x y'       | ['x', 'y']
+        '${nodecontext.nodea@anode} x y' | ['a', 'x', 'y']
+    }
+
 
     def "Create execution context with global vars"() {
         given:
@@ -852,7 +1005,7 @@ class ExecutionServiceSpec extends Specification {
         )
 
         when:
-        def val = service.createContext(se, null, null, null, null, null, null, null, null, null, charset)
+        def val = service.createContext(se, null, null, null, null, null, null, null, null, null, null, charset)
         then:
         val != null
         val.charsetEncoding == charset

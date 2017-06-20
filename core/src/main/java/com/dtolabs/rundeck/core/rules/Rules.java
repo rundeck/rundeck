@@ -1,11 +1,11 @@
 package com.dtolabs.rundeck.core.rules;
 
-import com.google.common.base.Function;
-import com.google.common.base.Optional;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
+
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Predicate;
+import java.util.stream.StreamSupport;
 
 /**
  * Create rules and a rule engine
@@ -49,7 +49,7 @@ public class Rules {
     public static Condition equalsCondition(final StateObj state) {
         return new Condition() {
             @Override
-            public boolean apply(final StateObj input) {
+            public boolean test(final StateObj input) {
                 return input.hasState(state);
             }
 
@@ -113,47 +113,6 @@ public class Rules {
         return conditionsRule(conditions, result);
     }
 
-    public static Condition not(final Condition condition) {
-        return conditionFrom(Predicates.not(condition));
-    }
-
-    public static Condition and(final Condition condition1, final Condition condition2) {
-        return conditionFrom(Predicates.and(condition1, condition2));
-    }
-
-    public static Condition and(final Condition... conditions) {
-        return conditionFrom(Predicates.and(conditions));
-    }
-
-    public static Condition and(final Iterable<Condition> conditions) {
-        return conditionFrom(Predicates.and(conditions));
-    }
-
-    public static Condition or(final Condition condition1, final Condition condition2) {
-        return conditionFrom(Predicates.or(condition1, condition2));
-    }
-
-    public static Condition or(final Condition... conditions) {
-        return conditionFrom(Predicates.or(conditions));
-    }
-
-    public static Condition or(final Iterable<Condition> conditions) {
-        return conditionFrom(Predicates.or(conditions));
-    }
-
-    static Condition conditionFrom(final Predicate<StateObj> pred) {
-        return new Condition() {
-            @Override
-            public boolean apply(final StateObj input) {
-                return pred.apply(input);
-            }
-
-            @Override
-            public String toString() {
-                return pred.toString();
-            }
-        };
-    }
 
     /**
      * Create a rule: predicate(conditions) => new state(results)
@@ -197,13 +156,13 @@ public class Rules {
         final StateObj newstate = States.state(results);
         return new Rule() {
             @Override
-            public boolean apply(final StateObj input) {
+            public boolean test(final StateObj input) {
                 return applyConditions(input, conditions, true);
             }
 
             @Override
             public StateObj evaluate(final StateObj stateObj) {
-                if (apply(stateObj)) {
+                if (test(stateObj)) {
                     return newstate;
                 }
                 return null;
@@ -224,7 +183,7 @@ public class Rules {
     {
         boolean allCondition = operationAnd;
         for (Condition condition : runConditions) {
-            boolean apply = condition.apply(state);
+            boolean apply = condition.test(state);
             allCondition = operationAnd ? allCondition && apply : allCondition || apply;
         }
         return allCondition;
@@ -245,23 +204,11 @@ public class Rules {
 
     }
 
-    public static Predicate<? super Rule> ruleApplies(final StateObj state) {
-        return new Predicate<Rule>() {
-            @Override
-            public boolean apply(final Rule input) {
-                assert input != null;
-                return input.apply(state);
-            }
-        };
+    public static java.util.function.Predicate<? super Rule> ruleApplies(final StateObj state) {
+        return input -> input.test(state);
     }
 
     public static Function<? super Rule, Optional<StateObj>> applyRule(final StateObj state) {
-        return new Function<Rule, Optional<StateObj>>() {
-            @Override
-            public Optional<StateObj> apply(final Rule input)
-            {
-                return Optional.fromNullable(input.evaluate(state));
-            }
-        };
+        return input -> Optional.ofNullable(input.evaluate(state));
     }
 }

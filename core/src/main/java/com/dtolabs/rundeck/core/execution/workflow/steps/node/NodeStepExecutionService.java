@@ -53,7 +53,7 @@ public class NodeStepExecutionService extends ChainedProviderService<NodeStepExe
     private BuiltinNodeStepExecutionService primaryService;
 
     public NodeStepExecutionService(final Framework framework) {
-        this.serviceList = new ArrayList<ProviderService<NodeStepExecutor>>();
+        this.serviceList = new ArrayList<>();
         /*
          * NodeStepExecutionService chains several other services:
          * 1. builtin providers

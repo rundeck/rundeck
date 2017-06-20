@@ -225,7 +225,7 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null)
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null,null)
         stb.successful=true
         stb.result=wfeForSuccess(true)
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
@@ -259,7 +259,7 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null)
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null,null)
         stb.successful=true
         def threshold=new testThreshold()
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true, threshold:threshold]
@@ -292,7 +292,7 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null)
+        WorkflowExecutionServiceThread stb=new TestWEServiceThread(null,null,null,null)
         stb.successful=true
         def threshold=new testThreshold()
         threshold.wasMet=true
@@ -342,7 +342,7 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        WorkflowExecutionServiceThread stb = new WorkflowExecutionServiceThread(null,null,null)
+        WorkflowExecutionServiceThread stb = new WorkflowExecutionServiceThread(null,null,null,null)
         stb.result = wfeForSuccess(false)
 
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
@@ -412,7 +412,7 @@ class ExecutionJobTest extends GroovyTestCase{
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
-        WorkflowExecutionServiceThread stb = new WorkflowExecutionServiceThread(null,null,null)
+        WorkflowExecutionServiceThread stb = new WorkflowExecutionServiceThread(null,null,null,null)
         stb.result=wfeForSuccess(false)
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true]
         mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->

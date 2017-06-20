@@ -1,13 +1,16 @@
 dataSource {
     pooled = false; //it is recommended not to use connection pool unless file encryption is enabled
+	jmxExport = true
     driverClassName = "org.h2.Driver"
     username = "sa"
     password = ""
 }
 hibernate {
-    cache.use_second_level_cache=true
-    cache.use_query_cache=true
-    cache.provider_class='net.sf.ehcache.hibernate.EhCacheProvider'
+	cache.use_second_level_cache = true
+	cache.use_query_cache = false
+	cache.region.factory_class = 'org.hibernate.cache.ehcache.SingletonEhCacheRegionFactory' // Hibernate 4
+	singleSession = true // configure OSIV singleSession mode
+	flush.mode = 'manual' // OSIV session flush mode outside of transactional context
 }
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)

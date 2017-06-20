@@ -411,7 +411,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             }
         }
         final int resultCode = sshexec.getExitStatus();
-
+        if(null!=context.getOutputContext()){
+            context.getOutputContext().addOutput("exec", "exitCode", String.valueOf(resultCode));
+        }
         if (success) {
             return NodeExecutorResultImpl.createSuccess(node);
         } else {
