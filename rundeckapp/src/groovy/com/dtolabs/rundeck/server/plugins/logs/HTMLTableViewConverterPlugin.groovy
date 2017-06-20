@@ -79,15 +79,19 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
             return renderPlaceholder('Empty List')
         }
         def md = new HashMap(metadata)
-        if (list.size() > 1) {
+        if (list.size() > 0) {
             def first = list.first()
             if (first instanceof Map) {
-                def second = list[1]
-                if (second instanceof Map) {
-                    if (first.keySet() == second.keySet()) {
-                        //
-                        return renderTableHtml(list, metadata)
+                if (list.size() > 1) {
+                    def second = list[1]
+                    if (second instanceof Map) {
+                        if (first.keySet() == second.keySet()) {
+                            //
+                            return renderTableHtml(list, metadata)
+                        }
                     }
+                } else {
+                    return renderTableHtml(list, metadata)
                 }
             }
         }
