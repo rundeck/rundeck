@@ -99,7 +99,7 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
             final String defaultValue
     )
     {
-        return resolve(view, false, group, key, defaultValue);
+        return resolve(view, null, group, key, defaultValue);
     }
 
     /**
@@ -109,7 +109,7 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
      * any base value will be returned, before widening the search scope.
      *
      * @param view         scope
-     * @param strict       if true do not widen scope
+     * @param widestScope       maximum search scope
      * @param group        group
      * @param key          key
      * @param defaultValue default value
@@ -118,7 +118,7 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
      */
     default String resolve(
             final K view,
-            final boolean strict,
+            final K widestScope,
             final String group,
             final String key,
             final String defaultValue
@@ -139,16 +139,16 @@ public interface MultiDataContext<K extends ViewTraverse<K>, D extends DataConte
         }
         MultiDataContext<K, D> base = getBase();
         if (base != null) {
-            String resolve = base.resolve(view, true, group, key, null);
+            String resolve = base.resolve(view, view, group, key, null);
             if (null != resolve) {
                 return resolve;
             }
         }
-        if (strict) {
+        if (null != widestScope && widestScope.isWider(view.widenView().getView())) {
             return defaultValue;
         }
         if (!view.isWidest()) {
-            return resolve(view.widenView().getView(), group, key, defaultValue);
+            return resolve(view.widenView().getView(), widestScope, group, key, defaultValue);
         }
         return defaultValue;
     }

@@ -29,6 +29,7 @@ public abstract class BaseVarExpander implements VarExpander {
     @Override
     public <T extends ViewTraverse<T>> String expandVariable(
             final MultiDataContext<T, DataContext> data,
+            final T currentContext,
             final BiFunction<Integer, String, T> viewMap,
             final String variableref
     )
@@ -45,7 +46,7 @@ public abstract class BaseVarExpander implements VarExpander {
         Boolean glob = variableRef.getNodeglob();
         String format = variableRef.getFormat();
         if (glob) {
-            List<String> strings = expandAllNodesVariable(data, viewMap, step, group, key);
+            List<String> strings = expandAllNodesVariable(data, currentContext, viewMap, step, group, key);
             if (strings == null) {
                 return null;
             }
@@ -56,9 +57,10 @@ public abstract class BaseVarExpander implements VarExpander {
             }
             return String.join(delimiter, strings);
         } else {
-            return expandVariable(data, viewMap, step, group, key, qual);
+            return expandVariable(data, currentContext, viewMap, step, group, key, qual);
         }
     }
+
 
 
     /**
@@ -76,6 +78,7 @@ public abstract class BaseVarExpander implements VarExpander {
      */
     public static <T extends ViewTraverse<T>> String expandVariable(
             final MultiDataContext<T, DataContext> data,
+            final T currentContext,
             final BiFunction<Integer, String, T> viewMap,
             final String step,
             final String group,
@@ -92,8 +95,8 @@ public abstract class BaseVarExpander implements VarExpander {
             }
         }
         T view = viewMap.apply(t, node);
-        boolean strict = null != step || null != node;
-        return data.resolve(view, strict, group, key, null);
+        T mergedview = view.merge(currentContext).getView();
+        return data.resolve(mergedview, view, group, key, null);
     }
 
     /**
@@ -109,6 +112,7 @@ public abstract class BaseVarExpander implements VarExpander {
      */
     public static <T extends ViewTraverse<T>> List<String> expandAllNodesVariable(
             final MultiDataContext<T, DataContext> data,
+            final T currentContext,
             final BiFunction<Integer, String, T> viewMap,
             final String step,
             final String group,
@@ -126,6 +130,7 @@ public abstract class BaseVarExpander implements VarExpander {
             t = null;
         }
         T containerView = viewMap.apply(t, null);
+        T mergedview = containerView.merge(currentContext).getView();
         return data.collect(containerView::globExpandTo, group, key);
     }
 

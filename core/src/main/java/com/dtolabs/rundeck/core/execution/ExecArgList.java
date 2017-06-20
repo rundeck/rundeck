@@ -185,7 +185,8 @@ public class ExecArgList {
                         str,
                         sharedContext,
                         //add node name to qualifier to read node-data first
-                        SharedDataContextUtils.defaultNodeView(nodeName),
+                        ContextView.node(nodeName),
+                        ContextView::nodeStep,
                         DataContextUtils.replaceMissingOptionsWithBlank,
                         false,
                         false

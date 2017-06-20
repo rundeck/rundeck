@@ -244,7 +244,8 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
                 SharedDataContextUtils.replaceDataReferences(
                         qindex > 0 ? urlString.substring(0, qindex) : urlString,
                         dataContext,
-                        SharedDataContextUtils.defaultNodeView(nodename),
+                        ContextView.node(nodename),
+                        ContextView::nodeStep,
                         urlPathEncoder,
                         true,
                         false
@@ -255,7 +256,8 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
                 builder.append(SharedDataContextUtils.replaceDataReferences(
                         urlString.substring(qindex + 1),
                         dataContext,
-                        SharedDataContextUtils.defaultNodeView(nodename),
+                        ContextView.node(nodename),
+                        ContextView::nodeStep,
                         urlQueryEncoder,
                         true,
                         false

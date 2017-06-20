@@ -34,6 +34,18 @@ public interface ViewTraverse<T> {
     default ViewTraverse<T> widenView() {
         return null;
     }
+    default ViewTraverse<T> merge(T source) {
+        return null;
+    }
+
+    /**
+     * Return true if the input is wider than the current view
+     * @param source
+     * @return
+     */
+    default boolean isWider(T source){
+        return false;
+    }
 
     default T getView() {
         return null;

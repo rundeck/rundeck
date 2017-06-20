@@ -17,16 +17,19 @@
 package com.dtolabs.rundeck.core.dispatcher
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static com.dtolabs.rundeck.core.dispatcher.ContextView.global
 import static com.dtolabs.rundeck.core.dispatcher.ContextView.node
 import static com.dtolabs.rundeck.core.dispatcher.ContextView.nodeStep
+import static com.dtolabs.rundeck.core.dispatcher.ContextView.step
 
 /**
  * @author greg
  * @since 5/2/17
  */
 class ContextViewSpec extends Specification {
+    @Unroll
     def "widen"() {
         expect:
         global().isGlobal()
@@ -45,11 +48,49 @@ class ContextViewSpec extends Specification {
 
         !nodeStep(1, "node").widenView().isGlobal()
         !nodeStep(1, "node").widenView().isWidest()
-        nodeStep(1, "node").widenView().getStepNumber() == null
-        nodeStep(1, "node").widenView().getNodeName() == "node"
+        nodeStep(1, "node").widenView().getStepNumber() == 1
+        nodeStep(1, "node").widenView().getNodeName() == null
 
         node("node").widenView().isGlobal()
         node("node").widenView().isWidest()
+
+    }
+
+    @Unroll
+    def "merge #a to #b is #result"() {
+
+        expect:
+        result == a.merge(b)
+        where:
+        a        | b                || result
+        global() | global()         || global()
+        global() | node('a')        || node('a')
+        global() | nodeStep(1, 'a') || nodeStep(1, 'a')
+        step(1)  | node('a')        || nodeStep(1, 'a')
+        step(1)  | nodeStep(2, 'a') || nodeStep(1, 'a')
+
+    }
+
+    @Unroll
+    def "#a isWider #b is #result"() {
+
+        expect:
+        result == a.isWider(b)
+        where:
+        a                | b                | result
+        global()         | global()         | false
+        node('a')        | global()         | true
+        step(1)          | global()         | true
+        nodeStep(1, 'a') | global()         | true
+        node('b')        | node('a')        | false
+        step(1)          | node('a')        | true
+        nodeStep(1, 'a') | node('a')        | true
+        node('a')        | step(1)          | false
+        step(2)          | step(1)          | false
+        nodeStep(1, 'a') | step(1)          | true
+        node('b')        | nodeStep(1, 'a') | false
+        step(2)          | nodeStep(1, 'a') | false
+        nodeStep(2, 'b') | nodeStep(1, 'a') | false
 
     }
 

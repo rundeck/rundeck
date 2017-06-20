@@ -37,6 +37,7 @@ public interface VarExpander {
      */
     <T extends ViewTraverse<T>> String expandVariable(
             final MultiDataContext<T, DataContext> data,
+            final T currentContext,
             final BiFunction<Integer, String, T> viewMap,
             final String variableref
     );

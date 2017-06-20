@@ -29,6 +29,7 @@ import java.util.Map;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import org.apache.log4j.Logger;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
@@ -92,7 +93,8 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
         if (null != instanceConfiguration) {
             instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
                     instanceConfiguration,
-                    SharedDataContextUtils.defaultNodeView(node.getNodename()),
+                    ContextView.node(node.getNodename()),
+                    ContextView::nodeStep,
                     null,
                     context.getSharedDataContext()
             );

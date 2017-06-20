@@ -84,6 +84,7 @@ class StepPluginAdapter implements StepExecutor, Describable {
         if (null != instanceConfiguration) {
             instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
                     instanceConfiguration,
+                    ContextView.global(),
                     ContextView::nodeStep,
                     null,
                     executionContext.getSharedDataContext()

@@ -96,7 +96,7 @@ class ScriptVarExpanderSpec extends Specification {
         )
 
         when:
-        def result = expander.expandVariable(shared, ContextView.&nodeStep, str)
+        def result = expander.expandVariable(shared, ContextView.global(), ContextView.&nodeStep, str)
         then:
         result == expected
         where:
@@ -141,7 +141,7 @@ class ScriptVarExpanderSpec extends Specification {
         )
 
         when:
-        def result = expander.expandVariable(shared, ContextView.&nodeStep, str)
+        def result = expander.expandVariable(shared, ContextView.global(), ContextView.&nodeStep, str)
         then:
         result == expected
         where:

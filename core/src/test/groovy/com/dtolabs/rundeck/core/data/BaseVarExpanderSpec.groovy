@@ -37,7 +37,14 @@ class BaseVarExpanderSpec extends Specification {
         def viewmap = ContextView.&nodeStep
 
         when:
-        List<String> result = BaseVarExpander.expandAllNodesVariable(data3, viewmap, step, group, key)
+        List<String> result = BaseVarExpander.expandAllNodesVariable(
+                data3,
+                ContextView.global(),
+                viewmap,
+                step,
+                group,
+                key
+        )
 
         then:
         result == expected

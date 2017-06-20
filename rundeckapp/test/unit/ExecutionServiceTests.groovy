@@ -1344,7 +1344,7 @@ class ExecutionServiceTests  {
                                           .threadCount(1)
                                           .keepgoing(false)
                                           .build()
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, null, null, null, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null,null, context, null, null, null, null, null, null)
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1359,7 +1359,7 @@ class ExecutionServiceTests  {
                                           .threadCount(1)
                                           .keepgoing(false)
                                           .build()
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, null, 2, null, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null,null, context, null, 2, null, null, null, null)
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1374,7 +1374,7 @@ class ExecutionServiceTests  {
                                           .threadCount(1)
                                           .keepgoing(false)
                                           .build()
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, null, null, true, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null,null, context, null, null, true, null, null, null)
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1399,7 +1399,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(new ExecutionContextImpl() , context, 'z p', null, null, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null,new ExecutionContextImpl() , context, 'z p', null, null, null, null, null)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1424,7 +1424,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(new ExecutionContextImpl(), context, 'z p', 2, null, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null,new ExecutionContextImpl(), context, 'z p', 2, null, null, null, null)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(false,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
@@ -1449,7 +1449,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(new ExecutionContextImpl(), context, 'z p', 2, true, null, null, false)
+        def newctx=service.overrideJobReferenceNodeFilter(null,new ExecutionContextImpl(), context, 'z p', 2, true, null, null, false)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
@@ -1475,7 +1475,7 @@ class ExecutionServiceTests  {
         }
         assertEquals(null, context.nodeRankAttribute)
         assertEquals(true, context.nodeRankOrderAscending)
-        def newctx=service.overrideJobReferenceNodeFilter(new ExecutionContextImpl(), context, 'z p', 2, true, 'rank', false, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null,new ExecutionContextImpl(), context, 'z p', 2, true, 'rank', false, null)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
@@ -1506,7 +1506,7 @@ class ExecutionServiceTests  {
                 dataContext([option:[test1:'blah']]).build()
         assertEquals(null, context.nodeRankAttribute)
         assertEquals(true, context.nodeRankOrderAscending)
-        def newctx=service.overrideJobReferenceNodeFilter(origContext, context, 'z p ${option.test1}', 2, true, 'rank', false, false)
+        def newctx=service.overrideJobReferenceNodeFilter(null,origContext, context, 'z p ${option.test1}', 2, true, 'rank', false, false)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
@@ -1547,7 +1547,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(origContext, newContext, 'a x', 2, null, null, null, true)
+        def newctx=service.overrideJobReferenceNodeFilter(null,origContext, newContext, 'a x', 2, null, null, null, true)
         assertEquals(['a'] as Set,newctx.nodes.nodeNames as Set)
     }
 
@@ -1583,7 +1583,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(origContext, newContext, null, 0, null, null, null, true)
+        def newctx=service.overrideJobReferenceNodeFilter(null,origContext, newContext, null, 0, null, null, null, true)
         assertEquals(['x','y'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(10,newctx.threadCount)
