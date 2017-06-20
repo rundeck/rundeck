@@ -28,6 +28,7 @@ abstract class ExecutionContext extends BaseNodeFilters{
     String serverNodeUUID
     String timeout
     String retry
+    String retryDelay
 
     static mapping = {
         user column: "rduser"
@@ -35,6 +36,10 @@ abstract class ExecutionContext extends BaseNodeFilters{
         serverNodeUUID type:'text'
         timeout type:'text'
         retry type:'text'
+        retryDelay type:'text'
+    }
+    static constraints = {
+        retryDelay(nullable:true)
     }
     Boolean nodeKeepgoing=false
     Boolean doNodedispatch=false
