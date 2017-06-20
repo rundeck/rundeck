@@ -19,9 +19,15 @@
 function doyft(id){
     yellowfade(id,0.0,1500,20,500,false);
 }
+function doyftsuccess(id){
+    yellowfade(id,0.0,1500,20,500,false,[0xf0,0xff,0xf0]);
+}
+function doyftdanger(id){
+    yellowfade(id,0.0,1500,20,500,false,[0xff,0xf0,0xf0]);
+}
 /* fade to light gray instead of white */
 function doyftg(id){
-    yellowfade(id,0.0,1500,20,500,false,null,new Array(0xf0,0xf0,0xf0));
+    yellowfade(id,0.0,1500,20,500,false,null,[0xf0,0xf0,0xf0]);
 }
 function tohex(x){
    var hex=["0","1","2","3","4","5","6","7","8","9","A","B","C","D","E","F"];

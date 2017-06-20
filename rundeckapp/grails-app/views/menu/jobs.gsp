@@ -22,7 +22,8 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
-    <g:javascript library="yellowfade"/>
+
+    <asset:javascript src="util/yellowfade.js"/>
     <g:javascript library="pagehistory"/>
     <g:javascript library="prototype/effects"/>
     <asset:javascript src="menu/jobs.js"/>
@@ -548,7 +549,8 @@
             ko.applyBindings(bulkeditor,document.getElementById('group_controls'));
         });
     </script>
-    <g:javascript library="yellowfade"/>
+
+    <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="menu/joboptions.js"/>
     <style type="text/css">
     .error{

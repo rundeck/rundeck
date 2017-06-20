@@ -416,7 +416,7 @@ function getCurSEID(){
                 </span>
             </div>
 
-            <script type="text/javascript" src="${resource(dir:'js',file:'yellowfade.js')}"></script>
+
         </div>
     </div>
 
