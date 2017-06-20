@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.services.FrameworkService;
 
 class AuthTagLib {
@@ -137,6 +138,8 @@ class AuthTagLib {
     def resourceAllowedTest = {attrs, body ->
         boolean has = (null == attrs.has || attrs.has == "true")
         boolean anyCheck = ((null != attrs.any) && (attrs.any in [true,"true"]))
+        boolean other = ((null != attrs.others) && (attrs.others in [true,"true"]))
+
         boolean auth = false
         if (!attrs.action) {
             throw new Exception("action attribute required: " + attrs.action + ": " + attrs.name)
@@ -167,14 +170,30 @@ class AuthTagLib {
         tagattrs.remove('has')
         tagattrs.remove('context')
         tagattrs.remove('any')
+        tagattrs.remove('others')
         def attributes = attrs.attributes ?: tagattrs
         if (attributes) {
             resource.putAll(attributes)
         }
-        def Set resources = [resource]
+        Set resources = [resource]
 
         def authContext = appContext?frameworkService.getAuthContextForSubject(request.subject):
                 frameworkService.getAuthContextForSubjectAndProject(request.subject,attrs.project)
+
+        if(other){
+            boolean isAuth = false
+            def projectNames = frameworkService.projectNames(authContext)
+            projectNames.each{
+                env = Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE +"project"), it))
+                if(it != attrs.project){
+                    def decision=  authContext.evaluate(resources, tests as Set, env)
+                    if(!decision.find{has^it.authorized}){
+                        isAuth = true
+                    }
+                }
+            }
+            return isAuth
+        }
 
         if(anyCheck){
             return tests.any { authContext.evaluate(resources, [it] as Set, env).any{has==it.authorized} }
