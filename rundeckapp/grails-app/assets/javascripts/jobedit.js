@@ -54,7 +54,7 @@ function _removeOptionName(name) {
     var findname = function (e) {
         return e.name == name;
     };
-    var found = _jobOptionData.find(findname);
+    var found = _jobOptionData.find(findName);
     if (found >= 0) {
         _jobOptionData.splice(found, 1);
     }
@@ -175,7 +175,7 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         if (isscriptStep) {
             var key = liitem.find('._wfiedit').data('rkey');
             if (key) {
-                workflowEditor.scriptSteps()[key].guessAceMode.subscribe(function (val) {
+                workflowEditor.steps()[key].guessAceMode.subscribe(function (val) {
                     setAceSyntaxMode(val, editor);
                 });
             }
@@ -184,7 +184,7 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         var obj = jQuery(elem);
         if (obj.hasClass('context_env_autocomplete')) {
             var key = liitem.find('._wfiedit').data('rkey');
-            return (key && workflowEditor.scriptSteps()[key] && workflowEditor.scriptSteps()[key].guessAceMode() || 'sh');
+            return (key && workflowEditor.steps()[key] && workflowEditor.steps()[key].guessAceMode() || 'sh');
         }
         return null;
     });
@@ -373,10 +373,6 @@ function _wfiedit(key,num,isErrorHandler) {
         _hideWFItemControls(key);
         postLoadItemEdit('#wfli_' + key, isErrorHandler);
     });
-}
-
-function _wficopy(key,num,isErrorHandler) {
-    _ajaxWFAction(appLinks.workflowCopy,{num:num,edit:true});
 }
 
 function _wfiview(key,num,isErrorHandler) {

@@ -18,17 +18,16 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItemImpl
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowImpl
-import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
-import groovy.transform.ToString
+import grails.transaction.NotTransactional
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.PluginStep
@@ -164,13 +163,7 @@ class ExecutionUtilService {
                 final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());
                 final String[] args = strings.toArray(new String[strings.size()]);
 
-                return ExecutionItemFactory.createExecCommand(
-                        args,
-                        handler,
-                        !!cmd.keepgoingOnSuccess,
-                        step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
-                );
+                return ExecutionItemFactory.createExecCommand(args, handler, !!cmd.keepgoingOnSuccess, step.description);
             } else if (null != cmd.getAdhocLocalString()) {
                 final String script = cmd.getAdhocLocalString();
                 final String[] args;
@@ -188,9 +181,7 @@ class ExecutionUtilService {
                         args,
                         handler,
                         !!cmd.keepgoingOnSuccess,
-                        step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
-                );
+                        step.description);
 
             } else if (null != cmd.getAdhocFilepath()) {
                 final String filepath = cmd.getAdhocFilepath();
@@ -210,9 +201,7 @@ class ExecutionUtilService {
                             args,
                             handler,
                             !!cmd.keepgoingOnSuccess,
-                            step.description,
-                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
-                    )
+                            step.description)
                 }else {
                     return ExecutionItemFactory.createScriptFileItem(
                             cmd.getScriptInterpreter(),
@@ -222,9 +211,7 @@ class ExecutionUtilService {
                             args,
                             handler,
                             !!cmd.keepgoingOnSuccess,
-                            step.description,
-                            createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
-                    );
+                            step.description);
 
                 }
             }else {
@@ -263,8 +250,7 @@ class ExecutionUtilService {
                         stepitem.configuration,
                         !!stepitem.keepgoingOnSuccess,
                         handler,
-                        step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                        step.description
                 )
             }else {
                 return ExecutionItemFactory.createPluginStepItem(
@@ -272,52 +258,11 @@ class ExecutionUtilService {
                         stepitem.configuration,
                         !!stepitem.keepgoingOnSuccess,
                         handler,
-                        step.description,
-                        createLogFilterConfigs(step.getPluginConfigListForType(ServiceNameConstants.LogFilter))
+                        step.description
                 )
             }
         } else {
             throw new IllegalArgumentException("Workflow step type was not expected: "+step);
-        }
-    }
-
-    /**
-     * Create the list of plugin configuration, given the configuration for LogFilter type
-     * @param config configuration list for LogFilter
-     * @return list of configurations, or empty list
-     */
-    public static List<PluginConfiguration> createLogFilterConfigs(Object configurations) {
-        List<PluginConfiguration> configs = []
-        if (configurations && configurations instanceof Collection) {
-            configurations.each { conf ->
-                if (conf && conf instanceof Map) {
-                    String name = conf['type']
-                    if (conf['config'] instanceof Map) {
-                        Map pluginconfig = conf['config']
-                        configs << createLogFilterConfig(name, pluginconfig)
-                    }
-                }
-            }
-        }
-        return configs;
-    }
-
-    public static PluginConfiguration createLogFilterConfig(String name, Map pluginconfig) {
-        new SimplePluginConfiguration(
-                provider: name,
-                service: ServiceNameConstants.LogFilter,
-                configuration: pluginconfig
-        )
-    }
-
-    static class SimplePluginConfiguration implements PluginConfiguration {
-        String provider;
-        String service;
-        Map<String, Object> configuration;
-
-        @Override
-        String toString() {
-            return "Plugin: $service:$provider"
         }
     }
 }

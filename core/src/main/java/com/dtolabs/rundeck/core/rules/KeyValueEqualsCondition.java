@@ -13,7 +13,7 @@ public class KeyValueEqualsCondition implements Condition {
     }
 
     @Override
-    public boolean test(final StateObj input) {
+    public boolean apply(final StateObj input) {
         String anObject = input.getState().get(key);
         if (value == null) {
             return anObject == null;

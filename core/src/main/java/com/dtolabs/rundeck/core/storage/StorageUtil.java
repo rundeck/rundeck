@@ -65,7 +65,12 @@ public class StorageUtil {
      * @return a factory for ResourceMeta
      */
     public static ContentFactory<ResourceMeta> factory(){
-        return StorageUtil::withStream;
+        return new ContentFactory<ResourceMeta>() {
+            @Override
+            public ResourceMeta create(HasInputStream hasInputStream, Map<String, String> metadata) {
+                return withStream(hasInputStream, metadata);
+            }
+        };
     }
 
     /**

@@ -20,21 +20,17 @@ import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
-import com.dtolabs.rundeck.core.data.BaseDataContext;
-import com.dtolabs.rundeck.core.data.DataContext;
-import com.dtolabs.rundeck.core.data.MultiDataContext;
-import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
-import com.dtolabs.rundeck.core.dispatcher.*;
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
-import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.utils.Streams;
 import org.apache.commons.lang.RandomStringUtils;
 
 import java.io.*;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -116,12 +112,11 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
         //create new dataContext with the node data, and write the script (file,
         // content or strea) to a temp file
         //using the dataContext for substitution.
-        final MultiDataContext<ContextView, DataContext> sharedContext = new WFSharedContext(context.getSharedDataContext());
-        sharedContext.merge(
-                ContextView.node(node.getNodename()),
-                new BaseDataContext("node", DataContextUtils.nodeData(node))
+        final Map<String, Map<String, String>> origContext = context.getDataContext();
+        final Map<String, Map<String, String>> dataContext = DataContextUtils.addContext(
+                "node",
+                DataContextUtils.nodeData(node), origContext
         );
-
 
         final File tempfile;
         ScriptfileUtils.LineEndingStyle style = ScriptfileUtils.lineEndingStyleForNode(node);
@@ -141,24 +136,24 @@ public class DefaultFileCopierUtil implements FileCopierUtil {
                 }
             } else if (null != script) {
                 if (expandTokens) {
-                    SharedDataContextUtils.replaceTokensInScript(
+                    DataContextUtils.replaceTokensInScript(
                             script,
-                            sharedContext,
+                            dataContext,
+                            framework,
                             style,
-                            tempfile,
-                            node.getNodename()
+                            tempfile
                     );
                 } else {
                     ScriptfileUtils.writeScriptFile(null, script, null, style, tempfile);
                 }
             } else if (null != input) {
                 if (expandTokens) {
-                    SharedDataContextUtils.replaceTokensInStream(
+                    DataContextUtils.replaceTokensInStream(
                             input,
-                            sharedContext,
+                            dataContext,
+                            framework,
                             style,
-                            tempfile,
-                            node.getNodename()
+                            tempfile
                     );
                 } else {
                     ScriptfileUtils.writeScriptFile(input, null, null, style, tempfile);

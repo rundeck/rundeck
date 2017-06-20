@@ -35,61 +35,86 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ContextualExecutionListener extends ExecutionListenerOverrideBase {
+class ContextualExecutionListener extends ExecutionListenerOverrideBase implements ContextLoggerExecutionListener {
+    private ContextLogger logger;
     private ContextualExecutionListener delegate;
-    private final ExecutionLogger logger;
-
-    protected ContextualExecutionListener(
-            ContextualExecutionListener delegate,
-            final ExecutionLogger logger
-    )
-    {
+    protected ContextualExecutionListener(ContextualExecutionListener delegate){
         super(delegate);
-        this.delegate = delegate;
-        this.logger = logger;
+        this.delegate=delegate;
     }
 
     public ContextualExecutionListener(
-            final FailedNodesListener failedNodesListener,
-            final ExecutionLogger logger
+        final FailedNodesListener failedNodesListener,
+        final ContextLogger logger,
+        final boolean terse,
+        final String logFormat
     ) {
-        super(failedNodesListener);
+        super(failedNodesListener, terse, logFormat);
         this.logger = logger;
+    }
+
+    public final void log(final int level, final String message) {
+        if(null!=delegate) {
+            delegate.log(level, message);
+        }else{
+            log(level, message, getLoggingContext());
+        }
+    }
+    private Map<String,String> mergeMap(Map a,Map<String, String> b) {
+        HashMap<String, String> hashMap = new HashMap<String, String>();
+        if(null!=a){
+            for (Object k : a.keySet()) {
+                hashMap.put(k.toString(), a.get(k).toString());
+            }
+        }
+        if(null!=b){
+            hashMap.putAll(b);
+        }
+        return hashMap;
     }
 
     @Override
     public void event(String eventType, String message, Map eventMeta) {
         if (null != delegate) {
             delegate.event(eventType, message, eventMeta);
-        } else if (null != logger) {
-            logger.event(eventType, message, eventMeta);
-        }
-    }
-
-    @Override
-    public void log(final int level, final String message) {
-        if (null != delegate) {
-            delegate.log(level, message);
-        } else if (null != logger) {
-            logger.log(level, message);
+        } else {
+            emitEvent(eventType, LogLevel.NORMAL, message, mergeMap(eventMeta, getLoggingContext()));
         }
 
     }
 
-    @Override
-    public void log(final int level, final String message, final Map eventMeta) {
+    private void emitEvent(String eventType, LogLevel normal, String message, Map<String, String> loggingContext) {
+        logger.emit(eventType, normal, message, loggingContext);
+    }
+
+    public void log(final int level, final String message, Map<String, String> data) {
         if (null != delegate) {
-            delegate.log(level, message, eventMeta);
-        } else if (null != logger) {
-            logger.log(level, message, eventMeta);
+            delegate.log(level, message, data);
+            return ;
+        }
+        if (level >= Constants.DEBUG_LEVEL) {
+            logger.verbose(message, data);
+        } else if (level >= Constants.VERBOSE_LEVEL) {
+            logger.verbose(message, data);
+        } else if (level >= Constants.INFO_LEVEL) {
+            logger.log(message, data);
+        } else if (level >= Constants.WARN_LEVEL) {
+            logger.warn(message, data);
+        } else if (level >= Constants.ERR_LEVEL) {
+            logger.error(message, data);
+        } else {
+            logger.log(message, data);
         }
     }
 
     public ExecutionListenerOverride createOverride() {
-        return new ContextualExecutionListener(this, logger);
+        return new ContextualExecutionListener(this);
     }
 
-    public ExecutionLogger getLogger() {
-        return logger;
+    /**
+     */
+    public Map<String, String> getContext() {
+        return getLoggingContext();
     }
+
 }

@@ -815,7 +815,12 @@ public class PropertyUtil {
         } else if (null == second) {
             return first;
         }
-        return value -> first.isValid(value) && second.isValid(value);
+        return new PropertyValidator() {
+            @Override
+            public boolean isValid(String value) throws ValidationException {
+                return first.isValid(value) && second.isValid(value);
+            }
+        };
     }
 
     static class FreeSelectProperty extends PropertyBase {
@@ -974,7 +979,11 @@ public class PropertyUtil {
         }
     }
 
-    static final PropertyValidator booleanValidator = value -> "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value);
+    static final PropertyValidator booleanValidator = new PropertyValidator() {
+        public boolean isValid(final String value) throws ValidationException {
+            return "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value);
+        }
+    };
 
     static final class IntegerProperty extends PropertyBase {
         public IntegerProperty(final String name, final String title, final String description, final boolean required,
@@ -989,13 +998,15 @@ public class PropertyUtil {
 
     }
 
-    static final PropertyValidator integerValidator = value -> {
-        try {
-            Integer.parseInt(value);
-        } catch (NumberFormatException e) {
-            throw new ValidationException("Not a valid integer");
+    static final PropertyValidator integerValidator = new PropertyValidator() {
+        public boolean isValid(final String value) throws ValidationException {
+            try {
+                java.lang.Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                throw new ValidationException("Not a valid integer");
+            }
+            return true;
         }
-        return true;
     };
 
     static final class LongProperty extends PropertyBase {
@@ -1011,13 +1022,29 @@ public class PropertyUtil {
 
     }
 
-    static final PropertyValidator longValidator = value -> {
-        try {
-            Long.parseLong(value);
-        } catch (NumberFormatException e) {
-            throw new ValidationException("Not a valid integer");
+    static final PropertyValidator longValidator = new PropertyValidator() {
+        public boolean isValid(final String value) throws ValidationException {
+            try {
+                java.lang.Long.parseLong(value);
+            } catch (NumberFormatException e) {
+                throw new ValidationException("Not a valid integer");
+            }
+            return true;
         }
-        return true;
     };
 
+    private static class Generic extends PropertyBase {
+        private final Type type;
+
+        public Generic(final String name, final String title, final String description, final boolean required,
+                       final String defaultValue,
+                       final PropertyValidator validator, final Type type) {
+            super(name, title, description, required, defaultValue, validator);
+            this.type = type;
+        }
+
+        public Type getType() {
+            return type;
+        }
+    }
 }

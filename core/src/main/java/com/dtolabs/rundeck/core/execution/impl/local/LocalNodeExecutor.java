@@ -101,9 +101,6 @@ public class LocalNodeExecutor implements NodeExecutor {
 
             }
         }
-        if(null!=context.getOutputContext()){
-            context.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
-        }
         final boolean status = 0==result;
         if(status) {
             return NodeExecutorResultImpl.createSuccess(node);
@@ -127,7 +124,8 @@ public class LocalNodeExecutor implements NodeExecutor {
         execTask.setExecutable(taskParameters.getCommandexecutable());
         String[] commandargs = taskParameters.getCommandArgs();
         if(null!=commandargs){
-            for (String commandarg : commandargs) {
+            for (int i = 0; i < commandargs.length; i++) {
+                String commandarg = commandargs[i];
                 execTask.createArg().setValue(commandarg);
             }
         }

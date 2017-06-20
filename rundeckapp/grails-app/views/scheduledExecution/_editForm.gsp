@@ -17,8 +17,6 @@
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
 <g:render template="/common/errorFragment"/>
-<g:render template="editLogFilterModal"/>
-
 
 %{--Edit job form--}%
 <g:form controller="scheduledExecution" method="post"

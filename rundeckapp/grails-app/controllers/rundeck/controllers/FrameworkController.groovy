@@ -26,9 +26,11 @@ import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
+import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.shared.resources.ResourceXMLGenerator
@@ -45,6 +47,7 @@ import rundeck.services.PasswordFieldsService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.framework.RundeckProjectConfigurable
 
+import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
@@ -856,7 +859,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 errors << "Resource Model Source provider was not found: ${type}"
             } else {
                 projProps[sourceConfigPrefix + '.' + count + '.type'] = type
-                def mapprops = frameworkService.parsePluginConfigInput(provider.description, prefixKey + '.' + ndx + '.' + 'config.', params)
+                def mapprops = frameworkService.parseResourceModelConfigInput(provider.description, prefixKey + '.' + ndx + '.' + 'config.', params)
                 def props = new Properties()
                 props.putAll(mapprops)
                 props.keySet().each { k ->
@@ -1342,7 +1345,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 count++
 
                 projProps[resourceType] = type
-                def mapprops = frameworkService.parsePluginConfigInput(description, prefixKey + '.' + ndx + '.' + 'config.', params)
+                def mapprops = frameworkService.parseResourceModelConfigInput(description, prefixKey + '.' + ndx + '.' + 'config.', params)
 
                 Properties props = new Properties()
                 props.putAll(mapprops)

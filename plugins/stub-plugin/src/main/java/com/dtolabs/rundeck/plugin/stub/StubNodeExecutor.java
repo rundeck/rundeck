@@ -70,10 +70,6 @@ public class StubNodeExecutor implements NodeExecutor, Describable {
                                                    "[stub] (failed to parse " + STUB_EXEC_SUCCESS + " for node)");
             }
         }
-
-        if(null!=context.getOutputContext()){
-            context.getOutputContext().addOutput("exec", "exitCode", String.valueOf(tcode));
-        }
         if (tsuccess) {
             context.getExecutionListener().log(Constants.WARN_LEVEL,
                                                "[stub] execute on node " + node.getNodename() + ": "

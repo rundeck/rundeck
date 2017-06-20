@@ -22,7 +22,6 @@ import java.io.FilterReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.Map;
-import java.util.function.Function;
 
 /**
  * Reader that filters text to replace delimited tokens with values, the default delimiters are '@', and the default
@@ -31,7 +30,7 @@ import java.util.function.Function;
 public class ReplaceTokenReader extends FilterReader {
     public static final char DEFAULT_TOKEN_START = '@';
     public static final char DEFAULT_TOKEN_END = '@';
-    private Function<String, String> resolver;
+    private Map<String, String> tokens;
     boolean blankIfMissing;
     char tokenStart = DEFAULT_TOKEN_START;
     char tokenEnd = DEFAULT_TOKEN_END;
@@ -97,26 +96,12 @@ public class ReplaceTokenReader extends FilterReader {
     }
 
     public ReplaceTokenReader(
-            Reader reader,
-            Map<String, String> data,
-            boolean blankIfMissing,
-            char tokenStart,
-            char tokenEnd
-    )
-    {
-        this(reader, data::get, blankIfMissing, tokenStart, tokenEnd);
-    }
-
-    public ReplaceTokenReader(
-            Reader reader,
-            Function<String, String> resolver,
-            boolean blankIfMissing,
-            char tokenStart,
+            Reader reader, Map<String, String> tokens, boolean blankIfMissing, char tokenStart,
             char tokenEnd
     )
     {
         super(reader);
-        this.resolver = resolver;
+        this.tokens = tokens;
         this.blankIfMissing = blankIfMissing;
         this.tokenStart = tokenStart;
         this.tokenEnd = tokenEnd;
@@ -125,9 +110,12 @@ public class ReplaceTokenReader extends FilterReader {
         tokenCharPredicate = DEFAULT_ALLOWED_PREDICATE;
     }
 
-    public static final Predicate DEFAULT_ALLOWED_PREDICATE = o -> {
-        Character c = (Character) o;
-        return !Character.isWhitespace(c);
+    public static final Predicate DEFAULT_ALLOWED_PREDICATE = new Predicate() {
+        @Override
+        public boolean evaluate(Object o) {
+            Character c = (Character) o;
+            return !Character.isWhitespace(c);
+        }
     };
 
 
@@ -205,22 +193,13 @@ public class ReplaceTokenReader extends FilterReader {
 
 
     private String substitution(String key) {
-        if (null != resolve(key)) {
-            return resolve(key);
+        if (null != tokens.get(key)) {
+            return tokens.get(key);
         } else if (blankIfMissing) {
             return "";
         } else {
             return tokenStart + key + tokenEnd;
         }
-    }
-
-    /**
-     * @param key
-     *
-     * @return
-     */
-    protected String resolve(final String key) {
-        return resolver.apply(key);
     }
 
 

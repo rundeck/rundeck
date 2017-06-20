@@ -1,47 +1,28 @@
-/*
- * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+package com.dtolabs.rundeck.core.execution.workflow;
 
-package com.dtolabs.rundeck.core.execution.workflow.engine;
-
-import com.dtolabs.rundeck.core.execution.workflow.BaseWorkflowExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior;
-import com.dtolabs.rundeck.core.execution.workflow.EngineWorkflowExecutor;
-import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
 import com.dtolabs.rundeck.core.rules.*;
 
 import java.util.Set;
+import java.util.concurrent.Callable;
 
 /**
  * operation for running a step
  */
-public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,OperationCompleted> {
-    private int stepNum;
-    private String label;
-    private Set<Condition> startTriggerConditions;
-    private Set<Condition> skipTriggerConditions;
-    private StepCallable callable;
+class EngineWorkflowStepOperation implements WorkflowSystem.Operation<EngineWorkflowStepOperationSuccess> {
+    int stepNum;
+    String label;
+    Set<Condition> startTriggerConditions;
+    Set<Condition> skipTriggerConditions;
+    private Callable<BaseWorkflowExecutor.StepResultCapture> callable;
     private StateObj startTriggerState;
     private StateObj skipTriggerState;
     private boolean didRun = false;
 
-    public StepOperation(
+    EngineWorkflowStepOperation(
             final int stepNum,
             final String label,
-            final StepCallable callable,
+            final Callable<BaseWorkflowExecutor.StepResultCapture> callable,
             final StateObj startTriggerState,
             final StateObj skipTriggerState,
             final Set<Condition> startTriggerConditions,
@@ -68,13 +49,14 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
     }
 
     @Override
-    public OperationCompleted apply(WFSharedContext context)  {
+    public EngineWorkflowStepOperationSuccess call() throws Exception {
         didRun = true;
-        BaseWorkflowExecutor.StepResultCapture stepResultCapture = callable.apply(context);
+        BaseWorkflowExecutor.StepResultCapture stepResultCapture = callable.call();
         StepExecutionResult result = stepResultCapture.getStepResult();
         ControlBehavior controlBehavior = stepResultCapture.getControlBehavior();
         String statusString = stepResultCapture.getStatusString();
 
+        EngineWorkflowExecutor.logger.debug("StepOperation callable complete: " + stepResultCapture);
 
         MutableStateObj stateChanges = States.mutable();
         boolean success = null != result && result.isSuccess();
@@ -82,6 +64,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
             EngineWorkflowExecutor.updateStateWithStepResultData(
                     stateChanges,
                     stepNum,
+                    result.getResultData(),
                     result.getFailureData()
             );
         }
@@ -96,7 +79,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
                 EngineWorkflowExecutor.stepKey(EngineWorkflowExecutor.STEP_STATE_KEY, stepNum),
                 stepResultValue
         );
-        if (label != null) {
+        if(label!=null) {
             stateChanges.updateState(
                     EngineWorkflowExecutor.stepKey(EngineWorkflowExecutor.STEP_STATE_KEY, "label." + label),
                     stepResultValue
@@ -109,6 +92,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
                 EngineWorkflowExecutor.updateStateWithStepResultData(
                         stateChanges,
                         "label." + label,
+                        result.getResultData(),
                         result.getFailureData()
                 );
             }
@@ -152,7 +136,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
             }
         }
 
-        return new OperationCompleted(stepNum, stateChanges, stepResultCapture);
+        return new EngineWorkflowStepOperationSuccess(stepNum, result, stateChanges, controlBehavior, statusString);
     }
 
     @Override
@@ -210,17 +194,5 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
                "stepNum=" + stepNum +
                ", label='" + label + '\'' +
                '}';
-    }
-
-    public int getStepNum() {
-        return stepNum;
-    }
-
-    public Set<Condition> getStartTriggerConditions() {
-        return startTriggerConditions;
-    }
-
-    public Set<Condition> getSkipTriggerConditions() {
-        return skipTriggerConditions;
     }
 }

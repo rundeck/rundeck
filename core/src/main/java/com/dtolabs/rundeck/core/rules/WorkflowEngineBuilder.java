@@ -1,7 +1,6 @@
 package com.dtolabs.rundeck.core.rules;
 
 import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
 
 /**
  * Created by greg on 5/18/16.
@@ -9,7 +8,7 @@ import java.util.function.Supplier;
 public class WorkflowEngineBuilder implements WorkflowSystemBuilder {
     RuleEngine engine;
     MutableStateObj state;
-    Supplier<ExecutorService> executor;
+    ExecutorService executor;
     WorkflowSystemEventListener listener;
 
     public static WorkflowEngineBuilder builder(WorkflowEngineBuilder source) {
@@ -39,7 +38,7 @@ public class WorkflowEngineBuilder implements WorkflowSystemBuilder {
     }
 
     @Override
-    public WorkflowEngineBuilder executor(Supplier<ExecutorService> executor) {
+    public WorkflowEngineBuilder executor(ExecutorService executor) {
         this.executor = executor;
         return this;
     }
@@ -55,7 +54,7 @@ public class WorkflowEngineBuilder implements WorkflowSystemBuilder {
         if (null == engine || null == state || null == executor) {
             throw new IllegalArgumentException();
         }
-        WorkflowEngine workflowEngine = new WorkflowEngine(engine, state, executor.get());
+        WorkflowEngine workflowEngine = new WorkflowEngine(engine, state, executor);
         workflowEngine.setListener(listener);
         return workflowEngine;
     }

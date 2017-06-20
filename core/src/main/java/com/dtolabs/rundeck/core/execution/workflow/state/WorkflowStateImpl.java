@@ -53,7 +53,7 @@ public class WorkflowStateImpl implements WorkflowState {
         this.setEndTime(endTime);
         this.setServerNode(serverNode);
         if(null!=stepStates){
-            this.setStepStates(new ArrayList<>(stepStates));
+            this.setStepStates(new ArrayList<WorkflowStepState>(stepStates));
         }
         this.setNodeStates(nodeStates);
     }
@@ -79,7 +79,7 @@ public class WorkflowStateImpl implements WorkflowState {
     }
 
     public void setNodeSet(List<String> nodeSet) {
-        this.nodeSet = new ArrayList<>(nodeSet);
+        this.nodeSet = new ArrayList<String>(nodeSet);
     }
 
     public void setStepCount(long stepCount) {

@@ -20,7 +20,6 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
-import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException
@@ -55,7 +54,6 @@ class NodeFirstWorkflowStrategySpec extends Specification {
         def nodeSet = new NodeSetImpl()
         def node1 = new NodeEntryImpl('node1')
         nodeSet.putNode(node1)
-        def dataContext= new BaseDataContext()
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Mock(ExecutionListener) {
                 log(*_) >> { args ->
@@ -64,7 +62,6 @@ class NodeFirstWorkflowStrategySpec extends Specification {
             }
             getNodes() >> nodeSet
             getFrameworkProject()>>TEST_PROJ
-            getDataContext()>>dataContext
         }
         def successExecutor = Mock(StepExecutor) {
             isNodeDispatchStep(_) >> false

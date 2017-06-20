@@ -19,7 +19,6 @@ package com.dtolabs.rundeck.core.plugins
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
-import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecArgList
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException
@@ -109,7 +108,7 @@ class BaseScriptPluginSpec extends Specification {
         plugin.scriptExecHelper = helper
         PluginStepContext context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> new BaseDataContext([:])
+            getDataContext() >> [:]
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework
@@ -161,7 +160,7 @@ class BaseScriptPluginSpec extends Specification {
         plugin.scriptExecHelper = helper
         PluginStepContext context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> new BaseDataContext([:])
+            getDataContext() >> [:]
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework
@@ -233,7 +232,7 @@ class BaseScriptPluginSpec extends Specification {
         plugin.scriptExecHelper = helper
         PluginStepContext context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> new BaseDataContext([:])
+            getDataContext() >> [:]
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework
@@ -308,7 +307,7 @@ class BaseScriptPluginSpec extends Specification {
         plugin.scriptExecHelper = helper
         PluginStepContext context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> new BaseDataContext([:])
+            getDataContext() >> [:]
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework
@@ -378,7 +377,7 @@ class BaseScriptPluginSpec extends Specification {
         plugin.scriptExecHelper = helper
         PluginStepContext context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> new BaseDataContext([:])
+            getDataContext() >> [:]
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework

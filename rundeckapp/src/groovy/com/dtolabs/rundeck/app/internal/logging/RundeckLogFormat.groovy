@@ -174,10 +174,6 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
             return new RDFormatItem(fileStart: true)
         } else if (line.startsWith(DELIM)) {
             def temp = line.substring(DELIM.length())
-            if (!temp) {
-                //delim alone
-                return new RDFormatItem(partial: '', lineComplete: true)
-            }
             def item = new RDFormatItem()
             def arr = temp.split("\\|", 4)
 
@@ -224,13 +220,7 @@ class RundeckLogFormat implements OutputLogFormat, LineLogFormat {
 
             def (message, done) = decodeLog(rest)
             item.lineComplete = done?true:false
-            item.entry = new DefaultLogEvent(
-                    loglevel: level,
-                    datetime: time,
-                    message: message + (done ? '' : '\n'),
-                    metadata: meta,
-                    eventType: eventType
-            )
+            item.entry = new DefaultLogEvent(loglevel: level, datetime: time, message: message, metadata: meta,eventType: eventType)
             return item
         } else {
             def (temp, done) = decodeLog(line)

@@ -73,7 +73,7 @@ public class ExecutionListenerBuildLogger implements BuildLogger {
 
     public void buildFinished(final BuildEvent event) {
         final Throwable error = event.getException();
-        final StringBuilder message = new StringBuilder();
+        final StringBuffer message = new StringBuffer();
         if (error != null) {
 
             message.append("Command failed.");
