@@ -25,6 +25,7 @@
     <asset:javascript src="menu/joboptions.js"/>
     <asset:javascript src="menu/jobs.js"/>
     <asset:javascript src="util/markdeep.js"/>
+    <asset:javascript src="jquery.autocomplete.min.js"/>
     <g:embedJSON id="jobParams"
                  data="${[filter: scheduledExecution?.filter, doNodeDispatch: scheduledExecution?.doNodedispatch, project: params.project
                          ?:
@@ -93,6 +94,11 @@
                     document.location.hash = t.attr('href');
                 }
             });
+
+            PageActionHandlers.registerHandler('copy_other_project',function(el){
+                jQuery('#jobid').val(el.data('jobId'));
+                jQuery('#selectProject').modal();
+            });
         }
         jQuery(init);
     </script>
@@ -100,6 +106,8 @@
 
 <body>
 <tmpl:show scheduledExecution="${scheduledExecution}" crontab="${crontab}"/>
+<g:render template="/menu/copyModal"
+          model="[projectNames: projectNames]"/>
 </body>
 </html>
 

@@ -30,7 +30,7 @@
         <asset:javascript src="menu/joboptionsTest.js"/>
         <asset:javascript src="menu/job-remote-optionsTest.js"/>
     </g:if>
-    <g:embedJSON id="pageParams" data="${[project:params.project?:request.project]}"/>
+    <g:embedJSON data="${projectNames ?: []}" id="projectNamesData"/>
     <g:jsMessages code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <script type="text/javascript">
@@ -396,6 +396,12 @@
                 bulkeditor.activateActionForJob(bulkeditor.ENABLE_SCHEDULE,el.data('jobId'));
             });
 
+            PageActionHandlers.registerHandler('copy_other_project',function(el){
+                jQuery('#jobid').val(el.data('jobId'));
+                jQuery('#selectProject').modal();
+            });
+
+
             Event.observe(document.body,'click',function(evt){
                 //click outside of popup bubble hides it
                 doMouseout();
@@ -602,6 +608,9 @@
 </div>
 </div>
 </div>
+
+<g:render template="/menu/copyModal"
+          model="[projectNames: projectNames]"/>
 
 <div class="row row-space" id="activity_section">
     <div class="col-sm-12 ">

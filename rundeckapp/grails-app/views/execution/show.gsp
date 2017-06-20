@@ -218,6 +218,11 @@
                 _applyAce(this);
             });
             followControl.bindActions('outputappendform');
+
+            PageActionHandlers.registerHandler('copy_other_project',function(el){
+                jQuery('#jobid').val(el.data('jobId'));
+                jQuery('#selectProject').modal();
+            });
         }
         jQuery(init);
       </g:javascript>
@@ -766,6 +771,8 @@
             </div>
         </div>
     </g:if>
+<g:render template="/menu/copyModal"
+          model="[projectNames: projectNames]"/>
 
   <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
 
