@@ -40,7 +40,7 @@ import static com.dtolabs.rundeck.plugin.stub.StubDataStep.parseData;
  */
 
 @Plugin(service = ServiceNameConstants.WorkflowNodeStep, name = StubDataNodeStep.PROVIDER_NAME)
-@PluginDescription(title = "Stub Node Step", description = "Produce data values for a node")
+@PluginDescription(title = "Data Node Step", description = "Produce data values for a node")
 public class StubDataNodeStep implements NodeStepPlugin {
     public static final String PROVIDER_NAME = "stub-node-step";
 
