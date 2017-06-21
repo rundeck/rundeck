@@ -229,6 +229,9 @@ class ScheduledExecution extends ExecutionContext {
         if(retry){
             map.retry=retry
         }
+        if(retryDelay){
+            map.retryDelay=retryDelay
+        }
         if(orchestrator){
             map.orchestrator=orchestrator.toMap();
         }
@@ -326,6 +329,7 @@ class ScheduledExecution extends ExecutionContext {
         }
         se.timeout = data.timeout?data.timeout.toString():null
         se.retry = data.retry?data.retry.toString():null
+        se.retryDelay = data.retryDelay?data.retryDelay.toString():null
         if(data.options){
             TreeSet options=new TreeSet()
             if(data.options instanceof Map) {

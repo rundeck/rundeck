@@ -1955,4 +1955,84 @@ class ExecutionServiceTests  {
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
     }
+
+    void testCreateExecutionRetryWithDelay(){
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                retry:'1',
+                retryDelay: '3s'
+        )
+        se.save()
+
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        Execution ex=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user','extra.option.test':'12'])
+
+        assertNotNull(ex)
+        assertEquals('-a b -c d', ex.argString)
+        assertEquals(se, ex.scheduledExecution)
+        assertNotNull(ex.dateStarted)
+        assertNull(ex.dateCompleted)
+        assertEquals('1',ex.retry)
+        assertEquals('3s',ex.retryDelay)
+        assertEquals(0,ex.retryAttempt)
+        assertEquals('user1', ex.user)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(ex))
+    }
+    void testCreateExecutionRetryDelayWithOptionValue(){
+
+        def jobRetryDelayValue = '${option.test}'
+        def testOptionValue = '1s'
+
+        assertRetryDelayOptionValueValid(jobRetryDelayValue, testOptionValue,'-test 1s')
+    }
+    private void assertRetryDelayOptionValueValid(String jobRetryValue, String testOptionValue, String argString) {
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                uuid: 'abc',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                retry: '2',
+                retryDelay: jobRetryValue
+        )
+        def opt1 = new Option(name: 'test', enforced: false,)
+        se.addToOptions(opt1)
+        if (!se.validate()) {
+            System.out.println(se.errors.allErrors*.toString().join("; "))
+        }
+        assertNotNull se.save()
+
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService = fsvc
+
+
+        Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [executionType:'user',('option.test'): testOptionValue])
+
+        assertNotNull(e2)
+        assertEquals(argString, e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals(testOptionValue, e2.retryDelay)
+        assertEquals(0, e2.retryAttempt)
+        assertEquals('user1', e2.user)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
+    }
 }
