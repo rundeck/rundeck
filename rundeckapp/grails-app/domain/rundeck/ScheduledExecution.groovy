@@ -226,11 +226,11 @@ class ScheduledExecution extends ExecutionContext {
         if(timeout){
             map.timeout=timeout
         }
-        if(retry){
+
+        if(retry && retryDelay){
+            map.retry = [retry:retry, delay: retryDelay]
+        }else if(retry){
             map.retry=retry
-        }
-        if(retryDelay){
-            map.retryDelay=retryDelay
         }
         if(orchestrator){
             map.orchestrator=orchestrator.toMap();
@@ -328,8 +328,12 @@ class ScheduledExecution extends ExecutionContext {
             se.uuid = data.uuid
         }
         se.timeout = data.timeout?data.timeout.toString():null
-        se.retry = data.retry?data.retry.toString():null
-        se.retryDelay = data.retryDelay?data.retryDelay.toString():null
+        if(data.retry instanceof Map){
+            se.retry = data.retry.retry?data.retry.retry.toString():null
+            se.retryDelay = data.retry.delay?data.retry.delay.toString():null
+        }else{
+            se.retry = data.retry?data.retry.toString():null
+        }
         if(data.options){
             TreeSet options=new TreeSet()
             if(data.options instanceof Map) {

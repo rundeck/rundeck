@@ -344,6 +344,12 @@ class JobsXMLCodec {
                 }
             }
         }
+        if(map.retry instanceof Map){
+            if(map.retry.delay){
+                map.retryDelay = map.retry.delay
+            }
+            map.retry = map.retry['<text>']
+        }
         return map
     }
     static convertXmlWorkflowToMap(Map data){
@@ -585,6 +591,10 @@ class JobsXMLCodec {
             if(map.schedule.year){
                 map.schedule.year=BuilderUtil.toAttrMap('year',map.schedule.remove('year'))
             }
+        }
+        if(map.retry && map.retry.delay){
+            map.retry = ['<text>':map.retry.retry,delay:map.retry.delay]
+            BuilderUtil.makeAttribute(map.retry,'delay')
         }
 
         convertWorkflowMapForBuilder(map.sequence)
