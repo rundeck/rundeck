@@ -64,6 +64,8 @@ class ScheduledExecution extends ExecutionContext {
     Boolean multipleExecutions = false
     Orchestrator orchestrator
 
+    String timeZone
+
     Boolean scheduleEnabled = true
     Boolean executionEnabled = true
 
@@ -140,6 +142,7 @@ class ScheduledExecution extends ExecutionContext {
         logOutputThreshold(maxSize: 256, blank:true, nullable: true)
         logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['halt','truncate'])
         logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true)
+        timeZone(maxSize: 256, blank: true, nullable: true)
     }
 
     static mapping = {
@@ -235,6 +238,9 @@ class ScheduledExecution extends ExecutionContext {
         if(orchestrator){
             map.orchestrator=orchestrator.toMap();
         }
+        if(timeZone){
+            map.timeZone=timeZone
+        }
 
         if(options){
             map.options = []
@@ -261,7 +267,10 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(doNodedispatch){
             map.nodesSelectedByDefault = hasNodesSelectedByDefault()
-            map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,keepgoing:nodeKeepgoing?true:false,excludePrecedence:nodeExcludePrecedence?true:false]]
+            map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,
+                                       keepgoing:nodeKeepgoing?true:false,
+                                       successOnEmptyNodeFilter:successOnEmptyNodeFilter?true:false,
+                                       excludePrecedence:nodeExcludePrecedence?true:false]]
             if(nodeRankAttribute){
                 map.nodefilters.dispatch.rankAttribute= nodeRankAttribute
             }
@@ -334,6 +343,7 @@ class ScheduledExecution extends ExecutionContext {
         }else{
             se.retry = data.retry?data.retry.toString():null
         }
+        se.timeZone = data.timeZone?data.timeZone.toString():null
         if(data.options){
             TreeSet options=new TreeSet()
             if(data.options instanceof Map) {
@@ -415,6 +425,9 @@ class ScheduledExecution extends ExecutionContext {
                 }
                 if(data.nodefilters.dispatch.containsKey('rankOrder')){
                     se.nodeRankOrderAscending = data.nodefilters.dispatch.rankOrder=='ascending'
+                }
+                if(data.nodefilters.dispatch.containsKey('successOnEmptyNodeFilter')){
+                    se.successOnEmptyNodeFilter = data.nodefilters.dispatch.successOnEmptyNodeFilter
                 }
             }
             if(data.nodefilters.filter){

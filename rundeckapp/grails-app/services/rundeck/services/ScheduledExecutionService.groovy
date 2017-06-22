@@ -1292,9 +1292,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def cronExpression = se.generateCrontabExression()
         try {
             log.info("creating trigger with crontab expression: " + cronExpression)
-            trigger = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
-                    .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
-                    .build()
+            if(se.timeZone){
+                log.info("creating trigger with time zone: " + se.timeZone)
+                trigger = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
+                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression).inTimeZone(TimeZone.getTimeZone(se.timeZone)))
+                        .build()
+            }else {
+                trigger = TriggerBuilder.newTrigger().withIdentity(se.generateJobScheduledName(), se.generateJobGroupName())
+                        .withSchedule(CronScheduleBuilder.cronSchedule(cronExpression))
+                        .build()
+            }
         } catch (java.text.ParseException ex) {
             throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression )
         }
@@ -1935,6 +1942,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                     failed = true;
                     scheduledExecution.errors.rejectValue('crontabString',
                             'scheduledExecution.crontabString.noschedule.message', [genCron] as Object[],
+                            "Invalid: {0}")
+                }
+            }
+            if(scheduledExecution.timeZone){
+                TimeZone tz = TimeZone.getTimeZone(scheduledExecution.timeZone,false)
+                if(tz == null){
+                    failed = true
+                    scheduledExecution.errors.rejectValue('timeZone',
+                            'scheduledExecution.timezone.error.message', [scheduledExecution.timeZone] as Object[],
                             "Invalid: {0}")
                 }
             }
@@ -3016,6 +3032,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                             'scheduledExecution.crontabString.noschedule.message', [genCron] as Object[], "invalid: {0}")
                 }
             }
+            if(scheduledExecution.timeZone){
+                TimeZone tz = TimeZone.getTimeZone(scheduledExecution.timeZone,false)
+                if(tz == null){
+                    failed = true
+                    scheduledExecution.errors.rejectValue('timeZone',
+                            'scheduledExecution.timezone.error.message', [scheduledExecution.timeZone] as Object[],
+                            "Invalid: {0}")
+                }
+            }
         } else {
             //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
@@ -3462,6 +3487,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         ScheduledExecution.findByUuidAndProject(uuid, project)
     }
 
+
+    def getTimeZones(){
+        TimeZone.getAvailableIDs()
+    }
     def isProjectExecutionEnabled(String project){
         def fwProject = frameworkService.getFrameworkProject(project)
         def disableEx = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_EXECUTION)

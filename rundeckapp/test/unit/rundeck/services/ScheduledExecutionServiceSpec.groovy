@@ -2477,6 +2477,104 @@ class ScheduledExecutionServiceSpec extends Specification {
     }
 
 
+    def "timezone validations on save"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams() +[scheduled: true,
+                                       crontabString: '0 1 2 3 4 ? *',
+                                       useCrontabString: 'true',
+                                        timeZone: timezone]
+        when:
+
+        def results = service._dovalidate(params, mockAuth())
+
+        then:
+
+        results.failed == expectFailed
+
+        where:
+        timezone    | expectFailed
+        null        | false
+        ''          | false
+        'America/Los_Angeles'   |false
+        'GMT-8:00'  | false
+        'PST'       | false
+        'XXXX'      |true
+        'AAmerica/Los_Angeles' | true
+
+    }
+
+    def "timezone validations on update"(){
+        given:
+        setupDoUpdate()
+        def params = baseJobParams() +[scheduled: true,
+                                       crontabString: '0 1 2 3 4 ? *',
+                                       useCrontabString: 'true',
+                                       timeZone: timezone]
+        def se = new ScheduledExecution(createJobParams()).save()
+        service.fileUploadService = Mock(FileUploadService)
+
+        when:
+        def results = service._doupdate([id: se.id.toString()] + params, mockAuth())
+
+        then:
+        results.success == expectSuccess
+
+        where:
+        timezone    | expectSuccess
+        null        | true
+        ''          | true
+        'America/Los_Angeles'   |true
+        'GMT-8:00'  | true
+        'PST'       | true
+        'XXXX'      |false
+        'AAmerica/Los_Angeles' | false
+    }
+
+    @Unroll
+    def "scheduleJob with or without TimeZone shouldn't fail"() {
+        given:
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler) {
+            getListenerManager() >> Mock(ListenerManager)
+        }
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckBase() >> ''
+            getFrameworkProject('AProject') >> projectMock
+        }
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b',
+                        crontabString: '0 0 10 0 0 ? *',
+                        useCrontabString: 'true',
+                        timeZone: timezone
+                )
+        ).save()
+        def scheduleDate = new Date()
+
+        when:
+        def result = service.scheduleJob(job, null, null)
+
+        then:
+        1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
+        1 * service.quartzScheduler.scheduleJob(_, _) >> scheduleDate
+        result == scheduleDate
+
+        where:
+        executionsAreActive | timezone
+        true                | 'America/Los_Angeles'
+        true                | null
+        true                | ''
+    }
+
+
+
     def "project passive mode execution"() {
         given:
         def projectMock = Mock(IRundeckProject) {
@@ -2551,4 +2649,5 @@ class ScheduledExecutionServiceSpec extends Specification {
 
 
     }
+
 }

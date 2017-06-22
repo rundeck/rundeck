@@ -1930,6 +1930,8 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def orchestratorPlugins = orchestratorPluginService.listDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+
+        def timeZones = scheduledExecutionService.getTimeZones()
         def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
         def fprojects = frameworkService.projectNames(authContext)
         return [scheduledExecution  :scheduledExecution, crontab:crontab, params:params,
@@ -1940,6 +1942,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 authorized          :scheduledExecutionService.userAuthorizedForJob(request,scheduledExecution,authContext),
                 nodeStepDescriptions: nodeStepTypes,
                 stepDescriptions    : stepTypes,
+                timeZones           : timeZones,
                 logFilterPlugins    : logFilterPlugins,
                 projectNames        : fprojects,
                 globalVars          : globals
@@ -2227,6 +2230,8 @@ class ScheduledExecutionController  extends ControllerBase{
         log.debug("ScheduledExecutionController: create : now returning model data to view...")
         def strategyPlugins = scheduledExecutionService.getWorkflowStrategyPluginDescriptions()
         def globals=frameworkService.getProjectGlobals(scheduledExecution.project).keySet()
+
+        def timeZones = scheduledExecutionService.getTimeZones()
         def logFilterPlugins = pluginService.listPlugins(LogFilterPlugin)
         def fprojects = frameworkService.projectNames(authContext)
         return ['scheduledExecution':scheduledExecution, params:params, crontab:[:],
@@ -2236,7 +2241,8 @@ class ScheduledExecutionController  extends ControllerBase{
                 orchestratorPlugins : orchestratorPluginService.listDescriptions(),
                 logFilterPlugins    : logFilterPlugins,
                 projectNames        : fprojects,
-                globalVars          :globals]
+                globalVars          :globals,
+                timeZones           :timeZones]
     }
 
     private clearEditSession(id='_new'){

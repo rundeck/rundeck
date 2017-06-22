@@ -404,6 +404,65 @@ class RuleEvaluatorSpec extends Specification {
         'zingle'      | 'asdf'             | 'bob.*'    | ['asdf', 'ghij'] | false
     }
 
+    @Unroll
+    def "evaluate match missing attribute"() {
+        when:
+        Authorization eval = new RuleEvaluator(basicRules([
+                regexMatch   : true,
+                containsMatch: false,
+                subsetMatch  : false,
+                equalsMatch  : false,
+                regexResource: [
+                        otherattr: 'bob.*'
+                ],
+                resourceType : 'restype',
+                allowActions : ['EXECUTE'] as Set,
+                denyActions  : [] as Set,
+        ]
+        )
+        )
+        def testRes = [
+                type    : 'restype',
+                someattr: 'attrval',
+        ]
+        def result = eval.evaluate(
+                testRes,
+                basicSubject("bob", "admin", "user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result != null
+        result.isAuthorized() == false
+        result.action == "EXECUTE"
+    }
+    @Unroll
+    def "evaluate equals missing attribute"() {
+        when:
+        Authorization eval = new RuleEvaluator(basicRules([
+
+                resourceType : 'restype',
+                allowActions : ['EXECUTE'] as Set,
+                denyActions  : [] as Set,
+        ]
+        )
+        )
+        def testRes = [
+                type    : 'restype',
+                someattr: 'attrval',
+        ]
+        def result = eval.evaluate(
+                testRes,
+                basicSubject("bob", "admin", "user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result != null
+        result.isAuthorized() == false
+        result.action == "EXECUTE"
+    }
+
     def "matches any pattern"() {
         expect:
         RuleEvaluator.matchesAnyPatterns(["abc"], "abc")
