@@ -282,6 +282,8 @@ Optionally a delay between retries can be established:
 * A number of seconds, such as `30`
 * A string indicating numbers and units, such as "1d 12h 30m 24s". Each number must have a unit letter next to it.  The total timeout duration will be the sum of the values.  Available units are "d" (days) "h" (hours) "m" (minutes) and "s" (seconds, default if unspecified.)
 * An embedded property reference such as `${option.delay}`.  This allows a Job Option to be used to change the delay between retries for the job.
+
+
 ![Job Delay between retries field](../figures/jobs-retry-delay-field.png)
 
 ### Log Limit
