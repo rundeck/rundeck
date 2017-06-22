@@ -138,12 +138,15 @@ In addition, these optional entries can be present:
     * `${option.delay}` reference to a job option value
    
    Example of retry with delay:
+
 ~~~~~~~~ {.yaml}
   retry:
       delay: 1h1m1s
       retry: '${option.retry}'
 ~~~~~~~~ 
+
    Example of simple retry:
+
 ~~~~~~~~ {.yaml}
   retry: ${option.retry}
 ~~~~~~~~ 
