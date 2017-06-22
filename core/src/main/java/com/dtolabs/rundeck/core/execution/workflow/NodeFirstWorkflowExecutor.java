@@ -178,6 +178,20 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                 stepCount += flowsection.getCommands().size();
             }
             wfresult = workflowResult(workflowsuccess, statusString, controlBehavior, wfCurrentContext);
+        } catch (NodesetEmptyException e) {
+            Boolean successOnEmptyNodeFilter = Boolean.valueOf(executionContext.getDataContext()
+                                                                               .get("job")
+                                                                               .get("successOnEmptyNodeFilter"));
+            if (!successOnEmptyNodeFilter) {
+                exception = e;
+                e.printStackTrace();
+                executionContext.getExecutionListener().log(Constants.ERR_LEVEL, "Exception: " + e.getClass() + ": " + e
+                        .getMessage());
+                wfresult = WorkflowResultFailed;
+            } else {
+                logger.debug("No matched nodes");
+                wfresult = workflowResult(true, null, ControlBehavior.Continue, wfCurrentContext);
+            }
         } catch (RuntimeException e) {
             exception = e;
             e.printStackTrace();
