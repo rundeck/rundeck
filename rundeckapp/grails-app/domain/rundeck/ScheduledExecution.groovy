@@ -338,10 +338,11 @@ class ScheduledExecution extends ExecutionContext {
         }
         se.timeout = data.timeout?data.timeout.toString():null
         if(data.retry instanceof Map){
-            se.retry = data.retry.retry?data.retry.retry.toString():null
-            se.retryDelay = data.retry.delay?data.retry.delay.toString():null
+            se.retry = data.retry.retry?.toString()
+            se.retryDelay = data.retry.delay?.toString()
         }else{
-            se.retry = data.retry?data.retry.toString():null
+            se.retry = data.retry?.toString()
+            se.retryDelay = data.retryDelay?.toString()
         }
         se.timeZone = data.timeZone?data.timeZone.toString():null
         if(data.options){

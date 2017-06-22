@@ -592,7 +592,7 @@ class JobsXMLCodec {
                 map.schedule.year=BuilderUtil.toAttrMap('year',map.schedule.remove('year'))
             }
         }
-        if(map.retry && map.retry.delay){
+        if(map.retry instanceof Map && map.retry.delay){
             map.retry = ['<text>':map.retry.retry,delay:map.retry.delay]
             BuilderUtil.makeAttribute(map.retry,'delay')
         }
