@@ -68,11 +68,12 @@ Some important settings:
 * `framework.rundeck.url`: Base URL for Rundeck server.
 
 
-SSH Connection settings:
+SSH Connection settings (See [Plugins User Guide > SSH Plugins](../plugins-user-guide/ssh-plugins.html)):
 
 * `framework.ssh.keypath`: Path to the SSH private key file used for SSH connections
 * `framework.ssh.user`: Default username for SSH Connections, if not overridden by Node specific value.
-* `framework.ssh.timeout`: timeout in milliseconds for SSH connections and executions. The default is "0" (no timeout).  You can modify this to change the maximum time allowed for SSH connections.
+* `framework.ssh-connect-timeout`: timeout in milliseconds for SSH connections. The default is "0" (no timeout).  You can modify this to change the connect/socket timeout. (Deprecated: `framework.ssh.timeout`.)
+* `framework.ssh-command-timeout`: timeout in milliseconds for SSH commands. The default is "0" (no timeout).  You can modify this to change the maximum time allowed for SSH commands to run.
 
 Other settings:
 

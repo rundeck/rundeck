@@ -18,7 +18,6 @@ package com.dtolabs.rundeck.core.execution.impl.jsch;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
@@ -168,6 +167,13 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
         return path;
     }
 
+    /**
+     * Resolve a property by looking for node attribute, project, then framework value
+     *
+     * @param propName
+     *
+     * @return
+     */
     private String resolve(final String propName) {
         return ResolverUtil.resolveProperty(propName, null, node, frameworkProject, framework);
     }
@@ -212,16 +218,60 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
         }
     }
 
-    public int getSSHTimeout() {
+    public long getTimeout() {
         int timeout = 0;
-        if (framework.getPropertyLookup().hasProperty(Constants.SSH_TIMEOUT_PROP)) {
-            final String val = framework.getProperty(Constants.SSH_TIMEOUT_PROP);
+        if (framework.getPropertyLookup().hasProperty(JschNodeExecutor.SSH_TIMEOUT_PROP)) {
+            final String val = framework.getProperty(JschNodeExecutor.SSH_TIMEOUT_PROP);
             try {
                 timeout = Integer.parseInt(val);
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ignored) {
             }
         }
         return timeout;
+    }
+
+    @Override
+    public long getCommandTimeout() {
+        return resolveLongFwk(
+                JschNodeExecutor.NODE_ATTR_SSH_COMMAND_TIMEOUT_PROP,
+                JschNodeExecutor.FRAMEWORK_SSH_COMMAND_TIMEOUT_PROP,
+                0
+        );
+    }
+
+    /**
+     * Look for a node/project/framework config property of the given key, and if not found
+     * fallback to a framework property, return parsed long or the default
+     *
+     * @param key           key for node attribute/project/framework property
+     * @param frameworkProp fallback framework property
+     * @param defval        default value
+     *
+     * @return parsed value or default
+     */
+    private long resolveLongFwk(final String key, final String frameworkProp, final long defval) {
+        long timeout = defval;
+        String opt = resolve(key);
+        if (opt == null && frameworkProp != null && framework.getPropertyLookup().hasProperty(frameworkProp)) {
+            opt = framework.getProperty(frameworkProp);
+        }
+        if (opt != null) {
+            try {
+                timeout = Long.parseLong(opt);
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return timeout;
+    }
+
+    @Override
+    public long getConnectTimeout() {
+        long l = resolveLongFwk(
+                JschNodeExecutor.NODE_ATTR_SSH_CONNECT_TIMEOUT_PROP,
+                JschNodeExecutor.FRAMEWORK_SSH_CONNECT_TIMEOUT_PROP,
+                0
+        );
+        return l > 0 ? l : getTimeout();
     }
 
     /**
