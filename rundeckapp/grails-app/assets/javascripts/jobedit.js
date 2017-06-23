@@ -52,9 +52,9 @@ function _addOption(data) {
 function _removeOptionName(name) {
     "use strict";
     var findname = function (e) {
-        return e.name == name;
+        return e.name === name;
     };
-    var found = _jobOptionData.find(findName);
+    var found = _jobOptionData.find(findname);
     if (found >= 0) {
         _jobOptionData.splice(found, 1);
     }
