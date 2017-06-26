@@ -944,19 +944,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     def scheduleJob(ScheduledExecution se, String oldJobName, String oldGroupName) {
+        def jobid = "${se.generateFullName()} [${se.extid}]"
+        def jobDesc = "Attempt to schedule job $jobid in project $se.project"
         if (!executionService.executionsAreActive) {
-            log.warn("Attempt to schedule job ${se} ${se.extid} in project ${se.project}, but executions are disabled.")
+            log.warn("$jobDesc, but executions are disabled.")
             return null
         }
 
         if(!shouldScheduleInThisProject(se.project)){
-            log.warn("Attempt to schedule job ${se} ${se.extid} in project ${se.project}, but project executions are disabled.")
+            log.warn("$jobDesc, but project executions are disabled.")
             return null
         }
 
         if (!se.shouldScheduleExecution()) {
             log.warn(
-                    "Attempt to schedule job ${se} ${se.extid} in project ${se.project}, but job execution is disabled."
+                    "$jobDesc, but job execution is disabled."
             )
             return null;
         }
@@ -966,7 +968,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         jobDetail.getJobDataMap().put("bySchedule", true)
         def Date nextTime
         if(oldJobName && oldGroupName){
-            log.info("job renamed, removing old job and scheduling new one")
+            log.info("$jobid was renamed, removing old job and scheduling new one")
             deleteJob(oldJobName,oldGroupName)
         }
         if ( hasJobScheduled(se) ) {
