@@ -58,6 +58,8 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
 
     /** units are milliseconds, default is 0=infinite */
     private long maxwait = 0;
+    private long connectTimeout = 0;
+    private long commandTimeout = 0;
 
     /** for waiting for the command to finish */
     private Thread thread = null;
@@ -79,8 +81,10 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
     private Integer ttlSSHAgent=0;
     private SSHAgentProcess sshAgentProcess=null;
 
-    private static final String TIMEOUT_MESSAGE =
+    public static final String COMMAND_TIMEOUT_MESSAGE =
         "Timeout period exceeded, connection dropped.";
+    public static final String CON_TIMEOUT_MESSAGE =
+            "Connection timeout.";
 
     /**
      * Constructor for SSHExecTask.
@@ -119,6 +123,26 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
     }
     public long getTimeout(){
         return maxwait;
+    }
+
+    @Override
+    public void setConnectTimeout(final long sshTimeout) {
+        connectTimeout = sshTimeout;
+    }
+
+    @Override
+    public long getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    @Override
+    public void setCommandTimeout(final long sshTimeout) {
+        commandTimeout = sshTimeout;
+    }
+
+    @Override
+    public long getCommandTimeout() {
+        return commandTimeout;
     }
 
     /**
@@ -407,10 +431,10 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
         if(getInputStream()!=null){
             istream=getInputStream();
         }
-
+        long sshConTimeout = connectTimeout > 0 ? connectTimeout : maxwait;
         try {
             final ChannelExec channel;
-            session.setTimeout((int) maxwait);
+            session.setTimeout((int) sshConTimeout);
             /* execute the command */
             channel = (ChannelExec) session.openChannel("exec");
             if(null != this.sshAgentProcess){
@@ -451,15 +475,15 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
                 };
 
             thread.start();
-            thread.join(maxwait);
+            thread.join(commandTimeout);
 
             if (thread.isAlive()) {
                 // ran out of time
                 thread = null;
                 if (getFailonerror()) {
-                    throw new BuildException(TIMEOUT_MESSAGE);
+                    throw new BuildException(COMMAND_TIMEOUT_MESSAGE);
                 } else {
-                    log(TIMEOUT_MESSAGE, Project.MSG_ERR);
+                    log(COMMAND_TIMEOUT_MESSAGE, Project.MSG_ERR);
                 }
             } else {
                 //success
@@ -483,11 +507,11 @@ public class ExtSSHExec extends SSHBase implements SSHTaskBuilder.SSHExecInterfa
         } catch (BuildException e) {
             throw e;
         } catch (JSchException e) {
-            if (e.getMessage().indexOf("session is down") >= 0) {
+            if (e.getMessage().contains("session is down")) {
                 if (getFailonerror()) {
-                    throw new BuildException(TIMEOUT_MESSAGE, e);
+                    throw new BuildException(CON_TIMEOUT_MESSAGE, e);
                 } else {
-                    log(TIMEOUT_MESSAGE, Project.MSG_ERR);
+                    log(CON_TIMEOUT_MESSAGE, Project.MSG_ERR);
                 }
             } else {
                 if (getFailonerror()) {

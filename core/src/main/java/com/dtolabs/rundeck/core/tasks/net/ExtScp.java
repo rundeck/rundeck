@@ -40,6 +40,8 @@ public class ExtScp extends Scp implements SSHTaskBuilder.SCPInterface {
     private String              knownhosts;
     private InputStream         sshKeyData;
     private long                timeout;
+    private long connectTimeout;
+    private long commandTimeout;
     private Map<String, String> sshConfig;
     private PluginLogger        pluginLogger;
     private String toDir;
@@ -143,5 +145,25 @@ public class ExtScp extends Scp implements SSHTaskBuilder.SCPInterface {
 
     public List<FileSet> getIfaceFileSets() {
         return fileSets;
+    }
+
+    @Override
+    public long getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    @Override
+    public void setConnectTimeout(long connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    @Override
+    public long getCommandTimeout() {
+        return commandTimeout;
+    }
+
+    @Override
+    public void setCommandTimeout(long commandTimeout) {
+        this.commandTimeout = commandTimeout;
     }
 }
