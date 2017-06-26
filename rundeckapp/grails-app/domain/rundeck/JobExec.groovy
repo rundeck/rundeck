@@ -132,6 +132,8 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             if(dispatch){
                 map.jobref.nodefilters.dispatch=dispatch
             }
+        } else if (null != nodeIntersect) {
+            map.jobref.nodefilters = [dispatch: [nodeIntersect: nodeIntersect]]
         }
         return map
     }
@@ -171,14 +173,15 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
                 if (null != dispatch?.rankOrder) {
                     exec.nodeRankOrderAscending = (dispatch.rankOrder == 'ascending')
                 }
-                if(null!=dispatch?.nodeIntersect){
-                    if (dispatch.nodeIntersect in ['true', true]) {
-                        exec.nodeIntersect=true
-                    }else{
-                        exec.nodeIntersect=false
-                    }
-                }
+
                 exec.nodeRankAttribute= dispatch?.rankAttribute
+            }
+            if(map.jobref.nodefilters.dispatch && null!=map.jobref.nodefilters.dispatch?.nodeIntersect){
+                if (map.jobref.nodefilters.dispatch.nodeIntersect in ['true', true]) {
+                    exec.nodeIntersect=true
+                }else{
+                    exec.nodeIntersect=false
+                }
             }
         }
         //nb: error handler is created inside Workflow.fromMap
