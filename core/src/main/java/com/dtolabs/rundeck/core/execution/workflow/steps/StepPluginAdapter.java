@@ -82,7 +82,11 @@ class StepPluginAdapter implements StepExecutor, Describable {
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         if (null != instanceConfiguration) {
             instanceConfiguration = DataContextUtils.replaceDataReferences(instanceConfiguration,
-                                                                           executionContext.getDataContext());
+                                                                           executionContext.getDataContext(),
+                                                                           null,
+                                                                           false,
+                                                                           true
+            );
         }
         final String providerName = item.getType();
         final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(executionContext,
