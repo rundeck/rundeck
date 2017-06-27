@@ -406,11 +406,13 @@ function Option(data) {
 
         var touse = tselected === 1 ? tvalues[tselected] :( remoteselected || (tselected >= 0 ? tvalues[tselected] : null));
 
+        //triggers refresh of "selectOptions" populating select box
+        self.remoteValues(rvalues);
+
         if ((touse) && !self.multivalued()) {
-            // self.value(touse);
+            //choose correct value
             self.selectedOptionValue(touse);
         }
-        self.remoteValues(rvalues);
     };
     /**
      * Option values data loaded from remote JSON request
