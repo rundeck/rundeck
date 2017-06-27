@@ -38,7 +38,7 @@ jQuery(function () {
             optionDepsMet: true,
             secureInput: false,
             hasExtended: false,
-            value: 'test value'
+            value: null
         };
         if (data) {
             jQuery.extend(defdata, data);
@@ -390,7 +390,7 @@ jQuery(function () {
             "use strict";
             var self = this;
             self.testMatrix(
-                " loadRemoteValues({0})",
+                " {2}: loadRemoteValues({0})",
                 [
                     [
                         {values: [{value: 'x', name: 'X'}, {value: 'y', name: 'Y'}], selectedvalue: 'x'},
@@ -433,6 +433,175 @@ jQuery(function () {
                         remoteValues: ko.utils.arrayMap(opt.remoteValues(), function (val) {
                             return val.value();
                         }).join(',')
+                    };
+                }
+            );
+        },
+        loadRemote_json_data_with_init_values_Test: function (pref) {
+            "use strict";
+            var self = this;
+            self.testMatrix(
+                " loadRemoteValues({0})",
+                [
+                    [
+                        {values: [{value: 'x', name: 'X'}, {value: 'y', name: 'Y'}], selectedvalue: 'x', init: 'x'},
+                        {value: 'x', selectedOptionValue: 'x', remoteValues: 'x,y', initvalue: 'x'}
+                    ],
+                    [
+                        {values: [{value: 'x', name: 'X'}, {value: 'y', name: 'Y'}], selectedvalue: 'x', init: 'y'},
+                        {value: 'y', selectedOptionValue: 'y', remoteValues: 'x,y', initvalue: 'y'}
+                    ],
+                    [
+                        {
+                            values: [{value: 'x', name: 'X'}, {value: 'y', name: 'Y', selected: true}],
+                            selectedvalue: 'x',
+                            init: 'y'
+                        },
+                        {value: 'y', selectedOptionValue: 'y', remoteValues: 'x,y', initvalue: 'y'}
+                    ],
+                    [
+                        {
+                            values: [{value: 'x', name: 'X', selected: true}, {value: 'y', name: 'Y', selected: false}],
+                            selectedvalue: 'x',
+                            init: 'y'
+                        },
+                        {value: 'y', selectedOptionValue: 'y', remoteValues: 'x,y', initvalue: 'y'}
+                    ]
+
+                ],
+                function (val) {
+                    var opt = mkopt({value: val.init, selectedOptionValue: null});
+                    opt.loadRemoteValues(val.values, val.selectedvalue);
+
+                    return {
+                        value: opt.value(),
+                        selectedOptionValue: opt.selectedOptionValue(),
+                        remoteValues: ko.utils.arrayMap(opt.remoteValues(), function (val) {
+                            return val.value();
+                        }).join(','),
+                        initvalue: opt.initvalue()
+                    };
+                }
+            );
+        },
+        loadRemote_json_data_twice_with_initvalue_Test: function (pref) {
+            "use strict";
+            var self = this;
+            self.testMatrix(
+                " loadRemoteValues({0})",
+                [
+                    [
+
+                        {
+                            loaded: [
+                                {
+                                    values: [
+                                        {value: 'x', name: 'X'},
+                                        {value: 'y', name: 'Y'}
+                                    ],
+                                    selectedvalue: 'x'
+                                },
+                                {
+                                    values: [
+                                        {value: 'a', name: 'A', selected: true},
+                                        {value: 'x', name: 'X'},
+                                        {value: 'z', name: 'Y'}
+                                    ],
+                                    selectedvalue: 'a'
+                                }
+                            ],
+                            init: 'x'
+                        },
+
+                        [
+                            {value: 'x', selectedOptionValue: 'x', remoteValues: 'x,y', initvalue: 'x', useinit: false},
+                            {
+                                value: 'a',
+                                selectedOptionValue: 'a',
+                                remoteValues: 'a,x,z',
+                                initvalue: 'x',
+                                useinit: false
+                            }
+                        ]
+                    ]
+                ],
+                function (val) {
+                    var opt = mkopt({value: val.init, selectedOptionValue: null});
+                    opt.loadRemoteValues(val.loaded[0].values, val.loaded[0].selectedvalue);
+
+                    var result = [{
+                        value: opt.value(),
+                        selectedOptionValue: opt.selectedOptionValue(),
+                        remoteValues: ko.utils.arrayMap(opt.remoteValues(), function (val) {
+                            return val.value();
+                        }).join(','),
+                        initvalue: opt.initvalue(),
+                        useinit: opt.useinit()
+                    }];
+                    opt.loadRemoteValues(val.loaded[1].values, val.loaded[1].selectedvalue);
+
+                    result.push({
+                        value: opt.value(),
+                        selectedOptionValue: opt.selectedOptionValue(),
+                        remoteValues: ko.utils.arrayMap(opt.remoteValues(), function (val) {
+                            return val.value();
+                        }).join(','),
+                        initvalue: opt.initvalue(),
+                        useinit: opt.useinit()
+                    });
+                    return result;
+                }
+            );
+        },
+
+        loadRemote_json_data_with_multiple_selected_Test: function (pref) {
+            "use strict";
+            var self = this;
+            self.testMatrix(
+                " loadRemoteValues({0})",
+                [
+                    [ //init value
+                        {
+                            init: 'z',
+                            values: [
+                                {value: 'x', name: 'X', selected: true},
+                                {value: 'y', name: 'Y'},
+                                {value: 'z', name: 'Z'}
+                            ],
+                            selectedvalue: 'y'
+                        },
+                        {value: 'z', selectedOptionValue: 'z'}
+                    ],
+                    [ //no init value
+                        {
+                            values: [
+                                {value: 'x', name: 'X', selected: true},
+                                {value: 'y', name: 'Y'},
+                                {value: 'z', name: 'Z'}
+                            ],
+                            selectedvalue: 'y'
+                        },
+                        {value: 'x', selectedOptionValue: 'x'}
+                    ],
+                    [ //no remote selected value
+                        {
+                            values: [
+                                {value: 'x', name: 'X'},
+                                {value: 'y', name: 'Y'},
+                                {value: 'z', name: 'Z'}
+                            ],
+                            selectedvalue: 'y'
+                        },
+                        {value: 'y', selectedOptionValue: 'y'}
+                    ]
+                ],
+                function (val) {
+                    var opt = mkopt({value: val.init, selectedOptionValue: null});
+                    opt.loadRemoteValues(val.values, val.selectedvalue);
+
+                    return {
+                        value: opt.value(),
+                        selectedOptionValue: opt.selectedOptionValue()
                     };
                 }
             );
