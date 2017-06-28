@@ -103,7 +103,10 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         if (null != instanceConfiguration) {
             instanceConfiguration = DataContextUtils.replaceDataReferences(instanceConfiguration,
-                                                                           context.getDataContext());
+                                                                           context.getDataContext(),
+                                                                           null,
+                                                                           false,
+                                                                           true);
         }
         final String providerName = item.getNodeStepType();
         final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
