@@ -56,15 +56,14 @@ class ProjectArchiveParams implements ProjectArchiveImportRequest{
     }
 
     ArchiveOptions toArchiveOptions() {
-        def a = new ArchiveOptions(
-                all: exportAll,
-                jobs: exportJobs,
-                executions: exportExecutions,
-                configs: exportConfigs,
-                readmes: exportReadmes,
-                acls: exportAcls
+        new ArchiveOptions(
+                all: exportAll ?: false,
+                jobs: exportJobs ?: false,
+                executions: exportExecutions ?: false,
+                configs: exportConfigs ?: false,
+                readmes: exportReadmes ?: false,
+                acls: exportAcls ?: false
         )
-        return a;
     }
 
 }
