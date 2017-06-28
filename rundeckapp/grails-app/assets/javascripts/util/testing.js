@@ -103,9 +103,9 @@ var TestHarness = function (name,data) {
     self.testMatrix=function(name,dataset,tester){
         "use strict";
 
-        dataset.forEach(function (t) {
+        dataset.forEach(function (t,x) {
             var val2 = tester(t[0]);
-            self.assert(messageTemplate(name,[JSON.stringify(t[0]),JSON.stringify(t[1])]), t[1], val2);
+            self.assert(messageTemplate(name,[JSON.stringify(t[0]),JSON.stringify(t[1]),x]), t[1], val2);
         });
     };
     self.holder={};
