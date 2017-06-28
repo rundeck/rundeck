@@ -1748,6 +1748,7 @@ class ExecutionServiceSpec extends Specification {
         }
         def authContext = Mock(UserAndRolesAuthContext) {
             getUsername() >> 'user1'
+            getRoles() >> (['c', 'd'] as Set)
         }
         service.scheduledExecutionService = Mock(ScheduledExecutionService)
         def job = new ScheduledExecution(
@@ -1772,6 +1773,10 @@ class ExecutionServiceSpec extends Specification {
             return scheduleDate
         }
         result.nextRun.getTime() == scheduleDate.getTime()
+        result.execution != null
+        result.execution.user == 'user1'
+        result.execution.userRoles == ['c', 'd']
+
 
         where:
         executionsAreActive | scheduleEnabled | executionEnabled | hasSchedule | expectScheduled
