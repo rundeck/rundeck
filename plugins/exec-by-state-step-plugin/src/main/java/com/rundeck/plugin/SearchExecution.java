@@ -7,6 +7,7 @@ import com.dtolabs.rundeck.core.jobs.JobNotFound;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.apache.log4j.Logger;
 
 import java.sql.*;
@@ -37,7 +38,7 @@ public class SearchExecution {
 
     public String execute(JobService jobService) throws StepException {
         ArrayList<HashMap<String,String>> jobs = new ArrayList<>();
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().serializeNulls().create();
 
         try {
             List<ExecutionReference> list = jobService.executionForState(state,project);
@@ -45,11 +46,11 @@ public class SearchExecution {
                 HashMap<String, String> job = new HashMap<>();
 
                 job.put("job",exec.getJob().getJobName());
-                job.put("group",exec.getJob().getGroupPath()!=null?exec.getJob().getGroupPath():"");
+                job.put("group",exec.getJob().getGroupPath());
                 job.put("job_id",exec.getJob().getId());
                 job.put("execution",exec.getId());
-                job.put("filter",exec.getFilter()!=null?exec.getFilter():"");
-                job.put("options",exec.getOptions()!=null?exec.getOptions():"");
+                job.put("filter",exec.getFilter());
+                job.put("options",exec.getOptions());
                 jobs.add(job);
             }
         }catch (JobNotFound e){
