@@ -1,24 +1,16 @@
 package com.rundeck.plugin;
 
 
-import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.core.plugins.Plugin;
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription;
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty;
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.sql.Connection;
 import java.util.Map;
 
 @Plugin(service = ServiceNameConstants.WorkflowStep, name = "search-executions")
@@ -43,10 +35,11 @@ public class SearchExecutionWorkflowStep implements StepPlugin {
         SearchExecution se = new SearchExecution(state, project);
         se.checkState();
         String res = se.execute(jobService);
+
         if(json) {
-            System.out.println(res);
+            context.getExecutionContext().getExecutionListener().log(2,res);
         }else{
-            System.out.println("RUNDECK:DATA:executions = "+res);
+            context.getExecutionContext().getExecutionListener().log(2,"RUNDECK:DATA:executions = "+res);
         }
     }
 }

@@ -112,9 +112,7 @@ class JobStateService implements AuthorizingJobService {
         def executions = Execution.findAllByProjectAndStatus(project,state)
         ArrayList<ExecutionReference> list = new ArrayList<>()
         executions.each { exec ->
-            println(exec)
             ScheduledExecution job = exec.scheduledExecution
-            println(job)
             JobReferenceImpl jobRef = new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath, project: job.project)
             ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(id:exec.id, options: exec.argString, filter: exec.filter, job: jobRef)
             list.add(execRef)
