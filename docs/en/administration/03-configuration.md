@@ -235,14 +235,15 @@ The following sections describe configuration values for this file.
     correctly if they use username and password login.
 
 * `rundeck.api.tokens.duration.max`: Duration string indicating maximum lifetime of API Tokens. If unset, the value
-    will be "30d" (30 days). Format: "##{ydhms}" (years, days, hours, minutes, seconds).
+    will be "30d" (30 days). Format: "##{ydhms}" (years, days, hours, minutes, seconds). 
+    If you want to disable the max expiration you can set it to 0 and create token with 0 duration that don't expire.
 
 * `rundeck.security.csrf.referer.filterMethod`:`NONE|POST|*`. Set HTTP Method to filter based on Referer header.  Can be POST, or "*" for all methods. Default: NONE (disabled)
 
 * `rundeck.security.csrf.referer.allowApi`: `true|false`. Allow /api/* requests without requireing matching Referer header. Default: true.
 
 * `rundeck.security.csrf.referer.requireHttps`: `true|false`. If server URL is HTTPS, Require referer header to be from HTTPS version of server URL, if false allow HTTP as well. Default: true.
-
+ 
 ### Execution Mode
 
 * `rundeck.executionMode`:`active/passive`. Default `active`. Set the Execution
