@@ -17,6 +17,7 @@
 package rundeck.services.jobs
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
@@ -48,4 +49,11 @@ class ResolvedAuthJobService implements JobService {
     JobState getJobState(JobReference jobReference) throws JobNotFound {
         authJobService.getJobState(authContext, jobReference)
     }
+
+    @Override
+    List<ExecutionReference> executionForState(String state, String project) throws JobNotFound{
+        authJobService.executionForState(authContext, state, project)
+    }
+
+
 }

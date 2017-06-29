@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
@@ -26,6 +27,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.transaction.Transactional
 import rundeck.Execution
 import rundeck.ScheduledExecution
+import rundeck.services.execution.ExecutionReferenceImpl
 import rundeck.services.jobs.AuthorizingJobService
 import rundeck.services.jobs.ResolvedAuthJobService
 
@@ -103,5 +105,20 @@ class JobStateService implements AuthorizingJobService {
      */
     JobService jobServiceWithAuthContext(AuthContext auth) {
         return new ResolvedAuthJobService(authContext: auth, authJobService: this)
+    }
+
+    @Override
+    List<ExecutionReference> executionForState(AuthContext auth, String state, String project) throws JobNotFound {
+        def executions = Execution.findAllByProjectAndStatus(project,state)
+        ArrayList<ExecutionReference> list = new ArrayList<>()
+        executions.each { exec ->
+            println(exec)
+            ScheduledExecution job = exec.scheduledExecution
+            println(job)
+            JobReferenceImpl jobRef = new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath, project: job.project)
+            ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(id:exec.id, options: exec.argString, filter: exec.filter, job: jobRef)
+            list.add(execRef)
+        }
+        return list
     }
 }

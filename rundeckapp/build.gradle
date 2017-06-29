@@ -78,6 +78,7 @@ dependencies {
             project(':plugins:localexec-plugin'),
             project(':plugins:copyfile-plugin'),
             project(':plugins:job-state-plugin'),
+            project(':plugins:exec-by-state-step-plugin'),
             project(':plugins:flow-control-plugin'),
             project(':plugins:jasypt-encryption-plugin'),
             project(':plugins:orchestrator-plugin'),
