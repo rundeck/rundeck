@@ -106,7 +106,7 @@ def manifest=[
         "lib/javax.servlet-${versions.servlet}.jar",
         "lib/jna-3.2.2.jar",
         "lib/libpam4j-1.5.jar",
-        "lib/not-yet-commons-ssl-0.3.11.jar",
+        "lib/not-yet-commons-ssl-0.3.17.jar",
     ],
     "plugins/script-plugin/${target}/rundeck-script-plugin-${version}.jar":[:],
     "plugins/stub-plugin/${target}/rundeck-stub-plugin-${version}.jar":[:],
