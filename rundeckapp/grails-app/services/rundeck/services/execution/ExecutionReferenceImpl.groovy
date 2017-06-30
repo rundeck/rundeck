@@ -9,11 +9,14 @@ class ExecutionReferenceImpl implements ExecutionReference {
     String filter
     String id
     JobReferenceImpl job
+    Date dateStarted
+    String status
 
     @Override
     String toString() {
         return "ExecutionReference{" +
                 "id='" + id + '\'' +
+                ", status='" + status + '\'' +
                 ", filter='" + filter + '\'' +
                 ", options='" + options + '\'' +
                 ", job='" + job + '\'' +

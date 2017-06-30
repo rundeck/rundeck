@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
+import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
@@ -25,11 +26,14 @@ import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.transaction.Transactional
+import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.execution.ExecutionReferenceImpl
 import rundeck.services.jobs.AuthorizingJobService
 import rundeck.services.jobs.ResolvedAuthJobService
+
+import java.util.concurrent.TimeUnit
 
 @Transactional
 class JobStateService implements AuthorizingJobService {
@@ -108,15 +112,48 @@ class JobStateService implements AuthorizingJobService {
     }
 
     @Override
-    List<ExecutionReference> executionForState(AuthContext auth, String state, String project) throws JobNotFound {
+    List<ExecutionReference> searchExecutions(AuthContext auth, String state, String project, String jobUuid,
+                                              String excludeJobUuid, String since){
+
         def executions = Execution.findAllByProjectAndStatus(project,state)
+        if(jobUuid){
+            executions = executions.findAll{it.scheduledExecution.extid==jobUuid}
+        }
+        if(excludeJobUuid){
+            executions = executions.findAll{it.scheduledExecution.extid!=excludeJobUuid}
+        }
+        if(since){
+            long timeAgo = Sizes.parseTimeDuration(since,TimeUnit.MILLISECONDS)
+            Date sinceDt = new Date()
+            sinceDt.setTime(sinceDt.getTime()-timeAgo)
+            executions = executions.findAll{it.dateStarted.time>sinceDt.time}
+        }
+
         ArrayList<ExecutionReference> list = new ArrayList<>()
         executions.each { exec ->
             ScheduledExecution job = exec.scheduledExecution
-            JobReferenceImpl jobRef = new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath, project: job.project)
-            ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(id:exec.id, options: exec.argString, filter: exec.filter, job: jobRef)
+            JobReferenceImpl jobRef = new JobReferenceImpl(id: job.extid, jobName: job.jobName,
+                    groupPath: job.groupPath, project: job.project)
+            ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(id:exec.id, options: exec.argString,
+                    filter: exec.filter, job: jobRef, dateStarted: exec.dateStarted, status: exec.status)
             list.add(execRef)
         }
         return list
+    }
+
+
+    @Override
+    ExecutionReference executionForId(AuthContext auth, String id, String project) throws ExecutionNotFound{
+        long exid = Long.valueOf(id)
+        def exec = Execution.findByIdAndProject(exid,project)
+        if(!exec){
+            throw new ExecutionNotFound("Not found", id, project)
+        }
+        ScheduledExecution job = exec.scheduledExecution
+        JobReferenceImpl jobRef = new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath,
+                project: job.project)
+        new ExecutionReferenceImpl(id:exec.id, options: exec.argString, filter: exec.filter, job: jobRef,
+                dateStarted: exec.dateStarted, status: exec.status)
+
     }
 }

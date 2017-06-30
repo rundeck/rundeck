@@ -3,27 +3,31 @@ package com.rundeck.plugin;
 
 import com.dtolabs.rundeck.core.execution.ExecutionReference;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
-import com.dtolabs.rundeck.core.jobs.JobNotFound;
 import com.dtolabs.rundeck.core.jobs.JobService;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.apache.log4j.Logger;
 
-import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
+
+import java.util.*;
 
 public class SearchExecution {
     static Logger logger = Logger.getLogger(SearchExecution.class);
 
     private String state;
     private String project;
+    private String jobUuid;
+    private String excludeJobUuid;
+    private String since;
 
-    public SearchExecution(String state, String project){
+
+    public SearchExecution(String state, String project, String jobUuid, String excludeJobUuid, String since){
         this.state = state;
         this.project = project;
+        this.jobUuid = jobUuid;
+        this.excludeJobUuid = excludeJobUuid;
+        this.since = since;
     }
 
 
@@ -33,32 +37,30 @@ public class SearchExecution {
         if(isNotSet(this.state)){
             throw new StepException("status is required", PluginFailureReason.MissingProperty);
         }
+        if(isNotSet(this.project)){
+            throw new StepException("project is required", PluginFailureReason.MissingProperty);
+        }
     }
 
 
-    public String execute(JobService jobService) throws StepException {
-        ArrayList<HashMap<String,String>> jobs = new ArrayList<>();
-        Gson gson = new GsonBuilder().serializeNulls().create();
-
-        try {
-            List<ExecutionReference> list = jobService.executionForState(state,project);
-            for (ExecutionReference exec:list) {
-                HashMap<String, String> job = new HashMap<>();
-
-                job.put("job",exec.getJob().getJobName());
-                job.put("group",exec.getJob().getGroupPath());
-                job.put("job_id",exec.getJob().getId());
-                job.put("execution",exec.getId());
-                job.put("filter",exec.getFilter());
-                job.put("options",exec.getOptions());
-                jobs.add(job);
-            }
-        }catch (JobNotFound e){
-            e.printStackTrace();
+    public String execute(JobService jobService, boolean toJson) throws StepException {
+        List<ExecutionReference> list = jobService.searchExecutions(state,project, jobUuid,excludeJobUuid,since);
+        if(toJson){
+            Gson gson = new GsonBuilder().serializeNulls().create();
+            return gson.toJson(list);
         }
+        Iterator<ExecutionReference> iterator = list.iterator();
+        StringBuilder execList = new StringBuilder("RUNDECK:DATA:executions = ");
+        while (iterator.hasNext()) {
+            ExecutionReference exec = iterator.next();
+            execList.append(exec.getId());
+            if(iterator.hasNext()) {
+                execList.append(',');
+            }
+        }
+        return execList.toString();
 
 
-        return gson.toJson(jobs);
     }
 
     private boolean isNotSet(String value){

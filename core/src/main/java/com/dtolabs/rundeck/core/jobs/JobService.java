@@ -16,8 +16,10 @@
 
 package com.dtolabs.rundeck.core.jobs;
 
+import com.dtolabs.rundeck.core.execution.ExecutionNotFound;
 import com.dtolabs.rundeck.core.execution.ExecutionReference;
 
+import java.util.Date;
 import java.util.List;
 
 /**
@@ -63,14 +65,26 @@ public interface JobService {
      */
     JobState getJobState(JobReference jobReference) throws JobNotFound;
 
+
     /**
      * @param state    to search
      * @param project the project
+     * @param jobUuid    to search or null
+     * @param excludeJobUuid    to search or null
+     * @param since    to search or null
      *
-     * @return a reference to the execution by the ID
+     * @return a list of references to executions using the input parameters
      *
-     * @throws com.dtolabs.rundeck.core.jobs.JobNotFound if the job was not found
      */
-    List<ExecutionReference> executionForState(String state, String project) throws JobNotFound;
+    List<ExecutionReference> searchExecutions(String state, String project, String jobUuid, String excludeJobUuid, String since);
 
+    /**
+     * @param id   execution id
+     * @param project the project
+     *
+     * @return a execution reference for the id
+     *
+     * @throws com.dtolabs.rundeck.core.execution.ExecutionNotFound if the execution was not found
+     */
+    ExecutionReference executionForId(String id, String project) throws ExecutionNotFound;
 }

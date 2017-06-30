@@ -11,6 +11,7 @@ import com.dtolabs.rundeck.plugins.descriptions.SelectValues;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 
+import java.util.Date;
 import java.util.Map;
 
 @Plugin(service = ServiceNameConstants.WorkflowStep, name = "search-executions")
@@ -19,10 +20,21 @@ public class SearchExecutionWorkflowStep implements StepPlugin {
     public static String serviceName = "search-executions";
 
     @SelectValues(freeSelect = true, values = {"incomplete","failed", "succeeded"})
-    @PluginProperty(name = "state", title = "state", description = "state of the execution", required = true)
+    @PluginProperty(name = "state", title = "State", description = "state of the execution", required = true)
     private String state;
 
-    @PluginProperty(name = "json", title = "json output", description = "Format output as json to display")
+    @PluginProperty(name = "job", title = "Job id", description = "search only for this job (optional)")
+    private String jobUuid;
+
+    @PluginProperty(name = "exclude", title = "Exclude job id", description = "exclude executions from this job (optional)")
+    private String excludeJobUuid;
+
+
+    @PluginProperty(name = "since", title = "Executions since", description = "Time ago to search, in seconds," +
+            " +  or specify time units: \"120m\", \"2h\", \"3d\".(optional)")
+    private String since;
+
+    @PluginProperty(name = "json", title = "Json output", description = "Format output as json to display")
     private boolean json;
 
     @Override
@@ -32,14 +44,10 @@ public class SearchExecutionWorkflowStep implements StepPlugin {
         JobService jobService = context.getExecutionContext().getJobService();
 
 
-        SearchExecution se = new SearchExecution(state, project);
+        SearchExecution se = new SearchExecution(state, project, jobUuid, excludeJobUuid,since);
         se.checkState();
-        String res = se.execute(jobService);
+        String res = se.execute(jobService,json);
 
-        if(json) {
-            context.getExecutionContext().getExecutionListener().log(2,res);
-        }else{
-            context.getExecutionContext().getExecutionListener().log(2,"RUNDECK:DATA:executions = "+res);
-        }
+        context.getExecutionContext().getExecutionListener().log(2,res);
     }
 }
