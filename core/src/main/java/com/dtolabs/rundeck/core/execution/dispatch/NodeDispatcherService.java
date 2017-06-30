@@ -46,10 +46,9 @@ public class NodeDispatcherService extends BaseProviderRegistryService<NodeDispa
         registry.put("orchestrator", OrchestratorNodeDispatcher.class);
     }
 
-    public  NodeDispatcher getNodeDispatcher(ExecutionContext context) throws ExecutionServiceException {
+    public NodeDispatcher getNodeDispatcher(ExecutionContext context) throws ExecutionServiceException {
         //this gets called for each node as well if we already have data then the parent orchestrator has fired
-        if(context.getOrchestrator() != null && 
-                !context.getDataContext().containsKey(OrchestratorNodeDispatcher.ORCHESTRATOR_DATA)){
+        if (context.getOrchestrator() != null) {
             return providerOfType("orchestrator");
         }
         if (context.getThreadCount() > 1 && context.getNodes().getNodeNames().size() > 1) {
