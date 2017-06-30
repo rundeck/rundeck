@@ -61,6 +61,9 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         super(failedNodesListener, logger, terse, logFormat);
     }
 
+    public void ignoreErrors(boolean value){
+
+    }
     @Override
     public void beginExecuteNodeStep(final ExecutionContext context, final NodeStepExecutionItem item, final INodeEntry node) {
         if(null!=delegate) {

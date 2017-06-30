@@ -350,6 +350,18 @@ public abstract class BaseWorkflowExecutor implements WorkflowExecutor {
                                                 final Map<Integer, StepExecutionResult> failedMap,
                                                 final int c,
                                                 final StepExecutionItem cmd) {
+        boolean hasHandler= cmd instanceof HasFailureHandler;
+        boolean hideError = false;
+        if(hasHandler){
+            final HasFailureHandler handles = (HasFailureHandler) cmd;
+            final StepExecutionItem handler = handles.getFailureHandler();
+            if(null != handler && handler instanceof HandlerExecutionItem){
+                hideError = ((HandlerExecutionItem)handler).isKeepgoingOnSuccess();
+            }
+        }
+        if(null != executionContext.getExecutionListener()) {
+            executionContext.getExecutionListener().ignoreErrors(hideError);
+        }
 
         if (null != executionContext.getExecutionListener()) {
             executionContext.getExecutionListener().log(Constants.DEBUG_LEVEL,

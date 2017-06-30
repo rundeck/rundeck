@@ -248,6 +248,8 @@ public class TestScriptPluginFileCopier {
         }
     }
     private class testListener implements ExecutionListener {
+
+        @Override public void ignoreErrors(boolean ignore){}
         @Override public boolean isTerse() {
             return false;
         }

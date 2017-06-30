@@ -117,7 +117,6 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         final PluginStepContextImpl pluginContext = PluginStepContextImpl.from(context);
         Description description = getDescription();
         final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
-
         final GeneratedScript script;
         try {
             script = plugin.generateScript(pluginContext, config, node);
