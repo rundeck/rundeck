@@ -73,12 +73,7 @@ public class WorkflowExecutionService extends ChainedProviderService<WorkflowExe
                 registry
         );
 
-//        final ProviderService<WorkflowExecutor> pluginService =
-//                ServiceFactory.pluginService(SERVICE_NAME, framework, WorkflowExecutor.class);
-
-
         serviceList.add(primaryService);
-//        serviceList.add(pluginService);
     }
 
     @Override
