@@ -18,6 +18,8 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
+import com.dtolabs.rundeck.core.execution.ExecutionNotFound
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
@@ -26,6 +28,7 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.services.execution.ExecutionReferenceImpl
 import spock.lang.Specification
 
 /**
@@ -39,6 +42,9 @@ class JobStateServiceSpec extends Specification {
 
         service.frameworkService=Stub(FrameworkService){
             authorizeProjectJobAll(null,!null,!null,!null) >>> [true,true]
+            filterAuthorizedProjectExecutionsAll(null,!null,!null)>>{auth, exec,actions->
+                return exec
+            }
         }
 
     }
@@ -446,4 +452,136 @@ class JobStateServiceSpec extends Specification {
         'false' | false | true | false | ExecutionState.timedout
         'false' | false | false | true | ExecutionState.failed_with_retry
     }
+
+
+    void "search executions by state"(){
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+        def projectName = 'testProj'
+        def state = 'incomplete'
+        given:
+        setTestExecutions(projectName,jobUuid)
+        when:
+        def ref = service.searchExecutions(null,state, projectName, null,null,null)
+
+        then:
+        ref!=null
+        ref.size()==2
+        ref.get(0)
+        ExecutionReference resExec = ref.get(0)
+        resExec.status==state
+
+
+    }
+
+    void "search executions by state and jobid"(){
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+
+        def projectName = 'testProj'
+
+        def state = 'incomplete'
+        given:
+        setTestExecutions(projectName,jobUuid)
+        when:
+        def ref = service.searchExecutions(null,state, projectName, jobUuid,null,null)
+
+        then:
+        ref!=null
+        ref.size()==1
+        ref.get(0)
+        ExecutionReference resExec = ref.get(0)
+        resExec.status==state
+        resExec.job.id==jobUuid
+    }
+
+    void "search executions by state and exclude jobid"(){
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+
+        def projectName = 'testProj'
+
+        def state = 'incomplete'
+        given:
+        setTestExecutions(projectName,jobUuid)
+        when:
+        def ref = service.searchExecutions(null,state, projectName, null,jobUuid,null)
+
+        then:
+        ref!=null
+        ref.size()==1
+        ref.get(0)
+        ExecutionReference resExec = ref.get(0)
+        resExec.status==state
+        resExec.job.id!=jobUuid
+    }
+
+    void "search executions by state and date"(){
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+
+        def projectName = 'testProj'
+
+        def state = 'incomplete'
+        def since = '2h'
+        given:
+        setTestExecutions(projectName,jobUuid)
+        when:
+        def ref = service.searchExecutions(null,state, projectName, null,null,since)
+
+        then:
+        ref!=null
+        ref.size()==1
+        ref.get(0)
+        ExecutionReference resExec = ref.get(0)
+        resExec.status==state
+    }
+
+    void "search execution by id"(){
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+        def id = '1'
+
+        def projectName = 'testProj'
+
+        def state = 'incomplete'
+        def since = '2h'
+        given:
+        setTestExecutions(projectName,jobUuid)
+        when:
+        def ref = service.executionForId(null,id, projectName)
+
+        then:
+        ref!=null
+        ref.id == id
+    }
+
+
+
+
+    def setTestExecutions(projectName, jobUuid){
+        def now = new Date()
+        def hourInMillis = 3600*1000
+        def dayInMillis = 24*hourInMillis
+        def dateStarted = new Date(now.time-hourInMillis)
+        def dateStartedB = new Date(now.time-dayInMillis)
+
+        def se = new ScheduledExecution(
+                jobName: 'abc',
+                groupPath: null,
+                project: projectName,
+                uuid: jobUuid,
+                workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
+        ).save()
+        Execution e = new Execution(argString: "-test args", user: "testuser", project: projectName, loglevel: 'WARN',
+                doNodedispatch: false, scheduledExecution: se, status: 'incomplete', dateStarted: dateStarted, id:1)
+        assertNotNull(e.save())
+        def seB = new ScheduledExecution(
+                jobName: 'def',
+                groupPath: 'grp',
+                project: projectName,
+                uuid: '2ad3f137-e005-40b8-8bb9-88e369dda798',
+                workflow: new Workflow(commands:[new CommandExec(adhocRemoteString: 'echo hi')])
+        ).save()
+        Execution eB = new Execution(argString: "-test args", user: "testuser", project: projectName, loglevel: 'WARN',
+                doNodedispatch: false, scheduledExecution: seB, status: 'incomplete', dateStarted: dateStartedB, id:2)
+        assertNotNull(eB.save())
+    }
+
+
 }

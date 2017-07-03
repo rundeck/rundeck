@@ -115,7 +115,9 @@ class JobStateService implements AuthorizingJobService {
     List<ExecutionReference> searchExecutions(AuthContext auth, String state, String project, String jobUuid,
                                               String excludeJobUuid, String since){
 
+
         def executions = Execution.findAllByProjectAndStatus(project,state)
+        executions = frameworkService.filterAuthorizedProjectExecutionsAll(auth,executions,[AuthConstants.ACTION_READ])
         if(jobUuid){
             executions = executions.findAll{it.scheduledExecution.extid==jobUuid}
         }
@@ -147,11 +149,22 @@ class JobStateService implements AuthorizingJobService {
         long exid = Long.valueOf(id)
         def exec = Execution.findByIdAndProject(exid,project)
         if(!exec){
-            throw new ExecutionNotFound("Not found", id, project)
+            throw new ExecutionNotFound("Execution not found", id, project)
         }
-        ScheduledExecution job = exec.scheduledExecution
-        JobReferenceImpl jobRef = new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath,
-                project: job.project)
+        ScheduledExecution se = exec.scheduledExecution
+        def isAuth = null
+        if(se){
+            isAuth=frameworkService.authorizeProjectJobAll(auth, se, [AuthConstants.ACTION_READ], se.project)
+        }else if(!se){
+            isAuth=frameworkService.authorizeProjectResourceAll(auth, AuthConstants.RESOURCE_ADHOC, [AuthConstants.ACTION_READ],
+                    exec.project)
+        }
+        if(!isAuth){
+            throw new ExecutionNotFound("Execution not found", id, project)
+        }
+
+        JobReferenceImpl jobRef = new JobReferenceImpl(id: se.extid, jobName: se.jobName, groupPath: se.groupPath,
+                project: se.project)
         new ExecutionReferenceImpl(id:exec.id, options: exec.argString, filter: exec.filter, job: jobRef,
                 dateStarted: exec.dateStarted, status: exec.status)
 
