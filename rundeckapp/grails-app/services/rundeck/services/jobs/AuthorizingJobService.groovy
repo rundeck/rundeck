@@ -40,4 +40,6 @@ interface AuthorizingJobService {
 
     ExecutionReference executionForId(AuthContext auth, String id, String project) throws ExecutionNotFound
 
+    String startJob(AuthContext auth, JobReference jobReference, String jobArgString, String jobFilter, String asUser) throws JobNotFound
+
 }

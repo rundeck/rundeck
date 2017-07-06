@@ -87,4 +87,14 @@ public interface JobService {
      * @throws com.dtolabs.rundeck.core.execution.ExecutionNotFound if the execution was not found
      */
     ExecutionReference executionForId(String id, String project) throws ExecutionNotFound;
+
+
+    /**
+     * @param jobReference reference to a job
+     * @param jobArgString argString for the execution
+     * @param jobFilter filter for the execution
+     * @param asUser user to execute the job(null for the same user)
+     * @return Id of the result execution
+     */
+    String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)throws JobNotFound;
 }

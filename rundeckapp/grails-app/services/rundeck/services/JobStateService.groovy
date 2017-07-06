@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
@@ -168,5 +169,39 @@ class JobStateService implements AuthorizingJobService {
         new ExecutionReferenceImpl(id:exec.id, options: exec.argString, filter: exec.filter, job: jobRef,
                 dateStarted: exec.dateStarted, status: exec.status)
 
+    }
+
+
+    @Override
+    String startJob(AuthContext auth, JobReference jobReference, String jobArgString, String jobFilter, String asUser) throws JobNotFound {
+        def inputOpts = [:]
+        inputOpts["argString"] = jobArgString
+        if (jobFilter) {
+            def filters = [filter:jobFilter]
+            inputOpts['_replaceNodeFilters']='true'
+            inputOpts['doNodedispatch']=true
+            filters.each {k, v ->
+                inputOpts[k] = v
+            }
+            if(null== inputOpts['nodeExcludePrecedence']){
+                inputOpts['nodeExcludePrecedence'] = true
+            }
+        }
+
+        inputOpts['executionType'] = 'user'
+        String resultExecution = "";
+
+        def se = ScheduledExecution.findByUuidAndProject(jobReference.id, jobReference.project)
+        if (!se || !frameworkService.authorizeProjectJobAll(auth, se, [AuthConstants.ACTION_READ], se.project)) {
+            throw new JobNotFound("Not found", jobReference.id, jobReference.project)
+        }
+        if(auth instanceof UserAndRolesAuthContext) {
+            def result = frameworkService.kickJob(se,
+                    auth, asUser, inputOpts)
+            if(result && result.executionId){
+                resultExecution += result.executionId
+            }
+        }
+        return resultExecution
     }
 }

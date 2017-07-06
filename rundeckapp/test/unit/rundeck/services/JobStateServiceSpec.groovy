@@ -16,11 +16,12 @@
 
 package rundeck.services
 
-import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobNotFound
+import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -28,7 +29,6 @@ import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.Workflow
-import rundeck.services.execution.ExecutionReferenceImpl
 import spock.lang.Specification
 
 /**
@@ -44,6 +44,11 @@ class JobStateServiceSpec extends Specification {
             authorizeProjectJobAll(null,!null,!null,!null) >>> [true,true]
             filterAuthorizedProjectExecutionsAll(null,!null,!null)>>{auth, exec,actions->
                 return exec
+            }
+            kickJob(!null, !null, null,!null)>>{
+                Map<String, Object> ret = new HashMap<>()
+                ret.executionId = '1'
+                ret
             }
         }
 
@@ -536,20 +541,68 @@ class JobStateServiceSpec extends Specification {
     void "search execution by id"(){
         def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
         def id = '1'
-
         def projectName = 'testProj'
-
-        def state = 'incomplete'
-        def since = '2h'
         given:
         setTestExecutions(projectName,jobUuid)
         when:
         def ref = service.executionForId(null,id, projectName)
-
         then:
         ref!=null
         ref.id == id
     }
+
+    void "search execution by id without auth"(){
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+        def id = '1'
+        def projectName = 'testProj'
+        service.frameworkService=Stub(FrameworkService){
+            authorizeProjectJobAll(null,!null,!null,!null) >>> [false,false]
+        }
+        given:
+        setTestExecutions(projectName,jobUuid)
+        when:
+        def ref = service.executionForId(null,id, projectName)
+        then:
+        !ref
+        ExecutionNotFound ex = thrown()
+    }
+
+    void "start job"(){
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+        def projectName = 'testProj'
+        JobReference job = new JobReferenceImpl()
+        job.project=projectName
+        job.id=jobUuid
+        def auth = new SubjectAuthContext(null,null)
+        given:
+        setTestExecutions(projectName,jobUuid)
+
+        when:
+        def ref = service.startJob(auth,job, null,null,null)
+        then:
+        ref
+        ref == '1'
+    }
+
+    void "start job without auth"(){
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+        def projectName = 'testProj'
+        JobReference job = new JobReferenceImpl()
+        job.project=projectName
+        job.id=jobUuid
+        service.frameworkService=Stub(FrameworkService){
+            authorizeProjectJobAll(null,!null,!null,!null) >>> [false,false]
+        }
+        given:
+        setTestExecutions(projectName,jobUuid)
+
+        when:
+        def ref = service.startJob(null,job, null,null,null)
+        then:
+        !ref
+        JobNotFound ex = thrown()
+    }
+
 
 
 

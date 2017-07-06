@@ -59,4 +59,9 @@ class ResolvedAuthJobService implements JobService {
         authJobService.executionForId(authContext, id, project)
     }
 
+
+    String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser) throws JobNotFound{
+        authJobService.startJob(authContext, jobReference, jobArgString, jobFilter, asUser)
+    }
+
 }

@@ -1044,4 +1044,13 @@ class FrameworkService implements ApplicationContextAware {
         }
         return charsetname
     }
+
+    /**
+     * non transactional interface to run a job from plugins
+     * {@link ExecutionService#executeJob executeJob}
+     * @return Map of the execution result.
+     */
+    Map kickJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext, String user, Map input){
+        executionService.executeJob(scheduledExecution, authContext, user, input)
+    }
 }
