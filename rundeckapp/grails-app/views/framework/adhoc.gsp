@@ -22,7 +22,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="adhoc"/>
     <title><g:message code="gui.menu.Adhoc"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
-    <g:javascript library="executionControl"/>
+    <asset:javascript src="executionControl.js"/>
     <g:javascript library="yellowfade"/>
     <g:javascript library="pagehistory"/>
     <asset:javascript src="framework/adhoc.js"/>

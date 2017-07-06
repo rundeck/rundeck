@@ -154,6 +154,12 @@ var FollowControl = Class.create({
                 obj.reload();
             });
         });
+        $(elem).select('.log-wrap-toggle').each(function (e) {
+            Event.observe(e, 'change', function (evt) {
+                Event.stop(evt);
+                obj.setLogWrap(e.down('input').checked ? true : false);
+            });
+        });
         $(elem).select('.opt_append_top_true').each(function(e){
             e.onclick=null;
             Event.observe(e,'click',function(evt){obj.setOutputAppendTop(true);});
@@ -232,6 +238,16 @@ var FollowControl = Class.create({
         this.tailmode=this.tailmode||!(this.browsemode||this.nodemode);
         this.refresh=this.tailmode;
         this.readyMode();
+    },
+    setLogWrap: function (wrapped) {
+        "use strict";
+        if ($(this.cmdoutputtbl)) {
+            if (wrapped) {
+                jQuery($(this.cmdoutputtbl)).removeClass('no-wrap');
+            } else {
+                jQuery($(this.cmdoutputtbl)).addClass('no-wrap');
+            }
+        }
     },
     readyTail: function(){
         var obj=this;
