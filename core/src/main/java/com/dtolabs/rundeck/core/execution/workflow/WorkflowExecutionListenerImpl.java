@@ -56,6 +56,9 @@ public class WorkflowExecutionListenerImpl extends ContextualExecutionListener i
         super(failedNodesListener, logger);
     }
 
+    public void ignoreErrors(boolean value){
+
+    }
     @Override
     public void beginExecuteNodeStep(
             final ExecutionContext context,

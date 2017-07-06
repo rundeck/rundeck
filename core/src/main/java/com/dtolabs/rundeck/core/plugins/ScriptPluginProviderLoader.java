@@ -407,6 +407,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
             try {
                 validateProviderDef(pluginDef);
             } catch (PluginException e) {
+                log.error(String.format("Invalid provider definition in file %s: %s", file, e.getMessage()));
                 valid = false;
             }
         }
@@ -487,7 +488,7 @@ class ScriptPluginProviderLoader implements ProviderLoader, FileCache.Expireable
         } else if ("ui".equals(pluginDef.getPluginType())) {
             validateUIProviderDef(pluginDef);
         } else {
-            throw new PluginException("plugin missing has invalid plugin-type: " + pluginDef.getPluginType());
+            throw new PluginException("Script plugin has invalid plugin-type: " + pluginDef.getPluginType());
         }
     }
 

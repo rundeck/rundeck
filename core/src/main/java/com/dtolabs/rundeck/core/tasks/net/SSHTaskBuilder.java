@@ -156,9 +156,13 @@ public class SSHTaskBuilder {
         }
 
         Session session = jsch.getSession(base.getUserInfo().getName(), base.getHost(), base.getPort());
-        session.setTimeout((int) base.getTimeout());
+        long conTimeout = base.getConnectTimeout();
+        if(conTimeout<1){
+            conTimeout = base.getTimeout();
+        }
+        session.setTimeout((int) conTimeout);
         if (base.getVerbose()) {
-            base.getPluginLogger().log(Project.MSG_DEBUG, "Set timeout to " + base.getTimeout());
+            base.getPluginLogger().log(Project.MSG_DEBUG, "Set timeout to " + conTimeout);
         }
 
         session.setUserInfo(base.getUserInfo());
@@ -239,9 +243,17 @@ public class SSHTaskBuilder {
 
         void setUsername(String username);
 
-        public void setTimeout(long sshTimeout);
+        void setTimeout(long sshTimeout);
 
         long getTimeout();
+
+        void setConnectTimeout(long sshTimeout);
+
+        long getConnectTimeout();
+
+        void setCommandTimeout(long sshTimeout);
+
+        long getCommandTimeout();
 
         void setKeyfile(String sshKeypath);
 
@@ -281,8 +293,6 @@ public class SSHTaskBuilder {
     static interface SSHExecInterface extends SSHBaseInterface, DataContextUtils.EnvironmentConfigurable {
 
         void setCommand(String commandString);
-
-        void setTimeout(long sshTimeout);
 
         void setOutputproperty(String s);
     }
@@ -338,6 +348,26 @@ public class SSHTaskBuilder {
 
         public void setTimeout(long sshTimeout) {
             instance.setTimeout(sshTimeout);
+        }
+
+        @Override
+        public void setConnectTimeout(final long sshTimeout) {
+            instance.setConnectTimeout(sshTimeout);
+        }
+
+        @Override
+        public long getConnectTimeout() {
+            return instance.getConnectTimeout();
+        }
+
+        @Override
+        public void setCommandTimeout(final long sshTimeout) {
+            instance.setCommandTimeout(sshTimeout);
+        }
+
+        @Override
+        public long getCommandTimeout() {
+            return instance.getCommandTimeout();
         }
 
         public void setKeyfile(String sshKeypath) {
@@ -544,7 +574,9 @@ public class SSHTaskBuilder {
         //nb: args are already quoted as necessary
         final String commandString = StringUtils.join(args, " ");
         sshexecTask.setCommand(commandString);
-        sshexecTask.setTimeout(sshConnectionInfo.getSSHTimeout());
+        sshexecTask.setTimeout(sshConnectionInfo.getTimeout());
+        sshexecTask.setCommandTimeout(sshConnectionInfo.getCommandTimeout());
+        sshexecTask.setConnectTimeout(sshConnectionInfo.getConnectTimeout());
 
         DataContextUtils.addEnvVars(sshexecTask, dataContext);
     }
@@ -560,7 +592,7 @@ public class SSHTaskBuilder {
 
         sshexecTask.setLocalFile(localFile);
         sshexecTask.setRemoteFile(remoteFile);
-        sshexecTask.setTimeout(sshConnectionInfo.getSSHTimeout());
+        sshexecTask.setTimeout(sshConnectionInfo.getConnectTimeout());
 
         DataContextUtils.addEnvVars(sshexecTask, dataContext);
     }
@@ -918,7 +950,11 @@ public class SSHTaskBuilder {
 
         public String getPassword();
 
-        public int getSSHTimeout();
+        public long getTimeout();
+
+        public long getCommandTimeout();
+
+        public long getConnectTimeout();
 
         public String getUsername();
         

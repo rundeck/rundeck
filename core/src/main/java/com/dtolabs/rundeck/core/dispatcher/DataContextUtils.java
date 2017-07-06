@@ -180,26 +180,60 @@ public class DataContextUtils {
      *
      * @return Map with all string values having references replaced
      */
+    public static Map<String, Object> replaceDataReferences(
+            final Map<String, Object> input,
+            final Map<String, Map<String, String>> data
+    )
+    {
+        return replaceDataReferences(input, data, null, false, false);
+    }
+
+    /**
+     * Recursively replace data references in the values in a map which contains either string, collection or Map
+     * values.
+     *
+     * @param input input map
+     * @param data  context data
+     *
+     * @return Map with all string values having references replaced
+     */
     public static Map<String, Object> replaceDataReferences(final Map<String, Object> input,
-                                                             final Map<String, Map<String, String>> data) {
+                                                             final Map<String, Map<String, String>> data,
+                                                            Converter<String, String> converter,
+                                                            boolean failIfUnexpanded,
+                                                            boolean blankIfUnexpanded
+    )
+    {
         final HashMap<String, Object> output = new HashMap<>();
         for (final String s : input.keySet()) {
             Object o = input.get(s);
-            output.put(s, replaceDataReferencesInObject(o, data));
+            output.put(s, replaceDataReferencesInObject(o, data, converter, failIfUnexpanded, blankIfUnexpanded));
         }
         return output;
     }
-    public static Object replaceDataReferencesInObject(Object o, final Map<String, Map<String, String>> data){
+
+    private static Object replaceDataReferencesInObject(Object o, final Map<String, Map<String, String>> data){
+        return replaceDataReferencesInObject(o, data, null, false, true);
+    }
+
+    private static Object replaceDataReferencesInObject(
+            Object o,
+            final Map<String, Map<String, String>> data,
+            Converter<String, String> converter,
+            boolean failIfUnexpanded,
+            boolean blankIfUnexpanded
+    )
+    {
         if (o instanceof String) {
-            return replaceDataReferencesInString((String) o, data);
+            return replaceDataReferencesInString((String) o, data, converter, failIfUnexpanded, blankIfUnexpanded);
         } else if (o instanceof Map) {
             Map<String, Object> sub = (Map<String, Object>) o;
-            return replaceDataReferences(sub, data);
+            return replaceDataReferences(sub, data, converter, failIfUnexpanded, blankIfUnexpanded);
         } else if (o instanceof Collection) {
             ArrayList result = new ArrayList();
             Collection r = (Collection)o;
             for (final Object o1 : r) {
-                result.add(replaceDataReferencesInObject(o1, data));
+                result.add(replaceDataReferencesInObject(o1, data, converter, failIfUnexpanded, blankIfUnexpanded));
             }
             return result;
         }else{

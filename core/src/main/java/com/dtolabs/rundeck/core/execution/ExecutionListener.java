@@ -43,6 +43,12 @@ import java.util.Map;
  * @version $Revision$
  */
 public interface ExecutionListener extends PluginLogger {
+
+    /**
+     * Ignore error messages and transform them into standard output
+     * @param ignore
+     */
+    public void ignoreErrors(boolean ignore);
     /**
      * Return a listener for failed node list
      *

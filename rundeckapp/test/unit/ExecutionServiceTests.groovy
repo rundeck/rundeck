@@ -56,9 +56,11 @@ class ExecutionServiceTests  {
         mock.demand.with(clos)
         return mock.createMock()
     }
-    private UserAndRolesAuthContext createAuthContext(String user){
+
+    private UserAndRolesAuthContext createAuthContext(String user, Set<String> roles = []) {
         def mock=mockFor(UserAndRolesAuthContext)
         mock.demand.getUsername{ user }
+        mock.demand.getRoles { roles }
         mock.createMock()
     }
     void testCreateExecutionRunning(){
@@ -151,6 +153,48 @@ class ExecutionServiceTests  {
         assertNotNull(e2.dateStarted)
         assertNull(e2.dateCompleted)
         assertEquals('user1', e2.user)
+        assertEquals('scheduled', e2.executionType)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
+    }
+
+    void testCreateExecutionSimple_userRoles() {
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                )
+        se.save()
+
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService = fsvc
+
+        Execution e2 = svc.createExecution(
+                se,
+                createAuthContext("user1", ['a', 'b'] as Set),
+                null,
+                [executionType: 'scheduled']
+        )
+
+        assertNotNull(e2)
+        assertEquals('-a b -c d', e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals('user1', e2.user)
+        assertEquals(['a', 'b'], e2.userRoles)
         assertEquals('scheduled', e2.executionType)
         def execs = se.executions
         assertNotNull(execs)

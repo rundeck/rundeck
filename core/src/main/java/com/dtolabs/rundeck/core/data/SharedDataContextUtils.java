@@ -327,10 +327,42 @@ public class SharedDataContextUtils {
             final MultiDataContext<T, DataContext> data
     )
     {
+        return replaceDataReferences(input, currentContext, viewMap, converter, data, false, false);
+    }
+
+    /**
+     * Recursively replace data references in the values in a map which contains either string, collection or Map
+     * values.
+     *
+     * @param input input map
+     * @param data  context data
+     *
+     * @return Map with all string values having references replaced
+     */
+    public static <T extends ViewTraverse<T>> Map<String, Object> replaceDataReferences(
+            final Map<String, Object> input,
+            final T currentContext,
+            final BiFunction<Integer, String, T> viewMap,
+            final Converter<String, String> converter,
+            final MultiDataContext<T, DataContext> data,
+            boolean failOnUnexpanded,
+            boolean blankIfUnexpanded
+    )
+    {
         final HashMap<String, Object> output = new HashMap<>();
         for (final String s : input.keySet()) {
             Object o = input.get(s);
-            output.put(s, replaceDataReferencesInObject(o, currentContext, viewMap, converter, data));
+            output.put(
+                    s,
+                    replaceDataReferencesInObject(o,
+                                                  currentContext,
+                                                  viewMap,
+                                                  converter,
+                                                  data,
+                                                  failOnUnexpanded,
+                                                  blankIfUnexpanded
+                    )
+            );
         }
         return output;
     }
@@ -343,15 +375,52 @@ public class SharedDataContextUtils {
             final MultiDataContext<T, DataContext> data
     )
     {
+        return replaceDataReferencesInObject(o, currentContext, viewMap, converter, data, false, false);
+    }
+
+    public static <T extends ViewTraverse<T>> Object replaceDataReferencesInObject(
+            Object o,
+            final T currentContext,
+            final BiFunction<Integer, String, T> viewMap,
+            final Converter<String, String> converter,
+            final MultiDataContext<T, DataContext> data,
+            boolean failOnUnexpanded,
+            boolean blankIfUnexpanded
+    )
+    {
         if (o instanceof String) {
-            return replaceDataReferences((String) o, data, currentContext, viewMap, converter, false, false);
+            return replaceDataReferences(
+                    (String) o,
+                    data,
+                    currentContext,
+                    viewMap,
+                    converter,
+                    failOnUnexpanded,
+                    blankIfUnexpanded
+            );
         } else if (o instanceof Map) {
             Map<String, Object> sub = (Map<String, Object>) o;
-            return replaceDataReferences(sub, currentContext, viewMap, converter, data);
+            return replaceDataReferences(
+                    sub,
+                    currentContext,
+                    viewMap,
+                    converter,
+                    data,
+                    failOnUnexpanded,
+                    blankIfUnexpanded
+            );
         } else if (o instanceof Collection) {
             ArrayList result = new ArrayList();
             for (final Object o1 : (Collection) o) {
-                result.add(replaceDataReferencesInObject(o1, currentContext, viewMap, converter, data));
+                result.add(replaceDataReferencesInObject(
+                        o1,
+                        currentContext,
+                        viewMap,
+                        converter,
+                        data,
+                        failOnUnexpanded,
+                        blankIfUnexpanded
+                ));
             }
             return result;
         } else {

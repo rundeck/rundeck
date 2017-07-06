@@ -22,6 +22,7 @@ addons:
     - make
     - zip
     - unzip
+    - fakeroot
     #- xmlstarlet #once added to whitelist
     #- jq #once added to whitelist
 # whitelist

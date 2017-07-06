@@ -51,6 +51,11 @@ public class StubNodeExecutor implements NodeExecutor, Describable {
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node) {
+        return executeCommand(context, command, node, true);
+    }
+
+    public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
+                                             final INodeEntry node, boolean showError) {
         //replace data context in args
         int tcode = 0;
         boolean tsuccess = true;

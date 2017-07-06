@@ -39,6 +39,11 @@ class ContextualExecutionListener extends ExecutionListenerOverrideBase {
     private ContextualExecutionListener delegate;
     private final ExecutionLogger logger;
 
+    private boolean ignoreError;
+
+    public void ignoreErrors(boolean value) {
+        ignoreError = value;
+    }
     protected ContextualExecutionListener(
             ContextualExecutionListener delegate,
             final ExecutionLogger logger
@@ -67,7 +72,10 @@ class ContextualExecutionListener extends ExecutionListenerOverrideBase {
     }
 
     @Override
-    public void log(final int level, final String message) {
+    public void log(int level, final String message) {
+        if (ignoreError && level < Constants.INFO_LEVEL) {
+            level = Constants.INFO_LEVEL;
+        }
         if (null != delegate) {
             delegate.log(level, message);
         } else if (null != logger) {
