@@ -14,7 +14,8 @@
   - limitations under the License.
   --}%
 
-
+<div class="row">
+    <div class="col-sm-10 col-sm-offset-1">
 
         <div class="panel panel-default panel-tab-content">
             <div class="panel-heading">
@@ -69,4 +70,6 @@
             </div>
 
         </div>
+    </div>
+</div>
 

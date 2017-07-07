@@ -236,7 +236,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             case 'uploadJob':
                 return redirect(controller: 'scheduledExecution', action: 'upload', params: [project: params.project])
             case 'configure':
-                return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+                return redirect(controller: 'framework', action: 'editProject', params: [project: params.project])
             case 'history':
             case 'activity':
             case 'events':
@@ -728,7 +728,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
 
     }
-    def storage={
+    def storage(){
 //        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 //        if (unauthorizedResponse(
 //                frameworkService.authorizeApplicationResourceAny(authContext,
@@ -1180,6 +1180,38 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return redirect(action: 'acls', params: params)
     }
 
+    def projectAcls() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
+        }
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProject(params.project),
+                        [AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_ADMIN, 'Project', params.project
+        )) {
+            return
+        }
+        def project = frameworkService.getFrameworkProject(params.project)
+        if(notFoundResponse(project,'Project',params.project)){
+           return
+        }
+        def projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
+            it.replaceAll(/^acls\//, '')
+        }
+
+        [
+                rundeckFramework: frameworkService.rundeckFramework,
+                aclFileList     : list,
+                assumeValid     : true,
+                acllist         : projectlist
+        ]
+    }
+
     def acls() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -1194,26 +1226,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         Map<File,Validation> validation=list.collectEntries{
             [it,authorizationService.validateYamlPolicy(it)]
         }
-        def projectlist = []
-        if (params.project
-                && frameworkService.authorizeApplicationResourceAny(
-                authContext,
-                frameworkService.authResourceForProject(params.project),
-                [AuthConstants.ACTION_ADMIN]
-        )
-        ) {
-            def project = frameworkService.getFrameworkProject(params.project)
-            projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
-                it.replaceAll(/^acls\//, '')
-            }
-        }
 
         [
                 rundeckFramework: frameworkService.rundeckFramework,
                 fwkConfigDir    : fwkConfigDir,
                 aclFileList     : list,
                 validations     : validation,
-                projectlist     : projectlist
         ]
     }
 

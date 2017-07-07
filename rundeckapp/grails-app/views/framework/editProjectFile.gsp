@@ -56,7 +56,7 @@
         <div class="col-sm-10 col-sm-offset-1">
             <div class="panel panel-primary"  id="createform">
                 <div class="panel-heading">
-                        <span class="h3">
+                        <span class="panel-title">
                             <g:message code="project.file.${filename}.edit.message"
                                        default="Edit {0} for project {1}"
                                        args="${[filename,params.project ?: request.project]}"/>

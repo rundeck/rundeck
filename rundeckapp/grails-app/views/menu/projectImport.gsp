@@ -31,6 +31,11 @@
 </head>
 
 <body>
+<div class="row">
+    <div class="col-sm-12">
+        <g:render template="/common/messages"/>
+    </div>
+</div>
 <g:render template="projectImportForm"/>
 
 </body>

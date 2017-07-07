@@ -41,53 +41,42 @@
 
 <ul class="dropdown-menu" role="menu" aria-labelledby="">
 
-    <li class="dropdown-header">Configuration</li>
-    <li class="${!authConfigure ? 'disabled' : ''}">
-        <g:link controller="framework" action="editProject" params="[project: params.project ?: request.project]"
-                class="">
-            <i class="glyphicon glyphicon-edit"></i>
-            <g:message code="page.admin.EditProjectSimple.button" default="Simple Configuration"/>
-        </g:link>
-    </li>
+    <li class="dropdown-header"><g:message code="project.admin" /></li>
 
     <li class="${!authConfigure ? 'disabled' : ''}">
-        <g:link controller="framework" action="editProjectConfig" params="[project: params.project ?: request.project]"
-                class="has_tooltip"
-                data-placement="right"
-                title="${message(
-                        code: 'page.admin.EditProjectConfigFile.title',
-                        default: 'Advanced: Edit config file directly'
-                )}">
-            <i class="glyphicon glyphicon-edit"></i>
-            <g:message code="page.admin.EditProjectConfigFile.button" default="Edit Configuration File"/>
+        <g:link controller="framework" action="editProject" params="[project: params.project ?: request.project]">
+            <g:message code="edit.configuration"/>
         </g:link>
     </li>
-    <li class="dropdown-header">Readme</li>
-    <li class="">
+    <li>
+        <g:link controller="menu"
+                action="projectAcls"
+                params="[project: params.project ?: request.project]">
+            <g:message code="list.acls" />
+        </g:link>
+    </li>
+    <li role="separator" class="divider"></li>
+    <li>
         <g:link controller="framework"
                 action="editProjectFile"
-                params="[project: params.project ?: request.project, filename: 'readme.md']"
-                class="">
-            <i class="glyphicon glyphicon-edit"></i>
-            ${hasreadme ? 'Edit' : 'Add'} Project Readme
+                params="[project: params.project ?: request.project, filename: 'readme.md']">
+            <g:message code="edit.readme"/>
         </g:link>
     </li>
 
-    <li class="">
+    <li>
         <g:link
                 controller="framework"
                 action="editProjectFile"
-                params="[project: params.project ?: request.project, filename: 'motd.md']"
-                class="">
-            <i class="glyphicon glyphicon-edit"></i>
-            ${hasmotd ? 'Edit' : 'Add'} Message of the Day
+                params="[project: params.project ?: request.project, filename: 'motd.md']">
+            <g:message code="edit.message.of.the.day"/>
         </g:link>
     </li>
     <li role="separator" class="divider"></li>
     <li class="${!authConfigure ? 'disabled' : ''}">
         <g:link controller="scm" action="index"
                 params="[project: params.project ?: request.project]">
-            <g:message code="gui.menu.Scm" default="Configure SCM"/>
+            <g:message code="project.admin.menu.Scm.title" default="Setup SCM"/>
         </g:link>
     </li>
     <li role="separator" class="divider"></li>
@@ -97,8 +86,7 @@
                 action="projectExport"
                 params="[project: params.project ?: request.project]"
                 title="${authExport ? '' : message(code: "request.error.unauthorized.title")}">
-            <g:icon name="download"/>
-            <g:message code="export.archive"/>
+            <g:message code="export.archive.ellipsis" />
         </g:link>
     </li>
     <li class="${!authImport ? 'disabled' : ''}">
@@ -107,8 +95,7 @@
                 action="projectImport"
                 params="[project: params.project ?: request.project]"
                 title="${authImport ? '' : message(code: "request.error.unauthorized.title")}">
-            <g:icon name="upload"/>
-            <g:message code="import.archive"/>
+            <g:message code="import.archive.ellipsis" />
         </g:link>
     </li>
     <li role="separator" class="divider"></li>
@@ -119,7 +106,7 @@
                 params="[project: params.project ?: request.project]"
                 title="${authDelete ? '' : message(code: "request.error.unauthorized.title")}">
             <g:icon name="remove"/>
-            <g:message code="delete.project"/>
+            <g:message code="delete.project.ellipsis" />
         </g:link>
     </li>
 </ul>

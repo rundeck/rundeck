@@ -37,11 +37,8 @@ var VersionIdentity=function(data){
         var span=jQuery('<span></span>').attr('title',self.version.appId+' '+self.version.versionString +' ('+text+')' + (self.version.versionDate?' '+self.version.versionDate:'')).append(span2);
 
         if (data.tag && data.tag != 'GA') {
-            var s = data.tag.toLowerCase();
-            if(s=~/snapshot/i && self.version.versionDate){
-                s = s.replace(/snapshot/i,self.version.versionDate);
-            }
-            span.append(jQuery('<span></span>').addClass('badge badge-default').text(' ' + s));
+            var s = data.tag + " / " + self.version.versionDate;
+            span.append(jQuery('<span></span>').addClass('badge badge-default').text(' ' + s).css({ 'background': self.stripeBg(color,15,'#5c5c5c',20)}));
         } else if (self.version.versionDate) {
             var vdate = jQuery('<span></span>').addClass('rundeck-version-date').text(' ' + self.version.versionDate);
             span.append(vdate);

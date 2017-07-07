@@ -27,15 +27,18 @@
     <title><g:message code="gui.menu.ExecutionMode" default="Execution Mode" /></title>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
+    <meta name="tabtitle" content="${g.message(code:'gui.menu.ExecutionMode')}"/>
 
 </head>
 
 <body>
 <div class="row">
-    <div class="col-sm-3">
-        <g:render template="configNav" model="[selected: 'changeexecmode']"/>
+    <div class="col-sm-12">
+        <g:render template="/common/messages"/>
     </div>
-    <div class="col-sm-9">
+</div>
+<div class="row">
+    <div class="col-sm-10 col-sm-offset-1">
 
         <g:form class="form-horizontal" controller="execution" action="executionMode" method="POST" useToken="true">
         <div class="panel panel-primary">
@@ -50,6 +53,7 @@
                 <div class="radio  col-sm-12 ">
                 <label class="control-label text-success">
                     <g:radio name="mode" value="active" checked="${g.executionMode(active: true)}"/>
+                    <g:icon name="play" />
                     <g:message code="system.executionMode.status.active"/>
                     <g:ifExecutionMode active="true">(Current Mode)</g:ifExecutionMode>
                 </label>
@@ -62,6 +66,7 @@
                 <div class="radio  col-sm-12 ">
                 <label class="control-label text-warning">
                     <g:radio name="mode" value="passive" checked="${g.executionMode(active: false)}"/>
+                    <g:icon name="pause" />
                     <g:message code="system.executionMode.status.passive"/>
                     <g:ifExecutionMode passive="true">(Current Mode)</g:ifExecutionMode>
                 </label>

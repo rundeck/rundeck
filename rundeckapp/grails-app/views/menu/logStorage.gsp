@@ -50,11 +50,7 @@
 </div>
 
 <div class="row">
-    <div class="col-sm-3">
-        <g:render template="configNav" model="[selected: 'logstorage']"/>
-    </div>
-
-    <div class="col-sm-9">
+    <div class="col-sm-10 col-sm-offset-1">
 
         <h3><g:message code="menu.logStorage.page.title"/>
             <span data-bind="if: !loaded() || loading()">

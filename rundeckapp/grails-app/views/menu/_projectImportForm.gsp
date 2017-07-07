@@ -25,7 +25,7 @@
 
             <div class="panel panel-primary" id="importform">
                 <div class="panel-heading">
-                    <span class="h3"><g:message code="import.archive"/></span>
+                    <span class="panel-title"><g:message code="import.archive"/></span>
                 </div>
 
                 <div class="list-group list-group-tab-content">
@@ -165,7 +165,11 @@
                 <div class="panel-footer">
                     <div class="buttons">
                         <div id="uploadFormButtons">
-                            <g:actionSubmit id="createFormCancelButton" value="Cancel" class="btn btn-default"/>
+
+                            <g:submitButton name="cancel"
+                                            value="${g.message(code:'button.action.Cancel',default:'Cancel')}"
+                                            class="btn btn-default"
+                            />
                             <g:actionSubmit action="importArchive" value="Import" id="uploadFormUpload"
                                             onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)"
                                             class="btn btn-primary"/>

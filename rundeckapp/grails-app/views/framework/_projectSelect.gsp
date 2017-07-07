@@ -23,6 +23,7 @@
     </a>
 
     <ul class="dropdown-menu " role="menu" aria-labelledby="dLabel">
+        <li class="dropdown-header"><g:message code="Project.plural" /></li>
 <auth:resourceAllowed action="create" kind="project" context="application">
         <g:if test="${!params.nocreate}">
             <li>

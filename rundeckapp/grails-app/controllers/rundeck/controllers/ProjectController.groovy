@@ -62,7 +62,7 @@ class ProjectController extends ControllerBase{
     public def export(ProjectArchiveParams archiveParams){
         if (archiveParams.hasErrors()) {
             flash.errors = archiveParams.errors
-            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+            return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
         }
         def project=params.project
         if (!project){
@@ -114,11 +114,14 @@ class ProjectController extends ControllerBase{
     public def exportPrepare(ProjectArchiveParams archiveParams){
         if (archiveParams.hasErrors()) {
             flash.errors = archiveParams.errors
-            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+            return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
         }
         def project=params.project
         if (!project){
             return renderErrorView("Project parameter is required")
+        }
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'index', params: [project: params.project])
         }
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
@@ -235,12 +238,16 @@ class ProjectController extends ControllerBase{
         withForm{
         if(archiveParams.hasErrors()){
             flash.errors=archiveParams.errors
-            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+            return redirect(controller: 'menu', action: 'projectImport', params: [project: params.project])
         }
         def project = params.project?:params.name
         if (!project) {
             return renderErrorView("Project parameter is required")
         }
+            if (params.cancel) {
+
+                return redirect(controller: 'menu', action: 'index', params: [project: params.project])
+            }
 
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
@@ -279,7 +286,7 @@ class ProjectController extends ControllerBase{
             def file = request.getFile("zipFile")
             if (!file || file.empty) {
                 flash.error = message(code:"no.file.was.uploaded")
-                return redirect(controller: 'menu', action: 'admin', params: [project: project])
+                return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
             }
             Framework framework = frameworkService.getRundeckFramework()
             def result = projectService.importToProject(
@@ -308,11 +315,11 @@ class ProjectController extends ControllerBase{
             if(result.aclerrors){
                 flash.aclerrors=result.aclerrors
             }
-            return redirect(controller: 'menu',action: 'admin',params:[project:project])
+            return redirect(controller: 'menu', action: 'projectImport', params: [project: project])
         }
         }.invalidToken {
             flash.error = g.message(code:'request.error.invalidtoken.message')
-            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+            return redirect(controller: 'menu', action: 'projectImport', params: [project: params.project])
         }
     }
 
@@ -320,7 +327,7 @@ class ProjectController extends ControllerBase{
         withForm{
         if (archiveParams.hasErrors()) {
             flash.errors = archiveParams.errors
-            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+            return redirect(controller: 'menu', action: 'projectDelete', params: [project: params.project])
         }
         def project = params.project
         if (!project) {
@@ -348,13 +355,13 @@ class ProjectController extends ControllerBase{
         if (!result.success) {
             log.error("Failed to delete project: ${result.error}")
             flash.error = result.error
-            return redirect(controller: 'menu', action: 'admin', params: [project: project])
+            return redirect(controller: 'menu', action: 'projectDelete', params: [project: project])
         }
         flash.message = 'Deleted project: ' + project
         return redirect(controller: 'menu', action: 'home')
         }.invalidToken {
             flash.error= g.message(code: 'request.error.invalidtoken.message')
-            return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+            return redirect(controller: 'menu', action: 'projectDelete', params: [project: params.project])
         }
     }
 

@@ -32,11 +32,7 @@
 <body>
 
 <div class="row">
-    <div class="col-sm-3">
-        <g:render template="configNav" model="[selected: 'metrics']"/>
-    </div>
-
-    <div class="col-sm-9">
+    <div class="col-sm-10 col-sm-offset-1">
 <g:markdown>
 * [Metrics](${g.createLink(uri: '/metrics/metrics?pretty=true')}) (json)
 * [Ping](${g.createLink(uri:'/metrics/ping')})

@@ -51,7 +51,7 @@
 
             <div class="panel panel-primary" id="exportform">
                 <div class="panel-heading">
-                    <span class="h3"><g:message code="export.archive"/></span>
+                    <span class="panel-title"><g:message code="export.archive"/></span>
                 </div>
 
                 <div class="list-group">
@@ -130,9 +130,10 @@
 
 
                 <div class="panel-footer">
-                    <button type="button" class="btn btn-default">
-                        <g:message code="cancel"/>
-                    </button>
+                    <g:submitButton name="cancel"
+                                    value="${g.message(code:'button.action.Cancel',default:'Cancel')}"
+                                    class="btn btn-default"
+                    />
                     <button type="submit" class="btn btn-success"><g:message code="button.Export.title"/></button>
                 </div>
             </div>
