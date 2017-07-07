@@ -37,7 +37,7 @@
                     <tmpl:edit user="${user}"/>
                 </div>
 
-                <div class="panel-footer">
+                <div class="panel-footer buttons">
                     <g:actionSubmit id="editFormCancelButton" value="Cancel" class="btn btn-default"/>
                     <g:submitButton name="Update" class="btn btn-primary"/>
                 </div>
