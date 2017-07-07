@@ -1633,7 +1633,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             flash.message='Cleared project file '+params.filename
         }
 
-        return redirect(controller: 'framework', action: 'editProjectFile', params: [project: project])
+        return redirect(
+                controller: 'framework',
+                action: 'editProjectFile',
+                params: [project: project, filename: params.filename]
+        )
     }
     def editProjectConfig (){
         if(!params.project){
