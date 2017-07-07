@@ -11,6 +11,9 @@ class ExecutionReferenceImpl implements ExecutionReference {
     JobReferenceImpl job
     Date dateStarted
     String status
+    String succeededNodeList
+    String failedNodeList
+    String targetNodes
 
     @Override
     String toString() {

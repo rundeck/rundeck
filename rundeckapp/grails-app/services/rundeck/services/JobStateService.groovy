@@ -16,8 +16,14 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.BaseNodeFilters
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.INodeEntry
+import com.dtolabs.rundeck.core.common.INodeSet
+import com.dtolabs.rundeck.core.common.NodeFilter
+import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
@@ -25,6 +31,7 @@ import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.jobs.JobState
+import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.transaction.Transactional
 import org.rundeck.util.Sizes
@@ -133,17 +140,51 @@ class JobStateService implements AuthorizingJobService {
         }
 
         ArrayList<ExecutionReference> list = new ArrayList<>()
+        Framework framework = frameworkService.getRundeckFramework()
+        def frameworkProject = framework.getFrameworkProjectMgr().getFrameworkProject(project)
+        INodeSet allNodes = frameworkProject.getNodeSet()
+
         executions.each { exec ->
             ScheduledExecution job = exec.scheduledExecution
             JobReferenceImpl jobRef = new JobReferenceImpl(id: job.extid, jobName: job.jobName,
                     groupPath: job.groupPath, project: job.project)
+            StringBuilder targetNode = new StringBuilder()
+            if(!exec.filter){
+                targetNode.append(framework.getFrameworkNodeName())
+            }else{
+                NodeSet filterNodeSet = filtersAsNodeSet([
+                        filter:exec.filter,
+                        nodeExcludePrecedence:exec.nodeExcludePrecedence,
+                        nodeThreadcount: exec.nodeThreadcount,
+                        nodeKeepgoing: exec.nodeKeepgoing
+                ])
+                INodeSet nodeSet =  NodeFilter.filterNodes(filterNodeSet, allNodes)
+                Iterator<INodeEntry> it = nodeSet.getNodes().iterator()
+                while(it.hasNext()){
+                    INodeEntry node = it.next()
+                    targetNode.append(node.nodename)
+                    if(it.hasNext()){
+                        targetNode.append(',')
+                    }
+                }
+            }
             ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(id:exec.id, options: exec.argString,
-                    filter: exec.filter, job: jobRef, dateStarted: exec.dateStarted, status: exec.status)
+                    filter: exec.filter, job: jobRef, dateStarted: exec.dateStarted, status: exec.status,
+                    succeededNodeList: exec.succeededNodeList, failedNodeList: exec.failedNodeList,
+                    targetNodes: targetNode.toString())
             list.add(execRef)
         }
         return list
     }
 
+    NodeSet filtersAsNodeSet(Map econtext) {
+        final NodeSet nodeset = new NodeSet();
+        nodeset.createExclude(BaseNodeFilters.asExcludeMap(econtext)).setDominant(econtext.nodeExcludePrecedence?true:false);
+        nodeset.createInclude(BaseNodeFilters.asIncludeMap(econtext)).setDominant(!econtext.nodeExcludePrecedence?true:false);
+        nodeset.setKeepgoing(econtext.nodeKeepgoing?true:false)
+        nodeset.setThreadCount(econtext.nodeThreadcount?econtext.nodeThreadcount:1)
+        return nodeset
+    }
 
     @Override
     ExecutionReference executionForId(AuthContext auth, String id, String project) throws ExecutionNotFound{
@@ -167,7 +208,8 @@ class JobStateService implements AuthorizingJobService {
         JobReferenceImpl jobRef = new JobReferenceImpl(id: se.extid, jobName: se.jobName, groupPath: se.groupPath,
                 project: se.project)
         new ExecutionReferenceImpl(id:exec.id, options: exec.argString, filter: exec.filter, job: jobRef,
-                dateStarted: exec.dateStarted, status: exec.status)
+                dateStarted: exec.dateStarted, status: exec.status, succeededNodeList: exec.succeededNodeList, 
+                failedNodeList: exec.failedNodeList)
 
     }
 
