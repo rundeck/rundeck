@@ -55,7 +55,7 @@
                     <g:radio name="mode" value="active" checked="${g.executionMode(active: true)}"/>
                     <g:icon name="play" />
                     <g:message code="system.executionMode.status.active"/>
-                    <g:ifExecutionMode active="true">(Current Mode)</g:ifExecutionMode>
+                    <g:ifExecutionMode active="true"><g:message code="current.mode" /></g:ifExecutionMode>
                 </label>
 
                     <p class="col-sm-12 help-block ">
@@ -68,7 +68,7 @@
                     <g:radio name="mode" value="passive" checked="${g.executionMode(active: false)}"/>
                     <g:icon name="pause" />
                     <g:message code="system.executionMode.status.passive"/>
-                    <g:ifExecutionMode passive="true">(Current Mode)</g:ifExecutionMode>
+                    <g:ifExecutionMode passive="true"><g:message code="current.mode" /></g:ifExecutionMode>
                 </label>
 
                     <p class="col-sm-12 help-block ">
