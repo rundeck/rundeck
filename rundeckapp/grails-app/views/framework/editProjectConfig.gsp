@@ -45,7 +45,11 @@
 </head>
 
 <body>
-    <g:render template="/common/messages" />
+<div class="row">
+    <div class="col-sm-12">
+        <g:render template="/common/messages"/>
+    </div>
+</div>
 
     <div class="row">
         <g:form action="saveProjectConfig" method="post"

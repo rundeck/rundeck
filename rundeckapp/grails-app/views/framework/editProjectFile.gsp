@@ -46,7 +46,11 @@
 
 <body>
 
-
+<div class="row">
+    <div class="col-sm-12">
+        <g:render template="/common/messages"/>
+    </div>
+</div>
     <div class="row">
         <g:form action="saveProjectFile" method="post"
             params="${[project:params.project]}"
