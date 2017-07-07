@@ -94,20 +94,19 @@
 
             </div>
             <div class="panel-footer">
-                <div class="form-group ">
-                <div class="col-sm-12 ">
-                <g:link action="systemConfig" controller="menu" class="btn btn-default " name="cancel">
-                    <g:message code="cancel"/>
-                </g:link>
-            <g:set var="authAction" value="${g.executionMode(active:true)?AuthConstants.ACTION_DISABLE_EXECUTIONS:AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
-            <auth:resourceAllowed action="${[authAction,AuthConstants.ACTION_ADMIN]}" any="true" context="application" kind="system">
-                    <button type="submit"
-                            class="btn btn-primary "
-                            >
-                        Set Execution Mode
-                    </button>
-            </auth:resourceAllowed>
-                </div>
+                <div class=" buttons">
+                    <g:link action="index" controller="menu" class="btn btn-default " name="cancel">
+                        <g:message code="cancel"/>
+                    </g:link>
+                    <g:set var="authAction"
+                           value="${g.executionMode(active: true) ? AuthConstants.ACTION_DISABLE_EXECUTIONS :
+                                   AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
+                    <auth:resourceAllowed action="${[authAction, AuthConstants.ACTION_ADMIN]}" any="true"
+                                          context="application" kind="system">
+                        <button type="submit" class="btn btn-primary ">
+                            <g:message code="set.execution.mode"/>
+                        </button>
+                    </auth:resourceAllowed>
                 </div>
             </div>
         </div>
