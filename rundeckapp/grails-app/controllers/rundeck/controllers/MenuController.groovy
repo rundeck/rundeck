@@ -740,6 +740,55 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 //        }
 
     }
+
+    def projectExport() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
+        }
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProject(params.project),
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
+                ),
+                AuthConstants.ACTION_EXPORT, 'Project', params.project
+        )) {
+            return
+        }
+    }
+    def projectImport() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
+        }
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProject(params.project),
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]
+                ),
+                AuthConstants.ACTION_IMPORT, 'Project', params.project
+        )) {
+            return
+        }
+    }
+    def projectDelete() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
+        }
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProject(params.project),
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_DELETE]
+                ),
+                AuthConstants.ACTION_DELETE, 'Project', params.project
+        )) {
+            return
+        }
+    }
     def admin(){
         Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)

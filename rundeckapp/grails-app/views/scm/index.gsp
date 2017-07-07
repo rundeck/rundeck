@@ -25,7 +25,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <meta name="tabpage" content="configure"/>
+    <meta name="tabpage" content="projectconfigure"/>
     <meta name="layout" content="base"/>
     <title><g:appTitle/> - <g:message code="scmController.page.index.title" args="[params.project]"/></></title>
 
@@ -40,11 +40,8 @@
 </div>
 
 <div class="row">
-    <div class="col-sm-3">
-        <g:render template="/menu/configNav" model="[selected: 'scm']"/>
-    </div>
+    <div class="col-sm-10 col-sm-offset-1">
 
-    <div class="col-sm-9">
         <h3><g:message code="gui.menu.Scm" default="Project SCM Integration"/></h3>
 
         <div class="well well-sm">

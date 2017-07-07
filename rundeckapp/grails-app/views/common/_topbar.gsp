@@ -73,7 +73,14 @@
     </g:ifPageProperty>
     </g:if>
     <g:if test="${! homeselected}">
-
+        <g:set var="projconfigselected" value=""/>
+        <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
+            <g:ifPageProperty name='meta.tabpage'>
+                <g:ifPageProperty name='meta.tabpage' equals='projectconfigure'>
+                    <g:set var="projconfigselected" value="active"/>
+                </g:ifPageProperty>
+            </g:ifPageProperty>
+        </g:if>
     <g:if test="${params.project ?: request.project || session?.projects}">
         <g:if test="${session.frameworkProjects}">
             <li class="dropdown" id="projectSelect">
@@ -97,6 +104,16 @@
                 <i class="glyphicon glyphicon-tasks"></i>
                 <g:enc>${project ?: params.project ?: request.project ?: 'Choose ...'}</g:enc>
             </a>
+        </li>
+
+        <li class="dropdown ${enc(attr:projconfigselected)}" id="projectAdmin">
+            <a class="dropdown-toggle  toptab ${enc(attr: projconfigselected)}" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                <g:icon name="cog"/>
+                <span class="caret"></span>
+                <span class="sr-only">Toggle Dropdown</span>
+            </a>
+
+            <g:render template="/menu/projectConfigNavMenu"/>
         </li>
     </g:if>
 
