@@ -16,7 +16,7 @@
 
 <%@ page import="com.opensymphony.module.sitemesh.RequestConstants; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <g:set var="selectParams" value="${[:]}"/>
-<g:if test="${pageScope._metaTabPage}">
+<g:if test="${pageScope._metaTabPage && pageScope._metaTabPage != 'configure'&& pageScope._metaTabPage != 'projectconfigure'}">
     <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>
 </g:if>
 <nav class="navbar-overrides navbar navbar-default navbar-static-top" role="navigation">
@@ -81,22 +81,25 @@
                     </g:ifPageProperty>
                 </g:ifPageProperty>
             </g:if>
-            <g:if test="${params.project ?: request.project || session?.projects}">
-                <g:if test="${session.frameworkProjects}">
-                    <li class="dropdown" id="projectSelect">
-                        <g:render template="/framework/projectSelect"
-                                  model="${[projects                   : session.frameworkProjects, project: params.project
-                                          ?:
-                                          request.project, selectParams: selectParams]}"/>
-                    </li>
-                </g:if>
-                <g:else>
-                    <li id="projectSelect" class="dropdown disabled">
-                        <a data-toggle="dropdown" href="#" class="disabled">
-                            <i class="caret"></i>
-                        </a>
-                    </li>
-                </g:else>
+            <g:if test="${session.frameworkProjects}">
+                <li class="dropdown" id="projectSelect">
+                    <g:render template="/framework/projectSelect"
+                              model="${[
+                                      projects    : session.frameworkProjects,
+                                      project     : params.project ?: request.project,
+                                      selectParams: selectParams
+                              ]}"/>
+                </li>
+            </g:if>
+            <g:else>
+                <li id="projectSelect" class="dropdown disabled">
+                    <a data-toggle="dropdown" href="#" class="disabled">
+                        <i class="caret"></i>
+                    </a>
+                </li>
+            </g:else>
+            <g:if test="${params.project ?: request.project}">
+
                 <li id="projectHomeLink">
                     <a href="${createLink(
                             controller: 'menu',
