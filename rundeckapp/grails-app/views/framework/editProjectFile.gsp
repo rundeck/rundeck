@@ -16,7 +16,7 @@
 <%--
    Author: Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
 --%>
-<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -83,9 +83,31 @@
                 </div>
 
 
-                <div class="panel-footer">
-                    <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>
-                    <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-primary reset_page_confirm"/>
+                <div class="panel-footer buttons">
+                    <g:submitButton name="cancel" value="${g.message(code: 'button.action.Cancel', default: 'Cancel')}"
+                                    class="btn btn-default reset_page_confirm"/>
+                    <g:submitButton name="save" value="${g.message(code: 'button.action.Save', default: 'Save')}"
+                                    class="btn btn-primary reset_page_confirm"/>
+                    <g:if test="${displayConfig?.contains('none')}">
+                        <span class="text-warning text-right">
+                            <g:set var="authAdmin" value="${auth.resourceAllowedTest(
+                                    action: AuthConstants.ACTION_ADMIN,
+                                    type: "project",
+                                    name: (params.project ?: request.project),
+                                    context: "application"
+                            )}"/>
+                            <g:if test="${authAdmin}">
+                                <g:message code="project.edit.readme.warning.not.displayed.admin.message" />
+                                <g:link controller="framework" action="editProject" params="[project: params.project]">
+                                    <g:message code="project.configuration" />
+                                </g:link>
+                            </g:if>
+                            <g:else>
+                                <g:message code="project.edit.readme.warning.not.displayed.nonadmin.message" />
+                            </g:else>
+
+                        </span>
+                    </g:if>
                 </div>
             </div>
         </div>

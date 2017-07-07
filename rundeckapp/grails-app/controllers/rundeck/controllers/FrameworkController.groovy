@@ -90,6 +90,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def configStorageService
     def AuthorizationService authorizationService
     def ApplicationContext applicationContext
+    def MenuService menuService
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -1580,9 +1581,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             fwkProject.loadFileResource(params.filename,baos)
             fileText=baos.toString('UTF-8')
         }
+
+        def displayConfig
+        if (params.filename == 'readme.md') {
+            displayConfig = menuService.getReadmeDisplay(fwkProject)
+        } else if (params.filename == 'motd.md') {
+            displayConfig = menuService.getMotdDisplay(fwkProject)
+        }
+
         [
-                filename:params.filename,
-                fileText:fileText
+                displayConfig: displayConfig,
+                filename     : params.filename,
+                fileText     : fileText
         ]
     }
     def saveProjectFile (){
