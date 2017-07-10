@@ -178,8 +178,17 @@
                                any: true,
                                context: 'application'
                        )}"/>
+                <g:set var="projACLAuth"
+                       value="${auth.resourceAllowedTest(
+                               type: AuthConstants.TYPE_PROJECT_ACL,
+                               name: (params.project ?: request.project),
+                               action: [AuthConstants.ACTION_READ,
+                                        AuthConstants.ACTION_ADMIN],
+                               any: true,
+                               context: 'application'
+                       )}"/>
 
-                <g:if test="${projConfigAuth}">
+                <g:if test="${projConfigAuth||projACLAuth}">
                     <li class="dropdown ${enc(attr: projconfigselected)}" id="projectAdmin">
                         <bs:dropdownToggle css="toptab ${projconfigselected}"  code="Project" />
                         <g:render template="/menu/projectConfigNavMenu"/>

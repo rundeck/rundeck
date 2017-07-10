@@ -1102,10 +1102,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAny(
                         authContext,
-                        frameworkService.authResourceForProject(params.project),
-                        [AuthConstants.ACTION_ADMIN]
+                        frameworkService.authResourceForProjectAcl(params.project),
+                        [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
                 ),
-                AuthConstants.ACTION_ADMIN, 'Project', params.project
+                AuthConstants.ACTION_READ, 'ACL for Project', params.project
         )) {
             return
         }

@@ -38,6 +38,12 @@
        value="${authAdmin || auth.resourceAllowedTest(action: AuthConstants.ACTION_CONFIGURE, type: "project",
                                                       name: (params.project ?: request.project), context: "application"
        )}"/>
+<g:set var="authReadAcl"
+       value="${auth.resourceAllowedTest(action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN],
+                                         any: true,
+                                         type: AuthConstants.TYPE_PROJECT_ACL,
+                                         name: (params.project ?: request.project), context: "application"
+       )}"/>
 
 <bs:dropdown>
 
@@ -53,7 +59,7 @@
     </bs:menuitem>
 
     <bs:menuitem
-            enabled="${authConfigure}"
+            enabled="${authReadAcl}"
             disabledTitleCode="request.error.unauthorized.title"
             controller="menu"
             action="projectAcls"
