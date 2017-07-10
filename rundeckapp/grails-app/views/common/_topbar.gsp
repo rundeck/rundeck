@@ -258,14 +258,6 @@
       </g:ifServletContextAttributeExists>
     <g:if test="${session?.user && request.subject}">
         <li class="headright">
-        <g:if
-                test="${auth.resourceAllowedTest(
-                        type: 'resource',
-                        kind: 'system',
-                        action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN],
-                        any: true, context: 'application'
-                )}">
-
             <li class="dropdown ${enc(attr: cfgselected)}" id="appAdmin">
                 <a class="dropdown-toggle  toptab ${enc(attr: projconfigselected)}" data-toggle="dropdown"
                    aria-haspopup="true" aria-expanded="false">
@@ -275,8 +267,7 @@
                 </a>
 
                 <g:render template="/menu/sysConfigNavMenu"/>
-            </li>
-        </g:if><!--
+            </li><!--
             -->
         <li class="dropdown">
             <g:link controller="user" action="profile" class="dropdown-toggle" data-toggle="dropdown" data-target="#" id="userLabel"
