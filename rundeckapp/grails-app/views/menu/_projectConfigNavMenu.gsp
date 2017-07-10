@@ -39,74 +39,89 @@
                                                       name: (params.project ?: request.project), context: "application"
        )}"/>
 
-<ul class="dropdown-menu" role="menu" aria-labelledby="">
+<bs:dropdown>
 
-    <li class="dropdown-header"><g:message code="project.admin" /></li>
+    <bs:menuitem headerCode="project.admin"/>
 
-    <li class="${!authConfigure ? 'disabled' : ''}">
-        <g:link controller="framework" action="editProject" params="[project: params.project ?: request.project]">
-            <g:message code="edit.configuration"/>
-        </g:link>
-    </li>
-    <li>
-        <g:link controller="menu"
-                action="projectAcls"
-                params="[project: params.project ?: request.project]">
-            <g:message code="list.acls" />
-        </g:link>
-    </li>
-    <li role="separator" class="divider"></li>
-    <li>
-        <g:link controller="framework"
-                action="editProjectFile"
-                params="[project: params.project ?: request.project, filename: 'readme.md']">
-            <g:message code="edit.readme"/>
-        </g:link>
-    </li>
+    <bs:menuitem
+            enabled="${authConfigure}"
+            disabledTitleCode="request.error.unauthorized.title"
+            controller="framework"
+            action="editProject"
+            params="[project: params.project]"
+            code="edit.configuration">
+    </bs:menuitem>
 
-    <li>
-        <g:link
-                controller="framework"
-                action="editProjectFile"
-                params="[project: params.project ?: request.project, filename: 'motd.md']">
-            <g:message code="edit.message.of.the.day"/>
-        </g:link>
-    </li>
-    <li role="separator" class="divider"></li>
-    <li class="${!authConfigure ? 'disabled' : ''}">
-        <g:link controller="scm" action="index"
-                params="[project: params.project ?: request.project]">
-            <g:message code="project.admin.menu.Scm.title" default="Setup SCM"/>
-        </g:link>
-    </li>
-    <li role="separator" class="divider"></li>
-    <li class="${!authExport ? 'disabled' : ''}">
-        <g:link
-                controller="menu"
-                action="projectExport"
-                params="[project: params.project ?: request.project]"
-                title="${authExport ? '' : message(code: "request.error.unauthorized.title")}">
-            <g:message code="export.archive.ellipsis" />
-        </g:link>
-    </li>
-    <li class="${!authImport ? 'disabled' : ''}">
-        <g:link
-                controller="menu"
-                action="projectImport"
-                params="[project: params.project ?: request.project]"
-                title="${authImport ? '' : message(code: "request.error.unauthorized.title")}">
-            <g:message code="import.archive.ellipsis" />
-        </g:link>
-    </li>
-    <li role="separator" class="divider"></li>
-    <li class="${!authDelete ? 'disabled' : ''}">
-        <g:link
-                controller="menu"
-                action="projectDelete"
-                params="[project: params.project ?: request.project]"
-                title="${authDelete ? '' : message(code: "request.error.unauthorized.title")}">
-            <g:icon name="remove"/>
-            <g:message code="delete.project.ellipsis" />
-        </g:link>
-    </li>
-</ul>
+    <bs:menuitem
+            enabled="${authConfigure}"
+            disabledTitleCode="request.error.unauthorized.title"
+            controller="menu"
+            action="projectAcls"
+            params="[project: params.project]"
+            code="list.acls">
+    </bs:menuitem>
+
+    <bs:menuitem/>
+
+    <bs:menuitem
+            enabled="${authConfigure}"
+            disabledTitleCode="request.error.unauthorized.title"
+            controller="framework"
+            action="editProjectFile"
+            params="[project: params.project, filename: 'readme.md']"
+            code="edit.readme">
+    </bs:menuitem>
+
+    <bs:menuitem
+            enabled="${authConfigure}"
+            disabledTitleCode="request.error.unauthorized.title"
+            controller="framework"
+            action="editProjectFile"
+            params="[project: params.project, filename: 'motd.md']"
+            code="edit.message.of.the.day">
+    </bs:menuitem>
+
+    <bs:menuitem/>
+
+    <bs:menuitem
+            enabled="${authConfigure}"
+            disabledTitleCode="request.error.unauthorized.title"
+            controller="index"
+            action="index"
+            params="[project: params.project]"
+            code="project.admin.menu.Scm.title">
+    </bs:menuitem>
+
+    <bs:menuitem/>
+
+    <bs:menuitem
+            enabled="${authExport}"
+            disabledTitleCode="request.error.unauthorized.title"
+            controller="menu"
+            action="projectExport"
+            params="[project: params.project]"
+            code="export.archive.ellipsis">
+    </bs:menuitem>
+
+    <bs:menuitem
+            enabled="${authImport}"
+            disabledTitleCode="request.error.unauthorized.title"
+            controller="menu"
+            action="projectImport"
+            params="[project: params.project]"
+            code="import.archive.ellipsis">
+
+    </bs:menuitem>
+
+    <bs:menuitem/>
+
+    <bs:menuitem
+            enabled="${authExport}"
+            disabledTitleCode="request.error.unauthorized.title"
+            controller="menu"
+            action="projectDelete"
+            params="[project: params.project]"
+            icon="remove"
+            code="delete.project.ellipsis">
+    </bs:menuitem>
+</bs:dropdown>

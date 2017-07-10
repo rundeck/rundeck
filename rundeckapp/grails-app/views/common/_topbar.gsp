@@ -181,13 +181,7 @@
 
                 <g:if test="${projConfigAuth}">
                     <li class="dropdown ${enc(attr: projconfigselected)}" id="projectAdmin">
-                        <a class="dropdown-toggle  toptab ${enc(attr: projconfigselected)}" data-toggle="dropdown"
-                           aria-haspopup="true" aria-expanded="false">
-                            Project
-                            <span class="caret"></span>
-                            <span class="sr-only">Toggle Dropdown</span>
-                        </a>
-
+                        <bs:dropdownToggle css="toptab ${projconfigselected}"  code="Project" />
                         <g:render template="/menu/projectConfigNavMenu"/>
                     </li>
                 </g:if>

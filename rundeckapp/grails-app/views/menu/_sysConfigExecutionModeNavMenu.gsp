@@ -16,23 +16,22 @@
 
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
-<li role="separator" class="divider"></li>
-
 <g:set var="authAction" value="${g.executionMode(active: true) ? AuthConstants.ACTION_DISABLE_EXECUTIONS :
         AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
 <auth:resourceAllowed action="${[authAction, AuthConstants.ACTION_ADMIN]}"
                       any="true"
                       context="application"
                       kind="system">
-    <li>
-        <g:link action="executionMode" controller="menu" class="">
-            <g:ifExecutionMode>
-                <g:icon name="play" css="text-success"/>
-            </g:ifExecutionMode>
-            <g:ifExecutionMode passive="true">
-                <g:icon name="pause" css="text-warning"/>
-            </g:ifExecutionMode>
-            Execution Mode…
-        </g:link>
-    </li>
+    <bs:menuitem
+            separator="true"
+            action="executionMode"
+            controller="menu">
+        <g:ifExecutionMode>
+            <g:icon name="play" css="text-success"/>
+        </g:ifExecutionMode>
+        <g:ifExecutionMode passive="true">
+            <g:icon name="pause" css="text-warning"/>
+        </g:ifExecutionMode>
+        <g:message code="execution.mode.ellipsis"/>
+    </bs:menuitem>
 </auth:resourceAllowed>

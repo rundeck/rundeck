@@ -16,54 +16,49 @@
 
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 
-<ul class="dropdown-menu" role="menu" aria-labelledby="">
 
-    <li class="dropdown-header">System</li>
-    <g:if test="${auth.resourceAllowedTest(
+<bs:dropdown>
+
+    <bs:menuitem headerCode="system"/>
+    <bs:menuitem
+            controller="menu"
+            action="storage"
+            code="gui.menu.KeyStorage"/>
+    <g:set var="authRead" value="${auth.resourceAllowedTest(
             type: 'resource',
             kind: 'system',
             action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN],
             any: true,
             context: 'application'
-    )
-    }">
-        <li class="${selected == 'storage' ? 'active' : ''}">
-            <g:link controller="menu" action="storage">
-                <g:message code="gui.menu.KeyStorage" default="Key Storage"/>
-            </g:link>
-        </li>
-        <li class="${selected == 'syscfg' ? 'active' : ''}">
-            <g:link controller="menu" action="systemConfig" >
-                <g:message code="gui.menu.SystemConfig" default="System Configuration"/>
-            </g:link>
-        </li>
-        <li class="">
-            <g:link controller="menu" action="acls">
-                <g:message code="gui.menu.AccessControl"/>
-            </g:link>
-        </li>
-        <li class="">
-            <g:link controller="menu" action="systemInfo" >
-                <g:message code="gui.menu.SystemInfo" default="System Report"/>
-            </g:link>
-        </li>
+    )}"/>
 
-        <g:if test="${g.logStorageEnabled() || selected == 'logstorage'}">
+    <g:if test="${authRead}">
 
-            <li class="${selected == 'logstorage' ? 'active' : ''}">
-                <g:link controller="menu" action="logStorage" >
-                    <g:message code="gui.menu.LogStorage" default="Log Storage"/>
-                </g:link>
-            </li>
+        <bs:menuitem
+                controller="menu"
+                action="systemConfig"
+                code="gui.menu.SystemConfig"/>
+        <bs:menuitem
+                controller="menu"
+                action="acls"
+                code="gui.menu.AccessControl"/>
+        <bs:menuitem
+                controller="menu"
+                action="systemInfo"
+                code="gui.menu.SystemInfo"/>
 
-        </g:if>
+
+        <bs:menuitem
+                shown="${g.logStorageEnabled()}"
+                controller="menu"
+                action="logStorage"
+                code="gui.menu.LogStorage"/>
 
     </g:if>
-    <li class="${selected == 'plugins' ? 'active' : ''}">
-        <g:link controller="menu" action="plugins" >
-            <g:message code="gui.menu.ListPlugins"/>
-        </g:link>
-    </li>
+    <bs:menuitem
+            controller="menu"
+            action="plugins"
+            code="gui.menu.ListPlugins"/>
 
     <g:render template="/menu/sysConfigExecutionModeNavMenu"/>
-</ul>
+</bs:dropdown>
