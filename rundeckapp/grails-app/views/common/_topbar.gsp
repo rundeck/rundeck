@@ -168,7 +168,7 @@
             </g:link></li>
                 <g:set var="projConfigAuth"
                        value="${auth.resourceAllowedTest(
-                               type: 'project',
+                               type: AuthConstants.TYPE_PROJECT,
                                name: (params.project ?: request.project),
                                action: [AuthConstants.ACTION_CONFIGURE,
                                         AuthConstants.ACTION_ADMIN,

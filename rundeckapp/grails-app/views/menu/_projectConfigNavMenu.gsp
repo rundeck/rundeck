@@ -18,25 +18,33 @@
 
 <g:set var="authAdmin" value="${auth.resourceAllowedTest(
         action: AuthConstants.ACTION_ADMIN,
-        type: "project",
+        type: AuthConstants.TYPE_PROJECT,
         name: (params.project ?: request.project),
         context: "application"
 )}"/>
 <g:set var="authDelete"
-       value="${authAdmin || auth.resourceAllowedTest(action: AuthConstants.ACTION_DELETE, type: "project",
-                                                      name: (params.project ?: request.project), context: "application"
+       value="${authAdmin || auth.resourceAllowedTest(
+               action: AuthConstants.ACTION_DELETE,
+               type: AuthConstants.TYPE_PROJECT,
+               name: (params.project ?: request.project), context: "application"
        )}"/>
 <g:set var="authExport"
-       value="${authAdmin || auth.resourceAllowedTest(action: AuthConstants.ACTION_EXPORT, type: "project",
-                                                      name: (params.project ?: request.project), context: "application"
+       value="${authAdmin || auth.resourceAllowedTest(
+               action: AuthConstants.ACTION_EXPORT,
+               type: AuthConstants.TYPE_PROJECT,
+               name: (params.project ?: request.project), context: "application"
        )}"/>
 <g:set var="authImport"
-       value="${authAdmin || auth.resourceAllowedTest(action: AuthConstants.ACTION_IMPORT, type: "project",
-                                                      name: (params.project ?: request.project), context: "application"
+       value="${authAdmin || auth.resourceAllowedTest(
+               action: AuthConstants.ACTION_IMPORT,
+               type: AuthConstants.TYPE_PROJECT,
+               name: (params.project ?: request.project), context: "application"
        )}"/>
 <g:set var="authConfigure"
-       value="${authAdmin || auth.resourceAllowedTest(action: AuthConstants.ACTION_CONFIGURE, type: "project",
-                                                      name: (params.project ?: request.project), context: "application"
+       value="${authAdmin || auth.resourceAllowedTest(
+               action: AuthConstants.ACTION_CONFIGURE,
+               type: AuthConstants.TYPE_PROJECT,
+               name: (params.project ?: request.project), context: "application"
        )}"/>
 <g:set var="authReadAcl"
        value="${auth.resourceAllowedTest(action: [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN],
