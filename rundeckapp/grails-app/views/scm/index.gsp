@@ -26,6 +26,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="projectconfigure"/>
+    <meta name="projtabtitle" content="${message(code: 'gui.menu.Scm')}"/>
     <meta name="layout" content="base"/>
     <title><g:appTitle/> - <g:message code="scmController.page.index.title" args="[params.project]"/></></title>
 

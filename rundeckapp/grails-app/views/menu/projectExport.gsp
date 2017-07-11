@@ -27,6 +27,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
+    <meta name="projtabtitle" content="${message(code: 'export.archive')}"/>
     <title><g:message code="export.archive"/></title>
 </head>
 

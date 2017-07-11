@@ -83,7 +83,7 @@
             controller="framework"
             action="editProjectFile"
             params="[project: params.project, filename: 'readme.md']"
-            code="edit.readme">
+            code="edit.readme.ellipsis">
     </bs:menuitem>
 
     <bs:menuitem

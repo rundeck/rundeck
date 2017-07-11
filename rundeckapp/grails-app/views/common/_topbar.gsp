@@ -190,7 +190,15 @@
 
                 <g:if test="${projConfigAuth||projACLAuth}">
                     <li class="dropdown ${enc(attr: projconfigselected)}" id="projectAdmin">
-                        <bs:dropdownToggle css="toptab ${projconfigselected}"  code="Project" />
+                        <bs:dropdownToggle css="toptab ${projconfigselected}">
+                            <g:message code="Project"/>
+                            <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
+                                <g:ifPageProperty name='meta.projtabtitle'>
+                                    <g:icon name="menu-right"/>
+                                    <g:pageProperty name='meta.projtabtitle'/>
+                                </g:ifPageProperty>
+                            </g:if>
+                        </bs:dropdownToggle>
                         <g:render template="/menu/projectConfigNavMenu"/>
                     </li>
                 </g:if>
@@ -208,7 +216,6 @@
         </g:if>
     </ul>
 </g:if>
-        <g:if test="${!(params.project ?: request.project || session?.projects)}">
 
             <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
                 <g:ifPageProperty name='meta.tabtitle'>
@@ -225,7 +232,6 @@
 
                 </g:ifPageProperty>
             </g:if>
-        </g:if>
 <g:if test="${session?.user && request.subject }">
 <g:ifExecutionMode passive="true">
     <p class="navbar-text has_tooltip navbar-text-warning"

@@ -27,7 +27,8 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectconfigure"/>
-    <title><g:message code="domain.Project.choose.title" default="Edit Project"/></title>
+    <meta name="projtabtitle" content="${message(code:'configuration')}"/>
+    <title><g:message code="edit.configuration" /></title>
 
     <g:javascript library="prototype/effects"/>
     <g:javascript library="resourceModelConfig"/>

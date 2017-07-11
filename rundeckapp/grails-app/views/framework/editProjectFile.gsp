@@ -21,8 +21,9 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <meta name="tabpage" content="configure"/>
-    <title><g:message code="project.config.editor.title" default="Edit Project File"/></title>
+    <meta name="tabpage" content="projectconfigure"/>
+    <meta name="projtabtitle" content="${message(code:filename=='readme.md'?'edit.readme':filename=='motd.md'?'edit.motd':'edit.project.file')}"/>
+    <title><g:message code="edit.project.file" /></title>
 
     <g:javascript library="prototype/effects"/>
     <asset:javascript src="leavePageConfirm.js"/>
