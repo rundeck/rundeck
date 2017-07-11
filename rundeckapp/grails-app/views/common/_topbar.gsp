@@ -267,35 +267,29 @@
       </g:ifServletContextAttributeExists>
     <g:if test="${session?.user && request.subject}">
         <li class="headright">
-            <li class="dropdown ${enc(attr: cfgselected)}" id="appAdmin">
-                <a class="dropdown-toggle  toptab ${enc(attr: projconfigselected)}" data-toggle="dropdown"
-                   aria-haspopup="true" aria-expanded="false">
-                    <g:icon name="cog"/>
-                    <span class="caret"></span>
-                    <span class="sr-only">Toggle Dropdown</span>
-                </a>
-
-                <g:render template="/menu/sysConfigNavMenu"/>
-            </li><!--
+        <li class="dropdown ${enc(attr: cfgselected)}" id="appAdmin">
+            <bs:dropdownToggle css="toptab ${projconfigselected}">
+                <g:icon name="cog"/>
+            </bs:dropdownToggle>
+            <g:render template="/menu/sysConfigNavMenu"/>
+        </li><!--
             -->
         <li class="dropdown">
-            <g:link controller="user" action="profile" class="dropdown-toggle" data-toggle="dropdown" data-target="#" id="userLabel"
-                    role="button">
-                <g:enc>${session.user}</g:enc> <span class="caret"></span>
-            </g:link>
-            <ul class="dropdown-menu" role="menu" aria-labelledby="userLabel">
-                <li><g:link controller="user" action="profile">
-                        <i class="glyphicon glyphicon-user"></i>
-                        Profile
-                    </g:link>
-                </li>
-                <li class="divider"></li>
-                <li><g:link action="logout" controller="user" title="Logout user: ${enc(attr:session.user)}">
-                    <i class="glyphicon glyphicon-remove"></i>
-                    Logout
-                </g:link>
-                </li>
-            </ul>
+
+            <bs:dropdownToggle id="userLabel" >
+                ${session.user}
+            </bs:dropdownToggle>
+            <bs:dropdown labelId="userLabel">
+                <bs:menuitem
+                        controller="user" action="profile"
+                        icon="user"
+                        code="profile"/>
+
+                <bs:menuitem/>
+                <bs:menuitem action="logout" controller="user"
+                             icon="remove"
+                             code="logout"/>
+            </bs:dropdown>
         </li>
     </g:if>
     </ul>
