@@ -22,8 +22,8 @@
                       any="true"
                       context="application"
                       kind="system">
+    <bs:menuitem/>
     <bs:menuitem
-            separator="true"
             action="executionMode"
             controller="menu">
         <g:ifExecutionMode>
