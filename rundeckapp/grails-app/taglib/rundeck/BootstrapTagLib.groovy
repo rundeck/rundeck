@@ -29,14 +29,20 @@ class BootstrapTagLib {
      * toggle button for a dropdown-menu
      */
     def dropdownToggle = { attrs, body ->
-        out << '<a href="#" class="dropdown-toggle '
+        out << '<a href="'
+        out << getAnchorHref(false, attrs)
+        out << '" class="dropdown-toggle '
         if (attrs.right) {
             out << 'dropdown-toggle-right '
         }
         if (attrs.css) {
             out << attrs.css.encodeAsHTML()
         }
-        out << '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">'
+        out << '" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"'
+        if(attrs.id){
+            out<< " id=\"${attrs.id.encodeAsHTML()}\""
+        }
+        out << '>'
         if (attrs.code) {
             out << message(code: attrs.code).encodeAsHTML()
         } else if (body) {
@@ -107,13 +113,7 @@ class BootstrapTagLib {
         }
         out << '>'
         out << '<a href="'
-        if (isDisabled) {
-            out << '#'
-        } else if (attrs.href) {
-            out << attrs.href?.encodeAsHTML()
-        } else if (attrs.action) {
-            out << createLink(attrs.subMap(['action', 'controller', 'params'])).encodeAsHTML()
-        }
+        out << getAnchorHref(isDisabled, attrs)
         out << '"'
         out << ' title="'
         if (isDisabled && attrs.disabledTitleCode) {
@@ -138,5 +138,14 @@ class BootstrapTagLib {
         out << '</a>'
 
         out << '</li>'
+    }
+
+    private String getAnchorHref(boolean isDisabled, Map attrs) {
+        if (!isDisabled && attrs.href) {
+            return attrs.href?.encodeAsHTML()
+        } else if (!isDisabled && attrs.action) {
+            return createLink(attrs.subMap(['action', 'controller', 'params'])).encodeAsHTML()
+        }
+        return '#'
     }
 }
