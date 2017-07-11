@@ -24,11 +24,8 @@ e<html>
 
 <body>
 <div class="row " id="userListPage">
-        <div class="col-sm-3">
-            <g:render template="/menu/configNav" model="[selected: 'profiles']"/>
-        </div>
 
-        <div class="col-sm-9">
+        <div class="col-sm-10 col-sm-offset-1">
             <h3>Users
 
             <g:if test="${auth.resourceAllowedTest(kind: 'user', action: [AuthConstants.ACTION_ADMIN], context: 'application')}">

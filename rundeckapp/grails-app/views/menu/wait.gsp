@@ -110,7 +110,7 @@
 
     </div>
     <div class="panel-footer">
-        <g:link controller="menu" action="admin" params="${[project: params.project]}">
+        <g:link controller="menu" action="projectExport" params="${[project: params.project]}">
             <g:message code="return.to.configuration" />
         </g:link>
     </div>

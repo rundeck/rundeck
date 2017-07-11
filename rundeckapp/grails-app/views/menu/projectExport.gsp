@@ -1,5 +1,5 @@
 %{--
-  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  - Copyright 2017 Rundeck, Inc. (http://rundeck.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -17,30 +17,27 @@
 <%--
   Created by IntelliJ IDEA.
   User: greg
-  Date: 10/3/13
-  Time: 12:19 PM
-  To change this template use File | Settings | File Templates.
+  Date: 7/6/17
+  Time: 4:33 PM
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <meta name="meta.tabpage" content="configure"/>
-    <title>Metrics Links</title>
+    <meta name="tabpage" content="projectconfigure"/>
+    <meta name="projtabtitle" content="${message(code: 'export.archive')}"/>
+    <title><g:message code="export.archive"/></title>
 </head>
-<body>
 
+<body>
 <div class="row">
-    <div class="col-sm-10 col-sm-offset-1">
-<g:markdown>
-* [Metrics](${g.createLink(uri: '/metrics/metrics?pretty=true')}) (json)
-* [Ping](${g.createLink(uri:'/metrics/ping')})
-* [Threads](${g.createLink(uri: '/metrics/threads')})
-* [Healthcheck](${g.createLink(uri: '/metrics/healthcheck')})  (json)
-</g:markdown>
-        </div>
+    <div class="col-sm-12">
+        <g:render template="/common/messages"/>
     </div>
+</div>
+<g:render template="projectExportForm"/>
 
 </body>
 </html>

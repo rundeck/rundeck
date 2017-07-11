@@ -476,11 +476,11 @@ class ExecutionController extends ControllerBase{
             }
             if(requestActive == executionService.executionsAreActive){
                 flash.message=g.message(code:'action.executionMode.notchanged.'+(requestActive?'active':'passive')+'.text')
-                return redirect(controller: 'menu',action:'systemConfig',params:[project:params.project])
+                return redirect(controller: 'menu',action:'executionMode')
             }
             executionService.setExecutionsAreActive(requestActive)
             flash.message=g.message(code:'action.executionMode.changed.'+(requestActive?'active':'passive')+'.text')
-            return redirect(controller: 'menu',action:'systemConfig',params:[project:params.project])
+            return redirect(controller: 'menu',action:'executionMode')
         }.invalidToken{
 
             request.error=g.message(code:'request.error.invalidtoken.message')

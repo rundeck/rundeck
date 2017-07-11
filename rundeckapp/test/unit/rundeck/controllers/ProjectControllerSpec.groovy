@@ -1403,7 +1403,7 @@ class ProjectControllerSpec extends Specification{
         def result=controller.importArchive()
 
         then:
-        response.redirectedUrl=='/menu/admin?project=test'
+        response.redirectedUrl=='/menu/projectImport?project=test'
         flash.message=='archive.successfully.imported'
         response.status==302
     }
@@ -1456,7 +1456,7 @@ class ProjectControllerSpec extends Specification{
         def result=controller.importArchive()
 
         then:
-        response.redirectedUrl=='/menu/admin?project=test'
+        response.redirectedUrl=='/menu/projectImport?project=test'
         flash.message=='archive.successfully.imported'
         response.status==302
     }
@@ -1534,7 +1534,7 @@ class ProjectControllerSpec extends Specification{
         def result=controller.importArchive()
 
         then:
-        response.redirectedUrl=='/menu/admin?project=test'
+        response.redirectedUrl=='/menu/projectImport?project=test'
         flash.error=='request.error.invalidtoken.message'
 
     }
