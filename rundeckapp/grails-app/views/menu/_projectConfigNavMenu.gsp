@@ -100,7 +100,7 @@
     <bs:menuitem
             enabled="${authConfigure}"
             disabledTitleCode="request.error.unauthorized.title"
-            controller="index"
+            controller="scm"
             action="index"
             params="[project: params.project]"
             code="project.admin.menu.Scm.title">
