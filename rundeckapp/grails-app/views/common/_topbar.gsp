@@ -266,7 +266,6 @@
           </g:ifServletContextAttribute>
       </g:ifServletContextAttributeExists>
     <g:if test="${session?.user && request.subject}">
-        <li class="headright">
         <li class="dropdown ${enc(attr: cfgselected)}" id="appAdmin">
             <bs:dropdownToggle css="toptab ${projconfigselected}">
                 <g:icon name="cog"/>
