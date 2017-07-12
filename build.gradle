@@ -198,7 +198,7 @@ exportedProjects.each {
         //utility to create a pom for building
         if(!(project.name in ['core','launcher'])){
             //:core buildfile will generate its own pom for specialized purpose
-            task createPom << {
+            task('createPom').doLast {
                 publishPom.writeTo("pom.xml")
             }
         }

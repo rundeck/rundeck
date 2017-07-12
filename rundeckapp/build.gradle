@@ -84,7 +84,7 @@ dependencies {
             project(':plugins:source-refresh-plugin')
 }
 
-task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
+task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
     File libextDir = new File(additionalFileLocation, "WEB-INF/rundeck/plugins")
     File manifestFile = new File(additionalFileLocation, "WEB-INF/rundeck/plugins/manifest.properties")
 
@@ -190,7 +190,7 @@ def projDeps = [
  * "core" needs to be built and installed into the local ~/.m2 repo before
  * we attempt to do anything further with Grails.
  */
-task installDependencies(dependsOn: projDeps) << {
+task('installDependencies').dependsOn(projDeps).doLast {
     description = "Builds and installs dependencies on other subprojects"
 }
 
@@ -288,7 +288,7 @@ task grailsCompile(type: Exec, overwrite: true, dependsOn: [extractGrails]) {
  */
 task grailsWar(type: Exec, overwrite:true, dependsOn: [ installDependencies,extractGrails, copyPluginLibs]) {
     inputs.dir file(grailsHome)
-    inputs.sourceDir file("${projectDir}/src")
+    inputs.dir(file("${projectDir}/src")).skipWhenEmpty()
     outputs.file file(warFileLocation)
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
