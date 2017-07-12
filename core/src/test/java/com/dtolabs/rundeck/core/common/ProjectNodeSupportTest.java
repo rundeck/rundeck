@@ -45,6 +45,7 @@ public class ProjectNodeSupportTest extends AbstractBaseTest {
 
     @Before
     public void setUp() {
+        super.setUp();
         projectBasedir = new File(getFrameworkProjectsBase(), PROJECT_NAME);
         nodesfile = new File(projectBasedir, "/etc/resources.xml");
         projectPropsFile = new File(projectBasedir, "/etc/project.properties");
