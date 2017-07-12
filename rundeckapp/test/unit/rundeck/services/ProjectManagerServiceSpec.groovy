@@ -1140,7 +1140,6 @@ class ProjectManagerServiceSpec extends Specification {
                 1*storeFileResource('etc/project.properties.imported',{
                     def props=new Properties()
                     props.load(it)
-                    System.err.println(props.toString())
                     props['test']=='abc'
                 }) >> 4
                 1*deleteFileResource('etc/project.properties') >> true
@@ -1153,7 +1152,6 @@ class ProjectManagerServiceSpec extends Specification {
             createResource("projects/abc/etc/project.properties",{res->
                 def props=new Properties()
                 props.load(res.inputStream)
-                System.err.println(props.toString())
                 props['test']=='abc'
             }) >> Stub(Resource){
                 getContents()>> Stub(ResourceMeta){

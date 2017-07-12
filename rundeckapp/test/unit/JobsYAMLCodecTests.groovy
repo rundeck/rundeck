@@ -428,8 +428,6 @@ public class JobsYAMLCodecTests  {
 
         def doc = yaml.load(ymlstr)
         assertNotNull doc
-        System.out.println("yaml: ${ymlstr}");
-        System.out.println("doc: ${doc}");
         assertEquals(1,doc[0].notification.size())
         assertEquals(1,doc[0].notification.onsuccess.size())
         assertEquals([type:'test1', configuration:['blah':'blee']],doc[0].notification.onsuccess.plugin)
@@ -530,8 +528,6 @@ public class JobsYAMLCodecTests  {
 
         def doc = yaml.load(ymlstr)
         assertNotNull doc
-        System.out.println("yaml: ${ymlstr}");
-        System.out.println("doc: ${doc}");
         assertEquals(1,doc[0].sequence.commands.size())
         assertEquals([type:'monkey', nodeStep:true, configuration: [elf: 'hider']], doc[0].sequence.commands[0])
     }
@@ -557,8 +553,6 @@ public class JobsYAMLCodecTests  {
 
         def doc = yaml.load(ymlstr)
         assertNotNull doc
-        System.out.println("yaml: ${ymlstr}");
-        System.out.println("doc: ${doc}");
         assertEquals(1,doc[0].sequence.commands.size())
         assertEquals([type:'monkey', nodeStep:true], doc[0].sequence.commands[0])
     }
@@ -584,8 +578,6 @@ public class JobsYAMLCodecTests  {
 
         def doc = yaml.load(ymlstr)
         assertNotNull doc
-        System.out.println("yaml: ${ymlstr}");
-        System.out.println("doc: ${doc}");
         assertEquals(1,doc[0].sequence.commands.size())
         assertEquals([type:'monkey', nodeStep:true], doc[0].sequence.commands[0])
     }
@@ -632,8 +624,6 @@ public class JobsYAMLCodecTests  {
 
         def doc = yaml.load(ymlstr)
         assertNotNull doc
-        System.err.println("yaml: ${ymlstr}") ;
-        System.err.println("doc: ${doc}") ;
         assertEquals "wrong number of jobs", 1, doc.size()
         assertNotNull "missing sequence", doc[0].sequence
         assertFalse "wrong wf keepgoing", doc[0].sequence.keepgoing

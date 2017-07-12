@@ -44,7 +44,6 @@ import rundeck.services.FrameworkService
 @RunWith(JUnit4.class)
 class ExecutionJobTest extends GroovyTestCase{
 
-    @Test(expected = RuntimeException)
     void testInitializeEmpty(){
         ExecutionJob job = new ExecutionJob()
         def contextMock = setupJobDataMap([:])
@@ -53,10 +52,8 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.fail("expected exception")
         } catch (RuntimeException e) {
             Assert.assertTrue(e.message,e.message.contains("failed to lookup scheduledException object from job data map"))
-            throw e
         }
     }
-    @Test(expected = RuntimeException)
     void testInitializeWithoutExecutionService(){
         ScheduledExecution se = setupJob()
         ExecutionJob job = new ExecutionJob()
@@ -66,10 +63,8 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.fail("expected exception")
         } catch (RuntimeException e) {
             Assert.assertTrue(e.message,e.message.contains("ExecutionService could not be retrieved"))
-            throw e
         }
     }
-    @Test(expected = RuntimeException)
     void testInitializeWithoutExecutionUtilService(){
         ScheduledExecution se = setupJob()
         ExecutionJob job = new ExecutionJob()
@@ -82,7 +77,6 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.fail("expected exception")
         } catch (RuntimeException e) {
             Assert.assertTrue(e.message,e.message.contains("ExecutionUtilService could not be retrieved"))
-            throw e
         }
     }
     /**

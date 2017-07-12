@@ -331,7 +331,6 @@ class FileUploadServiceSpec extends Specification {
         )
         exec.validate()
         if (exec.errors.hasErrors()) {
-            System.err.println(exec.errors.allErrors*.toString())
         }
         exec.save(flush: true)
     }

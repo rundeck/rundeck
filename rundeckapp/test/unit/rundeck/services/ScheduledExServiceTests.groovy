@@ -234,7 +234,6 @@ class ScheduledExServiceTests {
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
                 }
             }
             assertTrue succeeded
@@ -415,7 +414,6 @@ class ScheduledExServiceTests {
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
-                System.err.println(it);
             }
         }
         assertTrue succeeded
@@ -474,7 +472,6 @@ class ScheduledExServiceTests {
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
-                System.err.println(it);
             }
         }
         assertFalse succeeded
@@ -613,7 +610,6 @@ class ScheduledExServiceTests {
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
-                System.err.println(it);
             }
         }
         assertTrue succeeded

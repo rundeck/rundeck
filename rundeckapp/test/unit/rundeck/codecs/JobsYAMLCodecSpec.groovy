@@ -74,7 +74,6 @@ class JobsYAMLCodecSpec extends Specification {
         ymlstr != null
         ymlstr instanceof String
 
-        System.err.println("yaml: "+ymlstr)
         def doc = yaml.load(ymlstr)
 
         doc.size() == 1
