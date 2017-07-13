@@ -124,20 +124,29 @@ class JobStateService implements AuthorizingJobService {
                                               String excludeJobUuid, String since){
 
 
-        def executions = Execution.findAllByProjectAndStatus(project,state)
+        def executions = Execution.createCriteria().list {
+            eq('project',project)
+            eq('status', state)
+            createAlias('scheduledExecution', 'se')
+            if(jobUuid){
+                isNotNull 'scheduledExecution'
+                eq 'se.uuid',jobUuid
+            }
+            if(excludeJobUuid){
+                or{
+                    isNull('scheduledExecution')
+                    ne 'se.uuid',excludeJobUuid
+                }
+            }
+            if(since){
+                long timeAgo = Sizes.parseTimeDuration(since,TimeUnit.MILLISECONDS)
+                Date sinceDt = new Date()
+                sinceDt.setTime(sinceDt.getTime()-timeAgo)
+                ge 'dateStarted',sinceDt
+            }
+
+        }
         executions = frameworkService.filterAuthorizedProjectExecutionsAll(auth,executions,[AuthConstants.ACTION_READ])
-        if(jobUuid){
-            executions = executions.findAll{it.scheduledExecution.extid==jobUuid}
-        }
-        if(excludeJobUuid){
-            executions = executions.findAll{it.scheduledExecution.extid!=excludeJobUuid}
-        }
-        if(since){
-            long timeAgo = Sizes.parseTimeDuration(since,TimeUnit.MILLISECONDS)
-            Date sinceDt = new Date()
-            sinceDt.setTime(sinceDt.getTime()-timeAgo)
-            executions = executions.findAll{it.dateStarted.time>sinceDt.time}
-        }
 
         ArrayList<ExecutionReference> list = new ArrayList<>()
         Framework framework = frameworkService.getRundeckFramework()
@@ -146,8 +155,11 @@ class JobStateService implements AuthorizingJobService {
 
         executions.each { exec ->
             ScheduledExecution job = exec.scheduledExecution
-            JobReferenceImpl jobRef = new JobReferenceImpl(id: job.extid, jobName: job.jobName,
-                    groupPath: job.groupPath, project: job.project)
+            JobReferenceImpl jobRef = null
+            if(job) {
+                jobRef = new JobReferenceImpl(id: job.extid, jobName: job.jobName,
+                        groupPath: job.groupPath, project: job.project)
+            }
             StringBuilder targetNode = new StringBuilder()
             if(!exec.filter){
                 targetNode.append(framework.getFrameworkNodeName())
