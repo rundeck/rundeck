@@ -182,7 +182,6 @@ class ProjectServiceTest extends GroovyTestCase {
         assertTrue(errs[0].contains("NO matching outfile"))
         assertTrue(errs[1].contains("NO matching outfile"))
         assertEquals(2,result.size())
-        System.err.println("result: ${result}")
 
         assertNotNull(result[(int)id1])
         assertNotNull(result[(int)id2])

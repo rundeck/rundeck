@@ -1,3 +1,7 @@
+% Version 2.8.4
+% greg
+% 07/12/2017
+
 Release 2.8.4
 ===========
 
@@ -7,14 +11,14 @@ Name: <span style="color: Purple"><span class="glyphicon glyphicon-gift"></span>
 
 ## Upgrading from 2.8.0
 
-**Important Note**: please see the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html) if you are using Mysql or H2 database,
+**Important Note**: please see the [Upgrading Guide](../upgrading/index.html) if you are using Mysql or H2 database,
 and are upgrading from Rundeck 2.8.0.
 
 A DB schema change requires a manual fix before upgrading.
 
 ## Upgrading from Earlier versions
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 

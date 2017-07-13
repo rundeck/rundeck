@@ -188,7 +188,6 @@ class JobsXMLCodecTests {
             fail "Parsing shouldn't complete"
         } catch (JobXMLException e) {
             assertNotNull e
-            e.printStackTrace(System.err)
             assertEquals "failed: ${e.getMessage()}", "'sequence' element not found", e.getMessage()
         }
     }
@@ -1593,7 +1592,6 @@ void testDecodeBasic__no_group(){
             assertEquals "incorrect minute","?",jobs[0].dayOfMonth
             assertEquals "incorrect minute","1-5,9,12",jobs[0].month
             def datemap=jobs[0].timeAndDateAsBooleanMap()
-        System.err.println("datemap: ${datemap}");
             assertEquals "incorrect crontab.dayOfWeek.MON","true",datemap.'dayOfWeek.SUN'
             assertEquals "incorrect crontab.dayOfWeek.TUE",null,datemap.'dayOfWeek.MON'
             assertEquals "incorrect crontab.dayOfWeek.WED","true",datemap.'dayOfWeek.TUE'
@@ -4250,7 +4248,6 @@ void testDecodeBasic__no_group(){
             def xmlstr = JobsXMLCodec.encode(jobs1)
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
-            System.err.println("xmlstr: ${xmlstr}");
 
             def doc = parser.parse(new StringReader(xmlstr))
             assertNotNull doc
@@ -4477,7 +4474,6 @@ void testDecodeBasic__no_group(){
             assertNotNull xmlstr
             assertTrue xmlstr instanceof String
 
-        System.err.println("xmlstr: ${xmlstr}");
             def jobs=JobsXMLCodec.decode(xmlstr)
             assertNotNull jobs
             assertEquals "incorrect size",1,jobs.size()
@@ -5089,7 +5085,6 @@ void testDecodeBasic__no_group(){
         def xmlstr = JobsXMLCodec.encode(jobs4)
         assertNotNull xmlstr
         assertTrue xmlstr instanceof String
-        System.err.println("xmlstr: " + xmlstr);
 
 
         def doc = parser.parse(new StringReader(xmlstr))
@@ -6210,7 +6205,6 @@ void testDecodeBasic__no_group(){
                def xmlstr = JobsXMLCodec.encode(jobs1)
                assertNotNull xmlstr
                assertTrue xmlstr instanceof String
-        System.err.println("xmlstr: ${xmlstr}");
 
                def doc = parser.parse(new StringReader(xmlstr))
                assertNotNull doc

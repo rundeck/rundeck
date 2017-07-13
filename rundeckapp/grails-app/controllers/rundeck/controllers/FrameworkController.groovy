@@ -318,7 +318,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def allnodes = [:]
         def totalexecs = [:]
         def total=0
-        def truncateMax=params.untruncate?-1: params.maxShown?params.int('maxShown'):100
         def allcount=null
         NodeSet nset = ExecutionService.filtersAsNodeSet(query)
         def projects=[]
@@ -379,6 +378,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 remaining=true;
                 page=page*-1;
             }
+        }
+        def truncateMax=params.untruncate?-1: params.maxShown?params.int('maxShown'):100
+        if(truncateMax && max){
+            truncateMax=Math.max(truncateMax,max)
         }
 
         def tagsummary=frameworkService.summarizeTags(nodes)

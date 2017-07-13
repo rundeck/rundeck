@@ -53,6 +53,9 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
             isClusterModeEnabled() >> true
             getServerUUID() >> TEST_UUID2
             getRundeckBase() >> ''
+            getFrameworkProject(project) >> Mock(IRundeckProject){
+                getProjectProperties()>>[:]
+            }
         }
         service.fileUploadService=Mock(FileUploadService)
 
@@ -117,6 +120,9 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
             isClusterModeEnabled() >> true
             getServerUUID() >> TEST_UUID2
             getRundeckBase() >> ''
+            getFrameworkProject(project) >> Mock(IRundeckProject){
+                getProjectProperties()>>[:]
+            }
         }
         service.fileUploadService=Mock(FileUploadService)
 
@@ -278,6 +284,9 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
             isClusterModeEnabled() >> true
             getServerUUID() >> TEST_UUID2
             getRundeckBase() >> ''
+            getFrameworkProject(project) >> Mock(IRundeckProject){
+                getProjectProperties()>>[:]
+            }
         }   
         
         String jobUuid  = UUID.randomUUID().toString()
@@ -341,6 +350,9 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
             isClusterModeEnabled() >> true
             getServerUUID() >> TEST_UUID2
             getRundeckBase() >> ''
+            getFrameworkProject(project) >> Mock(IRundeckProject){
+                getProjectProperties()>>[:]
+            }
         }
 
         String jobUuid  = UUID.randomUUID().toString()

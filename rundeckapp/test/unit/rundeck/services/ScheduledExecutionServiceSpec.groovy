@@ -1744,7 +1744,6 @@ class ScheduledExecutionServiceSpec extends Specification {
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
-                System.err.println(it);
             }
         }
         then:

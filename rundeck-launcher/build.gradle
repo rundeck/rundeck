@@ -31,7 +31,7 @@ subprojects{
     }
 }
 
-task createPom << {
+task('createPom').doLast {
     pom {
         project {
             artifactId 'rundeck-launcher-parent'

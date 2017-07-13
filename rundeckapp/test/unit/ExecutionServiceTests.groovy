@@ -334,7 +334,6 @@ class ExecutionServiceTests  {
         def opt1 = new Option(name: 'test', enforced: false,)
         se.addToOptions(opt1)
         if (!se.validate()) {
-            System.out.println(se.errors.allErrors*.toString().join("; "))
         }
         assertNotNull se.save()
 
@@ -371,7 +370,6 @@ class ExecutionServiceTests  {
         def opt1 = new Option(name: 'test', enforced: false,)
         se.addToOptions(opt1)
         if (!se.validate()) {
-            System.out.println(se.errors.allErrors*.toString().join("; "))
         }
         assertNotNull se.save()
 

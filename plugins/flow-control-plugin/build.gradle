@@ -30,7 +30,7 @@ jar {
     }
 }
 
-task createPom << {
+task('createPom').doLast {
     pom {
         project {
             artifactId 'rundeck-flow-control-plugin'
