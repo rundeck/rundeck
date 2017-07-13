@@ -45,6 +45,7 @@ import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProvi
 import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
+import com.dtolabs.rundeck.util.DbmCallbacks
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
 import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
@@ -314,4 +315,7 @@ beans={
     /// XML/JSON custom marshaller support
 
     apiMarshallerRegistrar(ApiMarshallerRegistrar)
+
+    // DB migration
+    migrationCallbacks(DbmCallbacks)
 }

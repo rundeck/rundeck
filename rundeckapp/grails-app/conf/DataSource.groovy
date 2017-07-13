@@ -27,22 +27,33 @@ hibernate {
 
 // environment specific settings
 environments {
-	development {
-		dataSource {
-			dbCreate = "create-drop" // one of 'create', 'create-drop','update'
-            url = "jdbc:h2:file:db/devDb"
+    development {
+        dataSource {
+            url = "jdbc:h2:./db/devDb"
+            dbCreate = "none"
         }
-	}
-	test {
-		dataSource {
-			dbCreate = "update"
-			url = "jdbc:h2:file:./db/testDb"
-		}
-	}
-	production {
-		dataSource {
-			dbCreate = "update"
-			url = "jdbc:h2:file:rundeck/grailsh2"
-		}
-	}
+        grails.plugin.databasemigration.updateOnStart = true
+        grails.plugin.databasemigration.updateOnStartFileNames = ['changelog.groovy']
+        // Required so that migration is run for grails integration tests.
+        grails.plugin.databasemigration.forceAutoMigrate = true
+    }
+    test {
+        dataSource {
+            url = "jdbc:h2:./db/testDb"
+            dbCreate = "none"
+        }
+        grails.plugin.databasemigration.updateOnStart = true
+        grails.plugin.databasemigration.updateOnStartFileNames = ['changelog.groovy']
+        // Required so that migration is run for grails integration tests.
+        grails.plugin.databasemigration.forceAutoMigrate = true
+
+    }
+    production {
+        dataSource {
+            url = "jdbc:h2:./rundeck/grailsh2"
+            dbCreate = "none"
+        }
+        grails.plugin.databasemigration.updateOnStart = true
+        grails.plugin.databasemigration.updateOnStartFileNames = ['changelog.groovy']
+    }
 }
