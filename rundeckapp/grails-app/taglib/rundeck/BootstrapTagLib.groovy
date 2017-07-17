@@ -9,7 +9,7 @@ class BootstrapTagLib {
      * ul for dropdown-menu
      */
     def dropdown = { attrs, body ->
-        out << '<ul class="dropdown-menu'
+        out << '<ul class="dropdown-menu '
 
         if (attrs.right) {
             out << 'dropdown-menu-right '
