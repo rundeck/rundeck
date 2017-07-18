@@ -941,7 +941,6 @@ function getCurSEID(){
     </g:javascript>
     </div>
 
-    </div>
     %{-- scheduleEnabled --}%
     <g:if test="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_TOGGLE_SCHEDULE)}">
         <div class="form-group">

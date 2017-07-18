@@ -216,6 +216,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def eqfilters=ScheduledExecutionQuery.EQ_FILTERS
         def boolfilters=ScheduledExecutionQuery.BOOL_FILTERS
         def filters = ScheduledExecutionQuery.ALL_FILTERS
+        def xfilters = ScheduledExecutionQuery.X_FILTERS
 
         def idlist=[]
         if(query.idlist){
@@ -304,8 +305,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 }
             }
 
-            if(query && query.sortBy && filters[query.sortBy]){
-                order(filters[query.sortBy],query.sortOrder=='ascending'?'asc':'desc')
+            if(query && query.sortBy && xfilters[query.sortBy]){
+                order(xfilters[query.sortBy],query.sortOrder=='ascending'?'asc':'desc')
             }else{
                 order("jobName","asc")
             }
