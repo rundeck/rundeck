@@ -17,6 +17,8 @@
 package rundeck.services.jobs
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.execution.ExecutionNotFound
+import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobState
@@ -33,4 +35,11 @@ interface AuthorizingJobService {
     JobReference jobForName(AuthContext auth, String group, String name, String project) throws JobNotFound;
 
     JobState getJobState(AuthContext auth, JobReference jobReference) throws JobNotFound;
+
+    List<ExecutionReference> searchExecutions(AuthContext auth, String state, String project, String jobUuid, String excludeJobUuid, String since)
+
+    ExecutionReference executionForId(AuthContext auth, String id, String project) throws ExecutionNotFound
+
+    String startJob(AuthContext auth, JobReference jobReference, String jobArgString, String jobFilter, String asUser) throws JobNotFound
+
 }
