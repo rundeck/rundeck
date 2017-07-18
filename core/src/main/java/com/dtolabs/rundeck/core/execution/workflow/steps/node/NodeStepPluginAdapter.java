@@ -30,6 +30,8 @@ import java.util.Map;
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.execution.HandlerExecutionItem;
+import com.dtolabs.rundeck.core.execution.HasFailureHandler;
 import org.apache.log4j.Logger;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
@@ -96,7 +98,9 @@ class NodeStepPluginAdapter implements NodeStepExecutor, Describable {
                     ContextView.node(node.getNodename()),
                     ContextView::nodeStep,
                     null,
-                    context.getSharedDataContext()
+                    context.getSharedDataContext(),
+                    false,
+                    true
             );
         }
         final String providerName = item.getNodeStepType();

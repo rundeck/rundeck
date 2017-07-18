@@ -189,6 +189,44 @@ class ProjectControllerSpec extends Specification{
         true | false | false | false   | false   | false
     }
 
+    def "export prepare"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.exportAll = all
+        params.exportJobs = jobs
+        params.exportExecutions = execs
+        params.exportConfigs = configs
+        params.exportReadmes = readmes
+        params.exportAcls = acls
+
+        when:
+        def result = controller.exportPrepare()
+
+        then:
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['admin', 'export']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.exportProjectToFileAsync(_, _, _, _, { ArchiveOptions opts ->
+            opts.executionsOnly == false &&
+                    opts.all == (all ?: false) &&
+                    opts.jobs == (jobs ?: false) &&
+                    opts.executions == (execs ?: false) &&
+                    opts.configs == (configs ?: false) &&
+                    opts.readmes == (readmes ?: false) &&
+                    opts.acls == (acls ?: false)
+        }
+        ) >> 'dummytoken'
+        response.redirectedUrl == '/project/exportWait?token=dummytoken&project=aproject'
+
+        where:
+        all  | jobs  | execs | configs | readmes | acls
+        true | false | false | false   | false   | false
+        true | false | false | false   | false   | null
+    }
+
     def "api export execution ids async"() {
         given:
         controller.projectService = Mock(ProjectService)
@@ -1365,7 +1403,7 @@ class ProjectControllerSpec extends Specification{
         def result=controller.importArchive()
 
         then:
-        response.redirectedUrl=='/menu/admin?project=test'
+        response.redirectedUrl=='/menu/projectImport?project=test'
         flash.message=='archive.successfully.imported'
         response.status==302
     }
@@ -1418,7 +1456,7 @@ class ProjectControllerSpec extends Specification{
         def result=controller.importArchive()
 
         then:
-        response.redirectedUrl=='/menu/admin?project=test'
+        response.redirectedUrl=='/menu/projectImport?project=test'
         flash.message=='archive.successfully.imported'
         response.status==302
     }
@@ -1496,7 +1534,7 @@ class ProjectControllerSpec extends Specification{
         def result=controller.importArchive()
 
         then:
-        response.redirectedUrl=='/menu/admin?project=test'
+        response.redirectedUrl=='/menu/projectImport?project=test'
         flash.error=='request.error.invalidtoken.message'
 
     }

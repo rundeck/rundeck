@@ -87,7 +87,9 @@ class StepPluginAdapter implements StepExecutor, Describable {
                     ContextView.global(),
                     ContextView::nodeStep,
                     null,
-                    executionContext.getSharedDataContext()
+                    executionContext.getSharedDataContext(),
+                    false,
+                    true
             );
         }
         final String providerName = item.getType();

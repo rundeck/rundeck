@@ -2642,7 +2642,6 @@ class ScheduledExecutionControllerTests  {
         exec.validate()
         if(exec.hasErrors()){
             exec.errors.allErrors.each{
-                System.out.println(it.toString())
             }
         }
         assertFalse(exec.hasErrors())

@@ -85,25 +85,26 @@
                     </div>
                 </div>
 
-                <div class="row">
-                    <div class="col-sm-2 control-label">
-                        <span class="btn   btn-link ${wdgt.css(if: item?.nodeFilter, then: 'active')}"
-                              data-toggle="collapse" data-target="#nodeFilterOverride${enc(attr: rkey)}">
-                            <g:message code="override.node.filters" />
-                            <i class="glyphicon ${wdgt.css(if: item?.nodeFilter, then: 'glyphicon-chevron-down', else: 'glyphicon-chevron-right')} "></i>
-                        </span>
-                    </div>
-                </div>
-            </section>
+    <g:set var="nodeFilterOverrideExpanded" value="${item?.nodeFilter || item?.nodeIntersect}"/>
+    <div class="row">
+    <div class="col-sm-2 control-label">
+    <span class="btn   btn-link ${wdgt.css(if: nodeFilterOverrideExpanded, then: 'active')}"
+                data-toggle="collapse" data-target="#nodeFilterOverride${enc(attr: rkey)}">
+        <g:message code="override.node.filters" />
+        <i class="glyphicon ${wdgt.css(if: nodeFilterOverrideExpanded, then: 'glyphicon-chevron-down', else: 'glyphicon-chevron-right')} "></i>
+    </span>
+    </div>
+    </div>
+    </section>
 
-            <section id="nodeFilterOverride${enc(attr: rkey)}" class="collapse-expandable collapse ${wdgt.css(if: item?.nodeFilter, then: 'in')} node_filter_link_holder section-separator-solo">
-                <div class="form-group">
-                    <div class="col-sm-12 ">
-                        <div class="text-info">
-                            <g:message code="JobExec.property.nodeFilter.help.description" />
-                        </div>
-                    </div>
-                </div>
+    <section id="nodeFilterOverride${enc(attr: rkey)}" class="collapse-expandable collapse ${wdgt.css(if: nodeFilterOverrideExpanded, then: 'in')} node_filter_link_holder section-separator-solo">
+    <div class="form-group">
+        <div class="col-sm-12 ">
+            <div class="text-info">
+                <g:message code="JobExec.property.nodeFilter.help.description" />
+            </div>
+        </div>
+    </div>
 
                 <div class="form-group" >
                     <label class="col-sm-2 control-label ">

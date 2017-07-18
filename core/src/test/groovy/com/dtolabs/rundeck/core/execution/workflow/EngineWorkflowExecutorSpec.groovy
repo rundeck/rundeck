@@ -379,6 +379,8 @@ class EngineWorkflowExecutorSpec extends Specification {
     }
 
     class LogListener implements ExecutionListener {
+        @Override public void ignoreErrors(boolean ignore){}
+
         @Override
         void log(final int level, final String message) {
             println(message)

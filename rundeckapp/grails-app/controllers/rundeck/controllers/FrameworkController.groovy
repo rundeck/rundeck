@@ -90,6 +90,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def configStorageService
     def AuthorizationService authorizationService
     def ApplicationContext applicationContext
+    def MenuService menuService
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
@@ -317,7 +318,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def allnodes = [:]
         def totalexecs = [:]
         def total=0
-        def truncateMax=params.untruncate?-1: params.maxShown?params.int('maxShown'):100
         def allcount=null
         NodeSet nset = ExecutionService.filtersAsNodeSet(query)
         def projects=[]
@@ -378,6 +378,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 remaining=true;
                 page=page*-1;
             }
+        }
+        def truncateMax=params.untruncate?-1: params.maxShown?params.int('maxShown'):100
+        if(truncateMax && max){
+            truncateMax=Math.max(truncateMax,max)
         }
 
         def tagsummary=frameworkService.summarizeTags(nodes)
@@ -1052,8 +1056,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         //cancel modification
-        if (params.cancel == 'Cancel') {
-            return redirect(controller: 'menu', action: 'admin', params: [project: project])
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'index', params: [project: project])
         }
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -1208,7 +1212,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 resourcesPasswordFieldsService.reset()
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
-                return redirect(controller: 'menu', action: 'admin', params: [project: project])
+                return redirect(controller: 'menu', action: 'editProjectConfig', params: [project: project])
             }
         }
         if(errors){
@@ -1242,8 +1246,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         //cancel modification
-        if (params.cancel == 'Cancel') {
-            return redirect(controller: 'menu', action: 'admin', params: [project: project])
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'index', params: [project: project])
         }
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -1438,7 +1442,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 resourcesPasswordFieldsService.reset()
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
-                return redirect(controller: 'menu', action: 'admin', params: [project: project])
+                return redirect(controller: 'menu', action: 'index', params: [project: project])
             }
         }
         if(errors){
@@ -1488,11 +1492,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-            frameworkService.authorizeApplicationResourceAll(
-                frameworkService.getAuthContextForSubject(session.subject),
-                frameworkService.authResourceForProject(project),
-                [AuthConstants.ACTION_ADMIN]),
-            AuthConstants.ACTION_ADMIN, 'Project', project)) {
+                frameworkService.authorizeApplicationResourceAll(
+                        frameworkService.getAuthContextForSubject(session.subject),
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
             return
         }
 
@@ -1568,8 +1574,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 frameworkService.authorizeApplicationResourceAll(
                         frameworkService.getAuthContextForSubject(session.subject),
                         frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN]),
-                AuthConstants.ACTION_ADMIN, 'Project', project)) {
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
             return
         }
 
@@ -1580,9 +1588,18 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             fwkProject.loadFileResource(params.filename,baos)
             fileText=baos.toString('UTF-8')
         }
+
+        def displayConfig
+        if (params.filename == 'readme.md') {
+            displayConfig = menuService.getReadmeDisplay(fwkProject)
+        } else if (params.filename == 'motd.md') {
+            displayConfig = menuService.getMotdDisplay(fwkProject)
+        }
+
         [
-                filename:params.filename,
-                fileText:fileText
+                displayConfig: displayConfig,
+                filename     : params.filename,
+                fileText     : fileText
         ]
     }
     def saveProjectFile (){
@@ -1618,8 +1635,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         //cancel modification
-        if (params.cancel == 'Cancel') {
-            return redirect(controller: 'menu', action: 'admin', params: [project: project])
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'index', params: [project: project])
         }
 
         final def fwkProject = frameworkService.getFrameworkProject(project)
@@ -1633,7 +1650,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             flash.message='Cleared project file '+params.filename
         }
 
-        return redirect(controller: 'menu', action: 'admin', params: [project: project])
+        return redirect(
+                controller: 'framework',
+                action: 'editProjectFile',
+                params: [project: project, filename: params.filename]
+        )
     }
     def editProjectConfig (){
         if(!params.project){

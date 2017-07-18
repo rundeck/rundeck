@@ -76,6 +76,8 @@ function Option(data) {
     self.multivalueAllSelected = ko.observable(data.multivalueAllSelected ? true : false);
     self.delimiter = ko.observable(data.delimiter);
     self.value = ko.observable(data.value);
+    self.initvalue = ko.observable(data.value);
+    self.useinit = ko.observable(data.value ? true : false);
     /**
      * static list of values to choose from
      */
@@ -369,7 +371,16 @@ function Option(data) {
 
     self.loadRemoteValues = function (values, selvalue) {
         self.remoteError(null);
+        var tvalues = [];
+        if (self.useinit() && self.initvalue()) {
+            tvalues[1] = (self.initvalue());
+            self.useinit(false);
+        }
+        if (selvalue && tvalues.indexOf(selvalue) < 0) {
+            tvalues[0] = selvalue;
+        }
         var rvalues = [];
+        var tselected = -1;
         var remoteselected;
         ko.utils.arrayForEach(values, function (val) {
             var optval;
@@ -383,14 +394,25 @@ function Option(data) {
             }
             if (optval) {
                 rvalues.push(optval);
+                if (tvalues.length > 0 && tvalues.indexOf(optval.value()) > tselected) {
+                    tselected = tvalues.indexOf(optval.value());
+                }
             }
         });
+        //choose value to select, by preference:
+        //1: init value
+        //2: remote "selected" value
+        //3: input "selected" value
 
-        if ((selvalue || remoteselected) && !self.multivalued()) {
-            self.value(remoteselected || selvalue);
-            self.selectedOptionValue(remoteselected || selvalue);
-        }
+        var touse = tselected === 1 ? tvalues[tselected] :( remoteselected || (tselected >= 0 ? tvalues[tselected] : null));
+
+        //triggers refresh of "selectOptions" populating select box
         self.remoteValues(rvalues);
+
+        if ((touse) && !self.multivalued()) {
+            //choose correct value
+            self.selectedOptionValue(touse);
+        }
     };
     /**
      * Option values data loaded from remote JSON request

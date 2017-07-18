@@ -27,6 +27,7 @@
 <head>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
+    <meta name="tabtitle" content="${g.message(code:'licenses')}"/>
   <title><g:message code="licenses" /></title>
 </head>
 <body>

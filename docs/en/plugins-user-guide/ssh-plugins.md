@@ -98,6 +98,30 @@ SSH config options can be specified by setting the following properties:
 2. **Project level**: `project.ssh-config-KEY` property in `project.properties`.  Applies to any project node by default.
 3. **Rundeck level**: `framework.ssh-config-KEY` property in `framework.properties`. Applies to all projects by default.
 
+### Specifying SSH Timeout options
+
+SSH timeout options can be specified.  The timeout values are in milliseconds.  
+A value of 0 means the timeout will be indefinite.
+The precedence level is Node > Project > Rundeck.  
+
+1. **Node level**: attribute on the Node. Applies only to the target node.
+    
+    * `ssh-connection-timeout` connection timeout
+    * `ssh-command-timeout` command timeout
+
+2. **Project level**:  Applies to any project node by default. Set property in Project Config (`project.properties`).
+
+    * `project.ssh-connection-timeout`  connection timeout
+    * `project.ssh-command-timeout` command timeout
+    
+3. **Rundeck level**: Applies to all projects by default. Set property in `framework.properties`. 
+
+    * `framework.ssh-connection-timeout` connection timeout 
+    * `framework.ssh-command-timeout` command timeout 
+
+
+Deprecated: The framework property `framework.ssh.timeout` will also be used for Connection timeout if set.
+
 ### SSH Private Keys
 
 Choose either:

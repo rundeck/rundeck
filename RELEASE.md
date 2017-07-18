@@ -1,9 +1,9 @@
-Release 2.8.2
+Release 2.8.4
 ===========
 
-Date: 2017-04-19
+Date: 2017-07-12
 
-Name: <span style="color: Olive"><span class="glyphicon glyphicon-flag"></span> "cafe cubano olive flag"</span>
+Name: <span style="color: Purple"><span class="glyphicon glyphicon-gift"></span> "cafe cubano purple gift"</span>
 
 ## Upgrading from 2.8.0
 
@@ -18,25 +18,24 @@ A DB schema change requires a manual fix before upgrading.
 
 ## Notes
 
-Bug fixes and a few slight enhancements.
+This release is primarily bug fixes. 
 
 ## Contributors
 
+* GitHub (web-flow)
 * Greg Schueler (gschueler)
-* jtobard
+* René Kroon
 
-## Reporters
+## Bug Reporters
 
-* jtobard
-* al-heisner
-* jquick
-* ahonor
+* JustRiedy
+* ReneKroon
+* simple365
 
 ## Issues
 
-[Milestone 2.8.2](https://github.com/rundeck/rundeck/milestone/54)
+[Milestone 2.8.4](https://github.com/rundeck/rundeck/milestone/57)
 
-* [Using option value in key storage path](https://github.com/rundeck/rundeck/pull/2443)
-* [Jobs hang when retry is enabled and step fails on at least one node](https://github.com/rundeck/rundeck/issues/2442)
-* [v2.8.1 Cannot create table job_file_record due to reserved word (oracle)](https://github.com/rundeck/rundeck/issues/2441)
-* [Expand global properties in plugin.yaml context](https://github.com/rundeck/rundeck/issues/2399)
+* [Mysql syntax error after login](https://github.com/rundeck/rundeck/issues/2609)
+* [Move to Gradle 3.5](https://github.com/rundeck/rundeck/pull/2600)
+* [Node List - Fails to display greater than 100 nodes per page](https://github.com/rundeck/rundeck/issues/2514)

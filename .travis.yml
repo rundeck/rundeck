@@ -22,6 +22,7 @@ addons:
     - make
     - zip
     - unzip
+    - fakeroot
     #- xmlstarlet #once added to whitelist
     #- jq #once added to whitelist
 # whitelist
@@ -29,6 +30,7 @@ branches:
   only:
     - master
     - '2.7.x'
+    - 'prerelease-2.9.0'
 
 notifications:
   irc:

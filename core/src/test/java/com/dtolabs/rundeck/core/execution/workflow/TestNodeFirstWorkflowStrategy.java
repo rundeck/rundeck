@@ -116,6 +116,9 @@ public class TestNodeFirstWorkflowStrategy extends AbstractBaseTest {
     }
 
     static class testListener implements ExecutionListenerOverride {
+
+        @Override public void ignoreErrors(boolean ignore){}
+
         public void log(int i, String s) {
             System.err.println(i + ": " + s);
         }

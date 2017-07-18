@@ -52,9 +52,9 @@ dependencies {
         'com.jcraft:jsch.agentproxy.usocket-nc:0.0.9',
         'com.jcraft:jsch.agentproxy.connector-factory:0.0.9',
         'com.jcraft:jsch.agentproxy.core:0.0.9',
-        'com.fasterxml.jackson.core:jackson-databind:2.5.3',
-        'com.fasterxml.jackson.core:jackson-core:2.5.3',
-        'com.fasterxml.jackson.core:jackson-annotations:2.5.3',
+        'com.fasterxml.jackson.core:jackson-databind:2.8.8.1',
+        'com.fasterxml.jackson.core:jackson-core:2.8.8',
+        'com.fasterxml.jackson.core:jackson-annotations:2.8.8',
         'org.yaml:snakeyaml:1.9',
         'xerces:xercesImpl:2.11.0',
         'xml-apis:xml-apis:1.4.01',
@@ -101,7 +101,7 @@ test{
     systemProperties 'rdeck.base': "$projectDir/build/rdeck_base"
 }
 
-task expandTemplate << {
+task('expandTemplate').doLast {
     ant.delete(file:"$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/application.properties")
     def datestring=new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").format(new Date())
     println("Building: $version-$buildNum ($datestring)")
@@ -267,7 +267,7 @@ def buildpom={deps->
 }
 }
 
-task createPom << {
+task('createPom').doLast {
     buildpom(rundeckToolsDependencies).writeTo("pom.xml")
 }
 

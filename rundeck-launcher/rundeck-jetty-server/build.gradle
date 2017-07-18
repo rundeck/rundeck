@@ -33,7 +33,7 @@ dependencies {
         [group: 'org.eclipse.jetty', name: 'jetty-jaas', version: jettyVersion],
         [group: 'org.kohsuke', name:'libpam4j', version:'1.5', ext:'jar'],
         // This is in httpcomponents 4+ but stuck on 3.x for now.
-        [group: 'ca.juliusdavies', name: 'not-yet-commons-ssl', version: '0.3.11', ext: 'jar'],
+        [group: 'ca.juliusdavies', name: 'not-yet-commons-ssl', version: '0.3.17'],
     )
     runtime(
         [group: 'org.eclipse.jetty.aggregate', name: 'jetty-all', version: jettyVersion],
@@ -55,7 +55,7 @@ jar {
 install.dependsOn build 
 
 apply plugin: 'maven'
-task createPom << {
+task('createPom').doLast {
     pom {
         project {
             artifactId archivesBaseName

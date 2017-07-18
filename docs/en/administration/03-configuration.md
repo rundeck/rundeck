@@ -68,11 +68,12 @@ Some important settings:
 * `framework.rundeck.url`: Base URL for Rundeck server.
 
 
-SSH Connection settings:
+SSH Connection settings (See [Plugins User Guide > SSH Plugins](../plugins-user-guide/ssh-plugins.html)):
 
 * `framework.ssh.keypath`: Path to the SSH private key file used for SSH connections
 * `framework.ssh.user`: Default username for SSH Connections, if not overridden by Node specific value.
-* `framework.ssh.timeout`: timeout in milliseconds for SSH connections and executions. The default is "0" (no timeout).  You can modify this to change the maximum time allowed for SSH connections.
+* `framework.ssh-connect-timeout`: timeout in milliseconds for SSH connections. The default is "0" (no timeout).  You can modify this to change the connect/socket timeout. (Deprecated: `framework.ssh.timeout`.)
+* `framework.ssh-command-timeout`: timeout in milliseconds for SSH commands. The default is "0" (no timeout).  You can modify this to change the maximum time allowed for SSH commands to run.
 
 Other settings:
 
@@ -234,14 +235,15 @@ The following sections describe configuration values for this file.
     correctly if they use username and password login.
 
 * `rundeck.api.tokens.duration.max`: Duration string indicating maximum lifetime of API Tokens. If unset, the value
-    will be "30d" (30 days). Format: "##{ydhms}" (years, days, hours, minutes, seconds).
+    will be "30d" (30 days). Format: "##{ydhms}" (years, days, hours, minutes, seconds). 
+    If you want to disable the max expiration you can set it to 0 and create token with 0 duration that don't expire.
 
 * `rundeck.security.csrf.referer.filterMethod`:`NONE|POST|*`. Set HTTP Method to filter based on Referer header.  Can be POST, or "*" for all methods. Default: NONE (disabled)
 
 * `rundeck.security.csrf.referer.allowApi`: `true|false`. Allow /api/* requests without requireing matching Referer header. Default: true.
 
 * `rundeck.security.csrf.referer.requireHttps`: `true|false`. If server URL is HTTPS, Require referer header to be from HTTPS version of server URL, if false allow HTTP as well. Default: true.
-
+ 
 ### Execution Mode
 
 * `rundeck.executionMode`:`active/passive`. Default `active`. Set the Execution

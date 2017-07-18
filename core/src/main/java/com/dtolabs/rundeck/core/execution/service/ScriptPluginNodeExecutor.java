@@ -80,6 +80,16 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
             final INodeEntry node
     )
     {
+        return executeCommand(executionContext, command, node,true);
+    }
+
+    public NodeExecutorResult executeCommand(
+            final ExecutionContext executionContext,
+            final String[] command,
+            final INodeEntry node,
+            final boolean showError
+    )
+    {
         Description pluginDesc = getDescription();
         final ScriptPluginProvider plugin = getProvider();
         final String pluginname = plugin.getName();

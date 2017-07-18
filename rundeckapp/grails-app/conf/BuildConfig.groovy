@@ -115,8 +115,8 @@ grails.project.dependency.resolution = {
                 'log4j:log4j:1.2.17',
                 'commons-collections:commons-collections:3.2.2',
                 'commons-codec:commons-codec:1.5',
-                'com.fasterxml.jackson.core:jackson-databind:2.5.3',
-                'com.fasterxml.jackson.core:jackson-annotations:2.5.3',
+                'com.fasterxml.jackson.core:jackson-databind:2.8.8.1',
+                'com.fasterxml.jackson.core:jackson-annotations:2.8.8',
                 'com.codahale.metrics:metrics-core:3.0.1',
                 'com.google.guava:guava:15.0',
                 'org.owasp.encoder:encoder:1.2',
@@ -127,7 +127,7 @@ grails.project.dependency.resolution = {
         compile("org.rundeck:rundeck-core:${rundeckVersion}")
         compile("org.rundeck:rundeck-storage-filesys:${rundeckVersion}")
 
-        runtime 'postgresql:postgresql:9.1-901.jdbc4'
+        runtime 'org.postgresql:postgresql:42.0.0'
         runtime 'mysql:mysql-connector-java:5.1.35'
 
         //BEGIN fix hibernate4 bug with dateCreated auto timestamp, see: https://jira.grails.org/browse/GPHIB-30

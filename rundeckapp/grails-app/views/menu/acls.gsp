@@ -28,54 +28,42 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
+    <meta name="tabtitle" content="${g.message(code: 'gui.menu.AccessControl')}"/>
     <title><g:message code="gui.menu.AccessControl"/></title>
 </head>
 <body>
 <div class="row">
-    <div class="col-sm-3">
-        <g:render template="configNav" model="[selected: 'securityConfig']"/>
-    </div>
-
-    <div class="col-sm-9">
-        <h4><g:message code="system.access.control.title"/></h4>
-
-        <div class="text-muted">
-            <g:message code="to.modify.access.control.rules.create.or.edit.a.aclpolicy.file.in.the.rundeck.etc.directory" />
-        </div>
-        <div>
-            <g:message code="list.of.acl.policy.files.in.directory" /> <code>${fwkConfigDir.absolutePath}</code>:
-            <ul>
-            <g:each in="${aclFileList}" var="file">
-                <g:render template="/menu/aclValidationListItem" model="${[
-                        policyFile: file.name,
-                        validation: validations[file]
-                ]}"/>
-
-            </g:each>
-            </ul>
-        </div>
-        <g:if test="${params.project}">
-            <h4><g:message code="project.access.control.title" args="${[params.project]}"/></h4>
-
-            <div class="text-muted">
-                <g:message code="project.access.control.description"/>
+    <div class="col-sm-10 col-sm-offset-1">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <span class="panel-title">
+                    <g:message code="system.access.control.title"/>
+                </span>
             </div>
 
-            <div>
-                <span class="text-info">${projectlist.size()}</span>
-                <g:message code="project.access.control.prompt" args="${[params.project]}"/>:
-                <ul>
-                    <g:each in="${projectlist}" var="file">
-                        <g:render template="/menu/aclValidationListItem" model="${[
-                                policyFile: file,
-                                validation: [valid: true]
-                        ]}"/>
+            <div class="panel-body">
 
-                    </g:each>
-                </ul>
+                <p class="text-info">
+                    <g:message
+                            code="to.modify.access.control.rules.create.or.edit.a.aclpolicy.file.in.the.rundeck.etc.directory"/>
+                </p>
+
+                <div>
+                    <span class="text-info">${aclFileList.size()}</span>
+                    <g:message code="list.of.acl.policy.files.in.directory" /> <code>${fwkConfigDir.absolutePath}</code>:
+                    <ul>
+                        <g:each in="${aclFileList}" var="file">
+                            <g:render template="/menu/aclValidationListItem" model="${[
+                                    policyFile: file.name,
+                                    validation: validations[file]
+                            ]}"/>
+
+                        </g:each>
+                    </ul>
+                </div>
             </div>
+        </div>
 
-        </g:if>
     </div>
 </div>
 </body>

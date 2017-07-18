@@ -1673,6 +1673,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       serverNodeUUID: frameworkService.getServerUUID()
             )
 
+            execution.userRoles = params.userRoles
 
             
             //parse options
@@ -1992,6 +1993,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             props.put(k,se[k])
         }
         props.user = authContext.username
+        def roles = authContext.roles
+        if (roles) {
+            props.userRoles = (roles as List)
+        }
         if (runAsUser) {
             props.user = runAsUser
         }
