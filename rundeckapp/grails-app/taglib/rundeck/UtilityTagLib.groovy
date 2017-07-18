@@ -1741,9 +1741,11 @@ ansi-bg-default'''))
         out << "</tr>"
 
         attrs.data.each { row ->
+            out << '<tr>'
             attrs.columns.each {
                 out << "<td>${row.hasProperty(it) || row.properties[it] ? row[it] : ''}</td>"
             }
+            out << '</tr>'
         }
         out << '</table>'
     }
