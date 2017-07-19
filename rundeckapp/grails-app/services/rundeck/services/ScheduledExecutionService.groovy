@@ -1314,10 +1314,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param scheduledExecutions
      * @return
      */
-    def Map nextExecutionTimes(Collection<ScheduledExecution> scheduledExecutions) {
+    def Map nextExecutionTimes(Collection<ScheduledExecution> scheduledExecutions, boolean require=false) {
         def map = [ : ]
         scheduledExecutions.each {
-            def next = nextExecutionTime(it)
+            def next = nextExecutionTime(it, require)
             if(next){
                 map[it.id] = next
             }
@@ -1349,14 +1349,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param se
      * @return
      */
-    def Date nextExecutionTime(ScheduledExecution se) {
+    def Date nextExecutionTime(ScheduledExecution se, boolean require=false) {
         if(!se.scheduled){
             return new Date(TWO_HUNDRED_YEARS)
         }
         def trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()))
         if(trigger){
             return trigger.getNextFireTime()
-        }else if (frameworkService.isClusterModeEnabled() && se.serverNodeUUID != frameworkService.getServerUUID()) {
+        }else if (frameworkService.isClusterModeEnabled() && se.serverNodeUUID != frameworkService.getServerUUID() || require) {
             //guess next trigger time for the job on the assigned cluster node
             def value= tempNextExecutionTime(se)
             return value
