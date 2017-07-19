@@ -71,7 +71,7 @@ class ScheduledExecution extends ExecutionContext {
 
     static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
-                         'crontabString']
+                         'crontabString','averageDuration']
 
     static constraints = {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -946,6 +946,13 @@ class ScheduledExecution extends ExecutionContext {
      */
     List<Option> listFileOptions() {
         options.findAll { it.typeFile } as List
+    }
+
+    long getAverageDuration() {
+        if (totalTime && execCount) {
+            return Math.floor(totalTime / execCount)
+        }
+        return 0;
     }
 }
 
