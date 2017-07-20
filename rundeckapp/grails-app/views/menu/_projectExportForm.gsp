@@ -134,9 +134,87 @@
                                     value="${g.message(code:'button.action.Cancel',default:'Cancel')}"
                                     class="btn btn-default"
                     />
-                    <button type="submit" class="btn btn-success"><g:message code="button.Export.title"/></button>
+                    <button type="submit" class="btn btn-success"><g:message code="export.archive"/></button>
+                    <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-success"><g:message code="export.another.instance"/></button>
                 </div>
             </div>
+
+
+
+
+
+
+            <!-- Generate Modal -->
+            <div class="modal fade clearconfirm" id="exportModal" tabindex="-1" role="dialog"
+                 aria-labelledby="gentokenLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title" id="exportLabel">
+                                Export to another instance
+                            </h4>
+                        </div>
+
+                        <div class="modal-body" id="userTokenGenerateForm">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label">
+                                                <label for="url">Url instance</label>
+                                            </div>
+
+                                            <div class="col-sm-10">
+
+                                                <input type='text' name="retry" value=""
+                                                       id="url" class="form-control"/>
+                                                <span class="help-block">
+                                                    Url instance http://ip:port
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label">
+                                                <label for="token">Token</label>
+                                            </div>
+
+                                            <div class="col-sm-10">
+
+                                                <input type='text' name="retry" value=""
+                                                       id="token" class="form-control"/>
+                                                <span class="help-block">
+                                                    token
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label">
+                                                <label for="project">Project</label>
+                                            </div>
+
+                                            <div class="col-sm-10">
+
+                                                <input type='text' name="retry" value=""
+                                                       id="project" class="form-control"/>
+                                                <span class="help-block">
+                                                    Project
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="submit" class="small btn btn-success"><g:message code="export.another.instance.go"/></button>
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div><!-- /.modal -->
         </g:form>
     </div>
 </div>
