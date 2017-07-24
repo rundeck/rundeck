@@ -163,43 +163,57 @@
                                     <div class="form">
                                         <div class="form-group">
                                             <div class="col-sm-2 control-label">
-                                                <label for="url">Url instance</label>
+                                                <label for="url"><g:message code="export.another.instance.url"/></label>
                                             </div>
 
                                             <div class="col-sm-10">
 
-                                                <input type='text' name="retry" value=""
+                                                <input type='text' name="url" value=""
                                                        id="url" class="form-control"/>
                                                 <span class="help-block">
-                                                    Url instance http://ip:port
+                                                    <g:message code="export.another.instance.url.help"/>
                                                 </span>
                                             </div>
                                         </div>
                                         <div class="form-group">
                                             <div class="col-sm-2 control-label">
-                                                <label for="token">Token</label>
+                                                <label for="token"><g:message code="export.another.instance.token"/></label>
                                             </div>
 
                                             <div class="col-sm-10">
 
-                                                <input type='text' name="retry" value=""
+                                                <input type='password' name="token" value=""
                                                        id="token" class="form-control"/>
                                                 <span class="help-block">
-                                                    token
+                                                    <g:message code="export.another.instance.token.help"/>
                                                 </span>
                                             </div>
                                         </div>
                                         <div class="form-group">
                                             <div class="col-sm-2 control-label">
-                                                <label for="project">Project</label>
+                                                <label for="targetproject"><g:message code="export.another.instance.project"/></label>
                                             </div>
 
                                             <div class="col-sm-10">
 
-                                                <input type='text' name="retry" value=""
-                                                       id="project" class="form-control"/>
+                                                <input type='text' name="targetproject" value=""
+                                                       id="targetproject" class="form-control"/>
                                                 <span class="help-block">
-                                                    Project
+                                                    <g:message code="export.another.instance.project.help"/>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label">
+                                                <label for="preserveuuid"><g:message code="project.archive.import.jobUuidOption.preserve.label"/></label>
+                                            </div>
+
+                                            <div class="col-sm-10">
+
+                                                <input type='checkbox' name="preserveuuid" value=""
+                                                       id="preserveuuid" class="form-control"/>
+                                                <span class="help-block">
+                                                    <g:message code="project.archive.import.jobUuidOption.preserve.description"/>
                                                 </span>
                                             </div>
                                         </div>
@@ -210,7 +224,7 @@
                         </div>
 
                         <div class="modal-footer">
-                            <button type="submit" class="small btn btn-success"><g:message code="export.another.instance.go"/></button>
+                            <g:actionSubmit action="exportInstancePrepare" class="small btn btn-success" value="${message(code:'export.another.instance.go')}" />
                         </div>
                     </div><!-- /.modal-content -->
                 </div><!-- /.modal-dialog -->

@@ -145,8 +145,23 @@ class ProjectController extends ControllerBase{
                                                                          [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
         ArchiveOptions options = archiveParams.toArchiveOptions()
         def token = projectService.exportProjectToFileAsync(project1, framework, session.user, aclReadAuth, options)
-        return redirect(action:'exportWait',params: [token:token,project:archiveParams.project])
+        return redirect(action:'exportWait',params: [token:token,project:archiveParams.project,instance:params.instance])
     }
+
+    public def exportInstancePrepare(ProjectArchiveParams archiveParams){
+        def error = false
+        def msg = ''
+        //TODO check url, token, targetproject,preserveuuid
+        if (error) {
+            flash.error = msg
+            return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
+        }
+        params.instance = params.url
+        return exportPrepare(archiveParams)
+
+    }
+
+
     /**
      * poll for archive export process completion using a token, responds in html or json
      * @param token

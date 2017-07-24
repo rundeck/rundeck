@@ -36,7 +36,7 @@
             notFound:notFound,
             errorMessage:requestError?.message,
             percentage:percentage,
-            url:createLink(controller: 'project', action: 'exportWait', params: [project: params.project, token: params.token, format: 'json'])
+            url:createLink(controller: 'project', action: 'exportWait', params: [project: params.project, token: params.token,instance:params.instance, format: 'json'])
     ]}" id="requestdata"/>
     <g:jsMessages code="archive.request.please.wait.pagetitle.ready"/>
     <g:javascript>
@@ -93,11 +93,16 @@
 <body>
 <div class="panel panel-default panel-tab-content" data-bind="visible: ready() && !notFound() && !errorMessage()">
     <div class="panel-heading">
+        <g:if test="${!params.url}">
         <g:message code="archive.request.download.title" args="${[params.project ?: request.project]}"/>
+        </g:if>
+        <g:if test="${params.url}">
+            Exporting project <b>${params.project ?: request.project}</b> to <b>${params.url}</b>
+        </g:if>
     </div>
 
     <div class="panel-body">
-
+        <g:if test="${!params.url}">
         <g:link controller="project" action="exportWait"
                 params="[project: params.project ?: request.project, token: params.token, download: true]"
                 class="btn btn-success">
@@ -107,6 +112,14 @@
         <div class="text-info">
             <g:message code="archive.request.will.expire" />
         </div>
+        </g:if>
+        <g:if test="${params.url}">
+            <div class="alert alert-info">
+                Archive successfully imported on the new instance
+            </div>
+
+            <g:link url="${params.url}/?project=empty">Go to the other instance</g:link>
+        </g:if>
 
     </div>
     <div class="panel-footer">
