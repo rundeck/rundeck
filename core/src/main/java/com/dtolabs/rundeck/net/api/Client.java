@@ -68,29 +68,29 @@ public class Client {
                     new Annotation[0]
             );
             ErrorDetail error = errorConverter.convert(responseBody);
-            if (error.getErrorCode().equals("401") || error.getErrorCode().equals("403")) {
+            if (status.code() == 401 || status.code() == 403) {
                 //authorization
                 throw new RuntimeException(
-                        String.format("Authorization failed: %s %s", error.getErrorCode(), error.getErrorMessage()));
+                        String.format("Authorization failed: %d %s", status.code(), error.getErrorMessage()));
             }
-            if (error.getErrorCode().equals("409")) {
+            if (status.code() == 409) {
                 //authorization
                 throw new RuntimeException(String.format(
-                        "Could not create resource: %s %s",
-                        error.getErrorCode(),
+                        "Could not create resource: %d %s",
+                        status.code(),
                         error.getErrorMessage()
                 ));
             }
-            if (error.getErrorCode().equals("404")) {
+            if (status.code() == 404) {
                 //authorization
                 throw new RuntimeException(String.format(
-                        "Could not find resource:  %s %s",
-                        error.getErrorCode(),
+                        "Could not find resource:  %d %s",
+                        status.code(),
                         error.getErrorMessage()
                 ));
             }
             throw new RuntimeException(
-                    String.format("Request failed:  %s %s", error.getErrorCode(), error.getErrorMessage()));
+                    String.format("Request failed:  %d %s", status.code(), error.getErrorMessage()));
         }
 
         return response;

@@ -162,7 +162,7 @@
 
 <div class="panel panel-danger panel-tab-content" data-bind="visible: errors">
     <div class="panel-heading">
-        <g:message code="archive.request.error" />
+        <g:message code="export.another.instance.process" args="${[params.project ?: request.project,params.instance]}"/>
     </div>
 
     <div class="panel-body">
@@ -171,6 +171,15 @@
             <li><pre data-bind="text: $data"></pre></li>
         </ul>
 
+
+        <g:link url="${params.instance}/?project=${params.iproject}"><g:message code="export.another.instance.goto"></g:message></g:link>
+
+    </div>
+
+    <div class="panel-footer">
+        <g:link controller="menu" action="projectExport" params="${[project: params.project]}">
+            <g:message code="return.to.configuration" />
+        </g:link>
     </div>
 
 </div>
