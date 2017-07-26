@@ -8,6 +8,7 @@ import com.dtolabs.rundeck.net.model.ProjectImportStatus;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
+import org.apache.log4j.Logger;
 import retrofit2.Converter;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -26,6 +27,7 @@ public class Client {
     private OkHttpClient.Builder builder;
     private Retrofit retrofit;
 
+    private static Logger log = Logger.getLogger(Client.class.getName());
     private static final String APPLICATION_ZIP = "application/zip";
     private static final MediaType MEDIA_TYPE_ZIP = MediaType.parse(APPLICATION_ZIP);
 
@@ -45,20 +47,24 @@ public class Client {
         ProjectImportStatus response = new ProjectImportStatus();
         response.successful = true;
         RequestBody body = RequestBody.create(MEDIA_TYPE_ZIP, file);
-        boolean anyerror = false;
         Response<ProjectImportStatus> status = api.importProjectArchive(project,preserveUuids? "remove" : "preserve",importExecutions,importConfig,importACL,body).execute();
-        //TODO log errors
         if(status.isSuccessful()){
-            if(null != status.body() && status.body().getResultSuccess()){
+            if(null != status.body()) {
                 response = status.body();
-            }else{
-                System.out.println(status.body());
-                if(null != status.body()){
-                    response = status.body();
-                    System.out.println(status.body().aclErrors);
-                    System.out.println(status.body().errors);
-                    System.out.println(status.body().executionErrors);
+                if(!response.getResultSuccess()){
+                    log.error(
+                            String.format("Error on import jobs to new project: %d", response.errors.size())
+                    );
+                    log.error(
+                            String.format("Error on import executions to new project: %d", response.executionErrors.size())
+                    );
+                    log.error(
+                            String.format("Error on import acls to new project: %d", response.aclErrors.size())
+                    );
                 }
+            }else{
+                log.error("null body on response");
+                response.successful=false;
             }
 
         }else{
@@ -69,12 +75,10 @@ public class Client {
             );
             ErrorDetail error = errorConverter.convert(responseBody);
             if (status.code() == 401 || status.code() == 403) {
-                //authorization
                 throw new RuntimeException(
                         String.format("Authorization failed: %d %s", status.code(), error.getErrorMessage()));
             }
             if (status.code() == 409) {
-                //authorization
                 throw new RuntimeException(String.format(
                         "Could not create resource: %d %s",
                         status.code(),
@@ -82,7 +86,6 @@ public class Client {
                 ));
             }
             if (status.code() == 404) {
-                //authorization
                 throw new RuntimeException(String.format(
                         "Could not find resource:  %d %s",
                         status.code(),
@@ -109,8 +112,7 @@ public class Client {
                 )
                 .build();
 
-        RundeckApi api = retrofit.create(RundeckApi.class);
-        return api;
+        return retrofit.create(RundeckApi.class);
     }
 
 }

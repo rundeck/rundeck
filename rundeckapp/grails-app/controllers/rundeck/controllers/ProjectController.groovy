@@ -149,10 +149,27 @@ class ProjectController extends ControllerBase{
     }
 
     public def exportInstancePrepare(ProjectArchiveParams archiveParams){
-        def error = false
-        def msg = ''
-        //TODO check url, apitoken, targetproject,preserveuuid
-        if (error) {
+        def error = 0
+        def msg = 'In order to export'
+        if(!params.url){
+            error++
+            msg += ", Server URL"
+        }
+        if(!params.apitoken){
+            error++
+            msg += ", API Token"
+        }
+        if(!params.targetproject){
+
+            msg += ", Target Project"
+            error++
+        }
+        if (error>0) {
+            if(error == 1){
+                msg+=" is required."
+            }else{
+                msg+=" are required."
+            }
             flash.error = msg
             return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
         }
