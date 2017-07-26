@@ -36,7 +36,9 @@
             notFound:notFound,
             errorMessage:requestError?.message,
             percentage:percentage,
-            url:createLink(controller: 'project', action: 'exportWait', params: [project: params.project, token: params.token,instance:params.instance, format: 'json'])
+            instance:instance,
+            errors: errors,
+            url:createLink(controller: 'project', action: 'exportWait', params: [project: params.project, token: params.token,instance:params.instance, iproject:params.iproject, format: 'json'])
     ]}" id="requestdata"/>
     <g:jsMessages code="archive.request.please.wait.pagetitle.ready"/>
     <g:javascript>
@@ -47,9 +49,11 @@
             self.errorMessage = ko.observable(null);
             self.refresh = ko.observable(false);
             self.percentage = ko.observable(0);
+            self.instance = ko.observable(null);
             self.token = null;
             self.timeout = null;
             self.url = null;
+            self.errors = ko.observable(null);
             self.refreshData = function () {
                 jQuery.ajax({
                     url: self.url,
@@ -91,18 +95,18 @@
 </head>
 
 <body>
-<div class="panel panel-default panel-tab-content" data-bind="visible: ready() && !notFound() && !errorMessage()">
+<div class="panel panel-default panel-tab-content" data-bind="visible: ready() && !notFound() && !errorMessage() && !errors()">
     <div class="panel-heading">
-        <g:if test="${!params.url}">
+        <g:if test="${!params.instance}">
         <g:message code="archive.request.download.title" args="${[params.project ?: request.project]}"/>
         </g:if>
-        <g:if test="${params.url}">
-            Exporting project <b>${params.project ?: request.project}</b> to <b>${params.url}</b>
+        <g:if test="${params.instance}">
+            <g:message code="export.another.instance.process" args="${[params.project ?: request.project,params.instance]}"/>
         </g:if>
     </div>
 
     <div class="panel-body">
-        <g:if test="${!params.url}">
+        <g:if test="${!params.instance}">
         <g:link controller="project" action="exportWait"
                 params="[project: params.project ?: request.project, token: params.token, download: true]"
                 class="btn btn-success">
@@ -113,12 +117,12 @@
             <g:message code="archive.request.will.expire" />
         </div>
         </g:if>
-        <g:if test="${params.url}">
+        <g:if test="${params.instance}">
             <div class="alert alert-info">
-                Archive successfully imported on the new instance
+                <g:message code="export.another.instance.success" />
             </div>
 
-            <g:link url="${params.url}/?project=empty">Go to the other instance</g:link>
+            <g:link url="${params.instance}/?project=${params.iproject}">Go to the other instance</g:link>
         </g:if>
 
     </div>
@@ -156,7 +160,22 @@
 
 </div>
 
-<div class="panel panel-default panel-tab-content" data-bind="visible: !ready() && !errorMessage() && !notFound()">
+<div class="panel panel-danger panel-tab-content" data-bind="visible: errors">
+    <div class="panel-heading">
+        <g:message code="archive.request.error" />
+    </div>
+
+    <div class="panel-body">
+
+        <ul data-bind="foreach: errors()" class="list-unstyled">
+            <li><pre data-bind="text: $data"></pre></li>
+        </ul>
+
+    </div>
+
+</div>
+
+<div class="panel panel-default panel-tab-content" data-bind="visible: !ready() && !errorMessage() && !notFound() && !errors()">
     <div class="panel-heading">
         <g:message code="archive.request.exporting.title" args="${[params.project ?: request.project]}"/>
     </div>
@@ -178,7 +197,7 @@
     <div class="panel-footer form-inline">
 
         <g:link controller="project" action="exportWait"
-                params="[project: params.project ?: request.project, token: params.token]"
+                params="[project: params.project ?: request.project, token: params.token,instance:params.instance, iproject:params.iproject]"
                 class="btn  btn-link reload_button"
                 data-loading="Loading...">
             <i class="glyphicon glyphicon-refresh"></i>

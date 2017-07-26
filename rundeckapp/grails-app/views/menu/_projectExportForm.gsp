@@ -177,13 +177,13 @@
                                         </div>
                                         <div class="form-group">
                                             <div class="col-sm-2 control-label">
-                                                <label for="token"><g:message code="export.another.instance.token"/></label>
+                                                <label for="apitoken"><g:message code="export.another.instance.token"/></label>
                                             </div>
 
                                             <div class="col-sm-10">
 
-                                                <input type='password' name="token" value=""
-                                                       id="token" class="form-control"/>
+                                                <input type='password' name="apitoken" value=""
+                                                       id="apitoken" class="form-control"/>
                                                 <span class="help-block">
                                                     <g:message code="export.another.instance.token.help"/>
                                                 </span>
@@ -210,7 +210,7 @@
 
                                             <div class="col-sm-10">
 
-                                                <input type='checkbox' name="preserveuuid" value=""
+                                                <input type='checkbox' name="preserveuuid" value="preserveuuid"
                                                        id="preserveuuid" class="form-control"/>
                                                 <span class="help-block">
                                                     <g:message code="project.archive.import.jobUuidOption.preserve.description"/>
