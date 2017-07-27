@@ -376,7 +376,7 @@ class ExecutionServiceSpec extends Specification {
 
         then:
         1 * service.scheduledExecutionService.scheduleAdHocJob(*_) >> { args ->
-            final Date startDate    = args[7]
+            final Date startDate    = args[6]
             // The start time may differ slightly (milliseconds)
             assert startDate.getTime() - expected.getTime() <= 500 ||
                 startDate.getTime() - expected.getTime() >= -500
@@ -1919,7 +1919,7 @@ class ExecutionServiceSpec extends Specification {
 
         then:
         1 * service.scheduledExecutionService.scheduleAdHocJob(*_) >> { args ->
-            final Date startDate    = args[7]
+            final Date startDate    = args[6]
             // The start time may differ slightly (milliseconds)
             assert startDate.getTime() - scheduleDate.getTime() <= 500 ||
                 startDate.getTime() - scheduleDate.getTime() >= -500
@@ -2048,7 +2048,7 @@ class ExecutionServiceSpec extends Specification {
 
         then:
         1 * service.scheduledExecutionService.scheduleAdHocJob(*_) >> { args ->
-            final Date startDate    = args[7]
+            final Date startDate    = args[6]
             // The start time may differ slightly (milliseconds)
             assert startDate.getTime() - scheduleDate.getTime() <= 500 ||
                 startDate.getTime() - scheduleDate.getTime() >= -500

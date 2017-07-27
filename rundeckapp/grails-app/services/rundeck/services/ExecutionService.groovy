@@ -1916,7 +1916,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     e,
                     secureOpts,
                     secureOptsExposed,
-                    e.retryAttempt,
                     startTime
             )
             if (nextRun != null) {

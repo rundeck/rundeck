@@ -52,6 +52,7 @@ import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import rundeck.services.PasswordFieldsService
+import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
 
 beans={
@@ -122,6 +123,10 @@ beans={
 
     rundeckFilesystemPolicyAuthorization(AuthorizationFactory, configDir){bean->
         bean.factoryMethod='createFromDirectory'
+    }
+
+    rundeckJobScheduleManager(QuartzJobScheduleManager){
+        quartzScheduler=ref('quartzScheduler')
     }
 
     //cache for provider loaders bound to a file

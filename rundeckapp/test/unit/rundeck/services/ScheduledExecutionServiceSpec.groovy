@@ -217,7 +217,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         ).save()
 
         when:
-        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], 0, null)
+        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], null)
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
@@ -264,7 +264,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         startTime.set(year: 1999, month: 1, dayOfMonth: 1, hourOfDay: 1, minute: 2, seconds: 42)
 
         when:
-        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], 0, startTime)
+        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], startTime)
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
@@ -1862,6 +1862,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         given:
         def uuid=setupDoUpdate(enabled)
         def se = new ScheduledExecution(createJobParams()).save()
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -2060,7 +2061,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             getUsername() >> 'test'
             getRoles() >> new HashSet<String>(['test'])
         }
-
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         when:
         def results = service._doupdateJob(se.id,newJob, auth)
@@ -2310,6 +2311,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             getFrameworkProject(_) >> projectMock
         }
         service.fileUploadService = Mock(FileUploadService)
+        service.jobSchedulerService = Mock(JobSchedulerService)
         when:
         def result = service.rescheduleJobs(null)
 
@@ -2326,7 +2328,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
         1 * service.executionServiceBean.getExecutionsAreActive() >> true
         1 * service.frameworkService.getRundeckBase() >> ''
-        1 * service.quartzScheduler.scheduleJob(_, _) >> new Date()
+        1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted) >> exec1.dateStarted
     }
     def "reschedule adhoc execution getAuthContext error"() {
         given:
@@ -2369,6 +2371,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         def uuid = setupDoUpdate(true)
         
         def se = new ScheduledExecution(createJobParams()).save()
+        service.jobSchedulerService=Mock(JobSchedulerService)
         when:
         def params = baseJobParams()+[
                 

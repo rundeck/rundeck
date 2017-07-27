@@ -48,6 +48,7 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
         def project = 'testProject'
         service.executionServiceBean    = Mock(ExecutionService)
         service.quartzScheduler         = Mock(Scheduler)
+        service.jobSchedulerService = Mock(JobSchedulerService)
         service.frameworkService        = Stub(FrameworkService) {
             existsFrameworkProject(project) >> true
             isClusterModeEnabled() >> true
@@ -115,6 +116,7 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
         def project = 'testProject'
         service.executionServiceBean    = Mock(ExecutionService)
         service.quartzScheduler         = Mock(Scheduler)
+        service.jobSchedulerService = Mock(JobSchedulerService)
         service.frameworkService        = Stub(FrameworkService) {
             existsFrameworkProject(project) >> true
             isClusterModeEnabled() >> true
@@ -204,6 +206,7 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
         service.executionServiceBean    = Mock(ExecutionService)
         service.fileUploadService = Mock(FileUploadService)
         service.quartzScheduler         = Mock(Scheduler)
+        service.jobSchedulerService = Mock(JobSchedulerService)
         service.frameworkService = Stub(FrameworkService) {
             existsFrameworkProject(project) >> true
             isClusterModeEnabled() >> true
@@ -259,12 +262,7 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
         e.serverNodeUUID == TEST_UUID2
         se != null
         1 * service.executionServiceBean.executionsAreActive >> true
-        1 * service.quartzScheduler.scheduleJob(_ as JobDetail, _ as SimpleTrigger) >> {
-            arguments ->
-                SimpleTrigger trigger = arguments[1]
-                assert trigger.getStartTime().getTime() == startTime.getTime()
-                return startTime
-        }
+        1 * service.jobSchedulerService.scheduleJob(_,_,_, startTime) >>  startTime
 
         // Both jobs should've been claimed
         jobUuid in results

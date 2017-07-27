@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
@@ -122,6 +123,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def pluginService
     def executionUtilService
     def fileUploadService
+    JobSchedulerService jobSchedulerService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -694,7 +696,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                             e.userRoles ?: se.userRoles,
                             e.project
                     )
-                    Date nexttime = scheduleAdHocJob(se, authContext.username, authContext, e, null, null, 0, e.dateStarted)
+                    Date nexttime = scheduleAdHocJob(
+                            se,
+                            authContext.username,
+                            authContext,
+                            e,
+                            null,
+                            null,
+                            e.dateStarted
+                    )
                     if (nexttime) {
                         succeedExecutions << [execution: e, time: nexttime]
                     }
@@ -952,7 +962,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             return [success:false,error:  [message: result.error, job: scheduledExecution, errorCode: 'failed', id: scheduledExecution.extid]]
         } else {
             logJobChange(changeinfo, jobdata)
-            return [success: [message: lookupMessage('api.success.job.delete.message', [jobtitle]), job: scheduledExecution]]
+            return [success: [message: lookupMessage('api.success.job.delete.message', [jobtitle]), job:
+                    scheduledExecution]]
         }
     }
     /**
@@ -962,8 +973,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @return
      */
     def deleteJob(String jobname, String groupname){
-        log.info("deleting job from scheduler")
-        quartzScheduler.deleteJob(new JobKey(jobname,groupname))
+        jobSchedulerService.deleteJobSchedule(jobname, groupname)
     }
 
     def userAuthorizedForJob(request,ScheduledExecution se, AuthContext authContext){
@@ -1020,25 +1030,31 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      *
      * The schedule time is required and must be in the future.
      *
-     * @param   se                  the scheduled execution
+     * @param se the job
      * @param   user                user running this job
-     * @param   authContext
-     * @param   e                   the execution details
-     * @param   secureOpts
-     * @param   secureOptsExposed
-     * @param   retryAttempt
+     * @param authContext the auth context
+     * @param e the execution
+     * @param secureOpts secure authentication input
+     * @param secureOptsExposed secure input
      * @param   startTime           the time to start running the job
      * @return  the scheduled date/time as returned by Quartz, or null if it couldn't be scheduled
      * @throws  IllegalArgumentException    if the schedule time is not set, or if it is in the past
      */
-    def Date scheduleAdHocJob(ScheduledExecution se, String user, AuthContext authContext,
-                             Execution e, Map secureOpts = null, Map secureOptsExposed = null,
-                              int retryAttempt = 0, Date startTime) {
+    def Date scheduleAdHocJob(
+            ScheduledExecution se,
+            String user,
+            AuthContext authContext,
+            Execution e,
+            Map secureOpts,
+            Map secureOptsExposed,
+            Date startTime
+    )
+    {
         if (!executionService.executionsAreActive) {
             log.warn("Attempt to schedule job ${se}, but executions are disabled.")
             return null
         }
-        if(!isProjectExecutionEnabled(se.project)){
+        if (!isProjectExecutionEnabled(se.project)) {
             log.warn("Attempt to schedule job ${se}, but project executions are disabled.")
             return null
         }
@@ -1048,30 +1064,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             throw new IllegalArgumentException("Scheduled date and time must be present")
         }
 
-        java.util.Calendar now   = java.util.Calendar.getInstance()
+        java.util.Calendar now = java.util.Calendar.getInstance()
         if (startTime.before(now.getTime())) {
             throw new IllegalArgumentException("Cannot schedule a job in the past")
         }
 
         log.debug("ScheduledExecutionService: will schedule job at ${startTime}")
         def identity = getJobIdent(se, e)
-        def jobDetail = createJobDetail(se, identity.jobname, identity.groupname)
-        jobDetail.getJobDataMap().put("bySchedule", true)
-        jobDetail.getJobDataMap().put("user", user)
-        jobDetail.getJobDataMap().put("authContext", authContext)
-        jobDetail.getJobDataMap().put("executionId", e.id.toString())
+        Map jobDetail = createJobDetailMap(se) + [
+                bySchedule  : true,
+                user        : user,
+                authContext : authContext,
+                executionId : e.id.toString(),
+                retryAttempt: 0
+        ]
         if (secureOpts) {
-            jobDetail.getJobDataMap().put("secureOpts", secureOpts)
+            jobDetail["secureOpts"] = secureOpts
         }
         if (secureOptsExposed) {
-            jobDetail.getJobDataMap().put("secureOptsExposed", secureOptsExposed)
+            jobDetail["secureOptsExposed"] = secureOptsExposed
         }
-        jobDetail.getJobDataMap().put("retryAttempt", 0)
 
-        SimpleTrigger trigger = (SimpleTrigger)TriggerBuilder.newTrigger()
-                .withIdentity(identity.jobname, identity.groupname)
-                .startAt(startTime)
-                .build()
 
         try {
             fileUploadService.executionBeforeSchedule(new ExecutionPrepareEvent(
@@ -1084,17 +1097,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.warn("Failed uploaded file preparation for scheduled job: $exc", exc)
         }
 
-        if (quartzScheduler.checkExists(jobDetail.getKey())) {
-            log.info("rescheduling existing ad-hoc job in project ${se.project} ${se.extid} ${e.id}")
-            return quartzScheduler.rescheduleJob(
-                    TriggerKey.triggerKey(identity.jobname, identity.groupname),
-                    trigger
-            )
-        } else {
-            Date nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
-            log.debug("scheduled ad-hoc job. next run: " + nextTime.toString())
-            return nextTime
-        }
+        return jobSchedulerService.scheduleJob(identity.jobname, identity.groupname, jobDetail, startTime)
     }
 
     /**
@@ -1185,44 +1188,51 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
 
     /**
      * Schedule a stored job to execute immediately, include a set of params in the data map
+     * @param se the job
+     * @param user the user running the job
+     * @param authContext the auth context
+     * @param e the execution
+     * @param secureOpts the secure authentication input
+     * @param secureOptsExposed the secure input
+     * @param retryAttempt the retry attempt
+     * @return the execution id
      */
-    def long scheduleTempJob(ScheduledExecution se, String user, AuthContext authContext,
-                             Execution e, Map secureOpts =null,
-                             Map secureOptsExposed =null, int retryAttempt = 0) {
+    def long scheduleTempJob(
+            ScheduledExecution se,
+            String user,
+            AuthContext authContext,
+            Execution e,
+            Map secureOpts,
+            Map secureOptsExposed,
+            int retryAttempt
+    )
+    {
         def ident = getJobIdent(se, e)
-        def quartzJobName = ident.jobname//"TEMP:" + user + ":" + se.id + ":" + e.id
-        def jobDetail = createJobDetail(se, quartzJobName, ident.groupname /*user + ":run:" + se.id*/)
-        jobDetail.getJobDataMap().put("user", user)
-        jobDetail.getJobDataMap().put("authContext", authContext)
-        jobDetail.getJobDataMap().put("executionId", e.id.toString())
-        if(secureOpts){
-            jobDetail.getJobDataMap().put("secureOpts", secureOpts)
+        def jobDetail = createJobDetailMap(se) + [
+                user        : user,
+                authContext : authContext,
+                executionId : e.id.toString(),
+                retryAttempt: retryAttempt ?: 0
+        ]
+        if (secureOpts) {
+            jobDetail["secureOpts"] = secureOpts
         }
-        if(secureOptsExposed){
-            jobDetail.getJobDataMap().put("secureOptsExposed", secureOptsExposed)
+        if (secureOptsExposed) {
+            jobDetail["secureOptsExposed"] = secureOptsExposed
         }
-        if(retryAttempt){
-            jobDetail.getJobDataMap().put("retryAttempt",retryAttempt)
-        }else{
-            jobDetail.getJobDataMap().put("retryAttempt", 0)
-        }
-
-        def Trigger trigger = TriggerBuilder.newTrigger().startNow().withIdentity(quartzJobName + "Trigger").build()
-
-        if(retryAttempt && retryAttempt > 0 && e.retryDelay){
+        if(retryAttempt > 0 && e.retryDelay){
             long retryTime = Sizes.parseTimeDuration(e.retryDelay,TimeUnit.MILLISECONDS)
             Date now = new Date()
-            now.setTime(now.getTime()+retryTime)
-            trigger = TriggerBuilder.newTrigger().startAt(now)
-                    .withIdentity(quartzJobName + "Trigger").build()
+            jobSchedulerService.scheduleJob(
+                    ident.jobname,
+                    ident.groupname,
+                    jobDetail,
+                    new Date(now.getTime() + retryTime)
+            )
+        }else{
+            jobSchedulerService.scheduleJobNow(ident.jobname, ident.groupname, jobDetail)
         }
-        def nextTime
-        try {
-            log.info("scheduling immediate job run: " + quartzJobName)
-            nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
-        } catch (Exception exc) {
-            throw new RuntimeException("caught exception while adding job: " + exc.getMessage(), exc)
-        }
+
         return e.id
     }
 
@@ -1278,18 +1288,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
 
-    def JobDetail createJobDetail(ScheduledExecution se, String jobname, String jobgroup){
-        def jobDetailBuilder = JobBuilder.newJob(ExecutionJob).withIdentity(jobname,jobgroup)
-                        .withDescription(se.description)
-                .usingJobData("scheduledExecutionId",se.id.toString())
-                .usingJobData("rdeck.base",frameworkService.getRundeckBase())
+    def Map createJobDetailMap(ScheduledExecution se) {
+        Map data = [:]
+        data.put("scheduledExecutionId", se.id.toString())
+        data.put("rdeck.base", frameworkService.getRundeckBase())
 
         if(se.scheduled){
-            jobDetailBuilder.usingJobData("userRoles",se.userRoleList)
+            data.put("userRoles", se.userRoleList)
             if(frameworkService.isClusterModeEnabled()){
-                jobDetailBuilder.usingJobData("serverUUID",frameworkService.getServerUUID())
+                data.put("serverUUID", frameworkService.getServerUUID())
             }
         }
+
+        return data
+    }
+
+    def JobDetail createJobDetail(ScheduledExecution se, String jobname, String jobgroup) {
+        def jobDetailBuilder = JobBuilder.newJob(ExecutionJob)
+                                         .withIdentity(jobname, jobgroup)
+                                         .withDescription(se.description)
+                                         .usingJobData(new JobDataMap(createJobDetailMap(se)))
+
 
         return jobDetailBuilder.build()
     }
