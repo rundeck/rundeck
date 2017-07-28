@@ -306,36 +306,27 @@ class ProjectController extends ControllerBase{
                 Streams.copy(instream,response.outputStream,false)
             }
             projectService.releasePromise(session.user,token)
-        }else{
-            def percentage = projectService.promiseSummary(session.user,token).percent()
-            if(instance) {
-                return withFormat{
-                    html{
-                        render(view: "/menu/wait",model:[token:token,ready:null!=outfile,percentage:percentage,
-                                                         instance: instance, iproject:iproject,])
-                    }
-                    json{
-                        render(contentType:'application/json'){
-                            delegate.'token'=token
-                            delegate.ready=null!=outfile
-                            delegate.'percentage'=percentage
-                        }
+        }else {
+            def percentage = projectService.promiseSummary(session.user, token).percent()
+
+            return withFormat {
+                html {
+                    if(instance) {
+                        render(view: "/menu/wait", model: [token   : token, ready: null != outfile, percentage: percentage,
+                                                           instance: instance, iproject: iproject])
+                    }else{
+                        render(view: "/menu/wait", model: [token   : token, ready: null != outfile, percentage: percentage])
                     }
                 }
-            }else{
-                return withFormat{
-                    html{
-                        render(view: "/menu/wait",model:[token:token,ready:null!=outfile,percentage:percentage])
-                    }
-                    json{
-                        render(contentType:'application/json'){
-                            delegate.'token'=token
-                            delegate.ready=null!=outfile
-                            delegate.'percentage'=percentage
-                        }
+                json {
+                    render(contentType: 'application/json') {
+                        delegate.'token' = token
+                        delegate.ready = null != outfile
+                        delegate.'percentage' = percentage
                     }
                 }
             }
+
         }
     }
 
