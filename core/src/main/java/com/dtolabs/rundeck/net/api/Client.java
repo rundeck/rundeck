@@ -9,6 +9,7 @@ import okhttp3.MediaType;
 import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import org.apache.log4j.Logger;
+import retrofit2.Call;
 import retrofit2.Converter;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -27,17 +28,30 @@ public class Client {
     private OkHttpClient.Builder builder;
     private Retrofit retrofit;
 
-    private static Logger log = Logger.getLogger(Client.class.getName());
+    static Logger projectLogger = Logger.getLogger("org.rundeck.project.events");
     private static final String APPLICATION_ZIP = "application/zip";
     private static final MediaType MEDIA_TYPE_ZIP = MediaType.parse(APPLICATION_ZIP);
 
-    private final long HTTP_TIMEOUT_SEC = 180;
+    private final long HTTP_TIMEOUT_MIN = 10;
 
     public Client(String url, String authToken){
         this.url = url;
         this.authToken = authToken;
         this.builder = new OkHttpClient.Builder();
-        api = createApi();
+        builder.addInterceptor(new StaticHeaderInterceptor("X-Rundeck-Auth-Token", authToken));
+        builder.readTimeout(HTTP_TIMEOUT_MIN, TimeUnit.MINUTES);
+        builder.connectTimeout(HTTP_TIMEOUT_MIN, TimeUnit.MINUTES);
+        builder.writeTimeout(HTTP_TIMEOUT_MIN, TimeUnit.MINUTES);
+
+        retrofit = new Retrofit.Builder()
+                .baseUrl(url)
+                .client(builder.build())
+                .addConverterFactory(JacksonConverterFactory.create()
+                )
+                .build();
+    }
+    public void setApi(RundeckApi api){
+        this.api = api;
     }
 
 
@@ -47,23 +61,28 @@ public class Client {
         ProjectImportStatus response = new ProjectImportStatus();
         response.successful = true;
         RequestBody body = RequestBody.create(MEDIA_TYPE_ZIP, file);
-        Response<ProjectImportStatus> status = api.importProjectArchive(project,preserveUuids? "remove" : "preserve",importExecutions,importConfig,importACL,body).execute();
+        Response<ProjectImportStatus> status = getApi().importProjectArchive(project,preserveUuids? "remove" : "preserve",importExecutions,importConfig,importACL,body).execute();
         if(status.isSuccessful()){
             if(null != status.body()) {
                 response = status.body();
                 if(!response.getResultSuccess()){
-                    log.error(
-                            String.format("Error on import jobs to new project: %d", response.errors.size())
-                    );
-                    log.error(
-                            String.format("Error on import executions to new project: %d", response.executionErrors.size())
-                    );
-                    log.error(
-                            String.format("Error on import acls to new project: %d", response.aclErrors.size())
-                    );
+                    if(null != response.errors) {
+                        projectLogger.error(
+                                String.format("Error on import jobs to new project: %d", response.errors.size())
+                        );
+                    }
+                    if(null != response.executionErrors) {
+                        projectLogger.error(
+                                String.format("Error on import executions to new project: %d", response.executionErrors.size())
+                        );
+                    }if(null != response.aclErrors) {
+                        projectLogger.error(
+                                String.format("Error on import acls to new project: %d", response.aclErrors.size())
+                        );
+                    }
                 }
             }else{
-                log.error("null body on response");
+                projectLogger.error("Null body on response");
                 response.successful=false;
             }
 
@@ -99,20 +118,11 @@ public class Client {
         return response;
     }
 
-    private RundeckApi createApi(){
-        builder.addInterceptor(new StaticHeaderInterceptor("X-Rundeck-Auth-Token", authToken));
-        builder.readTimeout(HTTP_TIMEOUT_SEC, TimeUnit.SECONDS);
-        builder.connectTimeout(HTTP_TIMEOUT_SEC, TimeUnit.SECONDS);
-        builder.writeTimeout(HTTP_TIMEOUT_SEC, TimeUnit.SECONDS);
-
-        retrofit = new Retrofit.Builder()
-                .baseUrl(url)
-                .client(builder.build())
-                .addConverterFactory(JacksonConverterFactory.create()
-                )
-                .build();
-
-        return retrofit.create(RundeckApi.class);
+    private RundeckApi getApi(){
+        if(api == null){
+            api = retrofit.create(RundeckApi.class);
+        }
+        return api;
     }
 
 }

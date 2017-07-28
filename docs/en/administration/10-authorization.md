@@ -134,7 +134,7 @@ for:
   project:
     - match:
         name: '.*'
-      allow: [read,import,export,configure,delete,admin] # allow full access of all projects or use 'admin'
+      allow: [read,import,export,configure,delete,promote,admin] # allow full access of all projects or use 'admin'
   project_acl:
     - match:
         name: '.*'
@@ -227,6 +227,7 @@ aclpolicy:
     * Importing archives `import`
     * Exporting archives `export`
     * Deleting executions `delete_execution`
+    * Export project to another Rundeck instance `promote`
     * Full access `admin`
 * Managing Project level ACL Policies on specific projects by name (actions on a `project_acl` type)
     * Reading `read`

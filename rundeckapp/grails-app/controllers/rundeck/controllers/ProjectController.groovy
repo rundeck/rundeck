@@ -195,8 +195,8 @@ class ProjectController extends ControllerBase{
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAny(authContext,
                         frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]),
-                AuthConstants.ACTION_EXPORT, 'Project',project)) {
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_PROMOTE]),
+                AuthConstants.ACTION_PROMOTE, 'Project',project)) {
             return
         }
         def project1 = frameworkService.getFrameworkProject(project)

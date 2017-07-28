@@ -135,7 +135,14 @@
                                     class="btn btn-default"
                     />
                     <button type="submit" class="btn btn-success"><g:message code="export.archive"/></button>
-                    <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-success"><g:message code="export.another.instance"/></button>
+                    <auth:resourceAllowed
+                            action="${[AuthConstants.ACTION_PROMOTE, AuthConstants.ACTION_ADMIN]}"
+                            context='application'
+                            type="project"
+                            name="${params.project}">
+
+                        <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-success"><g:message code="export.another.instance"/></button>
+                    </auth:resourceAllowed>
                 </div>
             </div>
 

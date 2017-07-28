@@ -33,6 +33,7 @@ import grails.async.Promises
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
+import org.apache.log4j.Logger
 import org.springframework.beans.factory.InitializingBean
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import org.springframework.transaction.TransactionStatus
@@ -72,6 +73,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
     def authorizationService
     def scmService
     static transactional = false
+
+    static Logger projectLogger = Logger.getLogger("org.rundeck.project.events")
 
     private exportJob(ScheduledExecution job, Writer writer)
         throws ProjectServiceException {
@@ -506,6 +509,7 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
             boolean preserveUUID
     )
     {
+        projectLogger.info("Begin export ["+ project.name + "] to ["+instanceUrl+"]/"+project)
         String token = UUID.randomUUID().toString()
         def summary=new ExportFileProgress()
         def request=new ExportFileRequest(summary:summary,token:token)
@@ -519,10 +523,10 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
                     request.result = exportProjectToInstance(project, framework, summary, aclReadAuth, options,
                                     iProject, apiToken,instanceUrl,preserveUUID)
                     request.file = request.result.file
-                    log.debug("Async export request with token ${token} finished successfully")
+                    projectLogger.info("Export ["+ project.name + "] to ["+instanceUrl+"]/"+project + " succeeded")
                 }
             } catch (Throwable t) {
-                log.error("Async export request with token ${token} failed: ${t}", t)
+                projectLogger.info("Export of ${project.name} failed: ${t}", t)
                 request.exception = t
             }
         }
