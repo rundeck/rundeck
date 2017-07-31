@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.net.model.ProjectImportStatus
+import com.dtolabs.rundeck.net.api.Client
 import com.dtolabs.rundeck.util.XmlParserUtil
 import com.dtolabs.rundeck.util.ZipBuilder
 import com.dtolabs.rundeck.util.ZipReader
@@ -31,6 +33,7 @@ import grails.async.Promises
 import groovy.transform.ToString
 import groovy.xml.MarkupBuilder
 import org.apache.commons.io.FileUtils
+import org.apache.log4j.Logger
 import org.springframework.beans.factory.InitializingBean
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import org.springframework.transaction.TransactionStatus
@@ -70,6 +73,8 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
     def authorizationService
     def scmService
     static transactional = false
+
+    static Logger projectLogger = Logger.getLogger("org.rundeck.project.events")
 
     private exportJob(ScheduledExecution job, Writer writer)
         throws ProjectServiceException {
@@ -491,6 +496,44 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
         asyncExportRequests.put(ident+'/'+token,request)
         token
     }
+
+    def exportProjectToInstanceAsync(
+            IRundeckProject project,
+            Framework framework,
+            String ident,
+            boolean aclReadAuth,
+            ArchiveOptions options,
+            String iProject,
+            String apiToken,
+            String instanceUrl,
+            boolean preserveUUID
+    )
+    {
+        projectLogger.info("Begin export ["+ project.name + "] to ["+instanceUrl+"]/"+project)
+        String token = UUID.randomUUID().toString()
+        def summary=new ExportFileProgress()
+        def request=new ExportFileRequest(summary:summary,token:token)
+
+        def p = Promises.task {
+            try {
+                ScheduledExecution.withNewSession {
+                    request.project = iProject
+                    request.apitoken = apiToken
+                    request.instance = instanceUrl
+                    request.result = exportProjectToInstance(project, framework, summary, aclReadAuth, options,
+                                    iProject, apiToken,instanceUrl,preserveUUID)
+                    request.file = request.result.file
+                    projectLogger.info("Export ["+ project.name + "] to ["+instanceUrl+"]/"+project + " succeeded")
+                }
+            } catch (Throwable t) {
+                projectLogger.info("Export of ${project.name} failed: ${t}", t)
+                request.exception = t
+            }
+        }
+        //store in map
+        asyncExportRequests.put(ident+'/'+token,request)
+        token
+    }
     /**
      * Attempt to get the request from the cache, or return null if it is not available
      * @param key key
@@ -529,6 +572,15 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
      */
     def File promiseReady(String ident,String token){
         getRequest(ident+'/'+token)?.file
+    }
+    /**
+     *
+     * @param ident
+     * @param token
+     * @return result request
+     */
+    def ImportResponse promiseResult(String ident,String token){
+        getRequest(ident+'/'+token)?.result
     }
     /**
      *
@@ -582,6 +634,19 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
         }
         outfile.deleteOnExit()
         outfile
+    }
+    def exportProjectToInstance(IRundeckProject project, Framework framework, ProgressListener listener=null,
+                                boolean aclReadAuth = false, ArchiveOptions options,String iProject,
+                                String apiToken, String instanceUrl,boolean preserveUUID
+    ) throws ProjectServiceException{
+        File file = exportProjectToFile(project,framework,listener,aclReadAuth,options)
+        Client client = new Client(instanceUrl,apiToken)
+        ProjectImportStatus ret = client.importProjectArchive(iProject,file,true, options.executions,
+                    options.configs,options.acls)
+        ImportResponse response = new ImportResponse(file:file,errors: ret.errors, ok:ret.getResultSuccess(),
+                executionErrors:ret.executionErrors, aclErrors:ret.aclErrors)
+        listener?.done()
+        response
     }
     /**
      * Export the project to an outputstream
@@ -1347,6 +1412,19 @@ class ArchiveRequest {
     volatile Throwable exception
     ProgressSummary summary
     volatile File file
+    ImportResponse result
+}
+class ExportFileRequest extends ArchiveRequest{
+    String instance
+    String project
+    String apitoken
+}
+class ImportResponse{
+    volatile File file
+    public boolean ok
+    public List<String> errors
+    public List<String> executionErrors
+    public List<String> aclErrors
 }
 interface ProgressListener {
     void total(String key,long total)
@@ -1385,6 +1463,17 @@ class ArchiveRequestProgress implements ProgressSummary,ProgressListener{
             a + ( ( totals[k]>0 ? ( (counts[k]!=null?counts[k]:0d)/totals[k] ) : 1d) / totals.size() )
         }
         return Math.floor(100*sum)
+    }
+}
+
+class ExportFileProgress extends ArchiveRequestProgress{
+    @Override
+    int percent() {
+        Double sum=totals.keySet().inject(0){a,k->
+            a + ( ( totals[k]>0 ? ( (counts[k]!=null?counts[k]:0d)/totals[k] ) : 1d) / totals.size() )
+        }
+        //50% generate file, 100% result api call
+        return Math.floor(50*sum)
     }
 }
 

@@ -134,9 +134,108 @@
                                     value="${g.message(code:'button.action.Cancel',default:'Cancel')}"
                                     class="btn btn-default"
                     />
-                    <button type="submit" class="btn btn-success"><g:message code="button.Export.title"/></button>
+                    <button type="submit" class="btn btn-success"><g:message code="export.archive"/></button>
+                    <auth:resourceAllowed
+                            action="${[AuthConstants.ACTION_PROMOTE, AuthConstants.ACTION_ADMIN]}"
+                            context='application'
+                            type="project"
+                            name="${params.project}">
+
+                        <button type="button" data-toggle="modal" data-target="#exportModal" class="btn btn-success"><g:message code="export.another.instance"/></button>
+                    </auth:resourceAllowed>
                 </div>
             </div>
+
+
+
+
+
+
+            <!-- Generate Modal -->
+            <div class="modal fade clearconfirm" id="exportModal" tabindex="-1" role="dialog"
+                 aria-labelledby="gentokenLabel"
+                 aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4 class="modal-title" id="exportLabel">
+                                <g:message code="export.another.instance"/>
+                            </h4>
+                        </div>
+
+                        <div class="modal-body" id="userTokenGenerateForm">
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <div class="form">
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label">
+                                                <label for="url"><g:message code="export.another.instance.url"/></label>
+                                            </div>
+
+                                            <div class="col-sm-10">
+
+                                                <input type='text' name="url" value=""
+                                                       id="url" class="form-control"/>
+                                                <span class="help-block">
+                                                    <g:message code="export.another.instance.url.help"/>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label">
+                                                <label for="apitoken"><g:message code="export.another.instance.token"/></label>
+                                            </div>
+
+                                            <div class="col-sm-10">
+
+                                                <input type='password' name="apitoken" value=""
+                                                       id="apitoken" class="form-control"/>
+                                                <span class="help-block">
+                                                    <g:message code="export.another.instance.token.help"/>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label">
+                                                <label for="targetproject"><g:message code="export.another.instance.project"/></label>
+                                            </div>
+
+                                            <div class="col-sm-10">
+
+                                                <input type='text' name="targetproject" value=""
+                                                       id="targetproject" class="form-control"/>
+                                                <span class="help-block">
+                                                    <g:message code="export.another.instance.project.help"/>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="form-group">
+                                            <div class="col-sm-2 control-label">
+                                                <label for="preserveuuid"><g:message code="project.archive.import.jobUuidOption.preserve.label"/></label>
+                                            </div>
+
+                                            <div class="col-sm-10">
+
+                                                <input type='checkbox' name="preserveuuid" value="preserveuuid"
+                                                       id="preserveuuid" class="form-control"/>
+                                                <span class="help-block">
+                                                    <g:message code="project.archive.import.jobUuidOption.preserve.description"/>
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <g:actionSubmit action="exportInstancePrepare" class="small btn btn-success" value="${message(code:'export.another.instance.go')}" />
+                        </div>
+                    </div><!-- /.modal-content -->
+                </div><!-- /.modal-dialog -->
+            </div><!-- /.modal -->
         </g:form>
     </div>
 </div>

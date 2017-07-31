@@ -147,6 +147,72 @@ class ProjectController extends ControllerBase{
         def token = projectService.exportProjectToFileAsync(project1, framework, session.user, aclReadAuth, options)
         return redirect(action:'exportWait',params: [token:token,project:archiveParams.project])
     }
+
+    public def exportInstancePrepare(ProjectArchiveParams archiveParams){
+        def error = 0
+        def msg = 'In order to export'
+        if(!params.url){
+            error++
+            msg += ", Server URL"
+        }
+        if(!params.apitoken){
+            error++
+            msg += ", API Token"
+        }
+        if(!params.targetproject){
+
+            msg += ", Target Project"
+            error++
+        }
+        if (error>0) {
+            if(error == 1){
+                msg+=" is required."
+            }else{
+                msg+=" are required."
+            }
+            flash.error = msg
+            return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
+        }
+        params.instance = params.url
+        if (archiveParams.hasErrors()) {
+            flash.errors = archiveParams.errors
+            return redirect(controller: 'menu', action: 'projectExport', params: [project: params.project])
+        }
+        def project=params.project
+        if (!project){
+            return renderErrorView("Project parameter is required")
+        }
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'index', params: [project: params.project])
+        }
+        Framework framework = frameworkService.getRundeckFramework()
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
+
+        if (notFoundResponse(frameworkService.existsFrameworkProject(project), 'Project', project)) {
+            return
+        }
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(authContext,
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_PROMOTE]),
+                AuthConstants.ACTION_PROMOTE, 'Project',project)) {
+            return
+        }
+        def project1 = frameworkService.getFrameworkProject(project)
+
+        //request token
+        def aclReadAuth=frameworkService.authorizeApplicationResourceAny(authContext,
+                frameworkService.authResourceForProjectAcl(project),
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN])
+        ArchiveOptions options = archiveParams.toArchiveOptions()
+        def token = projectService.exportProjectToInstanceAsync(project1, framework, session.user, aclReadAuth, options
+                ,params.targetproject,params.apitoken,params.url,params.preserveuuid?true:false)
+        return redirect(action:'exportWait',params: [token:token,project:archiveParams.project,instance:params.instance, iproject:params.targetproject])
+
+    }
+
+
     /**
      * poll for archive export process completion using a token, responds in html or json
      * @param token
@@ -154,6 +220,8 @@ class ProjectController extends ControllerBase{
      */
     public def exportWait(){
         def token = params.token
+        def instance = params.instance
+        def iproject = params.iproject
         if (!token) {
             return withFormat {
                 html {
@@ -203,6 +271,28 @@ class ProjectController extends ControllerBase{
                 }
             }
         }
+        if(instance){
+            def result = projectService.promiseResult(session.user, token)
+            if (result && !result.ok) {
+                def errorList = []
+                errorList.addAll(result.errors?:[])
+                errorList.addAll(result.executionErrors?:[])
+                errorList.addAll(result.aclErrors?:[])
+                return withFormat{
+                    html{
+                        request.errors = errorList
+                        response.status = HttpServletResponse.SC_INTERNAL_SERVER_ERROR
+                        return render(view: "/common/error",model:[:])
+                    }
+                    json{
+                        render(contentType:'application/json'){
+                            delegate.'token'=token
+                            delegate.'errors'=errorList
+                        }
+                    }
+                }
+            }
+        }
         File outfile = projectService.promiseReady(session.user,token)
         if(null!=outfile && params.download=='true'){
             SimpleDateFormat dateFormater = new SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US);
@@ -216,17 +306,23 @@ class ProjectController extends ControllerBase{
                 Streams.copy(instream,response.outputStream,false)
             }
             projectService.releasePromise(session.user,token)
-        }else{
-            def percentage = projectService.promiseSummary(session.user,token).percent()
-            return withFormat{
-                html{
-                    render(view: "/menu/wait",model:[token:token,ready:null!=outfile,percentage:percentage])
+        }else {
+            def percentage = projectService.promiseSummary(session.user, token).percent()
+
+            return withFormat {
+                html {
+                    if(instance) {
+                        render(view: "/menu/wait", model: [token   : token, ready: null != outfile, percentage: percentage,
+                                                           instance: instance, iproject: iproject])
+                    }else{
+                        render(view: "/menu/wait", model: [token   : token, ready: null != outfile, percentage: percentage])
+                    }
                 }
-                json{
-                    render(contentType:'application/json'){
-                        delegate.'token'=token
-                        delegate.ready=null!=outfile
-                        delegate.'percentage'=percentage
+                json {
+                    render(contentType: 'application/json') {
+                        delegate.'token' = token
+                        delegate.ready = null != outfile
+                        delegate.'percentage' = percentage
                     }
                 }
             }
