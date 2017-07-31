@@ -1365,7 +1365,7 @@ of steps of different types.
 
 When creating a new Job definition, the Workflow form will be set with
 defaults and have no workflow steps defined. The workflow editor will
-have a form open asking to choose a stype type to add. 
+have a form open asking to choose a step type to add.
 
 ![Add a step](../figures/fig0402.png)
 
