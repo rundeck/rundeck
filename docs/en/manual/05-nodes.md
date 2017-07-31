@@ -112,7 +112,7 @@ The saved filters become availale in the Filters menu in in othe parts rundeck, 
 
 ## Node actions
 
-Often times you are browsing and filtering nodes because you want do do something with the list. The Node Actions menu contains links to 
+Often times you are browsing and filtering nodes because you want to do something with the list. The Node Actions menu contains links to 
 
 * Run a command. Choosing this menu item will forward your browser to the Commands page.
 * Create a job. Choosing this menu item will forward you to the Job create page and enter the filter expression in the edit form.
@@ -121,7 +121,7 @@ Often times you are browsing and filtering nodes because you want do do somethin
 ![Node actions menu](../figures/fig0204-f.png)
 
 
-Users that don't have sufficeint privileges granted by the ACL will show that menu item disabled.
+Users that don't have sufficient privileges granted by the ACL will show that menu item disabled.
 
 The example below shows that the user can't create Job for those nodes.
 
