@@ -87,6 +87,7 @@ class ScheduledExecutionController  extends ControllerBase{
     public static final String ONSUCCESS_TRIGGER_NAME = 'onsuccess'
     public static final String ONFAILURE_TRIGGER_NAME = 'onfailure'
     public static final String ONSTART_TRIGGER_NAME = 'onstart'
+    public static final String OVERAVGDURATION_TRIGGER_NAME = 'avgduration'
     public static final String EMAIL_NOTIFICATION_TYPE = 'email'
     public static final String WEBHOOK_NOTIFICATION_TYPE = 'url'
     public static final ArrayList<String> NOTIFICATION_ENABLE_FIELD_NAMES = [
