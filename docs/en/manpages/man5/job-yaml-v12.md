@@ -130,7 +130,27 @@ In addition, these optional entries can be present:
 
     * An integer number indicating the maximum retries
     * `${option.retry}` reference to a job option value
-    
+
+   Alternatively the retry can be set with delay between retries:
+   
+    * `120` - indicates 120 seconds
+    * `6h 30m` indicates 6 hours and 30 minutes
+    * `${option.delay}` reference to a job option value
+   
+   Example of retry with delay:
+
+~~~~~~~~ {.yaml}
+  retry:
+      delay: 1h1m1s
+      retry: '${option.retry}'
+~~~~~~~~ 
+
+   Example of simple retry:
+
+~~~~~~~~ {.yaml}
+  retry: ${option.retry}
+~~~~~~~~ 
+
 `loglimit`
 
 :    An optional logging limit.

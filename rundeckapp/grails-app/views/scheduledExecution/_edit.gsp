@@ -1070,7 +1070,7 @@ function getCurSEID(){
             <label for="schedJobRetry"><g:message code="scheduledExecution.property.retry.label" default="Retry"/></label>
         </div>
 
-        <div class="${fieldColHalfSize}">
+        <div class="${fieldColShortSize}">
 
             <input type='text' name="retry" value="${enc(attr:scheduledExecution?.retry)}"
                    id="schedJobRetry" class="form-control"/>
@@ -1082,6 +1082,21 @@ function getCurSEID(){
             </g:hasErrors>
             <span class="help-block">
                 <g:message code="scheduledExecution.property.retry.description"/>
+            </span>
+        </div>
+
+        <label class="${labelColSize} control-label text-form-label">
+            <g:message code="scheduledExecution.property.retry.delay.label" default="Timeout"/>
+        </label>
+
+        <div class="${fieldColShortSize}">
+
+            <input type='text' name="retryDelay" value="${enc(attr:scheduledExecution?.retryDelay)}"
+                   id="schedJobRetryDelay" class="form-control"/>
+
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.retry.delay.description"/>
             </span>
         </div>
     </div>

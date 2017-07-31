@@ -171,6 +171,7 @@ class ScheduledExecution extends ExecutionContext {
         options lazy: false
         timeout(type: 'text')
         retry(type: 'text')
+        retryDelay(type: 'text')
     }
 
     static namedQueries = {
@@ -228,7 +229,10 @@ class ScheduledExecution extends ExecutionContext {
         if(timeout){
             map.timeout=timeout
         }
-        if(retry){
+
+        if(retry && retryDelay){
+            map.retry = [retry:retry, delay: retryDelay]
+        }else if(retry){
             map.retry=retry
         }
         if(orchestrator){
@@ -333,8 +337,14 @@ class ScheduledExecution extends ExecutionContext {
             se.uuid = data.uuid
         }
         se.timeout = data.timeout?data.timeout.toString():null
+        if(data.retry instanceof Map){
+            se.retry = data.retry.retry?.toString()
+            se.retryDelay = data.retry.delay?.toString()
+        }else{
+            se.retry = data.retry?.toString()
+            se.retryDelay = data.retryDelay?.toString()
+        }
         se.timeZone = data.timeZone?data.timeZone.toString():null
-        se.retry = data.retry?data.retry.toString():null
         if(data.options){
             TreeSet options=new TreeSet()
             if(data.options instanceof Map) {

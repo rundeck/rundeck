@@ -1128,4 +1128,90 @@ inside]]></aproperty>
         ''                              | false
 
     }
+
+
+    @Unroll
+    def "decode retry"() {
+        given:
+        def xml = """<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+    """+text+"""
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+      </command>
+    </sequence>
+
+  </job>
+</joblist>
+"""
+        when:
+        def result = JobsXMLCodec.decode(xml.toString())
+
+        then:
+        result.size() == 1
+        result[0].jobName == 'test job 1'
+        result[0].retry == retryVal
+        result[0].retryDelay == delayVal
+
+        where:
+        text                            | retryVal | delayVal
+        '<retry>2</retry>'              | '2'      | null
+        '<retry delay="1h">2</retry>'   | '2'      | '1h'
+        ''                              | null     | null
+
+    }
+
+
+    @Unroll
+    def "encode with retry"() {
+        given:
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [new CommandExec(
+                                        [adhocRemoteString: 'test buddy', argString: ' -monkey cheese ' +
+                                                '-particle']
+                                )],
+                        ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
+                        retry:retry,
+                        retryDelay: delay
+                )
+        ]
+        when:
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+
+        then:
+        null != xmlstr
+        xmlstr instanceof String
+        if(delay){
+            xmlstr.contains('delay='+delay)
+        }else{
+            !xmlstr.contains('delay=')
+        }
+        def doc = parser.parse(new StringReader(xmlstr))
+        doc.name() == 'joblist'
+        doc.job.size() == 1
+        doc.job[0].name[0].text() == 'test job 1'
+        doc.job[0].retry == retry
+
+        where:
+        retry  | delay
+        '2'    | '1h'
+        '2'    | null
+    }
 }
