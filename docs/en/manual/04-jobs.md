@@ -1682,7 +1682,7 @@ Option context variables are referred to as `option.NAME` (more about [Job Optio
 
 ### Context Variable Usage
 
-Context variables can be used in a few ways in a Job step, with slightly different sytanxes:
+Context variables can be used in a few ways in a Job step, with slightly different syntaxes:
 
 * Commands, Script Arguments and Job Reference Arguments
 
