@@ -1365,7 +1365,7 @@ of steps of different types.
 
 When creating a new Job definition, the Workflow form will be set with
 defaults and have no workflow steps defined. The workflow editor will
-have a form open asking to choose a stype type to add. 
+have a form open asking to choose a step type to add.
 
 ![Add a step](../figures/fig0402.png)
 
@@ -1649,7 +1649,7 @@ Node context variables:
 
 * `node.name`: Name of the Node being executed on
 * `node.hostname`: Hostname of the Node
-* `node.username`: Usernae of the remote user
+* `node.username`: Username of the remote user
 * `node.description`: Description of the node
 * `node.tags`: Comma-separated list of tags
 * `node.os-*`: OS properties of the Node: `name`,`version`,`arch`,`family`
@@ -1682,7 +1682,7 @@ Option context variables are referred to as `option.NAME` (more about [Job Optio
 
 ### Context Variable Usage
 
-Context variables can be used in a few ways in a Job step, with slightly different sytanxes:
+Context variables can be used in a few ways in a Job step, with slightly different syntaxes:
 
 * Commands, Script Arguments and Job Reference Arguments
 
