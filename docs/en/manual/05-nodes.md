@@ -77,7 +77,7 @@ Rundeck  node filters let you match Nodes based on a pattern like "tags" or any 
 ![Filtered nodes](../figures/fig0204-c.png)
 
 1. Filter expression
-2. Columned labeled by attribute name
+2. Column labeled by attribute name
 
 
 ### Filter expression syntax
