@@ -31,6 +31,9 @@
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
+
+    <asset:i18n locale="${session[org.springframework.web.servlet.i18n.SessionLocaleResolver.LOCALE_SESSION_ATTRIBUTE_NAME]}" />
+
     <asset:stylesheet href="rundeck.css"/>
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="non_responsive.css"/>

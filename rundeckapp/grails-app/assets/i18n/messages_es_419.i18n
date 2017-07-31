@@ -1,0 +1,6 @@
+# messages_es_419.i18n
+# Client-side i18n, Spanish.
+#
+
+@import _messages
+

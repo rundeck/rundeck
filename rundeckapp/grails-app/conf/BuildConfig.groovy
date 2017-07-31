@@ -95,7 +95,8 @@ grails.project.dependency.resolution = {
         compile ':twitter-bootstrap:3.3.2.1'
         compile (':asset-pipeline:2.7.2')
         compile ':cache:1.1.8'
-        compile ":platform-core:1.0.0"
+        compile ':platform-core:1.0.0'
+        compile ':i18n-asset-pipeline:1.0.6'
         runtime (':hibernate4:4.3.6.1')
         runtime ':mail:1.0.7', ':quartz:1.0.2', ':executor:0.3'
 
