@@ -103,7 +103,7 @@ The example below shows the dialog to confirm saving a new filter.
 
 1. Filter name
 
-The saved filters become availale in the Filters menu in in othe parts rundeck, like in the Nodes page, when creating Jobs or running Commands.
+The saved filters become available in the Filters menu in in othe parts rundeck, like in the Nodes page, when creating Jobs or running Commands.
 
 
 ![Saved Filters menu](../figures/fig0204-e.png)
