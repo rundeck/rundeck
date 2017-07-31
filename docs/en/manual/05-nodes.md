@@ -23,7 +23,7 @@ The screenshot above shows the elements of the Nodes page user interface.
 
 1. Filter - Search expression using tags and attribute patterns. The filter menu also contains an item to list all nodes in the project.
 2. Tags - Category or classification of Nodes. Each tag shows the number of nodes that reference that tag. You can click the tag name and list other nodes with that tag.
-3. Node detail - Clicking on the node name will show a diaglog that lets you view the attributes and values for that Node.
+3. Node detail - Clicking on the node name will show a dialogue that lets you view the attributes and values for that Node.
 4. Attributes - Node attributes describe the characteristics or state of a Node
 5. Node actions - Run a command or create a Job for the nodes matching the filter.
 6. Single node view - Click the arrow next to the node name to drill down to a single node.
