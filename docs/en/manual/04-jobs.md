@@ -1649,7 +1649,7 @@ Node context variables:
 
 * `node.name`: Name of the Node being executed on
 * `node.hostname`: Hostname of the Node
-* `node.username`: Usernae of the remote user
+* `node.username`: Username of the remote user
 * `node.description`: Description of the node
 * `node.tags`: Comma-separated list of tags
 * `node.os-*`: OS properties of the Node: `name`,`version`,`arch`,`family`
