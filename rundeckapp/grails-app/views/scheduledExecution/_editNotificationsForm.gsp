@@ -116,3 +116,20 @@
                   adminauth: adminauth,
                   serviceName: ServiceNameConstants.Notification
           ]}"/>
+<g:render template="/scheduledExecution/editNotificationsTriggerForm"
+          model="${[
+                  isVisible: (notifications|| params.notified == 'true'),
+                  trigger: ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME,
+                  triggerEmailCheckboxName: ScheduledExecutionController.NOTIFY_ONSTART_EMAIL,
+                  triggerEmailRecipientsName: ScheduledExecutionController.NOTIFY_START_RECIPIENTS,
+                  triggerEmailSubjectName: ScheduledExecutionController.NOTIFY_START_SUBJECT,
+                  triggerUrlCheckboxName: ScheduledExecutionController.NOTIFY_ONSTART_URL,
+                  triggerUrlFieldName: ScheduledExecutionController.NOTIFY_START_URL,
+                  isEmail: isStart,
+                  isUrl: isStartUrl,
+                  defEmail: defStart,
+                  defUrl: defStartUrl,
+                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == ScheduledExecutionController.ONSTART_TRIGGER_NAME },
+                  adminauth: adminauth,
+                  serviceName: ServiceNameConstants.Notification
+          ]}"/>
