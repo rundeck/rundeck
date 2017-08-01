@@ -108,7 +108,6 @@ class Execution extends ExecutionContext {
         //mapping overrides superclass, so we need to relist these
         user column: "rduser"
         argString type: 'text'
-        logFileStorageRequest fetch: 'join'
 
         failedNodeList type: 'text'
         succeededNodeList type: 'text'
