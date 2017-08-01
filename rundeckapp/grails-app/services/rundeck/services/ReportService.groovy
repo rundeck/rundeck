@@ -218,6 +218,7 @@ class ReportService  {
                 stat: 'status',
                 reportId: 'reportId',
                 jobId: 'jcJobId',
+                proj: 'ctxProject',
         ]
         def txtfilters = [
                 user: 'author',
@@ -243,9 +244,12 @@ class ReportService  {
                         ilike(val, '%' + query["${key}Filter"] + '%')
                     }
                 }
+
                 if(fixCancel){
                     query.statFilter='fail'
                     isNotNull('abortedByUser')
+                }else if(query.statFilter=='fail' && !query.abortedByFilter){
+                    isNull('abortedByUser')
                 }
 
                 eqfilters.each { key, val ->
@@ -353,6 +357,7 @@ class ReportService  {
                 stat: 'status',
                 reportId: 'reportId',
                 jobId: 'jcJobId',
+                proj: 'ctxProject',
         ]
         def txtfilters = [
                 user: 'author',
