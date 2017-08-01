@@ -218,7 +218,6 @@ class ReportService  {
                 stat: 'status',
                 reportId: 'reportId',
                 jobId: 'jcJobId',
-                proj: 'ctxProject',
         ]
         def txtfilters = [
                 user: 'author',
@@ -233,6 +232,8 @@ class ReportService  {
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
 
+        //in cancel case the real stat is failed but AbortedByUser != null
+        boolean fixCancel = (query.statFilter=='cancel' && !query.abortedByFilter)
 
         delegate.with {
 
@@ -241,6 +242,10 @@ class ReportService  {
                     if (query["${key}Filter"]) {
                         ilike(val, '%' + query["${key}Filter"] + '%')
                     }
+                }
+                if(fixCancel){
+                    query.statFilter='fail'
+                    isNotNull('abortedByUser')
                 }
 
                 eqfilters.each { key, val ->
@@ -339,13 +344,15 @@ class ReportService  {
 
             }
         }
+        if(fixCancel){
+            query.statFilter='cancel'
+        }
     }
     def getExecutionReports(ExecQuery query, boolean isJobs) {
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
                 jobId: 'jcJobId',
-                proj: 'ctxProject',
         ]
         def txtfilters = [
                 user: 'author',
