@@ -210,7 +210,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             this((ExecutionContext) original);
             if (null != original) {
                 ctx.stepNumber = original.getStepNumber();
-                ctx.stepContext = original.getStepContext();
+                ctx.stepContext = null != original.getStepContext() ? new ArrayList<>(original.getStepContext()) : null;
                 ctx.flowControl = original.getFlowControl();
             }
         }

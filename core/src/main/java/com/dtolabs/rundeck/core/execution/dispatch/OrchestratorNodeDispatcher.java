@@ -54,8 +54,6 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
  * @author Ashley Taylor
  */
 public class OrchestratorNodeDispatcher implements NodeDispatcher {
-    public static final String ORCHESTRATOR_DATA = "orchestratorData";
-    
     private Framework framework;
 
     public OrchestratorNodeDispatcher(Framework framework) {
@@ -119,8 +117,7 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
             + context.getThreadCount()
             + ")");
         //to not have 2 orchestrator within one run when it processed the inner node
-        Map<String,String> orchestratorData = new HashMap<>();
-        context.getDataContext().put(ORCHESTRATOR_DATA, orchestratorData);
+
         boolean success = false;
         final HashMap<String, NodeStepResult> resultMap = new HashMap<>();
         final HashMap<String, NodeStepResult> failureMap = new HashMap<>();
