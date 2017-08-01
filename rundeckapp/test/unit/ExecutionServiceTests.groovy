@@ -1308,10 +1308,15 @@ class ExecutionServiceTests  {
         assertEquals(2,Execution.findAll().size())
         assertEquals(1,Execution.findAllByDateCompletedAndServerNodeUUID(null, null).size())
         testService.cleanupRunningJobs((String)null)
-        exec1.refresh()
+
+        Execution.withSession { session ->
+            session.flush()
+            exec1.refresh()
+            exec2.refresh()
+        }
+
         assertNotNull(exec1.dateCompleted)
         assertEquals("false", exec1.status)
-        exec2.refresh()
         assertNull(exec2.dateCompleted)
         assertEquals(null, exec2.status)
 
@@ -1346,10 +1351,14 @@ class ExecutionServiceTests  {
         assertNull(exec2.status)
 
         testService.cleanupRunningJobs(uuid)
-        exec1.refresh()
+        Execution.withSession { session ->
+            session.flush()
+            exec1.refresh()
+            exec2.refresh()
+        }
+
         assertNull(exec1.dateCompleted)
         assertNull(exec1.status)
-        exec2.refresh()
         assertNotNull(exec2.dateCompleted)
         assertEquals("false", exec2.status)
     }
@@ -1371,7 +1380,12 @@ class ExecutionServiceTests  {
         assertEquals(ExecutionService.EXECUTION_SCHEDULED, exec1.status)
 
         testService.cleanupRunningJobs(uuid)
-        exec1.refresh()
+
+        Execution.withSession { session ->
+            session.flush()
+            exec1.refresh()
+        }
+
         assertNull(exec1.dateCompleted)
         assertEquals(ExecutionService.EXECUTION_SCHEDULED, exec1.status)
     }
