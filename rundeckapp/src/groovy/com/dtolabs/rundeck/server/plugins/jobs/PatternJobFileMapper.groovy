@@ -44,7 +44,7 @@ class PatternJobFileMapper implements JobFileMapper{
         ])
     }
     private String substitute(String key,Map data){
-        DataContextUtils.replaceDataReferences(key,
+        DataContextUtils.replaceDataReferencesInString(key,
                                                DataContextUtils.addContext(
                                                        "job",
                                                        data,

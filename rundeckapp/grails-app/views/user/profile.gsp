@@ -57,45 +57,48 @@
 <body>
 
 <div class="row">
+    <g:render template="/common/messages"/>
     <div class="col-sm-12">
-        <h3>
-            <g:link action="profile" params="[login: user.login]">
-                <g:icon name="user"/>
-                ${user.login}
-            </g:link>
+        <div class="panel panel-default">
 
-            <g:link action="edit"
-                    params="[login: user.login]"
-                    class="small btn btn-link btn-sm"
-                    title="${message(code: 'userController.action.edit.description', args: [user.login])}">
-                <g:icon name="edit"/>
-                <g:message code="button.Edit.label" />
-            </g:link>
-        </h3>
-    </div>
+            <div class="panel-heading">
+                <span class="panel-title">
+                    <g:link action="profile" params="[login: user.login]">
+                        <g:icon name="user"/>
+                        ${user.login}
+                    </g:link>
 
-    <div class="col-sm-12">
-        <div class="help-block">
-            <g:message code="userController.page.profile.description" />
+                    <g:link action="edit"
+                            params="[login: user.login]"
+                            class="small btn btn-link btn-sm"
+                            title="${message(code: 'userController.action.edit.description', args: [user.login])}">
+                        <g:icon name="edit"/>
+                        <g:message code="button.Edit.label"/>
+                    </g:link>
+                </span>
+                <span class="pull-right">
+                    <label for="language"><g:message code="user.profile.language.label"/></label>
+                    <select name="language" id="language" onchange="changeLanguage();">
+                        <option value="">English</option>
+                        <option value="es_419">Español</option>
+                        <option value="zh_cn">简体中文</option>
+                    </select>
+                </span>
+            </div>
+            <div class="panel-body">
+
+                <div class="help-block">
+                    <g:message code="userController.page.profile.description"/>
+                </div>
+                <div class="pageBody" id="userProfilePage">
+                    <g:jsonToken id='api_req_tokens' url="${request.forwardURI}"/>
+                    <tmpl:user user="${user}" edit="${true}"/>
+                </div>
+            </div>
         </div>
     </div>
-
-    <div class="col-sm-12">
-        <span class="pull-right">
-            <label for="language"><g:message code="user.profile.language.label"/></label>
-            <select name="language" id="language" onchange="changeLanguage();">
-                <option value="">English</option>
-                <option value="es_419">Español</option>
-            </select>
-        </span>
-    </div>
 </div>
 
-<div class="pageBody" id="userProfilePage">
-    <g:render template="/common/messages"/>
-    <g:jsonToken id='api_req_tokens' url="${request.forwardURI}"/>
-    <tmpl:user user="${user}" edit="${true}"/>
-</div>
 </body>
 </html>
 

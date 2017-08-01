@@ -476,7 +476,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         }
         controller.notificationService=Mock(NotificationService)
         controller.orchestratorPluginService=Mock(OrchestratorPluginService)
-
+        controller.pluginService = Mock(PluginService)
         when:
         request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
 
@@ -856,6 +856,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
             1 * listOrchestratorPlugins()
         }
+        controller.pluginService = Mock(PluginService)
         when:
         params.project = 'testProject'
         request.method = 'POST'
@@ -999,6 +1000,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
             1 * listDescriptions()
         }
+        controller.pluginService = Mock(PluginService)
         when:
         def result = controller.createFromExecution()
         then:
@@ -1062,6 +1064,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
             1 * listOrchestratorPlugins()
         }
+        controller.pluginService = Mock(PluginService)
         when:
         params.project = 'testProject'
         request.method = 'POST'

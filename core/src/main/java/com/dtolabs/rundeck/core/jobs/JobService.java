@@ -16,6 +16,12 @@
 
 package com.dtolabs.rundeck.core.jobs;
 
+import com.dtolabs.rundeck.core.execution.ExecutionNotFound;
+import com.dtolabs.rundeck.core.execution.ExecutionReference;
+
+import java.util.Date;
+import java.util.List;
+
 /**
  * Service for interacting with Jobs
  */
@@ -58,4 +64,37 @@ public interface JobService {
      * @return state of the job
      */
     JobState getJobState(JobReference jobReference) throws JobNotFound;
+
+
+    /**
+     * @param state    to search
+     * @param project the project
+     * @param jobUuid    to search or null
+     * @param excludeJobUuid    to search or null
+     * @param since    to search or null
+     *
+     * @return a list of references to executions using the input parameters
+     *
+     */
+    List<ExecutionReference> searchExecutions(String state, String project, String jobUuid, String excludeJobUuid, String since);
+
+    /**
+     * @param id   execution id
+     * @param project the project
+     *
+     * @return a execution reference for the id
+     *
+     * @throws com.dtolabs.rundeck.core.execution.ExecutionNotFound if the execution was not found
+     */
+    ExecutionReference executionForId(String id, String project) throws ExecutionNotFound;
+
+
+    /**
+     * @param jobReference reference to a job
+     * @param jobArgString argString for the execution
+     * @param jobFilter filter for the execution
+     * @param asUser user to execute the job(null for the same user)
+     * @return Id of the result execution
+     */
+    String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)throws JobNotFound;
 }

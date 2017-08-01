@@ -23,7 +23,7 @@ The screenshot above shows the elements of the Nodes page user interface.
 
 1. Filter - Search expression using tags and attribute patterns. The filter menu also contains an item to list all nodes in the project.
 2. Tags - Category or classification of Nodes. Each tag shows the number of nodes that reference that tag. You can click the tag name and list other nodes with that tag.
-3. Node detail - Clicking on the node name will show a diaglog that lets you view the attributes and values for that Node.
+3. Node detail - Clicking on the node name will show a dialogue that lets you view the attributes and values for that Node.
 4. Attributes - Node attributes describe the characteristics or state of a Node
 5. Node actions - Run a command or create a Job for the nodes matching the filter.
 6. Single node view - Click the arrow next to the node name to drill down to a single node.
@@ -77,7 +77,7 @@ Rundeck  node filters let you match Nodes based on a pattern like "tags" or any 
 ![Filtered nodes](../figures/fig0204-c.png)
 
 1. Filter expression
-2. Columned labeled by attribute name
+2. Column labeled by attribute name
 
 
 ### Filter expression syntax
@@ -103,7 +103,7 @@ The example below shows the dialog to confirm saving a new filter.
 
 1. Filter name
 
-The saved filters become availale in the Filters menu in in othe parts rundeck, like in the Nodes page, when creating Jobs or running Commands.
+The saved filters become available in the Filters menu in other parts of rundeck, like in the Nodes page, when creating Jobs or running Commands.
 
 
 ![Saved Filters menu](../figures/fig0204-e.png)
@@ -112,7 +112,7 @@ The saved filters become availale in the Filters menu in in othe parts rundeck, 
 
 ## Node actions
 
-Often times you are browsing and filtering nodes because you want do do something with the list. The Node Actions menu contains links to 
+Often times you are browsing and filtering nodes because you want to do something with the list. The Node Actions menu contains links to 
 
 * Run a command. Choosing this menu item will forward your browser to the Commands page.
 * Create a job. Choosing this menu item will forward you to the Job create page and enter the filter expression in the edit form.
@@ -121,7 +121,7 @@ Often times you are browsing and filtering nodes because you want do do somethin
 ![Node actions menu](../figures/fig0204-f.png)
 
 
-Users that don't have sufficeint privileges granted by the ACL will show that menu item disabled.
+Users that don't have sufficient privileges granted by the ACL will show that menu item disabled.
 
 The example below shows that the user can't create Job for those nodes.
 

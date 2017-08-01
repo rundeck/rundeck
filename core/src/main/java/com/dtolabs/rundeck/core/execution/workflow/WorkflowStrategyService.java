@@ -15,14 +15,16 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Created by greg on 5/5/16.
+ * Builtin and plugin providers for {@link WorkflowStrategy}
+ * @author greg
+ * @since 5/5/16
  */
 public class WorkflowStrategyService extends ChainedProviderService<WorkflowStrategy> implements DescribableService,
         PluggableProviderService<WorkflowStrategy>
 {
     private static final String SERVICE_NAME = ServiceNameConstants.WorkflowStrategy;
     private final Framework framework;
-    private List<ProviderService<WorkflowStrategy>> serviceList;
+    private final List<ProviderService<WorkflowStrategy>> serviceList;
     private final PluggableProviderService<WorkflowStrategy> pluginService;
     private final Map<String, String> builtinProviderSynonyms = new HashMap<>();
     private final BaseProviderRegistryService<WorkflowStrategy> builtinService;
@@ -39,14 +41,12 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
          * 1. builtin providers
          * 2. plugin providers
          */
-        HashMap<String, Class<? extends WorkflowStrategy>> builtinProviders =
-                new HashMap<String, Class<? extends WorkflowStrategy>>() {{
-                    put(NodeFirstWorkflowStrategy.PROVIDER_NAME, NodeFirstWorkflowStrategy.class);
-                    put(SequentialWorkflowStrategy.PROVIDER_NAME, SequentialWorkflowStrategy.class);
-                    //backwards compatibility synonym
-//                    put("step-first", SequentialWorkflowStrategy.class);
-                    put(ParallelWorkflowStrategy.PROVIDER_NAME, ParallelWorkflowStrategy.class);
-                }};
+        HashMap<String, Class<? extends WorkflowStrategy>> builtinProviders = new HashMap<>();
+
+        builtinProviders.put(NodeFirstWorkflowStrategy.PROVIDER_NAME, NodeFirstWorkflowStrategy.class);
+        builtinProviders.put(SequentialWorkflowStrategy.PROVIDER_NAME, SequentialWorkflowStrategy.class);
+        builtinProviders.put(ParallelWorkflowStrategy.PROVIDER_NAME, ParallelWorkflowStrategy.class);
+
         builtinProviderSynonyms.put("step-first", SequentialWorkflowStrategy.PROVIDER_NAME);
 
         builtinService = ServiceFactory.builtinService(
@@ -84,7 +84,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
      *
      * @return instance with configuration applied
      *
-     * @throws ExecutionServiceException
+     * @throws ExecutionServiceException if provider cannot be loaded
      */
     public WorkflowStrategy getStrategyForWorkflow(
             final WorkflowExecutionItem workflow,
@@ -117,7 +117,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
                     workflowStrategy
             );
             if (description != null) {
-                config = PluginAdapterUtility.configureProperties(
+                PluginAdapterUtility.configureProperties(
                         resolver,
                         description,
                         workflowStrategy,
@@ -135,7 +135,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
      *
      * @return instance with configuration applied
      *
-     * @throws ExecutionServiceException
+     * @throws ExecutionServiceException if provider cannot be loaded
      */
     public WorkflowStrategy getStrategyForWorkflow(
             final WorkflowExecutionItem workflow,
@@ -156,7 +156,7 @@ public class WorkflowStrategyService extends ChainedProviderService<WorkflowStra
                     workflowStrategy
             );
             if (description != null) {
-                Map<String, Object> stringObjectMap = PluginAdapterUtility.configureProperties(
+                PluginAdapterUtility.configureProperties(
                         resolver,
                         description,
                         workflowStrategy,

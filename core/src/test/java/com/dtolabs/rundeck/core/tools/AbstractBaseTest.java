@@ -39,12 +39,12 @@ public abstract class AbstractBaseTest extends TestCase {
     //
     // junit exported java properties (e.g. from maven's project.properties)
     //
-    public static String RDECK_BASE = System.getProperty("rdeck.base","target/rdeck_base");
+    public static String RDECK_BASE = System.getProperty("rdeck.base","build/rdeck_base");
 
     //
     // derived modules and projects base
     //
-    private static String PROJECTS_BASE = RDECK_BASE + "/" + "projects";
+    private String PROJECTS_BASE = RDECK_BASE + "/" + "projects";
 
 
     /** hostname used for local node in test environment */
@@ -61,7 +61,7 @@ public abstract class AbstractBaseTest extends TestCase {
         return baseDir;
     }
 
-    private static String projectsBase;
+    private String projectsBase;
 
     public String getFrameworkProjectsBase() {
         return projectsBase;

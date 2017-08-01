@@ -27,8 +27,8 @@
             <g:set var="configurable" value="${configdata.configurable}"/>
 
             <g:set var="pluginprefix" value="${configdata.get('prefix')}"/>
-
-            <g:each in="${configurable.projectConfigProperties}" var="prop">
+            <g:set var="categoryProps" value="${configurable.projectConfigProperties.findAll{configurable.categories[it.name]==category}}"/>
+            <g:each in="${categoryProps}" var="prop">
                 <g:render template="/framework/pluginConfigPropertySummaryValue"
                           model="${[
                                   prop  : prop,

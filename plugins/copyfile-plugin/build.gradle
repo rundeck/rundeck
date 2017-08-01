@@ -37,7 +37,7 @@ dependencies{
     testCompile "cglib:cglib-nodep:2.2.2"
 }
 
-task createPom << {
+task('createPom').doLast {
     pom {
         project {
             artifactId 'rundeck-copyfile-plugin'

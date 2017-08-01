@@ -55,7 +55,7 @@ jar {
 install.dependsOn build 
 
 apply plugin: 'maven'
-task createPom << {
+task('createPom').doLast {
     pom {
         project {
             artifactId archivesBaseName

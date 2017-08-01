@@ -30,6 +30,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
     String jobName
     String jobGroup
+    String jobProject
     String jobIdentifier
     String argString
     String nodeFilter
@@ -44,6 +45,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     static constraints = {
         jobName(nullable: false, blank: false, maxSize: 1024)
         jobGroup(nullable: true, blank: true, maxSize: 2048)
+        jobProject(nullable: true, blank: true, maxSize: 2048)
         argString(nullable: true, blank: true)
         nodeStep(nullable: true)
         nodeKeepgoing(nullable: true)
@@ -58,12 +60,13 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         argString type: 'text'
         jobName type: 'string'
         jobGroup type: 'string'
+        jobProject type: 'string'
         nodeFilter type: 'text'
         nodeRankAttribute type: 'text'
     }
 
     public String toString() {
-        return "jobref(name=\"${jobName}\" group=\"${jobGroup}\" argString=\"${argString}\" " +
+        return "jobref(name=\"${jobName}\" group=\"${jobGroup}\" project=\"${jobProject}\" argString=\"${argString}\" " +
                 "nodeStep=\"${nodeStep}\"" +
                 "nodeFilter=\"${nodeFilter}\"" +
                 "nodeKeepgoing=\"${nodeKeepgoing}\"" +
@@ -97,6 +100,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
      */
     public Map toMap(){
         final Map map = [jobref: [group: jobGroup ? jobGroup : '', name: jobName]]
+        if(jobProject){
+            map.project = jobProject
+        }
         if(argString){
             map.jobref.args=argString
         }
@@ -142,6 +148,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         JobExec exec = new JobExec()
         exec.jobGroup=map.jobref.group
         exec.jobName=map.jobref.name
+        if(map.jobref.jobProject){
+            exec.jobProject = map.jobref.jobProject
+        }
         if(map.jobref.args){
             exec.argString=map.jobref.args
         }

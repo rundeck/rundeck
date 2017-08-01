@@ -237,6 +237,9 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
             outthread.join();
             exec.getErrorStream().close();
             exec.getInputStream().close();
+            if(null!=executionContext.getOutputContext()){
+                executionContext.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
+            }
             success = 0 == result;
             executionContext.getExecutionListener().log(3,
                                                         "[script-exec]: result code: " + result + ", success: "

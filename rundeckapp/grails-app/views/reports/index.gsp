@@ -23,7 +23,8 @@
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${createLink(controller:"feed",action:"index",params:paginateParams?paginateParams:[:])}"/>
     </g:ifServletContextAttribute>
     <title><g:message code="gui.menu.Events"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
-    <g:javascript library="yellowfade"/>
+
+    <asset:javascript src="util/yellowfade.js"/>
     <g:javascript library="pagehistory"/>
     <g:javascript>
                 

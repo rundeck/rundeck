@@ -25,6 +25,7 @@ class PluginStep extends WorkflowStep{
     static constraints = {
         type nullable: false, blank: false
         jsonData(nullable: true, blank: true)
+        pluginConfigData(nullable: true, blank: true)
     }
     //ignore fake property 'configuration' and do not store it
     static transients = ['configuration']
@@ -52,6 +53,7 @@ class PluginStep extends WorkflowStep{
 
     static mapping = {
         jsonData(type: 'text')
+        pluginConfigData(type: 'text')
     }
 
     public Map toMap() {
@@ -67,6 +69,10 @@ class PluginStep extends WorkflowStep{
         } else if (keepgoingOnSuccess) {
             map.keepgoingOnSuccess = keepgoingOnSuccess
         }
+        def config = getPluginConfig()
+        if (config) {
+            map.plugins = config
+        }
         map
     }
 
@@ -78,11 +84,21 @@ class PluginStep extends WorkflowStep{
 
         ce.keepgoingOnSuccess = !!data.keepgoingOnSuccess
         ce.description=data.description?.toString()
+        if (data.plugins) {
+            ce.pluginConfig = data.plugins
+        }
         return ce
     }
 
     public PluginStep createClone() {
-        return new PluginStep(type: type, nodeStep: nodeStep, jsonData: jsonData,keepgoingOnSuccess: keepgoingOnSuccess,description: description)
+        return new PluginStep(
+                type: type,
+                nodeStep: nodeStep,
+                jsonData: jsonData,
+                keepgoingOnSuccess: keepgoingOnSuccess,
+                description: description,
+                pluginConfig: pluginConfig
+        )
     }
 
     @Override
@@ -91,6 +107,7 @@ class PluginStep extends WorkflowStep{
                "nodeStep=" + nodeStep +
                ", type='" + type + '\'' +
                ", jsonData='" + jsonData + '\'' +
+               ", pluginConfig='" + pluginConfig + '\'' +
                '}';
     }
 

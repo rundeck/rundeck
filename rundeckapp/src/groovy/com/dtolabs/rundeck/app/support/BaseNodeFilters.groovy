@@ -49,6 +49,7 @@ public class BaseNodeFilters {
     String nodeIncludeOsVersion
     String nodeExcludeOsVersion
     Boolean nodeExcludePrecedence=true
+    Boolean successOnEmptyNodeFilter=false
     String filter
 
     static constraints = {
@@ -67,6 +68,7 @@ public class BaseNodeFilters {
         nodeIncludeOsVersion(nullable: true)
         nodeExcludeOsVersion(nullable: true)
         nodeExcludePrecedence(nullable: true)
+        successOnEmptyNodeFilter(nullable: true)
         filter(nullable: true)
     }
     static mapping = {

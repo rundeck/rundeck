@@ -1740,7 +1740,7 @@ class ProjectControllerTest {
                 [] as Set, [] as Set)
         session.user='user1'
         request.method='PUT'
-        controller.apiProjectImport(new ProjectArchiveParams())
+        controller.apiProjectImport(new ProjectArchiveParams(project:'test1'))
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'failed',response.xml.'@status'.text()
         assertEquals '2',response.xml.errors.'@count'.text()

@@ -27,15 +27,18 @@
     <title><g:message code="gui.menu.ExecutionMode" default="Execution Mode" /></title>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
+    <meta name="tabtitle" content="${g.message(code:'gui.menu.ExecutionMode')}"/>
 
 </head>
 
 <body>
 <div class="row">
-    <div class="col-sm-3">
-        <g:render template="configNav" model="[selected: 'changeexecmode']"/>
+    <div class="col-sm-12">
+        <g:render template="/common/messages"/>
     </div>
-    <div class="col-sm-9">
+</div>
+<div class="row">
+    <div class="col-sm-10 col-sm-offset-1">
 
         <g:form class="form-horizontal" controller="execution" action="executionMode" method="POST" useToken="true">
         <div class="panel panel-primary">
@@ -50,8 +53,9 @@
                 <div class="radio  col-sm-12 ">
                 <label class="control-label text-success">
                     <g:radio name="mode" value="active" checked="${g.executionMode(active: true)}"/>
+                    <g:icon name="play" />
                     <g:message code="system.executionMode.status.active"/>
-                    <g:ifExecutionMode active="true">(Current Mode)</g:ifExecutionMode>
+                    <g:ifExecutionMode active="true"><g:message code="current.mode" /></g:ifExecutionMode>
                 </label>
 
                     <p class="col-sm-12 help-block ">
@@ -62,8 +66,9 @@
                 <div class="radio  col-sm-12 ">
                 <label class="control-label text-warning">
                     <g:radio name="mode" value="passive" checked="${g.executionMode(active: false)}"/>
+                    <g:icon name="pause" />
                     <g:message code="system.executionMode.status.passive"/>
-                    <g:ifExecutionMode passive="true">(Current Mode)</g:ifExecutionMode>
+                    <g:ifExecutionMode passive="true"><g:message code="current.mode" /></g:ifExecutionMode>
                 </label>
 
                     <p class="col-sm-12 help-block ">
@@ -89,20 +94,19 @@
 
             </div>
             <div class="panel-footer">
-                <div class="form-group ">
-                <div class="col-sm-12 ">
-                <g:link action="systemConfig" controller="menu" class="btn btn-default " name="cancel">
-                    <g:message code="cancel"/>
-                </g:link>
-            <g:set var="authAction" value="${g.executionMode(active:true)?AuthConstants.ACTION_DISABLE_EXECUTIONS:AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
-            <auth:resourceAllowed action="${[authAction,AuthConstants.ACTION_ADMIN]}" any="true" context="application" kind="system">
-                    <button type="submit"
-                            class="btn btn-primary "
-                            >
-                        Set Execution Mode
-                    </button>
-            </auth:resourceAllowed>
-                </div>
+                <div class=" buttons">
+                    <g:link action="index" controller="menu" class="btn btn-default " name="cancel">
+                        <g:message code="cancel"/>
+                    </g:link>
+                    <g:set var="authAction"
+                           value="${g.executionMode(active: true) ? AuthConstants.ACTION_DISABLE_EXECUTIONS :
+                                   AuthConstants.ACTION_ENABLE_EXECUTIONS}"/>
+                    <auth:resourceAllowed action="${[authAction, AuthConstants.ACTION_ADMIN]}" any="true"
+                                          context="application" kind="system">
+                        <button type="submit" class="btn btn-primary ">
+                            <g:message code="set.execution.mode"/>
+                        </button>
+                    </auth:resourceAllowed>
                 </div>
             </div>
         </div>

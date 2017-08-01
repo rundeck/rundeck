@@ -47,6 +47,9 @@ import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.ProducedExecutionFile
 
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
+
 @TestFor(LogFileStorageService)
 @Mock([LogFileStorageRequest,Execution,ScheduledExecution,Workflow])
 class LogFileStorageServiceTests  {
@@ -742,13 +745,14 @@ class LogFileStorageServiceTests  {
         test.storeLogFileSuccess=false
         LogFileStorageService svc
         boolean queued=false
+        def sched = mockFor(ScheduledExecutorService)
+        sched.demand.schedule() { Closure clos, long delay, TimeUnit unit ->
+            queued=true
+            assertEquals(30,delay)
+        }
+        service.scheduledExecutor = sched.createMock()
         Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
             svc = service
-            svc.metaClass.queueLogStorageRequest={ Map task, int delay ->
-                queued=true
-                assertEquals(30,delay)
-                assertEquals(testLogFile1,task.file)
-            }
             assertFalse(test.storeLogFileCalled)
             assertNull(test.storeFiletype)
         }
@@ -1036,10 +1040,9 @@ class LogFileStorageServiceTests  {
         def test = new testStoragePlugin()
         test.available = true
 
-        def reader=performReaderRequest(test, false, testLogFileDNE, false, createExecution(), false){ LogFileStorageService svc->
-            svc.metaClass.logFileRetrievalRequestState={Execution execution, String filetype->
-                ExecutionLogState.PENDING_LOCAL
-            }
+        def e = createExecution()
+        def reader = performReaderRequest(test, false, testLogFileDNE, false, e, false) { LogFileStorageService svc ->
+            svc.logFileRetrievalRequests[e.id + ':rdlog'] = [state: ExecutionLogState.PENDING_LOCAL]
         }
 
         //initialize should have been called

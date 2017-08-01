@@ -28,6 +28,10 @@ log4j.additivity.org.rundeck.api.requests=false
 log4j.logger.org.rundeck.web.requests=INFO,access
 log4j.additivity.org.rundeck.web.requests=false
 
+# Enable project logging
+log4j.logger.org.rundeck.project.events=INFO,project
+log4j.additivity.org.rundeck.project.events=false
+
 # Enable Storage logging
 log4j.logger.org.rundeck.storage.events=INFO,storage
 log4j.additivity.org.rundeck.storage.events=false
@@ -149,3 +153,14 @@ log4j.appender.access.file=${rundeck.log.dir}${file.separator}rundeck.access.log
 log4j.appender.access.append=true
 log4j.appender.access.layout=org.apache.log4j.PatternLayout
 log4j.appender.access.layout.ConversionPattern=${logger.access.format}
+
+#
+# project log
+#
+# Logs Project changes
+#
+log4j.appender.project=org.apache.log4j.DailyRollingFileAppender
+log4j.appender.project.file=${rundeck.log.dir}${file.separator}rundeck.project.log
+log4j.appender.project.append=true
+log4j.appender.project.layout=org.apache.log4j.PatternLayout
+log4j.appender.project.layout.ConversionPattern=%d{ISO8601} - %m%n

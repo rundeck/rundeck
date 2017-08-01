@@ -65,6 +65,34 @@ public class Workflow {
             return null
         }
     }
+    /**
+     * Get the config for a type
+     * @param type
+     * @return available config data, or null
+     */
+    public def getPluginConfigData(String type) {
+        def map = getPluginConfigMap()
+        map?.get(type)
+    }
+    /**
+     * Get the config for a type, wraps the value as a list if it is not a collection
+     * @param type
+     * @return available config data, as a List, or null
+     */
+    public def getPluginConfigDataList(String type) {
+        def map = getPluginConfigMap()
+        def val = map?.get(type)
+        if (val && !(val instanceof Collection)) {
+            val = [val]
+        }
+        val
+    }
+    /**
+     * Get the config for a type expecting a map, and an entry in the map
+     * @param type
+     * @param name
+     * @return available map data or empty map
+     */
     public def getPluginConfigData(String type,String name) {
         def map = getPluginConfigMap()
         if(!map){
@@ -83,6 +111,18 @@ public class Workflow {
             map[type]=[:]
         }
         map[type][name] = data
+        setPluginConfigMap(map)
+    }
+
+    public void setPluginConfigData(String type, data) {
+        def map = getPluginConfigMap()
+        if (!map) {
+            map = [:]
+        }
+        map[type] = data
+        if (!data) {
+            map.remove(type)
+        }
         setPluginConfigMap(map)
     }
 

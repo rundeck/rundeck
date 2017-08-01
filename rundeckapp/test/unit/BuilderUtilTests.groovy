@@ -71,7 +71,6 @@ public class BuilderUtilTests{
         bu.objToDom('test', map, builder)
         final String string = writer.toString()
         assertNotNull(string)
-        System.err.println("string: ${string}");
         string
     }
 

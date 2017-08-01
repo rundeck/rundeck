@@ -1,10 +1,10 @@
 package com.dtolabs.rundeck.core.rules;
 
-import com.google.common.base.Optional;
-import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
 
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 /**
  * Basic rules engine
@@ -13,7 +13,7 @@ public class BaseRuleEngine implements RuleEngine {
     private Set<Rule> ruleSet;
 
     public BaseRuleEngine(final Set<Rule> ruleSet) {
-        this.ruleSet = ruleSet;
+        this.ruleSet = new HashSet<>(ruleSet);
     }
 
     @Override
@@ -36,15 +36,15 @@ public class BaseRuleEngine implements RuleEngine {
     @Override
     public StateObj evaluateRules(final StateObj state) {
         MutableStateObj dataState = States.mutable();
-        ImmutableList<Optional<StateObj>> newStates =
-                FluentIterable
-                        .from(getRuleSet())
-                        .filter(Rules.ruleApplies(state))
-                        .transform(Rules.applyRule(state))
-                        .toList();
-        for (StateObj evaluate : Optional.presentInstances(newStates)) {
-            dataState.updateState(evaluate);
-        }
+        getRuleSet().stream()
+                    //filter rules that apply given the state
+                    .filter(i -> i.test(state))
+                    //evaluate the applicable rules
+                    .map(input -> Optional.ofNullable(input.evaluate(state)))
+                    //exclude empty results
+                    .flatMap(o -> o.map(Stream::of).orElseGet(Stream::empty))
+                    //update the state with each result
+                    .forEach(dataState::updateState);
         return dataState;
     }
 

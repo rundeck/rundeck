@@ -80,7 +80,7 @@ public class WorkflowStepStateImpl implements WorkflowStepState {
     }
 
     public void setNodeStepTargets(List<String> nodeStepTargets) {
-        this.nodeStepTargets = new ArrayList<String>(nodeStepTargets);
+        this.nodeStepTargets = new ArrayList<>(nodeStepTargets);
     }
 
     public boolean isNodeStep() {

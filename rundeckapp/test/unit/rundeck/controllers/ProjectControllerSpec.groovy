@@ -1403,7 +1403,7 @@ class ProjectControllerSpec extends Specification{
         def result=controller.importArchive()
 
         then:
-        response.redirectedUrl=='/menu/admin?project=test'
+        response.redirectedUrl=='/menu/projectImport?project=test'
         flash.message=='archive.successfully.imported'
         response.status==302
     }
@@ -1456,7 +1456,7 @@ class ProjectControllerSpec extends Specification{
         def result=controller.importArchive()
 
         then:
-        response.redirectedUrl=='/menu/admin?project=test'
+        response.redirectedUrl=='/menu/projectImport?project=test'
         flash.message=='archive.successfully.imported'
         response.status==302
     }
@@ -1534,8 +1534,96 @@ class ProjectControllerSpec extends Specification{
         def result=controller.importArchive()
 
         then:
-        response.redirectedUrl=='/menu/admin?project=test'
+        response.redirectedUrl=='/menu/projectImport?project=test'
         flash.error=='request.error.invalidtoken.message'
+
+    }
+
+    def "export Instance Prepare"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.exportAll = true
+        params.exportJobs = true
+        params.exportExecutions = true
+        params.exportConfigs = true
+        params.exportReadmes = true
+        params.exportAcls = true
+        params.url = url
+        params.apitoken = token
+        params.targetproject = target
+        params.preserveuuid = preserveuuid
+
+
+        when:
+        def result = controller.exportInstancePrepare()
+
+        then:
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['admin', 'promote']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, _, { ArchiveOptions opts ->
+            opts.executionsOnly == false &&
+                    opts.all == true &&
+                    opts.jobs == true &&
+                    opts.executions == true &&
+                    opts.configs == true &&
+                    opts.readmes == true &&
+                    opts.acls == true
+        },_,_,_,preserveuuid?:false
+        ) >> 'dummytoken'
+        response.redirectedUrl == '/project/exportWait?token=dummytoken&project=aproject&instance='+url+'&iproject='+target
+
+        where:
+        url      | token  | target      | preserveuuid
+        'url1'   | '123'  | 'proj1'     | null
+        'url2'   | '456'  | 'proj2'     | true
+
+    }
+
+    def "export Instance Prepare With missing properties"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.exportAll = true
+        params.exportJobs = true
+        params.exportExecutions = true
+        params.exportConfigs = true
+        params.exportReadmes = true
+        params.exportAcls = true
+        params.url = url
+        params.apitoken = token
+        params.targetproject = target
+        params.preserveuuid = preserveuuid
+
+
+        when:
+        def result = controller.exportInstancePrepare()
+
+        then:
+        0 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        0 * controller.projectService.exportProjectToInstanceAsync(_, _, _, _, { ArchiveOptions opts ->
+            opts.executionsOnly == false &&
+                    opts.all == true &&
+                    opts.jobs == true &&
+                    opts.executions == true &&
+                    opts.configs == true &&
+                    opts.readmes == true &&
+                    opts.acls == true
+        },_,_,_,preserveuuid?:false
+        ) >> 'dummytoken'
+        flash.error
+        response.redirectedUrl == '/menu/projectExport?project=aproject'
+
+        where:
+        url      | token  | target      | preserveuuid
+        null     | '123'  | 'proj1'     | null
+        'url1'   | null   | 'proj2'     | true
+        'url2'   | '456'  | null        | true
 
     }
 }

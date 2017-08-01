@@ -34,6 +34,7 @@ import rundeck.codecs.AnsiColorCodec
 import rundeck.codecs.HTMLElementCodec
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
@@ -253,6 +254,7 @@ class ExecutionControllerSpec extends Specification {
         )
         e1.save() != null
         controller.loggingService = Mock(LoggingService)
+        controller.configurationService = Mock(ConfigurationService)
         def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
         reader.reader = new TestReader(logs:
                                                [

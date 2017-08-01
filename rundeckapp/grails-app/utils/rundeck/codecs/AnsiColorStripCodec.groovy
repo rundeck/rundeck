@@ -23,6 +23,6 @@ package rundeck.codecs
  */
 class AnsiColorStripCodec {
     def decode = { str ->
-        str.replaceAll('\033[\\[%\\(]((\\d{1,2})?(;\\d{1,3})*)[mGHfABCDRsuhl]','')
+        str.replaceAll('\033[\\[%\\(]((\\d{1,2})?(;\\d{1,3})*)[mKGHfABCDRsuhl]','')
     }
 }

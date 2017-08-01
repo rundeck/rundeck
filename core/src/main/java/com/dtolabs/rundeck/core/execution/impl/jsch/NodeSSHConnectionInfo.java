@@ -67,7 +67,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
         }
         //expand properties in path
         if (path != null && path.contains("${")) {
-            path = DataContextUtils.replaceDataReferences(path, context.getDataContext());
+            path = DataContextUtils.replaceDataReferencesInString(path, context.getDataContext());
         }
         return path;
     }
@@ -106,7 +106,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
         }
         //expand properties in path
         if (path != null && path.contains("${")) {
-            path = DataContextUtils.replaceDataReferences(path, context.getDataContext());
+            path = DataContextUtils.replaceDataReferencesInString(path, context.getDataContext());
         }
         return path;
     }
@@ -115,7 +115,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
 
         //expand properties in path
         if (path != null && path.contains("${")) {
-            path = DataContextUtils.replaceDataReferences(path, context.getDataContext());
+            path = DataContextUtils.replaceDataReferencesInString(path, context.getDataContext());
         }
         return path;
     }
@@ -124,7 +124,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
         String path = resolve(prefix + JschNodeExecutor.NODE_ATTR_SUDO_PASSWORD_STORAGE_PATH);
         //expand properties in path
         if (path != null && path.contains("${")) {
-            path = DataContextUtils.replaceDataReferences(path, context.getDataContext());
+            path = DataContextUtils.replaceDataReferencesInString(path, context.getDataContext());
         }
         return path;
     }
@@ -162,7 +162,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
         String path = resolve(JschNodeExecutor.NODE_ATTR_SSH_KEY_PASSPHRASE_STORAGE_PATH);
         //expand properties in path
         if (path != null && path.contains("${")) {
-            path = DataContextUtils.replaceDataReferences(path, context.getDataContext());
+            path = DataContextUtils.replaceDataReferencesInString(path, context.getDataContext());
         }
         return path;
     }
@@ -296,7 +296,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
             user = nonBlank(framework.getProperty(Constants.SSH_USER_PROP));
         }
         if (null != user && user.contains("${")) {
-            return DataContextUtils.replaceDataReferences(user, context.getDataContext());
+            return DataContextUtils.replaceDataReferencesInString(user, context.getDataContext());
         }
         return user;
     }
@@ -322,7 +322,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
     }
 
     public static Map<String, String> sshConfigFromFramework(Framework framework) {
-        HashMap<String, String> config = new HashMap<String, String>();
+        HashMap<String, String> config = new HashMap<>();
         IPropertyLookup propertyLookup = framework.getPropertyLookup();
         for (Object o : propertyLookup.getPropertiesMap().keySet()) {
             String key = (String) o;
@@ -336,7 +336,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
     }
 
     public static Map<String, String> sshConfigFromProject(IRundeckProject frameworkProject) {
-        HashMap<String, String> config = new HashMap<String, String>();
+        HashMap<String, String> config = new HashMap<>();
         for (Object o : frameworkProject.getProperties().keySet()) {
             String key = (String) o;
 
@@ -349,7 +349,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
     }
 
     public static Map<String, String> sshConfigFromNode(INodeEntry node) {
-        HashMap<String, String> config = new HashMap<String, String>();
+        HashMap<String, String> config = new HashMap<>();
         for (String s : node.getAttributes().keySet()) {
             if (s.startsWith(JschNodeExecutor.SSH_CONFIG_PREFIX)) {
                 String name = s.substring(JschNodeExecutor.SSH_CONFIG_PREFIX.length());
@@ -361,7 +361,7 @@ final class NodeSSHConnectionInfo implements SSHTaskBuilder.SSHConnectionInfo {
 
     @Override
     public Map<String, String> getSshConfig() {
-        Map<String, String> config = new HashMap<String, String>();
+        Map<String, String> config = new HashMap<>();
         Map<String, String> fwkConfig = sshConfigFromFramework(framework);
         Map<String, String> projConfig = sshConfigFromProject(frameworkProject);
         Map<String, String> nodeConfig = sshConfigFromNode(node);

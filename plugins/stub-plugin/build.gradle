@@ -18,7 +18,7 @@
  * The Rundeck stub plugin build file
  */
 
-ext.pluginClassNames = 'com.dtolabs.rundeck.plugin.stub.StubFileCopier,com.dtolabs.rundeck.plugin.stub.StubNodeExecutor,com.dtolabs.rundeck.plugin.stub.StubResourceModelSourceFactory'
+ext.pluginClassNames = 'com.dtolabs.rundeck.plugin.stub.LogDataStep,com.dtolabs.rundeck.plugin.stub.StubFileCopier,com.dtolabs.rundeck.plugin.stub.StubNodeExecutor,com.dtolabs.rundeck.plugin.stub.StubResourceModelSourceFactory,com.dtolabs.rundeck.plugin.stub.StubDataNodeStep,com.dtolabs.rundeck.plugin.stub.StubDataStep'
 ext.pluginName = 'Stub Execution'
 ext.pluginDescription = 'Mock execution of commands and scripts'
 
@@ -30,7 +30,7 @@ jar {
     }
 }
 
-task createPom << {
+task('createPom').doLast {
     pom {
         project {
             artifactId 'rundeck-stub-plugin'

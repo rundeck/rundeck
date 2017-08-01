@@ -190,6 +190,7 @@ class ScheduledExServiceTests {
                 assertEquals 'testProject', project
                 return projectMock
             }
+            projectNames{authContext -> []}
         }
     }
     def setupDoUpdateJob(sec){
@@ -234,7 +235,6 @@ class ScheduledExServiceTests {
             def scheduledExecution = results.scheduledExecution
             if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
                 scheduledExecution.errors.allErrors.each {
-                    System.err.println(it);
                 }
             }
             assertTrue succeeded
@@ -415,7 +415,6 @@ class ScheduledExServiceTests {
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
-                System.err.println(it);
             }
         }
         assertTrue succeeded
@@ -462,6 +461,7 @@ class ScheduledExServiceTests {
                 assertEquals 'testProject', project
                 return projectMock
             }
+            projectNames{authContext -> []}
         }
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
@@ -474,7 +474,6 @@ class ScheduledExServiceTests {
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
-                System.err.println(it);
             }
         }
         assertFalse succeeded
@@ -600,6 +599,7 @@ class ScheduledExServiceTests {
             getFrameworkFromUserSession { session, request -> return null }
             getFrameworkFromUserSession { session, request -> return null }
             isClusterModeEnabled{->false}
+            projectNames{authContext -> []}
         }
 
 
@@ -613,7 +613,6 @@ class ScheduledExServiceTests {
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
-                System.err.println(it);
             }
         }
         assertTrue succeeded

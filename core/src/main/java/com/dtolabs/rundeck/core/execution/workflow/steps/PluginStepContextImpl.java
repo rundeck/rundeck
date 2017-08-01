@@ -25,15 +25,15 @@ package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
-import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.FlowControl;
+import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 
 import java.util.List;
-import java.util.Map;
 
 
 /**
@@ -45,13 +45,14 @@ public class PluginStepContextImpl implements PluginStepContext {
 
     PluginLogger logger;
     private String frameworkProject;
-    private Map<String, Map<String, String>> dataContext;
+    private DataContext dataContext;
     private INodeSet nodes;
     private int stepNumber;
     private List<Integer> stepContext;
     private Framework framework;
     private ExecutionContext executionContext;
     private FlowControl flowControl;
+    private SharedOutputContext outputContext;
 
     public PluginStepContextImpl() {
         stepNumber = -1;
@@ -63,7 +64,7 @@ public class PluginStepContextImpl implements PluginStepContext {
     }
 
     @Override
-    public Map<String, Map<String, String>> getDataContext() {
+    public DataContext getDataContext() {
         return dataContext;
     }
 
@@ -84,6 +85,7 @@ public class PluginStepContextImpl implements PluginStepContext {
         context1.framework = context.getFramework();
         context1.executionContext = context;
         context1.flowControl = context.getFlowControl();
+        context1.outputContext = context.getOutputContext();
         return context1;
     }
 
@@ -110,5 +112,10 @@ public class PluginStepContextImpl implements PluginStepContext {
     @Override
     public FlowControl getFlowControl() {
         return flowControl;
+    }
+
+    @Override
+    public SharedOutputContext getOutputContext() {
+        return outputContext;
     }
 }

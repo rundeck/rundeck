@@ -78,7 +78,7 @@ jar.dependsOn(copyToLib)
 
 
 apply plugin: 'maven'
-task createPom << {
+task('createPom').doLast {
     pom {
         project {
             artifactId project.name

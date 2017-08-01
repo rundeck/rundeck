@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.OrchestratorConfig
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
@@ -97,7 +98,7 @@ class OrchestratorNodeDispatcherSpec extends Specification {
             getNodes() >> nodeSet
             getExecutionListener() >> Mock(ExecutionListener)
             getThreadCount() >> 1
-            getDataContext() >> dataContext
+            getDataContext() >> DataContextUtils.context(dataContext)
         }
 
         NodeStepExecutionItem item = Mock(NodeStepExecutionItem)
@@ -142,7 +143,7 @@ class OrchestratorNodeDispatcherSpec extends Specification {
             getNodes() >> nodeSet
             getExecutionListener() >> Mock(ExecutionListener)
             getThreadCount() >> 1
-            getDataContext() >> dataContext
+            getDataContext() >> DataContextUtils.context(dataContext)
         }
 
         NodeStepExecutionItem item = Mock(NodeStepExecutionItem)

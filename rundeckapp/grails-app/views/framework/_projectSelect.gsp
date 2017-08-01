@@ -16,32 +16,25 @@
 
 <g:set var="projectSet" value="${projects.sort()}"/>
 <g:set var="selectParams" value="${selectParams?:[:]}"/>
-    <a class="dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+<bs:dropdownToggle>
         ${project && selectItemTitle ? selectItemTitle : emptyTitle}
-        <span class="caret"></span>
-        <span class="sr-only">Toggle Dropdown</span>
-    </a>
+</bs:dropdownToggle>
+<bs:dropdown labelId="dLabel">
+    <bs:menuitem headerCode="Project.plural"/>
 
-    <ul class="dropdown-menu " role="menu" aria-labelledby="dLabel">
 <auth:resourceAllowed action="create" kind="project" context="application">
         <g:if test="${!params.nocreate}">
-            <li>
-                <g:link controller="framework" action="createProject">
-                    <g:message code="page.home.new.project.button.label"/>
-                    <b class="glyphicon glyphicon-plus"></b>
-                </g:link>
-            </li>
-            <li class="divider">
-            </li>
-
+            <bs:menuitem controller="framework" action="createProject">
+                <g:message code="page.home.new.project.button.label"/>
+                <b class="glyphicon glyphicon-plus"></b>
+            </bs:menuitem>
+            <bs:menuitem/>
         </g:if>
 </auth:resourceAllowed>
         <g:each var="project" in="${projectSet}">
-            <li>
-                <g:link controller="menu" action="index" params="${selectParams + [project: project]}" >
-                    <i class="glyphicon glyphicon-tasks"></i>
-                    <g:enc>${project}</g:enc>
-                </g:link>
-            </li>
+            <bs:menuitem controller="menu" action="index" params="${selectParams + [project: project]}"
+                         icon="tasks">
+                ${project}
+            </bs:menuitem>
         </g:each>
-    </ul>
+</bs:dropdown>

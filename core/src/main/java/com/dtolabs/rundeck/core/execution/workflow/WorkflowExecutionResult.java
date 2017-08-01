@@ -37,7 +37,7 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public interface WorkflowExecutionResult extends ExceptionStatusResult, WorkflowStatusResult {
+public interface WorkflowExecutionResult extends ExceptionStatusResult, WorkflowStatusResult, WorkflowDataResult {
     /**
      * @return list of step results
      */
