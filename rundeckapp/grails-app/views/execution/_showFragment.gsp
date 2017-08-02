@@ -194,6 +194,10 @@
                     <input type="checkbox" checked/>
                     <g:message code="execution.show.mode.ansicolor.title" default="Ansi Color"/>
                 </label>
+                <label class="log-wrap-toggle">
+                    <input type="checkbox" checked/>
+                    <g:message code="execution.show.mode.wrapmode.title" default="Wrap Long Lines"/>
+                </label>
 
                 </div>
         </div>

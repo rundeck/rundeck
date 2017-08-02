@@ -1186,6 +1186,11 @@ section{
       padding: 1px 3px;
       color: black;
     }
+    &.no-wrap {
+      td.data {
+        white-space: pre;
+      }
+    }
     td.time{
       padding: 0 3px;
       background-color: @gray-lighter;
@@ -1244,6 +1249,9 @@ section{
   }
   .log_line{
     white-space: pre-wrap;
+    &.no-wrap {
+      white-space: pre;
+    }
     font-family: "Lucida Console", courier, monospace;
     color: black;
     &.level_verbose, &.level_debug {
