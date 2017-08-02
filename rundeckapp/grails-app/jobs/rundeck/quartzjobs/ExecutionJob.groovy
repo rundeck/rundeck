@@ -361,6 +361,11 @@ class ExecutionJob implements InterruptableJob {
         def killLimit = 100
         def WorkflowExecutionServiceThread thread = execmap.thread
         def ThresholdValue threshold = execmap.threshold
+        def jobAverageDuration = 0
+        if(execmap.scheduledExecution?.execCount){
+            jobAverageDuration= execmap.scheduledExecution.totalTime/execmap.scheduledExecution.execCount
+        }
+        def boolean avgNotificationSent = false
         def boolean stop=false
         boolean never=true
         while (thread.isAlive() || never) {
@@ -369,6 +374,14 @@ class ExecutionJob implements InterruptableJob {
                 thread.join(1000)
             } catch (InterruptedException e) {
                 //do nada
+            }
+            //TODO send notification avg duration
+            if(!avgNotificationSent && jobAverageDuration>0){
+                if((System.currentTimeMillis() - startTime) > jobAverageDuration){
+                    def res = executionService.notificationService.triggerJobNotification('avgduration', execmap.scheduledExecution.id,
+                            [execution: execmap.execution, context:execmap])
+                    avgNotificationSent=true
+                }
             }
             if (
             !wasInterrupted
@@ -491,7 +504,6 @@ class ExecutionJob implements InterruptableJob {
             Map execmap
     )
     {
-
         Map<String, Object> failedNodes = extractFailedNodes(execmap)
         Set<String> succeededNodes = extractSucceededNodes(execmap)
 

@@ -87,7 +87,13 @@ class ScheduledExecutionController  extends ControllerBase{
     public static final String ONSUCCESS_TRIGGER_NAME = 'onsuccess'
     public static final String ONFAILURE_TRIGGER_NAME = 'onfailure'
     public static final String ONSTART_TRIGGER_NAME = 'onstart'
-    public static final String OVERAVGDURATION_TRIGGER_NAME = 'avgduration'
+    public static final String OVERAVGDURATION_TRIGGER_NAME = 'onavgduration'
+    public static final String NOTIFY_OVERAVGDURATION_EMAIL = 'notifyAvgDurationEmail'
+    public static final String NOTIFY_OVERAVGDURATION_URL = 'notifyAvgDurationUrl'
+    public static final String NOTIFY_ONOVERAVGDURATION_URL = 'notifyOnAvgDurationUrl'
+    public static final String NOTIFY_OVERAVGDURATION_RECIPIENTS = 'notifyAvgDurationRecipients'
+    public static final String NOTIFY_OVERAVGDURATION_SUBJECT = 'notifyAvgDurationSubject'
+
     public static final String EMAIL_NOTIFICATION_TYPE = 'email'
     public static final String WEBHOOK_NOTIFICATION_TYPE = 'url'
     public static final ArrayList<String> NOTIFICATION_ENABLE_FIELD_NAMES = [
@@ -96,7 +102,9 @@ class ScheduledExecutionController  extends ControllerBase{
             NOTIFY_ONSUCCESS_EMAIL,
             NOTIFY_ONSUCCESS_URL,
             NOTIFY_ONSTART_EMAIL,
-            NOTIFY_ONSTART_URL
+            NOTIFY_ONSTART_URL,
+            NOTIFY_OVERAVGDURATION_EMAIL,
+            NOTIFY_ONOVERAVGDURATION_URL
     ]
 
     def Scheduler quartzScheduler

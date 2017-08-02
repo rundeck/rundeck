@@ -32,6 +32,15 @@
 <g:set var="defStartUrl" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONSTART_TRIGGER_NAME, ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE)}"/>
 <g:set var="isStartUrl"
        value="${'true' == params[ScheduledExecutionController.NOTIFY_ONSTART_URL] || null == params[ScheduledExecutionController.NOTIFY_ONSTART_URL] && defStartUrl}"/>
+<g:set var="defAvg" value="${scheduledExecution.findNotification(ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME, ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE)}"/>
+<g:set var="isAvg"
+       value="${'true' == params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL] || null == params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL] && defAvg}"/>
+<g:set var="defAvgUrl" value="${scheduledExecution.findNotification(ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME, ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE)}"/>
+<g:set var="isAvgUrl"
+       value="${'true' == params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL] || null == params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL] && defAvgUrl}"/>
+
+
+
 <div class="form-group">
     <div class="col-sm-2 control-label text-form-label">
         <g:message code="scheduledExecution.property.notified.label.text" />
@@ -120,16 +129,16 @@
           model="${[
                   isVisible: (notifications|| params.notified == 'true'),
                   trigger: ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME,
-                  triggerEmailCheckboxName: ScheduledExecutionController.NOTIFY_ONSTART_EMAIL,
-                  triggerEmailRecipientsName: ScheduledExecutionController.NOTIFY_START_RECIPIENTS,
-                  triggerEmailSubjectName: ScheduledExecutionController.NOTIFY_START_SUBJECT,
-                  triggerUrlCheckboxName: ScheduledExecutionController.NOTIFY_ONSTART_URL,
-                  triggerUrlFieldName: ScheduledExecutionController.NOTIFY_START_URL,
-                  isEmail: isStart,
-                  isUrl: isStartUrl,
-                  defEmail: defStart,
-                  defUrl: defStartUrl,
-                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == ScheduledExecutionController.ONSTART_TRIGGER_NAME },
+                  triggerEmailCheckboxName: ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL,
+                  triggerEmailRecipientsName: ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS,
+                  triggerEmailSubjectName: ScheduledExecutionController.NOTIFY_OVERAVGDURATION_SUBJECT,
+                  triggerUrlCheckboxName: ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
+                  triggerUrlFieldName: ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
+                  isEmail: isAvg,
+                  isUrl: isAvgUrl,
+                  defEmail: defAvg,
+                  defUrl: defAvgUrl,
+                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME },
                   adminauth: adminauth,
                   serviceName: ServiceNameConstants.Notification
           ]}"/>
