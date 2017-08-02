@@ -99,7 +99,7 @@ public class NotificationService implements ApplicationContextAware{
      * @return replaced text
      */
     def String renderTemplate(String templateText, Map context){
-        return DataContextUtils.replaceDataReferences(templateText,context,null,false,false)
+        return DataContextUtils.replaceDataReferencesInString(templateText, context, null, false, false)
     }
     /**
      * write log output to a temp file, optionally formatted.
@@ -184,7 +184,7 @@ public class NotificationService implements ApplicationContextAware{
                     if(destrecipients){
                         if(destrecipients.indexOf('${')>=0){
                             try {
-                                destrecipients=DataContextUtils.replaceDataReferences(destrecipients, context ,null,true)
+                                destrecipients=DataContextUtils.replaceDataReferencesInString(destrecipients, context, null, true)
                             } catch (DataContextUtils.UnresolvedDataReferenceException e) {
                                 log.error("Cannot send notification email: "+e.message +
                                                   ", context: user: "+ exec.user+", job: "+source.generateFullName());
@@ -266,7 +266,7 @@ public class NotificationService implements ApplicationContextAware{
                         String sendTo=recipient
                         if(sendTo.indexOf('${')>=0){
                             try {
-                                sendTo=DataContextUtils.replaceDataReferences(recipient, context ,null,true)
+                                sendTo=DataContextUtils.replaceDataReferencesInString(recipient, context, null, true)
                             } catch (DataContextUtils.UnresolvedDataReferenceException e) {
                                 log.error("Cannot send notification email: "+e.message +
                                                   ", context: user: "+ exec.user+", job: "+source.generateFullName());

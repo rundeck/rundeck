@@ -118,7 +118,7 @@ public class LocalExecNodeStepPlugin implements NodeStepPlugin {
                                                                                 DataContextUtils.nodeData(entry),
                                                                                 context.getDataContext());
 
-        final String[] finalCommand = DataContextUtils.replaceDataReferences(split, nodeData);
+        final String[] finalCommand = DataContextUtils.replaceDataReferencesInArray(split, nodeData);
         StringBuilder preview=new StringBuilder();
 
         for (int i = 0; i < finalCommand.length; i++) {

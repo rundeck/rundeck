@@ -236,7 +236,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             case 'uploadJob':
                 return redirect(controller: 'scheduledExecution', action: 'upload', params: [project: params.project])
             case 'configure':
-                return redirect(controller: 'menu', action: 'admin', params: [project: params.project])
+                return redirect(controller: 'framework', action: 'editProject', params: [project: params.project])
             case 'history':
             case 'activity':
             case 'events':
@@ -467,9 +467,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * Presents the jobs tree and can pass the jobsjscallback parameter
      * to the be a javascript callback for clicked jobs, instead of normal behavior.
      */
-    def jobsPicker = {ScheduledExecutionQuery query ->
+    def jobsPicker(ScheduledExecutionQuery query) {
 
-        Framework framework = frameworkService.getRundeckFramework()
         AuthContext authContext
         def usedFilter=null
         if(!query){
@@ -478,6 +477,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(query && !query.projFilter && params.project) {
             query.projFilter = params.project
             authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        } else if(query && query.projFilter){
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, query.projFilter)
         } else {
             authContext = frameworkService.getAuthContextForSubject(session.subject)
         }
@@ -490,7 +491,36 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(params.jobsjscallback){
             results.jobsjscallback=params.jobsjscallback
         }
+        results.showemptymessage=true
         return results + [runAuthRequired:params.runAuthRequired]
+    }
+
+    public def jobsSearchJson(ScheduledExecutionQuery query) {
+        AuthContext authContext
+        def usedFilter = null
+        if (!query) {
+            query = new ScheduledExecutionQuery()
+        }
+        if (query && !query.projFilter && params.project) {
+            query.projFilter = params.project
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, params.project)
+        } else if (query && query.projFilter) {
+            authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, query.projFilter)
+        } else {
+            authContext = frameworkService.getAuthContextForSubject(session.subject)
+        }
+        def results = listWorkflows(query, authContext, session.user)
+        def runRequired = params.runAuthRequired
+        def jobs = runRequired == 'true' ? results.nextScheduled.findAll { se ->
+            results.jobauthorizations[AuthConstants.ACTION_RUN]?.contains(se.id.toString())
+        } : results.nextScheduled
+        def formatted = jobs.collect {ScheduledExecution job->
+            [name: job.jobName, group: job.groupPath, project: job.project, id: job.extid]
+        }
+        respond(
+                [formats: ['json']],
+                formatted,
+        )
     }
     private def listWorkflows(ScheduledExecutionQuery query,AuthContext authContext,String user) {
         long start=System.currentTimeMillis()
@@ -698,104 +728,57 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
 
     }
-    def storage={
-//        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-//        if (unauthorizedResponse(
-//                frameworkService.authorizeApplicationResourceAny(authContext,
-//                        frameworkService.authResourceForProject(params.project),
-//                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
-//                                AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
-//                AuthConstants.ACTION_ADMIN, 'Project', params.project)) {
-//            return
-//        }
+    def storage(){
 
     }
-    def admin(){
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
+    def projectExport() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (!params.project) {
             return renderErrorView('Project parameter is required')
         }
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(authContext,
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
                         frameworkService.authResourceForProject(params.project),
-                        [AuthConstants.ACTION_CONFIGURE,AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT,
-                                AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_DELETE]),
-                AuthConstants.ACTION_ADMIN, 'Project', params.project)) {
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
+                ),
+                AuthConstants.ACTION_EXPORT, 'Project', params.project
+        )) {
             return
         }
-
-            def project= params.project
-            def fproject = frameworkService.getFrameworkProject(project)
-            def configs = fproject.projectNodes.listResourceModelConfigurations()
-            def nodeErrorsMap = fproject.projectNodes.getResourceModelSourceExceptionsMap()
-
-            final service = framework.getResourceModelSourceService()
-            final descriptions = service.listDescriptions()
-            final nodeexecdescriptions = framework.getNodeExecutorService().listDescriptions()
-            final filecopydescs = framework.getFileCopierService().listDescriptions()
-
-
-            final defaultNodeExec = fproject.hasProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(NodeExecutorService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
-            final defaultFileCopy = fproject.hasProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) ? fproject.getProperty(FileCopierService.SERVICE_DEFAULT_PROVIDER_PROPERTY) : null
-            //load config for node exec
-            def nodeexec = [:]
-            if (defaultNodeExec) {
-                nodeexec.type= defaultNodeExec
-                try {
-                    final executor = framework.getNodeExecutorService().providerOfType(defaultNodeExec)
-                    final desc = executor.description
-                    nodeexec.config = Validator.demapProperties(fproject.getProperties(), desc)
-                } catch (com.dtolabs.rundeck.core.execution.service.ExecutionServiceException e) {
-                    log.error(e.message)
-                }
-            }
-            //load config for file copy
-            def fcopy = [:]
-            if (defaultFileCopy) {
-                fcopy.type=defaultFileCopy
-                try {
-                    final executor = framework.getFileCopierService().providerOfType(defaultFileCopy)
-                    final desc = executor.description
-                    fcopy.config = Validator.demapProperties(fproject.getProperties(), desc)
-                } catch (com.dtolabs.rundeck.core.execution.service.ExecutionServiceException e) {
-                    log.error(e.message)
-                }
-            }
-
-        Map<String,RundeckProjectConfigurable> projectConfigurableBeans=applicationContext.getBeansOfType(RundeckProjectConfigurable)
-
-        Map<String,Map> extraConfig=[:]
-        projectConfigurableBeans.each { k, v ->
-            if(k.endsWith('Profiled')){
-                //skip profiled versions of beans
-                return
-            }
-            //construct existing values from project properties
-            def values=Validator.demapProperties(fproject.getProjectProperties(),v.getPropertiesMapping(), true)
-            extraConfig[k] = [
-                    name        : k,
-                    configurable: v,
-                    values      : values,
-                    prefix      : "extraConfig.${k}."
-            ]
+    }
+    def projectImport() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
         }
-            return [configs:configs,
-                    nodeErrorsMap:nodeErrorsMap,
-                resourceModelConfigDescriptions:descriptions,
-                nodeexecconfig:nodeexec,
-                    disableExecutionMode:fproject.getProjectProperties().get("project.disable.executions"),
-                    disableScheduleMode:fproject.getProjectProperties().get("project.disable.schedule"),
-                fcopyconfig:fcopy,
-                defaultNodeExec: defaultNodeExec,
-                defaultFileCopy: defaultFileCopy,
-                nodeExecDescriptions: nodeexecdescriptions,
-                fileCopyDescriptions: filecopydescs,
-                hasreadme:fproject.existsFileResource("readme.md"),
-                hasmotd:fproject.existsFileResource("motd.md"),
-                    extraConfig:extraConfig
-            ]
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProject(params.project),
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]
+                ),
+                AuthConstants.ACTION_IMPORT, 'Project', params.project
+        )) {
+            return
+        }
+    }
+    def projectDelete() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
+        }
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProject(params.project),
+                        [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_DELETE]
+                ),
+                AuthConstants.ACTION_DELETE, 'Project', params.project
+        )) {
+            return
+        }
     }
 
     public def resumeIncompleteLogStorage(Long id){
@@ -1101,6 +1084,38 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return redirect(action: 'acls', params: params)
     }
 
+    def projectAcls() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
+        }
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProjectAcl(params.project),
+                        [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_READ, 'ACL for Project', params.project
+        )) {
+            return
+        }
+        def project = frameworkService.getFrameworkProject(params.project)
+        if(notFoundResponse(project,'Project',params.project)){
+           return
+        }
+        def projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
+            it.replaceAll(/^acls\//, '')
+        }
+
+        [
+                rundeckFramework: frameworkService.rundeckFramework,
+                aclFileList     : list,
+                assumeValid     : true,
+                acllist         : projectlist
+        ]
+    }
+
     def acls() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -1115,26 +1130,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         Map<File,Validation> validation=list.collectEntries{
             [it,authorizationService.validateYamlPolicy(it)]
         }
-        def projectlist = []
-        if (params.project
-                && frameworkService.authorizeApplicationResourceAny(
-                authContext,
-                frameworkService.authResourceForProject(params.project),
-                [AuthConstants.ACTION_ADMIN]
-        )
-        ) {
-            def project = frameworkService.getFrameworkProject(params.project)
-            projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
-                it.replaceAll(/^acls\//, '')
-            }
-        }
 
         [
                 rundeckFramework: frameworkService.rundeckFramework,
                 fwkConfigDir    : fwkConfigDir,
                 aclFileList     : list,
                 validations     : validation,
-                projectlist     : projectlist
         ]
     }
 

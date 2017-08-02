@@ -70,7 +70,7 @@ public class TemplateJobFileMapper implements JobFileMapper {
     }
 
     private String substitute(String key, Map<String, String> data) {
-        return DataContextUtils.replaceDataReferences(
+        return DataContextUtils.replaceDataReferencesInString(
                 key,
                 DataContextUtils.addContext(
                         "job",

@@ -229,7 +229,7 @@ function StorageBrowser(baseUrl, rootPath, fileSelect) {
     });
 
     self.selectedPathUrl=ko.computed(function(){
-       return _genUrl(appLinks.storageKeysBrowse,{resourcePath:self.selectedPath()});
+        return _genUrl(appLinks.storageKeysBrowse + '/' + self.selectedPath());
     });
 
     //functions

@@ -26,7 +26,12 @@ archivesBaseName = 'rundeck-core'
 defaultTasks 'clean','assemble'
 ext.rundeckToolsDependencies=''
 apply plugin: "groovy"
-
+configurations {
+    provided
+}
+sourceSets {
+    main { compileClasspath += configurations.provided }
+}
 dependencies {
     compile project(":rundeck-storage:rundeck-storage-api")
     compile project(":rundeck-storage:rundeck-storage-conf")
@@ -53,7 +58,9 @@ dependencies {
         'org.yaml:snakeyaml:1.9',
         'xerces:xercesImpl:2.11.0',
         'xml-apis:xml-apis:1.4.01',
-        'com.google.guava:guava:15.0'
+        'com.google.guava:guava:15.0',
+        'com.squareup.retrofit2:retrofit:2.2.0',
+        'com.squareup.retrofit2:converter-jackson:2.2.0'
 
     compile ('jaxen:jaxen:1.1') {
         // Remove xerces apis as that should be provided by jdk
@@ -64,11 +71,13 @@ dependencies {
     compile ('commons-httpclient:commons-httpclient:3.0.1') {
         exclude group:'junit', module: 'junit'
     }
+    provided "org.projectlombok:lombok:1.16.16"
     testCompile 'junit:junit:4.8.1',
         'org.mockito:mockito-all:1.8.5'
 
     testCompile "org.codehaus.groovy:groovy-all:2.3.7"
     testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
+    testCompile "com.squareup.retrofit2:retrofit-mock:2.2.0"
 }
 
 def genDeps={

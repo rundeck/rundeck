@@ -50,7 +50,7 @@
                                    data-job-name="${scheduledExecution.jobName}"
                                    data-job-group="${scheduledExecution.groupPath}"
                                    style="overflow:hidden; text-overflow: ellipsis; white-space: nowrap; overflow-x: hidden">
-                                       <g:set var="jstext" value="jobChosen('${enc(js: scheduledExecution.jobName)}','${enc(js: scheduledExecution.groupPath)}')"/>
+                                       <g:set var="jstext" value="jobChosen('${enc(js: scheduledExecution.jobName)}','${enc(js: scheduledExecution.groupPath)}',this)"/>
                                        <span class="textbtn textbtn-success" title="Choose this job" onclick="${enc(attr:jstext)}">
                                            <i class="glyphicon glyphicon-book"></i>
                                            <g:enc>${scheduledExecution.jobName}</g:enc>
@@ -123,7 +123,8 @@
                                             controller="scheduledExecution"
                                             id="${scheduledExecution.extid}"
                                             class="hover_show_job_info"
-                                            params="[project: scheduledExecution.project]">
+                                            params="[project: scheduledExecution.project]"
+                                            data-job-id="${scheduledExecution.extid}">
                                         <g:if test="${showIcon}">
                                             <i class="glyphicon glyphicon-book"></i>
                                         </g:if>

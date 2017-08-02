@@ -595,7 +595,7 @@ function _genUrl(url,params){
             urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]));
         }
     }
-    return url + (url.indexOf('?') > 0 ? '&' : '?') + urlparams.join("&");
+    return url + (urlparams.length ? ( (url.indexOf('?') > 0 ? '&' : '?') + urlparams.join("&")) : '');
 }
 /**
  * Generate a link

@@ -317,20 +317,23 @@ These are all valid values:
 ## retry
 
 Retry count indicating the maximum number of times to retry the job if it fails or times out. 
+You can also set a delay between retries.
 
 Allowed values:
 
 *  An integer number, indicating maximum number of retries
 * `${option.retry}` reference to a job option value
+* Optional delay attribute, with the same format as [timeout](#timeout)
 
 
 ~~~~~~~~ {.xml }
 <job>
     <name>iffy job</name>
     <description>Job which might need to be retried</description>
-    <retry>${option.retry}</retry>
+    <retry delay='1h1m1s'>${option.retry}</retry>
 </job>
 ~~~~~~~~ 
+
 
 ## logging
 

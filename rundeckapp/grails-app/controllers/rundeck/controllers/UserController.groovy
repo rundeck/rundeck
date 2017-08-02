@@ -209,10 +209,10 @@ class UserController extends ControllerBase{
         }
     }
 
-    def cancel={
+    def cancel(){
         return redirect(action:'profile')
     }
-    def edit={
+    def edit(){
         def model=profile()
         return model
     }

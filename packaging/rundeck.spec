@@ -134,6 +134,11 @@ fi
 /var/lib/rundeck/cli/jackson-annotations-2.8.8.jar
 /var/lib/rundeck/cli/jackson-core-2.8.8.jar
 /var/lib/rundeck/cli/jackson-databind-2.8.8.1.jar
+/var/lib/rundeck/cli/converter-jackson-2.2.0.jar
+/var/lib/rundeck/cli/okhttp-3.6.0.jar
+/var/lib/rundeck/cli/okio-1.11.0.jar
+/var/lib/rundeck/cli/retrofit-2.2.0.jar
+
 
 
 # CLI Tools

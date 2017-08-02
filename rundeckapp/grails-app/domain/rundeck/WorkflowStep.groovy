@@ -16,18 +16,72 @@
 
 package rundeck
 
+import com.fasterxml.jackson.databind.ObjectMapper
+
 class WorkflowStep {
     WorkflowStep errorHandler
     Boolean keepgoingOnSuccess
     String description
+    String pluginConfigData
     static belongsTo = [Workflow, WorkflowStep]
     static constraints = {
         errorHandler(nullable: true)
         keepgoingOnSuccess(nullable: true)
         description(nullable: true, maxSize: 1024)
+        pluginConfigData(nullable: true, blank: true)
+    }
+    //ignore fake property 'configuration' and do not store it
+    static transients = ['pluginConfig']
+    static mapping = {
+        pluginConfigData(type: 'text')
     }
 
     public String summarize() {
         return this.toString()
     }
+
+
+    public Map getPluginConfig() {
+        //de-serialize the json
+        if (null != pluginConfigData) {
+            final ObjectMapper mapper = new ObjectMapper()
+            return mapper.readValue(pluginConfigData, Map.class)
+        } else {
+            return null
+        }
+    }
+
+    public Object getPluginConfigForType(String type) {
+        return getPluginConfig()?.get(type)
+    }
+
+    /**
+     *
+     * @param type
+     * @return
+     */
+    public List getPluginConfigListForType(String type) {
+        def val = getPluginConfig()?.get(type)
+        val && !(val instanceof Collection) ? [val] : val
+    }
+    /**
+     * store plugin configuration for a type
+     */
+    public void storePluginConfigForType(String key, Object obj) {
+        def config = getPluginConfig() ?: [:]
+        config.put(key, obj)
+        setPluginConfig(config)
+    }
+
+
+    public void setPluginConfig(Map obj) {
+        //serialize json and store into field
+        if (null != obj) {
+            final ObjectMapper mapper = new ObjectMapper()
+            pluginConfigData = mapper.writeValueAsString(obj)
+        } else {
+            pluginConfigData = null
+        }
+    }
+
 }

@@ -197,4 +197,70 @@ class ReportServiceTests extends GroovyTestCase {
         assert result.reports.size() == results.size()
         assert result.reports.containsAll(results)
     }
+
+    void testgetExecReportsFailedStat(){
+        def r1,r2,r3
+
+        ExecReport.withNewSession {
+            r1=proto(reportId:'blah', jcExecId: '123', status: 'fail')
+            assert r1.validate()
+            assert null!=r1.save(flush: true)
+            assert 'blah'==r1.reportId
+            assertNotNull(r1.id)
+            r2 = proto(reportId: 'blah2', jcExecId: '124',status: 'fail')
+            assert r2.validate()
+            assert null != r2.save(flush: true)
+            r3 = proto(reportId: 'blah3', jcExecId: '125',status: 'succes')
+            assert r3.validate()
+            println r3.save(flush: true)
+
+            sessionFactory.currentSession.flush()
+        }
+        r1=r1.refresh()
+        r2=r2.refresh()
+        r3=r3.refresh()
+        assertEquals(3,ExecReport.count())
+        def query = new ExecQuery(statFilter: 'fail')
+
+        def result=reportService.getExecutionReports(query,true)
+        assert result.total==2
+        assert result.reports.size()==2
+        assert result.reports.contains(r1)
+        assert result.reports.contains(r2)
+        assert !result.reports.contains(r3)
+
+    }
+
+    void testgetExecReportsKilledStat(){
+        def r1,r2,r3
+
+        ExecReport.withNewSession {
+            r1=proto(reportId:'blah', jcExecId: '123', status: 'fail', abortedByUser: 'admin')
+            assert r1.validate()
+            assert null!=r1.save(flush: true)
+            assert 'blah'==r1.reportId
+            assertNotNull(r1.id)
+            r2 = proto(reportId: 'blah2', jcExecId: '124',status: 'fail')
+            assert r2.validate()
+            assert null != r2.save(flush: true)
+            r3 = proto(reportId: 'blah3', jcExecId: '125',status: 'succes')
+            assert r3.validate()
+            println r3.save(flush: true)
+
+            sessionFactory.currentSession.flush()
+        }
+        r1=r1.refresh()
+        r2=r2.refresh()
+        r3=r3.refresh()
+        assertEquals(3,ExecReport.count())
+        def query = new ExecQuery(statFilter: 'cancel')
+
+        def result=reportService.getExecutionReports(query,true)
+        assert result.total==1
+        assert result.reports.size()==1
+        assert result.reports.contains(r1)
+        assert !result.reports.contains(r2)
+        assert !result.reports.contains(r3)
+
+    }
 }

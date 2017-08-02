@@ -250,16 +250,12 @@ public class TestScriptPluginFileCopier {
     private class testListener implements ExecutionListener {
 
         @Override public void ignoreErrors(boolean ignore){}
-        @Override public boolean isTerse() {
-            return false;
-        }
-
-        @Override public String getLogFormat() {
-            return null;
-        }
 
         @Override public void log(int level, String message) {
 
+        }
+        @Override
+        public void log(final int level, final String message, final Map eventMeta) {
         }
 
         @Override public void event(String eventType, String message, Map eventMeta) {

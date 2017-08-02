@@ -210,18 +210,14 @@ public class TestBaseWorkflowExecutor extends AbstractBaseTest {
         public void ignoreErrors(boolean ignore) {
             ignoreErr=ignore;
         }
-        @Override
-        public boolean isTerse() {
-            return false;
-        }
-
-        @Override
-        public String getLogFormat() {
-            return null;
-        }
 
         @Override
         public void log(int level, String message) {
+
+        }
+
+        @Override
+        public void log(final int level, final String message, final Map eventMeta) {
 
         }
 

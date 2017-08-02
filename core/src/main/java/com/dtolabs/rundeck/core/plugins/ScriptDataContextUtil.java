@@ -25,11 +25,11 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.Constants;
 import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.FrameworkProject;
-import com.dtolabs.rundeck.core.common.IRundeckProject;
+import com.dtolabs.rundeck.core.data.BaseDataContext;
+import com.dtolabs.rundeck.core.data.DataContext;
 
 import java.io.File;
-import java.util.*;
+import java.util.Map;
 
 /**
  * ScriptDataContextUtil is ...
@@ -57,23 +57,16 @@ public class ScriptDataContextUtil {
      * @param framework framework
      *
      */
-    public static Map<String, Map<String, String>> createScriptDataContext(final Framework framework) {
-        final Map<String, String> rundeckDataContext = new HashMap<String, String>();
-        final Map<String, String> pluginDataContext = new HashMap<String, String>();
-
-        rundeckDataContext.put("base", framework.getFilesystemFramework().getBaseDir().getAbsolutePath());
+    public static DataContext createScriptDataContext(final Framework framework) {
+        BaseDataContext data = new BaseDataContext();
 
         final File vardir = new File(Constants.getBaseVar(framework.getFilesystemFramework().getBaseDir().getAbsolutePath()));
         final File tmpdir = new File(vardir, "tmp");
-        pluginDataContext.put("vardir", vardir.getAbsolutePath());
-        pluginDataContext.put("tmpdir", tmpdir.getAbsolutePath());
+        data.group("plugin").put("vardir", vardir.getAbsolutePath());
+        data.group("plugin").put("tmpdir", tmpdir.getAbsolutePath());
+        data.put("rundeck", "base", framework.getFilesystemFramework().getBaseDir().getAbsolutePath());
 
-        final Map<String, Map<String, String>> scriptPluginDataContext = new HashMap<String, Map<String, String>>();
-
-        scriptPluginDataContext.put("plugin", pluginDataContext);
-        scriptPluginDataContext.put("rundeck", rundeckDataContext);
-
-        return scriptPluginDataContext;
+        return data;
     }
 
     /**
@@ -83,28 +76,39 @@ public class ScriptDataContextUtil {
      * @param framework fwk
      * @param projectName project
      */
-    public static Map<String, Map<String, String>> createScriptDataContextForProject(final Framework framework,
-                                                                                     final String projectName) {
-        final Map<String, Map<String, String>> localDataContext = new HashMap<String, Map<String, String>>();
+    public static Map<String, Map<String, String>> createScriptDataContextForProject(
+            final Framework framework,
+            final String projectName
+    )
+    {
+        return createScriptDataContextObjectForProject(framework, projectName);
+    }
+
+    /**
+     * @param framework   fwk
+     * @param projectName project
+     *
+     * @return Create a data context for executing a script plugin or provider, for a project context. Extends the
+     * context
+     * provided by {@link #createScriptDataContext(com.dtolabs.rundeck.core.common.Framework)} by setting the
+     * plugin.vardir to be
+     * a dir specific to the project's basedir.
+     */
+    public static DataContext createScriptDataContextObjectForProject(
+            final Framework framework,
+            final String projectName
+    )
+    {
+        BaseDataContext data = new BaseDataContext();
 
         //add script-plugin context data
-        final Map<String, Map<String, String>> scriptDataContext = createScriptDataContext(framework);
-        localDataContext.putAll(scriptDataContext);
+        data.merge(createScriptDataContext(framework));
 
         //reset vardir to point to project-specific dir.
-        final Map<String, String> plugin1 = new HashMap<String, String>(scriptDataContext.get("plugin"));
-
-        plugin1.put("vardir", getVarDirForProject(framework, projectName).getAbsolutePath());
-
-        localDataContext.put("plugin", plugin1);
-
+        data.put("plugin", "vardir", getVarDirForProject(framework, projectName).getAbsolutePath());
         //add project context to rundeck dataset
-        final Map<String, String> rundeck = new HashMap<String, String>(scriptDataContext.get("rundeck"));
+        data.put("rundeck", "project", projectName);
 
-        rundeck.put("project", projectName);
-
-        localDataContext.put("rundeck", rundeck);
-
-        return localDataContext;
+        return data;
     }
 }

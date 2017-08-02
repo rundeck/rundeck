@@ -44,7 +44,7 @@
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
       <asset:javascript src="workflow.js"/>
-      <g:javascript src="executionControl.js"/>
+      <asset:javascript src="executionControl.js"/>
       <g:javascript src="executionState.js"/>
       <asset:javascript src="executionState_HistoryKO.js"/>
 
@@ -102,7 +102,7 @@
             multiworkflow:multiworkflow,
             appLinks:appLinks,
 
-            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}",
+            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}&renderContent=${enc(js:enc(url: params.renderContent))}",
             lastlines: '${enc(js:params.int('lastlines') ?: defaultLastLines)}',
             maxLastLines:'${enc(js:params.int('maxlines') ?: maxLastLines)}',
             collapseCtx: {value:${enc(js:null == execution?.dateCompleted)},changed:false},

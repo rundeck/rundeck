@@ -1535,10 +1535,15 @@ span.resname, span.resname a {
 
 ul.wfhandleritem, ul.wfhandleritem li {
     margin: 0;
+    padding: 0;
+}
+
+ul.wfhandleritem li {
+    list-style-type: none;
 }
 
 ul.wfhandleritem li span.wfitemcontrols {
-    margin-right: 11px;
+    margin-right: 2em;
 }
 
 /**

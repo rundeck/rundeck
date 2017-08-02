@@ -268,7 +268,14 @@ class EditOptsController {
      */
     def renderUndo() {
         final String id = params.scheduledExecutionId ? params.scheduledExecutionId : '_new'
-        render(template: "/common/undoRedoControls", model: [undo: session.undoOPTS ? session.undoOPTS[id]?.size() : 0, redo: session.redoOPTS ? session.redoOPTS[id]?.size() : 0, key: 'opts', revertConfirm: 'all Options'])
+        render(template: "/common/undoRedoControls", model: [
+                undo         : session.undoOPTS ? session.undoOPTS[id]?.size() : 0,
+                redo         : session.redoOPTS ? session.redoOPTS[id]?.size() : 0,
+                key          : 'opts',
+                revertConfirm: 'all Options',
+                highlightundo: session.undoOPTSstate?.get(id)
+        ]
+        )
     }
 
 
@@ -708,6 +715,7 @@ class EditOptsController {
         }
         if (!session.undoOPTS) {
             session.undoOPTS = [:]
+            session.undoOPTSstate = [:]
         }
         def uid = id ? id : '_new'
         if (!session.undoOPTS[uid]) {
@@ -718,6 +726,7 @@ class EditOptsController {
         if (session.undoOPTS[uid].size() > UNDO_MAX) {
             session.undoOPTS[uid].remove(0);
         }
+        session.undoOPTSstate[uid]=true
     }
 
     /**
@@ -746,6 +755,9 @@ class EditOptsController {
         if (!session.redoOPTS) {
             session.redoOPTS = [:]
         }
+        if (!session.undoOPTSstate) {
+            session.undoOPTSstate = [:]
+        }
         def uid = id ? id : '_new'
         if (!session.redoOPTS[uid]) {
             session.redoOPTS[uid] = [input]
@@ -755,6 +767,7 @@ class EditOptsController {
         if (session.redoOPTS[uid].size() > UNDO_MAX) {
             session.redoOPTS[uid].remove(0);
         }
+        session.undoOPTSstate[uid]=false
     }
     /**
      * pop action set from the undo stack

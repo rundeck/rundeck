@@ -28,6 +28,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
+    <meta name="tabtitle" content="${g.message(code: 'gui.menu.KeyStorage')}"/>
     <title><g:message code="gui.menu.KeyStorage" /></title>
     <asset:javascript src="storageBrowseKO.js"/>
     <g:javascript>
@@ -61,21 +62,20 @@
 </div>
 
 <div class="row">
-    <div class="col-sm-3">
-        <g:render template="configNav" model="[selected: 'storage']"/>
-    </div>
+    <div class="col-sm-10 col-sm-offset-1">
+        <div class="panel panel-default">
 
-    <div class="col-sm-9">
-        <h3><g:message code="gui.menu.KeyStorage" /></h3>
-
-        <div class="well well-sm">
-            <div class="text-info">
-                <g:message code="page.keyStorage.description" />
-            </div>
-        </div>
-
+            <div class="panel-body">
         <g:render template="/framework/storageBrowser"/>
 
+            </div>
+            <div class="panel-footer">
+
+                <span class=" text-info">
+                    <g:message code="page.keyStorage.description" />
+                </span>
+            </div>
+        </div>
         %{--modal file delete confirmation--}%
         <div class="modal" id="storageconfirmdelete" tabindex="-1" role="dialog"
              aria-labelledby="storageconfirmdeletetitle"

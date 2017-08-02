@@ -40,12 +40,12 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
 
 
     public WorkflowExecutionStateListenerAdapter() {
-        this(new ArrayList<WorkflowStateListener>());
+        this(new ArrayList<>());
     }
 
     public WorkflowExecutionStateListenerAdapter(List<WorkflowStateListener> listeners) {
         this.listeners = listeners;
-        stepContext = new StepContextWorkflowExecutionListener<INodeEntry, StepContextId>();
+        stepContext = new StepContextWorkflowExecutionListener<>();
     }
 
     public void addWorkflowStateListener(WorkflowStateListener listener) {
@@ -79,7 +79,7 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
         if(null!= currentNode && null != currentStep) {
             //if already node context, begin a parameterized sub workflow
             //change step context to include node name parameter for the step id
-            HashMap<String, String> params = new HashMap<String, String>();
+            HashMap<String, String> params = new HashMap<>();
             params.put("node", currentNode.getNodename());
             stepContext.beginStepContext(StateUtils.stepContextId(currentStep.getStep(),
                     !currentStep.getAspect().isMain(),params));
@@ -98,7 +98,7 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
         List<INodeEntry> orderedNodes = INodeEntryComparator.rankOrderedNodes(executionContext.getNodes(),
                 executionContext.getNodeRankAttribute(),
                 executionContext.isNodeRankOrderAscending());
-        List<String> names = new ArrayList<String>();
+        List<String> names = new ArrayList<>();
         for (INodeEntry orderedNode : orderedNodes) {
             names.add(orderedNode.getNodename());
         }
@@ -160,7 +160,7 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
         if (null != result && result.isSuccess()) {
             return null;
         }
-        HashMap<String, Object> map = new HashMap<String, Object>();
+        HashMap<String, Object> map = new HashMap<>();
         if (null != result && null != result.getFailureData()) {
             map.putAll(result.getFailureData());
         }
@@ -176,7 +176,7 @@ public class WorkflowExecutionStateListenerAdapter implements WorkflowExecutionL
     @Override
     public void beginWorkflowItemErrorHandler(int step, StepExecutionItem item) {
         stepContext.beginStepContext(StateUtils.stepContextId(step, true));
-        HashMap<String,String> ehMap=new HashMap<String, String>();
+        HashMap<String,String> ehMap= new HashMap<>();
         ehMap.put("handlerTriggered", "true");
         notifyAllStepState(createIdentifier(), createStepStateChange(ExecutionState.RUNNING_HANDLER, ehMap),
                 new Date());

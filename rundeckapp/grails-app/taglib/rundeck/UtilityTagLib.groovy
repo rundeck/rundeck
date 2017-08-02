@@ -1741,9 +1741,11 @@ ansi-bg-default'''))
         out << "</tr>"
 
         attrs.data.each { row ->
+            out << '<tr>'
             attrs.columns.each {
                 out << "<td>${row.hasProperty(it) || row.properties[it] ? row[it] : ''}</td>"
             }
+            out << '</tr>'
         }
         out << '</table>'
     }
@@ -1764,7 +1766,7 @@ ansi-bg-default'''))
             out << "<tr>"
             out << "<td>${attrs.fieldTitle?.get(it) ?: it}</td>"
             def val = (data.hasProperty(it) || data[it]) ? data[it] : ''
-            def title = (attrs.dataTitles?.hasProperty(it) || attrs.dataTitles.get(it)) ? attrs.dataTitles[it] : ''
+            def title = (attrs.dataTitles?.hasProperty(it) || attrs.dataTitles?.get(it)) ? attrs.dataTitles[it] : ''
             out << "<td title=\"${title}\">${val}</td>"
             out << "</tr>"
         }

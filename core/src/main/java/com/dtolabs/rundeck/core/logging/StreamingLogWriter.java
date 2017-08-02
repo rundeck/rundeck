@@ -22,7 +22,7 @@ import java.util.Map;
 /**
  * writes log entries in a streaming manner
  */
-public interface StreamingLogWriter {
+public interface StreamingLogWriter extends LogEventReceiver {
     /**
      * Open a stream, called before addEvent is called
      * @throws java.io.IOException if an io error occurs

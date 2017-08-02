@@ -61,7 +61,7 @@ class ScriptUtil {
         ArrayList<String> shells = new ArrayList<String>(Arrays.asList(remoteShell.split(" ")));
 
         //use script-copy attribute and replace datareferences
-        final String newargs = DataContextUtils.replaceDataReferences(scriptargs, newDataContext);
+        final String newargs = DataContextUtils.replaceDataReferencesInString(scriptargs, newDataContext);
         shells.add(newargs);
 
         final ProcessBuilder processBuilder = new ProcessBuilder(shells).directory(workingdir);
@@ -89,7 +89,7 @@ class ScriptUtil {
                                final Map<String, Map<String, String>> newDataContext,
                                final String logName) throws IOException {
         //use script-exec attribute and replace datareferences
-        final String[] args = DataContextUtils.replaceDataReferences(scriptargs.split(" "), newDataContext);
+        final String[] args = DataContextUtils.replaceDataReferencesInArray(scriptargs.split(" "), newDataContext);
 
         //create system environment variables from the data context
         final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(envContext);
