@@ -689,9 +689,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                                  "${se.jobName} [${e.id}]: ${e.dateStarted}"
                 )
                 try {
-                    AuthContext authContext = frameworkService.getAuthContextForUserAndRoles(
+                    AuthContext authContext = frameworkService.getAuthContextForUserAndRolesAndProject(
                             e.user ?: se.user,
-                            e.userRoles ?: se.userRoles
+                            e.userRoles ?: se.userRoles,
+                            e.project
                     )
                     Date nexttime = scheduleAdHocJob(se, authContext.username, authContext, e, null, null, 0, e.dateStarted)
                     if (nexttime) {

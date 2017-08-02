@@ -2323,7 +2323,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         !job1.shouldScheduleExecution()
         job1.user == 'bob'
         job1.userRoles == ['a', 'b']
-        1 * service.frameworkService.getAuthContextForUserAndRoles('bob', ['a', 'b']) >> Mock(UserAndRolesAuthContext)
+        1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
         1 * service.executionServiceBean.getExecutionsAreActive() >> true
         1 * service.frameworkService.getRundeckBase() >> ''
         1 * service.quartzScheduler.scheduleJob(_, _) >> new Date()
@@ -2356,7 +2356,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         !job1.shouldScheduleExecution()
         job1.user == 'bob'
         job1.userRoles == ['a', 'b']
-        1 * service.frameworkService.getAuthContextForUserAndRoles('bob', ['a', 'b']) >> {
+        1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> {
             throw new RuntimeException("getAuthContextForUserAndRoles failure")
         }
         0 * service.executionServiceBean.getExecutionsAreActive() >> true

@@ -114,7 +114,7 @@ class ExecutionJobTest extends GroovyTestCase{
             'test'
         }
         def authcontext=mockAuth.createMock()
-        mockfs.demand.getAuthContextForUserAndRoles(1..1) { user, rolelist ->
+        mockfs.demand.getAuthContextForUserAndRolesAndProject(1..1) { user, rolelist, project ->
             authcontext
         }
         ExecutionService es = mockes.createMock()
@@ -170,7 +170,7 @@ class ExecutionJobTest extends GroovyTestCase{
             'test'
         }
         def authcontext=mockAuth.createMock()
-        mockfs.demand.getAuthContextForUserAndRoles(1..1) { user, rolelist ->
+        mockfs.demand.getAuthContextForUserAndRolesAndProject(1..1) { user, rolelist, project ->
             authcontext
         }
 
