@@ -34,7 +34,6 @@ import rundeck.Workflow
 import rundeck.services.ExecutionService
 import rundeck.services.ExecutionUtilService
 import rundeck.services.FrameworkService
-import rundeck.services.NotificationService
 
 /**
  * $INTERFACE is ...
