@@ -11,6 +11,7 @@ Currently there are three conditions that can trigger notifications:
 * `onstart` - the Job started
 * `onsuccess` - the Job completed without error
 * `onfailure` - the Job failed or was aborted
+* `onavgduration` - The Execution exceed the average duration of the Job
 
 Rundeck has two built-in notification types that can be configured for Jobs:
 
@@ -288,7 +289,7 @@ The user is presented with any `Instance` scoped properties in the Rundeck GUI w
 
 ### Notification handlers
 
-For a `NotificationPlugin`, you can define custom handlers for each of the notification triggers (`onsuccess`, `onfailure`, and `onstart`).
+For a `NotificationPlugin`, you can define custom handlers for each of the notification triggers (`onsuccess`, `onfailure`, `onstart` and `onavgduration`).
 
 Simply define a closure with the given trigger name, and return a true value if your action was successful:
 
@@ -306,6 +307,11 @@ onsuccess{ Map execution, Map configuration ->
 onfailure{ Map execution, Map configuration ->
     //perform an action using the execution and configuration
     println "Oh No! Job ${execution.job.name} didn't work out."
+    return true
+}
+onavgduration{ Map execution, Map configuration ->
+    //perform an action using the execution and configuration
+    println "Job ${execution.job.name} exceeded Average Duration!."
     return true
 }
 ~~~~~~~~
@@ -334,6 +340,10 @@ rundeckPlugin(NotificationPlugin){
  
     onsuccess {
         println("success: data ${execution}")
+        true
+    }
+    onavgduration{
+        println("exceeded average duration: data ${execution}")
         true
     }
 }
@@ -399,6 +409,11 @@ rundeckPlugin(NotificationPlugin) {
     onsuccess {
         //with no args, there is a "configuration" and an "execution" variable in the context
         println("script, success: data ${execution}, test1: ${configuration.test1}, test2: ${configuration.test2} test3: ${configuration.test3}")
+        true
+    }
+
+    onavgduration { Map executionData,Map config ->
+        println("script, exceeded average duration: data ${executionData}, config: ${config}")
         true
     }
 }

@@ -375,7 +375,6 @@ class ExecutionJob implements InterruptableJob {
             } catch (InterruptedException e) {
                 //do nada
             }
-            //TODO send notification avg duration
             if(!avgNotificationSent && jobAverageDuration>0){
                 if((System.currentTimeMillis() - startTime) > jobAverageDuration){
                     def res = executionService.notificationService.triggerJobNotification('avgduration', execmap.scheduledExecution.id,
