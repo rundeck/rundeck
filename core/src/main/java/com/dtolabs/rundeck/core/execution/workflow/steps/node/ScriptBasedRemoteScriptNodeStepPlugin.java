@@ -92,7 +92,7 @@ class ScriptBasedRemoteScriptNodeStepPlugin extends BaseScriptPlugin implements 
         }
 
         final MutableDataContext finalDataContext = DataContextUtils.context("config", configData);
-        finalDataContext.merge(context.getDataContext());
+        finalDataContext.merge(context.getDataContextObject());
 
         //NB: dont generate final args yet, they will be constructed by node dispatch layer
         final String args = provider.getScriptArgs();

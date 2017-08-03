@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.execution.workflow.SharedOutputContext;
 import com.dtolabs.rundeck.plugins.PluginLogger;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -53,9 +54,14 @@ public interface PluginStepContext {
     /**
      * @return the data context
      */
-    public DataContext getDataContext();
+    public DataContext getDataContextObject();
 
-    //TODO: shared data context as well
+    /**
+     * @return the data context map
+     *
+     * @deprecated use {@link #getDataContextObject()}
+     */
+    public Map<String, Map<String, String>> getDataContext();
 
     /**
      * @return the nodes used for this execution
