@@ -637,6 +637,9 @@ class FrameworkService implements ApplicationContextAware {
         log.debug("getAuthContextForSubjectAndProject ${project}, authorization: ${authorization}, project auth ${projectAuth}")
         return new SubjectAuthContext(subject, authorization)
     }
+    public UserAndRolesAuthContext getAuthContextForUserAndRolesAndProject(String user, List rolelist, String project) {
+        getAuthContextWithProject(getAuthContextForUserAndRoles(user, rolelist), project)
+    }
     public UserAndRolesAuthContext getAuthContextForUserAndRoles(String user, List rolelist) {
         if (!(null != user && null != rolelist)) {
             throw new RuntimeException("getAuthContextForUserAndRoles: Cannot get AuthContext without user, roles: ${user}, ${rolelist}")
