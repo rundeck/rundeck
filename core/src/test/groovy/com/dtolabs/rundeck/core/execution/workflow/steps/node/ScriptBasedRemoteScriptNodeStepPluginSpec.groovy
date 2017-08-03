@@ -97,7 +97,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
         def context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> new BaseDataContext([:])
+            getDataContextObject() >> new BaseDataContext([:])
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework
@@ -150,7 +150,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
         def context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> new BaseDataContext([:])
+            getDataContextObject() >> new BaseDataContext([:])
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework
@@ -199,7 +199,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
         def context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> new BaseDataContext([
+            getDataContextObject() >> new BaseDataContext([
                     node: [name: 'anode']
             ])
             getLogger() >> Mock(PluginLogger)
@@ -255,7 +255,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
         def context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> new BaseDataContext([:])
+            getDataContextObject() >> new BaseDataContext([:])
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework

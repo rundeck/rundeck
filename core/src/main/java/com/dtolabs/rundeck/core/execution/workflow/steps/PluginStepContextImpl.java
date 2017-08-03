@@ -34,6 +34,7 @@ import com.dtolabs.rundeck.plugins.PluginLogger;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 
 import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -64,10 +65,14 @@ public class PluginStepContextImpl implements PluginStepContext {
     }
 
     @Override
-    public DataContext getDataContext() {
+    public DataContext getDataContextObject() {
         return dataContext;
     }
 
+    @Override
+    public Map<String, Map<String, String>> getDataContext() {
+        return dataContext;
+    }
 
     @Override
     public PluginLogger getLogger() {
