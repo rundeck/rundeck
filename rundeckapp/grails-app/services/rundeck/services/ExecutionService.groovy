@@ -44,6 +44,7 @@ import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.JobExecutionItem
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.execution.JobReferenceFailureReason
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -974,7 +975,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     logFilterPluginLoader,
                     scheduledExecution ?
                             ExecutionUtilService.createLogFilterConfigs(
-                                    execution.workflow.pluginConfigMap?.get('LogFilter')
+                                    execution.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
                             ) :
                             []
             )
@@ -1088,7 +1089,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     framework.getWorkflowExecutionService(),
                     item,
                     executioncontext,
-                    rootLogManager
+                    workflowLogManager
             )
             thread.start()
             log.debug("started thread")
