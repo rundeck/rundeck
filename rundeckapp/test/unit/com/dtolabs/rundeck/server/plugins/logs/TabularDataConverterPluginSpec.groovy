@@ -30,8 +30,9 @@ class TabularDataConverterPluginSpec extends Specification {
         expect:
         plugin.isSupportsDataType(String, 'text/csv')
         plugin.isSupportsDataType(String, 'text/csv; charset=UTF-8')
+        plugin.isSupportsDataType(String, 'text/csv; header=present')
 
-        plugin.getOutputDataTypeForContentDataType(String, 'text/csv') == HTMLTableViewConverterPlugin.MAP_LIST_TYPE
+        plugin.getOutputDataTypeForContentDataType(String, 'text/csv') == HTMLTableViewConverterPlugin.COL_LIST_TYPE
         plugin.getOutputClassForDataType(String, 'text/csv') == List
     }
 
@@ -48,9 +49,9 @@ class TabularDataConverterPluginSpec extends Specification {
 
         where:
         data                 | expected
-        'a,b,c\nd,e,f'       | [[A: 'a', B: 'b', C: 'c'], [A: 'd', B: 'e', C: 'f']]
-        'a,b,c\nd,e,f\n'     | [[A: 'a', B: 'b', C: 'c'], [A: 'd', B: 'e', C: 'f']]
-        '\n\na,b,c\nd,e,f\n' | [[A: 'a', B: 'b', C: 'c'], [A: 'd', B: 'e', C: 'f']]
+        'a,b,c\nd,e,f'       | [['A', 'B', 'C'], ['a', 'b', 'c'], ['d', 'e', 'f']]
+        'a,b,c\nd,e,f\n'     | [['A', 'B', 'C'], ['a', 'b', 'c'], ['d', 'e', 'f']]
+        '\n\na,b,c\nd,e,f\n' | [['A', 'B', 'C'], ['a', 'b', 'c'], ['d', 'e', 'f']]
     }
 
     @Unroll
@@ -61,7 +62,7 @@ class TabularDataConverterPluginSpec extends Specification {
 
         def result = plugin.convert(data, type, meta)
         then:
-        result == [['1': 'a', '2': 'b', '3': 'c'], ['1': 'd', '2': 'e', '3': 'f']]
+        result == [['1', '2', '3'], ['a', 'b', 'c'], ['d', 'e', 'f']]
 
         where:
         data                           | type                      | meta
@@ -71,5 +72,25 @@ class TabularDataConverterPluginSpec extends Specification {
         '\n\n1,2,3\n---\na,b,c\nd,e,f' | 'text/csv'                | [:]
         '\n\n1,2,3\na,b,c\nd,e,f'      | 'text/csv;header=present' | [:]
         '\n\n1,2,3\na,b,c\nd,e,f'      | 'text/csv'                | [header: 'true']
+    }
+
+    @Unroll
+    def "convert with header empty values"() {
+        given:
+        def plugin = new TabularDataConverterPlugin()
+        when:
+
+        def result = plugin.convert(data, type, [:])
+        then:
+        result == expect
+
+        where:
+        data                     | expect
+        '\n\n1,2,3\na,b,c\nd,e,' | [['1', '2', '3'], ['a', 'b', 'c'], ['d', 'e', '']]
+        '\n\n1,2,3\na,b,c\nd,,'  | [['1', '2', '3'], ['a', 'b', 'c'], ['d', '', '']]
+        '\n\n1,2,3\na,b,c\n,,'   | [['1', '2', '3'], ['a', 'b', 'c'], ['', '', '']]
+        '\n\n1,2,3\na,b,c\n,,f'  | [['1', '2', '3'], ['a', 'b', 'c'], ['', '', 'f']]
+        '1,2,3\na,b,c\n,e,f'    | [['1', '2', '3'], ['a', 'b', 'c'], ['', 'e', 'f']]
+        type = 'text/csv;header=present'
     }
 }

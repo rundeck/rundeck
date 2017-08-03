@@ -32,12 +32,14 @@ contains Maps, the first item\'s keys will be the table headers.''')
 class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
     static final Map<String, Class<?>> datatypes = [
             (MAP_LIST_TYPE): List,
+            (COL_LIST_TYPE): List,
             (MAP_TYPE)     : Map,
             (LIST_TYPE)    : List,
     ]
     static final List<Class<?>> mapOrListTypes = [List, Map]
     public static final String PROVIDER_NAME = 'log-data-table-view'
     public static final String MAP_LIST_TYPE = 'application/x-java-map-list'
+    public static final String COL_LIST_TYPE = 'application/x-java-col-list'
     public static final String MAP_TYPE = 'application/x-java-map'
     public static final String LIST_TYPE = 'application/x-java-list'
     public static final String MAP_OR_LIST_TYPE = 'application/x-java-map-or-list'
@@ -66,6 +68,8 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
         //render data as a Table.
         if (Map.isAssignableFrom(data.getClass())) {
             return renderSimpleMap((Map) data, metadata)
+        } else if (dataType == COL_LIST_TYPE) {
+            return renderColList((List) data, metadata)
         } else {
             return renderSimpleList((List) data, metadata)
         }
@@ -73,6 +77,48 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
 
     public static String renderPlaceholder(String message) {
         '<span class="text-muted">' + message + '</span>'
+    }
+    /**
+     * List of columnar data, first item is the headers
+     * @param list
+     * @param metadata
+     * @return
+     */
+    public static String renderColList(List list, Map<String, String> md) {
+        def keys = []
+        if (list.size() > 0) {
+            keys = list.first()
+            list.remove(0)
+        }
+        def out = new StringBuffer()
+        renderTableStart(out, md['css-class'])
+        if (md['table-title']) {
+            renderTableTitle(out, md['table-title'], keys.size())
+            md.remove('table-title')
+        }
+        renderTableHeaders(out, keys)
+        list.each { dataObj ->
+
+
+            openTag(out, 'tr')
+            dataObj.each { item ->
+
+                openTag(out, 'td')
+                if (item instanceof List) {
+                    out << renderSimpleList(item, md)
+                } else if (item instanceof Map) {
+                    out << renderSimpleMap(item, md)
+                } else if (null == item) {
+                    out << renderPlaceholder('Null Value')
+                } else {
+                    out << item.toString().encodeAsHTML()
+                }
+                closeTag(out, 'td')
+            }
+            closeTag(out, 'tr')
+        }
+        closeTag(out, 'table')
+        return out.toString()
     }
     public static String renderSimpleList(List list, Map<String, String> metadata) {
         if (!list) {
@@ -189,7 +235,7 @@ class HTMLTableViewConverterPlugin implements ContentConverterPlugin {
             keys.each { key ->
                 def item = dataObj[key]
 
-                closeTag(out, 'td')
+                openTag(out, 'td')
                 if (item instanceof List) {
                     out << renderSimpleList(item, md)
                 } else if (item instanceof Map) {

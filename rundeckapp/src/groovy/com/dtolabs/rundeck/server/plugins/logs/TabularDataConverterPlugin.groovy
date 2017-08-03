@@ -67,7 +67,7 @@ class TabularDataConverterPlugin implements ContentConverterPlugin {
 
     @Override
     String getOutputDataTypeForContentDataType(final Class<?> clazz, final String dataType) {
-        isSupportsDataType(clazz, dataType) ? HTMLTableViewConverterPlugin.MAP_LIST_TYPE : null
+        isSupportsDataType(clazz, dataType) ? HTMLTableViewConverterPlugin.COL_LIST_TYPE : null
     }
 
     @Override
@@ -88,23 +88,29 @@ class TabularDataConverterPlugin implements ContentConverterPlugin {
             hasHeader = true
         }
 
-        List<Map> result = []
+        List<List> result = []
         while(content.size()>0 && !content.first().trim()) {
             content.remove(0)
         }
-        List first = content.remove(0).split(quotedSep)
+        List first = content.remove(0).split(quotedSep, -1)
         if (content.size() > 0 && content.first().matches('^-+$')) {
             hasHeader = true
             content.remove(0)
         }
         List keys = null
-        if (hasHeader) {
-            keys = first
-        } else {
-            result << make(first)
-        }
+        result << first
+        int max = 0
         content.each {
-            result << make(it.split(quotedSep) as List, keys)
+            result << (it.split(quotedSep, -1) as List)
+            max = Math.max(max, result[-1].size())
+        }
+        if (!hasHeader) {
+            //generate header
+            keys = []
+            (0..<max).each {
+                keys << colName(it)
+            }
+            result.add(0, keys)
         }
 
 
