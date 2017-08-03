@@ -108,6 +108,7 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
                 def value = match.group(2)
                 if (key && value) {
                     allData[key] = value
+                    outputContext.addOutput("data", key, value)
                 }
             }
         }
@@ -116,7 +117,6 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
     @Override
     void complete(final PluginLoggingContext context) {
         if (allData) {
-            outputContext.addOutput("data", allData)
             if (logData) {
                 context.log(
                         2,
