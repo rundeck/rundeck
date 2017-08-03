@@ -101,6 +101,8 @@ class Execution extends ExecutionContext {
         willRetry(nullable: true)
         nodeFilterEditable(nullable: true)
         userRoleList(nullable: true)
+        retryDelay(nullable:true)
+        successOnEmptyNodeFilter(nullable: true)
     }
 
     static mapping = {

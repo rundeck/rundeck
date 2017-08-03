@@ -143,6 +143,8 @@ class ScheduledExecution extends ExecutionContext {
         logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['halt','truncate'])
         logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true)
         timeZone(maxSize: 256, blank: true, nullable: true)
+        retryDelay(nullable:true)
+        successOnEmptyNodeFilter(nullable: true)
     }
 
     static mapping = {
