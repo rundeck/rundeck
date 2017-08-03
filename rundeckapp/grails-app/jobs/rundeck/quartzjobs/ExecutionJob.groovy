@@ -361,10 +361,7 @@ class ExecutionJob implements InterruptableJob {
         def killLimit = 100
         def WorkflowExecutionServiceThread thread = execmap.thread
         def ThresholdValue threshold = execmap.threshold
-        def jobAverageDuration = 0
-        if(execmap.scheduledExecution?.execCount){
-            jobAverageDuration= execmap.scheduledExecution.totalTime/execmap.scheduledExecution.execCount
-        }
+        def jobAverageDuration = execmap.scheduledExecution?execmap.scheduledExecution.averageDuration:0
         def boolean avgNotificationSent = false
         def boolean stop=false
         boolean never=true
@@ -377,7 +374,7 @@ class ExecutionJob implements InterruptableJob {
             }
             if(!avgNotificationSent && jobAverageDuration>0){
                 if((System.currentTimeMillis() - startTime) > jobAverageDuration){
-                    def res = executionService.notificationService.triggerJobNotification('avgduration', execmap.scheduledExecution.id,
+                    def res = executionService.avgDurationExceeded(execmap.scheduledExecution.id,
                             [execution: execmap.execution, context:execmap])
                     avgNotificationSent=true
                 }
