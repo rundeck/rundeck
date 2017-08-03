@@ -51,6 +51,7 @@ params=""
 
 
 echo "TEST: ${runurl}?${params} (xml) ..."
+sleep 2
 
 # get listing
 docurl -H 'Accept:application/xml' ${runurl}?${params} > $DIR/curl.out
@@ -257,7 +258,7 @@ params=""
 
 
 echo "TEST: ${runurl}?${params} ..."
-
+sleep 2
 # get listing
 docurl -H 'Accept:application/xml' ${runurl}?${params} > $DIR/curl.out
 if [ 0 != $? ] ; then
