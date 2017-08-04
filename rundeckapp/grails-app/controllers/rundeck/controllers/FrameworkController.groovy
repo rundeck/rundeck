@@ -1212,7 +1212,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 resourcesPasswordFieldsService.reset()
                 fcopyPasswordFieldsService.reset()
                 execPasswordFieldsService.reset()
-                return redirect(controller: 'menu', action: 'editProjectConfig', params: [project: project])
+                return redirect(controller: 'framework', action: 'editProjectConfig', params: [project: project])
             }
         }
         if(errors){
