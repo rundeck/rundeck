@@ -629,16 +629,20 @@ function RDNodeStep(data, node, flow){
     self.executionState = ko.observable(data.executionState || null);
     self.parameterizedStep = ko.observable(data.stepctx.indexOf('@')>=0);
     self.startTimeSimple=ko.pureComputed(function(){
-        return MomentUtil.formatTimeSimple(self.startTime());
+        //TODO: fix incorrect startTime format: it is not actually UTC time
+        return MomentUtil.formatTimeSimpleUTC(self.startTime());
     });
     self.startTimeFormat=function(format){
-        return MomentUtil.formatTime(self.startTime(),format);
+        //TODO: fix incorrect startTime format: it is not actually UTC time
+        return MomentUtil.formatTimeUTC(self.startTime(),format);
     };
     self.endTimeSimple=ko.pureComputed(function(){
-        return MomentUtil.formatTimeSimple(self.endTime());
+        //TODO: fix incorrect endTime format: it is not actually UTC time
+        return MomentUtil.formatTimeSimpleUTC(self.endTime());
     });
     self.endTimeFormat= function (format) {
-        return MomentUtil.formatTime(self.endTime(), format);
+        //TODO: fix incorrect endTime format: it is not actually UTC time
+        return MomentUtil.formatTimeUTC(self.endTime(), format);
     };
     self.durationCalc=ko.pureComputed(function(){
         var dur=self.duration();
@@ -1283,7 +1287,8 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
         });
     };
     self.formatTimeAtDate=function(text){
-        return MomentUtil.formatTimeAtDate(text);
+        //TODO: fix incorrect endTime/startTime format: it is not actually UTC time
+        return MomentUtil.formatTimeAtDateUTC(text);
     };
     self.formatDurationHumanize=function(ms){
         return MomentUtil.formatDurationHumanize(ms);
