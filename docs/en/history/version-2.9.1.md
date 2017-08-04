@@ -1,3 +1,7 @@
+% Version 2.9.1
+% greg
+% 08/04/2017
+
 Release 2.9.1
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: ForestGreen"><span class="glyphicon glyphicon-sunglass
 
 ## Upgrading from Earlier versions
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 
