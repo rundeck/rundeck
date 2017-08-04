@@ -633,49 +633,33 @@ var FollowControl = Class.create({
         }
     },
     appendCmdOutput: function(data) {
-        var orig = data;
         var needsScroll = false;
-        try{
         if (!this.isAppendTop() && this.isAtBottom() && this.autoscroll) {
             needsScroll = true;
         }
-        if (typeof(data) == "string" && data == "") {
-            return;
+
+        if (this.refresh && this.cmdoutputtbl && data.lastlinesSupported && this.truncateToTail){
+            try {
+                this.clearTable(this.cmdoutputtbl);
+            } catch (e) {
+                this._log(e);
+            }
         }
-        }catch(e){
-            this.appendCmdOutputError("appendCmdOutput1 "+e);
-            return;
+        if (!this.cmdoutputtbl) {
+            this.cmdoutputtbl = this.createTable(this.tableId);
+            this.setColNode(this.colNode.value);
+            this.setColStep(this.colStep.value);
+            this.setColTime(this.colTime.value);
         }
-        try {
-            if (typeof(data) == "string") {
-                eval("data=" + data);
-            }
-            if (this.refresh && this.cmdoutputtbl && data.lastlinesSupported && this.truncateToTail){
-                try {
-                    this.clearTable(this.cmdoutputtbl);
-                } catch (e) {
-                    this._log(e);
-                }
-            }
-            if (!this.cmdoutputtbl) {
-                this.cmdoutputtbl = this.createTable(this.tableId);
-                this.setColNode(this.colNode.value);
-                this.setColStep(this.colStep.value);
-                this.setColTime(this.colTime.value);
-            }
-            if (!this.runningcmd) {
-                this.runningcmd = new Object();
-                this.runningcmd.count = 0;
-                this.runningcmd.entries = new Array();
-            }
-        } catch (e) {
-            this.appendCmdOutputError("appendCmdOutput,eval "+e);
-            return;
+        if (!this.runningcmd) {
+            this.runningcmd = {};
+            this.runningcmd.count = 0;
+            this.runningcmd.entries = [];
         }
         if (data.error) {
             this.appendCmdOutputError(data.error);
             this.finishedExecution();
-            if(this.runningcmd.count==0){
+            if(this.runningcmd.count===0){
                 //hide table header
                 $(this.cmdoutputtbl).hide();
             }
@@ -857,19 +841,23 @@ var FollowControl = Class.create({
 
     loadMoreOutputTail: function(id, offset) {
         var url = this.appLinks.tailExecutionOutput;
-        var obj=this;
+        var obj = this;
         if(this.isrunning){
-            var idstr=id?( "id=" + id ): '';
-            new Ajax.Request(url, {
-                parameters: idstr + "&offset=" + offset
-                    + ((this.tailmode && this.lastlines && this.truncateToTail && offset==0) ? "&lastlines=" + this.lastlines : "")
-                    + "&maxlines="+this.maxLastLines
-                    + this.extraParams ,
-                onSuccess: function(transport) {
-                    obj.appendCmdOutput(transport.responseText);
-//                        obj.appendCmdOutputError("loadMoreOutputTail "+e);
+            var params = {offset: offset, maxlines: this.maxLastLines};
+            if (id) {
+                params.id = id;
+            }
+            if (this.tailmode && this.lastlines && this.truncateToTail && offset == 0) {
+                params.lastlines = this.lastlines;
+            }
+            return jQuery.ajax({
+                url: _genUrl(url, params) + this.extraParams,
+                type: 'post',
+                dataType: 'json',
+                success: function (data, status, xhr) {
+                    obj.appendCmdOutput(data);
                 },
-                onFailure: function() {
+                error: function (xhr, status, err) {
                     obj.appendCmdOutputError("Error performing request (loadMoreOutputTail): " + url);
                     obj.finishedExecution();
                 }
