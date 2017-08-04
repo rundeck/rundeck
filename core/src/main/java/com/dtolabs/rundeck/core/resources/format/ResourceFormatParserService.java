@@ -77,7 +77,7 @@ public class ResourceFormatParserService extends PluggableProviderRegistryServic
         return list;
     }
     /**
-     * @return  the available format identifiers provided by all parsers
+     * @return  the available format extensions provided by all parsers
      */
     public List<String> listSupportedFileExtensions() {
         final ArrayList<String> list = new ArrayList<String>();
@@ -239,7 +239,7 @@ public class ResourceFormatParserService extends PluggableProviderRegistryServic
         return list;
     }
 
-    private List<ResourceFormatParser> listParsers() {
+    public List<ResourceFormatParser> listParsers() {
         final ArrayList<ResourceFormatParser> list = new ArrayList<ResourceFormatParser>();
         for (final ProviderIdent providerIdent : listProviders()) {
             try {
