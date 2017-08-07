@@ -3,6 +3,7 @@
 set -e
 
 TEST_DIR=$1
+TEST_SCRIPT=${2:-/tests/run-tests.sh}
 
 : ${TEST_DIR?"Argument required"}
 echo "run_tests with $TEST_DIR"
@@ -67,10 +68,10 @@ source $RDECK_BASE/etc/profile
 echo "starting tests"
 
 set +e
-chmod -w /tests/run-tests.sh
+chmod -w $TEST_SCRIPT
 sync
 
-/tests/run-tests.sh \
+$TEST_SCRIPT \
 	--rdeck-base $HOME \
 	--rundeck-project testproj1 \
 	--rundeck-user $USERNAME \

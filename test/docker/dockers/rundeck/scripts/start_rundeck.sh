@@ -203,6 +203,16 @@ service.NodeExecutor.default.provider=jsch-ssh
 END
 }
 
+append_project_config(){
+  local FARGS=("$@")
+  local DIR=${FARGS[0]}
+  local PROJ=${FARGS[1]}
+  local FILE=${FARGS[2]}
+  echo "Append config for test project: $PROJ in dir $DIR"
+  
+  cat >>$DIR/projects/$PROJ/etc/project.properties< $FILE
+}
+
 setup_ssl(){
   local FARGS=("$@")
   local DIR=${FARGS[0]}
@@ -222,6 +232,9 @@ END
 
 if [ -n "$SETUP_TEST_PROJECT" ] ; then
     setup_project $RDECK_BASE $SETUP_TEST_PROJECT
+    if [ -n "$CONFIG_TEST_PROJECT_FILE" ] ; then
+      append_project_config $RDECK_BASE $SETUP_TEST_PROJECT $CONFIG_TEST_PROJECT_FILE
+    fi
 fi
 
 if [ -n "$SETUP_SSL" ] ; then

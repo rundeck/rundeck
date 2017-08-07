@@ -19,6 +19,8 @@ fi
 docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans
 
 set -e
+# clean up docker env
+docker build -t rdtest --build-arg CLI_DEB_URL=$CLI_DEB_URL --build-arg CLI_VERS=$CLI_VERS dockers/rundeck
 # re-build docker env
 docker-compose -f $DOCKER_COMPOSE_SPEC build
 
@@ -30,7 +32,7 @@ echo "up completed, running tests..."
 
 set +e
 
-docker-compose -f $DOCKER_COMPOSE_SPEC exec -T --user rundeck rundeck1 bash scripts/run_tests.sh /tests/rundeck
+docker-compose -f $DOCKER_COMPOSE_SPEC exec -T --user rundeck rundeck1 bash scripts/run_tests.sh /tests/rundeck /tests/run-tests.sh
 
 EC=$?
 echo "run_tests.sh finished with: $EC"
