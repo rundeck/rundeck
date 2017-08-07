@@ -81,7 +81,7 @@ public class PluginStepContextImpl implements PluginStepContext {
 
     public static PluginStepContextImpl from(final StepExecutionContext context) {
         final PluginStepContextImpl context1 = new PluginStepContextImpl();
-        context1.dataContext = context.getDataContext();
+        context1.dataContext = context.getDataContextObject();
         context1.frameworkProject = context.getFrameworkProject();
         context1.logger = context.getExecutionListener();
         context1.nodes = context.getNodes();

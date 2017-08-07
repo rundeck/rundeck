@@ -138,7 +138,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                         .build(),
                 node,
                 script,
-                context.getDataContext().resolve("job", "execid"),
+                context.getDataContextObject().resolve("job", "execid"),
                 providerName
         );
     }
