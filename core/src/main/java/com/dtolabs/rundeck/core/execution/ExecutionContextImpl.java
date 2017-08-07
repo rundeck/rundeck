@@ -161,8 +161,8 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.nodes = original.getNodes();
                 ctx.loglevel = original.getLoglevel();
                 ctx.charsetEncoding = original.getCharsetEncoding();
-                ctx.dataContext = original.getDataContext();
-                ctx.privateDataContext = original.getPrivateDataContext();
+                ctx.dataContext = original.getDataContextObject();
+                ctx.privateDataContext = original.getPrivateDataContextObject();
                 ctx.executionListener = original.getExecutionListener();
                 ctx.workflowExecutionListener = original.getWorkflowExecutionListener();
                 ctx.executionLogger = original.getExecutionLogger();
@@ -473,8 +473,18 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         return loglevel;
     }
 
-    public DataContext getDataContext() {
+    public Map<String, Map<String, String>> getDataContext() {
         return dataContext;
+    }
+
+    @Override
+    public DataContext getDataContextObject() {
+        return dataContext;
+    }
+
+    @Override
+    public DataContext getPrivateDataContextObject() {
+        return privateDataContext;
     }
 
     public ExecutionListener getExecutionListener() {
@@ -503,7 +513,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         return keepgoing;
     }
 
-    public DataContext getPrivateDataContext() {
+    public Map<String, Map<String, String>> getPrivateDataContext() {
         return privateDataContext;
     }
 

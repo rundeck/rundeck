@@ -38,6 +38,8 @@ import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
+import java.util.Map;
+
 /**
  * ExecutionContext is ...
  *
@@ -130,7 +132,8 @@ public interface ExecutionContext {
      *
      * @return map of data contexts keyed by name
      */
-    public DataContext getDataContext();
+    public Map<String, Map<String, String>> getDataContext();
+    public DataContext getDataContextObject();
     /**
      * @return the node specific context data keyed by node name
      */
@@ -139,7 +142,8 @@ public interface ExecutionContext {
     /**
      * @return the data context in the private scope
      */
-    public DataContext getPrivateDataContext();
+    public Map<String, Map<String, String>> getPrivateDataContext();
+    public DataContext getPrivateDataContextObject();
 
     public ExecutionListener getExecutionListener();
 

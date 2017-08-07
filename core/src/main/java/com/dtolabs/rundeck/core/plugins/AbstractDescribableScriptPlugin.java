@@ -397,7 +397,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                 if (StringRenderingConstants.ValueConversion.STORAGE_PATH_AUTOMATIC_READ.equalsOrString(conversion)) {
                     convertStoragePathValue(data, context.getStorageTree(), name, propValue, renderingOptions);
                 } else if (StringRenderingConstants.ValueConversion.PRIVATE_DATA_CONTEXT.equalsOrString(conversion)) {
-                    convertPrivateDataValue(data, context.getPrivateDataContext(), name, propValue, renderingOptions);
+                    convertPrivateDataValue(data, context.getPrivateDataContextObject(), name, propValue, renderingOptions);
                 }
             }
         }

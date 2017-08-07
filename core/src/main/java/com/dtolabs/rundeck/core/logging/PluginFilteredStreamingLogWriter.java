@@ -46,8 +46,8 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         myLoggingContext = new MyLoggingContext(
                 context.getOutputContext(),
                 directLogger,
-                context.getDataContext(),
-                context.getPrivateDataContext(),
+                context.getDataContextObject(),
+                context.getPrivateDataContextObject(),
                 context.getSharedDataContext()
         );
     }

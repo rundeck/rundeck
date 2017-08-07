@@ -150,7 +150,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
         //create node context for node and substitute data references in command
         WFSharedContext sharedContext = new WFSharedContext();
         sharedContext.merge(context.getSharedDataContext());
-        sharedContext.merge(ContextView.global(), context.getDataContext());
+        sharedContext.merge(ContextView.global(), context.getDataContextObject());
         sharedContext.merge(
                 ContextView.node(node.getNodename()),
                 new BaseDataContext("node", DataContextUtils.nodeData(node))
