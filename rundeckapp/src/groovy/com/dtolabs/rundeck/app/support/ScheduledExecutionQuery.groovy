@@ -67,10 +67,13 @@ public class ScheduledExecutionQuery extends BaseQuery{
      * all filters
      */
     public final static  ALL_FILTERS = [ :]
+    public final static  X_FILTERS = [ :]
     static{
             ALL_FILTERS.putAll(TEXT_FILTERS)
             ALL_FILTERS.putAll(EQ_FILTERS)
             ALL_FILTERS.putAll(BOOL_FILTERS)
+            X_FILTERS.putAll(ALL_FILTERS)
+            X_FILTERS.put('group','groupPath')
     }
 
 

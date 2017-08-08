@@ -157,7 +157,7 @@ class StorageControllerSpec extends Specification {
 
         then:
         response.status == 302
-        response.redirectedUrl=='/menu/storage?project=&resourcePath=keys%2Fmonkey'
+        response.redirectedUrl=='/menu/storage?resourcePath=keys%2Fmonkey'
         1 * controller.frameworkService.getAuthContextForSubject(_)
         1 * controller.storageService.hasResource(_, 'keys/monkey') >> false
         1 * controller.storageService.hasPath(_, 'keys/monkey') >> false

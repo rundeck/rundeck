@@ -15,6 +15,8 @@
 // #333
 @gray: lighten(#000, 33.5%);
 // #555
+@gray-med: lighten(#000, 50%);
+// #808080
 @gray-light: lighten(#000, 60%);
 // #999
 @gray-lighter: lighten(#000, 93.5%);
@@ -24,6 +26,7 @@
 // -------------------------
 
 @brand-primary:         #3C3C3C;
+@brand-secondary:       #3C3C7C;
 @brand-success:         #188C6C;
 @brand-warning:         #E38C02;
 @brand-danger:          #E74C3C;
@@ -134,7 +137,7 @@
 @btn-default-border:             @btn-default-bg;
 
 @btn-primary-color:              @btn-default-color;
-@btn-primary-bg:                 @brand-primary;
+@btn-primary-bg:                 @brand-secondary;
 @btn-primary-border:             @btn-primary-bg;
 
 @btn-success-color:              @btn-default-color;
@@ -287,7 +290,7 @@
 @navbar-padding-vertical:          ((@navbar-height - @line-height-computed) / 2);
 @navbar-collapse-max-height: 340px;
 
-@navbar-default-color:             #777;
+@navbar-default-color:             #FFF;
 @navbar-default-bg:                @brand-primary;
 @navbar-default-border:            darken(@navbar-default-bg, 6.5%);
 

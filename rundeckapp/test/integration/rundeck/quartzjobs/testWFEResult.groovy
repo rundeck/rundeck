@@ -17,6 +17,7 @@
 package rundeck.quartzjobs
 
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 
@@ -59,5 +60,8 @@ class TestWFEResult implements WorkflowExecutionResult {
         return success;
     }
 
-
+    @Override
+    WFSharedContext getSharedContext() {
+        return null
+    }
 }

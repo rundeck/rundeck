@@ -64,12 +64,14 @@ class ScheduledExecution extends ExecutionContext {
     Boolean multipleExecutions = false
     Orchestrator orchestrator
 
+    String timeZone
+
     Boolean scheduleEnabled = true
     Boolean executionEnabled = true
 
     static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
-                         'crontabString']
+                         'crontabString','averageDuration']
 
     static constraints = {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -140,6 +142,9 @@ class ScheduledExecution extends ExecutionContext {
         logOutputThreshold(maxSize: 256, blank:true, nullable: true)
         logOutputThresholdAction(maxSize: 256, blank:true, nullable: true,inList: ['halt','truncate'])
         logOutputThresholdStatus(maxSize: 256, blank:true, nullable: true)
+        timeZone(maxSize: 256, blank: true, nullable: true)
+        retryDelay(nullable:true)
+        successOnEmptyNodeFilter(nullable: true)
     }
 
     static mapping = {
@@ -168,6 +173,7 @@ class ScheduledExecution extends ExecutionContext {
         options lazy: false
         timeout(type: 'text')
         retry(type: 'text')
+        retryDelay(type: 'text')
     }
 
     static namedQueries = {
@@ -225,11 +231,17 @@ class ScheduledExecution extends ExecutionContext {
         if(timeout){
             map.timeout=timeout
         }
-        if(retry){
+
+        if(retry && retryDelay){
+            map.retry = [retry:retry, delay: retryDelay]
+        }else if(retry){
             map.retry=retry
         }
         if(orchestrator){
             map.orchestrator=orchestrator.toMap();
+        }
+        if(timeZone){
+            map.timeZone=timeZone
         }
 
         if(options){
@@ -257,7 +269,10 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(doNodedispatch){
             map.nodesSelectedByDefault = hasNodesSelectedByDefault()
-            map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,keepgoing:nodeKeepgoing?true:false,excludePrecedence:nodeExcludePrecedence?true:false]]
+            map.nodefilters=[dispatch:[threadcount:null!=nodeThreadcount?nodeThreadcount:1,
+                                       keepgoing:nodeKeepgoing?true:false,
+                                       successOnEmptyNodeFilter:successOnEmptyNodeFilter?true:false,
+                                       excludePrecedence:nodeExcludePrecedence?true:false]]
             if(nodeRankAttribute){
                 map.nodefilters.dispatch.rankAttribute= nodeRankAttribute
             }
@@ -324,7 +339,14 @@ class ScheduledExecution extends ExecutionContext {
             se.uuid = data.uuid
         }
         se.timeout = data.timeout?data.timeout.toString():null
-        se.retry = data.retry?data.retry.toString():null
+        if(data.retry instanceof Map){
+            se.retry = data.retry.retry?.toString()
+            se.retryDelay = data.retry.delay?.toString()
+        }else{
+            se.retry = data.retry?.toString()
+            se.retryDelay = data.retryDelay?.toString()
+        }
+        se.timeZone = data.timeZone?data.timeZone.toString():null
         if(data.options){
             TreeSet options=new TreeSet()
             if(data.options instanceof Map) {
@@ -406,6 +428,9 @@ class ScheduledExecution extends ExecutionContext {
                 }
                 if(data.nodefilters.dispatch.containsKey('rankOrder')){
                     se.nodeRankOrderAscending = data.nodefilters.dispatch.rankOrder=='ascending'
+                }
+                if(data.nodefilters.dispatch.containsKey('successOnEmptyNodeFilter')){
+                    se.successOnEmptyNodeFilter = data.nodefilters.dispatch.successOnEmptyNodeFilter
                 }
             }
             if(data.nodefilters.filter){
@@ -933,6 +958,13 @@ class ScheduledExecution extends ExecutionContext {
      */
     List<Option> listFileOptions() {
         options.findAll { it.typeFile } as List
+    }
+
+    long getAverageDuration() {
+        if (totalTime && execCount) {
+            return Math.floor(totalTime / execCount)
+        }
+        return 0;
     }
 }
 

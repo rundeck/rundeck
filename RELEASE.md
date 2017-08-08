@@ -1,16 +1,9 @@
-Release 2.8.4
+Release 2.9.1
 ===========
 
-Date: 2017-07-12
+Date: 2017-08-04
 
-Name: <span style="color: Purple"><span class="glyphicon glyphicon-gift"></span> "cafe cubano purple gift"</span>
-
-## Upgrading from 2.8.0
-
-**Important Note**: please see the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html) if you are using Mysql or H2 database,
-and are upgrading from Rundeck 2.8.0.
-
-A DB schema change requires a manual fix before upgrading.
+Name: <span style="color: ForestGreen"><span class="glyphicon glyphicon-sunglasses"></span> "caffe latte forestgreen sunglasses"</span>
 
 ## Upgrading from Earlier versions
 
@@ -18,24 +11,31 @@ A DB schema change requires a manual fix before upgrading.
 
 ## Notes
 
-This release is primarily bug fixes. 
+Bugfix release.
+
+Previous changes in 2.9.0: [Relese 2.9.0](https://github.com/rundeck/rundeck/blob/v2.9.0/RELEASE.md)
+
+For more detail see [2.9.0 Changes](https://github.com/rundeck/rundeck/issues/2577)
+
+Stay tuned! We are also adding many new features to [Rundeck Pro](http://rundeck.com).
 
 ## Contributors
 
-* GitHub (web-flow)
 * Greg Schueler (gschueler)
-* René Kroon
 
 ## Bug Reporters
 
-* JustRiedy
-* ReneKroon
-* simple365
+* gschueler
+* ltamaster
+* qicaihuoyan
+* uprooted
 
 ## Issues
 
-[Milestone 2.8.4](https://github.com/rundeck/rundeck/milestone/57)
+[Milestone 2.9.1](https://github.com/rundeck/rundeck/milestone/59)
 
-* [Mysql syntax error after login](https://github.com/rundeck/rundeck/issues/2609)
-* [Move to Gradle 3.5](https://github.com/rundeck/rundeck/pull/2600)
-* [Node List - Fails to display greater than 100 nodes per page](https://github.com/rundeck/rundeck/issues/2514)
+* [Editing Project Configuration File](https://github.com/rundeck/rundeck/issues/2673)
+* [Fix: Execution Summary step start times show in wrong time zone](https://github.com/rundeck/rundeck/pull/2672)
+* [fix: edit project config file shows error after saving](https://github.com/rundeck/rundeck/pull/2671)
+* [Error on Log Output tab on rundeck 2.9.0](https://github.com/rundeck/rundeck/issues/2667)
+* [yum installation broken: "Transaction check error" for web.xml](https://github.com/rundeck/rundeck/issues/2666)

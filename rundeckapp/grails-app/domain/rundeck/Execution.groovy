@@ -101,6 +101,8 @@ class Execution extends ExecutionContext {
         willRetry(nullable: true)
         nodeFilterEditable(nullable: true)
         userRoleList(nullable: true)
+        retryDelay(nullable:true)
+        successOnEmptyNodeFilter(nullable: true)
     }
 
     static mapping = {
@@ -108,7 +110,6 @@ class Execution extends ExecutionContext {
         //mapping overrides superclass, so we need to relist these
         user column: "rduser"
         argString type: 'text'
-        logFileStorageRequest fetch: 'join'
 
         failedNodeList type: 'text'
         succeededNodeList type: 'text'
@@ -260,6 +261,9 @@ class Execution extends ExecutionContext {
         if(this.retry){
             map.retry=this.retry
         }
+        if(this.retryDelay){
+            map.retryDelay=this.retryDelay
+        }
         if(this.retryExecution){
             map.retryExecutionId=retryExecution.id
         }
@@ -312,6 +316,9 @@ class Execution extends ExecutionContext {
         }
         if(data.retry){
             exec.retry=data.retry
+        }
+        if(data.retryDelay){
+            exec.retryDelay=data.retryDelay
         }
         if(data.retryExecutionId){
             exec.retryExecution=Execution.get(data.retryExecutionId)

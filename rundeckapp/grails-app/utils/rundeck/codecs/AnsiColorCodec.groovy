@@ -80,10 +80,15 @@ class AnsiColorCodec {
                 return
             }
 
+            def matcher = Pattern.compile('(?s)^(((\\d{1,2})?(;\\d{1,3})*)%?([mKGHfABCDRsuhl])).*$').matcher(str)
+            if (matcher.matches() && matcher.groupCount() > 1 && matcher.group(5) == 'K') {
+                //clear screen escape code
+                //ignore this for now, and output the remaining text
+                sb << str.substring(matcher.group(1).length()).encodeAsHTML()
+                return
+            }
             sb << ('' + (ctx ? ctx.collect { '</span>' }.join('') : ''))
             ctx = []
-
-            def matcher = Pattern.compile('(?s)^(((\\d{1,2})?(;\\d{1,3})*)%?([mGHfABCDRsuhl])).*$').matcher(str)
             if (matcher.matches()) {
                 def len = matcher.group(1).length()
                 def cols = []

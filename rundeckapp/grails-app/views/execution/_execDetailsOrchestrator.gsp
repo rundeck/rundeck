@@ -15,7 +15,6 @@
   --}%
 
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.Description" %>
-<g:set var="orchestrator" value="${scheduledExecution.orchestrator}"/>
 <g:set var="desc" value="${orchestratorPlugins?.getDescription(orchestrator.type)}"/>
 <g:if test="${desc && desc instanceof Description}">
     <g:expander key="orchestratorplugin${orchestrator.type}">${desc.title.encodeAsHTML()} </g:expander>

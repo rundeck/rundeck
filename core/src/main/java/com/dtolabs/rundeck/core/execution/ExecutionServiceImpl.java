@@ -36,12 +36,14 @@ import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
+import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 import com.dtolabs.rundeck.core.utils.FileUtils;
 
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * NewExecutionServiceImpl is ...
@@ -56,12 +58,15 @@ class ExecutionServiceImpl implements ExecutionService {
     }
 
     protected WorkflowExecutionListener getWorkflowListener(final ExecutionContext executionContext) {
-        WorkflowExecutionListener wlistener = null;
+        WorkflowExecutionListener wlistener = executionContext.getWorkflowExecutionListener();
+        if(null!=wlistener){
+            return wlistener;
+        }
         final ExecutionListener elistener = executionContext.getExecutionListener();
         if (null != elistener && elistener instanceof WorkflowExecutionListener) {
-            wlistener = (WorkflowExecutionListener) elistener;
+            return (WorkflowExecutionListener) elistener;
         }
-        return wlistener;
+        return null;
     }
 
 
@@ -79,7 +84,22 @@ class ExecutionServiceImpl implements ExecutionService {
             if (null != getWorkflowListener(context)) {
                 getWorkflowListener(context).beginStepExecution(executor, context, item);
             }
-            result = executor.executeWorkflowStep(context, item);
+
+            PluginLoggingManager pluginLogging = null;
+            if (null != context.getLoggingManager()) {
+                pluginLogging = context
+                        .getLoggingManager().createPluginLogging(context, item);
+            }
+            if (null != pluginLogging) {
+                pluginLogging.begin();
+            }
+            try {
+                result = executor.executeWorkflowStep(context, item);
+            } finally {
+                if (null != pluginLogging) {
+                    pluginLogging.end();
+                }
+            }
         } finally {
             if (null != getWorkflowListener(context)) {
                 getWorkflowListener(context).finishStepExecution(executor,result, context, item);
@@ -112,7 +132,22 @@ class ExecutionServiceImpl implements ExecutionService {
             final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context)
                     .singleNodeContext(node, true)
                     .build();
-            result = interpreter.executeNodeStep(nodeContext, item, node);
+
+            PluginLoggingManager pluginLogging = null;
+            if (null != context.getLoggingManager()) {
+                pluginLogging = context
+                        .getLoggingManager().createPluginLogging(nodeContext, item);
+            }
+            if (null != pluginLogging) {
+                pluginLogging.begin();
+            }
+            try {
+                result = interpreter.executeNodeStep(nodeContext, item, node);
+            } finally {
+                if (null != pluginLogging) {
+                    pluginLogging.end();
+                }
+            }
             if (!result.isSuccess()) {
                 context.getExecutionListener().log(0, "Failed: " + result.toString());
             }
@@ -134,35 +169,46 @@ class ExecutionServiceImpl implements ExecutionService {
                                                                                                       DispatcherException,
                                                                                                       ExecutionServiceException {
 
-        if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginNodeDispatch(context, item);
-        }
-        final NodeDispatcher dispatcher = framework.getNodeDispatcherForContext(context);
-        DispatcherResult result = null;
-        try {
-            result = dispatcher.dispatch(context, item);
-        } finally {
-            if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishNodeDispatch(result, context, item);
-            }
-        }
-        return result;
+        return dispatchToNodesWith(context, null, item);
     }
 
     public DispatcherResult dispatchToNodes(StepExecutionContext context, Dispatchable item) throws
                                                                                              DispatcherException,
                                                                                              ExecutionServiceException {
 
+        return dispatchToNodesWith(context, item, null);
+    }
+
+    private DispatcherResult dispatchToNodesWith(
+            StepExecutionContext context,
+            Dispatchable dispatchable,
+            NodeStepExecutionItem item
+    ) throws
+            DispatcherException,
+            ExecutionServiceException
+    {
         if (null != context.getExecutionListener()) {
-            context.getExecutionListener().beginNodeDispatch(context, item);
+            if (null != item) {
+                context.getExecutionListener().beginNodeDispatch(context, item);
+            } else if (null != dispatchable) {
+                context.getExecutionListener().beginNodeDispatch(context, dispatchable);
+            }
         }
         final NodeDispatcher dispatcher = framework.getNodeDispatcherForContext(context);
         DispatcherResult result = null;
         try {
-            result = dispatcher.dispatch(context, item);
+            if (null != item) {
+                result = dispatcher.dispatch(context, item);
+            } else {
+                result = dispatcher.dispatch(context, dispatchable);
+            }
         } finally {
             if (null != context.getExecutionListener()) {
-                context.getExecutionListener().finishNodeDispatch(result, context, item);
+                if (null != item) {
+                    context.getExecutionListener().finishNodeDispatch(result, context, item);
+                } else if (null != dispatchable) {
+                    context.getExecutionListener().finishNodeDispatch(result, context, dispatchable);
+                }
             }
         }
         return result;
@@ -295,10 +341,15 @@ class ExecutionServiceImpl implements ExecutionService {
         }
 
         //create node context for node and substitute data references in command
-        final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context).nodeContextData(node).build();
+        final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context)
+                .nodeContextData(node)
+                .build();
 
-        final ArrayList<String> commandList = command.buildCommandForNode(nodeContext.getDataContext(),
-                node.getOsFamily());
+        final ArrayList<String> commandList = command.buildCommandForNode(
+                nodeContext.getSharedDataContext(),
+                node.getNodename(),
+                node.getOsFamily()
+        );
 
         NodeExecutorResult result = null;
         String[] commandArray = commandList.toArray(new String[commandList.size()]);

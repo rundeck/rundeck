@@ -194,6 +194,10 @@
                     <input type="checkbox" checked/>
                     <g:message code="execution.show.mode.ansicolor.title" default="Ansi Color"/>
                 </label>
+                <label class="log-wrap-toggle">
+                    <input type="checkbox" checked/>
+                    <g:message code="execution.show.mode.wrapmode.title" default="Wrap Long Lines"/>
+                </label>
 
                 </div>
         </div>
@@ -203,27 +207,27 @@
                      id="viewoptionscomplete">
                     <span>
                         <g:link class="textbtn" style="padding:5px;"
-                                title="View text output"
+                                title="${message(code:'execution.show.log.text.button.description',default:'View text output')}"
                                 controller="execution" action="downloadOutput" id="${execution.id}"
                                 params="[view: 'inline', formatted: false, project: execution.project,
                                         stripansi:true]">
-                            Text</g:link>
+                            <g:message code="execution.show.log.text.button.title" /></g:link>
                     </span>
                     <span>
                         <g:link class="textbtn" style="padding:5px;"
-                                title="View colorized output"
+                                title="${message(code:'execution.show.log.html.button.description',default:'View rendered output')}"
                                 controller="execution" action="renderOutput" id="${execution.id}"
-                                params="[project: execution.project, ansicolor:'on',loglevels:'on']">
-                            HTML</g:link>
+                                params="[project: execution.project, ansicolor:'on',loglevels:'on',convertContent:'on']">
+                            <g:message code="execution.show.log.html.button.title" /></g:link>
                     </span>
 
                     <span class="sepL">
                         <g:link class="textbtn" style="padding:5px;"
-                                title="Download ${enc(attr: filesize > 0 ? filesize + ' bytes' : '')}"
+                                title="${message(code:'execution.show.log.download.button.description',default:'Download {0} bytes',args:[filesize>0?filesize:'?'])}"
                                 controller="execution" action="downloadOutput" id="${execution.id}"
                                 params="[project: execution.project]">
                             <b class="glyphicon glyphicon-file"></b>
-                            Download</g:link>
+                            <g:message code="execution.show.log.download.button.title" /></g:link>
                     </span>
                 </span>
             </div>

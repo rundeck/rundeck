@@ -17,8 +17,12 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node
 
 import com.dtolabs.rundeck.core.common.*
+import com.dtolabs.rundeck.core.data.BaseDataContext
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils
+import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
 import com.dtolabs.rundeck.core.plugins.configuration.Description
@@ -76,9 +80,13 @@ class NodeStepPluginAdapterSpec extends Specification {
     def "expand config vars uses blank for unexpanded"() {
         given:
         framework.frameworkServices = Mock(IFrameworkServices)
+        def optionContext = new BaseDataContext([option: data])
+        def shared = SharedDataContextUtils.sharedContext()
+        shared.merge(ContextView.global(), optionContext)
         StepExecutionContext context = Mock(StepExecutionContext) {
             getFramework() >> framework
-            getDataContext() >> [option: data]
+            getDataContext() >> optionContext
+            getSharedDataContext() >> shared
             getFrameworkProject() >> PROJECT_NAME
         }
         def node = new NodeEntryImpl('node')

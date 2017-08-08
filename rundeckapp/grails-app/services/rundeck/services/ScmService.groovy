@@ -583,7 +583,7 @@ class ScmService {
      * @return
      */
     ScmOperationContext scmOperationContext(String username, List<String> roles, String project) {
-        scmOperationContext(frameworkService.getAuthContextForUserAndRoles(username, roles), project)
+        scmOperationContext(frameworkService.getAuthContextForUserAndRolesAndProject(username, roles, project), project)
     }
 
     /**

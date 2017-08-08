@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl;
 
@@ -36,6 +37,7 @@ import java.util.Map;
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
 public class NodeStepResultImpl extends StepExecutionResultImpl implements NodeStepResult {
+    private WFSharedContext sharedContext;
     private INodeEntry node;
 
     /**
@@ -84,5 +86,14 @@ public class NodeStepResultImpl extends StepExecutionResultImpl implements NodeS
 
     public INodeEntry getNode() {
         return node;
+    }
+
+    @Override
+    public WFSharedContext getSharedContext() {
+        return sharedContext;
+    }
+
+    public void setSharedContext(WFSharedContext sharedContext) {
+        this.sharedContext = sharedContext;
     }
 }

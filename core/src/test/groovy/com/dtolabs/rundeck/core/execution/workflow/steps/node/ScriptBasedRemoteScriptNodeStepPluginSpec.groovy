@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
@@ -96,7 +97,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
         def context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> [:]
+            getDataContextObject() >> new BaseDataContext([:])
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework
@@ -149,7 +150,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
         def context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> [:]
+            getDataContextObject() >> new BaseDataContext([:])
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework
@@ -198,9 +199,9 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
         def context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> [
+            getDataContextObject() >> new BaseDataContext([
                     node: [name: 'anode']
-            ]
+            ])
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework
@@ -254,7 +255,7 @@ class ScriptBasedRemoteScriptNodeStepPluginSpec extends Specification {
         def plugin = new ScriptBasedRemoteScriptNodeStepPlugin(provider, framework)
         def context = Mock(PluginStepContext) {
             getFrameworkProject() >> PROJECT_NAME
-            getDataContext() >> [:]
+            getDataContextObject() >> new BaseDataContext([:])
             getLogger() >> Mock(PluginLogger)
             getExecutionContext() >> Mock(ExecutionContext) {
                 getFramework() >> framework

@@ -103,7 +103,7 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
                 executionContext.getFrameworkProject(),
                 executionContext.getDataContext()
         );
-        final HashMap<String, String> scptexec = new HashMap<String, String>();
+        final HashMap<String, String> scptexec = new HashMap<>();
         scptexec.put("command", StringArrayUtil.asString(command, " "));
         localDataContext.put("exec", scptexec);
         final Map<String, Map<String, String>> nodeExecContext =
@@ -155,6 +155,9 @@ class ScriptPluginNodeExecutor extends BaseScriptPlugin implements NodeExecutor 
                     3,
                     "[" + pluginname + "]: result code: " + result + ", success: " + (0 == result)
             );
+            if(null!=executionContext.getOutputContext()){
+                executionContext.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
+            }
             if (0 != result) {
                 return NodeExecutorResultImpl.createFailure(
                         NodeStepFailureReason.NonZeroResultCode,

@@ -268,7 +268,7 @@ until it succeeds. (Note: Retry only affects the job if is invoked directly, not
 ![Job Retry field](../figures/jobs-retry-field.png)
 
 
-The value for the timeout can be:
+The value for the retry can be:
 
 * A specific integer number
 * An embedded property reference such as `${option.retryMax}`.  This allows a Job Option to be used to change the retry count for the job.
@@ -276,6 +276,15 @@ The value for the timeout can be:
 Each execution will be started with context variables 
 indicating the current retry attempt and whether it was a retry.  
 See [Context Variables](#context-variables).
+
+Optionally a delay between retries can be established:
+ 
+* A number of seconds, such as `30`
+* A string indicating numbers and units, such as "1d 12h 30m 24s". Each number must have a unit letter next to it.  The total timeout duration will be the sum of the values.  Available units are "d" (days) "h" (hours) "m" (minutes) and "s" (seconds, default if unspecified.)
+* An embedded property reference such as `${option.delay}`.  This allows a Job Option to be used to change the delay between retries for the job.
+
+
+![Job Delay between retries field](../figures/jobs-retry-delay-field.png)
 
 ### Log Limit
 
@@ -1365,7 +1374,7 @@ of steps of different types.
 
 When creating a new Job definition, the Workflow form will be set with
 defaults and have no workflow steps defined. The workflow editor will
-have a form open asking to choose a stype type to add. 
+have a form open asking to choose a step type to add.
 
 ![Add a step](../figures/fig0402.png)
 
@@ -1649,7 +1658,7 @@ Node context variables:
 
 * `node.name`: Name of the Node being executed on
 * `node.hostname`: Hostname of the Node
-* `node.username`: Usernae of the remote user
+* `node.username`: Username of the remote user
 * `node.description`: Description of the node
 * `node.tags`: Comma-separated list of tags
 * `node.os-*`: OS properties of the Node: `name`,`version`,`arch`,`family`
@@ -1682,7 +1691,7 @@ Option context variables are referred to as `option.NAME` (more about [Job Optio
 
 ### Context Variable Usage
 
-Context variables can be used in a few ways in a Job step, with slightly different sytanxes:
+Context variables can be used in a few ways in a Job step, with slightly different syntaxes:
 
 * Commands, Script Arguments and Job Reference Arguments
 

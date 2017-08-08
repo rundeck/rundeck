@@ -25,11 +25,9 @@ package com.dtolabs.rundeck.core.utils;
 
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.utils.Streams;
-import org.apache.commons.collections.Predicate;
-import org.apache.commons.collections.PredicateUtils;
 import org.apache.tools.ant.taskdefs.Execute;
 
 import java.io.*;
@@ -37,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -218,8 +217,10 @@ public class ScriptExecUtil {
      */
     public static int runLocalCommand(
             final String[] command,
-            final Map<String, String> envMap, final File workingdir,
-            final OutputStream outputStream, final OutputStream errorStream
+            final Map<String, String> envMap,
+            final File workingdir,
+            final OutputStream outputStream,
+            final OutputStream errorStream
     )
             throws IOException, InterruptedException {
         final String[] envarr = createEnvironmentArray(envMap);
@@ -341,15 +342,11 @@ public class ScriptExecUtil {
         return builder.build();
     }
 
-    static Predicate any(Predicate... preds) {
-        return PredicateUtils.anyPredicate(preds);
-    }
 
-    static final Predicate needsQuoting = any(
-            DataContextUtils.stringContainsPropertyReferencePredicate,
-            CLIUtils.stringContainsWhitespacePredicate,
-            CLIUtils.stringContainsQuotePredicate
-    );
+    static final Predicate needsQuoting =
+            DataContextUtils.stringContainsPropertyReferencePredicate
+                    .or(CLIUtils::containsSpace)
+                    .or(CLIUtils::containsQuote);
 
 
     private static void addScriptFileArgList(
@@ -423,7 +420,7 @@ public class ScriptExecUtil {
         final ArrayList<String> arglist = new ArrayList<String>();
         if (null != scriptinterpreter) {
             List<String> c = Arrays.asList(
-                    DataContextUtils.replaceDataReferences(
+                    DataContextUtils.replaceDataReferencesInArray(
                             OptsUtil.burst(scriptinterpreter),
                             localDataContext,
                             null,
@@ -455,7 +452,7 @@ public class ScriptExecUtil {
         if (null != scriptargs) {
             arglist.addAll(
                     Arrays.asList(
-                            DataContextUtils.replaceDataReferences(
+                            DataContextUtils.replaceDataReferencesInArray(
                                     scriptargs.split(" "),
                                     localDataContext
                             )
@@ -465,7 +462,7 @@ public class ScriptExecUtil {
             if (!quoted) {
                 arglist.addAll(Arrays.asList(scriptargsarr));
             } else {
-                final String[] newargs = DataContextUtils.replaceDataReferences(scriptargsarr, localDataContext);
+                final String[] newargs = DataContextUtils.replaceDataReferencesInArray(scriptargsarr, localDataContext);
                 Converter<String, String> quote = getQuoteConverterForNode(node);
                 //quote args that have substituted context input, or have whitespace
                 //allow other args to be used literally

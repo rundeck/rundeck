@@ -128,7 +128,7 @@
                         <%
                             nodecontextdata.project=nodedata.project.name
                         %>
-                        <g:set var="remoteUrl" value="${DataContextUtils.replaceDataReferences(node.attributes?.remoteUrl,[node:nodecontextdata])}" />
+                        <g:set var="remoteUrl" value="${DataContextUtils.replaceDataReferencesInString(node.attributes?.remoteUrl,[node:nodecontextdata])}" />
                         <span class="action " title="Edit this node via remote URL..." onclick='doRemoteEdit("${enc(js: node.nodename)}","${enc(js: nodedata.project.name)}","${enc(js: remoteUrl)}");'>Edit&hellip;</span>
                     </g:if>
                     <g:elseif test="${node.attributes?.editUrl}">
@@ -136,7 +136,7 @@
                         <%
                             nodecontextdata.project=nodedata.project.name
                         %>
-                        <g:set var="editUrl" value="${DataContextUtils.replaceDataReferences(node.attributes?.editUrl,[node:nodecontextdata])}" />
+                        <g:set var="editUrl" value="${DataContextUtils.replaceDataReferencesInString(node.attributes?.editUrl,[node:nodecontextdata])}" />
                         <a href="${enc(attr:editUrl)}" target="_blank" title="Opens a link to edit this node at a remote site.">Edit</a>
                     </g:elseif>
 

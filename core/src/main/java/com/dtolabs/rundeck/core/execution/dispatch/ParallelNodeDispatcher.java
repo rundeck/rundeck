@@ -27,20 +27,22 @@ import com.dtolabs.rundeck.core.cli.CallableWrapperTask;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
+import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
+import com.dtolabs.rundeck.core.execution.workflow.ReadableSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
+import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
 import org.apache.tools.ant.Task;
 import org.apache.tools.ant.taskdefs.Parallel;
 import org.apache.tools.ant.taskdefs.Sequential;
 
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -83,7 +85,7 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         INodeSet nodes = context.getNodes();
         boolean keepgoing = context.isKeepgoing();
 
-        final HashSet<String> nodeNames = new HashSet<String>();
+        final HashSet<String> nodeNames = new HashSet<>();
         FailedNodesListener failedListener = context.getExecutionListener().getFailedNodesListener();
 
         Project project = new Project();
@@ -98,15 +100,15 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         parallelTask.setThreadCount(context.getThreadCount());
         parallelTask.setFailOnAny(!keepgoing);
         boolean success = false;
-        final HashMap<String, NodeStepResult> resultMap = new HashMap<String, NodeStepResult>();
-        final HashMap<String, NodeStepResult> failureMap = new HashMap<String, NodeStepResult>();
+        final HashMap<String, NodeStepResult> resultMap = new HashMap<>();
+        final HashMap<String, NodeStepResult> failureMap = new HashMap<>();
         final Collection<INodeEntry> nodes1 = nodes.getNodes();
         //reorder based on configured rank property and order
         final String rankProperty = null != context.getNodeRankAttribute() ? context.getNodeRankAttribute() : "nodename";
         final boolean rankAscending = context.isNodeRankOrderAscending();
         final INodeEntryComparator comparator = new INodeEntryComparator(rankProperty);
-        final TreeSet<INodeEntry> orderedNodes = new TreeSet<INodeEntry>(
-            rankAscending ? comparator : Collections.reverseOrder(comparator));
+        final TreeSet<INodeEntry> orderedNodes = new TreeSet<>(
+                rankAscending ? comparator : Collections.reverseOrder(comparator));
 
         orderedNodes.addAll(nodes1);
         for (final INodeEntry node: orderedNodes) {
@@ -212,13 +214,30 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
         @Override
         public NodeStepResult call() {
             try {
-                final NodeStepResult interpreterResult = framework.getExecutionService().executeNodeStep(
-                    context, item, node);
-                if (!interpreterResult.isSuccess()) {
-                    failureMap.put(node.getNodename(), interpreterResult);
+                ContextView stepContextView = ContextView.nodeStep(
+                        context.getStepNumber(),
+                        node.getNodename()
+                );
+                final ReadableSharedContext outputContext = SharedDataContextUtils.outputContext(stepContextView);
+                ExecutionContextImpl nodeDataContext = new ExecutionContextImpl.Builder(context).outputContext(
+                        outputContext).build();
+
+                NodeStepResult result = framework.getExecutionService().executeNodeStep(
+                        nodeDataContext,
+                        item,
+                        node
+                );
+                WFSharedContext sharedContext = outputContext.getSharedContext();
+                DataContext data = sharedContext.getData(stepContextView);
+                if (data != null) {
+                    sharedContext.merge(ContextView.node(node.getNodename()), data);
                 }
-                resultMap.put(node.getNodename(), interpreterResult);
-                return interpreterResult;
+                result = NodeStepDataResultImpl.with(result, sharedContext);
+                if (!result.isSuccess()) {
+                    failureMap.put(node.getNodename(), result);
+                }
+                resultMap.put(node.getNodename(), result);
+                return result;
             } catch (NodeStepException e) {
                 NodeStepResultImpl result = new NodeStepResultImpl(e,
                                                                    e.getFailureReason(),
@@ -241,8 +260,8 @@ public class ParallelNodeDispatcher implements NodeDispatcher {
      * @param project the project
      */
     public static void configureNodeContextThreadLocalsForProject(final Project project) {
-        final InheritableThreadLocal<String> localNodeName = new InheritableThreadLocal<String>();
-        final InheritableThreadLocal<String> localUserName = new InheritableThreadLocal<String>();
+        final InheritableThreadLocal<String> localNodeName = new InheritableThreadLocal<>();
+        final InheritableThreadLocal<String> localUserName = new InheritableThreadLocal<>();
         if (null == project.getReference(NODE_NAME_LOCAL_REF_ID)) {
             project.addReference(NODE_NAME_LOCAL_REF_ID, localNodeName);
         }

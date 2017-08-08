@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -32,7 +33,9 @@ import rundeck.services.PasswordFieldsService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.StorageManager
 import rundeck.services.UserService
+import rundeck.services.framework.RundeckProjectConfigurable
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
@@ -817,8 +820,24 @@ class FrameworkControllerSpec extends Specification {
         params[SynchronizerTokensHolder.TOKEN_URI] = '/test'
     }
 
+    static class TestConfigurableBean implements RundeckProjectConfigurable {
+
+        Map<String, String> categories = [:]
+
+        List<Property> projectConfigProperties = []
+
+        Map<String, String> propertiesMapping = [:]
+    }
+
+    @Unroll
     def "save project updating passive mode"(){
         setup:
+        defineBeans {
+            testConfigurableBean(TestConfigurableBean) {
+                projectConfigProperties = ScheduledExecutionService.ProjectConfigProperties
+                propertiesMapping = ScheduledExecutionService.ConfigPropertiesMapping
+            }
+        }
         def fwkService=Mock(FrameworkService)
         controller.frameworkService = fwkService
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
@@ -833,8 +852,12 @@ class FrameworkControllerSpec extends Specification {
 
         params.project = "TestSaveProject"
         params.description='abc'
-        params.disableExecutionMode = disableExecution
-        params.disableScheduleMode = disableSchedule
+        params.extraConfig = [
+                testConfigurableBean: [
+                        disableExecution   : disableExecution,
+                        disableSchedule: disableSchedule
+                ]
+        ]
 
         setupFormTokens(params)
         when:

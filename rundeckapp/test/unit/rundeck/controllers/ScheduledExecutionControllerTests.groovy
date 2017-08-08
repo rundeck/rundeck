@@ -39,6 +39,7 @@ import rundeck.services.ApiService
 import rundeck.services.FileUploadService
 import rundeck.services.NotificationService
 import rundeck.services.OrchestratorPluginService
+import rundeck.services.PluginService
 
 import javax.security.auth.Subject
 import com.dtolabs.rundeck.core.authentication.Username
@@ -609,7 +610,9 @@ class ScheduledExecutionControllerTests  {
 			def oServiceControl = mockFor(OrchestratorPluginService, true)
 			oServiceControl.demand.listDescriptions{[]}
 			sec.orchestratorPluginService = oServiceControl.createMock()
-			
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
+        }
             def params = [
                     jobName: 'monkey1',
                     project: 'testProject',
@@ -673,6 +676,9 @@ class ScheduledExecutionControllerTests  {
 			def oServiceControl = mockFor(OrchestratorPluginService, true)
 			oServiceControl.demand.listDescriptions{[]}
 			sec.orchestratorPluginService = oServiceControl.createMock()
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
+        }
 			
             def params = [
                     jobName: 'monkey1',
@@ -1372,17 +1378,12 @@ class ScheduledExecutionControllerTests  {
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded = false
         def svcMock = mockFor(ApiService, true)
-        def requireFailed=false
-        svcMock.demand.requireApi { req, resp ->
-            true
+
+        svcMock.demand.renderErrorFormat { response, Map error ->
+            assert error.status == 400
+            assert error.code == 'api.error.invalid.request'
         }
-        svcMock.demand.requireParameters { reqparams, response, List needparams ->
-            assertTrue('project' in needparams)
-            assertTrue('exec' in needparams)
-            assertNull(reqparams.project)
-            requireFailed=true
-            return false
-        }
+
         sec.apiService = svcMock.createMock()
         def result = sec.apiRunCommand(new ApiRunAdhocRequest(exec: 'blah'))
         assert !succeeded
@@ -1390,7 +1391,6 @@ class ScheduledExecutionControllerTests  {
         assertNull(response.redirectedUrl)
         assert null==sec.flash.error
         assert !sec.chainModel
-        assert requireFailed
     }
 
     public void testApiBulkJobDeleteRequest_validation() {
@@ -2077,6 +2077,8 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.getNodeStepPluginDescriptions { [] }
             fwkControl.demand.getStepPluginDescriptions { [] }
+            fwkControl.demand.getProjectGlobals { [:] }
+            fwkControl.demand.projectNames { [] }
             sec.frameworkService = fwkControl.createMock()
             def seServiceControl = mockFor(ScheduledExecutionService, true)
 
@@ -2095,6 +2097,9 @@ class ScheduledExecutionControllerTests  {
                 []
             }
             sec.notificationService = pControl.createMock()
+            sec.pluginService = mockWith(PluginService){
+                listPlugins(){[]}
+            }
 
             def params = [id: se.id.toString()]
             sec.params.putAll(params)
@@ -2166,7 +2171,9 @@ class ScheduledExecutionControllerTests  {
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
         }
-
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
+        }
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
         def model = sec.show()
@@ -2264,6 +2271,9 @@ class ScheduledExecutionControllerTests  {
         }
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
+        }
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2364,6 +2374,9 @@ class ScheduledExecutionControllerTests  {
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
         }
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
+        }
 
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2463,6 +2476,9 @@ class ScheduledExecutionControllerTests  {
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
         }
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
+        }
 
         def params = [id: se.id.toString(),project:'project1']
         sec.params.putAll(params)
@@ -2560,6 +2576,9 @@ class ScheduledExecutionControllerTests  {
         }
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
+        }
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
         }
 
         def params = [id: se.id.toString(),project:'project1']
@@ -2684,6 +2703,9 @@ class ScheduledExecutionControllerTests  {
         }
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
             listOrchestratorPlugins(){->null}
+        }
+        sec.pluginService = mockWith(PluginService) {
+            listPlugins(){[]}
         }
 
         def params = [id: se.id.toString(),project:'project1',retryExecId:exec.id.toString()]

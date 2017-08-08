@@ -25,8 +25,8 @@ if (System.properties['maven.central.url']) {
 println "Maven Central: ${mavenCentralUrl}"
 
 
-grails.project.target.level = 1.7
-grails.project.source.level = 1.7
+grails.project.target.level = 1.8
+grails.project.source.level = 1.8
 
 grails.project.dependency.resolver = "maven"
 
@@ -96,7 +96,7 @@ grails.project.dependency.resolution = {
         compile (':asset-pipeline:2.7.2')
         compile ':cache:1.1.8'
         compile ":platform-core:1.0.0"
-        runtime (':hibernate4:4.3.6.1')
+        runtime (':hibernate4:4.3.10')
         runtime ':mail:1.0.7', ':quartz:1.0.2', ':executor:0.3'
 
         runtime ':profiler:0.5'

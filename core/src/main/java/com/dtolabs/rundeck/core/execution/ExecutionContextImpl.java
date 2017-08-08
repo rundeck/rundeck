@@ -31,15 +31,15 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.common.OrchestratorConfig;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
-import com.dtolabs.rundeck.core.execution.workflow.FlowControl;
-import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.data.*;
+import com.dtolabs.rundeck.core.dispatcher.*;
+import com.dtolabs.rundeck.core.execution.workflow.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeExecutionContext;
 import com.dtolabs.rundeck.core.jobs.JobService;
+import com.dtolabs.rundeck.core.logging.LoggingManager;
 import com.dtolabs.rundeck.core.nodes.ProjectNodeService;
 import com.dtolabs.rundeck.core.storage.StorageTree;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -56,14 +56,17 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private String user;
     private NodesSelector nodeSet;
     private INodeSet nodes;
+    private INodeEntry singleNodeContext;
     private int threadCount;
     private boolean keepgoing;
     private int loglevel;
     private String charsetEncoding;
-    private Map<String, Map<String, String>> dataContext;
-    private Map<String, Map<String, String>> privateDataContext;
-    private Map<String, Map<String, Map<String, String>>> nodeDataContext;
+    private DataContext dataContext;
+    private DataContext privateDataContext;
+    private MultiDataContext<ContextView, DataContext> sharedDataContext;
     private ExecutionListener executionListener;
+    private WorkflowExecutionListener workflowExecutionListener;
+    private ExecutionLogger executionLogger;
     private Framework framework;
     private AuthContext authContext;
     private String nodeRankAttribute;
@@ -74,12 +77,17 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private JobService jobService;
     private ProjectNodeService nodeService;
     private FlowControl flowControl;
+    private SharedOutputContext outputContext;
+    private LoggingManager loggingManager;
 
     private OrchestratorConfig orchestrator;
     private ExecutionContextImpl() {
-        stepContext = new ArrayList<Integer>();
+        stepContext = new ArrayList<>();
         nodes = new NodeSetImpl();
-        nodeDataContext = new HashMap<String, Map<String, Map<String, String>>>();
+        dataContext = new BaseDataContext();
+        privateDataContext = new BaseDataContext();
+        sharedDataContext = new MultiDataContextImpl<>();
+        outputContext = SharedDataContextUtils.outputContext(ContextView.global());
     }
 
     public static Builder builder() {
@@ -93,8 +101,8 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     }
 
     @Override
-    public Map<String, Map<String, Map<String, String>>> getNodeDataContext() {
-        return nodeDataContext;
+    public MultiDataContext<ContextView, DataContext> getSharedDataContext() {
+        return sharedDataContext;
     }
 
     public AuthContext getAuthContext() {
@@ -122,6 +130,19 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     public void setCharsetEncoding(String charsetEncoding) {
         this.charsetEncoding = charsetEncoding;
     }
+    public SharedOutputContext getOutputContext() {
+        return outputContext;
+    }
+
+    public INodeEntry getSingleNodeContext() {
+        return singleNodeContext;
+    }
+
+    @Override
+    public LoggingManager getLoggingManager() {
+        return loggingManager;
+    }
+
 
     public static class Builder {
         private ExecutionContextImpl ctx;
@@ -140,9 +161,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.nodes = original.getNodes();
                 ctx.loglevel = original.getLoglevel();
                 ctx.charsetEncoding = original.getCharsetEncoding();
-                ctx.dataContext = original.getDataContext();
-                ctx.privateDataContext = original.getPrivateDataContext();
+                ctx.dataContext = original.getDataContextObject();
+                ctx.privateDataContext = original.getPrivateDataContextObject();
                 ctx.executionListener = original.getExecutionListener();
+                ctx.workflowExecutionListener = original.getWorkflowExecutionListener();
+                ctx.executionLogger = original.getExecutionLogger();
                 ctx.framework = original.getFramework();
                 ctx.authContext = original.getAuthContext();
                 ctx.threadCount = original.getThreadCount();
@@ -153,15 +176,23 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.jobService = original.getJobService();
                 ctx.nodeService = original.getNodeService();
                 ctx.orchestrator = original.getOrchestrator();
+                ctx.outputContext = original.getOutputContext();
+                ctx.sharedDataContext = MultiDataContextImpl.with(original.getSharedDataContext());
+                ctx.loggingManager = original.getLoggingManager();
                 if(original instanceof NodeExecutionContext){
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
-                    ctx.nodeDataContext.putAll(original1.getNodeDataContext());
+                    ctx.singleNodeContext = original1.getSingleNodeContext();
                 }
             }
         }
 
+        public Builder loggingManager(LoggingManager loggingManager) {
+            ctx.loggingManager = loggingManager;
+            return this;
+        }
+
         public Builder storageTree(StorageTree storageTree) {
-            ctx.storageTree=storageTree;
+            ctx.storageTree = storageTree;
             return this;
         }
 
@@ -179,13 +210,17 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             this((ExecutionContext) original);
             if (null != original) {
                 ctx.stepNumber = original.getStepNumber();
-                ctx.stepContext = original.getStepContext();
+                ctx.stepContext = null != original.getStepContext() ? new ArrayList<>(original.getStepContext()) : null;
                 ctx.flowControl = original.getFlowControl();
             }
         }
 
         public Builder flowControl(FlowControl flowControl) {
             ctx.flowControl = flowControl;
+            return this;
+        }
+        public Builder outputContext(SharedOutputContext outputContext) {
+            ctx.outputContext = outputContext;
             return this;
         }
 
@@ -222,16 +257,22 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 //merge in any node-specific data context
                 nodeContextData(node);
 
-                if (null != ctx.nodeDataContext && null != ctx.nodeDataContext.get(node.getNodename())) {
-                    ctx.dataContext = DataContextUtils.merge(ctx.dataContext,
-                                                             ctx.nodeDataContext.get(node.getNodename()));
-                }
+                ctx.singleNodeContext=node;
+
+//                if (null != ctx.sharedDataContext && null != ctx.sharedDataContext.getData(node.getNodename())) {
+                //XXX: merge shared node data at this point?
+//                    ctx.dataContext.merge(ctx.sharedDataContext.getData(node.getNodename()));
+//                }
             }
             return this;
         }
 
         public Builder nodeContextData(INodeEntry node) {
-            ctx.dataContext = DataContextUtils.addContext("node", DataContextUtils.nodeData(node), ctx.dataContext);
+            ctx.dataContext.merge(new BaseDataContext("node", DataContextUtils.nodeData(node)));
+            ctx.sharedDataContext.merge(
+                    ContextView.node(node.getNodename()),
+                    new BaseDataContext("node", DataContextUtils.nodeData(node))
+            );
             return this;
         }
 
@@ -246,15 +287,37 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         /**
+         * Merge a context data set
+         * @param data data
+         * @return builder
+         */
+        public Builder mergeContext(final Map<String,Map<String,String>> data) {
+            return mergeContext(new BaseDataContext(data));
+        }
+
+        /**
+         * Merge a context data set
+         *
+         * @param data data
+         *
+         * @return builder
+         */
+        public Builder mergeContext(final DataContext data) {
+            ctx.dataContext.merge(data);
+            ctx.sharedDataContext.merge(ContextView.global(), data);
+            return this;
+        }
+
+        /**
          * merge a context data set
          * @param key key
          * @param data data
          * @return builder
          */
         public Builder mergeContext(final String key, final Map<String,String> data) {
-            HashMap<String, Map<String, String>> tomerge = new HashMap<String, Map<String, String>>();
+            HashMap<String, Map<String, String>> tomerge = new HashMap<>();
             tomerge.put(key, data);
-            return dataContext(DataContextUtils.merge(ctx.dataContext, tomerge));
+            return mergeContext(tomerge);
         }
 
         public Builder loglevel(int loglevel) {
@@ -268,17 +331,40 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         public Builder dataContext(Map<String, Map<String, String>> dataContext) {
-            ctx.dataContext = dataContext;
+            ctx.dataContext = new BaseDataContext(dataContext);
+            ctx.sharedDataContext.getData().put(ContextView.global(), new BaseDataContext(dataContext));
+
+            return this;
+        }
+
+        public Builder dataContext(DataContext dataContext) {
+            ctx.dataContext = new BaseDataContext(dataContext);
+            ctx.sharedDataContext.getData().put(ContextView.global(), new BaseDataContext(dataContext));
             return this;
         }
 
         public Builder privateDataContext(Map<String, Map<String, String>> privateDataContext) {
-            ctx.privateDataContext = privateDataContext;
+            ctx.privateDataContext = new BaseDataContext(privateDataContext);
+            return this;
+        }
+
+        public Builder privateDataContext(DataContext privateDataContext) {
+            ctx.privateDataContext = new BaseDataContext(privateDataContext);
             return this;
         }
 
         public Builder executionListener(ExecutionListener executionListener) {
             ctx.executionListener = executionListener;
+            ctx.executionLogger = executionListener;
+            return this;
+        }
+        public Builder workflowExecutionListener(WorkflowExecutionListener workflowExecutionListener) {
+            ctx.workflowExecutionListener = workflowExecutionListener;
+            return this;
+        }
+
+        public Builder executionLogger(ExecutionLogger executionLogger) {
+            ctx.executionLogger = executionLogger;
             return this;
         }
 
@@ -334,7 +420,31 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         public Builder nodeDataContext(final String nodeName, final Map<String,Map<String,String>> dataContext) {
-            ctx.nodeDataContext.put(nodeName, dataContext);
+            ctx.sharedDataContext.merge(
+                    ContextView.nodeStep(ctx.stepNumber, nodeName),
+                    new BaseDataContext(dataContext)
+            );
+            ctx.sharedDataContext.merge(
+                    ContextView.node(nodeName),
+                    new BaseDataContext(dataContext)
+            );
+            return this;
+        }
+
+        public Builder sharedDataContext(MultiDataContext<ContextView, DataContext> shared) {
+            ctx.sharedDataContext = new MultiDataContextImpl<>(shared);
+            if (null != ctx.dataContext) {
+                ctx.sharedDataContext.merge(ContextView.global(), ctx.dataContext);
+            }
+            return this;
+        }
+        public Builder mergeSharedContext(MultiDataContext<ContextView, DataContext> shared) {
+            ctx.sharedDataContext.merge(shared);
+            return this;
+        }
+
+        public Builder sharedDataContextClear() {
+            ctx.sharedDataContext = new MultiDataContextImpl<>();
             return this;
         }
 
@@ -367,8 +477,28 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         return dataContext;
     }
 
+    @Override
+    public DataContext getDataContextObject() {
+        return dataContext;
+    }
+
+    @Override
+    public DataContext getPrivateDataContextObject() {
+        return privateDataContext;
+    }
+
     public ExecutionListener getExecutionListener() {
         return executionListener;
+    }
+
+    @Override
+    public WorkflowExecutionListener getWorkflowExecutionListener() {
+        return workflowExecutionListener;
+    }
+
+    @Override
+    public ExecutionLogger getExecutionLogger() {
+        return executionLogger;
     }
 
     public Framework getFramework() {

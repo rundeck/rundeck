@@ -493,7 +493,11 @@
   &.textbtn-on-hover:hover,
   &.textbtn-on-hover:focus,
   &.textbtn-on-hover:active,
-  &.textbtn-on-hover.active
+  &.textbtn-on-hover.active,
+  &.textbtn-deemphasize:hover,
+  &.textbtn-deemphasize:focus,
+  &.textbtn-deemphasize:active,
+  &.textbtn-deemphasize.active
    {
     color: darken(@color, 8%);
     background-color: @background-higlight;
@@ -534,6 +538,9 @@
   &.textbtn-on-hover{
     .textbtn-on-hover();
   }
+  &.textbtn-deemphasize {
+    color: lighten(@gray, 30%);
+  }
 
 }
 .textbtn-default {
@@ -565,6 +572,21 @@
 .textbtn-info {
   .textbtn-variant(@brand-info,transparent,lighten(@brand-info, 40%));
 }
+
+
+// muted button variant
+.btn-muted {
+  .button-variant(@text-muted; transparent; lighten(@text-muted, 20%));
+}
+// link version
+.btn-link.btn-muted {
+
+  color: @text-muted;
+  font-weight: normal;
+  border-radius: 0;
+  border: 1px solid transparent;
+}
+
 
 //represent textual query
 
@@ -1058,7 +1080,7 @@ section{
     td.node.empty {
       color: #eee;
     }
-    tr.node-new td{
+    tr.node-new > td{
       border-top: 2px solid white;
     }
     td.node{
@@ -1164,6 +1186,11 @@ section{
       padding: 1px 3px;
       color: black;
     }
+    &.no-wrap {
+      td.data {
+        white-space: pre;
+      }
+    }
     td.time{
       padding: 0 3px;
       background-color: @gray-lighter;
@@ -1222,6 +1249,9 @@ section{
   }
   .log_line{
     white-space: pre-wrap;
+    &.no-wrap {
+      white-space: pre;
+    }
     font-family: "Lucida Console", courier, monospace;
     color: black;
     &.level_verbose, &.level_debug {
@@ -1232,6 +1262,17 @@ section{
     }
   }
 
+table.table-data-embed {
+  font-size: @font-size-base;
+  white-space: normal;
+  &.invert {
+    background-color: @well-bg;
+    border: 1px solid white;
+    td, th {
+      border: 1px solid white;
+    }
+  }
+}
   .stepident, .stepnum {
 //    color: @brand-light;
   }
@@ -1246,7 +1287,7 @@ section{
   }
 
   //workflow editor, option editor, autohilite:
-  span.autohilite:hover {
+span.autohilite:hover, btn.autohilite:hover {
     background: lighten(@brand-info, 40%);
   }
 
@@ -1651,7 +1692,7 @@ td {
   white-space: nowrap;
   .version-icon{
     .badge();
-    background-color: #eee;
+    background-color: transparent;
     font-weight: normal;
   }
 }
@@ -1783,3 +1824,21 @@ a {
 .autocomplete-suggestions strong { font-weight: normal; color: #3399FF; }
 .autocomplete-group { padding: 2px 5px; }
 .autocomplete-group strong { display: block; border-bottom: 1px solid #000; }
+
+//other buttons
+
+// hollow button variant
+.btn-info-hollow {
+  .button-variant(@brand-info ; transparent; @btn-info-border);
+}
+
+@keyframes pulse {
+  50% {
+    background-color: #3399FF;
+    border-color: #3399FF;
+  }
+}
+
+.flash_undo {
+  animation: pulse .75s ease 1 normal;
+}

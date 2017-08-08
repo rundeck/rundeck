@@ -17,20 +17,23 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.cli.CLIUtils;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.data.MultiDataContext;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.utils.Converter;
-import org.apache.commons.collections.Predicate;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * A list of commandline arguments, with flags to indicate quoting.
  */
 public class ExecArgList {
-    List<ExecArg> args = new ArrayList<ExecArg>();
+    List<ExecArg> args = new ArrayList<>();
 
     private ExecArgList() {
     }
@@ -93,7 +96,7 @@ public class ExecArgList {
      * @return Flatten the list of arguments into a list
      */
     public ArrayList<String> asFlatStringList() {
-        final ArrayList<String> strings = new ArrayList<String>();
+        final ArrayList<String> strings = new ArrayList<>();
         for (ExecArg arg : getList()) {
             arg.accept(new ExecArg.Visitor() {
                 @Override
@@ -134,20 +137,61 @@ public class ExecArgList {
      *
      * @return list of strings
      */
+    @Deprecated
     public ArrayList<String> buildCommandForNode(Map<String, Map<String, String>> dataContext, String osFamily) {
         return buildCommandForNode(this, dataContext, osFamily);
     }
 
-    private static ArrayList<String> buildCommandForNode(ExecArgList command, Map<String, Map<String,
-            String>> dataContext,
-            String osFamily) {
+    private static ArrayList<String> buildCommandForNode(
+            ExecArgList command,
+            Map<String, Map<String, String>> dataContext,
+            String osFamily
+    )
+    {
         final Converter<String, String> quote = CLIUtils.argumentQuoteForOperatingSystem(osFamily);
-        final Converter<String, String> expand = DataContextUtils.replaceDataReferencesConverter(dataContext,
+        final Converter<String, String> expand = DataContextUtils.replaceDataReferencesConverter(
+                dataContext,
                 DataContextUtils.replaceMissingOptionsWithBlank,
-                false);
+                false
+        );
 
-        final ArrayList<String> commandList = new ArrayList<String>();
+        final ArrayList<String> commandList = new ArrayList<>();
         CommandVisitor visiter = new CommandVisitor(commandList, quote, expand);
+        command.visitWith(visiter);
+        return commandList;
+    }
+
+    public ArrayList<String> buildCommandForNode(
+            MultiDataContext<ContextView, DataContext> sharedContext,
+            String nodeName, String osFamily
+    )
+    {
+        return buildCommandForNode(this, sharedContext, nodeName, osFamily);
+    }
+
+    private static ArrayList<String> buildCommandForNode(
+            ExecArgList command,
+            MultiDataContext<ContextView, DataContext> sharedContext,
+            String nodeName,
+            String osFamily
+    )
+    {
+
+        final ArrayList<String> commandList = new ArrayList<>();
+        CommandVisitor visiter = new CommandVisitor(
+                commandList,
+                CLIUtils.argumentQuoteForOperatingSystem(osFamily),
+                str -> SharedDataContextUtils.replaceDataReferences(
+                        str,
+                        sharedContext,
+                        //add node name to qualifier to read node-data first
+                        ContextView.node(nodeName),
+                        ContextView::nodeStep,
+                        DataContextUtils.replaceMissingOptionsWithBlank,
+                        false,
+                        false
+                )
+        );
         command.visitWith(visiter);
         return commandList;
     }
@@ -180,7 +224,7 @@ public class ExecArgList {
         @Override
         public void visit(ExecArg arg) {
             if (arg.isList()) {
-                CommandVisitor commandVisitor = new CommandVisitor(new ArrayList<String>(), quote, expand);
+                CommandVisitor commandVisitor = new CommandVisitor(new ArrayList<>(), quote, expand);
                 for (ExecArg execArg : arg.getList()) {
                     execArg.accept(commandVisitor);
                 }
@@ -286,7 +330,7 @@ public class ExecArgList {
          */
         public Builder args(List<String> args, Predicate quoted) {
             for (String arg : args) {
-                argList.addArg(arg, quoted.evaluate(arg));
+                argList.addArg(arg, quoted.test(arg));
             }
             return this;
         }

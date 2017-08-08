@@ -236,7 +236,7 @@ public class ResponderTask implements Callable<ResponderTask.ResponderResult> {
      * @return sequence
      */
     public Callable<ResponderResult> createSequence(final Responder responder, final ResultHandler resultHandler) {
-        return new Sequence<ResponderResult>(this, this.chainResponder(responder, resultHandler));
+        return new Sequence<>(this, this.chainResponder(responder, resultHandler));
     }
 
     /**

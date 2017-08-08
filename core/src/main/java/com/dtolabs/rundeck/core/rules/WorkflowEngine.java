@@ -1,15 +1,10 @@
 package com.dtolabs.rundeck.core.rules;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.FluentIterable;
 import com.google.common.util.concurrent.*;
 import org.apache.log4j.Logger;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * A WorkflowSystem which processes the operations by use of a rule system and a mutable state.
@@ -24,11 +19,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class WorkflowEngine implements WorkflowSystem {
     static Logger logger = Logger.getLogger(WorkflowEngine.class.getName());
-    private MutableStateObj state;
+    private final MutableStateObj state;
     private final RuleEngine engine;
-    private final LinkedBlockingQueue<StateObj> stateChangeQueue;
-    private final Set<Operation> inProcess = Collections.synchronizedSet(new HashSet<Operation>());
-    private final Set<Operation> skipped = new HashSet<>();
     private final ListeningExecutorService executorService;
     private final ListeningExecutorService manager;
 
@@ -51,181 +43,60 @@ public class WorkflowEngine implements WorkflowSystem {
     {
         this.engine = engine;
         this.state = state;
-        stateChangeQueue = new LinkedBlockingQueue<>();
         executorService = MoreExecutors.listeningDecorator(executor);
         manager = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     }
 
-    public <T extends OperationSuccess, X extends Operation<T>> Set<OperationResult<T, X>> processOperations(
-            final Set<X> operations
-    )
-    {
-        event(WorkflowSystemEventType.Begin, "Workflow begin");
-        //initial state change to start workflow
-        queueChange(Workflows.getWorkflowStartState());
-        final Set<X> pending = new HashSet<>(operations);
-        final Set<OperationResult<T, X>> results = Collections.synchronizedSet(new HashSet<OperationResult<T, X>>());
-        final List<ListenableFuture<T>> futures = Collections.synchronizedList(new ArrayList<ListenableFuture<T>>());
-        interrupted = false;
-        long sleepOrig = 250;
-        long sleepMult = 2;
-        long sleepmax = 1000*5;
-        long sleeptime = sleepOrig;
-        while (!interrupted) {
-            try {
-                HashMap<String, String> changes = new HashMap<>();
-                //load all changes already in the queue
-                pollAll(changes);
-                if (changes.size() < 1) {
-                    //no changes seen, so wait for any change
-                    if (inProcess.size() < 1) {
-                        //no pending operations, signalling no new state changes will occur
-                        event(
-                                WorkflowSystemEventType.EndOfChanges,
-                                "No more state changes expected, finishing workflow."
-                        );
-                        break;
-                    }
-                    //otherwise wait for change
-                    StateObj take = stateChangeQueue.poll(sleeptime, TimeUnit.MILLISECONDS);
-                    if (null == take || take.getState().size() < 1) {
-                        sleeptime = Math.min(sleeptime * sleepMult, sleepmax);
-                        continue;
-                    }
-                    sleeptime = sleepOrig;
-                    changes.putAll(take.getState());
-                    pollAll(changes);
-                }
-                event(WorkflowSystemEventType.WillProcessStateChange,
-                      String.format("saw state changes: %s", changes), changes
-                );
+    MutableStateObj getState() {
+        return state;
+    }
 
-                state.updateState(changes);
+    RuleEngine getRuleEngine() {
+        return engine;
+    }
 
-                boolean update = Rules.update(engine, state);
-                event(WorkflowSystemEventType.DidProcessStateChange,
-                      String.format("applied state changes and rules (changed? %s): %s", update, state), state
-                );
+    static class Sleeper {
+        private long orig = 250;
+        private long mult = 2;
+        private long max = 5000L;
+        private long time = orig;
+        private TimeUnit unit = TimeUnit.MILLISECONDS;
 
-
-                if (isWorkflowEndState(state)) {
-                    event(WorkflowSystemEventType.WorkflowEndState, "Workflow end state reached.");
-                    break;
-                }
-
-                int origPendingCount = pending.size();
-
-                //operations which match runnable conditions
-                FluentIterable<X> runnable = FluentIterable.from(pending).filter(shouldRun(state));
-
-                //runnable that should be skipped
-                List<X> shouldskip = runnable.filter(shouldSkip(state, true)).toList();
-
-                //runnable, should not skip
-                List<X> shouldrun = runnable.toList();
-
-                for (final X operation : shouldrun) {
-                    if (shouldskip.contains(operation)) {
-                        continue;
-                    }
-                    pending.remove(operation);
-
-                    event(
-                            WorkflowSystemEventType.WillRunOperation,
-                            String.format("operation starting: %s", operation),
-                            operation
-                    );
-                    final ListenableFuture<T> submit = executorService.submit(operation);
-                    inProcess.add(operation);
-                    futures.add(submit);
-                    FutureCallback<T> cleanup = new FutureCallback<T>() {
-                        @Override
-                        public void onSuccess(final T result) {
-                            futures.remove(submit);
-                        }
-
-                        @Override
-                        public void onFailure(final Throwable t) {
-                            futures.remove(submit);
-                        }
-                    };
-                    FutureCallback<T> callback = new FutureCallback<T>() {
-                        @Override
-                        public void onSuccess(final T successResult) {
-                            event(
-                                    WorkflowSystemEventType.OperationSuccess,
-                                    String.format("operation succeeded: %s", successResult),
-                                    successResult
-                            );
-                            assert successResult != null;
-                            OperationResult<T, X> result = result(successResult, operation);
-                            synchronized (results) {
-                                results.add(result);
-                            }
-                            queueChange(successResult.getNewState());
-                            inProcess.remove(operation);
-                        }
-
-                        @Override
-                        public void onFailure(final Throwable t) {
-                            event(
-                                    WorkflowSystemEventType.OperationFailed,
-                                    String.format("operation failed: %s", t),
-                                    t
-                            );
-                            OperationResult<T, X> result = result(t, operation);
-                            synchronized (results) {
-                                results.add(result);
-                            }
-                            StateObj newFailureState = operation.getFailureState(t);
-                            if (null != newFailureState && newFailureState.getState().size() > 0) {
-                                queueChange(newFailureState);
-                            }
-                            inProcess.remove(operation);
-
-                        }
-                    };
-                    Futures.addCallback(submit, callback, manager);
-                    Futures.addCallback(submit, cleanup, manager);
-                }
-                for (final X operation : shouldskip) {
-                    event(
-                            WorkflowSystemEventType.WillSkipOperation,
-                            String.format("Skip condition statisfied for operation: %s, skipping", operation),
-                            operation
-                    );
-                    pending.remove(operation);
-                    skipped.add(operation);
-                    StateObj newstate = operation.getSkipState(state);
-                    queueChange(newstate);
-                }
-
-                event(
-                        WorkflowSystemEventType.LoopProgress,
-                        String.format(
-                                "Pending(%d) => run(%d), skip(%d), remain(%d)",
-                                origPendingCount,
-                                shouldrun.size() - shouldskip.size(),
-                                shouldskip.size(),
-                                pending.size()
-                        )
-                );
-            } catch (InterruptedException e) {
-                interrupted = true;
-                break;
-            }
+        long time() {
+            return time;
         }
-        if (interrupted) {
-            event(WorkflowSystemEventType.Interrupted, "Engine interrupted, stopping engine...");
-            //attempt to cancel all futures
-            synchronized (futures) {
-                for (ListenableFuture<T> future : futures) {
-                    if (!future.isDone()) {
-                        future.cancel(true);
-                    }
-                }
-            }
+
+        void backoff() {
+            time = Math.min(time * mult, max);
         }
+
+        void reset() {
+            time = orig;
+        }
+
+        TimeUnit unit() {
+            return unit;
+        }
+    }
+
+    public <DAT,
+            RES extends OperationCompleted<DAT>,
+            OP extends Operation<DAT, RES>
+            >
+    Set<OperationResult<DAT, RES, OP>> processOperations(final Set<OP> operations, final SharedData<DAT> sharedData) {
+
+        WorkflowEngineOperationsProcessor<DAT, RES, OP> processor = new WorkflowEngineOperationsProcessor<>(
+                this,
+                operations,
+                sharedData,
+                executorService,
+                manager
+        );
+
+        processor.beginProcessing();
+
+        Set<OperationResult<DAT, RES, OP>> results = processor.getResults();
+        interrupted = processor.isInterrupted();
 
         event(WorkflowSystemEventType.WillShutdown, "Workflow engine shutting down");
 
@@ -235,15 +106,7 @@ public class WorkflowEngine implements WorkflowSystem {
                 executorService.shutdownNow();
             }
         } catch (InterruptedException ignored) {
-        }
-
-        if (inProcess.size() > 0) {
-            //attempt to wait for cancel results to be received
-            try {
-                Thread.sleep(5000);
-            } catch (InterruptedException ignored) {
-
-            }
+            Thread.currentThread().interrupt();
         }
 
         manager.shutdown();
@@ -252,45 +115,116 @@ public class WorkflowEngine implements WorkflowSystem {
                 manager.shutdownNow();
             }
         } catch (InterruptedException ignored) {
+            Thread.currentThread().interrupt();
         }
-        if (pending.size() > 0) {
-
+        if (!processor.getPending().isEmpty()) {
             event(
                     WorkflowSystemEventType.IncompleteOperations,
-                    String.format("Some operations were not run: %d", pending.size()),
-                    pending
+                    String.format("Some operations were not run: %d", processor.getPending().size()),
+                    processor.getPending()
             );
         }
         event(WorkflowSystemEventType.Complete, String.format("Workflow complete: %s", results));
         return results;
     }
 
-    private void event(final WorkflowSystemEventType eventType, final String message) {
-        event(eventType, message, null);
+    void eventLoopProgress(
+            final int origPendingCount,
+            final int skipcount,
+            final int toruncount,
+            final int pendingcount
+    )
+    {
+        event(
+                WorkflowSystemEventType.LoopProgress,
+                String.format(
+                        "Pending(%d) => run(%d), skip(%d), remain(%d)",
+                        origPendingCount,
+                        toruncount - skipcount,
+                        skipcount,
+                        pendingcount
+                )
+        );
     }
 
-    private void event(final WorkflowSystemEventType eventType, final String message, final Object data) {
-        logDebug(message);
+    static class Event implements WorkflowSystemEvent {
+        private WorkflowSystemEventType eventType;
+        private String message;
+        private Object data;
 
-        if (null != listener) {
-            listener.onEvent(new WorkflowSystemEvent() {
-                @Override
-                public String getMessage() {
-                    return message;
-                }
+        Event(final WorkflowSystemEventType eventType, final String message, final Object data) {
+            this.eventType = eventType;
+            this.message = message;
+            this.data = data;
+        }
 
-                @Override
-                public WorkflowSystemEventType getEventType() {
-                    return eventType;
-                }
+        static Event with(WorkflowSystemEventType type, String message) {
+            return new Event(type, message, null);
+        }
 
-                @Override
-                public Object getData() {
-                    return data;
-                }
-            });
+        static Event with(WorkflowSystemEventType type, String message, Object data) {
+            return new Event(type, message, data);
+        }
+
+        @Override
+        public WorkflowSystemEventType getEventType() {
+            return eventType;
+        }
+
+        public void setEventType(WorkflowSystemEventType eventType) {
+            this.eventType = eventType;
+        }
+
+        @Override
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        @Override
+        public Object getData() {
+            return data;
+        }
+
+        public void setData(Object data) {
+            this.data = data;
         }
     }
+
+
+    static <T> OperationCompleted<T> dummyResult(final StateObj state) {
+        return new OperationCompleted<T>() {
+            @Override
+            public StateObj getNewState() {
+                return state;
+            }
+
+            @Override
+            public T getResult() {
+                return null;
+            }
+        };
+    }
+
+    void event(final WorkflowSystemEventType endOfChanges, final String message) {
+        event(endOfChanges, message, null);
+    }
+
+    void event(final WorkflowSystemEventType eventType, final String message, final Object data) {
+        event(Event.with(eventType, message, data));
+    }
+
+    private void event(final WorkflowSystemEvent event) {
+        logDebug(event.getMessage());
+
+        if (null != listener) {
+            listener.onEvent(event);
+        }
+    }
+
 
     private void logDebug(final String message) {
         logger.debug(message);
@@ -317,7 +251,9 @@ public class WorkflowEngine implements WorkflowSystem {
     }
 
 
-    private static class WResult<T extends OperationSuccess, X extends Operation<T>> implements OperationResult<T, X> {
+    static class WResult<D, T extends OperationCompleted<D>, X extends Operation<D, T>> implements
+            OperationResult<D, T, X>
+    {
         final private X operation;
 
         WResult(final X operation, final Throwable throwable) {
@@ -351,45 +287,6 @@ public class WorkflowEngine implements WorkflowSystem {
         }
     }
 
-    private <T extends OperationSuccess, X extends Operation<T>> OperationResult<T, X> result(
-            final Throwable t, final X operation
-    )
-    {
-        return new WResult<>(operation, t);
-    }
-
-    private <T extends OperationSuccess, X extends Operation<T>> OperationResult<T, X> result(
-            final T successResult, final X operation
-    )
-    {
-        return new WResult<>(operation, successResult);
-    }
-
-
-    static private Predicate<Operation> shouldRun(final StateObj state) {
-        return new Predicate<Operation>() {
-            @Override
-            public boolean apply(final Operation input) {
-                assert input != null;
-                return input.shouldRun(state);
-            }
-        };
-    }
-
-    static private Predicate<Operation> shouldSkip(final StateObj state, final boolean requireSkip) {
-        return new Predicate<Operation>() {
-            @Override
-            public boolean apply(final Operation input) {
-                assert input != null;
-                return requireSkip == input.shouldSkip(state);
-            }
-        };
-    }
-
-
-    private void queueChange(StateObj state) {
-        stateChangeQueue.add(state);
-    }
 
 
     private Map<String, String> map(final String key, final String value) {
@@ -398,11 +295,5 @@ public class WorkflowEngine implements WorkflowSystem {
         return map;
     }
 
-    private void pollAll(final HashMap<String, String> changes) {
-        StateObj task = stateChangeQueue.poll();
-        while (task != null) {
-            changes.putAll(task.getState());
-            task = stateChangeQueue.poll();
-        }
-    }
+
 }

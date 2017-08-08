@@ -233,6 +233,8 @@ class ReportService  {
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
 
+        //in cancel case the real stat is failed but AbortedByUser != null
+        boolean fixCancel = (query.statFilter=='cancel' && !query.abortedByFilter)
 
         delegate.with {
 
@@ -241,6 +243,13 @@ class ReportService  {
                     if (query["${key}Filter"]) {
                         ilike(val, '%' + query["${key}Filter"] + '%')
                     }
+                }
+
+                if(fixCancel){
+                    query.statFilter='fail'
+                    isNotNull('abortedByUser')
+                }else if(query.statFilter=='fail' && !query.abortedByFilter){
+                    isNull('abortedByUser')
                 }
 
                 eqfilters.each { key, val ->
@@ -338,6 +347,9 @@ class ReportService  {
                 }
 
             }
+        }
+        if(fixCancel){
+            query.statFilter='cancel'
         }
     }
     def getExecutionReports(ExecQuery query, boolean isJobs) {

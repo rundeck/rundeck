@@ -226,6 +226,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                null,
                 null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -274,6 +275,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                null,
                 null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -291,6 +293,7 @@ class ExecutionItemFactoryTest {
                 true,
                 null,
                 2,
+                null,
                 null,
                 null,
                 null,
@@ -316,6 +319,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                null,
                 null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -334,6 +338,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 false,
+                null,
                 null,
                 null,
                 null,
@@ -358,6 +363,7 @@ class ExecutionItemFactoryTest {
                 'rank',
                 null,
                 null,
+                null,
                 null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -378,6 +384,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 true,
+                null,
                 null,
                 null
         )
@@ -400,6 +407,7 @@ class ExecutionItemFactoryTest {
                 null,
                 false,
                 null,
+                null,
                 null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -417,6 +425,7 @@ class ExecutionItemFactoryTest {
                 false,
                 handler,
                 true,
+                null,
                 null,
                 null,
                 null,
@@ -448,6 +457,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                null,
                 null
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -460,13 +470,14 @@ class ExecutionItemFactoryTest {
     @Test
     public void createJobRefNodeStep_withHandler(){
         StepExecutionItem handler = ExecutionItemFactory.createExecCommand(['a', 'b'] as String[], null, false,
-                                                                           null)
+                null)
         StepExecutionItem test = ExecutionItemFactory.createJobRef(
                 "monkey/piece",
                 ['args', 'args2'] as String[],
                 true,
                 handler,
                 true,
+                null,
                 null,
                 null,
                 null,
@@ -484,6 +495,29 @@ class ExecutionItemFactoryTest {
         Assert.assertTrue(test instanceof HasFailureHandler)
         HasFailureHandler handlered2 = (HasFailureHandler) test
         Assert.assertEquals(handler, handlered2.failureHandler)
+    }
+    @Test
+    public void createJobRef_from_AnotherProject(){
+        StepExecutionItem test = ExecutionItemFactory.createJobRef(
+                "monkey/piece",
+                ['args', 'args2'] as String[],
+                true,
+                null,
+                true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                'anotherProject'
+        )
+        Assert.assertTrue(test instanceof JobRefCommand)
+        JobRefCommand testcommand=(JobRefCommand) test
+        Assert.assertEquals( 'monkey/piece',testcommand.jobIdentifier)
+        Assert.assertEquals( ['args','args2'],testcommand.args as List)
+        Assert.assertEquals('anotherProject',testcommand.project)
     }
     @Test
     public void createPluginStep(){

@@ -38,29 +38,15 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
-import com.dtolabs.rundeck.server.plugins.loader.PluginFileManifest
-import com.dtolabs.rundeck.server.plugins.loader.PluginFileSource
-import com.dtolabs.utils.Streams
-import grails.spring.BeanBuilder
 import org.codehaus.groovy.grails.commons.GrailsApplication
-import org.springframework.beans.factory.NoSuchBeanDefinitionException
-import org.springframework.beans.factory.config.AutowireCapableBeanFactory
-import org.springframework.beans.factory.groovy.GroovyBeanDefinitionReader
-import org.springframework.beans.factory.support.BeanDefinitionBuilder
-import org.springframework.beans.factory.support.BeanDefinitionRegistry
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
-import org.springframework.scripting.config.LangNamespaceUtils
-import org.springframework.scripting.groovy.GroovyScriptFactory
-import org.springframework.scripting.support.ScriptFactoryPostProcessor
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
 
 import javax.security.auth.Subject
-import java.nio.charset.Charset
 
 /**
  * Interfaces with the core Framework object
@@ -651,6 +637,9 @@ class FrameworkService implements ApplicationContextAware {
         log.debug("getAuthContextForSubjectAndProject ${project}, authorization: ${authorization}, project auth ${projectAuth}")
         return new SubjectAuthContext(subject, authorization)
     }
+    public UserAndRolesAuthContext getAuthContextForUserAndRolesAndProject(String user, List rolelist, String project) {
+        getAuthContextWithProject(getAuthContextForUserAndRoles(user, rolelist), project)
+    }
     public UserAndRolesAuthContext getAuthContextForUserAndRoles(String user, List rolelist) {
         if (!(null != user && null != rolelist)) {
             throw new RuntimeException("getAuthContextForUserAndRoles: Cannot get AuthContext without user, roles: ${user}, ${rolelist}")
@@ -721,7 +710,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param type
      * @return
      */
-    def Description getNodeStepPluginDescription(String type){
+    def Description getNodeStepPluginDescription(String type) throws MissingProviderException {
         rundeckFramework.getNodeStepExecutorService().providerOfType(type).description
     }
     /**
@@ -730,7 +719,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param type
      * @return
      */
-    def Description getStepPluginDescription(String type){
+    def Description getStepPluginDescription(String type) throws MissingProviderException{
         rundeckFramework.getStepExecutionService().providerOfType(type).description
     }
     /**
@@ -793,7 +782,7 @@ class FrameworkService implements ApplicationContextAware {
         def result=[:]
         result.valid=false
         result.desc = description
-        result.props = parseResourceModelConfigInput(description, prefix, params)
+        result.props = parsePluginConfigInput(description, prefix, params)
 
         if (description) {
             def report = Validator.validate(result.props as Properties, description)
@@ -828,7 +817,7 @@ class FrameworkService implements ApplicationContextAware {
         def result = [:]
         result.valid = false
         result.desc = description
-        result.props = parseResourceModelConfigInput(result.desc, prefix, params)
+        result.props = parsePluginConfigInput(result.desc, prefix, params)
         def resolver = getFrameworkPropertyResolver(project, result.props)
         if (result.desc) {
             def report = Validator.validate(resolver, description, defaultScope, ignored)
@@ -847,11 +836,11 @@ class FrameworkService implements ApplicationContextAware {
      * @param params input parameter map
      * @return map of property name to value based on correct property types.
      */
-    public Map parseResourceModelConfigInput(Description desc, String prefix, final Map params) {
+    public Map parsePluginConfigInput(Description desc, String prefix, final Map params) {
         Map props = [:]
         if (desc) {
             desc.properties.each {prop ->
-                def v = params[prefix  + prop.name]
+                def v = params ? params[prefix + prop.name] : null
                 if (prop.type == Property.Type.Boolean) {
                     props.put(prop.name, (v == 'true' || v == 'on') ? 'true' : 'false')
                 } else if (v) {
@@ -861,7 +850,7 @@ class FrameworkService implements ApplicationContextAware {
         } else {
             final cfgprefix = prefix
             //just parse all properties with the given prefix
-            params.keySet().each {String k ->
+            params?.keySet()?.each { String k ->
                 if (k.startsWith(cfgprefix)) {
                     def key = k.substring(cfgprefix.length())
                     props.put(key, params[k])
@@ -1057,5 +1046,14 @@ class FrameworkService implements ApplicationContextAware {
             charsetname=config.getProperty("framework.$REMOTE_CHARSET")
         }
         return charsetname
+    }
+
+    /**
+     * non transactional interface to run a job from plugins
+     * {@link ExecutionService#executeJob executeJob}
+     * @return Map of the execution result.
+     */
+    Map kickJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext, String user, Map input){
+        executionService.executeJob(scheduledExecution, authContext, user, input)
     }
 }

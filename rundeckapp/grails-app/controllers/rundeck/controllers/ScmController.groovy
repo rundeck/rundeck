@@ -188,6 +188,17 @@ class ScmController extends ControllerBase {
     }
 
     def index(String project) {
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        authContext,
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
         def ePluginConfig = scmService.loadScmConfig(project, 'export')
         def iPluginConfig = scmService.loadScmConfig(project, 'import')
         def eplugins = scmService.listPlugins('export')

@@ -23,10 +23,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
  */
 interface RundeckProjectConfigurable {
     /**
-     * Project configuration category
+     * Return configuration categories for the properties, keyed by property name
      * @return
      */
-    String getCategory()
+    Map<String, String> getCategories()
 
     /**
      * List of properties
