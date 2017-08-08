@@ -1,14 +1,10 @@
-version: '3'
+version: '2'
 
 services:
   rundeck1:
     hostname: rundeck1
     build:
       context: dockers/rundeckansible/
-      args:
-        CLI_DEB_URL: ${CLI_DEB_URL}
-        CLI_VERS: ${CLI_VERS}
-        LAUNCHER_URL: ${LAUNCHER_URL}
     links:
       - hostnode
     environment:
@@ -22,6 +18,7 @@ services:
       - CONFIG_SCRIPT_PRESTART=scripts/config-ansible.sh
       - SETUP_TEST_PROJECT=atest
       - CONFIG_TEST_PROJECT_FILE=atest/atest-project.properties
+      - NODE_CACHE_FIRST_LOAD_SYNCH=1
     volumes:
       - logs:/home/rundeck/logs:rw
       - resources:/home/rundeck/resources:rw

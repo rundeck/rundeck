@@ -2,9 +2,8 @@
 #/ does something ...
 #/ usage: [..]
 
-set -euo pipefail
+#set -euo pipefail
 IFS=$'\n\t'
-readonly ARGS=("$@")
 # <http://www.kfirlavi.com/blog/2012/11/14/defensive-bash-programming/>
 # <http://redsymbol.net/articles/unofficial-bash-strict-mode/>
 
@@ -31,10 +30,9 @@ check_args(){
 #  # set -x
 #}
 setup_ansible(){
-	cat >/etc/ansible/hosts <<END
+	sudo cat >/home/rundeck/resources/ansibleinv.ini <<END
 [ansible-nodes]
-$NODE1 ansible_host=$NODE1 ansible_port=22
-test-ansible-node ansible_connection=local ansible_host=127.0.0.1
+test-ansible-node ansible_connection=local
 $RUNDECK_NODE ansible_connection=local
 END
 

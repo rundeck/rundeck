@@ -95,8 +95,8 @@ echo "DATE ----"
 date
 echo "-----"
 
-echo "IFCONFIG ----"
-ifconfig -a
+echo "UNAME ----"
+uname -a
 echo "------"]]></script>
         <scriptargs />
       </command>

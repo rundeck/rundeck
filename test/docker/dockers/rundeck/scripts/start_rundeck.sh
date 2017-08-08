@@ -241,6 +241,11 @@ if [ -n "$SETUP_SSL" ] ; then
     setup_ssl $RDECK_BASE
 fi
 
+if [ -n "$NODE_CACHE_FIRST_LOAD_SYNCH" ] ; then
+  cat - >>$RDECK_BASE/server/config/rundeck-config.properties <<END
+rundeck.nodeService.nodeCache.firstLoadAsynch=false
+END
+fi
 
 ### PRE CONFIG
 # RUN TEST PRESTART SCRIPT

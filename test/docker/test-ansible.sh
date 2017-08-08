@@ -2,7 +2,9 @@
 
 . common.sh
 
-export DOCKER_COMPOSE_SPEC=docker-compose-multinode-test.yml
+export DOCKER_COMPOSE_SPEC=docker-compose-ansible-test.yaml
+export TEST_DIR=/home/rundeck/ansible-tests/ansible
+export TEST_SCRIPT=/home/rundeck/ansible-tests/run-tests.sh
 
 if [ -f rundeck-launcher.jar ] ; then
 	mv rundeck-launcher.jar dockers/rundeck/data/
@@ -38,8 +40,8 @@ echo "up completed, running tests..."
 
 set +e
 
-docker-compose -f $DOCKER_COMPOSE_SPEC exec -T --user rundeck rundeck1 \
-	bash scripts/run_tests.sh /tests/rundeck /tests/run-tests.sh testproj1
+docker-compose -f $DOCKER_COMPOSE_SPEC exec -T --user rundeck rundeck1 bash \
+	scripts/run_tests.sh $TEST_DIR $TEST_SCRIPT atest
 
 EC=$?
 echo "run_tests.sh finished with: $EC"

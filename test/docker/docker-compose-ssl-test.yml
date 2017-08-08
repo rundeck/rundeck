@@ -3,12 +3,7 @@ version: '2'
 services:
   rundeck1:
     hostname: rundeck1
-    build:
-      context: dockers/rundeck/
-      args:
-        CLI_DEB_URL: ${CLI_DEB_URL}
-        CLI_VERS: ${CLI_VERS}
-        LAUNCHER_URL: ${LAUNCHER_URL}
+    image: rdtest:latest
 #    entrypoint: bash /home/rundeck/run.sh
     environment:
       - RUNDECK_NODE=rundeck1
