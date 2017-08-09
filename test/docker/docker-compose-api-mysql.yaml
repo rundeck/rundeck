@@ -17,12 +17,7 @@ services:
        - ./dockers/mysql/conf:/etc/mysql/conf.d
   rundeck1:
     hostname: rundeck1
-    build:
-      context: dockers/rundeck/
-      args:
-        CLI_DEB_URL: ${CLI_DEB_URL}
-        CLI_VERS: ${CLI_VERS}
-        LAUNCHER_URL: ${LAUNCHER_URL}
+    image: rdtest:latest
 #    entrypoint: bash /home/rundeck/run.sh
     links:
       - mysql

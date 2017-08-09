@@ -3,9 +3,13 @@
 set -e
 
 TEST_DIR=$1
+TEST_SCRIPT=${2:-/tests/run-tests.sh}
+TEST_PROJECT=${3:-testproj1}
 
-: ${TEST_DIR?"Argument required"}
-echo "run_tests with $TEST_DIR"
+: ${TEST_DIR?"Dir required"}
+: ${TEST_SCRIPT?"Script required"}
+: ${TEST_PROJECT?"Project required"}
+echo "run_tests with $TEST_DIR and $TEST_SCRIPT for project $TEST_PROJECT"
 
 export API_KEY=letmein99
 # define env vars used by rd tool
@@ -67,12 +71,13 @@ source $RDECK_BASE/etc/profile
 echo "starting tests"
 
 set +e
-chmod -w /tests/run-tests.sh
+chmod -w $TEST_SCRIPT
+chmod +x $TEST_SCRIPT
 sync
 
-/tests/run-tests.sh \
+$TEST_SCRIPT \
 	--rdeck-base $HOME \
-	--rundeck-project testproj1 \
+	--rundeck-project $TEST_PROJECT \
 	--rundeck-user $USERNAME \
     --test-dir $TEST_DIR
 EC=$?
