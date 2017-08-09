@@ -2649,4 +2649,41 @@ class ScheduledExecutionServiceSpec extends Specification {
 
     }
 
+    @Unroll
+    def "nextExecutionTime on remote Cluster"() {
+        given:
+        setupDoValidate(true)
+        service.quartzScheduler = Mock(Scheduler)
+
+
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: hasSchedule,
+                        scheduleEnabled: scheduleEnabled,
+                        executionEnabled: executionEnabled,
+                        userRoleList: 'a,b',
+                        serverNodeUUID: TEST_UUID2
+                )
+        ).save()
+
+        when:
+        def result = service.nextExecutionTime(job)
+
+        then:
+        1 * service.quartzScheduler.getTrigger(_) >> null
+        if(expectScheduled){
+            result != null
+        }else{
+            result == null
+        }
+
+
+        where:
+        scheduleEnabled | executionEnabled | hasSchedule | expectScheduled
+        true            | true             | true        | true
+        false           | true             | true        | false
+        true            | false            | true        | false
+        false           | false            | true        | false
+    }
+
 }

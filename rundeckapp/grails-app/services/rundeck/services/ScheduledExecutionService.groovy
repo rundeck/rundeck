@@ -1366,7 +1366,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()))
         if(trigger){
             return trigger.getNextFireTime()
-        }else if (frameworkService.isClusterModeEnabled() && se.serverNodeUUID != frameworkService.getServerUUID() || require) {
+        }else if (frameworkService.isClusterModeEnabled() &&
+                se.serverNodeUUID != frameworkService.getServerUUID() &&
+                (se.scheduleEnabled && se.executionEnabled) || require) {
             //guess next trigger time for the job on the assigned cluster node
             def value= tempNextExecutionTime(se)
             return value
