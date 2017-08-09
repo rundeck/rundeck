@@ -5,16 +5,13 @@ services:
     hostname: rundeck1
     build:
       context: dockers/rundeckansible/
-    links:
-      - hostnode
     environment:
       - RUNDECK_NODE=rundeck1
-      - REMOTE_NODE=hostnode
       - RUNDECK_URL=http://rundeck1:4440/
       - LAUNCHER_URL=${LAUNCHER_URL}
       - CLI_DEB_URL=${CLI_DEB_URL}
       - CLI_VERS=${CLI_VERS}
-      - WAIT_NODES=rundeck1 hostnode
+      - WAIT_NODES=rundeck1
       - CONFIG_SCRIPT_PRESTART=scripts/config-ansible.sh
       - SETUP_TEST_PROJECT=atest
       - CONFIG_TEST_PROJECT_FILE=atest/atest-project.properties
@@ -28,22 +25,6 @@ services:
     ports:
       - "2222:22"
       - "4440:4440"
-
-  hostnode:
-    hostname: hostnode
-    build: 
-      context: dockers/hostnode/
-      args:
-        RUNDECK_NODE: hostnode
-    environment:
-      - RUNDECK_NODE=hostnode
-    volumes:
-      - resources:/home/rundeck/resources:rw
-    networks:
-      localnet:
-        ipv4_address: 192.168.234.2
-    ports:
-      - "2223:22"
 
 networks:
   localnet:
