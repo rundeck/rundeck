@@ -1,9 +1,8 @@
 #!/usr/bin/env roundup
 #
-
+set -e
 : ${RUNDECK_USER?"environment variable not set."} 
 : ${RUNDECK_PROJECT?"environment variable not set."}
-: ${REMOTE_NODE?"environment variable not set."}
 
 # Let's get started
 # -----------------
