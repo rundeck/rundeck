@@ -14,16 +14,7 @@ if [ -f rd.deb ] ; then
 	mv rd.deb dockers/rundeck/data/
 fi
 
-# tickle installer for it to rebuild
-#date > dockers/rundeck/rundeckpro-installer/build_control
-
-# create base image for rundeck
-docker build \
-	-t rdtest \
-	--build-arg LAUNCHER_URL=$LAUNCHER_URL \
-	--build-arg CLI_DEB_URL=$CLI_DEB_URL \
-	--build-arg CLI_VERS=$CLI_VERS \
-	dockers/rundeck
+build_rdtest_docker
 
 # clean up docker env
 docker-compose -f $DOCKER_COMPOSE_SPEC down --volumes --remove-orphans
