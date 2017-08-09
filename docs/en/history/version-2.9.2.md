@@ -1,3 +1,7 @@
+% Version 2.9.2
+% greg
+% 08/07/2017
+
 Release 2.9.2
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: Fuchsia"><span class="glyphicon glyphicon-bell"></span
 
 ## Upgrading from Earlier versions
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 
