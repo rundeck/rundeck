@@ -2654,7 +2654,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         given:
         setupDoValidate(true)
         service.quartzScheduler = Mock(Scheduler)
-
+        service.quartzScheduler.getTrigger(_) >> null
 
         def job = new ScheduledExecution(
                 createJobParams(
@@ -2670,7 +2670,6 @@ class ScheduledExecutionServiceSpec extends Specification {
         def result = service.nextExecutionTime(job)
 
         then:
-        1 * service.quartzScheduler.getTrigger(_) >> null
         if(expectScheduled){
             result != null
         }else{
