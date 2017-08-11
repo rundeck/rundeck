@@ -29,6 +29,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
@@ -1097,7 +1098,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             log.warn("Failed uploaded file preparation for scheduled job: $exc", exc)
         }
 
-        return jobSchedulerService.scheduleJob(identity.jobname, identity.groupname, jobDetail, startTime)
+        try {
+            return jobSchedulerService.scheduleJob(identity.jobname, identity.groupname, jobDetail, startTime)
+        } catch (JobScheduleFailure exc) {
+            throw new ExecutionServiceException("Could not schedule job: " + exc.message, exc)
+        }
     }
 
     /**
@@ -1205,7 +1210,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             Map secureOpts,
             Map secureOptsExposed,
             int retryAttempt
-    )
+    ) throws ExecutionServiceException
     {
         def ident = getJobIdent(se, e)
         def jobDetail = createJobDetailMap(se) + [
@@ -1220,17 +1225,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (secureOptsExposed) {
             jobDetail["secureOptsExposed"] = secureOptsExposed
         }
-        if(retryAttempt > 0 && e.retryDelay){
-            long retryTime = Sizes.parseTimeDuration(e.retryDelay,TimeUnit.MILLISECONDS)
-            Date now = new Date()
-            jobSchedulerService.scheduleJob(
-                    ident.jobname,
-                    ident.groupname,
-                    jobDetail,
-                    new Date(now.getTime() + retryTime)
-            )
-        }else{
-            jobSchedulerService.scheduleJobNow(ident.jobname, ident.groupname, jobDetail)
+        try {
+            if (retryAttempt > 0 && e.retryDelay) {
+                long retryTime = Sizes.parseTimeDuration(e.retryDelay, TimeUnit.MILLISECONDS)
+                Date now = new Date()
+                jobSchedulerService.scheduleJob(
+                        ident.jobname,
+                        ident.groupname,
+                        jobDetail,
+                        new Date(now.getTime() + retryTime)
+                )
+            } else {
+                jobSchedulerService.scheduleJobNow(ident.jobname, ident.groupname, jobDetail)
+            }
+        } catch (JobScheduleFailure exc) {
+            throw new ExecutionServiceException("Could not schedule job: " + exc.message, exc)
         }
 
         return e.id

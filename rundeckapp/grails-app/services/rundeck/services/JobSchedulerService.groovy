@@ -1,10 +1,12 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.schedule.JobScheduleFailure
 import com.dtolabs.rundeck.core.schedule.JobScheduleManager
 import org.quartz.JobBuilder
 import org.quartz.JobDataMap
 import org.quartz.JobKey
 import org.quartz.Scheduler
+import org.quartz.SchedulerException
 import org.quartz.SimpleTrigger
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
@@ -26,12 +28,14 @@ class JobSchedulerService implements JobScheduleManager {
     }
 
     @Override
-    Date scheduleJob(final String name, final String group, final Map data, final Date atTime) {
+    Date scheduleJob(final String name, final String group, final Map data, final Date atTime)
+            throws JobScheduleFailure
+    {
         return rundeckJobScheduleManager.scheduleJob(name, group, data, atTime)
     }
 
     @Override
-    boolean scheduleJobNow(final String name, final String group, final Map data) {
+    boolean scheduleJobNow(final String name, final String group, final Map data) throws JobScheduleFailure {
         return rundeckJobScheduleManager.scheduleJobNow(name, group, data)
     }
 }
@@ -50,7 +54,9 @@ class QuartzJobScheduleManager implements JobScheduleManager {
     }
 
     @Override
-    Date scheduleJob(final String name, final String group, final Map data, final Date atTime) {
+    Date scheduleJob(final String name, final String group, final Map data, final Date atTime)
+            throws JobScheduleFailure
+    {
         def jobDetail = JobBuilder.newJob(ExecutionJob)
                                   .withIdentity(name, group)
                                   .usingJobData(new JobDataMap(data ?: [:])).build()
@@ -59,18 +65,22 @@ class QuartzJobScheduleManager implements JobScheduleManager {
                                                               .withIdentity(name, group)
                                                               .startAt(atTime)
                                                               .build()
-        if (quartzScheduler.checkExists(jobDetail.getKey())) {
-            return quartzScheduler.rescheduleJob(
-                    TriggerKey.triggerKey(name, group),
-                    trigger
-            )
-        } else {
-            return quartzScheduler.scheduleJob(jobDetail, trigger)
+        try {
+            if (quartzScheduler.checkExists(jobDetail.getKey())) {
+                return quartzScheduler.rescheduleJob(
+                        TriggerKey.triggerKey(name, group),
+                        trigger
+                )
+            } else {
+                return quartzScheduler.scheduleJob(jobDetail, trigger)
+            }
+        } catch (SchedulerException exc) {
+            throw new JobScheduleFailure("caught exception while adding job: " + exc.getMessage(), exc)
         }
     }
 
     @Override
-    boolean scheduleJobNow(final String name, final String group, final Map data) {
+    boolean scheduleJobNow(final String name, final String group, final Map data) throws JobScheduleFailure {
         def jobDetail = JobBuilder.newJob(ExecutionJob)
                                   .withIdentity(name, group)
                                   .usingJobData(new JobDataMap(data ?: [:])).build()
@@ -79,8 +89,8 @@ class QuartzJobScheduleManager implements JobScheduleManager {
 
         try {
             return quartzScheduler.scheduleJob(jobDetail, trigger) != null
-        } catch (Exception exc) {
-            throw new RuntimeException("caught exception while adding job: " + exc.getMessage(), exc)
+        } catch (SchedulerException exc) {
+            throw new JobScheduleFailure("caught exception while adding job: " + exc.getMessage(), exc)
         }
     }
 }

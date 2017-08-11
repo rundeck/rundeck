@@ -1807,6 +1807,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         input.retryAttempt = attempt
+        def Execution e = null
+        boolean success = false
         try {
 
             Map allowedOptions = input.subMap(
@@ -1814,7 +1816,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                      'retryAttempt', 'nodeoverride', 'nodefilter']
             ).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
-            def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions,attempt>0,prevId)
+            e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId)
             def timeout = 0
             def eid = scheduledExecutionService.scheduleTempJob(
                     scheduledExecution,
@@ -1825,6 +1827,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     secureOptsExposed,
                     e.retryAttempt
             )
+            success = true
             return [success: true, executionId: eid, name: scheduledExecution.jobName, execution: e]
         } catch (ExecutionServiceValidationException exc) {
             return [success: false, error: 'invalid', message: exc.getMessage(), options: exc.getOptions(), errors: exc.getErrors()]
@@ -1832,6 +1835,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def msg = exc.getMessage()
             log.error("Unable to create execution",exc)
             return [success: false, error: exc.code ?: 'failed', message: msg, options: input.option]
+        } finally {
+            if (!success && e) {
+                e.delete()
+            }
         }
     }
 

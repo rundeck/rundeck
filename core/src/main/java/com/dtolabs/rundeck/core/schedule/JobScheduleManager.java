@@ -45,7 +45,7 @@ public interface JobScheduleManager {
      *
      * @return time to run
      */
-    Date scheduleJob(String name, String group, Map data, Date atTime);
+    Date scheduleJob(String name, String group, Map data, Date atTime) throws JobScheduleFailure;
 
     /**
      * Schedule a job to run now
@@ -56,6 +56,6 @@ public interface JobScheduleManager {
      *
      * @return true if successful
      */
-    boolean scheduleJobNow(String name, String group, Map data);
+    boolean scheduleJobNow(String name, String group, Map data) throws JobScheduleFailure;
 
 }
