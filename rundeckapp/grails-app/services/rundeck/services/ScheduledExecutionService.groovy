@@ -1260,9 +1260,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      * @param se
      * @return
      */
-    def Date nextExecutionTime(ScheduledExecution se) {
+    def Date nextExecutionTime(ScheduledExecution se, boolean require=false) {
         if(!se.scheduled){
             return new Date(TWO_HUNDRED_YEARS)
+        }
+        if(!require && (!se.scheduleEnabled || !se.executionEnabled)){
+           return null
         }
         def trigger = quartzScheduler.getTrigger(TriggerKey.triggerKey(se.generateJobScheduledName(), se.generateJobGroupName()))
         if(trigger){
