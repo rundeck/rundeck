@@ -59,9 +59,9 @@
 
             $('busy').hide();
         }
-        function requestError(item,trans){
+        function requestError(item,message){
             unloadExec();
-            showError("Failed request: "+item+" . Result: "+trans.getStatusText());
+            showError("Failed request: "+item+". Result: "+message);
         }
         function loadExec(id,eparams) {
             $("error").hide();
@@ -69,11 +69,12 @@
             if(!params){
                 params={id:id};
             }
-            jQuery('#execDivContent').load(_genUrl(appLinks.scheduledExecutionExecuteFragment, params),function(response,status,xhr){
+            jQuery('#execDivContent').load(_genUrl(appLinks.scheduledExecutionExecuteFragment, params),
+                function(response,status,xhr){
                 if (status == "success") {
                     loadedFormSuccess(!!id,id);
                 } else {
-                    requestError("executeFragment for [" + id + "]",xhr);
+                    requestError("executeFragment for [" + id + "]",xhr.statusText);
                 }
             });
         }
@@ -104,8 +105,8 @@
                         showError(result.message ? result.message : result.error ? result.error : "Failed request");
                     }
                 },
-                error: function (x) {
-                    requestError("runJobInline", x);
+                error: function (data, jqxhr, err) {
+                    requestError("runJobInline", err);
                 }
             });
         }
