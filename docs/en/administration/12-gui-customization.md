@@ -61,6 +61,9 @@ these properties in the [rundeck-config.properties](configuration-file-reference
 `rundeck.gui.login.welcomeHtml`             HTML displayed in the login form
                                             pages. The HTML will be sanitized
                                             before display. (Default: blank)
+`rundeck.gui.login.footerMessageHtml`       HTML displayed in the login form
+                                            pages (below the login form). The HTML will be sanitized
+                                            before display. (Default: blank)                                           
 
 `rundeck.gui.errorpage.hidestacktrace`      Hide Java stacktraces from the end   true/false
                                             user when an error occurs.
