@@ -1273,7 +1273,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         datacontext.put("job",jobcontext?jobcontext:new HashMap<String,String>())
 
         // Put globals in context.
-        Map<String, String> globals = frameworkService.getProjectGlobals(origContext?origContext.frameworkProject:execMap.project);
+        Map<String, String> globals = frameworkService.getProjectGlobals(origContext?.frameworkProject?:execMap.project);
         datacontext.put("globals", globals ? globals : new HashMap<>());
 
 
@@ -1304,9 +1304,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         def INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
-                origContext?origContext.frameworkProject:execMap.project,
+                origContext?.frameworkProject?:execMap.project,
                 new HashSet<String>(Arrays.asList("read", "run")),
-                frameworkService.filterNodeSet(nodeselector, origContext?origContext.frameworkProject:execMap.project),
+                frameworkService.filterNodeSet(nodeselector, origContext?.frameworkProject?:execMap.project),
                 authContext)
 
         def Map<String, Map<String, String>> privatecontext = new HashMap<String, Map<String, String>>()
