@@ -1273,7 +1273,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         datacontext.put("job",jobcontext?jobcontext:new HashMap<String,String>())
 
         // Put globals in context.
-        Map<String, String> globals = frameworkService.getProjectGlobals(execMap.project);
+        Map<String, String> globals = frameworkService.getProjectGlobals(origContext?origContext.frameworkProject:execMap.project);
         datacontext.put("globals", globals ? globals : new HashMap<>());
 
 
@@ -1304,10 +1304,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         def INodeSet nodeSet = frameworkService.filterAuthorizedNodes(
-                execMap.project,
+                origContext?origContext.frameworkProject:execMap.project,
                 new HashSet<String>(Arrays.asList("read", "run")),
-                frameworkService.filterNodeSet(nodeselector, execMap.project),
-                authContext);
+                frameworkService.filterNodeSet(nodeselector, origContext?origContext.frameworkProject:execMap.project),
+                authContext)
 
         def Map<String, Map<String, String>> privatecontext = new HashMap<String, Map<String, String>>()
         if (null != extraParams) {
@@ -1324,7 +1324,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //create execution context
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
         builder.with {
-            frameworkProject(execMap.project)
+            frameworkProject(origContext?origContext.frameworkProject:execMap.project)
             storageTree(storageService.storageTreeWithContext(authContext))
             jobService(jobStateService.jobServiceWithAuthContext(authContext))
             nodeService(nodeService)
