@@ -2136,17 +2136,30 @@ class ExecutionServiceSpec extends Specification {
                 ).save(flush: true)
         def user = 'userB'
         def auth = Mock(AuthContext)
+        service.configurationService = Mock(ConfigurationService) {
+            getString('executionService.startup.cleanupStatus', _) >> 'incompletestatus'
+        }
 
         when:
-        def result = service.abortExecution(job, e, user, auth)
+        def result = service.abortExecution(job, e, user, auth, asuser, forced)
 
         then:
+        Execution.withSession {session->
+            session.flush()
+            e.refresh()
+        }
         e.id != null
         result.abortstate == eAbortstate
         result.jobstate == eJobstate
+        e.status == (isadhocschedule&&wasScheduledPreviously?'scheduled':estatus)
+        e.cancelled == ecancelled
+        e.abortedby==(cmatch?(asuser?:'userB'):null)
 
         1 * service.scheduledExecutionService.getJobIdent(job, e) >> [jobname: 'test', groupname: 'testgroup']
         1 * service.frameworkService.authorizeProjectExecutionAll(auth, e, [AuthConstants.ACTION_KILL]) >> true
+        if(asuser) {
+            1 * service.frameworkService.authorizeProjectExecutionAll(auth, e, [AuthConstants.ACTION_KILLAS]) >> true
+        }
         1 * service.frameworkService.isClusterModeEnabled() >> iscluster
         if(cmatch) {
             1 * service.scheduledExecutionService.findExecutingQuartzJob(job, e) >>
@@ -2158,17 +2171,31 @@ class ExecutionServiceSpec extends Specification {
 
 
         where:
-        isadhocschedule | wasScheduledPreviously | didinterrupt | iscluster | cmatch | eAbortstate | eJobstate
-        true            | true                   | true         | false     | true   | 'pending'   | 'running'
-        false           | true                   | true         | false     | true   | 'pending'   | 'running'
-        true            | false                  | true         | false     | true   | 'aborted'   | 'aborted'
-        false           | false                  | true         | false     | true   | 'aborted'   | 'aborted'
-        true            | true                   | false        | false     | true   | 'failed'    | 'running'
-        false           | true                   | false        | false     | true   | 'failed'    | 'running'
-        true            | false                  | false        | false     | true   | 'aborted'   | 'aborted'
-        false           | false                  | false        | false     | true   | 'aborted'   | 'aborted'
-        true            | true                   | true         | true      | true   | 'pending'   | 'running'
-        true            | true                   | true         | true      | false  | 'failed'    | 'running'
+        isadhocschedule | wasScheduledPreviously | didinterrupt | iscluster | cmatch | forced | eAbortstate | eJobstate | estatus | ecancelled | asuser
+        true            | true                   | true         | false     | true   | false  | 'pending'   | 'running' | 'false' | false | null
+        true            | true                   | true         | false     | true   | false  | 'pending'   | 'running' | 'false' | false | 'userC'
+        false           | true                   | true         | false     | true   | false  | 'pending'   | 'running'| null | false| null
+        false           | true                   | true         | false     | true   | false  | 'pending'   | 'running'| null | false| 'userC'
+        true            | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| null
+        true            | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| 'userC'
+        false           | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| null
+        false           | false                  | true         | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| 'userC'
+        true            | true                   | false        | false     | true   | false  | 'failed'    | 'running'| 'false' | false| null
+        true            | true                   | false        | false     | true   | false  | 'failed'    | 'running'| 'false' | false| 'userC'
+        false           | true                   | false        | false     | true   | false  | 'failed'    | 'running'| null | false| null
+        false           | true                   | false        | false     | true   | false  | 'failed'    | 'running'| null | false| 'userC'
+        true            | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| null
+        true            | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| 'userC'
+        false           | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| null
+        false           | false                  | false        | false     | true   | false  | 'aborted'   | 'aborted'| 'false' | true| 'userC'
+        true            | true                   | true         | true      | true   | false  | 'pending'   | 'running'| 'false' | false| null
+        true            | true                   | true         | true      | true   | false  | 'pending'   | 'running'| 'false' | false| 'userC'
+        true            | true                   | true         | true      | false  | false  | 'failed'    | 'running'| 'false' | false| null
+        true            | true                   | true         | true      | false  | false  | 'failed'    | 'running'| 'false' | false| 'userC'
+        false           | true                   | false        | false     | true  | true   | 'aborted'   | 'aborted' | 'incompletestatus' | false| null
+        false           | true                   | false        | false     | true  | true   | 'aborted'   | 'aborted' | 'incompletestatus' | false| 'userC'
+        false           | false                   | false        | false     | true  | true   | 'aborted'   | 'aborted' | 'incompletestatus' | false| null
+        false           | false                   | false        | false     | true  | true   | 'aborted'   | 'aborted' | 'incompletestatus' | false| 'userC'
 
     }
 

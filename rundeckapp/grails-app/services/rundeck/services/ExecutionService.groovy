@@ -729,6 +729,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def cleanupRunningJobs(List<Execution> found, String status = null) {
         found.each { Execution e ->
             cleanupExecution(e, status)
+            log.error("Stale Execution cleaned up: [${e.id}] in ${e.project}")
+            metricService.markMeter(this.class.name, 'executionCleanupMeter')
         }
     }
 
@@ -744,8 +746,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 null,
                 null
         )
-        log.error("Stale Execution cleaned up: [${e.id}] in ${e.project}")
-        metricService.markMeter(this.class.name, 'executionCleanupMeter')
+
     }
 
     /**
@@ -1373,7 +1374,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param killAsUser as username
      * @return AbortResult
      */
-    def abortExecution(ScheduledExecution se, Execution e, String user, AuthContext authContext, String killAsUser = null) {
+    def abortExecution(
+            ScheduledExecution se,
+            Execution e,
+            String user,
+            AuthContext authContext,
+            String killAsUser = null,
+            boolean forceIncomplete = false
+    )
+    {
         if (!frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILL])) {
             return new AbortResult(
                     abortstate: ABORT_FAILED,
@@ -1393,7 +1402,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     reason: "unauthorized"
             )
         }
-        abortExecutionDirect(se, e, user, killAsUser)
+        abortExecutionDirect(se, e, user, killAsUser, forceIncomplete)
     }
 
     /**
@@ -1404,7 +1413,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param killAsUser as username
      * @return AbortResult
      */
-    def abortExecutionDirect(ScheduledExecution se, Execution e, String user, String killAsUser = null) {
+    def abortExecutionDirect(
+            ScheduledExecution se,
+            Execution e,
+            String user,
+            String killAsUser = null,
+            boolean forceIncomplete = false
+    )
+    {
         metricService.markMeter(this.class.name, 'executionAbortMeter')
         def eid = e.id
         def dateCompleted = e.dateCompleted
@@ -1412,7 +1428,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def ident = scheduledExecutionService.getJobIdent(se, e)
         def isadhocschedule = se && e.status == "scheduled"
         def userIdent = killAsUser?:user
-        if (frameworkService.isClusterModeEnabled()) {
+        if (frameworkService.isClusterModeEnabled() && !forceIncomplete) {
             def serverUUID = frameworkService.serverUUID
             if (e.serverNodeUUID != serverUUID) {
                 def ereply = grailsEvents?.event(
@@ -1436,13 +1452,19 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 ]
                 def resp = ereply?.value
                 if (resp && resp instanceof Map) {
-                    return new AbortResult(abortresult + resp)
+                    if (resp.abortstate) {
+                        return new AbortResult(abortresult + resp)
+                    }
+                } else {
+                    return new AbortResult(abortresult)
                 }
-                return new AbortResult(abortresult)
             }
         }
         def result = new AbortResult()
-
+        def cleanupStatus = configurationService.getString(
+                'executionService.startup.cleanupStatus',
+                'incomplete'
+        )
         def quartzJobInstanceId = scheduledExecutionService.findExecutingQuartzJob(se, e)
         if (quartzJobInstanceId) {
             boolean success = false
@@ -1487,10 +1509,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 se ? se.id : null,
                 eid,
                     [
-                    status: String.valueOf(false),
-                    dateCompleted: new Date(),
-                    cancelled: true,
-                    abortedby: userIdent
+                        status       : forceIncomplete ? cleanupStatus : String.valueOf(false),
+                        dateCompleted: new Date(),
+                        cancelled    : !forceIncomplete,
+                        abortedby    : userIdent
                     ],
                     null,
                     null
@@ -1502,6 +1524,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             result.status = 'previously ' + result.jobstate
             result.abortstate = ABORT_FAILED
             result.reason = 'Job is not running'
+        }
+        if (result.abortstate == ABORT_FAILED && forceIncomplete) {
+            cleanupExecution(e, cleanupStatus)
+            result.abortstate = ABORT_ABORTED
+            result.jobstate = EXECUTION_ABORTED
+            result.reason = 'Marked as ' + cleanupStatus
         }
         result
     }

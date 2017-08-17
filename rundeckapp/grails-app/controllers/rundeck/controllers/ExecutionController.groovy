@@ -511,6 +511,7 @@ class ExecutionController extends ControllerBase{
         boolean valid=false
         withForm{
             valid=true
+            g.refreshFormTokensHeader()
         }.invalidToken{
 
         }
@@ -547,7 +548,14 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         def ScheduledExecution se = e.scheduledExecution
-        ExecutionService.AbortResult abortresult=executionService.abortExecution(se, e, session.user, authContext)
+        ExecutionService.AbortResult abortresult = executionService.abortExecution(
+                se,
+                e,
+                session.user,
+                authContext,
+                null,
+                params.forceIncomplete == 'true'
+        )
 
 
         def didcancel=abortresult.abortstate in [ExecutionService.ABORT_ABORTED, ExecutionService.ABORT_PENDING]
@@ -558,6 +566,7 @@ class ExecutionController extends ControllerBase{
                 render(contentType:"text/json"){
                     delegate.cancelled=didcancel
                     delegate.status=(abortresult.status?:(didcancel?'killed':'failed'))
+                    delegate.abortstate = abortresult.abortstate
                     if(reasonstr){
                         delegate.'reason'=reasonstr
                     }
@@ -565,9 +574,12 @@ class ExecutionController extends ControllerBase{
             }
             xml {
                 render(contentType:"text/xml",encoding:"UTF-8"){
-                    result(error:false,success:didcancel){
+                    result(error: false, success: didcancel, abortstate: abortresult.abortstate) {
                         success{
                             message("Job status: ${abortresult.status?:(didcancel?'killed': 'failed')}")
+                        }
+                        if (reasonstr) {
+                            reason(reasonstr)
                         }
                     }
                 }
@@ -1573,7 +1585,14 @@ class ExecutionController extends ControllerBase{
             //authorized within service call
             killas= params.asUser
         }
-        ExecutionService.AbortResult abortresult = executionService.abortExecution(se, e, user, authContext, killas)
+        ExecutionService.AbortResult abortresult = executionService.abortExecution(
+                se,
+                e,
+                user,
+                authContext,
+                killas,
+                params.forceIncomplete == 'true'
+        )
 
         def reportstate=[status: abortresult.abortstate]
         if(abortresult.reason){
