@@ -534,12 +534,11 @@ class ExecutionController extends ControllerBase{
         def Execution e = Execution.get(params.id)
         if(!e){
             log.error("Execution not found for id: "+params.id)
-            flash.error = "Execution not found for id: "+params.id
             return withFormat {
                 json{
                     render(contentType:"text/json"){
                         delegate.cancelled=false
-                        delegate.status=(statusStr?statusStr:(didcancel?'killed':'failed'))
+                        delegate.error = "Execution not found for id: " + params.id
                     }
                 }
                 xml {
