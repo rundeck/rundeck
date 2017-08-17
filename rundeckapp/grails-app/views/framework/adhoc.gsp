@@ -14,7 +14,7 @@
   limitations under the License.
   --}%
 
-<%@ page import="grails.util.Environment; rundeck.User" %>
+<%@ page import="grails.util.Environment; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <html>
 <head>
     <g:set var="ukey" value="${g.rkey()}" />
@@ -22,6 +22,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="adhoc"/>
     <title><g:message code="gui.menu.Adhoc"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
+    <g:javascript src="executionState.js"/>
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>
     <g:javascript library="pagehistory"/>
@@ -38,7 +39,8 @@
             emptyQuery:emptyQuery?:null,
             ukey:ukey,
             project:params.project?:request.project,
-            runCommand:runCommand?:''
+            runCommand:runCommand?:'',
+            adhocKillAllowed:auth.adhocAllowedTest(action: AuthConstants.ACTION_KILL,project:params.project)
     ]}"/>
     <g:jsMessages code="Node,Node.plural"/>
 </head>

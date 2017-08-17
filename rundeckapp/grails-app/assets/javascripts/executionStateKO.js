@@ -885,7 +885,7 @@ function RDNode(name, steps,flow){
     }
 }
 
-function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
+function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflow, data) {
     var self=this;
     self.workflow=workflow;
     self.multiWorkflow=multiworkflow;
@@ -896,6 +896,7 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
     self.nodes=ko.observableArray([ ]).extend({ rateLimit: 500 });
     self.selectedNodes=ko.observableArray([ ]);
     self.followingStep=ko.observable();
+    self.execFollowingControl = data.followControl;
     self.followingControl=null;
     self.followOutputUrl= outputUrl;
     self.nodeStateUpdateUrl= nodeStateUpdateUrl;
@@ -911,7 +912,7 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
     self.jobAverageDuration=ko.observable();
     self.startTime=ko.observable();
     self.endTime=ko.observable();
-    self.executionId=ko.observable();
+    self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
     self.activeTab=ko.observable("summary");
     self.scheduled = ko.pureComputed(function () {
@@ -932,6 +933,51 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
     self.displayStatusString = ko.computed(function () {
         var statusString = self.executionStatusString();
         return statusString != null && self.executionState() != statusString.toUpperCase() && !self.incompleteState();
+    });
+    self.canKillExec = ko.computed(function () {
+        return self.execFollowingControl && self.execFollowingControl.killjobauth
+    });
+    self.killRequested = ko.observable(false);
+    self.killResponseData = ko.observable({});
+    self.killExecAction = function () {
+        if (self.execFollowingControl) {
+            self.execFollowingControl.docancel().then(function (data) {
+                self.killRequested(true);
+                self.killResponseData(data);
+            });
+        }
+    };
+    self.killStatusFailed = ko.computed(function () {
+        "use strict";
+        var req = self.killRequested();
+        var data = self.killResponseData();
+        if (!req) {
+            return false;
+        }
+        return data && !data.cancelled;
+    });
+    self.killStatusPending = ko.computed(function () {
+        "use strict";
+        var req = self.killRequested();
+        var data = self.killResponseData();
+        if (!req) {
+            return false;
+        }
+        return data && data.cancelled && data.abortstate === 'pending';
+    });
+    self.killStatusText = ko.computed(function () {
+        var req = self.killRequested();
+        var data = self.killResponseData();
+        if (!req) {
+            return "";
+        }
+        if (data && data.cancelled && data.abortstate === 'pending') {
+            return data.reason || 'Killing Job...';
+        } else if (data && data.cancelled && data.abortstate === 'aborted') {
+            return data.reason || 'Killed.';
+        } else {
+            return (data ? data['error'] || data.reason : '') || 'Failed to Kill Job.';
+        }
     });
     self.totalNodeCount=ko.observable(0);
     self.nodeIndex={};
@@ -1312,6 +1358,52 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
     self.execDurationHumanized = ko.pureComputed(function () {
         return MomentUtil.formatDurationHumanize(self.execDuration());
     });
+    self.followFlowState = function (flowState,followNodes) {
+        "use strict";
+        flowState.addUpdater({
+            updateError: function (error, data) {
+                self.stateLoaded(false);
+                if (error !== 'pending') {
+                    self.errorMessage(data.state.errorMessage ? data.state.errorMessage : error);
+                } else {
+                    self.statusMessage(data.state.errorMessage ? data.state.errorMessage : error);
+                }
+                ko.mapping.fromJS({
+                    executionState: data.executionState,
+                    executionStatusString: data.executionStatusString,
+                    retryExecutionId: data.retryExecutionId,
+                    retryExecutionUrl: data.retryExecutionUrl,
+                    retryExecutionState: data.retryExecutionState,
+                    retryExecutionAttempt: data.retryExecutionAttempt,
+                    retry: data.retry,
+                    completed: data.completed,
+                    execDuration: data.execDuration,
+                    jobAverageDuration: data.jobAverageDuration,
+                    startTime: data.startTime ? data.startTime : data.state ? data.state.startTime : null,
+                    endTime: data.endTime ? data.endTime : data.state ? data.state.endTime : null
+                }, {}, self);
+            },
+            updateState: function (data) {
+                ko.mapping.fromJS({
+                    executionState: data.executionState,
+                    executionStatusString: data.executionStatusString,
+                    retryExecutionId: data.retryExecutionId,
+                    retryExecutionUrl: data.retryExecutionUrl,
+                    retryExecutionState: data.retryExecutionState,
+                    retryExecutionAttempt: data.retryExecutionAttempt,
+                    retry: data.retry,
+                    completed: data.completed,
+                    execDuration: data.execDuration,
+                    jobAverageDuration: data.jobAverageDuration,
+                    startTime: data.startTime ? data.startTime : data.state ? data.state.startTime : null,
+                    endTime: data.endTime ? data.endTime : data.state ? data.state.endTime : null
+                }, {}, self);
+                if(followNodes) {
+                    self.updateNodes(data.state);
+                }
+            }
+        });
+    }
 }
 
 

@@ -55,24 +55,38 @@
                 </span>
             </g:elseif>
             <g:else>
-                <span id="runstatus">
-                    <span class="nowrunning">
-                        <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}"
-                             alt="Spinner"/>
-                        Now Running&hellip;
+                <span >
+                    <!-- ko if: executionState()=='RUNNING' -->
+                    <g:img file="spinner-gray.gif" width="12px" height="12px"/>
+                    <!-- /ko -->
+                    <span class=" execstate execstatedisplay overall"
+                          data-execstate="${enc(attr:execState)}"
+                          data-bind="attr: { 'data-execstate': executionState(), 'data-statusstring': executionStatusString() } ">
                     </span>
                 </span>
                 <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-                    <span id="cancelresult" style="margin-left:10px">
-                        <span class="btn btn-danger btn-xs act_cancel" onclick="docancel();">Kill <g:message
-                                code="domain.ScheduledExecution.title"/>
-                            <i class="glyphicon glyphicon-remove"></i>
+                    <span data-bind="if: canKillExec()" style="margin-left: 10px">
+                        <span data-bind="visible: !completed() ">
+                            <!-- ko if: !killRequested() || killStatusFailed() -->
+                            <span class="btn btn-danger btn-xs"
+                                  data-bind="click: killExecAction">
+                                <g:message code="button.action.kill.job" />
+                                <i class="glyphicon glyphicon-remove"></i>
+                            </span>
+                            <!-- /ko -->
+                            <!-- ko if: killRequested() -->
+                            <!-- ko if: killStatusPending() -->
+                            <g:img file="spinner-gray.gif" width="16px" height="16px"/>
+                            <!-- /ko -->
+                            <span class="loading" data-bind="text: killStatusText"></span>
+                            <!-- /ko -->
                         </span>
                     </span>
+
                 </g:if>
 
             </g:else>
-                <span class="retrybuttons execRerun " style="${wdgt.styleVisible(if: null != execution.dateCompleted)}">
+                <span class=" " data-bind="visible: completed() ">
                     <g:if test="${scheduledExecution}">
                         <g:if test="${authChecks[AuthConstants.ACTION_RUN]}">
                             <g:link controller="scheduledExecution"

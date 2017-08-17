@@ -113,6 +113,7 @@
             execData: {},
             groupOutput:{value:${enc(js:followmode == 'browse')}},
             updatepagetitle:${enc(js:null == execution?.dateCompleted)},
+            killjobauth:${enc(js: authChecks[AuthConstants.ACTION_KILL] ? true : false)},
           <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
               killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
           </g:if>
@@ -126,7 +127,8 @@
             workflow,
             "${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
             "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecNodeState', id: execution.id))}",
-            multiworkflow
+            multiworkflow,
+            {followControl:followControl,executionId:'${enc(js:execution.id)}'}
           );
           flowState = new FlowState('${enc(js:execution?.id)}','flowstate',{
             workflow:workflow,
@@ -135,46 +137,8 @@
             selectedOutputStatusId:'selectedoutputview',
             reloadInterval:1500
          });
-            flowState.addUpdater({
-            updateError:function(error,data){
-                nodeflowvm.stateLoaded(false);
-                if(error!='pending'){
-                    nodeflowvm.errorMessage(data.state.errorMessage?data.state.errorMessage:error);
-                }else{
-                    nodeflowvm.statusMessage(data.state.errorMessage?data.state.errorMessage:error);
-                }
-                ko.mapping.fromJS({
-                    executionState:data.executionState,
-                    executionStatusString:data.executionStatusString,
-                    retryExecutionId:data.retryExecutionId,
-                    retryExecutionUrl:data.retryExecutionUrl,
-                    retryExecutionState:data.retryExecutionState,
-                    retryExecutionAttempt:data.retryExecutionAttempt,
-                    retry:data.retry,
-                    completed:data.completed,
-                    execDuration:data.execDuration,
-                    jobAverageDuration:data.jobAverageDuration,
-                    startTime:data.startTime? data.startTime : data.state ? data.state.startTime: null,
-                    endTime:data.endTime ? data.endTime : data.state ? data.state.endTime : null
-                },{},nodeflowvm);
-            },
-            updateState:function(data){
-                ko.mapping.fromJS({
-                    executionState:data.executionState,
-                    executionStatusString:data.executionStatusString,
-                    retryExecutionId:data.retryExecutionId,
-                    retryExecutionUrl:data.retryExecutionUrl,
-                    retryExecutionState:data.retryExecutionState,
-                    retryExecutionAttempt:data.retryExecutionAttempt,
-                    retry:data.retry,
-                    completed:data.completed,
-                    execDuration:data.execDuration,
-                    jobAverageDuration:data.jobAverageDuration,
-                    startTime:data.startTime? data.startTime : data.state ? data.state.startTime: null,
-                    endTime:data.endTime ? data.endTime : data.state ? data.state.endTime : null
-                },{},nodeflowvm);
-                nodeflowvm.updateNodes(data.state);
-            }});
+          nodeflowvm.followFlowState(flowState,true);
+
             ko.mapping.fromJS({
                 completed:'${execution.dateCompleted!=null}',
                 startTime:'${enc(js:execution.dateStarted)}',
@@ -361,18 +325,23 @@
                             <div class="col-sm-8">
 
                                 <g:if test="${null == execution.dateCompleted}">
-                                    <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-                                        <div class="pull-right">
-                                            <span id="cancelresult"
-                                                  data-bind="visible: !completed()">
+                                    <div class="pull-right" data-bind="if: canKillExec()">
+                                        <span data-bind="visible: !completed() ">
+                                            <!-- ko if: !killRequested() || killStatusFailed() -->
                                                 <span class="btn btn-danger btn-sm"
-                                                      onclick="followControl.docancel();">
+                                                      data-bind="click: killExecAction">
                                                     <g:message code="button.action.kill.job" />
                                                     <i class="glyphicon glyphicon-remove"></i>
                                                 </span>
-                                            </span>
+                                            <!-- /ko -->
+                                            <!-- ko if: killRequested() -->
+                                            <!-- ko if: killStatusPending() -->
+                                            <g:img file="spinner-gray.gif" width="16px" height="16px"/>
+                                            <!-- /ko -->
+                                            <span class="loading" data-bind="text: killStatusText"></span>
+                                            <!-- /ko -->
+                                        </span>
                                         </div>
-                                    </g:if>
                                 </g:if>
 
                                 %{--auth checks for delete execution--}%

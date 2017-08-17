@@ -61,6 +61,7 @@ var FollowControl = Class.create({
     totalCount:0,
     totalDuration:0,
     killjobhtml:'',
+    killjobauth: false,
     execData:null,
     nodemode:false,
     browsemode:false,
@@ -1415,29 +1416,11 @@ var FollowControl = Class.create({
     },
     updatecancel: function(data) {
 
-        var orig = data;
-        if (data['cancelled']) {
-            if ($('cancelresult')) {
-                $('cancelresult').loading('Killing Job...');
-            }
-        } else {
-            if ($('cancelresult')) {
-                var sp = new Element('span');
-                sp.addClassName('fail');
-                setText(sp, (data['error'] ? data['error'] : 'Failed to Kill Job.'));
-                clearHtml($('cancelresult'));
-                $('cancelresult').appendChild(sp);
-                appendHtml($('cancelresult'), this.killjobhtml);
-            }
-        }
     },
 
     docancel: function() {
-        if ($('cancelresult')) {
-            $('cancelresult').loading('Killing Job...');
-        }
         var obj=this;
-        jQuery.ajax({
+        return jQuery.ajax({
             type: 'POST',
             url: this.appLinks.executionCancelExecution,
             dataType:'json',
@@ -1449,6 +1432,6 @@ var FollowControl = Class.create({
             error: function (jqxhr,status,err) {
                 obj.updatecancel({error: "Failed to kill Job: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err)});
             }
-        });
+        }).success(_ajaxReceiveTokens.curry('exec_cancel_token'));
     }
 });
