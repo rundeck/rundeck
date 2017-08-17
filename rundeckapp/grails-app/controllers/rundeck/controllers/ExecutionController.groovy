@@ -272,7 +272,8 @@ class ExecutionController extends ControllerBase{
                 inputFilesMap         : inputFilesMap,
                 logFilterPlugins      : pluginService.listPlugins(LogFilterPlugin),
                 inputFilesMap         : inputFilesMap,
-                projectNames          : authProjectsToCreate
+                projectNames          : authProjectsToCreate,
+                clusterModeEnabled    : frameworkService.isClusterModeEnabled()
         ]
     }
     def delete = {
