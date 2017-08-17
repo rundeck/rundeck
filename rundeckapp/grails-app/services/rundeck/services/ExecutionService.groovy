@@ -1452,9 +1452,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 ]
                 def resp = ereply?.value
                 if (resp && resp instanceof Map) {
-                    if (resp.abortstate) {
-                        return new AbortResult(abortresult + resp)
-                    }
+                    return new AbortResult(abortresult + resp)
                 } else {
                     return new AbortResult(abortresult)
                 }
