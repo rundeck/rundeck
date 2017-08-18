@@ -569,7 +569,7 @@
 
             <g:if test="${execution.scheduledExecution}">
             %{--progress bar--}%
-                <div class="row" data-bind="if: !completed()">
+                <div class="row row-space" data-bind="if: !completed()">
                 <div class="col-sm-12">
                     <section class="runstatus " data-bind="if: !completed() && jobAverageDuration()>0">
                         <g:set var="progressBind" value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/>
