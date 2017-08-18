@@ -115,12 +115,6 @@
 
     </g:if>
     <g:layoutHead/>
-    <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
-        <g:javascript>
-            //call after gsp page has loaded javascript
-            jQuery(function(){window.rundeckPage.onPageLoad();});
-        </g:javascript>
-    </g:if>
 </head>
 <body>
 <g:render template="/common/topbar"/>
@@ -135,5 +129,12 @@
 <g:profilerOutput />
 -->
 <miniprofiler:javascript/>
+
+<g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
+    <script type="text/javascript" defer>
+        //call after gsp page has loaded javascript
+        jQuery(function(){window.rundeckPage.onPageLoad();});
+    </script>
+</g:if>
 </body>
 </html>
