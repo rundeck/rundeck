@@ -1056,4 +1056,13 @@ class FrameworkService implements ApplicationContextAware {
     Map kickJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext, String user, Map input){
         executionService.executeJob(scheduledExecution, authContext, user, input)
     }
+
+    /**
+     * non transactional interface to bulk delete executions
+     * {@link ExecutionService#deleteBulkExecutionIds deleteBulkExecutionIds}
+     * @return [success:true/false, failures:[ [success:false, message: String, id: id],... ], successTotal:Integer]
+     */
+    Map deleteBulkExecutionIds(Collection ids, AuthContext authContext, String username) {
+        executionService.deleteBulkExecutionIds(ids,authContext,username)
+    }
 }

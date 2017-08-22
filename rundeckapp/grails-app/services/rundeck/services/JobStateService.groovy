@@ -122,11 +122,17 @@ class JobStateService implements AuthorizingJobService {
     @Override
     List<ExecutionReference> searchExecutions(AuthContext auth, String state, String project, String jobUuid,
                                               String excludeJobUuid, String since){
+        searchExecutions(auth,state,project,jobUuid,excludeJobUuid,since,false)
+    }
 
+    List<ExecutionReference> searchExecutions(AuthContext auth, String state, String project, String jobUuid,
+                                              String excludeJobUuid, String since, boolean reverseSince){
 
         def executions = Execution.createCriteria().list {
             eq('project',project)
-            eq('status', state)
+            if(state){
+                eq('status', state)
+            }
             createAlias('scheduledExecution', 'se')
             if(jobUuid){
                 isNotNull 'scheduledExecution'
@@ -142,7 +148,12 @@ class JobStateService implements AuthorizingJobService {
                 long timeAgo = Sizes.parseTimeDuration(since,TimeUnit.MILLISECONDS)
                 Date sinceDt = new Date()
                 sinceDt.setTime(sinceDt.getTime()-timeAgo)
-                ge 'dateStarted',sinceDt
+                if(reverseSince){
+                    le 'dateStarted',sinceDt
+                }else{
+                    ge 'dateStarted',sinceDt
+                }
+
             }
 
         }
@@ -257,5 +268,11 @@ class JobStateService implements AuthorizingJobService {
             }
         }
         return resultExecution
+    }
+
+
+    @Override
+    Map deleteBulkExecutionIds(AuthContext auth, Collection ids, String asUser){
+        frameworkService.deleteBulkExecutionIds(ids,auth, asUser)
     }
 }
