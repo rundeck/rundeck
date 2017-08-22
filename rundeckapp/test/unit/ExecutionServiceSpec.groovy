@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
+import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
 import grails.test.mixin.Mock
@@ -2333,6 +2334,48 @@ class ExecutionServiceSpec extends Specification {
         status      | result
         'testvalue' | 'testvalue'
         null        | 'false'
+
+    }
+
+    def "get NodeService from origContext only if exists for referenced from another projects jobs"() {
+        given:
+
+        def orgProject = 'prgProj'
+        def jobProj = 'testproj'
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, orgProject)
+            0 * filterNodeSet(null, jobProj)
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_) >> [:]
+            0 * _(*_)
+        }
+        service.storageService = Mock(StorageService) {
+            1 * storageTreeWithContext(_)
+        }
+        service.jobStateService = Mock(JobStateService) {
+            1 * jobServiceWithAuthContext(_)
+        }
+        service.nodeService = Mock(NodeService){}
+
+        Execution se = new Execution(
+                argString: "-test args",
+                user: "testuser",
+                project: jobProj,
+                loglevel: 'WARN',
+                doNodedispatch: false
+        )
+
+        def origContext = Mock(StepExecutionContext){
+            getFrameworkProject() >> orgProject
+            getStepContext() >> []
+
+        }
+
+        when:
+        def val = service.createContext(se, origContext, null, null, null, null, null)
+        then:
+        val != null
+        val.getNodeService() != null
 
     }
 }
