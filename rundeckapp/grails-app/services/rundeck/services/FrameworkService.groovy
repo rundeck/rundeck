@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import com.dtolabs.rundeck.core.authorization.Attribute
@@ -1064,5 +1065,14 @@ class FrameworkService implements ApplicationContextAware {
      */
     Map deleteBulkExecutionIds(Collection ids, AuthContext authContext, String username) {
         executionService.deleteBulkExecutionIds(ids,authContext,username)
+    }
+
+    /**
+     * non transactional interface to query executions
+     * {@link ExecutionService#queryExecutions queryExecutions}
+     * @return [result:result,total:total]
+     */
+    Map queryExecutions(ExecutionQuery query, int offset=0, int max=-1) {
+        executionService.queryExecutions(query,offset,max)
     }
 }

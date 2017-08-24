@@ -73,4 +73,8 @@ class ResolvedAuthJobService implements JobService {
         authJobService.deleteBulkExecutionIds(authContext, ids, asUser)
     }
 
+    Map queryExecutions(Map filter){
+        authJobService.queryExecutions(authContext, filter)
+    }
+
 }

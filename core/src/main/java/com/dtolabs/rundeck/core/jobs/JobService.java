@@ -122,4 +122,11 @@ public interface JobService {
      * @return [success:true/false, failures:[ [success:false, message: String, id: id],... ], successTotal:Integer]
      */
     Map deleteBulkExecutionIds(Collection ids, String asUser);
+
+    /**
+     *
+     * @param filter for query executions
+     * @return map with results and total
+     */
+    Map queryExecutions(Map filter);
 }

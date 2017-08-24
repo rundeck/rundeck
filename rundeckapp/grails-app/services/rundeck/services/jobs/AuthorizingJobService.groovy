@@ -48,4 +48,6 @@ interface AuthorizingJobService {
 
     Map deleteBulkExecutionIds(AuthContext auth, Collection ids, String asUser)
 
+    Map queryExecutions(AuthContext auth,Map filter)
+
 }
