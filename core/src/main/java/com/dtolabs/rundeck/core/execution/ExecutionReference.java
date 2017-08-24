@@ -11,10 +11,12 @@ public interface ExecutionReference {
     String getOptions();
     JobReference getJob();
     Date getDateStarted();
+    Date getDateCompleted();
     String getStatus();
     String getSucceededNodeList();
     String getFailedNodeList();
     String getTargetNodes();
+    String getAdhocCommand();
 
 
 }

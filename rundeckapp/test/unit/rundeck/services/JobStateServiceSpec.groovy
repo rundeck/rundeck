@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.support.ExecutionQuery
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
@@ -495,7 +497,36 @@ class JobStateServiceSpec extends Specification {
     }
 
 
-
+    def "queryExecutions simple params"() {
+        setup:
+        def auth = Mock(AuthContext)
+        service.frameworkService = Mock(FrameworkService)
+        def mockExec = Mock(Execution)
+        when:
+        def result = service.queryExecutions(auth, filter)
+        then:
+        result
+        result.total == expTotal
+        1 * service.frameworkService.queryExecutions(_, 0, 0) >> {ExecutionQuery query,offset,max ->
+            if(query.adhoc){
+                return [result: [mockExec], total: 1]
+            }
+            if(query.jobIdListFilter){
+                return [result: [mockExec,mockExec], total: 2]
+            }
+            [result: [], total: 0]
+        }
+        1 * service.frameworkService.filterAuthorizedProjectExecutionsAll(_, _, [AuthConstants.ACTION_READ]) >>
+                {authcontext, inputArr, actions ->
+            return inputArr
+        }
+        where:
+        filter      | expTotal
+        [:]                     | 0
+        [adhoc:true]            | 1
+        [jobonly:true]          | 0
+        [jobIdListFilter:'1,2'] | 2
+    }
 
 
     def setTestExecutions(projectName, jobUuid){

@@ -235,8 +235,8 @@ class JobStateService implements AuthorizingJobService {
                     project: se.project)
         }
         new ExecutionReferenceImpl(id:exec.id, options: exec.argString, filter: exec.filter, job: jobRef,
-                dateStarted: exec.dateStarted, status: exec.status, succeededNodeList: exec.succeededNodeList, 
-                failedNodeList: exec.failedNodeList)
+                dateStarted: exec.dateStarted, status: exec.status, succeededNodeList: exec.succeededNodeList,
+                dateCompleted:exec.dateCompleted, failedNodeList: exec.failedNodeList)
 
     }
 
@@ -359,9 +359,13 @@ class JobStateService implements AuthorizingJobService {
                 jobRef = new JobReferenceImpl(id: se.extid, jobName: se.jobName, groupPath: se.groupPath,
                         project: se.project)
             }
-            ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(id:exec.id, options: exec.argString, filter: exec.filter, job: jobRef,
-                    dateStarted: exec.dateStarted, status: exec.status, succeededNodeList: exec.succeededNodeList,
+            ExecutionReferenceImpl execRef = new ExecutionReferenceImpl(id:exec.id, options: exec.argString,
+                    filter: exec.filter, job: jobRef, dateStarted: exec.dateStarted, dateCompleted:exec.dateCompleted,
+                    status: exec.status, succeededNodeList: exec.succeededNodeList,
                     failedNodeList: exec.failedNodeList)
+            if(!se && exec.workflow && exec.workflow.commands && exec.workflow.commands[0]){
+                execRef.adhocCommand = exec.workflow.commands[0].summarize()
+            }
             idList.push(execRef)
         }
         return [result:idList, total:idList.size()]

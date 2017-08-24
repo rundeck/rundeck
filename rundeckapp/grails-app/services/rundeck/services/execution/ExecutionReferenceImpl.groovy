@@ -10,10 +10,12 @@ class ExecutionReferenceImpl implements ExecutionReference {
     String id
     JobReferenceImpl job
     Date dateStarted
+    Date dateCompleted
     String status
     String succeededNodeList
     String failedNodeList
     String targetNodes
+    String adhocCommand
 
     @Override
     String toString() {
