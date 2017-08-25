@@ -172,7 +172,7 @@ class JobsXMLCodecSpec extends Specification {
         false         | _
     }
 
-    def "decode job ref intersection without filter"() {
+    def "decode job ref intersection and filter"() {
         given:
         def xml = """<joblist>
   <job>
@@ -186,6 +186,7 @@ class JobsXMLCodecSpec extends Specification {
             <dispatch>
                 <nodeIntersect>$input</nodeIntersect>
             </dispatch>
+            $filterXml
         </jobref>
       </command>
     </sequence>
@@ -203,11 +204,22 @@ class JobsXMLCodecSpec extends Specification {
         result[0].workflow.commands[0].jobName == 'ajob'
         result[0].workflow.commands[0].jobGroup == 'some/group'
         result[0].workflow.commands[0].nodeIntersect == input
+        result[0].workflow.commands[0].nodeFilter == filter
 
         where:
-        input | _
-        true  | _
-        false | _
+        input | filterXml                                             | filter
+        true  | ''                                                    | null
+        true  | '<nodefilters/>'                                      | null
+        true  | '<nodefilters/><nodefilters/>'                        | null
+        true  | '<nodefilters></nodefilters>'                         | null
+        true  | '<nodefilters>spurious</nodefilters>'                 | null
+        true  | '<nodefilters><filter>afilter</filter></nodefilters>' | 'afilter'
+        false | ''                                                    | null
+        false | '<nodefilters/>'                                      | null
+        false | '<nodefilters/><nodefilters/>'                        | null
+        false | '<nodefilters></nodefilters>'                         | null
+        false | '<nodefilters>spurious</nodefilters>'                 | null
+        false | '<nodefilters><filter>afilter</filter></nodefilters>' | 'afilter'
 
     }
     def "encode workflow strategy plugin"() {

@@ -85,4 +85,30 @@ class JobExecSpec extends Specification {
         true          | _
         false         | _
     }
+
+    def "from map with node intersect"() {
+        given:
+        def map = [
+                jobref     : [
+                        group      : 'group',
+                        name       : 'name',
+                        nodefilters: [
+                                dispatch: [
+                                        nodeIntersect: nodeIntersect
+                                ]
+                        ]
+                ],
+                description: 'a monkey'
+        ]
+        when:
+        def result = JobExec.jobExecFromMap(map)
+
+        then:
+        result.nodeIntersect == nodeIntersect
+        where:
+        nodeIntersect | _
+        true          | _
+        false         | _
+
+    }
 }

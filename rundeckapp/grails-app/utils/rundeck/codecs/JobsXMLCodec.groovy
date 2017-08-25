@@ -386,7 +386,7 @@ class JobsXMLCodec {
                     }
                     if (null != cmd.jobref.dispatch && (cmd.jobref.nodefilters instanceof Map)) {
                         cmd.jobref.nodefilters.dispatch = cmd.jobref.remove('dispatch')
-                    } else if (null != cmd.jobref.dispatch && null == cmd.jobref.nodefilters) {
+                    } else if (null != cmd.jobref.dispatch) {
                         cmd.jobref.nodefilters = [dispatch: cmd.jobref.remove('dispatch')]
                     }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
