@@ -29,8 +29,6 @@ addons:
 branches:
   only:
     - master
-    - '2.7.x'
-    - 'prerelease-2.9.0'
 
 notifications:
   irc:
