@@ -92,6 +92,17 @@
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">Login</button>
             </div>
+
+            <g:set var="footermessagehtml" value="${grailsApplication.config.rundeck?.gui?.login?.footerMessageHtml ?: ''}"/>
+            <g:if test="${footermessagehtml}">
+                <div class="row">
+                    <span class="col-sm-12">
+                        ${enc(sanitize:footermessagehtml)}
+                    </span>
+                </div>
+            </g:if>
+
+
         </form>
         </div>
         <g:if test="${flash.loginerror}">
