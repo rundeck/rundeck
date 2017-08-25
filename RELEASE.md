@@ -1,9 +1,9 @@
-Release 2.9.2
+Release 2.9.3
 ===========
 
-Date: 2017-08-07
+Date: 2017-08-25
 
-Name: <span style="color: Fuchsia"><span class="glyphicon glyphicon-bell"></span> "caffe latte fuchsia bell"</span>
+Name: <span style="color: Goldenrod"><span class="glyphicon glyphicon-book"></span> "caffe latte goldenrod book"</span>
 
 ## Upgrading from Earlier versions
 
@@ -22,13 +22,27 @@ Stay tuned! We are also adding many new features to [Rundeck Pro](http://rundeck
 ## Contributors
 
 * Greg Schueler (gschueler)
+* Luis Toledo (ltamaster)
+* jtobard
+* 黑牛 (chenlingmin)
 
 ## Bug Reporters
 
-* FritsHoogland
+* ahonor
+* chenlingmin
+* emiliohh
+* giovanimarin
+* jtobard
+* ltamaster
 
 ## Issues
 
-[Milestone 2.9.2](https://github.com/rundeck/rundeck/milestone/60)
+[Milestone 2.9.3](https://github.com/rundeck/rundeck/milestone/61)
 
-* [Running an ad-hoc command with ansible plugin results in java.lang.NoSuchMethodError: com.dtolabs.rundeck.core.execution.ExecutionContext.getDataContext()Ljava/util/Map;](https://github.com/rundeck/rundeck/issues/2675)
+* [When upload job's definition them project always is filled with the current project](https://github.com/rundeck/rundeck/issues/2715)
+* [Expose delete executions for plugins](https://github.com/rundeck/rundeck/pull/2709)
+* [Add "footer" message on login page.](https://github.com/rundeck/rundeck/pull/2692)
+* [jobref to other project uses other project's nodes](https://github.com/rundeck/rundeck/issues/2685)
+* [sync chinese message properties](https://github.com/rundeck/rundeck/pull/2678)
+* ["Next scheduled execution" message is inconsistent on Cluster Mode](https://github.com/rundeck/rundeck/issues/2677)
+* [Importing job with node intersection issue ](https://github.com/rundeck/rundeck/issues/2625)
