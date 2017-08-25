@@ -161,7 +161,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         }
         exec.keepgoingOnSuccess = !!map.keepgoingOnSuccess
         exec.description=map.description?.toString()
-        if(map.jobref.nodefilters){
+        if(map.jobref.nodefilters instanceof Map){
             exec.nodeFilter=map.jobref.nodefilters.filter?.toString()
             if(exec.nodeFilter){
                 def dispatch = map.jobref.nodefilters.dispatch
