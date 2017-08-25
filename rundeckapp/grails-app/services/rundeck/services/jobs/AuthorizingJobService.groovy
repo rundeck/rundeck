@@ -36,10 +36,18 @@ interface AuthorizingJobService {
 
     JobState getJobState(AuthContext auth, JobReference jobReference) throws JobNotFound;
 
-    List<ExecutionReference> searchExecutions(AuthContext auth, String state, String project, String jobUuid, String excludeJobUuid, String since)
+    List<ExecutionReference> searchExecutions(AuthContext auth, String state, String project, String jobUuid,
+                                              String excludeJobUuid, String since)
+
+    List<ExecutionReference> searchExecutions(AuthContext auth, String state, String project, String jobUuid,
+                                              String excludeJobUuid, String since, boolean reverseSince)
 
     ExecutionReference executionForId(AuthContext auth, String id, String project) throws ExecutionNotFound
 
     String startJob(AuthContext auth, JobReference jobReference, String jobArgString, String jobFilter, String asUser) throws JobNotFound
+
+    Map deleteBulkExecutionIds(AuthContext auth, Collection ids, String asUser)
+
+    Map queryExecutions(AuthContext auth,Map filter)
 
 }

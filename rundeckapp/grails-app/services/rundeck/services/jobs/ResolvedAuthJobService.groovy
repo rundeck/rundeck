@@ -51,6 +51,11 @@ class ResolvedAuthJobService implements JobService {
         authJobService.getJobState(authContext, jobReference)
     }
 
+    List<ExecutionReference> searchExecutions(String state, String project, String job, String excludeJob,
+                                              String since, boolean reverseSince){
+        authJobService.searchExecutions(authContext, state, project, job, excludeJob, since, reverseSince)
+    }
+
     List<ExecutionReference> searchExecutions(String state, String project, String job, String excludeJob, String since){
         authJobService.searchExecutions(authContext, state, project, job, excludeJob, since)
     }
@@ -62,6 +67,14 @@ class ResolvedAuthJobService implements JobService {
 
     String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser) throws JobNotFound{
         authJobService.startJob(authContext, jobReference, jobArgString, jobFilter, asUser)
+    }
+
+    Map deleteBulkExecutionIds(Collection ids, String asUser){
+        authJobService.deleteBulkExecutionIds(authContext, ids, asUser)
+    }
+
+    Map queryExecutions(Map filter){
+        authJobService.queryExecutions(authContext, filter)
     }
 
 }

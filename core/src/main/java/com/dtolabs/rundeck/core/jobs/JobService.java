@@ -19,8 +19,10 @@ package com.dtolabs.rundeck.core.jobs;
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound;
 import com.dtolabs.rundeck.core.execution.ExecutionReference;
 
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Service for interacting with Jobs
@@ -76,7 +78,22 @@ public interface JobService {
      * @return a list of references to executions using the input parameters
      *
      */
-    List<ExecutionReference> searchExecutions(String state, String project, String jobUuid, String excludeJobUuid, String since);
+    List<ExecutionReference> searchExecutions(String state, String project, String jobUuid, String excludeJobUuid,
+                                              String since);
+
+    /**
+     * @param state    to search
+     * @param project the project
+     * @param jobUuid    to search or null
+     * @param excludeJobUuid    to search or null
+     * @param since    to search or null
+     * @param reverseSince    if true search executions older than since parameter
+     *
+     * @return a list of references to executions using the input parameters
+     *
+     */
+    List<ExecutionReference> searchExecutions(String state, String project, String jobUuid, String excludeJobUuid,
+                                              String since, boolean reverseSince);
 
     /**
      * @param id   execution id
@@ -97,4 +114,19 @@ public interface JobService {
      * @return Id of the result execution
      */
     String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)throws JobNotFound;
+
+    /**
+     *
+     * @param ids collection of id to iterate
+     * @param asUser user to execute delete (null for the same user)
+     * @return [success:true/false, failures:[ [success:false, message: String, id: id],... ], successTotal:Integer]
+     */
+    Map deleteBulkExecutionIds(Collection ids, String asUser);
+
+    /**
+     *
+     * @param filter for query executions
+     * @return map with results and total
+     */
+    Map queryExecutions(Map filter);
 }
