@@ -172,6 +172,46 @@ class JobsXMLCodecSpec extends Specification {
         false         | _
     }
 
+    @Unroll
+    def "encode job ref with project"() {
+        given:
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName: 'test job 1',
+                        description: 'test descrip',
+                        loglevel: 'INFO',
+                        project: 'test1',
+                        workflow: new Workflow(
+                                keepgoing: true,
+                                commands: [
+                                        new JobExec(
+                                                jobName: 'ajob',
+                                                jobGroup: 'a/group',
+                                                jobProject: 'projectB'
+                                        )],
+                                ),
+                        nodeThreadcount: 1,
+                        nodeKeepgoing: true,
+                        doNodedispatch: true,
+                        filter: 'some nodes',
+                        )
+        ]
+        when:
+        def xmlstr = JobsXMLCodec.encode(jobs1)
+
+        then:
+        null != xmlstr
+        xmlstr instanceof String
+        def doc = parser.parse(new StringReader(xmlstr))
+        doc.job[0].sequence[0].command[0].jobref[0]."@project".text() == 'projectB'
+
+        where:
+        nodeIntersect | _
+        true          | _
+        false         | _
+    }
+
     def "decode job ref intersection and filter"() {
         given:
         def xml = """<joblist>
@@ -221,6 +261,46 @@ class JobsXMLCodecSpec extends Specification {
         false | '<nodefilters>spurious</nodefilters>'                 | null
         false | '<nodefilters><filter>afilter</filter></nodefilters>' | 'afilter'
 
+    }
+
+    @Unroll
+    def "decode job ref with project"() {
+        given:
+        def xml = """<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <jobref name="ajob" group="some/group" $attr>
+            $xmltext2
+        </jobref>
+        $xmltext
+      </command>
+    </sequence>
+
+  </job>
+</joblist>
+""".toString()
+        when:
+        def result = JobsXMLCodec.decode(xml)
+
+        then:
+        result.size() == 1
+        result[0].workflow.commands[0] != null
+        result[0].workflow.commands[0] instanceof JobExec
+        result[0].workflow.commands[0].jobName == 'ajob'
+        result[0].workflow.commands[0].jobGroup == 'some/group'
+        result[0].workflow.commands[0].jobProject == 'projectB'
+
+
+        where:
+        attr                 | xmltext                       | xmltext2
+        'project="projectB"' | ''                            | ''
+        ''                   | '<project>projectB</project>' | ''
+        ''                   | ''                            | '<project>projectB</project>'
     }
     def "encode workflow strategy plugin"() {
         given:
