@@ -389,6 +389,9 @@ class JobsXMLCodec {
                     } else if (null != cmd.jobref.dispatch) {
                         cmd.jobref.nodefilters = [dispatch: cmd.jobref.remove('dispatch')]
                     }
+                    if (cmd.project) {
+                        cmd.jobref.project = cmd.remove('project')
+                    }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
                     def parsePluginConfig={ plc->
                         def outconf=[:]
@@ -682,6 +685,11 @@ class JobsXMLCodec {
                     BuilderUtil.makeAttribute(cmd.jobref, 'group')
                 } else {
                     cmd.jobref.remove('group')
+                }
+                if (cmd.jobref.project) {
+                    BuilderUtil.makeAttribute(cmd.jobref, 'project')
+                } else {
+                    cmd.jobref.remove('project')
                 }
                 final def remove = cmd.jobref.remove('args')
                 if (null != remove) {
