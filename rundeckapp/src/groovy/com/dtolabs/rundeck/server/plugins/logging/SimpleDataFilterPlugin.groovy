@@ -46,7 +46,7 @@ By default, to produce a key/value entry, echo a line similar to this:
 
 Where `(key)` is the key name, and `(value)` is the value.
 
-If you only provide a regular expression with only one group, the `name` input is required.
+If you provide a regular expression with only one group, the `name` input is required.
 
 You can define the regular expression used.
 ''')
