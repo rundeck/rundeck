@@ -2051,8 +2051,8 @@ class ExecutionServiceSpec extends Specification {
         1 * service.scheduledExecutionService.scheduleAdHocJob(*_) >> { args ->
             final Date startDate    = args[6]
             // The start time may differ slightly (milliseconds)
-            assert startDate.getTime() - scheduleDate.getTime() <= 500 ||
-                startDate.getTime() - scheduleDate.getTime() >= -500
+            assert startDate.getTime() - scheduleDate.getTime() <= 1000 &&
+                startDate.getTime() - scheduleDate.getTime() >= -1000
             return scheduleDate
         }
         result.nextRun.getTime() == scheduleDate.getTime()
@@ -2063,6 +2063,7 @@ class ExecutionServiceSpec extends Specification {
         "2200-01-01T12:43:10.000Z"      | true                | true            | true             | true        | true
         "2200-01-01T12:43:10+00:00"     | true                | true            | true             | true        | true
         "2200-01-01T12:43:10Z"          | true                | true            | true             | true        | true
+        "2200-01-01T18:13:10+05:30"     | true                | true            | true             | true        | true
     }
 
     @Unroll
