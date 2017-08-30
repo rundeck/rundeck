@@ -519,6 +519,21 @@ class ExecutionUtilServiceTests {
         assertEquals([], item.args as List)
         JobRefCommand jrc = (JobRefCommand) res
         jrc.project==null
+    }
 
+    void testItemForWFCmdItem_jobref_setproject() {
+        def testService = service
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: null)
+        def res = testService.itemForWFCmdItem(ce, null, 'jobProject')
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof ScriptURLCommandExecutionItem)
+        assertTrue(res instanceof JobExecutionItem)
+        JobExecutionItem item = (JobExecutionItem) res
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertNotNull(item.args)
+        assertEquals([], item.args as List)
+        JobRefCommand jrc = (JobRefCommand) res
+        jrc.project=='jobProject'
     }
 }
