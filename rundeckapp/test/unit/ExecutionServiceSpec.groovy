@@ -2064,6 +2064,9 @@ class ExecutionServiceSpec extends Specification {
         "2200-01-01T12:43:10+00:00"     | true                | true            | true             | true        | true
         "2200-01-01T12:43:10Z"          | true                | true            | true             | true        | true
         "2200-01-01T18:13:10+05:30"     | true                | true            | true             | true        | true
+        "2200-01-01T18:13:10.000+05:30" | true                | true            | true             | true        | true
+        "2200-01-01T09:13:10-03:30"     | true                | true            | true             | true        | true
+        "2200-01-01T09:13:10.000-03:30" | true                | true            | true             | true        | true
     }
 
     @Unroll
@@ -2104,6 +2107,8 @@ class ExecutionServiceSpec extends Specification {
         "01/01/2001 10:11:12.000000 +0000" | true                | true            | true             | true        | true
         "0000-00-00 00:00:00.000+0000"     | true                | true            | true             | true        | true
         "2080-01-01T01:00:01.000"          | true                | true            | true             | true        | true
+        "2200-01-01 18:13:10.000 +05:30"   | true                | true            | true             | true        | true
+        "2080-01-01 01:00:01.000 -03:30"   | true                | true            | true             | true        | true
     }
 
     @Unroll
