@@ -3064,17 +3064,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def result
         def project = null
         if(jitem instanceof JobRefCommand){
-            JobRefCommand jitemRef = (JobRefCommand) jitem
-            if(jitemRef.project){
-                project = jitemRef.project
-            }else{
-                //use parent job project before using context framework
-                def globalContext = executionContext.getSharedDataContext().consolidate().getData(ContextView.global())
-                if(globalContext && globalContext.job && globalContext.job.project){
-                    project = executionContext.getSharedDataContext().consolidate().getData(ContextView.global()).job.project
-                }
-            }
-
+            project = jitem.project
         }
 
         def group = null
@@ -3119,7 +3109,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
                 return
             }
-            newExecItem = executionUtilService.createExecutionItemForWorkflow(se.workflow)
+            newExecItem = executionUtilService.createExecutionItemForWorkflow(se.workflow, se.project)
 
             try {
                 newContext = createJobReferenceContext(
