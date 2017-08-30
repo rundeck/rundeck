@@ -3065,7 +3065,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def project = null
         if(jitem instanceof JobRefCommand){
             JobRefCommand jitemRef = (JobRefCommand) jitem
-            project = jitemRef.project
+            if(jitemRef.project){
+                project = jitemRef.project
+            }else{
+                //use parent job project before using context framework
+                def globalContext = executionContext.getSharedDataContext().consolidate().getData(ContextView.global())
+                if(globalContext && globalContext.job && globalContext.job.project){
+                    project = executionContext.getSharedDataContext().consolidate().getData(ContextView.global()).job.project
+                }
+            }
+
         }
 
         def group = null
