@@ -122,6 +122,17 @@
                                 <g:textField name="descFilter" id="${rkey}descFilter" value="${params.descFilter}"
                                              class="form-control"/>
                             </div>
+                            <div class="form-group">
+                                <label for="${enc(attr:rkey)}scheduled"><g:message code="jobquery.title.scheduled"/></label>:
+                                <g:checkBox name="scheduled" id="${rkey}scheduled" value="${params.scheduled}"
+                                 class="form-control"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="${enc(attr:rkey)}serverUuid"><g:message code="jobquery.title.serverUuid"/></label>:
+                                <g:textField name="serverUuid" id="${rkey}serverUuid" value="${params.serverUuid}"
+                                         class="form-control"/>
+                            </div>
+
 
 
                             <div class="form-group">
