@@ -59,7 +59,7 @@ public class ScheduledExecutionFilter {
         return filter
     }
     public void fix(){
-        ['idlist','jobFilter','projFilter','groupPath', 'descFilter', 'loglevelFilter'].each{
+        ['idlist','jobFilter','projFilter','groupPath', 'descFilter', 'loglevelFilter', 'scheduledFilter'].each{
             if(!this[it]){
                 this[it]=''
             }

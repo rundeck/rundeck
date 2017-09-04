@@ -123,13 +123,13 @@
                                              class="form-control"/>
                             </div>
                             <div class="form-group">
-                                <label for="${enc(attr:rkey)}scheduled"><g:message code="jobquery.title.scheduled"/></label>:
-                                <g:checkBox name="scheduled" id="${rkey}scheduled" value="${params.scheduled}"
+                                <label for="${enc(attr:rkey)}scheduledFilter"><g:message code="jobquery.title.scheduledFilter"/></label>:
+                                <g:checkBox name="scheduledFilter" id="${rkey}scheduledFilter" value="${params.scheduledFilter}"
                                  class="form-control"/>
                             </div>
                             <div class="form-group">
-                                <label for="${enc(attr:rkey)}serverUuid"><g:message code="jobquery.title.serverUuid"/></label>:
-                                <g:textField name="serverUuid" id="${rkey}serverUuid" value="${params.serverUuid}"
+                                <label for="${enc(attr:rkey)}serverNodeUUIDFilter"><g:message code="jobquery.title.serverNodeUUIDFilter"/></label>:
+                                <g:textField name="serverNodeUUIDFilter" id="${rkey}serverUuid" value="${params.serverNodeUUIDFilter}"
                                          class="form-control"/>
                             </div>
 
