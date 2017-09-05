@@ -148,26 +148,6 @@ public class TestDefaultFileCopierUtil extends TestCase {
             return null;
         }
 
-        @Override
-        public boolean updateNodesResourceFile() throws UpdateUtils.UpdateException {
-            return false;
-        }
-
-        @Override
-        public void updateNodesResourceFileFromUrl(
-                final String providerURL,
-                final String username,
-                final String password
-        )
-                throws UpdateUtils.UpdateException
-        {
-
-        }
-
-        @Override
-        public void updateNodesResourceFile(final INodeSet nodeset) throws UpdateUtils.UpdateException {
-
-        }
 
         @Override
         public String getProperty(final String name) {

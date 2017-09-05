@@ -219,26 +219,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         Set<String> validSources = new HashSet<>();
         //generate Configuration for file source
         if (projectConfig.hasProperty(PROJECT_RESOURCES_FILE_PROPERTY)) {
-            try {
-                final Properties config = createFileSourceConfiguration();
-                logger.info("Source (project.resources.file): loading with properties: " + config);
-                nodesSourceList.add(loadResourceModelSource("file", config, shouldCacheForType("file"), "file.file"));
-                validSources.add("project.file");
-            } catch (ExecutionServiceException e) {
-                logger.error("Failed to load file resource model source: " + e.getMessage(), e);
-                exceptions.put("project.file",e);
-            }
+            logger.error("Project config: " + PROJECT_RESOURCES_FILE_PROPERTY + " is no longer supported.");
         }
         if (projectConfig.hasProperty(PROJECT_RESOURCES_URL_PROPERTY)) {
-            try {
-                final Properties config = createURLSourceConfiguration();
-                logger.info("Source (project.resources.url): loading with properties: " + config);
-                nodesSourceList.add(loadResourceModelSource("url", config, shouldCacheForType("url"), "file.url"));
-                validSources.add("project.url");
-            } catch (ExecutionServiceException e) {
-                logger.error("Failed to load file resource model source: " + e.getMessage(), e);
-                exceptions.put("project.url",e);
-            }
+            logger.error("Project config: " + PROJECT_RESOURCES_URL_PROPERTY + " is no longer supported.");
         }
 
         final List<Map<String, Object>> list = listResourceModelConfigurations();
@@ -273,13 +257,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         nodesSourcesLastReload = configLastModifiedTime!=null?configLastModifiedTime.getTime():-1;
     }
 
-    private Properties createURLSourceConfiguration() {
-        final URLResourceModelSource.Configuration build = URLResourceModelSource.Configuration.build();
-        build.url(projectConfig.getProperty(PROJECT_RESOURCES_URL_PROPERTY));
-        build.project(projectConfig.getName());
-
-        return build.getProperties();
-    }
 
     private File getResourceModelSourceFileCacheForType(String ident) {
         String varDir = projectConfig.getProperty("framework.var.dir");
@@ -524,200 +501,6 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             return null;
         }
     }
-    /**
-     * Return true if the resources file should be pulled from the server If he node is the server and workbench
-     * integration is enabled then the file should not be updated.
-     *
-     */
-    private boolean shouldUpdateNodesResourceFile() {
-        return projectConfig.hasProperty(PROJECT_RESOURCES_URL_PROPERTY);
-    }
-    /**
-     * Conditionally update the nodes resources file if a URL source is defined for it and return
-     * true if the update process was invoked and succeeded
-     *
-     * @param nodesResourcesFilePath destination file path
-     * @return true if the update succeeded, false if it was not performed
-     * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file
-     *
-     */
-    @Override
-    public boolean updateNodesResourceFile(final String nodesResourcesFilePath) throws UpdateUtils.UpdateException {
-        if (shouldUpdateNodesResourceFile()) {
-            updateNodesResourceFileFromUrl(projectConfig.getProperty(PROJECT_RESOURCES_URL_PROPERTY), null, null,nodesResourcesFilePath);
-            return true;
-        }
-        return false;
-    }
-    /**
-     * Update the nodes resources file from a specific URL, with BASIC authentication as provided or
-     * as defined in the URL's userInfo section.
-     * @param providerURL URL to retrieve resources file definition
-     * @param username username or null
-     * @param password or null
-     * @param nodesResourceFilePath path of the destination file
-     * @throws com.dtolabs.rundeck.core.common.UpdateUtils.UpdateException if an error occurs during the update process
-     */
-    @Override
-    public void updateNodesResourceFileFromUrl(
-            final String providerURL, final String username,
-            final String password, final String nodesResourceFilePath
-    ) throws UpdateUtils.UpdateException {
-        if(!validateResourceProviderURL(providerURL)){
-            throw new UpdateUtils.UpdateException("providerURL is not allowed: " + providerURL);
-        }
-
-        UpdateUtils.updateFileFromUrl(providerURL, nodesResourceFilePath, username, password,
-                                      URLFileUpdater.factory());
-        logger.debug("Updated nodes resources file: " + nodesResourceFilePath);
-    }
-
-    /**
-     * Return true if the URL is valid, and allowed by configuration
-     */
-    boolean validateResourceProviderURL(final String providerURL) throws UpdateUtils.UpdateException {
-        final URL url;
-        try {
-            url= new URL(providerURL);
-        } catch (MalformedURLException e) {
-            throw new UpdateUtils.UpdateException("Invalid URL: " + providerURL, e);
-        }
-        //assert allowed URL scheme
-        if(!("file".equals(url.getProtocol()) || "http".equals(url.getProtocol()) || "https".equals(url.getProtocol()))) {
-            throw new UpdateUtils.UpdateException("URL protocol not allowed: " + url.getProtocol());
-        }
-
-        return isAllowedProviderURL(providerURL);
-    }
-
-    /**
-     * Return true in these cases:
-     *  1. project.properties allows URL and framework.properties allows URL.
-     *  2. project.properties allows URL and no regexes are set in framework.properties
-     *  3. project.properties no regexes are set, and framework.properites allows URL.
-     */
-    boolean isAllowedProviderURL(final String providerURL) {
-        //whitelist the configured providerURL
-        if (projectConfig.hasProperty(PROJECT_RESOURCES_URL_PROPERTY) && projectConfig.getProperty(PROJECT_RESOURCES_URL_PROPERTY).equals(
-                providerURL)) {
-            return true;
-        }
-        //check regex properties for project props
-        int i = 0;
-        boolean projpass = false;
-        boolean setproj = false;
-        while (projectConfig.hasProperty(PROJECT_RESOURCES_ALLOWED_URL_PREFIX + i)) {
-            setproj = true;
-            final String regex = projectConfig.getProperty(PROJECT_RESOURCES_ALLOWED_URL_PREFIX + i);
-            final Pattern pat = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-            final Matcher matcher = pat.matcher(providerURL);
-            if (matcher.matches()) {
-                logger.debug(
-                        "ProviderURL allowed by project property \"project.resources.allowedURL." + i + "\": " + regex);
-                projpass = true;
-                break;
-            }
-            i++;
-        }
-        if (!projpass && setproj) {
-            //was checked but failed match
-            return false;
-        }
-        //check framework props
-        i = 0;
-
-        final boolean setframework = projectConfig.hasProperty(FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + i);
-        if (!setframework && projpass) {
-            //unset in framework.props, allowed by project.props
-            return true;
-        }
-        if(!setframework && !setproj){
-            //unset in both
-            return false;
-        }
-        while (projectConfig.hasProperty(FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + i)) {
-            final String regex = projectConfig.getProperty(FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX + i);
-            final Pattern pat = Pattern.compile(regex, Pattern.CASE_INSENSITIVE);
-            final Matcher matcher = pat.matcher(providerURL);
-            if (matcher.matches()) {
-                logger.debug(
-                        "ProviderURL allowed by framework property \"framework.resources.allowedURL." + i + "\": " + regex);
-                //allowed by framework.props, and unset or allowed by project.props,
-                return true;
-            }
-            i++;
-        }
-        if (projpass) {
-            logger.warn("providerURL was allowed by project.properties, but is not allowed by framework.properties: "
-                        + providerURL);
-        }
-        return false;
-    }
-
-    /**
-     * Update the resources file given an input Nodes set
-     *
-     * @param nodeset nodes
-     *
-     * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file or generate
-     *                                     nodes
-     */
-    @Override
-    public void updateNodesResourceFile(final INodeSet nodeset, final String nodesResourceFilePath)
-            throws UpdateUtils.UpdateException
-    {
-        final ResourceFormatGenerator generator;
-        File destfile = new File(nodesResourceFilePath);
-        try {
-            generator =
-                    resourceFormatGeneratorService
-                            .getGeneratorForFileExtension(destfile);
-        } catch (UnsupportedFormatException e) {
-            throw new UpdateUtils.UpdateException(
-                    "Unable to determine file format for file: " + nodesResourceFilePath, e
-            );
-        }
-        File resfile = null;
-        try {
-            resfile = File.createTempFile("resource-temp", destfile.getName());
-            resfile.deleteOnExit();
-        } catch (IOException e) {
-            throw new UpdateUtils.UpdateException("Unable to create temp file: " + e.getMessage(), e);
-        }
-        //serialize nodes and replace the nodes resource file
-
-        try {
-            final FileOutputStream stream = new FileOutputStream(resfile);
-            try {
-                generator.generateDocument(nodeset, stream);
-            } finally {
-                stream.close();
-            }
-        } catch (IOException e) {
-            throw new UpdateUtils.UpdateException("Unable to generate resources file: " + e.getMessage(), e);
-        } catch (ResourceFormatGeneratorException e) {
-            throw new UpdateUtils.UpdateException("Unable to generate resources file: " + e.getMessage(), e);
-        }
-
-        updateNodesResourceFile(resfile, nodesResourceFilePath);
-        if (!resfile.delete()) {
-            logger.warn("failed to remove temp file: " + resfile);
-        }
-        logger.debug("generated resources file: " + resfile.getAbsolutePath());
-    }
-
-    /**
-     * Update the resources file from a source file
-     *
-     * @param source the source file
-     * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file
-     *
-     */
-    public void updateNodesResourceFile(final File source, final String nodesResourceFilePath) throws UpdateUtils.UpdateException {
-        UpdateUtils.updateFileFromFile(source, nodesResourceFilePath);
-        logger.debug("Updated nodes resources file: " + nodesResourceFilePath);
-    }
-
 
     public IRundeckProjectConfig getProjectConfig() {
         return projectConfig;

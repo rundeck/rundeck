@@ -95,8 +95,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     // accept POST requests
     def static allowedMethods = [
             apiProjectResources: ['POST'],
-            apiProjectResourcesPost: ['POST'],
-            apiProjectResourcesRefresh: ['POST'],
             apiSystemAcls: ['GET','PUT','POST','DELETE'],
             createProjectPost: 'POST',
             deleteNodeFilter: 'POST',
@@ -623,43 +621,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             xml{
                 return render (result as XML)
             }
-        }
-    }
-
-    /**
-     * If user has admin rights and the project parameter is specified, attempt to re-fetch the resources.xml
-     * via the project's project.resources.url (if it exists).
-     * Returns true if re-fetch succeeded, false otherwise.
-     */
-    protected def performNodeReload (String url = null){
-        if(!params.project){
-            return [success: false, message: "project parameter is required", invalid: true]
-        }
-        Framework framework = frameworkService.getRundeckFramework()
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
-        if(!frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                AuthConstants.ACTION_REFRESH,params.project)){
-            def msg = "user: ${session.user} UNAUTHORIZED for performNodeReload"
-            log.error(msg)
-            return [success:false,message:msg,unauthorized:true]
-        }
-        def project=framework.getFrameworkProjectMgr().getFrameworkProject(params.project)
-       //if reload parameter is specified, and user is admin, reload from source URL
-        try {
-            if(url){
-                if(!(url==~ /(?i)^(https?|file):\/\/?.*$/)){
-                    log.error("Error updating node resources file for project ${project.name}: invalid URL: " + url)
-                    return [success: false, message: "Error updating node resources file for project ${project.name}: invalid URL: " + url, invalid: true]
-                }
-                project.updateNodesResourceFileFromUrl(url, null, null)
-                return [success:true]
-            }else{
-                return [success:project.updateNodesResourceFile(),url:url,
-                        message:g.message(code:'api.project.updateResources.noproviderUrl.failed',args: [params.project])]
-            }
-        } catch (Exception e) {
-            log.error("Error updating node resources file for project ${project.name}: "+e.message)
-            return [success: false, message: "Error updating node resources file for project ${project.name}: " + e.message, error: true]
         }
     }
 
@@ -1281,7 +1242,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
             def Set<String> removePrefixes=[]
-            removePrefixes<< FrameworkProject.PROJECT_RESOURCES_URL_PROPERTY
             if (params.defaultNodeExec) {
                 (defaultNodeExec, nodeexec, nodeexecreport) = parseDefaultPluginConfig(errors, params.defaultNodeExec, "nodeexec", frameworkService.getNodeExecutorService(),'Node Executor')
                 try {
@@ -1979,155 +1939,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     /*******
      * API actions
      */
-
-    /**
-     * API: /api/2/project/NAME/resources/refresh
-     * calls performNodeReload, then returns API response
-     * @deprecated will be removed
-     * */
-    def apiProjectResourcesRefresh () {
-        if (!apiService.requireVersion(request,response,ApiRequestFilters.V2)) {
-            return
-        }
-        Framework framework = frameworkService.getRundeckFramework()
-        if (!params.project) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required',
-                    args: ['project']])
-        }
-        def exists = frameworkService.existsFrameworkProject(params.project)
-        if (!exists) {
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist',
-                    args: ['project', params.project]])
-        }
-
-        //check content
-        def result = performNodeReload(params.providerURL)
-        def didsucceed=result.success
-        if(didsucceed){
-            return apiService.renderSuccessXml(response, 'api.project.updateResources.succeeded', [params.project])
-        }else{
-            def error=[:]
-            if(result.invalid){
-                error.code='api.error.invalid.request'
-                error.args=[result.message]
-            }else if(result.unauthorized){
-                error.code='api.error.item.unauthorized'
-                error.args=['Refresh Resources','Project: '+params.project,result.message]
-            }
-            if(!error.code && !result.url){
-                error.code= 'api.project.updateResources.failed'
-                error.args=[params.project]
-                error.message=result.message
-            }else if(!error.code){
-                error.code = 'api.project.updateResources.failed'
-                error.args = [error.message?:'Unknown reason']
-            }
-
-            return apiService.renderErrorXml(response, error)
-        }
-    }
-    /**
-     * API: /api/2/project/NAME/resources
-     * POST: update resources data with either: text/xml content, text/yaml content, form-data param providerURL=<url>
-     *     GET: see {@link #apiResourcesv2}
-     * */
-    def apiProjectResourcesPost() {
-        if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
-            return
-        }
-        Framework framework = frameworkService.getRundeckFramework()
-        if (!params.project) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: ['project']])
-
-        }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
-        def exists = frameworkService.existsFrameworkProject(params.project)
-        if (!exists) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['project', params.project]])
-        }
-        if (!frameworkService.authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_TYPE_NODE,
-                [AuthConstants.ACTION_CREATE,AuthConstants.ACTION_UPDATE], params.project)) {
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_FORBIDDEN,
-                    code: 'api.error.item.unauthorized', args: ['Update Nodes', 'Project', params.project]])
-        }
-        final IRundeckProject project = frameworkService.getFrameworkProject(params.project)
-
-        def didsucceed=false
-        def errormsg=null
-        //determine data
-        //assume post request
-        if(!request.post){
-            //bad method
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_METHOD_NOT_ALLOWED,
-                    code: 'api.error.invalid.request', args: ['Method not allowed']])
-        }
-        final contentType = request.contentType
-        //try to parse loaded data
-        if(!(contentType?.endsWith("/xml")||contentType?.endsWith('/yaml')|| contentType?.endsWith('/x-yaml'))){
-            if (!apiService.requireVersion(request, response,ApiRequestFilters.V3)) {
-                //require api V3 for any other content type
-                return
-            }
-        }
-
-        final parser
-        try {
-            parser = framework.getResourceFormatParserService().getParserForMIMEType(contentType)
-        } catch (UnsupportedFormatException e) {
-            //invalid data
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
-                    code: 'api.error.resources-import.unsupported-format', args: [contentType]])
-        }
-
-        //write content to temp file
-        File tempfile=File.createTempFile("post-input","data")
-        tempfile.deleteOnExit()
-        final stream = new FileOutputStream(tempfile)
-        try {
-            com.dtolabs.utils.Streams.copyStream(request.getInputStream(), stream)
-        } finally {
-            stream.close()
-        }
-
-        def INodeSet nodeset
-        try {
-            nodeset=parser.parseDocument(tempfile)
-        }catch (ResourceFormatParserException e){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.invalid.request', args: [e.message]])
-        }catch (Exception e){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    code: 'api.project.updateResources.failed', args: [e.message]])
-        }
-        tempfile.delete()
-
-        //finally update resources file with the new nodes data
-        try {
-            project.updateNodesResourceFile nodeset
-            didsucceed=true
-        } catch (Exception e) {
-            log.error("Failed updating nodes file: "+e.getMessage())
-            e.printStackTrace(System.err)
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
-                    code: 'api.project.updateResources.failed', args: [e.message]])
-        }
-        withFormat{
-            xml{
-                return apiService.renderSuccessXml(response, 'api.project.updateResources.succeeded', [params.project])
-            }
-            json{
-                return apiService.renderSuccessJson(response){
-                    success=true
-                    message=g.message(code:'api.project.updateResources.succeeded', args:[params.project])
-                }
-            }
-        }
-
-    }
 
     /**
      * Convert input node filter parameters into specific property names used by
