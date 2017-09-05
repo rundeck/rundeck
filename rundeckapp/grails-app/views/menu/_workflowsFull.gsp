@@ -124,8 +124,20 @@
                             </div>
                             <div class="form-group">
                                 <label for="${enc(attr:rkey)}scheduledFilter"><g:message code="jobquery.title.scheduledFilter"/></label>:
-                                <g:checkBox name="scheduledFilter" id="${rkey}scheduledFilter" value="${params.scheduledFilter}"
-                                 class="form-control"/>
+                                <br>
+                                ${params.scheduledFilter}
+                                <label class="radio-inline">
+                                    <g:radio name="scheduledFilter" id="${rkey}scheduledFilter" value="true" checked="${params.scheduledFilter==true}"/>
+                                    <g:message code="yes" />
+                                </label>
+                                <label class="radio-inline">
+                                    <g:radio name="scheduledFilter" id="${rkey}scheduledFilter" value="false" checked="${params.scheduledFilter == false}"/>
+                                    <g:message code="no" />
+                                </label>
+                                <label class="radio-inline">
+                                    <g:radio name="scheduledFilter" id="${rkey}scheduledFilter" value="" checked="${params.scheduledFilter == null}"/>
+                                    <g:message code="all"/>
+                                </label>
                             </div>
                             <div class="form-group">
                                 <label for="${enc(attr:rkey)}serverNodeUUIDFilter"><g:message code="jobquery.title.serverNodeUUIDFilter"/></label>:
