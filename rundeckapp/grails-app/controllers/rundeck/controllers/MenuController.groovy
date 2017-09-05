@@ -288,6 +288,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         }
         results.projectNames = authProjectsToCreate
+        results.clusterModeEnabled = frameworkService.isClusterModeEnabled()
         withFormat{
             html {
                 results

@@ -139,12 +139,13 @@
                                     <g:message code="all"/>
                                 </label>
                             </div>
+                            <g:if test="${clusterModeEnabled}">
                             <div class="form-group">
                                 <label for="${enc(attr:rkey)}serverNodeUUIDFilter"><g:message code="jobquery.title.serverNodeUUIDFilter"/></label>:
                                 <g:textField name="serverNodeUUIDFilter" id="${rkey}serverUuid" value="${params.serverNodeUUIDFilter}"
                                          class="form-control"/>
                             </div>
-
+                            </g:if>
 
 
                             <div class="form-group">
