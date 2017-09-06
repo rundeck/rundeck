@@ -44,6 +44,7 @@ class UserController extends ControllerBase{
             generateUserToken  : 'POST',
             renderUsertoken    : 'POST',
             removeExpiredTokens: 'POST',
+            apiUserData        : ['GET','POST'],
     ]
 
     def index = {
@@ -175,6 +176,118 @@ class UserController extends ControllerBase{
             return render(view: 'edit', model: [user: user])
         }
     }
+
+    public def apiUserData(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        UserAndRolesAuthContext auth = frameworkService.getAuthContextForSubject(session.subject)
+        def user = params.username?:auth.username
+        if(user!=auth.username){
+            //requiere admin privileges
+            if(!frameworkService.authorizeApplicationResourceAny(
+                    auth,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [ AuthConstants.ACTION_ADMIN]
+            )){
+                def errorMap= [status: HttpServletResponse.SC_FORBIDDEN, code: 'request.error.unauthorized.message', args: ['get info','from other','User.']]//TODO error code
+
+                withFormat {
+                    json {
+                        return apiService.renderErrorJson(response, errorMap)
+                    }
+                    xml {
+                        return apiService.renderErrorXml(response, errorMap)
+                    }
+                    '*' {
+                        return apiService.renderErrorXml(response, errorMap)
+                    }
+                }
+                return
+            }
+        }
+        User u = User.findByLogin(user)
+        if(!u){
+            def errorMap= [status: HttpServletResponse.SC_NOT_FOUND, code: 'request.error.notfound.message', args: ['User',user]]//TODO error code
+
+            withFormat {
+                xml {
+                    return apiService.renderErrorXml(response, errorMap)
+                }
+                json {
+                    return apiService.renderErrorJson(response, errorMap)
+                }
+                '*' {
+                    return apiService.renderErrorXml(response, errorMap)
+                }
+            }
+            return
+        }
+
+        if (request.method == 'POST'){
+            def config
+            def succeed = apiService.parseJsonXmlWith(request, response, [
+                    xml: { xml ->
+                        config = [:]
+                        xml?.property?.each {
+                            config[it.'@key'.text()] = it.'@value'.text()
+                        }
+                    },
+                    json: { json ->
+                        config = json
+                    }
+            ])
+            if(!succeed){
+                return
+            }
+            if(config.email){
+                u.email=config.email
+            }
+            if(config.firstName){
+                u.firstName=config.firstName
+            }
+            if(config.lastName){
+                u.lastName=config.lastName
+            }
+
+            if(!u.save(flush:true)){
+                def errorMsg= u.errors.allErrors.collect { g.message(error:it) }.join(";")
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        message:errorMsg,
+                        format:respFormat
+                ])
+            }
+        }
+        withFormat {
+            def xmlClosure = {
+                delegate.'user' {
+                    login(u.login)
+                    firstName(u.firstName)
+                    lastName(u.lastName)
+                    email(u.email)
+                }
+            }
+            xml {
+                return apiService.renderSuccessXml(request, response, xmlClosure)
+            }
+            json {
+                return apiService.renderSuccessJson(response) {
+                    delegate.'user'={
+                        login=u.login
+                        firstName=u.firstName
+                        lastName=u.lastName
+                        email=u.email
+                    }
+                }
+            }
+            '*' {
+                return apiService.renderSuccessXml(request, response, xmlClosure)
+            }
+        }
+    }
+
     public def update (User user) {
         withForm{
         if (user.hasErrors()) {
