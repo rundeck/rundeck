@@ -23,6 +23,9 @@ import com.dtolabs.rundeck.core.plugins.Closeables;
 import com.dtolabs.rundeck.core.resources.*;
 import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.core.utils.TextUtils;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.Delegate;
 import org.apache.log4j.Logger;
 
 import java.io.Closeable;
@@ -34,6 +37,8 @@ import java.net.URL;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * Manage node source loading for a project
@@ -52,7 +57,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private IRundeckProjectConfig projectConfig;
     private Map<String,Exception> nodesSourceExceptions;
     private long nodesSourcesLastReload = -1L;
-    private List<ResourceModelSource> nodesSourceList;
+    private List<LoadedResourceModelSource> nodesSourceList;
     /**
      * Closeables for releasing plugin loaders when sources are disposed
      */
@@ -190,7 +195,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         }
     }
 
-    private synchronized Collection<ResourceModelSource> getResourceModelSources() {
+    private synchronized List<LoadedResourceModelSource> getResourceModelSources() {
         //determine if sources need to be reloaded
         final long lastMod = projectConfig.getConfigLastModifiedTime()!=null? projectConfig.getConfigLastModifiedTime().getTime():0;
         if (lastMod > nodesSourcesLastReload) {
@@ -198,6 +203,23 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
             loadResourceModelSources();
         }
         return nodesSourceList;
+    }
+
+    @Data @RequiredArgsConstructor
+    public static final class ProjectNodes implements WriteableProjectNodes {
+        final WriteableModelSource writeableSource;
+        final int index;
+        final String type;
+    }
+
+    public Collection<WriteableProjectNodes> getWriteableResourceModelSources() {
+        //determine if sources need to be reloaded
+        List<LoadedResourceModelSource> resourceModelSources = getResourceModelSources();
+        return
+                resourceModelSources.stream()
+                                    .filter(i -> i.getSourceType() == SourceType.READ_WRITE)
+                                    .map(i -> new ProjectNodes(i.getWriteable(), i.getIndex(), i.getType()))
+                                    .collect(Collectors.toList());
     }
 
     @Override
@@ -236,7 +258,8 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 nodesSourceList.add(
                         loadResourceModelSource(
                                 providerType, props, shouldCacheForType(providerType),
-                                i + ".source"
+                                i + ".source",
+                                i
                         )
                 );
                 validSources.add(i + ".source" );
@@ -382,9 +405,23 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return resourceModelSourceService;
     }
 
-    private ResourceModelSource loadResourceModelSource(
+    static interface LoadedResourceModelSource extends ResourceModelSource {
+        int getIndex();
+
+        String getType();
+    }
+
+    @Data
+    static class LoadedSource implements LoadedResourceModelSource {
+        final int index;
+        final String type;
+        @Delegate final ResourceModelSource source;
+    }
+
+    private LoadedResourceModelSource loadResourceModelSource(
             String type, Properties configuration, boolean useCache,
-            String ident
+            String ident,
+            int index
     ) throws ExecutionServiceException
     {
 
@@ -400,9 +437,17 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
         nodeSourceReferences.add(sourceForConfiguration);
         if (useCache) {
-            return createCachingSource(sourceForConfiguration.getProvider(), ident, ident + " (" + type + ")");
+            return new LoadedSource(
+                    index,
+                    type,
+                    createCachingSource(sourceForConfiguration.getProvider(), ident, ident + " (" + type + ")")
+            );
         } else {
-            return sourceForConfiguration.getProvider();
+
+            return new LoadedSource(
+                    index,
+                    type, sourceForConfiguration.getProvider()
+            );
         }
     }
 

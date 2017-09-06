@@ -74,6 +74,15 @@
                         </g:if>
                         <g:render template="viewResourceModelConfig"
                                   model="${[prefix: prefixKey+'.'+(n+1)+'.', values: config.props, includeFormFields: true, description: desc, saved:true,type:config.type]}"/>
+                        <g:set var="writeableSource" value="${writeableSources.find { it.index == (n+1) }}"/>
+                        <g:if test="${writeableSource}">
+                        <%-- todo: link to controller to edit source file --%>
+                            <%--
+                            <g:link action="editResourceFile" controller="framework" params="${[project: project, index: n]}">
+                                edit
+                            </g:link>
+                            --%>
+                        </g:if>
                     </div>
                 </li>
             </g:each>

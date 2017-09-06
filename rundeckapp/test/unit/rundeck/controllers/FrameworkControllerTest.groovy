@@ -271,6 +271,7 @@ class FrameworkControllerTest {
                     ],
             ]
         }
+        fwk.demand.listWriteableResourceModelSources { project -> [] }
         fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
         fwk.demand.getDefaultNodeExecutorService { -> null }
         fwk.demand.getDefaultFileCopyService { -> null }

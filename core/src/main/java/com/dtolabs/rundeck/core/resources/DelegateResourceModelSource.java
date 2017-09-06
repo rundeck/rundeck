@@ -35,6 +35,16 @@ public abstract class DelegateResourceModelSource implements ResourceModelSource
         return getDelegate().getNodes();
     }
 
+    @Override
+    public SourceType getSourceType() {
+        return getDelegate().getSourceType();
+    }
+
+    @Override
+    public WriteableModelSource getWriteable() {
+        return getDelegate().getWriteable();
+    }
+
     public ResourceModelSource getDelegate() {
         return delegate;
     }

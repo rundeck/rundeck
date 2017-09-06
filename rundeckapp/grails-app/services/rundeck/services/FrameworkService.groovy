@@ -875,6 +875,11 @@ class FrameworkService implements ApplicationContextAware {
         fproject.projectNodes.listResourceModelConfigurations()
     }
 
+    public def listWriteableResourceModelSources(String project) {
+        def fproject = getFrameworkProject(project)
+        fproject.projectNodes.writeableResourceModelSources
+    }
+
     public def listResourceModelConfigurations(Properties properties) {
         ProjectNodeSupport.listResourceModelConfigurations(properties)
     }

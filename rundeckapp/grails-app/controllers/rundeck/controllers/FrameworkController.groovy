@@ -1473,6 +1473,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final nodeConfig = frameworkService.getNodeExecConfigurationForType(defaultNodeExec, project)
         final filecopyConfig = frameworkService.getFileCopyConfigurationForType(defaultFileCopy, project)
         final resourceConfig = frameworkService.listResourceModelConfigurations(project)
+        final writeableModelSources = frameworkService.listWriteableResourceModelSources(project)
+
 
         // Reset Password Fields in Session
         resourcesPasswordFieldsService.reset()
@@ -1510,6 +1512,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             projectDescription:fwkProject.getProjectProperties().get("project.description"),
             resourceModelConfigDescriptions: resourceDescs,
             configs: resourceConfig,
+            writeableSources: writeableModelSources,
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
             defaultNodeExec: defaultNodeExec,

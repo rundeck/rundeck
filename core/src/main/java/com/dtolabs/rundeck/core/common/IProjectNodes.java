@@ -16,7 +16,10 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.resources.WriteableModelSource;
+
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -31,6 +34,27 @@ public interface IProjectNodes {
      */
     INodeSet getNodeSet();
 
+    /**
+     * @return writeable sources
+     */
+    public Collection<WriteableProjectNodes> getWriteableResourceModelSources();
+
+    static interface WriteableProjectNodes {
+        /**
+         * @return the writeable source
+         */
+        WriteableModelSource getWriteableSource();
+
+        /**
+         * @return config index
+         */
+        int getIndex();
+
+        /**
+         * @return provider type
+         */
+        String getType();
+    }
     /**
      * @return the set of exceptions produced by the last attempt to invoke all node providers
      */

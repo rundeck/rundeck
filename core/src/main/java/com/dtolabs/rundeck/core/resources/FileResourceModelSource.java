@@ -28,13 +28,9 @@ import com.dtolabs.rundeck.core.plugins.configuration.*;
 import com.dtolabs.rundeck.core.resources.format.*;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
-import com.dtolabs.shared.resources.ResourceXMLGenerator;
+import com.dtolabs.utils.Streams;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.io.*;
 import java.util.List;
 import java.util.Properties;
 
@@ -43,7 +39,7 @@ import java.util.Properties;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class FileResourceModelSource implements ResourceModelSource, Configurable {
+public class FileResourceModelSource implements ResourceModelSource, Configurable, WriteableModelSource {
     private Framework framework;
     private NodeSetImpl nodeSet;
     private Configuration configuration;
@@ -56,51 +52,94 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
 
     static Description createDescription(final List<String> formats) {
         return DescriptionBuilder.builder()
-            .name("file")
-            .title("File")
-            .description("Reads a file containing node definitions in a supported format")
-            .property(PropertyBuilder.builder()
-                          .freeSelect(Configuration.FORMAT)
-                          .title("Format")
-                          .description("Format of the file")
-                          .values(formats)
-                          .build()
-            )
-            .property(PropertyBuilder.builder()
-                          .string(Configuration.FILE)
-                          .title("File Path")
-                          .description("Path of the file")
-                          .required(true)
-                          .build()
-            )
-            .property(PropertyBuilder.builder()
-                          .booleanType(Configuration.GENERATE_FILE_AUTOMATICALLY)
-                          .title("Generate")
-                          .description("Automatically generate the file if it is missing?\n\nAlso creates missing directories.")
-                          .required(true)
-                          .defaultValue("false")
-                          .build()
-            )
-            .property(PropertyBuilder.builder()
-                          .booleanType(Configuration.INCLUDE_SERVER_NODE)
-                          .title("Include Server Node")
-                          .description("Automatically include the server node in the generated file?")
-                          .required(true)
-                          .defaultValue("false")
-                          .build()
-            )
-            .property(PropertyBuilder.builder()
-                          .booleanType(Configuration.REQUIRE_FILE_EXISTS)
-                          .title("Require File Exists")
-                          .description("Require that the file exists")
-                          .required(true)
-                          .defaultValue("false")
-                          .build()
-            )
+                                 .name("file")
+                                 .title("File")
+                                 .description("Reads a file containing node definitions in a supported format")
+                                 .property(PropertyBuilder.builder()
+                                                          .freeSelect(Configuration.FORMAT)
+                                                          .title("Format")
+                                                          .description("Format of the file")
+                                                          .values(formats)
+                                                          .build()
+                                 )
+                                 .property(PropertyBuilder.builder()
+                                                          .string(Configuration.FILE)
+                                                          .title("File Path")
+                                                          .description("Path of the file")
+                                                          .required(true)
+                                                          .build()
+                                 )
+                                 .property(PropertyBuilder.builder()
+                                                          .booleanType(Configuration.GENERATE_FILE_AUTOMATICALLY)
+                                                          .title("Generate")
+                                                          .description(
+                                                                  "Automatically generate the file if it is " +
+                                                                  "missing?\n\nAlso creates missing directories.")
+                                                          .required(true)
+                                                          .defaultValue("false")
+                                                          .build()
+                                 )
+                                 .property(PropertyBuilder.builder()
+                                                          .booleanType(Configuration.INCLUDE_SERVER_NODE)
+                                                          .title("Include Server Node")
+                                                          .description(
+                                                                  "Automatically include the server node in the " +
+                                                                  "generated file?")
+                                                          .required(true)
+                                                          .defaultValue("false")
+                                                          .build()
+                                 )
+                                 .property(PropertyBuilder.builder()
+                                                          .booleanType(Configuration.REQUIRE_FILE_EXISTS)
+                                                          .title("Require File Exists")
+                                                          .description("Require that the file exists")
+                                                          .required(true)
+                                                          .defaultValue("false")
+                                                          .build()
+                                 )
+                                 .property(PropertyBuilder.builder()
+                                                          .booleanType(Configuration.WRITEABLE)
+                                                          .title("Writeable")
+                                                          .description("Allow this file to be editable.")
+                                                          .required(false)
+                                                          .defaultValue("false")
+                                                          .build()
+                                 )
 
-            .build();
+                                 .build();
     }
 
+    @Override
+    public String getFormat() {
+        return configuration.format;
+    }
+
+    @Override
+    public long writeData(final InputStream data) throws IOException {
+        if (!configuration.writeable) {
+            throw new IllegalArgumentException("Cannot write to file, it is not configured to be writeable");
+        }
+        try (FileOutputStream fos = new FileOutputStream(configuration.nodesFile)) {
+            return Streams.copyStream(data, fos);
+        }
+    }
+
+    @Override
+    public long readData(final OutputStream sink) throws IOException {
+        try(FileInputStream fis = new FileInputStream(configuration.nodesFile)){
+            return Streams.copyStream(fis, sink);
+        }
+    }
+
+    @Override
+    public SourceType getSourceType() {
+        return configuration.writeable ? SourceType.READ_WRITE : SourceType.READ_ONLY;
+    }
+
+    @Override
+    public WriteableModelSource getWriteable() {
+        return configuration.writeable ? this : null;
+    }
 
     public static class Configuration {
         public static final String GENERATE_FILE_AUTOMATICALLY = "generateFileAutomatically";
@@ -109,6 +148,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         public static final String PROJECT = "project";
         public static final String FORMAT = "format";
         public static final String REQUIRE_FILE_EXISTS = "requireFileExists";
+        public static final String WRITEABLE = "writeable";
         String format;
         File nodesFile;
         String project;
@@ -116,6 +156,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         boolean includeServerNode;
         boolean requireFileExists;
         final Properties configuration;
+        boolean writeable;
 
         Configuration() {
             configuration = new Properties();
@@ -188,6 +229,12 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
             return this;
         }
 
+        public Configuration writeable(boolean writeable) {
+            this.writeable = writeable;
+            configuration.put(WRITEABLE, Boolean.toString(writeable));
+            return this;
+        }
+
         public Properties getProperties() {
             return configuration;
         }
@@ -214,6 +261,9 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
             if (configuration.containsKey(REQUIRE_FILE_EXISTS)) {
                 requireFileExists = Boolean.parseBoolean(configuration.getProperty(REQUIRE_FILE_EXISTS));
             }
+            if (configuration.containsKey(WRITEABLE)) {
+                writeable = Boolean.parseBoolean(configuration.getProperty(WRITEABLE));
+            }
         }
 
         void validate() throws ConfigurationException {
@@ -234,6 +284,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
                    ", generateFileAutomatically=" + generateFileAutomatically +
                    ", includeServerNode=" + includeServerNode +
                    ", requireFileExists=" + requireFileExists +
+                   ", writeable=" + writeable +
                    ", configuration=" + configuration +
                    '}';
         }
