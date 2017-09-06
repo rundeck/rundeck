@@ -210,7 +210,6 @@ class UserController extends ControllerBase{
         User u = User.findByLogin(user)
         if(!u){
             def errorMap= [status: HttpServletResponse.SC_NOT_FOUND, code: 'request.error.notfound.message', args: ['User',user]]//TODO error code
-
             withFormat {
                 xml {
                     return apiService.renderErrorXml(response, errorMap)
@@ -224,7 +223,6 @@ class UserController extends ControllerBase{
             }
             return
         }
-
         if (request.method == 'POST'){
             def config
             def succeed = apiService.parseJsonXmlWith(request, response, [
