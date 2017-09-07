@@ -272,12 +272,10 @@ class UserController extends ControllerBase{
             }
             json {
                 return apiService.renderSuccessJson(response) {
-                    delegate.'user'={
-                        login=u.login
-                        firstName=u.firstName
-                        lastName=u.lastName
-                        email=u.email
-                    }
+                    delegate.login=u.login
+                    delegate.firstName=u.firstName
+                    delegate.astName=u.lastName
+                    delegate.email=u.email
                 }
             }
             '*' {
