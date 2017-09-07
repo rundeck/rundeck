@@ -228,9 +228,9 @@ class UserController extends ControllerBase{
             def succeed = apiService.parseJsonXmlWith(request, response, [
                     xml: { xml ->
                         config = [:]
-                        xml?.property?.each {
-                            config[it.'@key'.text()] = it.'@value'.text()
-                        }
+                            config.email=xml?.email?.text()
+                            config.firstName=xml?.firstName?.text()
+                            config.lastName=xml?.lastName?.text()
                     },
                     json: { json ->
                         config = json
