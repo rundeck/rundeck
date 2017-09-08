@@ -274,7 +274,7 @@ class UserController extends ControllerBase{
                 return apiService.renderSuccessJson(response) {
                     delegate.login=u.login
                     delegate.firstName=u.firstName
-                    delegate.astName=u.lastName
+                    delegate.lastName=u.lastName
                     delegate.email=u.email
                 }
             }

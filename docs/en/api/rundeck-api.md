@@ -1153,7 +1153,7 @@ Success response, with profile data:
 {
     "login":"user",
     "firstName":"Name",
-    "astName":"LastName",
+    "lastName":"LastName",
     "email":"user@server.com"
 }
 ~~~
@@ -1188,7 +1188,7 @@ Success response, with profile data:
 {
     "login":"user",
     "firstName":"Name",
-    "astName":"LastName",
+    "lastName":"LastName",
     "email":"user@server.com"
 }
 ~~~
@@ -1216,7 +1216,7 @@ or JSON Content:
 ~~~ {.json}
 {
     "firstName":"Name",
-    "astName":"LastName",
+    "lastName":"LastName",
     "email":"user@server.com"
 }
 ~~~
@@ -1242,7 +1242,7 @@ Success response, with profile updated data:
 {
     "login":"user",
     "firstName":"Name",
-    "astName":"LastName",
+    "lastName":"LastName",
     "email":"user@server.com"
 }
 ~~~
@@ -1270,7 +1270,7 @@ or JSON Content:
 ~~~ {.json}
 {
     "firstName":"Name",
-    "astName":"LastName",
+    "lastName":"LastName",
     "email":"user@server.com"
 }
 ~~~
@@ -1296,7 +1296,7 @@ Success response, with profile updated data:
 {
     "login":"user",
     "firstName":"Name",
-    "astName":"LastName",
+    "lastName":"LastName",
     "email":"user@server.com"
 }
 ~~~
