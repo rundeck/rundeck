@@ -639,6 +639,7 @@ class FrameworkControllerSpec extends Specification {
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'
         },_) >> [success:true]
+        1 * fwkService.validateProjectConfigurableInput(_,_)>>[:]
 
     }
     def "save project with out description"(){
@@ -670,6 +671,7 @@ class FrameworkControllerSpec extends Specification {
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == ''
         },_) >> [success:true]
+        1 * fwkService.validateProjectConfigurableInput(_,_)>>[:]
 
     }
     def "get project resources, project dne"(){
@@ -838,7 +840,15 @@ class FrameworkControllerSpec extends Specification {
                 propertiesMapping = ScheduledExecutionService.ConfigPropertiesMapping
             }
         }
-        def fwkService=Mock(FrameworkService)
+        def fwkService = Mock(FrameworkService) {
+            validateProjectConfigurableInput(_, _) >> [config: [testConfigurableBean: [
+                    disableExecution: disableExecution,
+                    disableSchedule : disableSchedule
+            ]],props:[
+                    'project.disable.executions':disableExecution,
+                    'project.disable.schedule':disableSchedule
+            ]]
+        }
         controller.frameworkService = fwkService
         controller.resourcesPasswordFieldsService = Mock(PasswordFieldsService)
         controller.fcopyPasswordFieldsService = Mock(PasswordFieldsService)

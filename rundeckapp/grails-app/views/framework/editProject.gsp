@@ -31,7 +31,7 @@
     <title><g:message code="edit.configuration" /></title>
 
     <g:javascript library="prototype/effects"/>
-    <g:javascript library="resourceModelConfig"/>
+    <asset:javascript src="resourceModelConfig.js"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="storageBrowseKO.js"/>
     <g:jsMessages code="page.unsaved.changes"/>

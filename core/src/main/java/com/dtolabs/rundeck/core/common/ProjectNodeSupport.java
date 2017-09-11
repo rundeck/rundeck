@@ -495,6 +495,28 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return listResourceModelConfigurations(properties);
     }
 
+
+    /**
+     * @return Properties form for the serialized list of model source configurations
+     */
+    public static Properties serializeResourceModelConfigurations(final List<Map<String, Object>> configs) {
+        Properties projProps = new Properties();
+        int count = 1;
+        for (Map<String, Object> config : configs) {
+
+            String prefix = FrameworkProject.RESOURCES_SOURCE_PROP_PREFIX + "." + count + ".";
+            String type = config.get("type").toString();
+            Properties props = (Properties) config.get("props");
+            projProps.setProperty(prefix + "type", type);
+            for (String k : props.stringPropertyNames()) {
+                String v = props.getProperty(k);
+                projProps.setProperty(prefix + "config." + k, v);
+            }
+            count++;
+        }
+        return projProps;
+    }
+
     /**
      * Return a list of resource model configuration
      * @param props properties

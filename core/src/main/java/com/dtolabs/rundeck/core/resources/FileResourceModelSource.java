@@ -31,6 +31,8 @@ import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 import com.dtolabs.utils.Streams;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Properties;
 
@@ -111,23 +113,65 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
 
     @Override
     public String getFormat() {
-        return configuration.format;
+        if (null != configuration.format) {
+            return configuration.format;
+        } else if (configuration.nodesFile != null) {
+            return ResourceFormatParserService.getFileExtension(configuration.nodesFile.getName());
+        }
+        return null;
     }
 
     @Override
-    public long writeData(final InputStream data) throws IOException {
+    public String getSourceDescription() {
+        return configuration.nodesFile.getAbsolutePath();
+    }
+
+    @Override
+    public long writeData(final InputStream data) throws IOException, ResourceModelSourceException {
         if (!configuration.writeable) {
             throw new IllegalArgumentException("Cannot write to file, it is not configured to be writeable");
         }
-        try (FileOutputStream fos = new FileOutputStream(configuration.nodesFile)) {
-            return Streams.copyStream(data, fos);
+        //validate data
+        File temp = Files.createTempFile("temp", configuration.nodesFile.getName()).toFile();
+        temp.deleteOnExit();
+
+
+        try {
+
+            try (FileOutputStream fos = new FileOutputStream(temp)) {
+                Streams.copyStream(data, fos);
+            }
+            final ResourceFormatParser parser = createParser(temp, configuration.format);
+            try {
+                final INodeSet set = parser.parseDocument(temp);
+            } catch (ResourceFormatParserException e) {
+                throw new ResourceModelSourceException(e);
+            }
+            try (FileInputStream fis = new FileInputStream(temp)) {
+                try (FileOutputStream fos = new FileOutputStream(configuration.nodesFile)) {
+                    return Streams.copyStream(fis, fos);
+                }
+            }
+        } finally {
+            temp.delete();
         }
     }
 
     @Override
     public long readData(final OutputStream sink) throws IOException {
-        try(FileInputStream fis = new FileInputStream(configuration.nodesFile)){
-            return Streams.copyStream(fis, sink);
+        if (!configuration.nodesFile.exists() && configuration.generateFileAutomatically) {
+            try {
+                generateResourcesFile(configuration.nodesFile, configuration.format);
+            } catch (ResourceModelSourceException e) {
+                throw new IOException("Unable to generate nodes file: " + e, e);
+            }
+        }
+        if (configuration.nodesFile.exists()) {
+            try (FileInputStream fis = new FileInputStream(configuration.nodesFile)) {
+                return Streams.copyStream(fis, sink);
+            }
+        } else {
+            return 0;
         }
     }
 

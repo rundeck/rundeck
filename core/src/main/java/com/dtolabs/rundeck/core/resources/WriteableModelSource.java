@@ -34,6 +34,13 @@ public interface WriteableModelSource {
     String getFormat();
 
     /**
+     * @return optional description of the source
+     */
+    default String getSourceDescription() {
+        return null;
+    }
+
+    /**
      * read current data into the sink
      *
      * @param sink
@@ -48,6 +55,8 @@ public interface WriteableModelSource {
      * @param data data
      *
      * @return bytes written
+     * @throws IOException if an IO error occurs
+     * @throws ResourceModelSourceException if the data is not valid
      */
-    long writeData(InputStream data) throws IOException;
+    long writeData(InputStream data) throws IOException, ResourceModelSourceException;
 }

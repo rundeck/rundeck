@@ -46,6 +46,7 @@ import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
+import rundeck.services.framework.RundeckProjectConfigurable
 
 import javax.security.auth.Subject
 
@@ -1079,5 +1080,129 @@ class FrameworkService implements ApplicationContextAware {
      */
     Map queryExecutions(ExecutionQuery query, int offset=0, int max=-1) {
         executionService.queryExecutions(query,offset,max)
+    }
+
+    /**
+     * Load the input map for project configurable beans
+     * @param prefix prefix for each bean for the result
+     * @param projectInputProps input project properties
+     * @param category optional category to limit properties
+     * @return Map of [(beanName): Map [ name: String, configurable: Bean, values: demapped value Map, prefix: bean prefix] ]
+     */
+    Map<String, Map> loadProjectConfigurableInput(String prefix, Map projectInputProps, String category = null) {
+        Map<String, RundeckProjectConfigurable> projectConfigurableBeans = applicationContext.getBeansOfType(
+                RundeckProjectConfigurable
+        )
+
+        Map<String, Map> extraConfig = [:]
+        projectConfigurableBeans.each { k, v ->
+            if (k.endsWith('Profiled')) {
+                //skip profiled versions of beans
+                return
+            }
+            def categoriesMap = v.categories
+            def valid = []
+            if (category) {
+                valid = categoriesMap.keySet().findAll { k2 -> categoriesMap[k2] == category }
+                if (!valid) {
+                    return
+                }
+            } else {
+                valid = categoriesMap.keySet()
+            }
+            //construct existing values from project properties
+            Map<String, String> mapping = v.getPropertiesMapping()
+            if (category) {
+                mapping = mapping.subMap(valid)
+            }
+            def values = Validator.demapProperties(projectInputProps, mapping, true)
+            extraConfig[k] = [
+                    name        : k,
+                    configurable: v,
+                    values      : values,
+                    prefix      : prefix + k + '.',
+            ]
+        }
+        extraConfig
+    }
+    /**
+     * Validate the input to ProjectConfigurable beans
+     * @param inputMap map of name to config map for each bean name being validated
+     * @param prefix prefix string for output
+     * @param category optional category to limit validation/output
+     * @return map [errors:List, config: Map, props: Map, remove: List]
+     */
+    Map validateProjectConfigurableInput(Map<String, Map> inputMap, String prefix, String category = null) {
+        Map<String, RundeckProjectConfigurable> projectConfigurableBeans = applicationContext.getBeansOfType(
+                RundeckProjectConfigurable
+        )
+        def errors = []
+        def extraConfig = [:]
+        def projProps = [:]
+        def removePrefixes = []
+
+        projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
+            if (k.endsWith('Profiled')) {
+                //skip profiled versions of beans
+                return
+            }
+            def categoriesMap = v.categories
+            def valid = []
+            if (category) {
+                valid = categoriesMap.keySet().findAll { k2 -> categoriesMap[k2] == category }
+                if (!valid) {
+                    return
+                }
+            } else {
+                valid = categoriesMap.keySet()
+            }
+            //construct input values for the bean
+
+            Map input = inputMap.get(k) ?: [:]
+            def beanData = [
+                    name        : k,
+                    configurable: v,
+                    prefix      : prefix + k + '.',
+                    values      : input
+            ]
+
+            def validProps = v.getProjectConfigProperties().findAll { it.name in valid }
+            validProps.findAll { it.type == Property.Type.Boolean }.
+                    each {
+                        if (input[it.name] != 'true') {
+                            input[it.name] = 'false'
+                        }
+                    }
+            validProps.findAll { it.type == Property.Type.Options }.
+                    each {
+                        if (input[it.name] instanceof Collection) {
+                            input[it.name] = input[it.name].join(',')
+                        } else if (input[it.name] instanceof String[]) {
+                            input[it.name] = input[it.name].join(',')
+                        }
+                    }
+            //validate
+            def report = Validator.validate(input as Properties, validProps)
+            beanData.report = report
+            if (!report.valid) {
+                errors << ("Some configuration was invalid: " + report)
+            } else {
+                Map<String, String> mapping = v.getPropertiesMapping()
+                if (category) {
+                    mapping = mapping.subMap(valid)
+                }
+                def projvalues = Validator.performMapping(input, mapping, true)
+                projProps.putAll(projvalues)
+                //remove all previous settings
+                removePrefixes.addAll(mapping.values())
+            }
+            extraConfig[k] = beanData
+        }
+        [
+                errors: errors,
+                config: extraConfig,
+                props : projProps,
+                remove: removePrefixes
+        ]
     }
 }

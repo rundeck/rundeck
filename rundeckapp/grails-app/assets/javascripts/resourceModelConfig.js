@@ -180,6 +180,12 @@ editConfig: function (elem, type, prefix, index) {
         }
     });
 },
+    modalNodeSourceDelete: function (index) {
+        "use strict";
+        jQuery('#deleteIndex').val(index);
+        jQuery('#deletenodesource').modal('show');
+
+    },
 cancelConfig: function (elem, type, prefix, index) {
     this.hidePicker();
     var li;
@@ -194,6 +200,7 @@ cancelConfig: function (elem, type, prefix, index) {
     } else {
         //cancel new entry
         li.parentNode.removeChild(li);
+        // this.modalNodeSourceDelete(index);
     }
 },
 addConfig: function(type) {
