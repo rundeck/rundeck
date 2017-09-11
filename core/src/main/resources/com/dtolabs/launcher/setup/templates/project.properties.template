@@ -13,10 +13,13 @@ project.dir = @rdeck.base@/projects/${project.name}
 project.etc.dir = @rdeck.base@/projects/${project.name}/etc
 
 #
-# The resources registration file
+# The default resources file
 #
-project.resources.file = @rdeck.base@/projects/${project.name}/etc/resources.xml
-
+resources.source.1.type=file
+resources.source.1.config.file=@rdeck.base@/projects/${project.name}/etc/resources.xml
+resources.source.1.config.format=resourcexml
+resources.source.1.config.includeServerNode=true
+resources.source.1.config.generateFileAutomatically=true
 
 # Project-wide global variables (overrides values from framework.globals)
 
