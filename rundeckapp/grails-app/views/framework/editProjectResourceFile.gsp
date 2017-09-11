@@ -102,6 +102,17 @@
                             <p class="form-control-static"><code>${fileFormat}</code></p>
                         </div>
                     </div>
+                    <g:if test="${sourceDesc}">
+                    <div class="form-group">
+                        <label class="control-label  col-sm-2">
+                            <g:message code="project.node.file.source.description.label" />
+                        </label>
+
+                        <div class="col-sm-10">
+                            <p class="form-control-static text-info">${sourceDesc}</p>
+                        </div>
+                    </div>
+                    </g:if>
                     <textarea
                             name="fileText"
                             class="form-control code apply_ace"
