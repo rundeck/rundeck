@@ -108,7 +108,8 @@
                                                     <div class="col-sm-12">
                                                         <g:link
                                                                 class="btn btn-sm btn-default"
-                                                                action="editProjectResourceFile" controller="framework"
+                                                                action="editProjectNodeSourceFile"
+                                                                controller="framework"
                                                                 params="${[project: project, index: (n + 1)]}">
                                                             <g:icon name="pencil"/>
                                                             <g:message code="edit.nodes.file"/>

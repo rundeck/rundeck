@@ -59,11 +59,10 @@
 </div>
 
 <div class="row">
-    <g:form action="saveProjectNodesFile" method="post"
-            params="${[project: params.project]}"
+    <g:form action="saveProjectNodeSourceFile" method="post"
+            params="${[project: params.project, index: index]}"
             useToken="true"
             class="form-horizontal">
-        <g:hiddenField name="index" value="${index}"/>
         <div class="col-sm-10 col-sm-offset-1">
             <div class="panel panel-primary" id="createform">
                 <div class="panel-heading">

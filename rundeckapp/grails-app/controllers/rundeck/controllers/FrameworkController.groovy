@@ -20,14 +20,10 @@ import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
-import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectNodeSupport
 import com.dtolabs.rundeck.core.common.ProviderService
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
-import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.plugins.configuration.Describable
-import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.core.resources.FileResourceModelSource
 import com.dtolabs.rundeck.core.resources.FileResourceModelSourceFactory
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceException
@@ -45,7 +41,6 @@ import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.ScheduledExecutionService
-import rundeck.services.framework.RundeckProjectConfigurable
 
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
@@ -58,7 +53,6 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodesFileGenerator
 import com.dtolabs.rundeck.core.common.NodesYamlGenerator
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException
-import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
@@ -96,14 +90,14 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     // the delete, save and update actions only
     // accept POST requests
     def static allowedMethods = [
-            apiProjectResources   : ['POST'],
-            apiSystemAcls         : ['GET', 'PUT', 'POST', 'DELETE'],
-            createProjectPost     : 'POST',
-            deleteNodeFilter      : 'POST',
-            saveProject           : 'POST',
-            storeNodeFilter       : 'POST',
-            saveProjectNodeSources: 'POST',
-            saveProjectNodesFile  : 'POST',
+            apiProjectResources      : ['POST'],
+            apiSystemAcls            : ['GET', 'PUT', 'POST', 'DELETE'],
+            createProjectPost        : 'POST',
+            deleteNodeFilter         : 'POST',
+            saveProject              : 'POST',
+            storeNodeFilter          : 'POST',
+            saveProjectNodeSources   : 'POST',
+            saveProjectNodeSourceFile: 'POST',
     ]
 
     def index = {
@@ -1565,7 +1559,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             resourcejson: 'json',
     ]
 
-    def editProjectResourceFile() {
+    def editProjectNodeSourceFile() {
         if (!params.project) {
             return renderErrorView("Project parameter is required")
         }
@@ -1620,7 +1614,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         ]
     }
 
-    def saveProjectNodesFile() {
+    def saveProjectNodeSourceFile() {
         if (!requireToken()) {
             return
         }
