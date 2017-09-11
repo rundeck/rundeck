@@ -1124,13 +1124,60 @@ The `memory` section describes memory usage in bytes:
 
 ## User Profile
 
+### List users
+
+Get a list of all the users.
+
+**Request:**
+
+    GET /api/20/user/list/
+
+**Response:**
+
+Success response, with a list of users:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<user>
+  <login>user</login>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+<user>
+  <login>admin</login>
+  <firstName />
+  <lastName />
+  <email />
+</user>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+[{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+},
+{
+    "login":"admin",
+    "firstName":"Admin",
+    "lastName":"Admin",
+    "email":"admin@server.com"
+}]
+~~~
+
+
 ### Get user profile
 
 Get same user profile data.
 
 **Request:**
 
-    GET /api/17/user/info/
+    GET /api/20/user/info/
 
 **Response:**
 
@@ -1165,7 +1212,7 @@ Get another user profile data. Requieres system `admin` permission.
 
 **Request:**
 
-    GET /api/17/user/info/[User]
+    GET /api/20/user/info/[User]
 
 **Response:**
 
@@ -1199,7 +1246,7 @@ Modify same user profile data.
 
 **Request:**
 
-    POST /api/17/user/info/
+    POST /api/20/user/info/
 
 XML Content:
 
@@ -1253,7 +1300,7 @@ Modify another user profile data. Requieres system `admin` permission.
 
 **Request:**
 
-    POST /api/17/user/info/[User]
+    POST /api/20/user/info/[User]
 
 XML Content:
 
