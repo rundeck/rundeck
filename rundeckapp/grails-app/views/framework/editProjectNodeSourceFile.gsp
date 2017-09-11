@@ -121,7 +121,7 @@
                             data-ace-control-syntax="${fileFormat ? 'false' : 'true'}"
                             data-ace-control-soft-wrap="true">${fileText}</textarea>
                     <g:if test="${saveError}">
-                        <h3>Error Saving Content:</h3>
+                        <h3><g:message code="project.nodes.edit.save.error.message" /></h3>
                         <div class="text-warning">${saveError}</div>
                     </g:if>
                 </div>
