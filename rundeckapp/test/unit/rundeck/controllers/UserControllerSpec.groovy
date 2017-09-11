@@ -212,4 +212,95 @@ class UserControllerSpec extends Specification{
         savedUser.email == email
     }
 
+
+    @Unroll
+    def "get user list xml"(){
+        given:
+        def userToSearch = 'admin'
+        User u = new User(login: userToSearch)
+        u.save()
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
+            getUsername()>>userToSearch
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_)>>auth
+            1 * authorizeApplicationResourceAny(_,_,_) >> true
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireApi(_,_) >> true
+            0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+                response.status=error.status
+                null
+            }
+        }
+        when:
+        request.method='GET'
+        request.format='xml'
+        def result=controller.apiUserList()
+
+        then:
+        response.status==200
+    }
+
+    @Unroll
+    def "get user list json"(){
+        given:
+        def userToSearch = 'admin'
+        User u = new User(login: userToSearch)
+        u.save()
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
+            getUsername()>>userToSearch
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_)>>auth
+            1 * authorizeApplicationResourceAny(_,_,_) >> true
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireApi(_,_) >> true
+            0 * renderErrorJson(_,_) >> {HttpServletResponse response, Map error->
+                response.status=error.status
+                null
+            }
+        }
+        when:
+        request.method='GET'
+        request.format='json'
+        def result=controller.apiUserList()
+
+        then:
+        response.status==200
+    }
+
+
+    @Unroll
+    def "get user list non admin"(){
+        given:
+        def userToSearch = 'admin'
+        User u = new User(login: userToSearch)
+        u.save()
+        UserAndRolesAuthContext auth = Mock(UserAndRolesAuthContext){
+            getUsername()>>'user'
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getAuthContextForSubject(_)>>auth
+            1 * authorizeApplicationResourceAny(_,_,_) >> false
+        }
+        controller.apiService=Mock(ApiService){
+            1 * requireApi(_,_) >> true
+            1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
+                response.status=error.status
+                null
+            }
+
+        }
+        when:
+        request.method='GET'
+        request.format='xml'
+        params.username=userToSearch
+        def result=controller.apiUserList()
+
+        then:
+        response.status==HttpServletResponse.SC_FORBIDDEN
+    }
+
 }

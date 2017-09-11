@@ -45,6 +45,7 @@ class UserController extends ControllerBase{
             renderUsertoken    : 'POST',
             removeExpiredTokens: 'POST',
             apiUserData        : ['GET','POST'],
+            apiUserList        : 'GET'
     ]
 
     def index = {
@@ -177,7 +178,7 @@ class UserController extends ControllerBase{
         }
     }
 
-    public def apiUserData(){
+    def apiUserData(){
         if (!apiService.requireApi(request, response)) {
             return
         }
@@ -191,7 +192,7 @@ class UserController extends ControllerBase{
                     AuthConstants.RESOURCE_TYPE_SYSTEM,
                     [ AuthConstants.ACTION_ADMIN]
             )){
-                def errorMap= [status: HttpServletResponse.SC_FORBIDDEN, code: 'request.error.unauthorized.message', args: ['get info','from other','User.']]//TODO error code
+                def errorMap= [status: HttpServletResponse.SC_FORBIDDEN, code: 'request.error.unauthorized.message', args: ['get info','from other','User.']]
 
                 withFormat {
                     json {
@@ -209,7 +210,7 @@ class UserController extends ControllerBase{
         }
         User u = User.findByLogin(user)
         if(!u){
-            def errorMap= [status: HttpServletResponse.SC_NOT_FOUND, code: 'request.error.notfound.message', args: ['User',user]]//TODO error code
+            def errorMap= [status: HttpServletResponse.SC_NOT_FOUND, code: 'request.error.notfound.message', args: ['User',user]]
             withFormat {
                 xml {
                     return apiService.renderErrorXml(response, errorMap)
@@ -282,6 +283,64 @@ class UserController extends ControllerBase{
                 return apiService.renderSuccessXml(request, response, xmlClosure)
             }
         }
+    }
+
+    def apiUserList(){
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        UserAndRolesAuthContext auth = frameworkService.getAuthContextForSubject(session.subject)
+
+        if(!frameworkService.authorizeApplicationResourceAny(
+                auth,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [ AuthConstants.ACTION_ADMIN]
+        )){
+            def errorMap= [status: HttpServletResponse.SC_FORBIDDEN, code: 'request.error.unauthorized.message', args: ['get info','from other','User.']]
+
+            withFormat {
+                json {
+                    return apiService.renderErrorJson(response, errorMap)
+                }
+                xml {
+                    return apiService.renderErrorXml(response, errorMap)
+                }
+                '*' {
+                    return apiService.renderErrorXml(response, errorMap)
+                }
+            }
+            return
+        }
+
+        def users = User.findAll()
+        withFormat {
+            def xmlClosure = {
+                    users.each { u ->
+                        delegate.'user' {
+                            login(u.login)
+                            firstName(u.firstName)
+                            lastName(u.lastName)
+                            email(u.email)
+                        }
+                    }
+            }
+            xml {
+                return apiService.renderSuccessXml(request, response, xmlClosure)
+            }
+            json {
+                return apiService.renderSuccessJson(response) {
+                    users.each {
+                        def u = [login: it.login, firstName: it.firstName, lastName: it.lastName, email: it.email]
+                        element(u)
+                    }
+                }
+            }
+            '*' {
+                return apiService.renderSuccessXml(request, response, xmlClosure)
+            }
+        }
+
     }
 
     public def update (User user) {
