@@ -3064,8 +3064,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def result
         def project = null
         if(jitem instanceof JobRefCommand){
-            JobRefCommand jitemRef = (JobRefCommand) jitem
-            project = jitemRef.project
+            project = jitem.project
         }
 
         def group = null
@@ -3110,7 +3109,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
                 return
             }
-            newExecItem = executionUtilService.createExecutionItemForWorkflow(se.workflow)
+            newExecItem = executionUtilService.createExecutionItemForWorkflow(se.workflow, se.project)
 
             try {
                 newContext = createJobReferenceContext(

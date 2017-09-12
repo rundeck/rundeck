@@ -134,7 +134,7 @@ class ExecutionUtilService {
      * Create an WorkflowExecutionItem instance for the given Workflow,
      * suitable for the ExecutionService layer
      */
-    public WorkflowExecutionItem createExecutionItemForWorkflow(Workflow workflow) {
+    public WorkflowExecutionItem createExecutionItemForWorkflow(Workflow workflow, parentProject=null) {
         if (!workflow.commands || workflow.commands.size() < 1) {
             throw new Exception("Workflow is empty")
         }
@@ -143,7 +143,8 @@ class ExecutionUtilService {
                 workflow.commands.collect {
                     itemForWFCmdItem(
                             it,
-                            it.errorHandler ? itemForWFCmdItem(it.errorHandler) : null
+                            it.errorHandler ? itemForWFCmdItem(it.errorHandler) : null,
+                            parentProject
                     )
                 },
                 workflow.threadcount,
@@ -156,7 +157,7 @@ class ExecutionUtilService {
     }
 
 
-    public StepExecutionItem itemForWFCmdItem(final WorkflowStep step, final StepExecutionItem handler=null) throws FileNotFoundException {
+    public StepExecutionItem itemForWFCmdItem(final WorkflowStep step, final StepExecutionItem handler=null,final parentProject=null) throws FileNotFoundException {
         if(step instanceof CommandExec || step.instanceOf(CommandExec)){
             CommandExec cmd=step.asType(CommandExec)
             if (null != cmd.getAdhocRemoteString()) {
@@ -241,6 +242,9 @@ class ExecutionUtilService {
                 args = new String[0];
             }
 
+            if(!jobcmditem.jobProject && parentProject){
+                jobcmditem.jobProject = parentProject
+            }
             return ExecutionItemFactory.createJobRef(
                     jobcmditem.getJobIdentifier(),
                     args,
