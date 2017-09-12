@@ -115,6 +115,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def fileUploadService
     def pluginService
 
+    static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
+        new ThreadLocal<DateFormat>() {
+            @Override
+            protected DateFormat initialValue() {
+				return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
+			}
+		}
+    static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_XXX =
+        new ThreadLocal<DateFormat>() {
+            @Override
+            protected DateFormat initialValue() {
+				return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX")
+			}
+		}
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS =
         new ThreadLocal<DateFormat>() {
             @Override
@@ -1976,6 +1990,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     def Date parseRunAtTime(String runAtTime) {
         try {
+            return ISO_8601_DATE_FORMAT_XXX.get().parse(runAtTime)
+        } catch (ParseException e1) {
+
+        }
+        try {
+            return ISO_8601_DATE_FORMAT_WITH_MS_XXX.get().parse(runAtTime)
+        } catch (ParseException e1) {
+
+        }
+        try {
             return ISO_8601_DATE_FORMAT.get().parse(runAtTime)
         } catch (ParseException e1) {
 
@@ -3490,6 +3514,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     @PreDestroy
     public void onShutdownCleanUp() {
+        ISO_8601_DATE_FORMAT_WITH_MS_XXX.remove()
+        ISO_8601_DATE_FORMAT_XXX.remove()
         ISO_8601_DATE_FORMAT_WITH_MS.remove()
         ISO_8601_DATE_FORMAT.remove()
     }
