@@ -3519,4 +3519,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         ISO_8601_DATE_FORMAT_WITH_MS.remove()
         ISO_8601_DATE_FORMAT.remove()
     }
+
+
+
+    boolean avgDurationExceeded(schedId, Map content){
+        notificationService.triggerJobNotification('avgduration',schedId, content)
+    }
 }
