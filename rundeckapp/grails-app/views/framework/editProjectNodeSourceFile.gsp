@@ -124,6 +124,9 @@
                         <h3><g:message code="project.nodes.edit.save.error.message" /></h3>
                         <div class="text-warning">${saveError}</div>
                     </g:if>
+                    <g:if test="${fileEmpty}">
+                        <div class="text-warning"><g:message code="project.nodes.edit.empty.description" /></div>
+                    </g:if>
                 </div>
 
 

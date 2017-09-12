@@ -1554,9 +1554,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         ]
     }
     static final Map<String, String> Formats = [
-            resourcexml : 'xml',
-            resourceyaml: 'yaml',
-            resourcejson: 'json',
+            'text/xml'        : 'xml',
+            'application/xml' : 'xml',
+            'application/yaml': 'yaml',
+            'text/yaml'       : 'yaml',
+            'application/json': 'json',
     ]
 
     def editProjectNodeSourceFile() {
@@ -1595,9 +1597,14 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         def baos = new ByteArrayOutputStream()
-        source.writeableSource.readData(baos)
+        def emptydata = false
+        if (source.writeableSource.hasData()) {
+            source.writeableSource.readData(baos)
+        } else {
+            emptydata = true
+        }
         def fileText = baos.toString('UTF-8')
-        def modelFormat = source.writeableSource.format
+        def modelFormat = source.writeableSource.syntaxMimeType
         def sourceDesc = source.writeableSource.sourceDescription
         def providerType = source.type;
         def desc = frameworkService.rundeckFramework.getResourceModelSourceService().
@@ -1607,6 +1614,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 project     : project,
                 index       : index,
                 fileText    : fileText,
+                fileEmpty   : emptydata,
                 fileFormat  : modelFormat ? (Formats[modelFormat] ?: modelFormat) : '',
                 sourceDesc  : sourceDesc,
                 providerType: providerType,
@@ -1657,7 +1665,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             log.error(flash.errors)
             return redirect(action: 'projectNodeSources', params: [project: project])
         }
-        def format = source.writeableSource.format
+        def format = source.writeableSource.syntaxMimeType
         //validate
 
 
@@ -1679,7 +1687,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                     params: [project: project]
             )
         }
-        def modelFormat = source.writeableSource.format
+        def modelFormat = source.writeableSource.syntaxMimeType
         def sourceDesc = source.writeableSource.sourceDescription
         def providerType = source.type;
         def desc = frameworkService.rundeckFramework.getResourceModelSourceService().

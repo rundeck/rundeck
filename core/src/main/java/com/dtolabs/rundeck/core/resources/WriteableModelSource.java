@@ -22,16 +22,16 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 /**
- * A ResourceModelSource that store formatted model data
+ * A ResourceModelSource that can write formatted model data
  *
  * @author greg
  * @since 9/5/17
  */
 public interface WriteableModelSource {
     /**
-     * @return the file format expected
+     * @return the mime type of the data
      */
-    String getFormat();
+    String getSyntaxMimeType();
 
     /**
      * @return optional description of the source
@@ -47,7 +47,12 @@ public interface WriteableModelSource {
      *
      * @return bytes written
      */
-    long readData(OutputStream sink) throws IOException;
+    long readData(OutputStream sink) throws IOException, ResourceModelSourceException;
+
+    /**
+     * @return true if the call to {@link #readData(OutputStream)} is expected to succeed.
+     */
+    boolean hasData();
 
     /**
      * Write new data in the expected format

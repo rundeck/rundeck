@@ -490,7 +490,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
             final INodeSet result = FileResourceModelSource.parseFile(dneFile, getFrameworkInstance(), PROJ_NAME);
             fail();
         } catch (ResourceModelSourceException e) {
-            assertEquals("File does not exist: " + dneFile.getAbsolutePath(), e.getMessage());
+            assertTrue(e.getMessage().contains("File does not exist: " + dneFile.getAbsolutePath()));
         }
     }
 
