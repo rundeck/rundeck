@@ -210,6 +210,8 @@ class UrlMappings {
                     DELETE: "apiDeleteResource"
             ]
         }
+        "/api/$api_version/user/info/$username?"(controller: 'user', action: 'apiUserData')
+        "/api/$api_version/user/list"(controller: 'user', action: 'apiUserList')
 
         "/api/$api_version/incubator/feature/$featureName?"(controller: 'api',action: 'featureToggle')
 

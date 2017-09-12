@@ -1122,6 +1122,233 @@ The `memory` section describes memory usage in bytes:
 
 :   Number of active Threads in the JVM
 
+## User Profile
+
+### List users
+
+Get a list of all the users.
+
+**Request:**
+
+    GET /api/20/user/list/
+
+**Response:**
+
+Success response, with a list of users:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<user>
+  <login>user</login>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+<user>
+  <login>admin</login>
+  <firstName />
+  <lastName />
+  <email />
+</user>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+[{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+},
+{
+    "login":"admin",
+    "firstName":"Admin",
+    "lastName":"Admin",
+    "email":"admin@server.com"
+}]
+~~~
+
+
+### Get user profile
+
+Get same user profile data.
+
+**Request:**
+
+    GET /api/20/user/info/
+
+**Response:**
+
+Success response, with profile data:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<user>
+  <login>user</login>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}
+~~~
+
+
+### Get another user profile
+
+Get another user profile data. Requieres system `admin` permission.
+
+**Request:**
+
+    GET /api/20/user/info/[User]
+
+**Response:**
+
+Success response, with profile data:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<user>
+  <login>user</login>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}
+~~~
+
+### Modify user profile
+
+Modify same user profile data.
+
+**Request:**
+
+    POST /api/20/user/info/
+
+XML Content:
+
+~~~ {.xml}
+<user>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+~~~
+
+or JSON Content:
+
+~~~ {.json}
+{
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}
+~~~
+
+**Response:**
+
+Success response, with profile updated data:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<user>
+  <login>user</login>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}
+~~~
+
+### Modify another user profile
+
+Modify another user profile data. Requieres system `admin` permission.
+
+**Request:**
+
+    POST /api/20/user/info/[User]
+
+XML Content:
+
+~~~ {.xml}
+<user>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+~~~
+
+or JSON Content:
+
+~~~ {.json}
+{
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}
+~~~
+
+**Response:**
+
+Success response, with profile updated data:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<user>
+  <login>user</login>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}
+~~~
+
+
 ## Log Storage
 
 ### Log Storage Info
