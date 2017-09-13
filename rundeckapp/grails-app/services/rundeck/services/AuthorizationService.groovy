@@ -144,13 +144,31 @@ class AuthorizationService implements InitializingBean{
      */
     private Policies loadStoredPolicies() {
         //TODO: list of files is always reloaded?
-        def paths = configStorageService.listDirPaths(ACL_STORAGE_PATH_BASE, ".*\\.aclpolicy")
+        List<String> paths = listStoredPolicyPaths()
 
         def sources = paths.collect { path ->
             sourceCache.get(path)
         }.findAll{it!=null}
 //        log.debug("loadStoredPolicies. paths: ${paths}, sources: ${sources}")
         new Policies(PoliciesCache.fromSources(sources))
+    }
+
+    /**
+     * List the system aclpolicy file names, not including the dir path
+     * @return
+     */
+    public List<String> listStoredPolicyFiles() {
+        listStoredPolicyPaths().collect {
+            it.substring(ACL_STORAGE_PATH_BASE.size())
+        }
+    }
+
+    /**
+     * List the system aclpolicy file paths, including the base dir name of acls/
+     * @return
+     */
+    public List<String> listStoredPolicyPaths() {
+        configStorageService.listDirPaths(ACL_STORAGE_PATH_BASE, ".*\\.aclpolicy")
     }
 
     /**

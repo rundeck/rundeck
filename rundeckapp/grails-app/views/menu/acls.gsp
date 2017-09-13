@@ -61,6 +61,20 @@
                         </g:each>
                     </ul>
                 </div>
+
+                <div>
+                    <span class="text-info">${aclStoredList.size()}</span>
+                    Stored ACL Policy Files:
+                    <ul>
+                        <g:each in="${aclStoredList}" var="name">
+                            <g:render template="/menu/aclValidationListItem" model="${[
+                                    policyFile: name,
+                                    validation: [valid: true]
+                            ]}"/>
+
+                        </g:each>
+                    </ul>
+                </div>
             </div>
         </div>
 

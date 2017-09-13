@@ -1128,6 +1128,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def fwkConfigDir=frameworkService.rundeckFramework.getConfigDir()
         def list=fwkConfigDir.listFiles().grep{it.name=~/\.aclpolicy$/}.sort()
+        def stored = authorizationService.listStoredPolicyFiles()
         Map<File,Validation> validation=list.collectEntries{
             [it,authorizationService.validateYamlPolicy(it)]
         }
@@ -1136,6 +1137,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 rundeckFramework: frameworkService.rundeckFramework,
                 fwkConfigDir    : fwkConfigDir,
                 aclFileList     : list,
+                aclStoredList   : stored,
                 validations     : validation,
         ]
     }
