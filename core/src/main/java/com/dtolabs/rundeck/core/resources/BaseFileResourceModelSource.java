@@ -265,13 +265,17 @@ public abstract class BaseFileResourceModelSource implements ResourceModelSource
             final NodeEntryImpl node = framework.createFrameworkNode();
             newNodes.putNode(node);
         }
-        try {
-            final INodeSet set = parser.parseDocument(openFileDataInputStream());
-            if (null != set) {
-                newNodes.putNodes(set);
+        if (hasData()) {
+            try {
+                try (InputStream input = openFileDataInputStream()) {
+                    final INodeSet set = parser.parseDocument(input);
+                    if (null != set) {
+                        newNodes.putNodes(set);
+                    }
+                }
+            } catch (ResourceFormatParserException | IOException e) {
+                throw new ResourceModelSourceException(e);
             }
-        } catch (ResourceFormatParserException | IOException e) {
-            throw new ResourceModelSourceException(e);
         }
         return newNodes;
     }

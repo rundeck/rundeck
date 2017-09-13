@@ -130,27 +130,25 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
 
 
     @Override
-    public InputStream openFileDataInputStream() throws IOException {
+    public InputStream openFileDataInputStream() throws IOException, ResourceModelSourceException {
         if (!configuration.nodesFile.exists() && configuration.generateFileAutomatically) {
-            try {
-                generateResourcesFile(configuration.nodesFile, configuration.format);
-            } catch (ResourceModelSourceException e) {
-                throw new IOException("Unable to generate nodes file: " + e, e);
-            }
+            generateResourcesFile(configuration.nodesFile, configuration.format);
         }
 
-        if (configuration.nodesFile.exists()) {
+        if (configuration.nodesFile.isFile()) {
             return new FileInputStream(configuration.nodesFile);
         } else if (configuration.requireFileExists) {
-            throw new IOException("File does not exist: " + configuration.nodesFile);
+            throw new ResourceModelSourceException("File does not exist: " + configuration.nodesFile);
         } else {
-            return new ByteArrayInputStream(new byte[0]);
+            return null;
         }
     }
 
     @Override
     public boolean hasData() {
-        return configuration.generateFileAutomatically || configuration.nodesFile.exists();
+        return configuration.requireFileExists ||
+               configuration.generateFileAutomatically ||
+               configuration.nodesFile.exists();
     }
 
     @Override
