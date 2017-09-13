@@ -65,6 +65,14 @@
             params="[project: params.project]"
             code="edit.configuration">
     </bs:menuitem>
+    <bs:menuitem
+            enabled="${authConfigure}"
+            disabledTitleCode="request.error.unauthorized.title"
+            controller="framework"
+            action="projectNodeSources"
+            params="[project: params.project]"
+            code="edit.nodes">
+    </bs:menuitem>
 
     <bs:menuitem
             enabled="${authReadAcl}"

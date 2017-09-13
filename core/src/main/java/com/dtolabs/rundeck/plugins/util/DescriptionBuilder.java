@@ -28,6 +28,8 @@ import com.dtolabs.rundeck.core.plugins.configuration.Property;
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 
 /**
@@ -63,6 +65,19 @@ public class DescriptionBuilder {
      */
     public static DescriptionBuilder builder() {
         return new DescriptionBuilder();
+    }
+
+    /**
+     * Build a description
+     *
+     * @param builder new DescriptionBuilder to build with
+     *
+     * @return built description
+     */
+    public static Description buildDescriptionWith(Consumer<DescriptionBuilder> builder) {
+        DescriptionBuilder builder1 = builder();
+        builder.accept(builder1);
+        return builder1.build();
     }
 
     /**
@@ -253,6 +268,21 @@ public class DescriptionBuilder {
      */
     public DescriptionBuilder property(final Property property) {
         replaceOrAddProperty(property);
+        return this;
+    }
+
+    /**
+     * Add a new property, or replace an existing property with the same name, with a
+     * consumer
+     *
+     * @param builder a new PropertyBuilder to modify
+     *
+     * @return this builder
+     */
+    public DescriptionBuilder property(final Consumer<PropertyBuilder> builder) {
+        PropertyBuilder propertyBuilder = PropertyBuilder.builder();
+        builder.accept(propertyBuilder);
+        replaceOrAddProperty(propertyBuilder.build());
         return this;
     }
 

@@ -134,9 +134,9 @@ class UrlMappings {
                 action: 'apiProjectExportAsyncDownload'
         )
         "/api/$api_version/project/$project/import"(controller: 'project',action: 'apiProjectImport')
-        "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
+//        "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
         "/api/$api_version/project/$project/resources"(controller: 'framework') {
-            action = [GET: "apiResourcesv2",/* PUT: "update", DELETE: "delete",*/ POST: "apiProjectResourcesPost"]
+            action = [GET: "apiResourcesv2",/* PUT: "update", DELETE: "delete", POST: "apiProjectResourcesPost"*/]
         }
         "/api/$api_version/project/$project/jobs"(controller: 'menu', action: 'apiJobsListv2')
         "/api/$api_version/project/$project/resource/$name"(controller: 'framework',action:"apiResourcev14")
@@ -246,6 +246,10 @@ class UrlMappings {
         "/resources/$action?/$id?"(controller: 'framework')
         "/project/$project/events/$action?/$id?(.$format)?"(controller: 'reports')
         "/project/$project/configure"(controller: 'framework', action: 'editProject')
+        "/project/$project/nodes/sources"(controller: 'framework', action: 'projectNodeSources')
+        "/project/$project/nodes/sources/edit"(controller: 'framework', action: 'editProjectNodeSources')
+        "/project/$project/nodes/source/$index/edit"(controller: 'framework', action: 'editProjectNodeSourceFile')
+        "/project/$project/nodes/source/$index/save"(controller: 'framework', action: 'saveProjectNodeSourceFile')
         "/project/$project/export"(controller: 'menu', action: 'projectExport')
         "/project/$project/import"(controller: 'menu', action: 'projectImport')
         "/project/$project/admin/delete"(controller: 'menu', action: 'projectDelete')

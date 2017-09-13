@@ -23,82 +23,269 @@
 */
 package com.dtolabs.rundeck.core.resources;
 
-import com.dtolabs.rundeck.core.common.*;
-import com.dtolabs.rundeck.core.plugins.configuration.*;
+import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.INodeSet;
+import com.dtolabs.rundeck.core.common.NodeEntryImpl;
+import com.dtolabs.rundeck.core.common.NodeSetImpl;
+import com.dtolabs.rundeck.core.plugins.configuration.Configurable;
+import com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException;
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.resources.format.*;
-import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
-import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
-import com.dtolabs.shared.resources.ResourceXMLGenerator;
+import com.dtolabs.utils.Streams;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.io.*;
 import java.util.List;
 import java.util.Properties;
 
+import static com.dtolabs.rundeck.plugins.util.DescriptionBuilder.buildDescriptionWith;
+
 /**
- * FileResourceModelSource can parse files to provide node results
+ * FileResourceModelSource extends {@link BaseFileResourceModelSource} to
+ * provide an optionally editable Model source using a local file system path.
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-public class FileResourceModelSource implements ResourceModelSource, Configurable {
-    private Framework framework;
-    private NodeSetImpl nodeSet;
+public class FileResourceModelSource extends BaseFileResourceModelSource implements Configurable {
     private Configuration configuration;
-    long lastModTime = 0;
 
     FileResourceModelSource(final Framework framework) {
-        this.framework = framework;
-        nodeSet = new NodeSetImpl();
+        super(framework);
     }
 
     static Description createDescription(final List<String> formats) {
-        return DescriptionBuilder.builder()
-            .name("file")
-            .title("File")
-            .description("Reads a file containing node definitions in a supported format")
-            .property(PropertyBuilder.builder()
-                          .freeSelect(Configuration.FORMAT)
-                          .title("Format")
-                          .description("Format of the file")
-                          .values(formats)
-                          .build()
-            )
-            .property(PropertyBuilder.builder()
-                          .string(Configuration.FILE)
-                          .title("File Path")
-                          .description("Path of the file")
-                          .required(true)
-                          .build()
-            )
-            .property(PropertyBuilder.builder()
-                          .booleanType(Configuration.GENERATE_FILE_AUTOMATICALLY)
-                          .title("Generate")
-                          .description("Automatically generate the file if it is missing?\n\nAlso creates missing directories.")
-                          .required(true)
-                          .defaultValue("false")
-                          .build()
-            )
-            .property(PropertyBuilder.builder()
-                          .booleanType(Configuration.INCLUDE_SERVER_NODE)
-                          .title("Include Server Node")
-                          .description("Automatically include the server node in the generated file?")
-                          .required(true)
-                          .defaultValue("false")
-                          .build()
-            )
-            .property(PropertyBuilder.builder()
-                          .booleanType(Configuration.REQUIRE_FILE_EXISTS)
-                          .title("Require File Exists")
-                          .description("Require that the file exists")
-                          .required(true)
-                          .defaultValue("false")
-                          .build()
-            )
+        return buildDescriptionWith(d -> d
+                .name("file")
+                .title("File")
+                .description("Reads a file containing node definitions in a supported format")
+                .property(p -> p
+                        .freeSelect(Configuration.FORMAT)
+                        .title("Format")
+                        .description("Format of the file")
+                        .values(formats)
+                )
+                .property(p -> p
+                        .string(Configuration.FILE)
+                        .title("File Path")
+                        .description("Path of the file")
+                        .required(true)
+                )
+                .property(p -> p
+                        .booleanType(Configuration.GENERATE_FILE_AUTOMATICALLY)
+                        .title("Generate")
+                        .description(
+                                "Automatically generate the file if it is " +
+                                "missing?\n\nAlso creates missing directories.")
+                        .required(true)
+                        .defaultValue("false")
+                )
+                .property(p -> p
+                        .booleanType(Configuration.INCLUDE_SERVER_NODE)
+                        .title("Include Server Node")
+                        .description(
+                                "Automatically include the server node in the " +
+                                "generated file?")
+                        .required(true)
+                        .defaultValue("false")
+                )
+                .property(p -> p
+                        .booleanType(Configuration.REQUIRE_FILE_EXISTS)
+                        .title("Require File Exists")
+                        .description("Require that the file exists")
+                        .required(true)
+                        .defaultValue("false")
+                )
+                .property(p -> p
+                        .booleanType(Configuration.WRITEABLE)
+                        .title("Writeable")
+                        .description("Allow this file to be editable.")
+                        .required(false)
+                        .defaultValue("false")
+                )
 
-            .build();
+        );
+    }
+
+    public void configure(final Properties configs) throws ConfigurationException {
+        final Configuration configuration1 = Configuration.fromProperties(configs);
+        configure(configuration1);
+    }
+
+    /**
+     * Configure the Source
+     *
+     * @param configuration configuration
+     *
+     * @throws com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException on config error
+     */
+    public void configure(final Configuration configuration) throws ConfigurationException {
+        this.configuration = new Configuration(configuration);
+        this.configuration.validate();
+    }
+
+    public long writeFileData(final InputStream dataStream) throws IOException {
+        try (FileOutputStream fos = new FileOutputStream(configuration.nodesFile)) {
+            return Streams.copyStream(dataStream, fos);
+        }
+    }
+
+
+    @Override
+    public InputStream openFileDataInputStream() throws IOException, ResourceModelSourceException {
+        if (!configuration.nodesFile.exists() && configuration.generateFileAutomatically) {
+            generateResourcesFile(configuration.nodesFile, configuration.format);
+        }
+
+        if (configuration.nodesFile.isFile()) {
+            return new FileInputStream(configuration.nodesFile);
+        } else if (configuration.requireFileExists) {
+            throw new ResourceModelSourceException("File does not exist: " + configuration.nodesFile);
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public boolean hasData() {
+        return configuration.requireFileExists ||
+               configuration.generateFileAutomatically ||
+               configuration.nodesFile.exists();
+    }
+
+    @Override
+    protected boolean isSupportsLastModified() {
+        return true;
+    }
+
+    @Override
+    protected long getLastModified() {
+        return configuration.nodesFile.exists() ? configuration.nodesFile.lastModified() : 0;
+    }
+
+    @Override
+    protected String getResourceFormat() {
+        return configuration.format;
+    }
+
+    @Override
+    protected String getDocumentFileExtension() {
+        return ResourceFormatParserService.getFileExtension(configuration.nodesFile.getName());
+    }
+
+    @Override
+    public String getSourceDescription() {
+        return configuration.nodesFile.getAbsolutePath();
+    }
+
+    @Override
+    public boolean isDataWritable() {
+        return configuration.writeable;
+    }
+
+    @Override
+    protected boolean shouldGenerateServerNode() {
+        return configuration.includeServerNode;
+    }
+
+    /**
+     * Utility method to directly parse the nodes from a file
+     *
+     * @param file      file
+     * @param framework fwk
+     * @param project   project name
+     *
+     * @return nodes
+     *
+     * @throws ResourceModelSourceException if an error occurs
+     * @throws ConfigurationException       if a configuration error occurs
+     */
+    public static INodeSet parseFile(final File file, final Framework framework, final String project) throws
+            ResourceModelSourceException,
+            ConfigurationException
+    {
+        final FileResourceModelSource prov = new FileResourceModelSource(framework);
+        prov.configure(
+                Configuration.build()
+                             .file(file)
+                             .includeServerNode(false)
+                             .generateFileAutomatically(false)
+                             .project(project)
+                             .requireFileExists(true)
+        );
+        return prov.getNodes();
+    }
+
+
+    /**
+     * Utility method to directly parse the nodes from a file
+     *
+     * @param file      file
+     * @param format    specified format
+     * @param framework fwk
+     * @param project   project name
+     *
+     * @return nodes
+     *
+     * @throws ResourceModelSourceException if an error occurs
+     * @throws ConfigurationException       if a configuration error occurs
+     */
+    public static INodeSet parseFile(
+            final File file, final String format, final Framework framework,
+            final String project
+    ) throws
+            ResourceModelSourceException,
+            ConfigurationException
+    {
+        final FileResourceModelSource prov = new FileResourceModelSource(framework);
+        prov.configure(
+                Configuration.build()
+                             .file(file)
+                             .includeServerNode(false)
+                             .generateFileAutomatically(false)
+                             .project(project)
+                             .format(format)
+                             .requireFileExists(true)
+        );
+        return prov.getNodes();
+    }
+
+
+    private void generateResourcesFile(final File resfile, final String format) throws ResourceModelSourceException {
+        final NodeEntryImpl node = framework.createFrameworkNode();
+        node.setFrameworkProject(configuration.project);
+        final ResourceFormatGenerator generator;
+        if (null != format) {
+            try {
+                generator = framework.getResourceFormatGeneratorService().getGeneratorForFormat(format);
+            } catch (UnsupportedFormatException e) {
+                throw new ResourceModelSourceException(e);
+            }
+        } else {
+            try {
+                generator = framework.getResourceFormatGeneratorService().getGeneratorForFileExtension(resfile);
+            } catch (UnsupportedFormatException e) {
+                throw new ResourceModelSourceException(e);
+            }
+        }
+        if (configuration.includeServerNode) {
+            NodeSetImpl nodes = new NodeSetImpl();
+            nodes.putNode(node);
+
+            if (!resfile.getParentFile().exists()) {
+                if (!resfile.getParentFile().mkdirs()) {
+                    throw new ResourceModelSourceException(
+                            "Parent dir for resource file does not exists, and could not be created: " + resfile
+                    );
+                }
+            }
+
+            try {
+                try (FileOutputStream stream = new FileOutputStream(resfile)) {
+                    generator.generateDocument(nodes, stream);
+                }
+            } catch (IOException | ResourceFormatGeneratorException e) {
+                throw new ResourceModelSourceException(e);
+            }
+        }
     }
 
 
@@ -109,6 +296,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         public static final String PROJECT = "project";
         public static final String FORMAT = "format";
         public static final String REQUIRE_FILE_EXISTS = "requireFileExists";
+        public static final String WRITEABLE = "writeable";
         String format;
         File nodesFile;
         String project;
@@ -116,6 +304,7 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
         boolean includeServerNode;
         boolean requireFileExists;
         final Properties configuration;
+        boolean writeable;
 
         Configuration() {
             configuration = new Properties();
@@ -188,6 +377,12 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
             return this;
         }
 
+        public Configuration writeable(boolean writeable) {
+            this.writeable = writeable;
+            configuration.put(WRITEABLE, Boolean.toString(writeable));
+            return this;
+        }
+
         public Properties getProperties() {
             return configuration;
         }
@@ -205,14 +400,17 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
             }
             if (configuration.containsKey(GENERATE_FILE_AUTOMATICALLY)) {
                 generateFileAutomatically = Boolean.parseBoolean(configuration.getProperty(
-                    GENERATE_FILE_AUTOMATICALLY));
+                        GENERATE_FILE_AUTOMATICALLY));
             }
             if (configuration.containsKey(INCLUDE_SERVER_NODE)) {
                 includeServerNode = Boolean.parseBoolean(configuration.getProperty(
-                    INCLUDE_SERVER_NODE));
+                        INCLUDE_SERVER_NODE));
             }
             if (configuration.containsKey(REQUIRE_FILE_EXISTS)) {
                 requireFileExists = Boolean.parseBoolean(configuration.getProperty(REQUIRE_FILE_EXISTS));
+            }
+            if (configuration.containsKey(WRITEABLE)) {
+                writeable = Boolean.parseBoolean(configuration.getProperty(WRITEABLE));
             }
         }
 
@@ -234,208 +432,16 @@ public class FileResourceModelSource implements ResourceModelSource, Configurabl
                    ", generateFileAutomatically=" + generateFileAutomatically +
                    ", includeServerNode=" + includeServerNode +
                    ", requireFileExists=" + requireFileExists +
+                   ", writeable=" + writeable +
                    ", configuration=" + configuration +
                    '}';
         }
     }
 
-    public void configure(final Properties configs) throws ConfigurationException {
-        final Configuration configuration1 = Configuration.fromProperties(configs);
-        configure(configuration1);
-    }
-
-    /**
-     * Configure the Source
-     * @param configuration configuration
-     * @throws com.dtolabs.rundeck.core.plugins.configuration.ConfigurationException on config error
-     */
-    public void configure(final Configuration configuration) throws ConfigurationException {
-        this.configuration = new Configuration(configuration);
-        this.configuration.validate();
-    }
-
-    public INodeSet getNodes() throws ResourceModelSourceException {
-        return getNodes(configuration.nodesFile, configuration.format);
-    }
-
-    /**
-     * Returns a {@link INodeSet} object conatining the nodes config data.
-     *
-     * @param nodesFile the source file
-     * @param format nodes format
-     *
-     * @return an instance of {@link INodeSet}
-     * @throws ResourceModelSourceException on error
-     */
-    public synchronized INodeSet getNodes(final File nodesFile, final String format) throws
-        ResourceModelSourceException {
-        final Long modtime = nodesFile.lastModified();
-        if (0 == nodeSet.getNodes().size() || (modtime > lastModTime)) {
-            nodeSet = new NodeSetImpl();
-            loadNodes(nodesFile, format);
-            lastModTime = modtime;
-        }
-        return nodeSet;
-    }
-
-    private void generateResourcesFile(final File resfile, final String format) throws ResourceModelSourceException {
-        final NodeEntryImpl node = framework.createFrameworkNode();
-        node.setFrameworkProject(configuration.project);
-        final ResourceFormatGenerator generator;
-        if (null!=format) {
-            try {
-                generator = framework.getResourceFormatGeneratorService().getGeneratorForFormat(format);
-            } catch (UnsupportedFormatException e) {
-                throw new ResourceModelSourceException(e);
-            }
-        } else {
-            try {
-                generator = framework.getResourceFormatGeneratorService().getGeneratorForFileExtension(resfile);
-            } catch (UnsupportedFormatException e) {
-                throw new ResourceModelSourceException(e);
-            }
-        }
-        if (configuration.includeServerNode) {
-            NodeSetImpl nodes = new NodeSetImpl();
-            nodes.putNode(node);
-
-            if(!resfile.getParentFile().exists()) {
-                if(!resfile.getParentFile().mkdirs()) {
-                    throw new ResourceModelSourceException(
-                            "Parent dir for resource file does not exists, and could not be created: " + resfile
-                    );
-                }
-            }
-
-            try {
-                final FileOutputStream stream = new FileOutputStream(resfile);
-                try {
-                    generator.generateDocument(nodes, stream);
-                } finally {
-                    stream.close();
-                }
-            } catch (IOException e) {
-                throw new ResourceModelSourceException(e);
-            } catch (ResourceFormatGeneratorException e) {
-                throw new ResourceModelSourceException(e);
-            }
-        }
-    }
-
-    private void loadNodes(final File nodesFile, final String format) throws ResourceModelSourceException {
-        if (!nodesFile.isFile() && configuration.generateFileAutomatically) {
-            generateResourcesFile(nodesFile, format);
-        } else if (configuration.includeServerNode) {
-            final NodeEntryImpl node = framework.createFrameworkNode();
-            nodeSet.putNode(node);
-        }
-        if (nodesFile.isFile()) {
-            final ResourceFormatParser parser = createParser(nodesFile, format);
-            try {
-                final INodeSet set = parser.parseDocument(nodesFile);
-                if(null!=set){
-                    nodeSet.putNodes(set);
-                }
-            } catch (ResourceFormatParserException e) {
-                throw new ResourceModelSourceException(e);
-            }
-        } else if (configuration.requireFileExists) {
-            throw new ResourceModelSourceException("File does not exist: " + nodesFile);
-        }
-    }
-
-    /**
-     * Create a NodeFileParser given the project and the source file, using the predetermined format
-     *
-     * @param file the nodes resource file
-     * @param format the file format
-     *
-     * @return a new parser based on the determined format
-     * @throws ResourceModelSourceException if the format is not supported
-     */
-    protected ResourceFormatParser createParser(final File file, final String format) throws
-        ResourceModelSourceException {
-        try {
-            if (null != format) {
-                return framework.getResourceFormatParserService().getParserForFormat(format);
-            } else {
-                return framework.getResourceFormatParserService().getParserForFileExtension(file);
-            }
-        } catch (UnsupportedFormatException e) {
-            throw new ResourceModelSourceException(e);
-        }
-    }
-
-    /**
-     *
-     * Utility method to directly parse the nodes from a file
-     * @param file file
-     * @param framework fwk
-     * @param project project name
-     * @return nodes
-     * @throws ResourceModelSourceException if an error occurs
-     * @throws ConfigurationException if a configuration error occurs
-     */
-    public static INodeSet parseFile(final String file, final Framework framework, final String project) throws
-        ResourceModelSourceException, ConfigurationException {
-        return parseFile(new File(file), framework, project);
-    }
-
-    /**
-     * Utility method to directly parse the nodes from a file
-     * @param file file
-     * @param framework fwk
-     * @param project project name
-     * @return nodes
-     * @throws ResourceModelSourceException if an error occurs
-     * @throws ConfigurationException if a configuration error occurs
-     */
-    public static INodeSet parseFile(final File file, final Framework framework, final String project) throws
-        ResourceModelSourceException,
-        ConfigurationException {
-        final FileResourceModelSource prov = new FileResourceModelSource(framework);
-        prov.configure(
-            FileResourceModelSource.Configuration.build()
-                .file(file)
-                .includeServerNode(false)
-                .generateFileAutomatically(false)
-                .project(project)
-                .requireFileExists(true)
-        );
-        return prov.getNodes();
-    }
-
-    /**
-     * Utility method to directly parse the nodes from a file
-     * @param file file
-     * @param format specified format
-     * @param framework fwk
-     * @param project project name
-     * @return nodes
-     * @throws ResourceModelSourceException if an error occurs
-     * @throws ConfigurationException if a configuration error occurs
-     */
-    public static INodeSet parseFile(final File file, final String format, final Framework framework,
-                                     final String project) throws
-        ResourceModelSourceException,
-        ConfigurationException {
-        final FileResourceModelSource prov = new FileResourceModelSource(framework);
-        prov.configure(
-            FileResourceModelSource.Configuration.build()
-                .file(file)
-                .includeServerNode(false)
-                .generateFileAutomatically(false)
-                .project(project)
-                .format(format)
-                .requireFileExists(true)
-        );
-        return prov.getNodes();
-    }
-
     @Override
     public String toString() {
         return "FileResourceModelSource{" +
-               "file=" + configuration.nodesFile+
+               "file=" + configuration.nodesFile +
                ", format=" + configuration.format +
                '}';
     }
