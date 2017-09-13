@@ -26,7 +26,7 @@
     <div class="row">
         <div class="col-sm-12">
 
-            <g:render template="renderPluginDesc" model="${[
+            <g:render template="/framework/renderPluginDesc" model="${[
                     serviceName    : serviceName,
                     description    : description,
                     showPluginIcon : showPluginIcon,

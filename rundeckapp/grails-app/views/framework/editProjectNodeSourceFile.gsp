@@ -82,7 +82,7 @@
                             <p class="form-control-static">
                                 ${index}.
                                 <g:if test="${providerDesc}">
-                                    <g:render template="renderPluginDesc" model="${[
+                                    <g:render template="/framework/renderPluginDesc" model="${[
                                             serviceName: 'ResourceModelSource',
                                             description: providerDesc,
                                     ]}"/>
