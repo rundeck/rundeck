@@ -98,7 +98,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             resumeIncompleteLogStorage     : 'POST',
             cleanupIncompleteLogStorage    : 'POST',
             saveProjectAclFile             : 'POST',
+            deleteProjectAclFile           : 'POST',
             saveSystemAclFile              : 'POST',
+            deleteSystemAclFile            : 'POST',
     ]
     def list = {
         def results = index(params)
@@ -1178,6 +1180,56 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ]
     }
 
+    def deleteProjectAclFile(ProjAclFile input) {
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'projectAcls', params: [project: params.project])
+        }
+        if (!requestHasValidToken()) {
+            return
+        }
+        if (!input.validate()) {
+            request.errors = input.errors
+            return renderErrorView()
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
+        }
+        def requiredAuth = AuthConstants.ACTION_DELETE
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProjectAcl(params.project),
+                        [requiredAuth, AuthConstants.ACTION_ADMIN]
+                ),
+                requiredAuth, 'ACL for Project', params.project
+        )) {
+            return
+        }
+        def project = frameworkService.getFrameworkProject(params.project)
+        if (notFoundResponse(project, 'Project', params.project)) {
+            return
+        }
+        def resPath = 'acls/' + input.file
+        def resourceExists = project.existsFileResource(resPath)
+
+        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, input.file)) {
+            return
+        }
+        //store
+        try {
+            if (project.deleteFileResource(resPath)) {
+                flash.message = input.file + " was deleted"
+            } else {
+                flash.error = input.file + " was NOT deleted"
+            }
+        } catch (IOException e) {
+            log.error("Error deleting project acl: $resPath: $e.message", e)
+            request.error = e.message
+        }
+        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
+    }
     def saveProjectAclFile(SaveProjAclFile input) {
         if (params.cancel) {
             return redirect(controller: 'menu', action: 'projectAcls', params: [project: params.project])
@@ -1438,6 +1490,66 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             flash.storedSize = authorizationService.storePolicyFileContents(input.file, fileText)
             flash.storedFile = input.file
             flash.storedType = input.fileType
+        }
+        return redirect(controller: 'menu', action: 'acls')
+    }
+
+    def deleteSystemAclFile(SysAclFile input) {
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'acls')
+        }
+        if (!requestHasValidToken()) {
+            return
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def requiredAuth = AuthConstants.ACTION_DELETE
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
+                        [requiredAuth, AuthConstants.ACTION_ADMIN]
+                ),
+                requiredAuth, 'System ACLs'
+        )) {
+            return
+        }
+
+        if (!input.validate()) {
+            request.errors = input.errors
+            return renderErrorView()
+        }
+        def exists = false
+        def size
+        if (input.fileType == 'fs') {
+            //look on filesys
+            def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
+            def file = new File(fwkConfigDir, input.file)
+            exists = file.isFile()
+            if (exists) {
+                size = file.length()
+            }
+        } else if (input.fileType == 'storage') {
+            //look in storage
+            exists = authorizationService.existsPolicyFile(input.file)
+        }
+
+        if (notFoundResponse(exists, 'System ACL Policy', input.file)) {
+            return
+        }
+        if (input.fileType == 'fs') {
+            //store on filesys
+            def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
+            def file = new File(fwkConfigDir, input.file)
+            file.delete()
+            flash.message = "Policy was deleted: " + input.file
+        } else if (input.fileType == 'storage') {
+            //store in storage
+            if (authorizationService.deletePolicyFile(input.file)) {
+                flash.message = "Policy was deleted: " + input.file
+            } else {
+                flash.error = "Policy was NOT deleted: " + input.file
+            }
         }
         return redirect(controller: 'menu', action: 'acls')
     }

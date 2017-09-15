@@ -31,22 +31,75 @@
     <meta name="tabpage" content="configure"/>
     <meta name="tabtitle" content="${g.message(code: 'gui.menu.AccessControl')}"/>
     <title><g:message code="gui.menu.AccessControl"/></title>
+
+    <asset:javascript src="menu/aclListing.js"/>
+    <script type="application/javascript">
+        jQuery(function () {
+            var filepolicies = loadJsonData('aclFileList');
+            var storedpolicies = loadJsonData('aclStoredList');
+            window.fspolicies = new PolicyFiles(filepolicies);
+            window.stpolicies = new PolicyFiles(storedpolicies);
+            ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
+            ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
+        })
+    </script>
+
+    %{--file system acl policies list--}%
+    <g:embedJSON id="aclFileList"
+                 data="${[policies: aclFileList.collect {
+                     [name: it.name, valid: validations[it] ? validations[it].valid : true,
+                      validation: validations[it]?.errors] +
+                             (flash.storedFile == it.name &&
+                                     flash.storedType ==
+                                     'fs' ? [wasSaved: true, savedSize: flash.storedSize] :
+                                     [:])
+                 }]}"/>
+
+    %{--storage acl policies list --}%
+    <g:embedJSON id="aclStoredList"
+                 data="${[policies: aclStoredList.collect {
+                     [name: it, valid: true,] +
+                             (flash.storedFile == it &&
+                                     flash.storedType ==
+                                     'storage' ? [wasSaved: true, savedSize: flash.storedSize] : [:])
+                 }]}"/>
+
 </head>
-<g:set var="hasEditAuth" value="${auth.resourceAllowedTest([
+<g:set var="hasAdminAuth" value="${auth.resourceAllowedTest([
         any    : true,
-        action : [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN],
+        action : [AuthConstants.ACTION_ADMIN],
         context: 'application',
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
-<g:set var="hasCreateAuth" value="${auth.resourceAllowedTest([
+<g:set var="hasEditAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any    : true,
-        action : [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN],
+        action : [AuthConstants.ACTION_UPDATE],
+        context: 'application',
+        kind   : AuthConstants.TYPE_SYSTEM_ACL,
+]
+)}"/>
+<g:set var="hasCreateAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
+        any    : true,
+        action : [AuthConstants.ACTION_CREATE],
+        context: 'application',
+        kind   : AuthConstants.TYPE_SYSTEM_ACL,
+]
+)}"/>
+<g:set var="hasDeleteAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
+        any    : true,
+        action : [AuthConstants.ACTION_DELETE],
         context: 'application',
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
 <body>
+
+<div class="row">
+    <div class="col-sm-12">
+        <g:render template="/common/messages"/>
+    </div>
+</div>
 <div class="row">
     <div class="col-sm-10 col-sm-offset-1">
         <div class="panel panel-default">
@@ -59,7 +112,7 @@
                 </span>
             </div>
 
-            <div class="panel-body">
+            <div class="panel-body" id="fsPolicies">
 
                 <g:if test="${hasCreateAuth}">
                     <div class="col-sm-12">
@@ -73,6 +126,25 @@
                     </div>
                 </g:if>
                 <div class="grid">
+                    <div data-bind="foreach: policies">
+                        <g:render template="/menu/aclValidationRowKO"
+                                  model="${[
+                                          hasEditAuth  : hasEditAuth,
+                                          hasDeleteAuth: hasDeleteAuth,
+                                          editHref     : g.createLink(
+                                                  [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'fs', file: '<$>']]
+                                          ),
+                                          deleteModalId: 'deleteFSAclPolicy',
+                                  ]}"/>
+
+                    </div>
+
+                    <g:render template="/menu/aclManageKO" model="[
+                            deleteModalId: 'deleteFSAclPolicy',
+                            deleteAction :
+                                    [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'fs']]
+                    ]"/>
+                    <%--
                         <g:each in="${aclFileList}" var="file">
                             <g:render template="/menu/aclValidationTableRow" model="${[
                                     policyFile  : file.name,
@@ -89,6 +161,7 @@
                             ]}"/>
 
                         </g:each>
+                        --%>
                 </div>
             </div>
 
@@ -99,7 +172,7 @@
                 </span>
             </div>
 
-            <div class="panel-body">
+            <div class="panel-body" id="storedPolicies">
                 <g:if test="${hasCreateAuth}">
                     <div class="col-sm-12">
                         <g:link controller="menu"
@@ -112,6 +185,25 @@
                     </div>
                 </g:if>
                 <div class="grid">
+                    <div data-bind="foreach: policies">
+                        <g:render template="/menu/aclValidationRowKO"
+                                  model="${[
+                                          hasEditAuth  : hasEditAuth,
+                                          hasDeleteAuth: hasDeleteAuth,
+                                          editHref     : g.createLink(
+                                                  [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'storage', file: '<$>']]
+                                          ),
+                                          deleteModalId: 'deleteStorageAclPolicy',
+                                  ]}"/>
+
+                    </div>
+
+                    <g:render template="/menu/aclManageKO" model="[
+                            deleteModalId: 'deleteStorageAclPolicy',
+                            deleteAction :
+                                    [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'storage']]
+                    ]"/>
+                    <%--
                         <g:each in="${aclStoredList}" var="name">
                             <g:render template="/menu/aclValidationTableRow" model="${[
                                     policyFile  : name,
@@ -127,6 +219,7 @@
                             ]}"/>
 
                         </g:each>
+                        --%>
                 </div>
             </div>
         </div>

@@ -29,18 +29,47 @@
     <meta name="tabpage" content="projectconfigure"/>
     <meta name="projtabtitle" content="${message(code: 'gui.menu.AccessControl')}"/>
     <title><g:message code="page.title.project.access.control.0" args="${[params.project]}"/></title>
+
+    <asset:javascript src="menu/aclListing.js"/>
+    <script type="application/javascript">
+        jQuery(function () {
+            var data = loadJsonData('aclPolicyList');
+            window.policies = new PolicyFiles(data);
+            ko.applyBindings(policies, jQuery('#policyList')[0]);
+        })
+
+    </script>
+    <g:embedJSON data="${[policies: acllist.collect {
+        [name: it, valid: true] + (flash.storedFile == it ? [wasSaved: true, savedSize: flash.storedSize] : [:])
+    }]}" id="aclPolicyList"/>
 </head>
-<g:set var="hasEditAuth" value="${auth.resourceAllowedTest([
+<g:set var="hasAdminAuth" value="${auth.resourceAllowedTest([
         any       : true,
-        action    : [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN],
+        action    : [AuthConstants.ACTION_ADMIN],
         context   : 'application',
         type      : AuthConstants.TYPE_PROJECT_ACL,
         attributes: [name: params.project]
 ]
 )}"/>
-<g:set var="hasCreateAuth" value="${auth.resourceAllowedTest([
+<g:set var="hasEditAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
         any       : true,
-        action    : [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN],
+        action    : [AuthConstants.ACTION_UPDATE],
+        context   : 'application',
+        type      : AuthConstants.TYPE_PROJECT_ACL,
+        attributes: [name: params.project]
+]
+)}"/>
+<g:set var="hasCreateAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
+        any       : true,
+        action    : [AuthConstants.ACTION_CREATE],
+        context   : 'application',
+        type      : AuthConstants.TYPE_PROJECT_ACL,
+        attributes: [name: params.project]
+]
+)}"/>
+<g:set var="hasDeleteAuth" value="${hasAdminAuth || auth.resourceAllowedTest([
+        any       : true,
+        action    : [AuthConstants.ACTION_DELETE],
         context   : 'application',
         type      : AuthConstants.TYPE_PROJECT_ACL,
         attributes: [name: params.project]
@@ -64,7 +93,8 @@
                 </span>
             </div>
 
-            <div class="panel-body">
+            <div class="panel-body" id="policyList">
+
                 <div>
                     <g:if test="${hasCreateAuth}">
                         <div class="col-sm-12">
@@ -78,21 +108,23 @@
                         </div>
                     </g:if>
                     <div class="grid">
-                        <g:each in="${acllist}" var="file">
-                            <g:render template="/menu/aclValidationTableRow"
+                        <div data-bind="foreach: policies">
+                            <g:render template="/menu/aclValidationRowKO"
                                       model="${[
-                                              policyFile  : file,
-                                              validation  : [valid: true],
-                                              editHref    : hasEditAuth ? g.createLink(
-                                                      [controller: 'menu', action: 'editProjectAclFile', params: [project: params.project, file: file]]
-                                              ) : null,
-                                              flashMessage: flash.storedFile == file ?
-                                                      g.message(code: 'file.was.saved.flash.message.0',
-                                                                args: [flash.storedSize]
-                                                      ) : null
-                            ]}"/>
+                                              hasEditAuth  : hasEditAuth,
+                                              hasDeleteAuth: hasDeleteAuth,
+                                              editHref     : g.createLink(
+                                                      [controller: 'menu', action: 'editProjectAclFile', params: [project: params.project, file: '<$>']]
+                                              ),
+                                              deleteModalId: 'deleteAclPolicy',
+                                      ]}"/>
 
-                        </g:each>
+                        </div>
+
+                        <g:render template="/menu/aclManageKO" model="[
+                                deleteAction:
+                                        [controller: 'menu', action: 'deleteProjectAclFile', params: [project: params.project]]
+                        ]"/>
                     </div>
                 </div>
 

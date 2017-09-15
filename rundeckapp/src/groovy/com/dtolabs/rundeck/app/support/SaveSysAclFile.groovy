@@ -27,7 +27,7 @@ class SaveSysAclFile extends SysAclFile {
     String fileText
     Boolean create
     static constraints = {
-        create(nullable: false)
+        create(nullable: true)
         fileText(blank: false)
     }
 }
