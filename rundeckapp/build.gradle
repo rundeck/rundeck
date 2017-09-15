@@ -40,6 +40,8 @@ apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'maven'
 apply plugin: 'signing'
+apply plugin: 'com.google.osdetector'
+
 
 // set the convention to rundeck:<branch>:<path>:<projectName>
 eclipse.project.name =  "${project.getParent().eclipse.project.name}:webapp"
@@ -56,8 +58,8 @@ def grailsLocalRepo = hasProperty('grailsLocalRepo') ? grailsLocalRepo : 'grails
 def grailsCentral = hasProperty('disableGrailsCentral') && disableGrailsCentral=='true' ? "-Ddisable.grails.central=${disableGrailsCentral}" : "-Dgrails.central.url=${grailsCentralUrl}"
 //def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
 def grailsDownloadUrl = "https://github.com/grails/grails-core/releases/download/v${grailsVersion}/grails-${grailsVersion}.zip"
-def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
-def grailsCommandLine = "${grailsHome}/bin/grails"
+ext.grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
+def grailsCommandLine() { if (osdetector.os.contains("windows")) { return "${grailsHome}/bin/grails.bat" } else { "${grailsHome}/bin/grails" } }
 def mavenCredsDefined = hasProperty('mavenUser') && hasProperty('mavenPassword') && hasProperty('mavenRealm') && hasProperty('mavenHost')
 def mavenCreds = mavenCredsDefined ? "-Dmaven.user=${mavenUser} -Dmaven.password=${mavenPassword} -Dmaven.realm=${mavenRealm} -Dmaven.host=${mavenHost}" : ''
 def warFileName = "rundeck-${version}.war"
@@ -212,7 +214,7 @@ task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
+    commandLine grailsCommandLine()
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "${grailsCentral}",
@@ -234,7 +236,7 @@ task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
     ignoreExitValue=true
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
+    commandLine grailsCommandLine()
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "${grailsCentral}",
@@ -256,7 +258,7 @@ task testGrails(type: Exec, overwrite: true, dependsOn: [installDependencies, ex
     inputs.dir file(grailsHome)
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
+    commandLine grailsCommandLine()
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "${grailsCentral}",
@@ -280,7 +282,7 @@ task grailsCompile(type: Exec, overwrite: true, dependsOn: [extractGrails]) {
     inputs.dir file(grailsHome)
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
+    commandLine grailsCommandLine()
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "${grailsCentral}",
@@ -298,7 +300,7 @@ task grailsWar(type: Exec, overwrite:true, dependsOn: [ installDependencies,extr
     outputs.file file(warFileLocation)
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
+    commandLine grailsCommandLine()
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "${grailsCentral}",
