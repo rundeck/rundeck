@@ -172,6 +172,49 @@ class AuthorizationService implements InitializingBean{
     }
 
     /**
+     *
+     * @param file name without path
+     * @return true if the policy file with the given name exists
+     */
+    public boolean existsPolicyFile(String file) {
+        configStorageService.existsFileResource(ACL_STORAGE_PATH_BASE + file)
+    }
+
+    /**
+     * @param fileName name of policy file, without path
+     * @return text contents of the policy file
+     */
+    public String getPolicyFileContents(String fileName) {
+        def resource = configStorageService.getFileResource(ACL_STORAGE_PATH_BASE + fileName)
+        def file = resource.contents
+        file.inputStream.getText()
+    }
+
+    /**
+     * Store a system policy file
+     * @param fileName name without path
+     * @param fileText contents
+     * @return size of bytes stored
+     */
+    public long storePolicyFileContents(String fileName, String fileText) {
+        def bytes = fileText.bytes
+        def result = configStorageService.writeFileResource(
+                ACL_STORAGE_PATH_BASE + fileName,
+                new ByteArrayInputStream(bytes),
+                [:]
+        )
+        bytes.length
+    }
+
+    /**
+     * Delete a policy file
+     * @return true if successful
+     */
+    public boolean deletePolicyFile(String fileName) {
+        configStorageService.deleteFileResource(ACL_STORAGE_PATH_BASE + fileName)
+    }
+
+    /**
      * load authorization from storage contents
      * @return authorization
      */

@@ -125,8 +125,13 @@ class BootstrapTagLib {
         } else if (!isDisabled && attrs.title) {
             out << attrs.title?.encodeAsHTML()
         }
-        out << '">'
-        if (attrs.icon) {
+        out << '"'
+
+        if (attrs.target) {
+            out << ' target="' + attrs.target.encodeAsHTMLAttribute() + '"'
+        }
+        out << '>'
+        if (attrs.icon && !attrs.iconAfter) {
             out << icon(name: attrs.icon)
             out << ' '
         }
@@ -134,6 +139,10 @@ class BootstrapTagLib {
             out << message(code: attrs.code).encodeAsHTML()
         } else if (body) {
             out << body()
+        }
+        if (attrs.icon && attrs.iconAfter) {
+            out << ' '
+            out << icon(name: attrs.icon)
         }
         out << '</a>'
 
