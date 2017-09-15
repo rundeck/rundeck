@@ -1332,7 +1332,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 aclFileList     : list,
                 aclStoredList   : stored,
                 validations     : validation,
+                clusterMode     : isClusterModeAclsLocalFileEditDisabled()
         ]
+    }
+
+    private boolean isClusterModeAclsLocalFileEditDisabled() {
+        frameworkService.isClusterModeEnabled() &&
+                configurationService.getBoolean('clusterMode.acls.localfiles.modify.disabled', true)
     }
 
     def createSystemAclFile() {
@@ -1351,6 +1357,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_CREATE, 'System ACLs'
         )) {
             return
+        }
+
+        if (params.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
+            return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
         }
         //TODO: templates
         [fileType: params.fileType]
@@ -1374,6 +1384,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
 
+        if (input.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
+            return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
+        }
         def fileText
         def exists = false
         def size
@@ -1440,6 +1453,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (!input.validate()) {
             request.errors = input.errors
             return renderInvalid()
+        }
+        if (input.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
+            return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
         }
         def exists = false
         def size
@@ -1518,6 +1534,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (!input.validate()) {
             request.errors = input.errors
             return renderErrorView()
+        }
+
+        if (input.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
+            return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
         }
         def exists = false
         def size

@@ -50,6 +50,15 @@ function PolicyFiles(data) {
             }
         }
     };
+    self.valid = ko.computed(function () {
+        var policies = self.policies();
+        if (policies.length < 1) {
+            return true;
+        }
+        return ko.utils.arrayFirst(policies, function (p) {
+            return !p.valid();
+        }) === null;
+    });
     self.selectedPolicy = ko.observable();
     self.showModal = function (id, policy) {
         self.selectedPolicy(policy);

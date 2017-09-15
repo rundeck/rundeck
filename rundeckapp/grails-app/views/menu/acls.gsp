@@ -34,14 +34,28 @@
 
     <asset:javascript src="menu/aclListing.js"/>
     <script type="application/javascript">
+        function SysPoliciesPage(data) {
+            var self = this;
+            self.show = ko.observable(false);
+            self.policyFiles = ko.observable(data.policyFiles);
+            self.toggleShow = function () {
+                self.show(!self.show());
+            };
+        }
         jQuery(function () {
             var filepolicies = loadJsonData('aclFileList');
-            var storedpolicies = loadJsonData('aclStoredList');
             window.fspolicies = new PolicyFiles(filepolicies);
-            window.stpolicies = new PolicyFiles(storedpolicies);
+            <g:if test="${clusterMode}">
+            window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
+            ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
+            </g:if>
+            <g:else>
             ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
+            </g:else>
+            var storedpolicies = loadJsonData('aclStoredList');
+            window.stpolicies = new PolicyFiles(storedpolicies);
             ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
-        })
+        });
     </script>
 
     %{--file system acl policies list--}%
@@ -103,72 +117,58 @@
 <div class="row">
     <div class="col-sm-10 col-sm-offset-1">
         <div class="panel panel-default">
-            <div class="panel-heading">
-                <span class="panel-title">
-                    <span class="text-info">${aclFileList.size()}</span>
-                    <g:message
-                            code="list.of.acl.policy.files.in.directory"/>
-                    <code>${fwkConfigDir.absolutePath}</code>:
-                </span>
-            </div>
-
-            <div class="panel-body" id="fsPolicies">
-
-                <g:if test="${hasCreateAuth}">
-                    <div class="col-sm-12">
-                        <g:link controller="menu"
-                                action="createSystemAclFile"
-                                params="${[fileType: 'fs']}"
-                                class="btn btn-sm btn-success">
-                            <g:icon name="plus"/>
-                            <g:message code="access.control.action.create.acl.policy.button.title"/>
-                        </g:link>
-                    </div>
-                </g:if>
-                <div class="grid">
-                    <div data-bind="foreach: policies">
-                        <g:render template="/menu/aclValidationRowKO"
-                                  model="${[
-                                          hasEditAuth  : hasEditAuth,
-                                          hasDeleteAuth: hasDeleteAuth,
-                                          editHref     : g.createLink(
-                                                  [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'fs', file: '<$>']]
-                                          ),
-                                          deleteModalId: 'deleteFSAclPolicy',
-                                  ]}"/>
-
-                    </div>
-
-                    <g:render template="/menu/aclManageKO" model="[
-                            deleteModalId: 'deleteFSAclPolicy',
-                            deleteAction :
-                                    [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'fs']]
-                    ]"/>
-                    <%--
-                        <g:each in="${aclFileList}" var="file">
-                            <g:render template="/menu/aclValidationTableRow" model="${[
-                                    policyFile  : file.name,
-                                    validation  : validations[file],
-                                    prefix      : fwkConfigDir.absolutePath + '/',
-                                    editHref    : hasEditAuth ? g.createLink(
-                                            [controller: 'menu', action: 'editSystemAclFile',
-                                             params    : [file: file.name, fileType: 'fs']]
-                                    ) : null,
-                                    flashMessage: flash.storedFile == file.name && flash.storedType == 'fs' ?
-                                            g.message(code: 'file.was.saved.flash.message.0',
-                                                      args: [flash.storedSize]
-                                            ) : null
-                            ]}"/>
-
-                        </g:each>
-                        --%>
+            <g:if test="${!clusterMode}">
+                <div class="panel-heading">
+                    <span class="panel-title">
+                        <span class="text-info">${aclFileList.size()}</span>
+                        <g:message
+                                code="list.of.acl.policy.files.in.directory"/>
+                        <code>${fwkConfigDir.absolutePath}</code>:
+                    </span>
                 </div>
-            </div>
+
+                <div class="panel-body" id="fsPolicies">
+
+                    <g:if test="${hasCreateAuth}">
+                        <div class="col-sm-12">
+                            <g:link controller="menu"
+                                    action="createSystemAclFile"
+                                    params="${[fileType: 'fs']}"
+                                    class="btn btn-sm btn-success">
+                                <g:icon name="plus"/>
+                                <g:message code="access.control.action.create.acl.policy.button.title"/>
+                            </g:link>
+                        </div>
+                    </g:if>
+                    <div class="grid">
+                        <div data-bind="foreach: policies">
+                            <g:render template="/menu/aclValidationRowKO"
+                                      model="${[
+                                              hasEditAuth  : hasEditAuth,
+                                              hasDeleteAuth: hasDeleteAuth,
+                                              editHref     : g.createLink(
+                                                      [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'fs', file: '<$>']]
+                                              ),
+                                              deleteModalId: 'deleteFSAclPolicy',
+                                      ]}"/>
+
+                        </div>
+
+                        <g:render template="/menu/aclManageKO" model="[
+                                deleteModalId: 'deleteFSAclPolicy',
+                                deleteAction :
+                                        [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'fs']]
+                        ]"/>
+
+                    </div>
+                </div>
+
+            </g:if>
 
             <div class="panel-heading">
                 <span class="panel-title">
                     <span class="text-info">${aclStoredList.size()}</span>
-                    <g:message code="stored.acl.policy.files.prompt"/>
+                    <g:message code="stored.acl.policy.files.title"/>
                 </span>
             </div>
 
@@ -203,26 +203,56 @@
                             deleteAction :
                                     [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'storage']]
                     ]"/>
-                    <%--
-                        <g:each in="${aclStoredList}" var="name">
-                            <g:render template="/menu/aclValidationTableRow" model="${[
-                                    policyFile  : name,
-                                    validation  : [valid: true],
-                                    editHref    : hasEditAuth ? g.createLink(
-                                            [controller: 'menu', action: 'editSystemAclFile',
-                                             params    : [file: name, fileType: 'storage']]
-                                    ) : null,
-                                    flashMessage: flash.storedFile == name && flash.storedType == 'storage' ?
-                                            g.message(code: 'file.was.saved.flash.message.0',
-                                                      args: [flash.storedSize]
-                                            ) : null
-                            ]}"/>
 
-                        </g:each>
-                        --%>
                 </div>
             </div>
+
         </div>
+        <g:if test="${clusterMode}">
+            <div id="clusterModeArea">
+                <span class="btn btn-link btn-muted" data-bind="visible: !show(), click: toggleShow">
+                    ${aclFileList.size()}
+                    <g:message
+                            code="list.of.acl.policy.files.in.directory"/>
+                    <span data-bind="if: !policyFiles().valid()">
+
+                        <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
+                           title="${message(code: "aclpolicy.format.validation.failed")}"></i>
+                    </span>
+                    <g:icon name="chevron-right"/>
+                </span>
+
+                <div class="panel panel-default" data-bind="visible: show">
+                    <div class="panel-heading">
+                        <span class="panel-title text-muted">
+                            <span class="text-info">${aclFileList.size()}</span>
+                            <g:message
+                                    code="list.of.acl.policy.files.in.directory"/>
+                            <span data-bind="if: !policyFiles().valid()">
+
+                                <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
+                                   title="${message(code: "aclpolicy.format.validation.failed")}"></i>
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="panel-body">
+                        Location: <code>${fwkConfigDir.absolutePath}</code>
+
+                        <div class="grid">
+                            <div data-bind="foreach: policyFiles().policies">
+                                <g:render template="/menu/aclValidationRowKO"
+                                          model="${[
+                                                  hasEditAuth  : false,
+                                                  hasDeleteAuth: false,
+                                          ]}"/>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </g:if>
 
     </div>
 </div>
