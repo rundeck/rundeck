@@ -20,15 +20,14 @@ import grails.validation.Validateable
 
 /**
  * @author greg
- * @since 9/13/17
+ * @since 9/15/17
  */
-
 @Validateable
-class SysAclFile {
-    String file
-    String fileType
+class SaveSysAclFile extends SysAclFile {
+    String fileText
+    Boolean create
     static constraints = {
-        file(nullable: false, matches: /^(?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][a-zA-Z0-9,\.+_-]*\.aclpolicy$/)
-        fileType(nullable: false, inList: ['fs', 'storage'])
+        create(nullable: false)
+        fileText(blank: false)
     }
 }

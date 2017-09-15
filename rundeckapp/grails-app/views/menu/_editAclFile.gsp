@@ -90,13 +90,23 @@
                 </div>
             </div>
         </g:if>
-        <textarea
-                name="fileText"
-                class="form-control code apply_ace"
-                data-ace-autofocus='true'
-                data-ace-session-mode="yaml"
-                data-ace-height="500px"
-                data-ace-control-soft-wrap="true">${fileText}</textarea>
+        <div class="form-group ${input?.errors?.hasFieldErrors('fileText') ? 'has-error' : ''}">
+            <div class="col-sm-12">
+                <textarea
+                        name="fileText"
+                        class="form-control code apply_ace"
+                        data-ace-autofocus='true'
+                        data-ace-session-mode="yaml"
+                        data-ace-height="500px"
+                        data-ace-control-soft-wrap="true">${fileText}</textarea>
+                <g:if test="${input?.errors?.hasFieldErrors('fileText')}">
+
+                    <div class="help-block">
+                        <g:fieldError field="fileText" bean="${input}"/>
+                    </div>
+                </g:if>
+            </div>
+        </div>
         <g:if test="${validation}">
             <h3>
                 <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"

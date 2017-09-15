@@ -22,6 +22,8 @@ import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
 import com.dtolabs.rundeck.app.support.BaseQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.QueueQuery
+import com.dtolabs.rundeck.app.support.SaveProjAclFile
+import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.app.support.SysAclFile
@@ -1176,7 +1178,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ]
     }
 
-    def saveProjectAclFile(ProjAclFile input) {
+    def saveProjectAclFile(SaveProjAclFile input) {
         if (params.cancel) {
             return redirect(controller: 'menu', action: 'projectAcls', params: [project: params.project])
         }
@@ -1187,10 +1189,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             render(view: input.create ? 'createProjectAclFile' : 'editProjectAclFile', model:
                     [
                             input   : input,
-                            fileText: params.fileText,
+                            fileText: input.fileText,
                             file    : input.file,
                             project : params.project,
-                            size    : params.fileText?.length(),
+                            size    : input.fileText?.length(),
                     ] + model
             )
         }
@@ -1202,9 +1204,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
 
         if (!params.project) {
             return renderErrorView('Project parameter is required')
-        }
-        if (!params.fileText) {
-            return renderErrorView('fileText parameter is required')
         }
         def requiredAuth = input.create ? AuthConstants.ACTION_CREATE : AuthConstants.ACTION_UPDATE
         if (unauthorizedResponse(
@@ -1238,17 +1237,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         def error = false
-        def validation = null
         //validate
 
-        String fileText = params.fileText
-        validation = authorizationService.validateYamlPolicy(project.name, resPath, fileText)
+        String fileText = input.fileText
+        def validation = authorizationService.validateYamlPolicy(project.name, resPath, fileText)
         if (!validation.valid) {
             request.error = "Validation failed"
-            error = true
-        }
-        //store
-        if (error) {
             return renderInvalid(validation: validation)
         }
         //store
@@ -1360,7 +1354,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ]
     }
 
-    def saveSystemAclFile(SysAclFile input) {
+    def saveSystemAclFile(SaveSysAclFile input) {
         if (params.cancel) {
             return redirect(controller: 'menu', action: 'acls')
         }
@@ -1371,19 +1365,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             render(view: input.create ? 'createSystemAclFile' : 'editSystemAclFile', model:
                     [
                             input   : input,
-                            fileText: params.fileText,
+                            fileText: input.fileText,
                             file    : input.file,
                             fileType: input.fileType,
-                            size    : params.fileText?.length(),
+                            size    : input.fileText?.length(),
                     ] + model
             )
-        }
-        if (!input.validate()) {
-            request.errors = input.errors
-            return renderInvalid()
-        }
-        if (!params.fileText) {
-            return renderErrorView('fileText parameter is required')
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def requiredAuth = input.create ? AuthConstants.ACTION_CREATE : AuthConstants.ACTION_UPDATE
@@ -1398,6 +1385,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
 
+        if (!input.validate()) {
+            request.errors = input.errors
+            return renderInvalid()
+        }
         def exists = false
         def size
         if (input.fileType == 'fs') {
@@ -1420,19 +1411,17 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     [input.file].toArray(),
                     "Policy Name already exists: {0}"
             )
-            return renderInvalid()
         } else if (!input.create && notFoundResponse(exists, 'System ACL Policy', input.file)) {
             return
         }
+        if (input.errors.hasErrors()) {
+            return renderInvalid()
+        }
 
-        String fileText = params.fileText
+        String fileText = input.fileText
         def validation = authorizationService.validateYamlPolicy(input.file, fileText)
-        def error
         if (!validation.valid) {
             request.error = "Validation failed"
-            error = true
-        }
-        if (error) {
             return renderInvalid(validation: validation)
         }
         //store

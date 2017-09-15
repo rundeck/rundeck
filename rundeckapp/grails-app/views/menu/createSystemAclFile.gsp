@@ -74,7 +74,7 @@
                     primaryLabel            : g.message(code: 'system.acl.location.prompt'),
                     primaryValue            : g.message(code: 'system.acl.location.type.'+fileType+'.label'),
                     fileText                : fileText,
-                    validationDocumentPrefix: 'acls/' + file,
+                    validationDocumentPrefix: file,
                     createField             : 'file',
                     createFieldLabel        : g.message(code: 'file.label.prompt'),
                     createFieldValue        : file,

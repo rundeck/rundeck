@@ -25,9 +25,8 @@ import grails.validation.Validateable
 @Validateable
 class ProjAclFile {
     String file
-    Boolean create
+
     static constraints = {
         file(nullable: false, matches: /^(?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][a-zA-Z0-9,\.+_-]*\.aclpolicy$/)
-        create(nullable: true)
     }
 }

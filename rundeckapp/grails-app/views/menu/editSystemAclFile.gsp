@@ -64,14 +64,15 @@
             class="form-horizontal">
         <div class="col-sm-10 col-sm-offset-1">
             <g:render template="editAclFile" model="${[
-                    backHref:g.createLink(controller:'menu',action:'acls'),
+                    backHref                : g.createLink(controller:'menu',action:'acls'),
                     title                   : g.message(code: 'edit.system.acl.file'),
                     primaryLabel            : g.message(code: 'system.acl.location.prompt'),
                     primaryValue            : g.message(code: 'system.acl.location.type.'+fileType+'.label'),
                     secondaryLabel          : g.message(code: 'file.label.prompt'),
                     secondaryValue          : file,
                     fileText                : fileText,
-                    validationDocumentPrefix: 'acls/' + file
+                    validationDocumentPrefix: 'acls/' + file,
+                    input                   : input
             ]}"/>
         </div>
     </g:form>
