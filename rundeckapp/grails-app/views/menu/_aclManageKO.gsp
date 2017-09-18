@@ -55,3 +55,94 @@
         </div>
     </g:render>
 </g:form>
+<g:if test="${uploadAction}">
+    <div id="${uploadFormId ?: 'aclUploadForm'}">
+        <g:uploadForm useToken="true"
+                      controller="${uploadAction.controller}"
+                      action="${uploadAction.action}"
+                      params="${uploadAction.params}"
+                      class="form form-horizontal"
+                      data-bind="submit: check">
+            <g:render template="/common/modal" model="[
+                    modalid : uploadModalId ?: 'aclUpload',
+                    title   : message(code: 'aclpolicy.file.upload.modal.title'),
+                    nocancel: true,
+                    buttons : [[
+                                       message: message(code: 'cancel'),
+                                       bind   : 'click: function(){cancelUploadModal(\'' + (uploadModalId ?:
+                                               'aclUpload') + '\');}'
+                               ],
+                               [
+                                       css    : 'btn-success',
+                                       message: message(code: 'button.action.Upload'),
+                               ]]
+            ]">
+                <div class="form-group">
+                    <label class="control-label col-sm-2"><g:message code="form.option.optionType.file.label"/></label>
+
+                    <div class="col-sm-10">
+                        <input type="file" name="uploadFile" id="uploadFile"
+                               data-bind="event: { change: fileChanged }"/>
+                    </div>
+
+                </div>
+
+                <div class="form-group" data-bind="css: {'has-error':nameError} ">
+                    <label class="control-label col-sm-2"><g:message code="aclpolicy.file.upload.name.label"/></label>
+
+                    <div class="col-sm-10">
+                        <!-- ko if: !nameFixed() -->
+                        <g:textField name="file" class="form-control" data-bind="value: name"/>
+                        <!-- /ko -->
+                        <!-- ko if: nameFixed() -->
+                        <input type="hidden" name="file" data-bind="value: nameFixed"/>
+
+                        <p class="form-control-static">
+                            <g:icon name="file"/>
+                            <span data-bind="text: nameFixed"></span>
+                        </p>
+                        <!-- /ko -->
+                        <!-- ko if: nameError -->
+                        <span class="help-block">
+                            <g:message code="aclpolicy.file.upload.name.is.required"/>
+                        </span>
+                        <!-- /ko -->
+                    </div>
+                </div>
+
+                <div class="form-group" data-bind="css: {'has-error':overwriteError}">
+
+                    <div class="col-sm-10 col-sm-offset-2">
+                        <!-- ko if: !nameFixed() -->
+                        <div class="checkbox">
+                            <label>
+
+                                <g:checkBox name="overwrite"
+                                            value="true"
+                                            checked="false"
+                                            data-bind="checked: overwrite"/>
+
+                                <g:message code="aclpolicy.file.upload.overwrite.label"/>
+                            </label>
+                        </div>
+                        <!-- /ko -->
+
+                        <!-- ko if: nameFixed() -->
+                        <span class="help-block">
+                            <g:icon name="ok"/>
+                            <g:message code="aclpolicy.file.upload.overwrite.label"/>
+                            <input type="hidden" name="overwrite" value="true"/>
+                        </span>
+                        <!-- /ko -->
+                        <!-- ko if: overwriteError -->
+                        <span class="help-block">
+                            <g:message code="aclpolicy.file.upload.exists.warning.message"/>
+                        </span>
+                        <!-- /ko -->
+                    </div>
+                </div>
+
+            </g:render>
+        </g:uploadForm>
+    </div>
+</g:if>

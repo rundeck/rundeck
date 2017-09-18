@@ -71,12 +71,11 @@
             var data = loadJsonData('aclPolicyList');
             window.policies = new PolicyFiles(data);
             ko.applyBindings(policies, jQuery('#policyList')[0]);
+            ko.applyBindings(policies, jQuery('#deleteAclPolicy')[0]);
             <g:if test="${hasCreateAuth}" >
             window.aclfileupload = new PolicyUpload({uploadField: '#uploadFile', policies: policies.policies()});
-            ko.applyBindings(aclfileupload, jQuery('#aclUpload')[0]);
-            checkUploadForm = function () {
-                return aclfileupload.check();
-            };
+            policies.fileUpload = aclfileupload;
+            ko.applyBindings(aclfileupload, jQuery('#aclUploadForm')[0]);
             <g:if test="${hasUploadValidationError}" >
             window.uploadedpolicy = new PolicyDocument(loadJsonData('uploadedPolicy'));
             ko.applyBindings(uploadedpolicy, jQuery('#uploadedPolicyValidation')[0]);
@@ -126,7 +125,7 @@
                     <div class="btn-group pull-right">
                         <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclUpload">
                             <g:icon name="upload"/>
-                            Upload
+                            <g:message code="button.action.Upload"/>
                         </span>
                         <g:link controller="menu"
                                 action="createProjectAclFile"
@@ -146,80 +145,31 @@
                                   model="${[
                                           hasEditAuth  : hasEditAuth,
                                           hasDeleteAuth: hasDeleteAuth,
+                                          hasCreateAuth: hasCreateAuth,
                                           editHref     : g.createLink(
                                                   [controller: 'menu', action: 'editProjectAclFile', params: [project: params.project, file: '<$>']]
                                           ),
                                           deleteModalId: 'deleteAclPolicy',
+                                          uploadModalId: 'aclUpload',
+
                                   ]}"/>
 
                     </div>
 
-                    <g:render template="/menu/aclManageKO" model="[
-                            deleteAction:
-                                    [controller: 'menu', action: 'deleteProjectAclFile', params: [project: params.project]]
-                    ]"/>
+
                 </div>
             </div>
         </div>
     </div>
 </div>
+<g:render template="/menu/aclManageKO" model="[
+        deleteAction :
+                [controller: 'menu', action: 'deleteProjectAclFile', params: [project: params.project]],
+        uploadModalId: 'aclUpload',
+        uploadAction : hasCreateAuth || hasEditAuth ?
+                [controller: 'menu', action: 'saveProjectAclFile', params: [project: params.project, upload: true]] :
+                null
+]"/>
 
-<g:if test="${hasCreateAuth}">
-    <g:uploadForm useToken="true"
-                  controller="menu"
-                  action="saveProjectAclFile"
-                  params="[project: params.project, upload: true]"
-                  class="form form-horizontal"
-                  onsubmit="return checkUploadForm()">
-        <g:render template="/common/modal" model="[
-                modalid: 'aclUpload',
-                title  : message(code: 'aclpolicy.file.upload.modal.title'),
-                buttons: [[
-                                  css    : 'btn-success',
-                                  message: message(code: 'button.upload.title'),
-                          ]]
-        ]">
-            <div class="form-group">
-                <label class="control-label col-sm-2"><g:message code="form.option.optionType.file.label"/></label>
-
-                <div class="col-sm-10">
-                    <input type="file" name="uploadFile" id="uploadFile" data-bind="event: { change: fileChanged }"/>
-                </div>
-
-            </div>
-
-            <div class="form-group" data-bind="css: {'has-error':nameError} ">
-                <label class="control-label col-sm-2"><g:message code="aclpolicy.file.upload.name.label"/></label>
-
-                <div class="col-sm-10">
-                    <g:textField name="file" class="form-control" data-bind="value: name"/>
-                    <!-- ko if: nameError -->
-                    <span class="help-block">
-                        <g:message code="aclpolicy.file.upload.name.is.required"/>
-                    </span>
-                    <!-- /ko -->
-                </div>
-            </div>
-
-            <div class="form-group" data-bind="css: {'has-error':overwriteError}">
-
-                <div class="col-sm-10 col-sm-offset-2">
-                    <div class="checkbox">
-                        <label>
-                            <g:checkBox name="overwrite" value="true" checked="false" data-bind="checked: overwrite"/>
-                            <g:message code="aclpolicy.file.upload.overwrite.label"/>
-                        </label>
-                    </div>
-                    <!-- ko if: overwriteError -->
-                    <span class="help-block">
-                        A Policy already exists with the specified name
-                    </span>
-                    <!-- /ko -->
-                </div>
-            </div>
-
-        </g:render>
-    </g:uploadForm>
-</g:if>
 </body>
 </html>

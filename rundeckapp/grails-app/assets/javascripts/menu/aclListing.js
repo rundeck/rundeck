@@ -26,6 +26,7 @@ function PolicyUpload(data) {
     var self = this;
     self.uploadField = ko.observable(data.uploadField);
     self.name = ko.observable(data.name);
+    self.nameFixed = ko.observable();
     self.nameError = ko.observable(false);
     self.overwriteError = ko.observable(false);
     self.overwrite = ko.observable(false);
@@ -58,7 +59,21 @@ function PolicyUpload(data) {
             self.name(name);
         }
     };
-
+    self.reset = function () {
+        self.name(data.name);
+        self.nameFixed(null);
+        self.nameError(false);
+        self.overwriteError(false);
+        self.overwrite(false);
+    };
+    self.showUploadModal = function (id, nameFixed) {
+        self.nameFixed(nameFixed);
+        jQuery('#' + id).modal('show');
+    };
+    self.cancelUploadModal = function (id) {
+        self.reset();
+        jQuery('#' + id).modal('hide');
+    };
 }
 function PolicyDocument(data) {
     var self = this;
@@ -80,6 +95,7 @@ function PolicyDocument(data) {
 function PolicyFiles(data) {
     var self = this;
     self.policies = ko.observableArray();
+    self.fileUpload = data.fileUpload;
     self.bindings = {
         policies: {
             key: function (data) {
@@ -105,5 +121,11 @@ function PolicyFiles(data) {
         self.selectedPolicy(policy);
         jQuery('#' + id).modal('show');
     };
+    self.showUploadModal = function (id, policy) {
+        if (self.fileUpload) {
+            self.fileUpload.showUploadModal(id, policy.name());
+        }
+    };
+
     ko.mapping.fromJS(data, self.bindings, self);
 }

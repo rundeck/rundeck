@@ -50,12 +50,26 @@
                 ${flashMessage}
             </span>
         </g:if>
-        <g:if test="${hasDeleteAuth}">
-            <span class="btn btn-sm btn-link btn-danger hover-action"
-                  title="${message(code: "button.action.Delete")}"
-                  data-bind="click: function(){$root.showModal('${deleteModalId}',$data);}">
-                <g:icon name="remove"/>
-                <g:message code="button.action.Delete"/>
+        <g:if test="${hasDeleteAuth || hasEditAuth}">
+            <span class="dropdown ">
+                <bs:dropdownToggle css="btn btn-link"/>
+                <bs:dropdown>
+                    <bs:menuitem
+                            shown="${hasEditAuth}"
+                            href="#"
+                            icon="upload"
+                            code="button.action.Upload"
+                            data-bind="click: function(){ \$root.showUploadModal('${uploadModalId}',\$data);}"></bs:menuitem>
+                    <bs:menuitem
+                            shown="${hasDeleteAuth && hasEditAuth}"/>
+                    <bs:menuitem
+                            shown="${hasDeleteAuth}"
+                            href="#"
+                            icon="remove"
+                            code="button.action.Delete"
+                            data-bind="click: function(){ \$root.showModal('${deleteModalId}', \$data);}"></bs:menuitem>
+
+                </bs:dropdown>
             </span>
         </g:if>
         <!-- ko if: wasSaved -->
