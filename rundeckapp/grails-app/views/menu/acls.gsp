@@ -25,60 +25,6 @@
 <%@ page contentType="text/html;charset=UTF-8" %>
 <%@ page import="com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <html>
-<head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <meta name="layout" content="base"/>
-    <meta name="tabpage" content="configure"/>
-    <meta name="tabtitle" content="${g.message(code: 'gui.menu.AccessControl')}"/>
-    <title><g:message code="gui.menu.AccessControl"/></title>
-
-    <asset:javascript src="menu/aclListing.js"/>
-    <script type="application/javascript">
-        function SysPoliciesPage(data) {
-            var self = this;
-            self.show = ko.observable(false);
-            self.policyFiles = ko.observable(data.policyFiles);
-            self.toggleShow = function () {
-                self.show(!self.show());
-            };
-        }
-        jQuery(function () {
-            var filepolicies = loadJsonData('aclFileList');
-            window.fspolicies = new PolicyFiles(filepolicies);
-            <g:if test="${clusterMode}">
-            window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
-            ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
-            </g:if>
-            <g:else>
-            ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
-            </g:else>
-            var storedpolicies = loadJsonData('aclStoredList');
-            window.stpolicies = new PolicyFiles(storedpolicies);
-            ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
-        });
-    </script>
-
-    %{--file system acl policies list--}%
-    <g:embedJSON id="aclFileList"
-                 data="${[policies: aclFileList.collect {
-                     [name: it.name, valid: validations[it] ? validations[it].valid : true,
-                      validation: validations[it]?.errors] +
-                             (flash.storedFile == it.name &&
-                                     flash.storedType ==
-                                     'fs' ? [wasSaved: true, savedSize: flash.storedSize] :
-                                     [:])
-                 }]}"/>
-
-    %{--storage acl policies list --}%
-    <g:embedJSON id="aclStoredList"
-                 data="${[policies: aclStoredList.collect {
-                     [name: it, valid: true,] +
-                             (flash.storedFile == it &&
-                                     flash.storedType ==
-                                     'storage' ? [wasSaved: true, savedSize: flash.storedSize] : [:])
-                 }]}"/>
-
-</head>
 <g:set var="hasAdminAuth" value="${auth.resourceAllowedTest([
         any    : true,
         action : [AuthConstants.ACTION_ADMIN],
@@ -107,30 +53,118 @@
         kind   : AuthConstants.TYPE_SYSTEM_ACL,
 ]
 )}"/>
+<g:set var="hasUploadValidationError" value="${input?.upload && validation && !validation.valid}"/>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <meta name="layout" content="base"/>
+    <meta name="tabpage" content="configure"/>
+    <meta name="tabtitle" content="${g.message(code: 'gui.menu.AccessControl')}"/>
+    <title><g:message code="gui.menu.AccessControl"/></title>
+
+    <asset:javascript src="menu/aclListing.js"/>
+    <script type="application/javascript">
+        function SysPoliciesPage(data) {
+            var self = this;
+            self.show = ko.observable(false);
+            self.policyFiles = ko.observable(data.policyFiles);
+            self.toggleShow = function () {
+                self.show(!self.show());
+            };
+        }
+        jQuery(function () {
+            var filepolicies = loadJsonData('aclFileList');
+            window.fspolicies = new PolicyFiles(filepolicies);
+            <g:if test="${clusterMode}">
+            window.policiesPage = new SysPoliciesPage({policyFiles: window.fspolicies});
+            ko.applyBindings(policiesPage, jQuery('#clusterModeArea')[0]);
+            </g:if>
+            <g:else>
+            ko.applyBindings(fspolicies, jQuery('#fsPolicies')[0]);
+            ko.applyBindings(fspolicies, jQuery('#deleteFSAclPolicy')[0]);
+            </g:else>
+            var storedpolicies = loadJsonData('aclStoredList');
+            window.stpolicies = new PolicyFiles(storedpolicies);
+            ko.applyBindings(stpolicies, jQuery('#storedPolicies')[0]);
+            ko.applyBindings(stpolicies, jQuery('#deleteStorageAclPolicy')[0]);
+            <g:if test="${hasCreateAuth}" >
+            window.aclstorageupload = new PolicyUpload({policies: stpolicies.policies()});
+            stpolicies.fileUpload = aclstorageupload;
+            ko.applyBindings(aclstorageupload, jQuery('#aclStorageUploadForm')[0]);
+
+            <g:if test="${!clusterMode}">
+
+            window.aclfsupload = new PolicyUpload({ policies: fspolicies.policies()});
+            fspolicies.fileUpload = aclfsupload;
+            ko.applyBindings(aclfsupload, jQuery('#aclFSUploadForm')[0]);
+
+            </g:if>
+            <g:if test="${hasUploadValidationError}" >
+            window.uploadedpolicy = new PolicyDocument(loadJsonData('uploadedPolicy'));
+            ko.applyBindings(uploadedpolicy, jQuery('#uploadedPolicyValidation')[0]);
+            </g:if>
+            </g:if>
+        });
+    </script>
+
+    %{--file system acl policies list--}%
+    <g:embedJSON id="aclFileList"
+                 data="${[policies: aclFileList.collect {
+                     [name: it.name, valid: validations[it] ? validations[it].valid : true,
+                      validation: validations[it]?.errors] +
+                             (flash.storedFile == it.name &&
+                                     flash.storedType ==
+                                     'fs' ? [wasSaved: true, savedSize: flash.storedSize] :
+                                     [:])
+                 }]}"/>
+
+    %{--storage acl policies list --}%
+    <g:embedJSON id="aclStoredList"
+                 data="${[policies: aclStoredList.collect {
+                     [name: it, valid: true,] +
+                             (flash.storedFile == it &&
+                                     flash.storedType ==
+                                     'storage' ? [wasSaved: true, savedSize: flash.storedSize] : [:])
+                 }]}"/>
+    <g:embedJSON id="uploadedPolicy"
+                 data="${hasUploadValidationError ?
+                         [name: input?.file, valid: validation.valid, validation: validation.errors] :
+                         [:]}"/>
+
+</head>
 <body>
 
 <div class="row">
     <div class="col-sm-12">
         <g:render template="/common/messages"/>
+        <g:if test="${hasUploadValidationError}">
+            <div id="uploadedPolicyValidation" class="col-sm-12">
+                <div class="alert alert-default alert-dismissible">
+                    <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+                    <h4><g:message code="aclpolicy.file.upload.failed.acl.policy.validation.message"/></h4>
+                    <span data-bind="template: { name: 'acl-policy-validation', data:$data }"></span>
+                </div>
+            </div>
+
+        </g:if>
     </div>
 </div>
 <div class="row">
     <div class="col-sm-10 col-sm-offset-1">
         <div class="panel panel-default">
             <g:if test="${!clusterMode}">
-                <div class="panel-heading">
-                    <span class="panel-title">
+                <div class="panel-heading clearfix">
+                    <span class="panel-title pull-left">
                         <span class="text-info">${aclFileList.size()}</span>
                         <g:message
                                 code="list.of.acl.policy.files.in.directory"/>
                         <code>${fwkConfigDir.absolutePath}</code>:
                     </span>
-                </div>
-
-                <div class="panel-body" id="fsPolicies">
-
                     <g:if test="${hasCreateAuth}">
-                        <div class="col-sm-12">
+                        <div class="btn-group pull-right">
+                            <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclFSUpload">
+                                <g:icon name="upload"/>
+                                <g:message code="button.action.Upload"/>
+                            </span>
                             <g:link controller="menu"
                                     action="createSystemAclFile"
                                     params="${[fileType: 'fs']}"
@@ -140,6 +174,10 @@
                             </g:link>
                         </div>
                     </g:if>
+                </div>
+
+                <div class="panel-body" id="fsPolicies">
+
                     <div class="grid">
                         <div data-bind="foreach: policies">
                             <g:render template="/menu/aclValidationRowKO"
@@ -150,31 +188,39 @@
                                                       [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'fs', file: '<$>']]
                                               ),
                                               deleteModalId: 'deleteFSAclPolicy',
+                                              uploadModalId: 'aclFSUpload',
                                       ]}"/>
 
                         </div>
 
-                        <g:render template="/menu/aclManageKO" model="[
-                                deleteModalId: 'deleteFSAclPolicy',
-                                deleteAction :
-                                        [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'fs']]
-                        ]"/>
 
                     </div>
                 </div>
 
+                <g:render template="/menu/aclManageKO" model="[
+                        deleteModalId: 'deleteFSAclPolicy',
+                        deleteAction :
+                                [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'fs']],
+                        uploadModalId: 'aclFSUpload',
+                        uploadFormId: 'aclFSUploadForm',
+                        uploadAction : hasCreateAuth || hasEditAuth ?
+                                [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'fs', upload: true]] :
+                                null
+                ]"/>
+
             </g:if>
 
-            <div class="panel-heading">
-                <span class="panel-title">
+            <div class="panel-heading clearfix">
+                <span class="panel-title pull-left">
                     <span class="text-info">${aclStoredList.size()}</span>
                     <g:message code="stored.acl.policy.files.title"/>
                 </span>
-            </div>
-
-            <div class="panel-body" id="storedPolicies">
                 <g:if test="${hasCreateAuth}">
-                    <div class="col-sm-12">
+                    <div class="btn-group pull-right">
+                        <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclStorageUpload">
+                            <g:icon name="upload"/>
+                            <g:message code="button.action.Upload"/>
+                        </span>
                         <g:link controller="menu"
                                 action="createSystemAclFile"
                                 params="${[fileType: 'storage']}"
@@ -184,6 +230,9 @@
                         </g:link>
                     </div>
                 </g:if>
+            </div>
+
+            <div class="panel-body" id="storedPolicies">
                 <div class="grid">
                     <div data-bind="foreach: policies">
                         <g:render template="/menu/aclValidationRowKO"
@@ -194,18 +243,25 @@
                                                   [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'storage', file: '<$>']]
                                           ),
                                           deleteModalId: 'deleteStorageAclPolicy',
+                                          uploadModalId: 'aclStorageUpload',
                                   ]}"/>
 
                     </div>
 
-                    <g:render template="/menu/aclManageKO" model="[
-                            deleteModalId: 'deleteStorageAclPolicy',
-                            deleteAction :
-                                    [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'storage']]
-                    ]"/>
+
 
                 </div>
             </div>
+            <g:render template="/menu/aclManageKO" model="[
+                    deleteModalId: 'deleteStorageAclPolicy',
+                    deleteAction :
+                            [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'storage']],
+                    uploadModalId: 'aclStorageUpload',
+                    uploadFormId: 'aclStorageUploadForm',
+                    uploadAction : hasCreateAuth || hasEditAuth ?
+                            [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'storage', upload: true]] :
+                            null
+            ]"/>
 
         </div>
         <g:if test="${clusterMode}">

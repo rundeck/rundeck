@@ -81,7 +81,7 @@
                     <label class="control-label col-sm-2"><g:message code="form.option.optionType.file.label"/></label>
 
                     <div class="col-sm-10">
-                        <input type="file" name="uploadFile" id="uploadFile"
+                        <input type="file" name="uploadFile"
                                data-bind="event: { change: fileChanged }"/>
                     </div>
 

@@ -1294,7 +1294,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         if ((input.create || input.upload && !input.overwrite) && resourceExists) {
-            //TODO: overwrite flag
             input.errors.rejectValue(
                     'file',
                     'policy.create.conflict',
@@ -1344,20 +1343,23 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
         }
-        def fwkConfigDir=frameworkService.rundeckFramework.getConfigDir()
-        def list=fwkConfigDir.listFiles().grep{it.name=~/\.aclpolicy$/}.sort()
+        systemAclsModel()
+    }
+
+    private Map systemAclsModel() {
+        def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
+        def list = fwkConfigDir.listFiles().grep { it.name =~ /\.aclpolicy$/ }.sort()
         def stored = authorizationService.listStoredPolicyFiles()
-        Map<File,Validation> validation=list.collectEntries{
-            [it,authorizationService.validateYamlPolicy(it)]
+        Map<File, Validation> validation = list.collectEntries {
+            [it, authorizationService.validateYamlPolicy(it)]
         }
 
         [
-                rundeckFramework: frameworkService.rundeckFramework,
-                fwkConfigDir    : fwkConfigDir,
-                aclFileList     : list,
-                aclStoredList   : stored,
-                validations     : validation,
-                clusterMode     : isClusterModeAclsLocalFileEditDisabled()
+                fwkConfigDir : fwkConfigDir,
+                aclFileList  : list,
+                aclStoredList: stored,
+                validations  : validation,
+                clusterMode  : isClusterModeAclsLocalFileEditDisabled()
         ]
     }
 
@@ -1452,7 +1454,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         def renderInvalid = { Map model = [:] ->
-            render(view: input.create ? 'createSystemAclFile' : 'editSystemAclFile', model:
+            if (input.upload) {
+                model += systemAclsModel()
+            }
+            render(view: input.upload ? 'acls' : input.create ? 'createSystemAclFile' : 'editSystemAclFile', model:
                     [
                             input   : input,
                             fileText: input.fileText,
@@ -1462,19 +1467,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     ] + model
             )
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
-        def requiredAuth = input.create ? AuthConstants.ACTION_CREATE : AuthConstants.ACTION_UPDATE
-        if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAny(
-                        authContext,
-                        AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
-                        [requiredAuth, AuthConstants.ACTION_ADMIN]
-                ),
-                requiredAuth, 'System ACLs'
-        )) {
-            return
-        }
 
+        if (input.upload) {
+            if (!(request instanceof MultipartHttpServletRequest)) {
+                response.status = HttpServletResponse.SC_BAD_REQUEST
+                return renderErrorView("Expected multipart file upload request")
+            }
+            input.fileText = new String(input.uploadFile.bytes, 'UTF-8')
+        }
         if (!input.validate()) {
             request.errors = input.errors
             return renderInvalid()
@@ -1496,15 +1496,27 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             //look in storage
             exists = authorizationService.existsPolicyFile(input.file)
         }
-        if (input.create && exists) {
-            //TODO: overwrite flag
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def requiredAuth = (input.upload && !exists || input.create) ? AuthConstants.ACTION_CREATE :
+                AuthConstants.ACTION_UPDATE
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
+                        [requiredAuth, AuthConstants.ACTION_ADMIN]
+                ),
+                requiredAuth, 'System ACLs'
+        )) {
+            return
+        }
+        if ((input.create || input.upload && !input.overwrite) && exists) {
             input.errors.rejectValue(
                     'file',
                     'policy.create.conflict',
                     [input.file].toArray(),
                     "Policy Name already exists: {0}"
             )
-        } else if (!input.create && notFoundResponse(exists, 'System ACL Policy', input.file)) {
+        } else if (!input.create && !input.upload && notFoundResponse(exists, 'System ACL Policy', input.file)) {
             return
         }
         if (input.errors.hasErrors()) {
@@ -1512,7 +1524,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         String fileText = input.fileText
-        def validation = authorizationService.validateYamlPolicy(input.file, fileText)
+        def validation = authorizationService.validateYamlPolicy(input.upload ? 'uploaded-file' : input.file, fileText)
         if (!validation.valid) {
             request.error = "Validation failed"
             return renderInvalid(validation: validation)

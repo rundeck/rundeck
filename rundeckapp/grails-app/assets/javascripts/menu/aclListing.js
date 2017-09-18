@@ -24,7 +24,6 @@
 function PolicyUpload(data) {
     "use strict";
     var self = this;
-    self.uploadField = ko.observable(data.uploadField);
     self.name = ko.observable(data.name);
     self.nameFixed = ko.observable();
     self.nameError = ko.observable(false);
@@ -32,7 +31,7 @@ function PolicyUpload(data) {
     self.overwrite = ko.observable(false);
     self.policies = ko.observableArray(data.policies);
     self.check = function () {
-        self.nameError(!self.name());
+        self.nameError(!self.name() && !self.nameFixed());
 
         if (!self.nameError() && !self.overwrite()) {
             //check existing policies
@@ -68,6 +67,7 @@ function PolicyUpload(data) {
     };
     self.showUploadModal = function (id, nameFixed) {
         self.nameFixed(nameFixed);
+        self.overwrite(true);
         jQuery('#' + id).modal('show');
     };
     self.cancelUploadModal = function (id) {
