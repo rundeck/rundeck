@@ -19,10 +19,35 @@
 //= require ko/binding-url-path-param
 //= require knockout-foreachprop
 //= require ko/binding-message-template
+//= require ko/binding-popover
 
+function PolicyUpload(data) {
+    "use strict";
+    var self = this;
+    self.uploadField = ko.observable(data.uploadField);
+    self.name = ko.observable(data.name);
+    self.nameError = ko.observable(false);
+    self.check = function () {
+        self.nameError(!self.name());
+        return !self.nameError();
+    };
+    self.fileChanged = function (obj, event) {
+        var files = event.currentTarget.files;
+        // console.log("changed: ", files, event);
+        if (!self.name() && files.length > 0) {
+            var name = files[0].name;
+            // if (name.endsWith('.aclpolicy')) {
+            //     name = name.substr(0, name.length - 10);
+            // }
+            self.name(name);
+        }
+    };
+
+}
 function PolicyDocument(data) {
     var self = this;
     self.name = ko.observable(data.name);
+    self.description = ko.observable(data.description);
     self.valid = ko.observable(data.valid);
     self.wasSaved = ko.observable(data.wasSaved ? true : false);
     self.savedSize = ko.observable(data.savedSize);

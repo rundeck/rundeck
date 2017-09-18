@@ -26,7 +26,8 @@
 </span>
 <span data-bind="text: name"></span>
 </script>
-
+%{--KO template--}%
+<g:render template="aclValidationReportKO"/>
 
 <div class="grid-row">
     <div class="grid-cell hover-action-holder">
@@ -77,17 +78,7 @@
 <div class="" data-bind="if: !valid()">
     <div style="display: inline-block" data-bind="visible: showValidation">
         <div class="well well-sm inline">
-            <ul>
-                <li data-bind="foreachprop: validation">
-
-                    <code data-bind="text: key"></code>
-                    <g:helpTooltip css="text-info" code="acl.validation.error.sourceIdentity.help"/>
-                    <ol data-bind="foreach: value">
-                        <li><code data-bind="text: $data"></code></li>
-                    </ol>
-
-                </li>
-            </ul>
+            <span data-bind="template: { name: 'acl-policy-validation', data:$data }"></span>
         </div>
     </div>
 </div>

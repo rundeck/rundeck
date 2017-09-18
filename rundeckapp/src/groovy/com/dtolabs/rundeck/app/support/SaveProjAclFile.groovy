@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.app.support
 
 import grails.validation.Validateable
+import org.springframework.web.multipart.commons.CommonsMultipartFile
 
 /**
  * @author greg
@@ -25,9 +26,13 @@ import grails.validation.Validateable
 @Validateable
 class SaveProjAclFile extends ProjAclFile {
     Boolean create
+    Boolean upload
     String fileText
+    CommonsMultipartFile uploadFile
     static constraints = {
         create(nullable: true)
+        upload(nullable: true)
+        uploadFile(nullable: true)
         fileText(blank: false, nullable: false)
     }
 }

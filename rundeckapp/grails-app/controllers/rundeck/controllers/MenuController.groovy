@@ -45,6 +45,8 @@ import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.web.multipart.MultipartHttpServletRequest
+import org.springframework.web.multipart.MultipartRequest
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
@@ -1106,19 +1108,19 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         def project = frameworkService.getFrameworkProject(params.project)
-        if(notFoundResponse(project,'Project',params.project)){
-           return
-        }
+        List<String> projectlist = listProjectAclFiles(project)
+        [
+                rundeckFramework: frameworkService.rundeckFramework,
+                assumeValid     : true,
+                acllist         : projectlist,
+        ]
+    }
+
+    private List<String> listProjectAclFiles(IRundeckProject project) {
         def projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
             it.replaceAll(/^acls\//, '')
         }
-
-        [
-                rundeckFramework: frameworkService.rundeckFramework,
-                aclFileList     : list,
-                assumeValid     : true,
-                acllist         : projectlist
-        ]
+        projectlist
     }
 
     def createProjectAclFile() {
@@ -1230,6 +1232,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
     }
+    /**
+     * Endpoint for save/upload
+     * @param input
+     * @return
+     */
     def saveProjectAclFile(SaveProjAclFile input) {
         if (params.cancel) {
             return redirect(controller: 'menu', action: 'projectAcls', params: [project: params.project])
@@ -1238,7 +1245,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         def renderInvalid = { Map model = [:] ->
-            render(view: input.create ? 'createProjectAclFile' : 'editProjectAclFile', model:
+            if(input.upload){
+                def project = frameworkService.getFrameworkProject(params.project)
+                model.acllist = listProjectAclFiles(project)
+            }
+            render(
+                    view: input.upload ? 'projectAcls' : input.create ? 'createProjectAclFile' : 'editProjectAclFile',
+                    model:
                     [
                             input   : input,
                             fileText: input.fileText,
@@ -1247,6 +1260,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                             size    : input.fileText?.length(),
                     ] + model
             )
+        }
+        if (input.upload) {
+            input.create = true
+            if (!(request instanceof MultipartHttpServletRequest)) {
+                response.status = HttpServletResponse.SC_BAD_REQUEST
+                return renderErrorView("Expected multipart file upload request")
+            }
+            input.fileText = new String(input.uploadFile.bytes, 'UTF-8')
         }
         if (!input.validate()) {
             request.errors = input.errors
