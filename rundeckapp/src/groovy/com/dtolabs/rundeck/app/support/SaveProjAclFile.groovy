@@ -27,11 +27,13 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile
 class SaveProjAclFile extends ProjAclFile {
     Boolean create
     Boolean upload
+    Boolean overwrite
     String fileText
     CommonsMultipartFile uploadFile
     static constraints = {
         create(nullable: true)
         upload(nullable: true)
+        overwrite(nullable: true)
         uploadFile(nullable: true)
         fileText(blank: false, nullable: false)
     }

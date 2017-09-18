@@ -72,7 +72,7 @@
             window.policies = new PolicyFiles(data);
             ko.applyBindings(policies, jQuery('#policyList')[0]);
             <g:if test="${hasCreateAuth}" >
-            window.aclfileupload = new PolicyUpload({uploadField: '#uploadFile'});
+            window.aclfileupload = new PolicyUpload({uploadField: '#uploadFile', policies: policies.policies()});
             ko.applyBindings(aclfileupload, jQuery('#aclUpload')[0]);
             checkUploadForm = function () {
                 return aclfileupload.check();
@@ -196,6 +196,23 @@
                     <!-- ko if: nameError -->
                     <span class="help-block">
                         <g:message code="aclpolicy.file.upload.name.is.required"/>
+                    </span>
+                    <!-- /ko -->
+                </div>
+            </div>
+
+            <div class="form-group" data-bind="css: {'has-error':overwriteError}">
+
+                <div class="col-sm-10 col-sm-offset-2">
+                    <div class="checkbox">
+                        <label>
+                            <g:checkBox name="overwrite" value="true" checked="false" data-bind="checked: overwrite"/>
+                            <g:message code="aclpolicy.file.upload.overwrite.label"/>
+                        </label>
+                    </div>
+                    <!-- ko if: overwriteError -->
+                    <span class="help-block">
+                        A Policy already exists with the specified name
                     </span>
                     <!-- /ko -->
                 </div>

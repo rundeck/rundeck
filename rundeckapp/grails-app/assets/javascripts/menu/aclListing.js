@@ -27,9 +27,25 @@ function PolicyUpload(data) {
     self.uploadField = ko.observable(data.uploadField);
     self.name = ko.observable(data.name);
     self.nameError = ko.observable(false);
+    self.overwriteError = ko.observable(false);
+    self.overwrite = ko.observable(false);
+    self.policies = ko.observableArray(data.policies);
     self.check = function () {
         self.nameError(!self.name());
-        return !self.nameError();
+
+        if (!self.nameError() && !self.overwrite()) {
+            //check existing policies
+            self.overwriteError(
+                ko.utils.arrayFirst(self.policies(), function (val) {
+                    return val.name() === self.name();
+                }) !== null
+            );
+        }
+        if (self.overwrite()) {
+            self.overwriteError(false);
+        }
+
+        return !self.nameError() && !self.overwriteError();
     };
     self.fileChanged = function (obj, event) {
         var files = event.currentTarget.files;

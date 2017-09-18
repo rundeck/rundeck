@@ -1262,7 +1262,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             )
         }
         if (input.upload) {
-            input.create = true
             if (!(request instanceof MultipartHttpServletRequest)) {
                 response.status = HttpServletResponse.SC_BAD_REQUEST
                 return renderErrorView("Expected multipart file upload request")
@@ -1278,7 +1277,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (!params.project) {
             return renderErrorView('Project parameter is required')
         }
-        def requiredAuth = input.create ? AuthConstants.ACTION_CREATE : AuthConstants.ACTION_UPDATE
+
+        def project = frameworkService.getFrameworkProject(params.project)
+        def resPath = 'acls/' + input.file
+        def resourceExists = project.existsFileResource(resPath)
+        def requiredAuth = (input.upload && !resourceExists || input.create) ? AuthConstants.ACTION_CREATE :
+                AuthConstants.ACTION_UPDATE
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAny(
                         authContext,
@@ -1289,13 +1293,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )) {
             return
         }
-        def project = frameworkService.getFrameworkProject(params.project)
-        if (notFoundResponse(project, 'Project', params.project)) {
-            return
-        }
-        def resPath = 'acls/' + input.file
-        def resourceExists = project.existsFileResource(resPath)
-        if (input.create && resourceExists) {
+        if ((input.create || input.upload && !input.overwrite) && resourceExists) {
             //TODO: overwrite flag
             input.errors.rejectValue(
                     'file',
@@ -1304,16 +1302,22 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     "Policy Name already exists: {0}"
             )
             response.status = HttpServletResponse.SC_CONFLICT
+            request.errors = input.errors
             return renderInvalid()
         }
-        if (!input.create && notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, input.file)) {
+        if (!input.create && !input.upload &&
+                notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, input.file)) {
             return
         }
         def error = false
         //validate
 
         String fileText = input.fileText
-        def validation = authorizationService.validateYamlPolicy(project.name, resPath, fileText)
+        def validation = authorizationService.validateYamlPolicy(
+                project.name,
+                input.upload ? 'uploaded-file' : resPath,
+                fileText
+        )
         if (!validation.valid) {
             request.error = "Validation failed"
             return renderInvalid(validation: validation)
