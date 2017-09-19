@@ -1587,7 +1587,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
             input.fileText = new String(input.uploadFile.bytes, 'UTF-8')
         }
-        if (!input.validate()) {
+        input.validate()
+        if (!input.id && !input.name) {
+            input.errors.rejectValue('id', 'blank', ['id'].toArray(), null)
+        }
+        if (input.hasErrors()) {
             request.errors = input.errors
             return renderInvalid()
         }
@@ -1599,14 +1603,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (input.fileType == 'fs') {
             //look on filesys
             def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
-            def file = new File(fwkConfigDir, input.name)
+            def file = new File(fwkConfigDir, input.createId())
             exists = file.isFile()
             if (exists) {
                 size = file.length()
             }
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = authorizationService.existsPolicyFile(input.name)
+            exists = authorizationService.existsPolicyFile(input.createId())
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def requiredAuth = (input.upload && !exists || input.create) ? AuthConstants.ACTION_CREATE :
@@ -1625,10 +1629,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             input.errors.rejectValue(
                     'file',
                     'policy.create.conflict',
-                    [input.name].toArray(),
+                    [input.createName()].toArray(),
                     "Policy Name already exists: {0}"
             )
-        } else if (!input.create && !input.upload && notFoundResponse(exists, 'System ACL Policy', input.name)) {
+        } else if (!input.create && !input.upload &&
+                notFoundResponse(exists, 'System ACL Policy', input.createName())) {
             return
         }
         if (input.errors.hasErrors()) {
@@ -1636,24 +1641,25 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         String fileText = input.fileText
-        def validation = authorizationService.validateYamlPolicy(input.upload ? 'uploaded-file' : input.name, fileText)
+        def validation = authorizationService.validateYamlPolicy(input.upload ? 'uploaded-file' : input.id, fileText)
         if (!validation.valid) {
             request.error = "Validation failed"
             return renderInvalid(validation: validation)
         }
+        storeCachedPolicyMeta(null, input.fileType, input.createId(), policyMetaFromValidation(validation))
         //store
         if (input.fileType == 'fs') {
             //store on filesys
             def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
-            def file = new File(fwkConfigDir, input.name)
+            def file = new File(fwkConfigDir, input.createId())
             file.text = fileText
             flash.storedSize = file.length()
-            flash.storedFile = input.name
+            flash.storedFile = input.createName()
             flash.storedType = input.fileType
         } else if (input.fileType == 'storage') {
             //store in storage
-            flash.storedSize = authorizationService.storePolicyFileContents(input.name, fileText)
-            flash.storedFile = input.name
+            flash.storedSize = authorizationService.storePolicyFileContents(input.createId(), fileText)
+            flash.storedFile = input.createName()
             flash.storedType = input.fileType
         }
         return redirect(controller: 'menu', action: 'acls')
