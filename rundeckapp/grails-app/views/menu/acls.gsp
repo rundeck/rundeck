@@ -155,9 +155,8 @@
                 <div class="panel-heading clearfix">
                     <span class="panel-title pull-left">
                         <span class="text-info">${aclFileList.size()}</span>
-                        <g:message
-                                code="list.of.acl.policy.files.in.directory"/>
-                        <code>${fwkConfigDir.absolutePath}</code>:
+                        <g:message code="list.of.acl.policy.files.in.directory"/>
+                        <code>${fwkConfigDir.absolutePath}</code>
                     </span>
                     <g:if test="${hasCreateAuth}">
                         <div class="btn-group pull-right">
@@ -293,7 +292,7 @@
                     </div>
 
                     <div class="panel-body">
-                        Location: <code>${fwkConfigDir.absolutePath}</code>
+                        <g:message code="title.location.prompt" /><code>${fwkConfigDir.absolutePath}</code>
 
                         <div class="grid">
                             <div data-bind="foreach: policyFiles().policies">
