@@ -1651,10 +1651,18 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             //store on filesys
             def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
             def file = new File(fwkConfigDir, input.createId())
-            file.text = fileText
-            flash.storedSize = file.length()
-            flash.storedFile = input.createName()
-            flash.storedType = input.fileType
+
+            try {
+                file.text = fileText
+
+                flash.storedSize = file.length()
+                flash.storedFile = input.createName()
+                flash.storedType = input.fileType
+            } catch (IOException exc) {
+                flash.error = "Failed saving file: $exc"
+                return renderInvalid()
+            }
+
         } else if (input.fileType == 'storage') {
             //store in storage
             flash.storedSize = authorizationService.storePolicyFileContents(input.createId(), fileText)
