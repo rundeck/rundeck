@@ -119,7 +119,7 @@
     <g:embedJSON id="aclStoredList"
                  data="${[policies: aclStoredList.collect {
                      it +
-                             (flash.storedFile == it &&
+                             (flash.storedFile == it.name &&
                                      flash.storedType ==
                                      'storage' ? [wasSaved: true, savedSize: flash.storedSize] : [:])
                  }]}"/>
@@ -173,10 +173,10 @@
                     </g:if>
                 </div>
 
-                <div class="panel-body" id="fsPolicies">
+                <div class="panel-body panel-content-embed" id="fsPolicies">
 
-                    <div class="grid">
-                        <div data-bind="foreach: policies">
+                    <table class="table table-hover table-condensed table-embed">
+                        <tbody data-bind="foreach: policies">
                             <g:render template="/menu/aclValidationRowKO"
                                       model="${[
                                               hasEditAuth  : hasEditAuth,
@@ -188,10 +188,10 @@
                                               uploadModalId: 'aclFSUpload',
                                       ]}"/>
 
-                        </div>
+                        </tbody>
 
 
-                    </div>
+                    </table>
                 </div>
 
                 <g:render template="/menu/aclManageKO" model="[
@@ -229,9 +229,9 @@
                 </g:if>
             </div>
 
-            <div class="panel-body" id="storedPolicies">
-                <div class="grid">
-                    <div data-bind="foreach: policies">
+            <div class="panel-body panel-content-embed" id="storedPolicies">
+                <table class="table table-hover table-condensed table-embed">
+                    <tbody data-bind="foreach: policies">
                         <g:render template="/menu/aclValidationRowKO"
                                   model="${[
                                           hasEditAuth  : hasEditAuth,
@@ -243,11 +243,11 @@
                                           uploadModalId: 'aclStorageUpload',
                                   ]}"/>
 
-                    </div>
+                    </tbody>
 
 
 
-                </div>
+                </table>
             </div>
             <g:render template="/menu/aclManageKO" model="[
                     deleteModalId: 'deleteStorageAclPolicy',

@@ -136,9 +136,9 @@
                 </g:if>
             </div>
 
-            <div class="panel-body" id="policyList">
-                <div class="grid">
-                    <div data-bind="foreach: policies">
+            <div class="panel-body panel-content-embed" id="policyList">
+                <table class="table table-hover table-condensed table-embed ">
+                    <tbody data-bind="foreach: policies">
                         <g:render template="/menu/aclValidationRowKO"
                                   model="${[
                                           hasEditAuth  : hasEditAuth,
@@ -152,10 +152,8 @@
 
                                   ]}"/>
 
-                    </div>
-
-
-                </div>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

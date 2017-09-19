@@ -14,23 +14,12 @@
   - limitations under the License.
   --}%
 
-<script type="text/html" id="acl-policy-ident">
-<span data-bind="if: valid">
-
-    <g:icon name="file"/>
-</span>
-<span data-bind="if: !valid()">
-
-    <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
-       title="${message(code: "aclpolicy.format.validation.failed")}"></i>
-</span>
-<span data-bind="text: name"></span>
-</script>
 %{--KO template--}%
+<g:render template="aclListItemKO"/>
 <g:render template="aclValidationReportKO"/>
 
-<div class="grid-row">
-    <div class="grid-cell hover-action-holder">
+<tr data-bind="css: {'flash_info':wasSaved}">
+    <td class=" hover-action-holder">
         <g:if test="${hasEditAuth}">
             <a href="${editHref}" class=" btn btn-link textbtn-info " data-bind="urlPathParam: id" title="Edit">
 
@@ -79,27 +68,28 @@
         <!-- ko if: meta() && meta().count && meta().count > 1 -->
         <span class="text-muted">(<span data-bind="text: meta().count"></span> Policies)</span>
         <!-- /ko -->
+    </td>
+
+    <td style="width: 100px">
         <!-- ko if: wasSaved -->
-        <span class="badge badge-default flash_info" data-bind="messageTemplate: savedSize">
-            <g:message code="file.was.saved.flash.message.0"/>
+        <span class="text-info">
+            <g:icon name="saved"/>
+            <g:message code="file.was.saved.flash.message"/>
         </span>
         <!-- /ko -->
-    </div>
-
-    <div class="grid-cell">
         <span data-bind="if: !valid()">
             <span class="text-warning btn btn-link" data-bind="click: toggleShowValidation">
                 <g:message code="validation.error"/>
                 <i class="glyphicon" data-bind="css: {'glyphicon-chevron-right':!showValidation(), 'glyphicon-chevron-down':showValidation()}"></i>
             </span>
         </span>
-    </div>
-</div>
+    </td>
+</tr>
 
-<div class="" data-bind="if: !valid()">
-    <div style="display: inline-block" data-bind="visible: showValidation">
+<tr class="" data-bind="if: !valid()">
+    <td style="display: inline-block" data-bind="visible: showValidation" colspan="2">
         <div class="well well-sm inline">
             <span data-bind="template: { name: 'acl-policy-validation', data:$data }"></span>
         </div>
-    </div>
-</div>
+    </td>
+</tr>
