@@ -1110,7 +1110,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def value = session.menu_acl_data_cache?.get(key)?.get(name)
         if (!value && gen != null) {
             value = gen()
-            System.err.println("generate for ${key}; $value")
             if (value != null) {
                 storeCachedPolicyMeta(project, type, name, value)
             }
