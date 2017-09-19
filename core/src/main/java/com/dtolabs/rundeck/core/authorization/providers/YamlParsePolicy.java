@@ -449,6 +449,11 @@ public class YamlParsePolicy implements Policy {
     }
 
     @Override
+    public String getDescription() {
+        return policyDoc.getDescription();
+    }
+
+    @Override
     public EnvironmentalContext getEnvironment() {
         return environment.toBasic();
     }
@@ -594,6 +599,31 @@ public class YamlParsePolicy implements Policy {
 
     }
 
+    public static Iterable<ACLPolicyDoc> documentIterable(final Iterable<Object> iterator) {
+        return documentIterable(iterator.iterator());
+    }
+
+    public static Iterable<ACLPolicyDoc> documentIterable(final Iterator<Object> iterator) {
+        return () -> new Iterator<ACLPolicyDoc>() {
+
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public ACLPolicyDoc next() {
+                Object next = iterator.next();
+
+                if (next == null) {
+                    return null;
+                }
+
+                return (ACLPolicyDoc) next;
+            }
+
+        };
+    }
 
     static YamlPolicyCollection.YamlSourceLoader<ACLPolicyDoc> loader(
             final YamlSource source1,
@@ -604,8 +634,12 @@ public class YamlParsePolicy implements Policy {
             @Override
             public Iterable<ACLPolicyDoc> loadAll() throws IOException {
                 final Yaml yaml = new Yaml(new YamlPolicyDocConstructor());
-                Iterable<Object> objects = source1.loadAll(yaml);
-                Iterator<Object> iterator = objects.iterator();
+                Iterable<ACLPolicyDoc> objects = source1.loadAll(yaml);
+                Iterator<ACLPolicyDoc> iterator = objects.iterator();
+                return documentIterable(iterator);
+            }
+
+            public Iterable<ACLPolicyDoc> documentIterable(final Iterator<ACLPolicyDoc> iterator) {
                 return new Iterable<ACLPolicyDoc>() {
                     @Override
                     public Iterator<ACLPolicyDoc> iterator() {
@@ -624,7 +658,6 @@ public class YamlParsePolicy implements Policy {
                                 try {
                                     next = iterator.next();
                                 } catch (ConstructorException e) {
-                                    e.printStackTrace();
                                     if (null != validation) {
                                         validation.addError(
                                                 currentIdentity(),
@@ -633,7 +666,6 @@ public class YamlParsePolicy implements Policy {
                                     }
                                     return null;
                                 } catch (YAMLException e) {
-                                    e.printStackTrace();
                                     if (null != validation) {
                                         validation.addError(
                                                 currentIdentity(),
@@ -664,6 +696,7 @@ public class YamlParsePolicy implements Policy {
                     }
                 };
             }
+
 
             @Override
             public void close() throws IOException {

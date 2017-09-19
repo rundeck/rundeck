@@ -34,5 +34,9 @@ public interface PolicyCollection extends AclRuleSetSource {
 
     public long countPolicies() ;
 
+    /**
+     * @return policies
+     */
+    public Collection<Policy> getPolicies();
 
 }

@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
+import com.dtolabs.rundeck.app.support.AclFile
 import com.dtolabs.rundeck.app.support.BaseQuery
 import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.QueueQuery
@@ -46,7 +47,6 @@ import org.grails.plugins.metricsweb.MetricService
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
-import org.springframework.web.multipart.MultipartRequest
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
@@ -66,6 +66,7 @@ import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
+import rundeck.services.authorization.PoliciesValidation
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
@@ -1091,6 +1092,32 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return redirect(action: 'acls', params: params)
     }
 
+    private Map storeCachedPolicyMeta(String project, String type, String name, Map meta) {
+        String key = project ? "proj:$project" : type
+        if (null == session.menu_acl_data_cache) {
+            session.menu_acl_data_cache = [:]
+        }
+        if (null == session.menu_acl_data_cache[key]) {
+            session.menu_acl_data_cache[key] = [:]
+        }
+        session.menu_acl_data_cache[key][name] = meta
+        meta
+    }
+
+    private Map getCachedPolicyMeta(String name, String project, String type, Closure gen = null) {
+        String key = project ? "proj:$project" : type
+
+        def value = session.menu_acl_data_cache?.get(key)?.get(name)
+        if (!value && gen != null) {
+            value = gen()
+            System.err.println("generate for ${key}; $value")
+            if (value != null) {
+                storeCachedPolicyMeta(project, type, name, value)
+            }
+        }
+        value
+    }
+
     def projectAcls() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -1115,10 +1142,37 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ]
     }
 
+    private PoliciesValidation loadProjectPolicy(IRundeckProject fwkProject, String ident) {
+        def baos = new ByteArrayOutputStream()
+        fwkProject.loadFileResource('acls/' + ident, baos)
+        def fileText = baos.toString('UTF-8')
+        authorizationService.validateYamlPolicy(fwkProject.name, ident, fileText)
+    }
+
+    private Map policyMetaFromValidation(PoliciesValidation policiesvalidation) {
+        def meta = [:]
+        if (policiesvalidation?.policies?.policies) {
+            meta.description = policiesvalidation?.policies?.policies?.first()?.description
+        }
+        if (policiesvalidation?.policies?.countPolicies()) {
+            meta.count = policiesvalidation?.policies?.countPolicies()
+        }
+        meta ?: null
+    }
+
     private List<Map> listProjectAclFiles(IRundeckProject project) {
         def projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
             def id = it.replaceAll(/^acls\//, '')
-            [id: id, name: id.replaceFirst(/\.aclpolicy$/, '')]
+            Map meta = getCachedPolicyMeta(id, project.name, null) {
+                def policy = loadProjectPolicy(project, id)
+                def meta = policyMetaFromValidation(policy)
+                meta
+            }
+            [
+                    id  : id,
+                    name: AclFile.idToName(id),
+                    meta: (meta ?: [:])
+            ]
         }
         projectlist
     }
@@ -1146,7 +1200,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def editProjectAclFile(ProjAclFile input) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
-        if (!params.project) {
+        def project = params.project
+        if (!project) {
             return renderErrorView('Project parameter is required')
         }
         input.validate()
@@ -1160,30 +1215,34 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAny(
                         authContext,
-                        frameworkService.authResourceForProjectAcl(params.project),
+                        frameworkService.authResourceForProjectAcl(project),
                         [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN]
                 ),
-                AuthConstants.ACTION_UPDATE, 'ACL for Project', params.project
+                AuthConstants.ACTION_UPDATE, 'ACL for Project', project
         )) {
             return
         }
-        def project = frameworkService.getFrameworkProject(params.project)
+        def fwkProject = frameworkService.getFrameworkProject(project)
         def resPath = 'acls/' + input.id
-        def resourceExists = project.existsFileResource(resPath)
+        def resourceExists = fwkProject.existsFileResource(resPath)
 
-        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, input.id)) {
+        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + project, input.id)) {
             return
         }
         def baos = new ByteArrayOutputStream()
-        def size = project.loadFileResource(resPath, baos)
+        def size = fwkProject.loadFileResource(resPath, baos)
         def fileText = baos.toString('UTF-8')
-        //todo: validate doc, cache description from parsed policie(s)
+        def policiesvalidation = loadProjectPolicy(fwkProject, input.id)
         [
-                fileText: fileText,
-                id      : input.id,
-                name    : input.idToName(),
-                project : params.project,
-                size    : size
+                fileText  : fileText,
+                id        : input.id,
+                name      : input.idToName(),
+                project   : project,
+                size      : size,
+                validation: policiesvalidation,
+                meta      : getCachedPolicyMeta(input.id, project, null) {
+                    policyMetaFromValidation(policiesvalidation)
+                }
         ]
     }
 
@@ -1335,6 +1394,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             request.error = "Validation failed"
             return renderInvalid(validation: validation)
         }
+        storeCachedPolicyMeta(project.name, null, input.createId(), policyMetaFromValidation(validation))
         //store
         try {
             def size = project.storeFileResource(resPath, new ByteArrayInputStream(fileText.getBytes('UTF-8')))
@@ -1360,19 +1420,52 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         systemAclsModel()
     }
 
+    private loadSystemPolicyFS(String fname) {
+        def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
+        def file = new File(fwkConfigDir, fname)
+        authorizationService.validateYamlPolicy(null, fname, file)
+    }
+
+    private loadSystemPolicyStorage(String fname) {
+        def exists = authorizationService.existsPolicyFile(fname)
+        if (exists) {
+            return authorizationService.validateYamlPolicy(
+                    null,
+                    fname,
+                    authorizationService.getPolicyFileContents(fname)
+            )
+        }
+        null
+    }
     private Map systemAclsModel() {
         def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
-        def list = fwkConfigDir.listFiles().grep { it.name =~ /\.aclpolicy$/ }.sort()
-        def stored = authorizationService.listStoredPolicyFiles()
-        Map<File, Validation> validation = list.collectEntries {
-            [it, authorizationService.validateYamlPolicy(it)]
+        def fslist = fwkConfigDir.listFiles().grep { it.name =~ /\.aclpolicy$/ }.sort().collect { file ->
+            def validation = loadSystemPolicyFS(file.name)
+            [
+                    id        : file.name,
+                    name      : AclFile.idToName(file.name),
+                    meta      : getCachedPolicyMeta(file.name, null, 'fs') {
+                        policyMetaFromValidation(validation)
+                    },
+                    validation: validation?.errors,
+                    valid     : validation?.valid
+            ]
+        }
+        def stored = authorizationService.listStoredPolicyFiles().collect { fname ->
+            [
+                    id   : fname,
+                    name : AclFile.idToName(fname),
+                    meta : getCachedPolicyMeta(fname, null, 'storage') {
+                        policyMetaFromValidation(loadSystemPolicyStorage(fname))
+                    },
+                    valid: true
+            ]
         }
 
         [
                 fwkConfigDir : fwkConfigDir,
-                aclFileList  : list,
+                aclFileList  : fslist,
                 aclStoredList: stored,
-                validations  : validation,
                 clusterMode  : isClusterModeAclsLocalFileEditDisabled()
         ]
     }

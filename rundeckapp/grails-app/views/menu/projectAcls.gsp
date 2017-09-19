@@ -85,9 +85,7 @@
 
     </script>
     <g:embedJSON data="${[policies: acllist.collect {
-        [name: it.name,id:it.id, valid: true, description: descriptions?.get(
-                it.id
-        )] + (flash.storedFile == it.id ? [wasSaved: true, savedSize: flash.storedSize] : [:])
+        [name: it.name,id:it.id, valid: true, meta: it.meta] + (flash.storedFile == it.id ? [wasSaved: true, savedSize: flash.storedSize] : [:])
     }]}" id="aclPolicyList"/>
     <g:embedJSON id="uploadedPolicy"
                  data="${hasUploadValidationError ?

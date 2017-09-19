@@ -72,6 +72,13 @@
                 </bs:dropdown>
             </span>
         </g:if>
+        <!-- ko if: meta() && meta().description -->
+        <span class="text-muted" data-bind="text: meta().description">
+        </span>
+        <!-- /ko -->
+        <!-- ko if: meta() && meta().count && meta().count > 1 -->
+        <span class="text-muted">(<span data-bind="text: meta().count"></span> Policies)</span>
+        <!-- /ko -->
         <!-- ko if: wasSaved -->
         <span class="badge badge-default flash_info" data-bind="messageTemplate: savedSize">
             <g:message code="file.was.saved.flash.message.0"/>

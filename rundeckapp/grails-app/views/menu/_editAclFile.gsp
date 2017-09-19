@@ -112,7 +112,7 @@
                 </g:if>
             </div>
         </div>
-        <g:if test="${validation}">
+        <g:if test="${validation && !validation.valid}">
             <h3>
                 <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
                    title="${message(code: "aclpolicy.format.validation.failed")}"></i>

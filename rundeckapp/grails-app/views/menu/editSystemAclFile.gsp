@@ -59,7 +59,7 @@
 
 <div class="row">
     <g:form action="saveSystemAclFile" method="post"
-            params="${[project: params.project, file: file, fileType: fileType]}"
+            params="${[project: params.project, id: id, fileType: fileType]}"
             useToken="true"
             class="form-horizontal">
         <div class="col-sm-10 col-sm-offset-1">
@@ -67,7 +67,7 @@
                     backHref                : g.createLink(controller:'menu',action:'acls'),
                     title                   : g.message(code: 'edit.system.acl.file'),
                     primaryLabel            : g.message(code: 'policy.name.label.prompt'),
-                    primaryValue            : file,
+                    primaryValue            : name,
                     secondaryLabel          : g.message(code: 'system.acl.location.prompt'),
                     secondaryValue          : g.message(code: 'system.acl.location.type.' + fileType + '.label'),
                     fileText                : fileText,

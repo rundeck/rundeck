@@ -32,10 +32,25 @@ class AclFile {
         id(nullable: true, matches: /^(?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][a-zA-Z0-9,\.+_-]*\.aclpolicy$$/)
     }
 
+    /**
+     * @return name from the id
+     */
     String idToName() {
+        idToName(id)
+    }
+
+    /**
+     * Convert a *.aclpolicy id into just the name
+     * @param id file name with extension
+     * @return base name
+     */
+    static String idToName(String id) {
         id?.replaceFirst(/\.aclpolicy$/, '')
     }
 
+    /**
+     * @return name with extension
+     */
     String nameToId() {
         name ? (name + '.aclpolicy') : null
     }

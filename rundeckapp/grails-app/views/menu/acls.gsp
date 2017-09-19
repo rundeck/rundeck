@@ -109,11 +109,7 @@
     %{--file system acl policies list--}%
     <g:embedJSON id="aclFileList"
                  data="${[policies: aclFileList.collect {
-                     [id: it.name,
-                      name: it.name.replaceAll(/\.aclpolicy$/,''),
-                      valid: validations[it] ? validations[it].valid : true,
-                      validation: validations[it]?.errors] +
-                             (flash.storedFile == it.name &&
+                     it + (flash.storedFile == it.name &&
                                      flash.storedType ==
                                      'fs' ? [wasSaved: true, savedSize: flash.storedSize] :
                                      [:])
@@ -122,7 +118,7 @@
     %{--storage acl policies list --}%
     <g:embedJSON id="aclStoredList"
                  data="${[policies: aclStoredList.collect {
-                     [id: it, name: it.replaceAll(/\.aclpolicy$/,''), valid: true,] +
+                     it +
                              (flash.storedFile == it &&
                                      flash.storedType ==
                                      'storage' ? [wasSaved: true, savedSize: flash.storedSize] : [:])

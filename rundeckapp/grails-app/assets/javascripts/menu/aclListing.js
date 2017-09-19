@@ -106,6 +106,7 @@ function PolicyDocument(data) {
     self.savedSize = ko.observable(data.savedSize);
     self.showValidation = ko.observable(false);
     self.validation = ko.observable(data.validation);
+    self.meta = ko.observable(data.meta);
 
     self.toggleShowValidation = function () {
         self.showValidation(!self.showValidation());
