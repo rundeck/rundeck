@@ -58,6 +58,11 @@
                 <div class="col-sm-10">
                     <input class="form-control" type="text" name="${createField}" value="${createFieldValue}"/>
                     <g:hiddenField name="create" value="true"/>
+                    <g:if test="${createFieldHelpCode}">
+                        <div class="help-block">
+                            <g:message code="${createFieldHelpCode}"/>
+                        </div>
+                    </g:if>
                     <g:if test="${input?.errors?.hasFieldErrors(createField)}">
 
                         <div class="help-block">

@@ -1108,17 +1108,17 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         def project = frameworkService.getFrameworkProject(params.project)
-        List<String> projectlist = listProjectAclFiles(project)
+        List<Map> projectlist = listProjectAclFiles(project)
         [
-                rundeckFramework: frameworkService.rundeckFramework,
                 assumeValid     : true,
                 acllist         : projectlist,
         ]
     }
 
-    private List<String> listProjectAclFiles(IRundeckProject project) {
+    private List<Map> listProjectAclFiles(IRundeckProject project) {
         def projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
-            it.replaceAll(/^acls\//, '')
+            def id = it.replaceAll(/^acls\//, '')
+            [id: id, name: id.replaceFirst(/\.aclpolicy$/, '')]
         }
         projectlist
     }
@@ -1143,14 +1143,19 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         [project: params.project]
     }
 
-    def editProjectAclFile() {
+    def editProjectAclFile(ProjAclFile input) {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (!params.project) {
             return renderErrorView('Project parameter is required')
         }
-        if (!params.file) {
-            return renderErrorView('file parameter is required')
+        input.validate()
+        if(!input.id) {
+            input.errors.rejectValue('id', 'blank',['id'].toArray(),null)
+        }
+        if (input.hasErrors()) {
+            request.errors = input.errors
+            return renderErrorView([:])
         }
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAny(
@@ -1163,20 +1168,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         def project = frameworkService.getFrameworkProject(params.project)
-        if (notFoundResponse(project, 'Project', params.project)) {
-            return
-        }
-        def resPath = 'acls/' + params.file
+        def resPath = 'acls/' + input.id
         def resourceExists = project.existsFileResource(resPath)
 
-        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, params.file)) {
+        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, input.id)) {
             return
         }
         def baos = new ByteArrayOutputStream()
         def size = project.loadFileResource(resPath, baos)
+        def fileText = baos.toString('UTF-8')
+        //todo: validate doc, cache description from parsed policie(s)
         [
-                fileText: baos.toString('UTF-8'),
-                file    : params.file,
+                fileText: fileText,
+                id      : input.id,
+                name    : input.idToName(),
                 project : params.project,
                 size    : size
         ]
@@ -1189,7 +1194,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (!requestHasValidToken()) {
             return
         }
-        if (!input.validate()) {
+        input.validate()
+        if(!input.id) {
+            input.errors.rejectValue('id', 'blank',['id'].toArray(),null)
+        }
+        if (input.hasErrors()) {
             request.errors = input.errors
             return renderErrorView()
         }
@@ -1213,18 +1222,18 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (notFoundResponse(project, 'Project', params.project)) {
             return
         }
-        def resPath = 'acls/' + input.file
+        def resPath = 'acls/' + input.id
         def resourceExists = project.existsFileResource(resPath)
 
-        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, input.file)) {
+        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, input.id)) {
             return
         }
         //store
         try {
             if (project.deleteFileResource(resPath)) {
-                flash.message = input.file + " was deleted"
+                flash.message = input.id + " was deleted"
             } else {
-                flash.error = input.file + " was NOT deleted"
+                flash.error = input.id + " was NOT deleted"
             }
         } catch (IOException e) {
             log.error("Error deleting project acl: $resPath: $e.message", e)
@@ -1255,7 +1264,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     [
                             input   : input,
                             fileText: input.fileText,
-                            file    : input.file,
+                            id      : input.id,
+                            name    : input.name,
                             project : params.project,
                             size    : input.fileText?.length(),
                     ] + model
@@ -1268,7 +1278,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
             input.fileText = new String(input.uploadFile.bytes, 'UTF-8')
         }
-        if (!input.validate()) {
+        input.validate()
+        if(!input.id && !input.name) {
+            input.errors.rejectValue('id', 'blank',['id'].toArray(),null)
+        }
+        if (input.hasErrors()) {
             request.errors = input.errors
             return renderInvalid()
         }
@@ -1279,7 +1293,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         def project = frameworkService.getFrameworkProject(params.project)
-        def resPath = 'acls/' + input.file
+        def resPath = 'acls/' + input.createId()
         def resourceExists = project.existsFileResource(resPath)
         def requiredAuth = (input.upload && !resourceExists || input.create) ? AuthConstants.ACTION_CREATE :
                 AuthConstants.ACTION_UPDATE
@@ -1295,17 +1309,17 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if ((input.create || input.upload && !input.overwrite) && resourceExists) {
             input.errors.rejectValue(
-                    'file',
+                    'name',
                     'policy.create.conflict',
-                    [input.file].toArray(),
-                    "Policy Name already exists: {0}"
+                    [input.createName()].toArray(),
+                    "ACL Policy already exists: {0}"
             )
             response.status = HttpServletResponse.SC_CONFLICT
             request.errors = input.errors
             return renderInvalid()
         }
         if (!input.create && !input.upload &&
-                notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, input.file)) {
+                notFoundResponse(resourceExists, 'ACL Policy in Project: ' + params.project, input.createName())) {
             return
         }
         def error = false
@@ -1324,7 +1338,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //store
         try {
             def size = project.storeFileResource(resPath, new ByteArrayInputStream(fileText.getBytes('UTF-8')))
-            flash.storedFile = input.file
+            flash.storedFile = input.createId()
             flash.storedSize = size
         } catch (IOException e) {
             log.error("Error storing project acl: $resPath: $e.message", e)
@@ -1394,7 +1408,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def editSystemAclFile(SysAclFile input) {
-        if (!input.validate()) {
+        input.validate()
+        if(!input.id) {
+            input.errors.rejectValue('id', 'blank',['id'].toArray(),null)
+        }
+        if (input.hasErrors()) {
             request.errors = input.errors
             return renderErrorView([:])
         }
@@ -1420,7 +1438,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (input.fileType == 'fs') {
             //look on filesys
             def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
-            def file = new File(fwkConfigDir, input.file)
+            def file = new File(fwkConfigDir, input.id)
             exists = file.isFile()
             if (exists) {
                 size = file.length()
@@ -1428,19 +1446,20 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             }
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = authorizationService.existsPolicyFile(input.file)
+            exists = authorizationService.existsPolicyFile(input.id)
             if (exists) {
-                fileText = authorizationService.getPolicyFileContents(input.file)
+                fileText = authorizationService.getPolicyFileContents(input.id)
                 size = fileText.length()
             }
         }
-        if (notFoundResponse(exists, "System ACL Policy File", input.file)) {
+        if (notFoundResponse(exists, "System ACL Policy File", input.id)) {
             return
         }
 
         [
                 fileText: fileText,
-                file    : input.file,
+                id      : input.id,
+                name    : input.idToName(),
                 fileType: input.fileType,
                 size    : size
         ]
@@ -1461,7 +1480,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     [
                             input   : input,
                             fileText: input.fileText,
-                            file    : input.file,
+                            file    : input.name,
                             fileType: input.fileType,
                             size    : input.fileText?.length(),
                     ] + model
@@ -1487,14 +1506,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (input.fileType == 'fs') {
             //look on filesys
             def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
-            def file = new File(fwkConfigDir, input.file)
+            def file = new File(fwkConfigDir, input.name)
             exists = file.isFile()
             if (exists) {
                 size = file.length()
             }
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = authorizationService.existsPolicyFile(input.file)
+            exists = authorizationService.existsPolicyFile(input.name)
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def requiredAuth = (input.upload && !exists || input.create) ? AuthConstants.ACTION_CREATE :
@@ -1513,10 +1532,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             input.errors.rejectValue(
                     'file',
                     'policy.create.conflict',
-                    [input.file].toArray(),
+                    [input.name].toArray(),
                     "Policy Name already exists: {0}"
             )
-        } else if (!input.create && !input.upload && notFoundResponse(exists, 'System ACL Policy', input.file)) {
+        } else if (!input.create && !input.upload && notFoundResponse(exists, 'System ACL Policy', input.name)) {
             return
         }
         if (input.errors.hasErrors()) {
@@ -1524,7 +1543,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
 
         String fileText = input.fileText
-        def validation = authorizationService.validateYamlPolicy(input.upload ? 'uploaded-file' : input.file, fileText)
+        def validation = authorizationService.validateYamlPolicy(input.upload ? 'uploaded-file' : input.name, fileText)
         if (!validation.valid) {
             request.error = "Validation failed"
             return renderInvalid(validation: validation)
@@ -1533,15 +1552,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (input.fileType == 'fs') {
             //store on filesys
             def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
-            def file = new File(fwkConfigDir, input.file)
+            def file = new File(fwkConfigDir, input.name)
             file.text = fileText
             flash.storedSize = file.length()
-            flash.storedFile = input.file
+            flash.storedFile = input.name
             flash.storedType = input.fileType
         } else if (input.fileType == 'storage') {
             //store in storage
-            flash.storedSize = authorizationService.storePolicyFileContents(input.file, fileText)
-            flash.storedFile = input.file
+            flash.storedSize = authorizationService.storePolicyFileContents(input.name, fileText)
+            flash.storedFile = input.name
             flash.storedType = input.fileType
         }
         return redirect(controller: 'menu', action: 'acls')
@@ -1568,7 +1587,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
 
-        if (!input.validate()) {
+        input.validate()
+        if(!input.id) {
+            input.errors.rejectValue('id', 'blank',['id'].toArray(),null)
+        }
+        if (input.hasErrors()) {
             request.errors = input.errors
             return renderErrorView()
         }
@@ -1581,31 +1604,31 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (input.fileType == 'fs') {
             //look on filesys
             def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
-            def file = new File(fwkConfigDir, input.file)
+            def file = new File(fwkConfigDir, input.id)
             exists = file.isFile()
             if (exists) {
                 size = file.length()
             }
         } else if (input.fileType == 'storage') {
             //look in storage
-            exists = authorizationService.existsPolicyFile(input.file)
+            exists = authorizationService.existsPolicyFile(input.id)
         }
 
-        if (notFoundResponse(exists, 'System ACL Policy', input.file)) {
+        if (notFoundResponse(exists, 'System ACL Policy', input.id)) {
             return
         }
         if (input.fileType == 'fs') {
             //store on filesys
             def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
-            def file = new File(fwkConfigDir, input.file)
+            def file = new File(fwkConfigDir, input.id)
             file.delete()
-            flash.message = "Policy was deleted: " + input.file
+            flash.message = "Policy was deleted: " + input.id
         } else if (input.fileType == 'storage') {
             //store in storage
-            if (authorizationService.deletePolicyFile(input.file)) {
-                flash.message = "Policy was deleted: " + input.file
+            if (authorizationService.deletePolicyFile(input.id)) {
+                flash.message = "Policy was deleted: " + input.id
             } else {
-                flash.error = "Policy was NOT deleted: " + input.file
+                flash.error = "Policy was NOT deleted: " + input.id
             }
         }
         return redirect(controller: 'menu', action: 'acls')

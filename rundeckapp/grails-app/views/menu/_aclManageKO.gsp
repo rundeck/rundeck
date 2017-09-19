@@ -47,7 +47,7 @@
 
                             <span data-bind="template: { name: 'acl-policy-ident', data:selectedPolicy() }"></span>
 
-                            <input type="hidden" name="file" data-bind="value: selectedPolicy().name"/>
+                            <input type="hidden" name="id" data-bind="value: selectedPolicy().id"/>
                         </span>
                     </p>
                 </div>
@@ -77,12 +77,17 @@
                                        message: message(code: 'button.action.Upload'),
                                ]]
             ]">
-                <div class="form-group">
+                <div class="form-group" data-bind="css: {'has-error':fileError} ">
                     <label class="control-label col-sm-2"><g:message code="form.option.optionType.file.label"/></label>
 
                     <div class="col-sm-10">
                         <input type="file" name="uploadFile"
                                data-bind="event: { change: fileChanged }"/>
+                        <!-- ko if: fileError -->
+                        <span class="help-block">
+                            File is required
+                        </span>
+                        <!-- /ko -->
                     </div>
 
                 </div>
@@ -92,10 +97,13 @@
 
                     <div class="col-sm-10">
                         <!-- ko if: !nameFixed() -->
-                        <g:textField name="file" class="form-control" data-bind="value: name"/>
+                        <g:textField name="name" class="form-control" data-bind="value: name"/>
+                        <span class="help-block">
+                            <g:message code="policy.name.description"/>
+                        </span>
                         <!-- /ko -->
                         <!-- ko if: nameFixed() -->
-                        <input type="hidden" name="file" data-bind="value: nameFixed"/>
+                        <input type="hidden" name="id" data-bind="value: nameFixed"/>
 
                         <p class="form-control-static">
                             <g:icon name="file"/>

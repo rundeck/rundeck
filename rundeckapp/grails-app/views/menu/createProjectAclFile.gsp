@@ -74,10 +74,11 @@
                     primaryLabel            : g.message(code: 'project.label.prompt'),
                     primaryValue            : project,
                     fileText                : fileText,
-                    validationDocumentPrefix: 'acls/' + file,
-                    createField             : 'file',
-                    createFieldLabel        : g.message(code: 'file.label.prompt'),
-                    createFieldValue        : file,
+                    validationDocumentPrefix: 'acls/' + id,
+                    createField             : 'name',
+                    createFieldLabel        : g.message(code: 'policy.name.label.prompt'),
+                    createFieldValue        : name,
+                    createFieldHelpCode     : 'policy.name.description',
                     input                   : input
             ]}"/>
         </div>

@@ -85,13 +85,13 @@
 
     </script>
     <g:embedJSON data="${[policies: acllist.collect {
-        [name: it, valid: true, description: descriptions?.get(
-                it
-        )] + (flash.storedFile == it ? [wasSaved: true, savedSize: flash.storedSize] : [:])
+        [name: it.name,id:it.id, valid: true, description: descriptions?.get(
+                it.id
+        )] + (flash.storedFile == it.id ? [wasSaved: true, savedSize: flash.storedSize] : [:])
     }]}" id="aclPolicyList"/>
     <g:embedJSON id="uploadedPolicy"
                  data="${hasUploadValidationError ?
-                         [name: input?.file, valid: validation.valid, validation: validation.errors] :
+                         [id: input?.id,name: input?.name, valid: validation.valid, validation: validation.errors] :
                          [:]}"/>
 </head>
 <body>
@@ -147,7 +147,7 @@
                                           hasDeleteAuth: hasDeleteAuth,
                                           hasCreateAuth: hasCreateAuth,
                                           editHref     : g.createLink(
-                                                  [controller: 'menu', action: 'editProjectAclFile', params: [project: params.project, file: '<$>']]
+                                                  [controller: 'menu', action: 'editProjectAclFile', params: [project: params.project, id: '<$>']]
                                           ),
                                           deleteModalId: 'deleteAclPolicy',
                                           uploadModalId: 'aclUpload',

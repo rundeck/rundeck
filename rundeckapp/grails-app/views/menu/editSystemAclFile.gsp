@@ -66,12 +66,12 @@
             <g:render template="editAclFile" model="${[
                     backHref                : g.createLink(controller:'menu',action:'acls'),
                     title                   : g.message(code: 'edit.system.acl.file'),
-                    primaryLabel            : g.message(code: 'system.acl.location.prompt'),
-                    primaryValue            : g.message(code: 'system.acl.location.type.'+fileType+'.label'),
-                    secondaryLabel          : g.message(code: 'file.label.prompt'),
-                    secondaryValue          : file,
+                    primaryLabel            : g.message(code: 'policy.name.label.prompt'),
+                    primaryValue            : file,
+                    secondaryLabel          : g.message(code: 'system.acl.location.prompt'),
+                    secondaryValue          : g.message(code: 'system.acl.location.type.' + fileType + '.label'),
                     fileText                : fileText,
-                    validationDocumentPrefix: 'acls/' + file,
+                    validationDocumentPrefix: 'acls/' + id,
                     input                   : input
             ]}"/>
         </div>

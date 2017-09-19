@@ -60,19 +60,19 @@
 
 <div class="row">
     <g:form action="saveProjectAclFile" method="post"
-            params="${[project: params.project, file: file]}"
+            params="${[project: params.project, id: id]}"
             useToken="true"
             class="form-horizontal">
         <div class="col-sm-10 col-sm-offset-1">
             <g:render template="editAclFile" model="${[
                     backHref                : g.createLink(controller: 'menu', action: 'projectAcls',params:[project:project]),
                     title                   : g.message(code: 'edit.project.acl.file'),
-                    primaryLabel            : g.message(code: 'project.label.prompt'),
-                    primaryValue            : project,
-                    secondaryLabel          : g.message(code: 'file.label.prompt'),
-                    secondaryValue          : file,
+                    primaryLabel            : g.message(code: 'policy.name.label.prompt'),
+                    primaryValue            : name,
+                    secondaryLabel          : g.message(code: 'project.label.prompt'),
+                    secondaryValue          : project,
                     fileText                : fileText,
-                    validationDocumentPrefix: 'acls/' + file
+                    validationDocumentPrefix: 'acls/' + id
             ]}"/>
         </div>
     </g:form>

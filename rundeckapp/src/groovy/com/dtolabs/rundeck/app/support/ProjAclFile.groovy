@@ -23,10 +23,6 @@ import grails.validation.Validateable
  * @since 9/14/17
  */
 @Validateable
-class ProjAclFile {
-    String file
+class ProjAclFile extends AclFile {
 
-    static constraints = {
-        file(nullable: false, matches: /^(?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][a-zA-Z0-9,\.+_-]*\.aclpolicy$/)
-    }
 }

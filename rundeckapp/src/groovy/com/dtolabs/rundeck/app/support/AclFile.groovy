@@ -20,13 +20,38 @@ import grails.validation.Validateable
 
 /**
  * @author greg
- * @since 9/13/17
+ * @since 9/19/17
  */
-
 @Validateable
-class SysAclFile extends AclFile {
-    String fileType
+class AclFile {
+    String name
+    String id
+
     static constraints = {
-        fileType(nullable: false, inList: ['fs', 'storage'])
+        name(nullable: true, matches: /^(?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][a-zA-Z0-9,\.+_-]*$/)
+        id(nullable: true, matches: /^(?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][a-zA-Z0-9,\.+_-]*\.aclpolicy$$/)
+    }
+
+    String idToName() {
+        id?.replaceFirst(/\.aclpolicy$/, '')
+    }
+
+    String nameToId() {
+        name ? (name + '.aclpolicy') : null
+    }
+
+    /**
+     * Return the id if set, or generate the id from the name
+     * @return
+     */
+    String createId() {
+        id ?: nameToId()
+    }
+    /**
+     * Return the name if set, or get the name from the id
+     * @return
+     */
+    String createName() {
+        name ?: idToName()
     }
 }

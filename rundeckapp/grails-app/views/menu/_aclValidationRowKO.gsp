@@ -32,7 +32,7 @@
 <div class="grid-row">
     <div class="grid-cell hover-action-holder">
         <g:if test="${hasEditAuth}">
-            <a href="${editHref}" class=" btn btn-link textbtn-info " data-bind="urlPathParam: name" title="Edit">
+            <a href="${editHref}" class=" btn btn-link textbtn-info " data-bind="urlPathParam: id" title="Edit">
 
                 <span data-bind="template: { name: 'acl-policy-ident', data:$data }"></span>
 

@@ -27,6 +27,8 @@ function PolicyUpload(data) {
     self.name = ko.observable(data.name);
     self.nameFixed = ko.observable();
     self.nameError = ko.observable(false);
+    self.hasFile = ko.observable(false);
+    self.fileError = ko.observable(false);
     self.overwriteError = ko.observable(false);
     self.overwrite = ko.observable(false);
     self.policies = ko.observableArray(data.policies);
@@ -44,26 +46,45 @@ function PolicyUpload(data) {
         if (self.overwrite()) {
             self.overwriteError(false);
         }
+        self.fileError(!self.hasFile());
 
-        return !self.nameError() && !self.overwriteError();
+        return !self.nameError() && !self.overwriteError() && !self.fileError();
     };
     self.fileChanged = function (obj, event) {
         var files = event.currentTarget.files;
         // console.log("changed: ", files, event);
         if (!self.name() && files.length > 0) {
             var name = files[0].name;
-            // if (name.endsWith('.aclpolicy')) {
-            //     name = name.substr(0, name.length - 10);
-            // }
+            if (name.endsWith('.aclpolicy')) {
+                name = name.substr(0, name.length - 10);
+            }
             self.name(name);
         }
+        self.hasFile(files.length === 1);
     };
+    self.name.subscribe(function (val) {
+        if (val) {
+            self.nameError(false);
+        }
+    });
+    self.overwrite.subscribe(function (val) {
+        if (val) {
+            self.overwriteError(false);
+        }
+    });
+    self.hasFile.subscribe(function (val) {
+        if (val) {
+            self.fileError(false);
+        }
+    });
     self.reset = function () {
         self.name(data.name);
         self.nameFixed(null);
         self.nameError(false);
         self.overwriteError(false);
         self.overwrite(false);
+        self.hasFile(false);
+        self.fileError(false);
     };
     self.showUploadModal = function (id, nameFixed) {
         self.nameFixed(nameFixed);
@@ -78,6 +99,7 @@ function PolicyUpload(data) {
 function PolicyDocument(data) {
     var self = this;
     self.name = ko.observable(data.name);
+    self.id = ko.observable(data.id);
     self.description = ko.observable(data.description);
     self.valid = ko.observable(data.valid);
     self.wasSaved = ko.observable(data.wasSaved ? true : false);

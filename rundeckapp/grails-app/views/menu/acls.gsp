@@ -109,7 +109,9 @@
     %{--file system acl policies list--}%
     <g:embedJSON id="aclFileList"
                  data="${[policies: aclFileList.collect {
-                     [name: it.name, valid: validations[it] ? validations[it].valid : true,
+                     [id: it.name,
+                      name: it.name.replaceAll(/\.aclpolicy$/,''),
+                      valid: validations[it] ? validations[it].valid : true,
                       validation: validations[it]?.errors] +
                              (flash.storedFile == it.name &&
                                      flash.storedType ==
@@ -120,14 +122,14 @@
     %{--storage acl policies list --}%
     <g:embedJSON id="aclStoredList"
                  data="${[policies: aclStoredList.collect {
-                     [name: it, valid: true,] +
+                     [id: it, name: it.replaceAll(/\.aclpolicy$/,''), valid: true,] +
                              (flash.storedFile == it &&
                                      flash.storedType ==
                                      'storage' ? [wasSaved: true, savedSize: flash.storedSize] : [:])
                  }]}"/>
     <g:embedJSON id="uploadedPolicy"
                  data="${hasUploadValidationError ?
-                         [name: input?.file, valid: validation.valid, validation: validation.errors] :
+                         [id: input?.id,name: input?.name, valid: validation.valid, validation: validation.errors] :
                          [:]}"/>
 
 </head>
@@ -184,7 +186,7 @@
                                               hasEditAuth  : hasEditAuth,
                                               hasDeleteAuth: hasDeleteAuth,
                                               editHref     : g.createLink(
-                                                      [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'fs', file: '<$>']]
+                                                      [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'fs', id: '<$>']]
                                               ),
                                               deleteModalId: 'deleteFSAclPolicy',
                                               uploadModalId: 'aclFSUpload',
@@ -239,7 +241,7 @@
                                           hasEditAuth  : hasEditAuth,
                                           hasDeleteAuth: hasDeleteAuth,
                                           editHref     : g.createLink(
-                                                  [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'storage', file: '<$>']]
+                                                  [controller: 'menu', action: 'editSystemAclFile', params: [fileType: 'storage', id: '<$>']]
                                           ),
                                           deleteModalId: 'deleteStorageAclPolicy',
                                           uploadModalId: 'aclStorageUpload',
