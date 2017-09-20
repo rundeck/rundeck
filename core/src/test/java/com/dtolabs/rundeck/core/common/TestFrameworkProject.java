@@ -90,23 +90,31 @@ public class TestFrameworkProject extends AbstractBaseTest {
             fis.close();
         }
     }
+    public FrameworkProject createProject() {
+        Framework frameworkInstance = getFrameworkInstance();
+        FilesystemFramework filesystemFramework = FrameworkFactory.createFilesystemFramework(
+                frameworkInstance.getBaseDir()
+        );
+        return FrameworkProject.create(PROJECT_NAME,
+                                       new File(getFrameworkProjectsBase()),
+                                       filesystemFramework,
+                                       frameworkInstance.getFilesystemFrameworkProjectManager(),
+                                       frameworkInstance::getResourceFormatGeneratorService,
+                                       frameworkInstance::getResourceModelSourceService
+        );
+    }
     public void testConstruction() {
         if (projectBasedir.exists()) {
             projectBasedir.delete();
         }
-        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                         new File(getFrameworkProjectsBase()),
-                                         getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        final FrameworkProject project = createProject();
         assertTrue("incorrect project.dir", project.getBaseDir().equals(new File(getFrameworkProjectsBase(), PROJECT_NAME)));
-        assertTrue("number of types: " + project.listChildren().size() + " should be 0",
-                   project.listChildren().size() == 0);
     }
 
 
     public void testChildCouldBeLoaded() {
-        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                         new File(getFrameworkProjectsBase()),
-                                         getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        final FrameworkProject project = createProject();
+
         assertFalse(project.childCouldBeLoaded("HahaType"));
 
         final File deployments = new File(project.getBaseDir(), "resources");
@@ -120,9 +128,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
     }
 
     public void testListChildNames() {
-        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                         new File(getFrameworkProjectsBase()),
-                                         getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        final FrameworkProject project = createProject();
 
         assertEquals(0, project.listChildNames().size());
         final File deployments = new File(project.getBaseDir(), "resources");
@@ -137,7 +143,6 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
 
 
-
     public void testProperties() throws IOException {
         final File projectDir = new File(getFrameworkProjectsBase(), PROJECT_NAME);
         FrameworkProject.createFileStructure(projectDir);
@@ -148,9 +153,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         p.put("b.c", "helmann");
         p.store(new FileOutputStream(projectPropertyFile), "test properties");
 
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                                           new File(getFrameworkProjectsBase()),
-                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
 
         assertEquals("monkey", project.getProperty("a.b"));
         assertEquals("helmann", project.getProperty("b.c"));
@@ -167,9 +170,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         p.put("b.c", "helmann");
         p.store(new FileOutputStream(projectPropertyFile), "test properties");
 
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                                           new File(getFrameworkProjectsBase()),
-                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
         Map<String, String> projectProperties = project.getProjectProperties();
         assertEquals(3, projectProperties.size());
         assertEquals(PROJECT_NAME, projectProperties.get("project.name"));
@@ -182,9 +183,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
      * @throws Exception
      */
     public void testExistsFileResource() throws Exception {
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                                           new File(getFrameworkProjectsBase()),
-                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
         //attempt to update nodes resource file without url prop
         assertFalse(project.existsFileResource("test.file"));
         File testFile = new File(projectBasedir, "test.file");
@@ -198,9 +197,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
      * @throws Exception
      */
     public void testExistsDirResource() throws Exception {
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                                           new File(getFrameworkProjectsBase()),
-                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
         //attempt to update nodes resource file without url prop
         assertFalse(project.existsDirResource("monkey"));
         File testdir = new File(projectBasedir, "monkey");
@@ -213,9 +210,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
      * @throws Exception
      */
     public void testListDirPaths() throws Exception {
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                                           new File(getFrameworkProjectsBase()),
-                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
         //attempt to update nodes resource file without url prop
         assertFalse(project.existsDirResource("monkey"));
         File testDir = new File(projectBasedir, "monkey");
@@ -247,9 +242,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
      * @throws Exception
      */
     public void testLoadFileResource() throws Exception {
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                                           new File(getFrameworkProjectsBase()),
-                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
         //attempt to update nodes resource file without url prop
         File testFile = new File(projectBasedir, "test.file");
 
@@ -275,9 +268,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
      * @throws Exception
      */
     public void testStoreFileResource() throws Exception {
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                                           new File(getFrameworkProjectsBase()),
-                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
         //attempt to update nodes resource file without url prop
         File testFile = new File(projectBasedir, "test.file");
 
@@ -300,9 +291,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
      * @throws Exception
      */
     public void testDeleteFileResource() throws Exception {
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                                           new File(getFrameworkProjectsBase()),
-                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
         File testFile = new File(projectBasedir, "test.file");
 
         FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"), testFile);
@@ -322,9 +311,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
      * @throws Exception
      */
     public void testDeleteFileResource_notExists() throws Exception {
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                                           new File(getFrameworkProjectsBase()),
-                                                           getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
         File testFile = new File(projectBasedir, "test.file");
 
         assertFalse(project.existsFileResource("test.file"));
@@ -341,9 +328,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
     
     public void testGetNodes() throws Exception {
-        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                         new File(getFrameworkProjectsBase()),
-                                         getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        final FrameworkProject project = createProject();
         FileUtils.copyFileStreams(new File("src/test/resources/com/dtolabs/rundeck/core/common/test-nodes1.xml"), nodesfile);
         assertTrue(nodesfile.exists());
         INodeSet nodes = project.getNodeSet();
@@ -360,9 +345,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
 
     public void testGenerateProjectPropertiesFile() throws IOException {
-        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                         new File(getFrameworkProjectsBase()),
-                                         getFrameworkInstance().getFilesystemFramework(), getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        final FrameworkProject project = createProject();
 
         final File propFile = new File(project.getEtcDir(), "project.properties");
         assertTrue("project.properties file was not generated",
@@ -395,9 +378,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
 
     }
     public void testGenerateProjectPropertiesFileOverwrite() throws IOException {
-        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-                                         new File(getFrameworkProjectsBase()),
-                                         getFrameworkInstance().getFilesystemFramework(), getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        final FrameworkProject project = createProject();
         final Properties testprops = new Properties();
         testprops.setProperty("test1", "value1");
         testprops.setProperty("test2", "value2");
@@ -423,9 +404,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertEquals("value3.else", p.getProperty("test3.somethingelse"));
     }
     public void testMergeProjectPropertiesFile() throws IOException {
-        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-            new File(getFrameworkProjectsBase()),
-            getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        final FrameworkProject project = createProject();
         final Properties testprops = new Properties();
         testprops.setProperty("test1", "value1");
         testprops.setProperty("test2", "value2");
@@ -465,9 +444,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         assertFalse(project.hasProperty("test3.somethingelse"));
     }
     public void testMergeProjectPropertiesFileNullPrefixes() throws IOException {
-        final FrameworkProject project = FrameworkProject.create(PROJECT_NAME,
-            new File(getFrameworkProjectsBase()),
-            getFrameworkInstance().getFilesystemFramework(),getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        final FrameworkProject project = createProject();
         final Properties testprops = new Properties();
         testprops.setProperty("test1", "value1");
         testprops.setProperty("test2", "value2");
@@ -548,7 +525,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         service.registerInstance("directory", factory1);
 
 
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()),getFrameworkInstance().getFilesystemFramework(), getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
         final INodeSet nodeSet = project.getNodeSet();
         assertNotNull(nodeSet);
         assertEquals(1, factory1.called);
@@ -603,7 +580,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         projectPropsFile.getParentFile().mkdirs();
         writeProps(props1, projectPropsFile);
 
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()),getFrameworkInstance().getFilesystemFramework(), getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
         final INodeSet nodeSet = project.getNodeSet();
         assertNotNull(nodeSet);
         assertEquals(2, factory1.called);
@@ -675,7 +652,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         projectPropsFile.getParentFile().mkdirs();
         writeProps(props1,projectPropsFile);
 
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()),getFrameworkInstance().getFilesystemFramework(), getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
         final INodeSet nodeSet = project.getNodeSet();
         assertNotNull(nodeSet);
         assertEquals(2, factory1.called);
@@ -749,7 +726,7 @@ public class TestFrameworkProject extends AbstractBaseTest {
         projectPropsFile.getParentFile().mkdirs();
         writeProps(props1,projectPropsFile);
 
-        FrameworkProject project = FrameworkProject.create(PROJECT_NAME, new File(getFrameworkProjectsBase()),getFrameworkInstance().getFilesystemFramework(), getFrameworkInstance().getFilesystemFrameworkProjectManager());
+        FrameworkProject project = createProject();
         final INodeSet nodeSet = project.getNodeSet();
         assertNotNull(nodeSet);
         assertEquals(2, factory1.called);

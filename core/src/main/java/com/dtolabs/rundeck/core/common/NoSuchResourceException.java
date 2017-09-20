@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,24 +16,17 @@
 
 package com.dtolabs.rundeck.core.common;
 
-import java.io.File;
-
 /**
- * Implementations of this interface provide a resource in a composition hierarchy of resources.
- * Conceptually, one can imagine a framework resource as a node in a acyclic directed graph. The word
- * "Node" was not chosen to avoid confusion with "machine nodes".
- * <br>
+ * @author greg
+ * @since 9/20/17
  */
-public interface IFrameworkResource {
-    /**
-     * @return resource name
-     */
+public class NoSuchResourceException extends FrameworkResourceException {
 
-    String getName();
+    NoSuchResourceException(final String message, final IFrameworkResource resource) {
+        super(message, resource);
+    }
 
-    /**
-     * @return resource base dir
-     */
-    File getBaseDir();
-
+    NoSuchResourceException(final String message, final FrameworkResource resource, final Throwable cause) {
+        super(message, resource, cause);
+    }
 }

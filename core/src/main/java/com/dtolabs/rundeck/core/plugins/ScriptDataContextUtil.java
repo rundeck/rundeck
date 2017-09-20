@@ -42,7 +42,7 @@ public class ScriptDataContextUtil {
         return new File(
                 Constants.getBaseVar(
                         new File(
-                                framework.getFilesystemFramework().getFrameworkProjectsBaseDir(),
+                                framework.getFrameworkProjectsBaseDir(),
                                 projectName
                         ).getAbsolutePath()
                 )
@@ -60,11 +60,11 @@ public class ScriptDataContextUtil {
     public static DataContext createScriptDataContext(final Framework framework) {
         BaseDataContext data = new BaseDataContext();
 
-        final File vardir = new File(Constants.getBaseVar(framework.getFilesystemFramework().getBaseDir().getAbsolutePath()));
+        final File vardir = new File(Constants.getBaseVar(framework.getBaseDir().getAbsolutePath()));
         final File tmpdir = new File(vardir, "tmp");
         data.group("plugin").put("vardir", vardir.getAbsolutePath());
         data.group("plugin").put("tmpdir", tmpdir.getAbsolutePath());
-        data.put("rundeck", "base", framework.getFilesystemFramework().getBaseDir().getAbsolutePath());
+        data.put("rundeck", "base", framework.getBaseDir().getAbsolutePath());
 
         return data;
     }
