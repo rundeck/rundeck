@@ -1411,8 +1411,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
-                        AuthConstants.ACTION_READ),
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
+                        [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+                ),
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
         }
