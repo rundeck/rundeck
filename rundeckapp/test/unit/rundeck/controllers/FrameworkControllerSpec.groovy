@@ -18,7 +18,6 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -33,6 +32,7 @@ import rundeck.services.PasswordFieldsService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.StorageManager
 import rundeck.services.UserService
+import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.framework.RundeckProjectConfigurable
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -322,7 +322,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -362,7 +362,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -400,7 +400,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -444,7 +444,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -540,7 +540,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>false
             }
         }
@@ -585,7 +585,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>false
             }
         }
