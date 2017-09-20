@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.SysAclFile
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policies
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -356,6 +357,34 @@ class MenuControllerSpec extends Specification {
 
     }
 
+    def "save project policy"() {
+        given:
+        def id = 'test.aclpolicy'
+        def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+
+        when:
+        request.method = 'POST'
+        setupFormTokens(params)
+        params.project = project
+        def result = controller.saveProjectAclFile(input)
+        then:
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['create', 'admin']) >> true
+        1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
+            1 * storeFileResource(_, { it.getText('UTF-8') == fileText }) >> {
+                fileText.length()
+            }
+            existsFileResource('acls/' + id) >> exists
+            getName() >> project
+        }
+        1 * controller.authorizationService.validateYamlPolicy(project, 'acls/' + id, fileText) >>
+                new PoliciesValidation(validation: new ValidationSet(valid: true))
+
+        where:
+        fileText    | create | exists | project
+        'test-data' | true   | false  | 'testproj'
+    }
     @Unroll
     def "save/delete acl policy action #action require POST"() {
         when:
