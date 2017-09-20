@@ -355,4 +355,41 @@ class MenuControllerSpec extends Specification {
         result == validation
 
     }
+
+    @Unroll
+    def "save/delete acl policy action #action require POST"() {
+        when:
+        params.putAll(inputParams)
+        input.id = 'test.aclpolicy'
+        def result = controller."$action"(input)
+        then:
+        response.status == 405
+
+        where:
+        action                 | input                                                | inputParams
+        'saveProjectAclFile'   | new SaveProjAclFile(fileText: 'asdf')                | [project: 'aproject']
+        'deleteProjectAclFile' | new ProjAclFile()                                    | [project: 'aproject']
+        'saveSystemAclFile'    | new SaveSysAclFile(fileType: 'fs', fileText: 'asdf') | [:]
+        'deleteSystemAclFile'  | new SysAclFile(fileType: 'fs')                       | [:]
+    }
+
+    @Unroll
+    def "save/delete acl policy action #action require request Token"() {
+        when:
+        params.putAll(inputParams)
+        request.method = 'POST'
+        input.id = 'test.aclpolicy'
+        def result = controller."$action"(input)
+        then:
+        response.status == 200
+        request.errorCode == 'request.error.invalidtoken.message'
+        view == '/common/error'
+
+        where:
+        action                 | input                                                | inputParams
+        'saveProjectAclFile'   | new SaveProjAclFile(fileText: 'asdf')                | [project: 'aproject']
+        'deleteProjectAclFile' | new ProjAclFile()                                    | [project: 'aproject']
+        'saveSystemAclFile'    | new SaveSysAclFile(fileType: 'fs', fileText: 'asdf') | [:]
+        'deleteSystemAclFile'  | new SysAclFile(fileType: 'fs')                       | [:]
+    }
 }
