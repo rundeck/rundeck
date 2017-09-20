@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.SysAclFile
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.authorization.providers.Policies
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
@@ -34,6 +35,7 @@ import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.authorization.PoliciesValidation
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -330,6 +332,27 @@ class MenuControllerSpec extends Specification {
                 [project: 'a']        |
                 [name: 'a', type: 'project_acl']       |
                 false
+
+    }
+
+    def "load project policy"() {
+        given:
+        def project = Mock(IRundeckProject) {
+            getName() >> 'aproject'
+        }
+        def ident = 'a.aclpolicy'
+        def validation = new PoliciesValidation()
+        controller.authorizationService = Mock(AuthorizationService)
+        when:
+        def result = controller.loadProjectPolicyValidation(project, ident)
+
+        then:
+        1 * project.loadFileResource('acls/' + ident, _) >> { args ->
+            args[1].write('data'.bytes)
+            4L
+        }
+        1 * controller.authorizationService.validateYamlPolicy('aproject', ident, 'data') >> validation
+        result == validation
 
     }
 }

@@ -30,7 +30,6 @@ import com.dtolabs.rundeck.app.support.StoreFilterCommand
 import com.dtolabs.rundeck.app.support.SysAclFile
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
@@ -1141,7 +1140,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ]
     }
 
-    private PoliciesValidation loadProjectPolicy(IRundeckProject fwkProject, String ident) {
+    protected PoliciesValidation loadProjectPolicyValidation(IRundeckProject fwkProject, String ident) {
         def baos = new ByteArrayOutputStream()
         fwkProject.loadFileResource('acls/' + ident, baos)
         def fileText = baos.toString('UTF-8')
@@ -1163,7 +1162,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
             def id = it.replaceAll(/^acls\//, '')
             Map meta = getCachedPolicyMeta(id, project.name, null) {
-                def policy = loadProjectPolicy(project, id)
+                def policy = loadProjectPolicyValidation(project, id)
                 def meta = policyMetaFromValidation(policy)
                 meta
             }
@@ -1231,7 +1230,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def baos = new ByteArrayOutputStream()
         def size = fwkProject.loadFileResource(resPath, baos)
         def fileText = baos.toString('UTF-8')
-        def policiesvalidation = loadProjectPolicy(fwkProject, input.id)
+        def policiesvalidation = loadProjectPolicyValidation(fwkProject, input.id)
         [
                 fileText  : fileText,
                 id        : input.id,
