@@ -1422,7 +1422,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     private loadSystemPolicyFS(String fname) {
-        def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
+        def fwkConfigDir = frameworkService.getFrameworkConfigDir()
         def file = new File(fwkConfigDir, fname)
         authorizationService.validateYamlPolicy(null, fname, file)
     }
@@ -1439,7 +1439,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         null
     }
     private Map systemAclsModel() {
-        def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
+        def fwkConfigDir = frameworkService.getFrameworkConfigDir()
         def fslist = fwkConfigDir.listFiles().grep { it.name =~ /\.aclpolicy$/ }.sort().collect { file ->
             def validation = loadSystemPolicyFS(file.name)
             [
@@ -1471,7 +1471,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         ]
     }
 
-    private boolean isClusterModeAclsLocalFileEditDisabled() {
+    protected boolean isClusterModeAclsLocalFileEditDisabled() {
         frameworkService.isClusterModeEnabled() &&
                 configurationService.getBoolean('clusterMode.acls.localfiles.modify.disabled', true)
     }
@@ -1531,12 +1531,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def size
         if (input.fileType == 'fs') {
             //look on filesys
-            def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
+            def fwkConfigDir = frameworkService.getFrameworkConfigDir()
             def file = new File(fwkConfigDir, input.id)
-            exists = file.isFile()
+            exists = frameworkService.existsFrameworkConfigFile(input.id)
             if (exists) {
-                size = file.length()
-                fileText = file.text
+                fileText = frameworkService.readFrameworkConfigFile(input.id)
+                size = fileText.length()
             }
         } else if (input.fileType == 'storage') {
             //look in storage
@@ -1600,15 +1600,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
         }
         def exists = false
-        def size
         if (input.fileType == 'fs') {
             //look on filesys
-            def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
-            def file = new File(fwkConfigDir, input.createId())
-            exists = file.isFile()
-            if (exists) {
-                size = file.length()
-            }
+            exists = frameworkService.existsFrameworkConfigFile(input.createId())
         } else if (input.fileType == 'storage') {
             //look in storage
             exists = authorizationService.existsPolicyFile(input.createId())
@@ -1628,7 +1622,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if ((input.create || input.upload && !input.overwrite) && exists) {
             input.errors.rejectValue(
-                    'file',
+                    'name',
                     'policy.create.conflict',
                     [input.createName()].toArray(),
                     "Policy Name already exists: {0}"
@@ -1651,13 +1645,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //store
         if (input.fileType == 'fs') {
             //store on filesys
-            def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
-            def file = new File(fwkConfigDir, input.createId())
-
             try {
-                file.text = fileText
-
-                flash.storedSize = file.length()
+                flash.storedSize = frameworkService.writeFrameworkConfigFile(input.createId(), fileText)
                 flash.storedFile = input.createName()
                 flash.storedType = input.fileType
             } catch (IOException exc) {
@@ -1708,15 +1697,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
         }
         def exists = false
-        def size
         if (input.fileType == 'fs') {
             //look on filesys
-            def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
-            def file = new File(fwkConfigDir, input.id)
-            exists = file.isFile()
-            if (exists) {
-                size = file.length()
-            }
+            exists = frameworkService.existsFrameworkConfigFile(input.id)
         } else if (input.fileType == 'storage') {
             //look in storage
             exists = authorizationService.existsPolicyFile(input.id)
@@ -1727,9 +1710,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if (input.fileType == 'fs') {
             //store on filesys
-            def fwkConfigDir = frameworkService.rundeckFramework.getConfigDir()
-            def file = new File(fwkConfigDir, input.id)
-            file.delete()
+            boolean deleted=frameworkService.deleteFrameworkConfigFile(input.id)
             flash.message = "Policy was deleted: " + input.id
         } else if (input.fileType == 'storage') {
             //store in storage

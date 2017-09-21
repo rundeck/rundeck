@@ -111,7 +111,57 @@ class FrameworkService implements ApplicationContextAware {
     def getServerUUID(){
         return serverUUID
     }
-   
+
+    /**
+     *
+     * @return the config dir used by the framework
+     */
+    File getFrameworkConfigDir() {
+        rundeckFramework.getConfigDir()
+    }
+
+    /**
+     *
+     * @param name file name in config dir
+     * @return true if a file with the name exists in the config dir
+     */
+    boolean existsFrameworkConfigFile(String name) {
+        new File(frameworkConfigDir, name).isFile()
+    }
+    /**
+     *
+     * @param name file name in config dir
+     * @return true if a file with the name exists in the config dir
+     */
+    String readFrameworkConfigFile(String name, String charset = 'UTF-8') {
+        new File(frameworkConfigDir, name).getText(charset)
+    }
+    /**
+     *
+     * @param name file name in config dir
+     * @return true if a file with the name exists in the config dir
+     */
+    long writeFrameworkConfigFile(String name, String text = null, Closure withOutputStream = null) throws IOException {
+        def file = new File(frameworkConfigDir, name)
+
+        if (text) {
+            file.text = text
+        } else if (withOutputStream) {
+            file.withOutputStream(withOutputStream)
+        }
+
+        file.length()
+    }
+
+    /**
+     * Deletes the framework config file
+     * @param name file name
+     * @return true if deleted
+     */
+    boolean deleteFrameworkConfigFile(String name) {
+        def file = new File(frameworkConfigDir, name)
+        file.delete()
+    }
 
 /**
      * Return a list of FrameworkProject objects

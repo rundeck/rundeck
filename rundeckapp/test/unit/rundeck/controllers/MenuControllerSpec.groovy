@@ -24,7 +24,9 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policies
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
@@ -34,6 +36,7 @@ import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
+import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.authorization.PoliciesValidation
@@ -370,7 +373,7 @@ class MenuControllerSpec extends Specification {
         params.project = project
         def result = controller.saveProjectAclFile(input)
         then:
-        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['create', 'admin']) >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
         1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
             1 * storeFileResource(_, { it.getText('UTF-8') == fileText }) >> {
                 fileText.length()
@@ -384,7 +387,76 @@ class MenuControllerSpec extends Specification {
         where:
         fileText    | create | exists | project
         'test-data' | true   | false  | 'testproj'
+        'test-data' | false  | true   | 'testproj'
     }
+
+    def "save sys fs policy disabled"() {
+        given:
+        def id = 'test.aclpolicy'
+        def input = new SaveSysAclFile(id: id, fileText: fileText, create: create, fileType: fileType)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+        controller.configurationService = Mock(ConfigurationService)
+        when:
+        request.method = 'POST'
+        setupFormTokens(params)
+        def result = controller.saveSystemAclFile(input)
+        then:
+        1 * controller.frameworkService.isClusterModeEnabled() >> true
+        1 * controller.configurationService.getBoolean('clusterMode.acls.localfiles.modify.disabled', true) >> true
+        view == '/common/error'
+        request.errorMessage == 'clusterMode.acls.localfiles.modify.disabled.warning.message'
+        where:
+        fileType | fileText    | create | exists
+        'fs'     | 'test-data' | true   | false
+    }
+
+    @Unroll
+    def "save sys policy enabled type #fileType"() {
+        given:
+        def id = 'test.aclpolicy'
+        def input = new SaveSysAclFile(id: id, fileText: fileText, create: create, fileType: fileType)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+        controller.configurationService = Mock(ConfigurationService)
+        when:
+        request.method = 'POST'
+        setupFormTokens(params)
+        def result = controller.saveSystemAclFile(input)
+        then:
+        if (fileType == 'fs') {
+            1 * controller.frameworkService.isClusterModeEnabled() >> true
+            1 * controller.configurationService.getBoolean('clusterMode.acls.localfiles.modify.disabled', true) >> false
+        }
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+        if (fileType == 'fs') {
+            1 * controller.frameworkService.existsFrameworkConfigFile(id) >> exists
+            1 * controller.frameworkService.writeFrameworkConfigFile(id, fileText) >> fileText.bytes.length
+        } else {
+            1 * controller.authorizationService.existsPolicyFile(id) >> exists
+            1 * controller.authorizationService.storePolicyFileContents(id, fileText) >> fileText.bytes.length
+        }
+
+        1 * controller.authorizationService.validateYamlPolicy(id, fileText) >>
+                new PoliciesValidation(validation: new ValidationSet(valid: true))
+        0 * controller.frameworkService._(*_)
+        0 * controller.configurationService._(*_)
+        0 * controller.authorizationService._(*_)
+        response.status == 302
+        response.redirectedUrl == '/menu/acls'
+        flash.storedSize == fileText.bytes.length
+        flash.storedFile == 'test'
+        flash.storedType == fileType
+        where:
+        fileType  | fileText    | create | exists
+        'fs'      | 'test-data' | true   | false
+        'fs'      | 'test-data' | false  | true
+        'storage' | 'test-data' | true   | false
+        'storage' | 'test-data' | false  | true
+    }
+
+
     @Unroll
     def "save/delete acl policy action #action require POST"() {
         when:
