@@ -412,10 +412,16 @@ class MenuControllerSpec extends Specification {
     }
 
     @Unroll
-    def "save sys policy enabled type #fileType"() {
+    def "save sys policy enabled type #fileType #create #exists #overwrite"() {
         given:
         def id = 'test.aclpolicy'
-        def input = new SaveSysAclFile(id: id, fileText: fileText, create: create, fileType: fileType)
+        def input = new SaveSysAclFile(
+                id: id,
+                fileText: fileText,
+                create: create,
+                fileType: fileType,
+                overwrite: overwrite
+        )
         controller.frameworkService = Mock(FrameworkService)
         controller.authorizationService = Mock(AuthorizationService)
         controller.configurationService = Mock(ConfigurationService)
@@ -449,11 +455,57 @@ class MenuControllerSpec extends Specification {
         flash.storedFile == 'test'
         flash.storedType == fileType
         where:
+        fileType  | fileText    | create | exists | overwrite
+        'fs'      | 'test-data' | true   | false  | false
+        'fs'      | 'test-data' | false  | true   | false
+        'storage' | 'test-data' | true   | false  | false
+        'storage' | 'test-data' | false  | true   | false
+    }
+
+    @Unroll
+    def "save sys policy conflict"() {
+        given:
+        def id = 'test.aclpolicy'
+        def input = new SaveSysAclFile(id: id, fileText: fileText, create: create, fileType: fileType, overwrite: false)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+        controller.configurationService = Mock(ConfigurationService)
+        when:
+        request.method = 'POST'
+        setupFormTokens(params)
+        def result = controller.saveSystemAclFile(input)
+        then:
+        if (fileType == 'fs') {
+            1 * controller.frameworkService.isClusterModeEnabled() >> true
+            1 * controller.configurationService.getBoolean('clusterMode.acls.localfiles.modify.disabled', true) >> false
+        }
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+        if (fileType == 'fs') {
+            1 * controller.frameworkService.existsFrameworkConfigFile(id) >> exists
+            0 * controller.frameworkService.writeFrameworkConfigFile(id, fileText) >> fileText.bytes.length
+        } else {
+            1 * controller.authorizationService.existsPolicyFile(id) >> exists
+            0 * controller.authorizationService.storePolicyFileContents(id, fileText) >> fileText.bytes.length
+        }
+
+        0 * controller.authorizationService.validateYamlPolicy(id, fileText) >>
+                new PoliciesValidation(validation: new ValidationSet(valid: true))
+        0 * controller.frameworkService._(*_)
+        0 * controller.configurationService._(*_)
+        0 * controller.authorizationService._(*_)
+        response.status == (exists ? 200 : 404)
+        if(exists) {
+            view ==~ '/menu/(create|update)SystemAclFile'
+        }else{
+            
+        }
+        where:
         fileType  | fileText    | create | exists
-        'fs'      | 'test-data' | true   | false
-        'fs'      | 'test-data' | false  | true
-        'storage' | 'test-data' | true   | false
-        'storage' | 'test-data' | false  | true
+        'fs'      | 'test-data' | true   | true
+        'fs'      | 'test-data' | false  | false
+        'storage' | 'test-data' | true   | true
+        'storage' | 'test-data' | false  | false
     }
 
 
