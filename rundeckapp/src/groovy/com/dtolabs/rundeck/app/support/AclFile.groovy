@@ -29,7 +29,7 @@ class AclFile {
 
     static constraints = {
         name(nullable: true, matches: /^(?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][a-zA-Z0-9,\.+_-]*$/)
-        id(nullable: true, matches: /^(?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][a-zA-Z0-9,\.+_-]*\.aclpolicy$$/)
+        id(nullable: true, matches: /^(?!\.\.(\/|$))[a-zA-Z0-9,\.+_-][a-zA-Z0-9,\.+_-]*\.aclpolicy$/)
     }
 
     /**
