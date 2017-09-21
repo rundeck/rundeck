@@ -276,32 +276,37 @@
                 </span>
 
                 <div class="panel panel-default" data-bind="visible: show">
-                    <div class="panel-heading">
-                        <span class="panel-title text-muted">
+                    <div class="panel-heading clearfix">
+                        <span class="panel-title text-muted pull-left">
                             <span class="text-info">${aclFileList.size()}</span>
-                            <g:message
-                                    code="list.of.acl.policy.files.in.directory"/>
+                            <g:message code="list.of.acl.policy.files.in.directory"/>
+                            <code>${fwkConfigDir.absolutePath}</code>
                             <span data-bind="if: !policyFiles().valid()">
 
                                 <i class="glyphicon glyphicon-warning-sign text-warning has_tooltip"
                                    title="${message(code: "aclpolicy.format.validation.failed")}"></i>
                             </span>
                         </span>
+                        <span class="panel-title pull-right">
+
+                            <button type="button"
+                                    class="close"
+                                    data-bind="click: toggleShow"
+                                    aria-hidden="true">&times;</button>
+                        </span>
                     </div>
 
                     <div class="panel-body">
-                        <g:message code="title.location.prompt" /><code>${fwkConfigDir.absolutePath}</code>
-
-                        <div class="grid">
-                            <div data-bind="foreach: policyFiles().policies">
+                        <table class="table table-condensed table-embed">
+                            <tbody data-bind="foreach: policyFiles().policies">
                                 <g:render template="/menu/aclValidationRowKO"
                                           model="${[
                                                   hasEditAuth  : false,
                                                   hasDeleteAuth: false,
                                           ]}"/>
 
-                            </div>
-                        </div>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
