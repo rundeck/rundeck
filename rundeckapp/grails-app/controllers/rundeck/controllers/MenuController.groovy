@@ -42,6 +42,7 @@ import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
+import org.quartz.TriggerUtils
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -339,7 +340,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         params['_no_scm']=true
 
         def results = jobsFragment(query)
-
         def clusterModeEnabled = frameworkService.isClusterModeEnabled()
         def serverNodeUUID = frameworkService.serverUUID
         def data = new JobInfoList(
@@ -353,6 +353,14 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     }
                     if(results.nextExecutions?.get(se.id)){
                         data.nextScheduledExecution=results.nextExecutions?.get(se.id)
+                        if(query.daysAhead) {
+                            def maxSched = results.nextExecutions?.max{it.value}
+                            def to = new Date() + query.daysAhead
+                            if(to>maxSched.value){
+                                to = maxSched.value
+                            }
+                            data.futureScheduledExecutions = se.nextExecutions(to)
+                        }
                     }
                     if (se.totalTime >= 0 && se.execCount > 0) {
                         def long avg = Math.floor(se.totalTime / se.execCount)

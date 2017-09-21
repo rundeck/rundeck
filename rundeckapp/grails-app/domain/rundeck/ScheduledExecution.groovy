@@ -18,6 +18,9 @@ package rundeck
 
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
+import org.quartz.Calendar
+import org.quartz.TriggerUtils
+import org.quartz.impl.calendar.BaseCalendar
 import org.rundeck.util.Sizes
 
 class ScheduledExecution extends ExecutionContext {
@@ -965,6 +968,20 @@ class ScheduledExecution extends ExecutionContext {
             return Math.floor(totalTime / execCount)
         }
         return 0;
+    }
+
+    /**
+     * Retrun a list of dates in a time lapse between now and the to Date.
+     * @param to Date in the future
+     * @return list of dates
+     */
+    List<Date> nextExecutions(Date to){
+        def trigger = scheduledExecutionService.createTrigger(this)
+        Calendar cal = new BaseCalendar()
+        if(timeZone){
+            cal.setTimeZone(TimeZone.getTimeZone(timeZone))
+        }
+        return TriggerUtils.computeFireTimesBetween(trigger, cal, new Date(), to)
     }
 }
 

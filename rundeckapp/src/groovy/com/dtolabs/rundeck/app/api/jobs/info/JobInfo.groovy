@@ -79,6 +79,11 @@ class JobInfo {
     @XmlAttribute
     Date nextScheduledExecution
 
+    @ApiVersion(20)
+    @Ignore(onlyIfNull = true)
+    @XmlAttribute
+    List<Date> futureScheduledExecutions
+
 //    Map blah=[
 //            z:'x'
 //    ]
@@ -101,7 +106,8 @@ class JobInfo {
                      scheduled      : se.scheduled,
                      scheduleEnabled: se.scheduleEnabled,
                      enabled        : se.executionEnabled
-                    ] + extra?.subMap('serverNodeUUID', 'serverOwner', 'averageDuration', 'nextScheduledExecution')
+                    ] + extra?.subMap('serverNodeUUID', 'serverOwner', 'averageDuration', 'nextScheduledExecution',
+                        'futureScheduledExecutions')
         )
     }
 }
