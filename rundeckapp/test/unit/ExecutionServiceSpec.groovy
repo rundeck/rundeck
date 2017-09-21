@@ -38,6 +38,8 @@ import rundeck.services.*
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import java.time.ZoneId
+
 /**
  * Created by greg on 2/17/15.
  */
@@ -1889,14 +1891,8 @@ class ExecutionServiceSpec extends Specification {
             getServerUUID() >> null
             authorizeProjectJobAll(*_) >> true
         }
-        Date scheduleDate = new Date().copyWith(
-                year: 2080,
-                month: Calendar.JULY,
-                dayOfMonth: 5,
-                hourOfDay: 16,
-                minute: 05,
-                second: 45
-        )
+
+        Date scheduleDate = createDate(2080, Calendar.JULY, 5, 16, 05, 45, 'Z')
         service.configurationService = Stub(ConfigurationService) {
             isExecutionModeActive() >> executionsAreActive
         }
@@ -2019,14 +2015,8 @@ class ExecutionServiceSpec extends Specification {
             getServerUUID() >> null
             authorizeProjectJobAll(*_) >> true
         }
-        Date scheduleDate = new Date().copyWith(
-                year: 2200,
-                month: Calendar.JANUARY,
-                dayOfMonth: 1,
-                hourOfDay: 12,
-                minute: 43,
-                second: 10
-        )
+        Date scheduleDate = createDate(2200, Calendar.JANUARY, 1, 12, 43, 10, 'Z')
+
         service.configurationService = Stub(ConfigurationService) {
             isExecutionModeActive() >> executionsAreActive
         }
@@ -2067,6 +2057,52 @@ class ExecutionServiceSpec extends Specification {
         "2200-01-01T18:13:10.000+05:30" | true                | true            | true             | true        | true
         "2200-01-01T09:13:10-03:30"     | true                | true            | true             | true        | true
         "2200-01-01T09:13:10.000-03:30" | true                | true            | true             | true        | true
+    }
+
+    private Date createDate(
+            int year,
+            int month,
+            int dayOfMonth,
+            int hour,
+            int minute,
+            int second,
+            String zoneId = 'Z'
+    )
+    {
+        def cal = GregorianCalendar.getInstance(TimeZone.getTimeZone(ZoneId.of(zoneId)))
+        cal.set(Calendar.YEAR, year)
+        cal.set(Calendar.MONTH, month)
+        cal.set(Calendar.DAY_OF_MONTH, dayOfMonth)
+        cal.set(Calendar.HOUR_OF_DAY, hour)
+        cal.set(Calendar.MINUTE, minute)
+        cal.set(Calendar.SECOND, second)
+
+        Date.from(cal.toInstant())
+    }
+
+    @Unroll
+    def "parseRunAt alternative ISO 8601 date"() {
+        given:
+
+        Date expectedDate = new Date(7258164190000)
+
+        when:
+        def parsedDate = service.parseRunAtTime(runAtTime)
+
+        then:
+        // The start time may differ slightly (milliseconds)
+        assert parsedDate.time - expectedDate.time <= 1000 && parsedDate.time - expectedDate.time >= -1000
+
+        where:
+        runAtTime                       | _
+        "2200-01-01T12:43:10.000+00:00" | _
+        "2200-01-01T12:43:10.000Z"      | _
+        "2200-01-01T12:43:10+00:00"     | _
+        "2200-01-01T12:43:10Z"          | _
+        "2200-01-01T18:13:10+05:30"     | _
+        "2200-01-01T18:13:10.000+05:30" | _
+        "2200-01-01T09:13:10-03:30"     | _
+        "2200-01-01T09:13:10.000-03:30" | _
     }
 
     @Unroll
