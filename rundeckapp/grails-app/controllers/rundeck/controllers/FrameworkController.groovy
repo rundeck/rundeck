@@ -712,7 +712,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
     def createProjectPost() {
         metricService.markMeter(this.class.name,actionName)
-        if (!requireToken()) {
+        if (!requestHasValidToken()) {
             return
         }
         //only attempt project create if form POST is used
@@ -1250,21 +1250,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         [type, config, report]
     }
 
-    private boolean requireToken() {
-        boolean valid = false
-        withForm {
-            valid = true
-        }.invalidToken {
-        }
-        if (!valid) {
-            request.errorCode = 'request.error.invalidtoken.message'
-            renderErrorView([:])
-        }
-        valid
-    }
-
     def deleteProjectNodesource() {
-        if (!requireToken()) {
+        if (!requestHasValidToken()) {
             return
         }
         if (!params.project) {
@@ -1371,7 +1358,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
     def saveProjectNodeSources() {
 
-        if (!requireToken()) {
+        if (!requestHasValidToken()) {
             return
         }
 
@@ -1623,7 +1610,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def saveProjectNodeSourceFile() {
-        if (!requireToken()) {
+        if (!requestHasValidToken()) {
             return
         }
         if (!params.project) {
@@ -2625,9 +2612,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
         }else if(configStorageService.existsDirResource(projectFilePath) || projectFilePath==rmprefix){
             //list aclpolicy files in the dir
-            def list=configStorageService.listDirPaths(projectFilePath).findAll{
-                it ==~ /.*\.aclpolicy$/
-            }
+            def list=configStorageService.listDirPaths(projectFilePath,'.+\\.aclpolicy$')
             withFormat{
                 xml{
                     render(contentType: 'application/xml'){

@@ -111,7 +111,57 @@ class FrameworkService implements ApplicationContextAware {
     def getServerUUID(){
         return serverUUID
     }
-   
+
+    /**
+     *
+     * @return the config dir used by the framework
+     */
+    File getFrameworkConfigDir() {
+        rundeckFramework.getConfigDir()
+    }
+
+    /**
+     *
+     * @param name file name in config dir
+     * @return true if a file with the name exists in the config dir
+     */
+    boolean existsFrameworkConfigFile(String name) {
+        new File(frameworkConfigDir, name).isFile()
+    }
+    /**
+     *
+     * @param name file name in config dir
+     * @return true if a file with the name exists in the config dir
+     */
+    String readFrameworkConfigFile(String name, String charset = 'UTF-8') {
+        new File(frameworkConfigDir, name).getText(charset)
+    }
+    /**
+     *
+     * @param name file name in config dir
+     * @return true if a file with the name exists in the config dir
+     */
+    long writeFrameworkConfigFile(String name, String text = null, Closure withOutputStream = null) throws IOException {
+        def file = new File(frameworkConfigDir, name)
+
+        if (text) {
+            file.text = text
+        } else if (withOutputStream) {
+            file.withOutputStream(withOutputStream)
+        }
+
+        file.length()
+    }
+
+    /**
+     * Deletes the framework config file
+     * @param name file name
+     * @return true if deleted
+     */
+    boolean deleteFrameworkConfigFile(String name) {
+        def file = new File(frameworkConfigDir, name)
+        file.delete()
+    }
 
 /**
      * Return a list of FrameworkProject objects
@@ -127,8 +177,8 @@ class FrameworkService implements ApplicationContextAware {
             projMap[proj.name] = proj;
             resources << authResourceForProject(proj.name)
         }
-        def authed = authorizeApplicationResourceSet(authContext, resources, 'read')
-        return new ArrayList(authed.collect{projMap[it.name]})
+        def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
+        return new ArrayList(new HashSet(authed.collect{it.name}).sort().collect{projMap[it]})
     }
     def projectNames (AuthContext authContext) {
         //authorize the list of projects
@@ -136,8 +186,8 @@ class FrameworkService implements ApplicationContextAware {
         for (projName in rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()) {
             resources << authResourceForProject(projName)
         }
-        def authed = authorizeApplicationResourceSet(authContext, resources, 'read')
-        return new ArrayList(authed.collect{it.name}).sort()
+        def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
+        return new ArrayList(new HashSet(authed.collect{it.name})).sort()
     }
 
     def existsFrameworkProject(String project) {
@@ -490,17 +540,17 @@ class FrameworkService implements ApplicationContextAware {
      * return all authorized resources for the action evaluated in the application context
      * @param framework
      * @param resources requested resources to authorize
-     * @param action
+     * @param actions set of any actions to authorize
      * @return set of authorized resources
      */
-    def Set authorizeApplicationResourceSet(AuthContext authContext, Set<Map> resources, String action) {
+    def Set authorizeApplicationResourceSet(AuthContext authContext, Set<Map> resources, Set<String> actions) {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
         def decisions = metricService.withTimer(this.class.name,'authorizeApplicationResourceSet') {
             authContext.evaluate(
                     resources,
-                    [action] as Set,
+                    actions,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         }
         return decisions.findAll {it.authorized}.collect {it.resource}

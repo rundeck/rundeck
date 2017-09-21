@@ -28,6 +28,7 @@ import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
+import rundeck.services.authorization.PoliciesValidation
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -1071,7 +1072,7 @@ class ProjectControllerSpec extends Specification{
         }
 
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -1115,7 +1116,7 @@ class ProjectControllerSpec extends Specification{
         }
 
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>false
             }
         }
@@ -1159,7 +1160,7 @@ class ProjectControllerSpec extends Specification{
         }
 
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>false
             }
         }
@@ -1211,7 +1212,7 @@ class ProjectControllerSpec extends Specification{
         }
 
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -1260,7 +1261,7 @@ class ProjectControllerSpec extends Specification{
         }
 
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.core.authorization.providers;
+package com.dtolabs.rundeck.app.support
 
-import com.dtolabs.rundeck.core.authorization.providers.yaml.model.ACLPolicyDoc;
-import org.yaml.snakeyaml.Yaml;
-
-import java.io.Closeable;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import grails.validation.Validateable
 
 /**
- * Created by greg on 7/17/15.
+ * @author greg
+ * @since 9/13/17
  */
-public interface YamlSource extends Closeable{
-    public String getIdentity();
-    public Iterable<ACLPolicyDoc> loadAll(Yaml yaml) throws IOException;
+
+@Validateable
+class SysAclFile extends AclFile {
+    String fileType
+    static constraints = {
+        fileType(nullable: false, inList: ['fs', 'storage'])
+    }
 }

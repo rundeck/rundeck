@@ -23,13 +23,6 @@ import java.util.Collection;
  * its name.
  */
 public interface IFrameworkResourceParent extends IFrameworkResource {
-    /**
-     * Create a new FrameworkResource child.
-     *
-     * @param name name of child
-     * @return new child
-     */
-    IFrameworkResource createChild(String name);
 
     /**
      * Gets specified child

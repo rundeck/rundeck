@@ -80,7 +80,7 @@
             controller="menu"
             action="projectAcls"
             params="[project: params.project]"
-            code="list.acls">
+            code="gui.menu.AccessControl">
     </bs:menuitem>
 
     <bs:menuitem/>

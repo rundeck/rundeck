@@ -18,7 +18,6 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -33,6 +32,7 @@ import rundeck.services.PasswordFieldsService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.StorageManager
 import rundeck.services.UserService
+import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.framework.RundeckProjectConfigurable
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -244,18 +244,21 @@ class FrameworkControllerSpec extends Specification {
         controller.configStorageService=Mock(StorageManager){
             1 * existsFileResource(_) >> false
             1 * existsDirResource('acls/') >> true
-            1 * listDirPaths('acls/') >> { args ->
-                ['acls/test','acls/blah.aclpolicy','acls/adir/']
+            1 * listDirPaths('acls/','.+\\.aclpolicy$') >> { args ->
+                ['acls/blah.aclpolicy']
             }
+            0*_(*_)
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
             1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            0*_(*_)
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy'],_)>>{args-> args[4].success=true}
+            0*_(*_)
         }
         when:
         params.path=''
@@ -273,18 +276,21 @@ class FrameworkControllerSpec extends Specification {
         controller.configStorageService=Mock(StorageManager){
             1 * existsFileResource(_) >> false
             1 * existsDirResource('acls/') >> true
-            1 * listDirPaths('acls/') >> { args ->
-                ['acls/test','acls/blah.aclpolicy','acls/adir/']
+            1 * listDirPaths('acls/','.+\\.aclpolicy$') >> { args ->
+                ['acls/blah.aclpolicy']
             }
+            0*_(*_)
         }
         controller.frameworkService=Mock(FrameworkService){
             1 * getAuthContextForSubject(_) >> null
                          1 * authorizeApplicationResourceAny(_,AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,[ACTION_READ,ACTION_ADMIN]) >> true
+            0*_(*_)
         }
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
             1 * xmlRenderDirList('acls/',_,_,['acls/blah.aclpolicy'],_)>>{args-> args[4].success(ok:true)}
+            0*_(*_)
         }
         when:
         params.path=''
@@ -322,7 +328,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -362,7 +368,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -400,7 +406,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -444,7 +450,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -540,7 +546,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>false
             }
         }
@@ -585,7 +591,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>false
             }
         }

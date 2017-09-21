@@ -19,19 +19,20 @@ package rundeck.controllers
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfo
 import com.dtolabs.rundeck.app.api.jobs.info.JobInfoList
+import com.dtolabs.rundeck.app.support.AclFile
 import com.dtolabs.rundeck.app.support.BaseQuery
+import com.dtolabs.rundeck.app.support.ProjAclFile
 import com.dtolabs.rundeck.app.support.QueueQuery
+import com.dtolabs.rundeck.app.support.SaveProjAclFile
+import com.dtolabs.rundeck.app.support.SaveSysAclFile
 import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.app.support.StoreFilterCommand
+import com.dtolabs.rundeck.app.support.SysAclFile
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
-import com.dtolabs.rundeck.core.execution.service.FileCopierService
-import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
@@ -44,6 +45,7 @@ import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
+import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
@@ -63,7 +65,7 @@ import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.UserService
-import rundeck.services.framework.RundeckProjectConfigurable
+import rundeck.services.authorization.PoliciesValidation
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
@@ -89,14 +91,18 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     def AuthorizationService authorizationService
     def ApplicationContext applicationContext
     static allowedMethods = [
-            deleteJobfilter:'POST',
-            storeJobfilter:'POST',
-            apiJobDetail:'GET',
-            apiResumeIncompleteLogstorage:'POST',
+            deleteJobfilter                : 'POST',
+            storeJobfilter                 : 'POST',
+            apiJobDetail                   : 'GET',
+            apiResumeIncompleteLogstorage  : 'POST',
             cleanupIncompleteLogStorageAjax:'POST',
-            resumeIncompleteLogStorageAjax: 'POST',
-            resumeIncompleteLogStorage: 'POST',
-            cleanupIncompleteLogStorage: 'POST',
+            resumeIncompleteLogStorageAjax : 'POST',
+            resumeIncompleteLogStorage     : 'POST',
+            cleanupIncompleteLogStorage    : 'POST',
+            saveProjectAclFile             : 'POST',
+            deleteProjectAclFile           : 'POST',
+            saveSystemAclFile              : 'POST',
+            deleteSystemAclFile            : 'POST',
     ]
     def list = {
         def results = index(params)
@@ -1085,6 +1091,31 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         return redirect(action: 'acls', params: params)
     }
 
+    private Map storeCachedPolicyMeta(String project, String type, String name, Map meta) {
+        String key = project ? "proj:$project" : type
+        if (null == session.menu_acl_data_cache) {
+            session.menu_acl_data_cache = [:]
+        }
+        if (null == session.menu_acl_data_cache[key]) {
+            session.menu_acl_data_cache[key] = [:]
+        }
+        session.menu_acl_data_cache[key][name] = meta
+        meta
+    }
+
+    private Map getCachedPolicyMeta(String name, String project, String type, Closure gen = null) {
+        String key = project ? "proj:$project" : type
+
+        def value = session.menu_acl_data_cache?.get(key)?.get(name)
+        if (!value && gen != null) {
+            value = gen()
+            if (value != null) {
+                storeCachedPolicyMeta(project, type, name, value)
+            }
+        }
+        value
+    }
+
     def projectAcls() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -1102,42 +1133,594 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return
         }
         def project = frameworkService.getFrameworkProject(params.project)
-        if(notFoundResponse(project,'Project',params.project)){
-           return
+        List<Map> projectlist = listProjectAclFiles(project)
+        [
+                assumeValid     : true,
+                acllist         : projectlist,
+        ]
+    }
+
+    protected PoliciesValidation loadProjectPolicyValidation(IRundeckProject fwkProject, String ident) {
+        def baos = new ByteArrayOutputStream()
+        fwkProject.loadFileResource('acls/' + ident, baos)
+        def fileText = baos.toString('UTF-8')
+        authorizationService.validateYamlPolicy(fwkProject.name, ident, fileText)
+    }
+
+    private Map policyMetaFromValidation(PoliciesValidation policiesvalidation) {
+        def meta = [:]
+        if (policiesvalidation?.policies?.policies) {
+            meta.description = policiesvalidation?.policies?.policies?.first()?.description
         }
+        if (policiesvalidation?.policies?.countPolicies()) {
+            meta.count = policiesvalidation?.policies?.countPolicies()
+        }
+        meta ?: null
+    }
+
+    private List<Map> listProjectAclFiles(IRundeckProject project) {
         def projectlist = project.listDirPaths('acls/').findAll { it ==~ /.*\.aclpolicy$/ }.collect {
-            it.replaceAll(/^acls\//, '')
+            def id = it.replaceAll(/^acls\//, '')
+            Map meta = getCachedPolicyMeta(id, project.name, null) {
+                def policy = loadProjectPolicyValidation(project, id)
+                def meta = policyMetaFromValidation(policy)
+                meta
+            }
+            [
+                    id  : id,
+                    name: AclFile.idToName(id),
+                    meta: (meta ?: [:])
+            ]
+        }
+        projectlist
+    }
+
+    def createProjectAclFile() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
+        }
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProjectAcl(params.project),
+                        [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CREATE, 'ACL for Project', params.project
+        )) {
+            return
+        }
+        //TODO: templates
+        [project: params.project]
+    }
+
+    def editProjectAclFile(ProjAclFile input) {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        def project = params.project
+        if (!project) {
+            return renderErrorView('Project parameter is required')
+        }
+        input.validate()
+        if(!input.id) {
+            input.errors.rejectValue('id', 'blank',['id'].toArray(),null)
+        }
+        if (input.hasErrors()) {
+            request.errors = input.errors
+            return renderErrorView([:])
+        }
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProjectAcl(project),
+                        [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_UPDATE, 'ACL for Project', project
+        )) {
+            return
+        }
+        def fwkProject = frameworkService.getFrameworkProject(project)
+        def resPath = 'acls/' + input.id
+        def resourceExists = fwkProject.existsFileResource(resPath)
+
+        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + project, input.id)) {
+            return
+        }
+        def baos = new ByteArrayOutputStream()
+        def size = fwkProject.loadFileResource(resPath, baos)
+        def fileText = baos.toString('UTF-8')
+        def policiesvalidation = loadProjectPolicyValidation(fwkProject, input.id)
+        [
+                fileText  : fileText,
+                id        : input.id,
+                name      : input.idToName(),
+                project   : project,
+                size      : size,
+                validation: policiesvalidation,
+                meta      : getCachedPolicyMeta(input.id, project, null) {
+                    policyMetaFromValidation(policiesvalidation)
+                }
+        ]
+    }
+
+    def deleteProjectAclFile(ProjAclFile input) {
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'projectAcls', params: [project: params.project])
+        }
+        if (!requestHasValidToken()) {
+            return
+        }
+        input.validate()
+        if(!input.id) {
+            input.errors.rejectValue('id', 'blank',['id'].toArray(),null)
+        }
+        if (input.hasErrors()) {
+            request.errors = input.errors
+            return renderErrorView()
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
+        }
+        def requiredAuth = AuthConstants.ACTION_DELETE
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProjectAcl(params.project),
+                        [requiredAuth, AuthConstants.ACTION_ADMIN]
+                ),
+                requiredAuth, 'ACL for Project', params.project
+        )) {
+            return
+        }
+        def project = frameworkService.getFrameworkProject(params.project)
+        if (notFoundResponse(project, 'Project', params.project)) {
+            return
+        }
+        def resPath = 'acls/' + input.id
+        def resourceExists = project.existsFileResource(resPath)
+
+        if (notFoundResponse(resourceExists, 'ACL File in Project: ' + params.project, input.id)) {
+            return
+        }
+        //store
+        try {
+            if (project.deleteFileResource(resPath)) {
+                flash.message = input.id + " was deleted"
+            } else {
+                flash.error = input.id + " was NOT deleted"
+            }
+        } catch (IOException e) {
+            log.error("Error deleting project acl: $resPath: $e.message", e)
+            request.error = e.message
+        }
+        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
+    }
+    /**
+     * Endpoint for save/upload
+     * @param input
+     * @return
+     */
+    def saveProjectAclFile(SaveProjAclFile input) {
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'projectAcls', params: [project: params.project])
+        }
+        if (!requestHasValidToken()) {
+            return
+        }
+        def renderInvalid = { Map model = [:] ->
+            if(input.upload){
+                def project = frameworkService.getFrameworkProject(params.project)
+                model.acllist = listProjectAclFiles(project)
+            }
+            render(
+                    view: input.upload ? 'projectAcls' : input.create ? 'createProjectAclFile' : 'editProjectAclFile',
+                    model:
+                    [
+                            input   : input,
+                            fileText: input.fileText,
+                            id      : input.id,
+                            name    : input.name,
+                            project : params.project,
+                            size    : input.fileText?.length(),
+                    ] + model
+            )
+        }
+        if (input.upload) {
+            if (!(request instanceof MultipartHttpServletRequest)) {
+                response.status = HttpServletResponse.SC_BAD_REQUEST
+                return renderErrorView("Expected multipart file upload request")
+            }
+            input.fileText = new String(input.uploadFile.bytes, 'UTF-8')
+        }
+        input.validate()
+        if(!input.id && !input.name) {
+            input.errors.rejectValue('id', 'blank',['id'].toArray(),null)
+        }
+        if (input.hasErrors()) {
+            request.errors = input.errors
+            return renderInvalid()
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!params.project) {
+            return renderErrorView('Project parameter is required')
         }
 
-        [
-                rundeckFramework: frameworkService.rundeckFramework,
-                aclFileList     : list,
-                assumeValid     : true,
-                acllist         : projectlist
-        ]
+        def project = frameworkService.getFrameworkProject(params.project)
+        def resPath = 'acls/' + input.createId()
+        def resourceExists = project.existsFileResource(resPath)
+        def requiredAuth = (input.upload && !resourceExists || input.create) ? AuthConstants.ACTION_CREATE :
+                AuthConstants.ACTION_UPDATE
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        frameworkService.authResourceForProjectAcl(params.project),
+                        [requiredAuth, AuthConstants.ACTION_ADMIN]
+                ),
+                requiredAuth, 'ACL for Project', params.project
+        )) {
+            return
+        }
+        if ((input.create || input.upload && !input.overwrite) && resourceExists) {
+            input.errors.rejectValue(
+                    'name',
+                    'policy.create.conflict',
+                    [input.createName()].toArray(),
+                    "ACL Policy already exists: {0}"
+            )
+            response.status = HttpServletResponse.SC_CONFLICT
+            request.errors = input.errors
+            return renderInvalid()
+        }
+        if (!input.create && !input.upload &&
+                notFoundResponse(resourceExists, 'ACL Policy in Project: ' + params.project, input.createName())) {
+            return
+        }
+        def error = false
+        //validate
+
+        String fileText = input.fileText
+        def validation = authorizationService.validateYamlPolicy(
+                project.name,
+                input.upload ? 'uploaded-file' : resPath,
+                fileText
+        )
+        if (!validation.valid) {
+            request.error = "Validation failed"
+            return renderInvalid(validation: validation)
+        }
+        storeCachedPolicyMeta(project.name, null, input.createId(), policyMetaFromValidation(validation))
+        //store
+        try {
+            def size = project.storeFileResource(resPath, new ByteArrayInputStream(fileText.getBytes('UTF-8')))
+            flash.storedFile = input.createId()
+            flash.storedSize = size
+        } catch (IOException e) {
+            log.error("Error storing project acl: $resPath: $e.message", e)
+            request.error = e.message
+            error = true
+        }
+        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
     }
 
     def acls() {
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResource(authContext, AuthConstants.RESOURCE_TYPE_SYSTEM,
-                        AuthConstants.ACTION_READ),
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
+                        [AuthConstants.ACTION_READ, AuthConstants.ACTION_ADMIN]
+                ),
                 AuthConstants.ACTION_READ, 'System configuration')) {
             return
         }
-        def fwkConfigDir=frameworkService.rundeckFramework.getConfigDir()
-        def list=fwkConfigDir.listFiles().grep{it.name=~/\.aclpolicy$/}.sort()
-        Map<File,Validation> validation=list.collectEntries{
-            [it,authorizationService.validateYamlPolicy(it)]
+        systemAclsModel()
+    }
+
+    private loadSystemPolicyFS(String fname) {
+        def fwkConfigDir = frameworkService.getFrameworkConfigDir()
+        def file = new File(fwkConfigDir, fname)
+        authorizationService.validateYamlPolicy(null, fname, file)
+    }
+
+    private loadSystemPolicyStorage(String fname) {
+        def exists = authorizationService.existsPolicyFile(fname)
+        if (exists) {
+            return authorizationService.validateYamlPolicy(
+                    null,
+                    fname,
+                    authorizationService.getPolicyFileContents(fname)
+            )
+        }
+        null
+    }
+    private Map systemAclsModel() {
+        def fwkConfigDir = frameworkService.getFrameworkConfigDir()
+        def fslist = fwkConfigDir.listFiles().grep { it.name =~ /\.aclpolicy$/ }.sort().collect { file ->
+            def validation = loadSystemPolicyFS(file.name)
+            [
+                    id        : file.name,
+                    name      : AclFile.idToName(file.name),
+                    meta      : getCachedPolicyMeta(file.name, null, 'fs') {
+                        policyMetaFromValidation(validation)
+                    },
+                    validation: validation?.errors,
+                    valid     : validation?.valid
+            ]
+        }
+        def stored = authorizationService.listStoredPolicyFiles().collect { fname ->
+            [
+                    id   : fname,
+                    name : AclFile.idToName(fname),
+                    meta : getCachedPolicyMeta(fname, null, 'storage') {
+                        policyMetaFromValidation(loadSystemPolicyStorage(fname))
+                    },
+                    valid: true
+            ]
         }
 
         [
-                rundeckFramework: frameworkService.rundeckFramework,
-                fwkConfigDir    : fwkConfigDir,
-                aclFileList     : list,
-                validations     : validation,
+                fwkConfigDir : fwkConfigDir,
+                aclFileList  : fslist,
+                aclStoredList: stored,
+                clusterMode  : isClusterModeAclsLocalFileEditDisabled()
         ]
+    }
+
+    protected boolean isClusterModeAclsLocalFileEditDisabled() {
+        frameworkService.isClusterModeEnabled() &&
+                configurationService.getBoolean('clusterMode.acls.localfiles.modify.disabled', true)
+    }
+
+    def createSystemAclFile() {
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (!params.fileType || !(params.fileType in ['fs', 'storage'])) {
+            return renderErrorView('fileType parameter is required, must be one of: fs, storage')
+        }
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
+                        [AuthConstants.ACTION_CREATE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CREATE, 'System ACLs'
+        )) {
+            return
+        }
+
+        if (params.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
+            return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
+        }
+        //TODO: templates
+        [fileType: params.fileType]
+    }
+
+    def editSystemAclFile(SysAclFile input) {
+        input.validate()
+        if(!input.id) {
+            input.errors.rejectValue('id', 'blank',['id'].toArray(),null)
+        }
+        if (input.hasErrors()) {
+            request.errors = input.errors
+            return renderErrorView([:])
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
+                        [AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_UPDATE, 'System ACLs'
+        )) {
+            return
+        }
+
+        if (input.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
+            return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
+        }
+        def fileText
+        def exists = false
+        def size
+        if (input.fileType == 'fs') {
+            //look on filesys
+            def fwkConfigDir = frameworkService.getFrameworkConfigDir()
+            def file = new File(fwkConfigDir, input.id)
+            exists = frameworkService.existsFrameworkConfigFile(input.id)
+            if (exists) {
+                fileText = frameworkService.readFrameworkConfigFile(input.id)
+                size = fileText.length()
+            }
+        } else if (input.fileType == 'storage') {
+            //look in storage
+            exists = authorizationService.existsPolicyFile(input.id)
+            if (exists) {
+                fileText = authorizationService.getPolicyFileContents(input.id)
+                size = fileText.length()
+            }
+        }
+        if (notFoundResponse(exists, "System ACL Policy File", input.id)) {
+            return
+        }
+
+        [
+                fileText: fileText,
+                id      : input.id,
+                name    : input.idToName(),
+                fileType: input.fileType,
+                size    : size
+        ]
+    }
+
+    def saveSystemAclFile(SaveSysAclFile input) {
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'acls')
+        }
+        if (!requestHasValidToken()) {
+            return
+        }
+        def renderInvalid = { Map model = [:] ->
+            if (input.upload) {
+                model += systemAclsModel()
+            }
+            render(view: input.upload ? 'acls' : input.create ? 'createSystemAclFile' : 'editSystemAclFile', model:
+                    [
+                            input   : input,
+                            fileText: input.fileText,
+                            file    : input.name,
+                            fileType: input.fileType,
+                            size    : input.fileText?.length(),
+                    ] + model
+            )
+        }
+
+        if (input.upload) {
+            if (!(request instanceof MultipartHttpServletRequest)) {
+                response.status = HttpServletResponse.SC_BAD_REQUEST
+                return renderErrorView("Expected multipart file upload request")
+            }
+            input.fileText = new String(input.uploadFile.bytes, 'UTF-8')
+        }
+        input.validate()
+        if (!input.id && !input.name) {
+            input.errors.rejectValue('id', 'blank', ['id'].toArray(), null)
+        }
+        if (input.hasErrors()) {
+            request.errors = input.errors
+            return renderInvalid()
+        }
+        if (input.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
+            return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
+        }
+        def exists = false
+        if (input.fileType == 'fs') {
+            //look on filesys
+            exists = frameworkService.existsFrameworkConfigFile(input.createId())
+        } else if (input.fileType == 'storage') {
+            //look in storage
+            exists = authorizationService.existsPolicyFile(input.createId())
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def requiredAuth = (input.upload && !exists || input.create) ? AuthConstants.ACTION_CREATE :
+                AuthConstants.ACTION_UPDATE
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
+                        [requiredAuth, AuthConstants.ACTION_ADMIN]
+                ),
+                requiredAuth, 'System ACLs'
+        )) {
+            return
+        }
+        if ((input.create || input.upload && !input.overwrite) && exists) {
+            input.errors.rejectValue(
+                    'name',
+                    'policy.create.conflict',
+                    [input.createName()].toArray(),
+                    "Policy Name already exists: {0}"
+            )
+        } else if (!input.create && !input.upload &&
+                notFoundResponse(exists, 'System ACL Policy', input.createName())) {
+            return
+        }
+        if (input.errors.hasErrors()) {
+            return renderInvalid()
+        }
+
+        String fileText = input.fileText
+        def validation = authorizationService.validateYamlPolicy(input.upload ? 'uploaded-file' : input.id, fileText)
+        if (!validation.valid) {
+            request.error = "Validation failed"
+            return renderInvalid(validation: validation)
+        }
+        storeCachedPolicyMeta(null, input.fileType, input.createId(), policyMetaFromValidation(validation))
+        //store
+        if (input.fileType == 'fs') {
+            //store on filesys
+            try {
+                flash.storedSize = frameworkService.writeFrameworkConfigFile(input.createId(), fileText)
+                flash.storedFile = input.createName()
+                flash.storedType = input.fileType
+            } catch (IOException exc) {
+                flash.error = "Failed saving file: $exc"
+                return renderInvalid()
+            }
+
+        } else if (input.fileType == 'storage') {
+            //store in storage
+            flash.storedSize = authorizationService.storePolicyFileContents(input.createId(), fileText)
+            flash.storedFile = input.createName()
+            flash.storedType = input.fileType
+        }
+        return redirect(controller: 'menu', action: 'acls')
+    }
+
+    def deleteSystemAclFile(SysAclFile input) {
+        if (params.cancel) {
+            return redirect(controller: 'menu', action: 'acls')
+        }
+        if (!requestHasValidToken()) {
+            return
+        }
+
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+        def requiredAuth = AuthConstants.ACTION_DELETE
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAny(
+                        authContext,
+                        AuthConstants.RESOURCE_TYPE_SYSTEM_ACL,
+                        [requiredAuth, AuthConstants.ACTION_ADMIN]
+                ),
+                requiredAuth, 'System ACLs'
+        )) {
+            return
+        }
+
+        input.validate()
+        if(!input.id) {
+            input.errors.rejectValue('id', 'blank',['id'].toArray(),null)
+        }
+        if (input.hasErrors()) {
+            request.errors = input.errors
+            return renderErrorView()
+        }
+
+        if (input.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
+            return renderErrorView(message(code:"clusterMode.acls.localfiles.modify.disabled.warning.message"))
+        }
+        def exists = false
+        if (input.fileType == 'fs') {
+            //look on filesys
+            exists = frameworkService.existsFrameworkConfigFile(input.id)
+        } else if (input.fileType == 'storage') {
+            //look in storage
+            exists = authorizationService.existsPolicyFile(input.id)
+        }
+
+        if (notFoundResponse(exists, 'System ACL Policy', input.id)) {
+            return
+        }
+        if (input.fileType == 'fs') {
+            //store on filesys
+            boolean deleted=frameworkService.deleteFrameworkConfigFile(input.id)
+            flash.message = "Policy was deleted: " + input.id
+        } else if (input.fileType == 'storage') {
+            //store in storage
+            if (authorizationService.deletePolicyFile(input.id)) {
+                flash.message = "Policy was deleted: " + input.id
+            } else {
+                flash.error = "Policy was NOT deleted: " + input.id
+            }
+        }
+        return redirect(controller: 'menu', action: 'acls')
     }
 
     def systemInfo (){
