@@ -1296,7 +1296,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             log.error("Error deleting project acl: $resPath: $e.message", e)
             request.error = e.message
         }
-        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
+        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project.name])
     }
     /**
      * Endpoint for save/upload
@@ -1403,7 +1403,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             request.error = e.message
             error = true
         }
-        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project])
+        return redirect(controller: 'menu', action: 'projectAcls', params: [project: project.name])
     }
 
     def acls() {

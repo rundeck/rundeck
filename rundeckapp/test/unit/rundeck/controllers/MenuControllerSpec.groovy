@@ -384,10 +384,42 @@ class MenuControllerSpec extends Specification {
         1 * controller.authorizationService.validateYamlPolicy(project, 'acls/' + id, fileText) >>
                 new PoliciesValidation(validation: new ValidationSet(valid: true))
 
+        response.redirectedUrl == "/menu/projectAcls?project=$project"
         where:
         fileText    | create | exists | project
         'test-data' | true   | false  | 'testproj'
         'test-data' | false  | true   | 'testproj'
+    }
+    @Unroll
+    def "delete project policy"() {
+        given:
+        def id = 'test.aclpolicy'
+        def input = new ProjAclFile(id: id)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+
+        when:
+        request.method = 'POST'
+        setupFormTokens(params)
+        params.project = project
+        def result = controller.deleteProjectAclFile(input)
+        then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authResourceForProjectAcl(project)
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+        1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
+            1 * deleteFileResource('acls/' + id) >> true
+            existsFileResource('acls/' + id) >> exists
+            getName() >> project
+        }
+        0 * controller.frameworkService._(*_)
+        0 * controller.authorizationService._(*_)
+
+        flash.message=~/was deleted/
+        response.redirectedUrl == "/menu/projectAcls?project=$project"
+        where:
+        fileText    |  exists | project
+        'test-data' |  true  | 'testproj'
     }
 
     def "save sys fs policy disabled"() {
