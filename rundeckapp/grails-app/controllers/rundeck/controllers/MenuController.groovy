@@ -353,10 +353,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     }
                     if(results.nextExecutions?.get(se.id)){
                         data.nextScheduledExecution=results.nextExecutions?.get(se.id)
-                        if(query.daysAhead) {
+                        if(query.daysAhead != null) {
                             def maxSched = results.nextExecutions?.max{it.value}
                             def to = new Date() + query.daysAhead
-                            if(to>maxSched.value){
+                            if(to<maxSched.value){
                                 to = maxSched.value
                             }
                             data.futureScheduledExecutions = se.nextExecutions(to)
