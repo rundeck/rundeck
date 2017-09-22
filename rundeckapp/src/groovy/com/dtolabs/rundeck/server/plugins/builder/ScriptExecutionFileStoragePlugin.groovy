@@ -36,7 +36,9 @@ class ScriptExecutionFileStoragePlugin
     Map configuration
     Map<String, ? extends Object> pluginContext
     boolean storeSupported
+    boolean partialStoreSupported
     boolean retrieveSupported
+    boolean partialRetrieveSupported
 
     ScriptExecutionFileStoragePlugin(Map<String, Closure> handlers, Description description) {
         this.handlers = handlers
@@ -55,6 +57,8 @@ class ScriptExecutionFileStoragePlugin
     void initialize(Map<String, ? extends Object> context) {
         this.pluginContext = context
         this.storeSupported = handlers['store'] ? true : false
+        this.partialStoreSupported = handlers['partialStore'] ? true : false
+        this.partialRetrieveSupported = handlers['partialRetrieve'] ? true : false
         this.retrieveSupported = (handlers['available'] != null && handlers['retrieve'] != null)
         if(retrieveSupported) {
             ['available', 'retrieve'].each {

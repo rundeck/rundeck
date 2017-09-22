@@ -49,13 +49,14 @@ class MultiFileStorageRequestImpl implements MultiFileStorageRequestErrors {
         if (!files[filetype]) {
             return null
         }
-        new StorageFileImpl(filetype: filetype, file: files[filetype])
+        new StorageFileImpl(filetype: filetype, file: files[filetype], complete: true)
     }
 }
 
 class StorageFileImpl implements StorageFile {
     String filetype
     File file
+    boolean complete
 
     @Override
     InputStream getInputStream() {
