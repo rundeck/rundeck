@@ -103,7 +103,7 @@
                         </span>
                         <!-- /ko -->
                         <!-- ko if: nameFixed() -->
-                        <input type="hidden" name="id" data-bind="value: nameFixed"/>
+                        <input type="hidden" name="id" data-bind="value: idFixed"/>
 
                         <p class="form-control-static">
                             <g:icon name="file"/>

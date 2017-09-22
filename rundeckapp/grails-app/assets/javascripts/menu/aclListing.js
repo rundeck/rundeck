@@ -26,6 +26,7 @@ function PolicyUpload(data) {
     var self = this;
     self.name = ko.observable(data.name);
     self.nameFixed = ko.observable();
+    self.idFixed = ko.observable();
     self.nameError = ko.observable(false);
     self.hasFile = ko.observable(false);
     self.fileError = ko.observable(false);
@@ -80,14 +81,16 @@ function PolicyUpload(data) {
     self.reset = function () {
         self.name(data.name);
         self.nameFixed(null);
+        self.idFixed(null);
         self.nameError(false);
         self.overwriteError(false);
         self.overwrite(false);
         self.hasFile(false);
         self.fileError(false);
     };
-    self.showUploadModal = function (id, nameFixed) {
-        self.nameFixed(nameFixed);
+    self.showUploadModal = function (id, policy) {
+        self.nameFixed(policy.name());
+        self.idFixed(policy.id());
         self.overwrite(true);
         jQuery('#' + id).modal('show');
     };
@@ -146,7 +149,7 @@ function PolicyFiles(data) {
     };
     self.showUploadModal = function (id, policy) {
         if (self.fileUpload) {
-            self.fileUpload.showUploadModal(id, policy.name());
+            self.fileUpload.showUploadModal(id, policy);
         }
     };
 
