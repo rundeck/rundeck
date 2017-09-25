@@ -42,7 +42,6 @@ import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
-import org.quartz.TriggerUtils
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
