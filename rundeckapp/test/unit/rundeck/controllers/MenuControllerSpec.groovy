@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
@@ -192,5 +193,89 @@ class MenuControllerSpec extends Specification {
         1 * controller.frameworkService.isClusterModeEnabled()>>true
         1 * controller.apiService.renderSuccessXml(_,_,_)
 
+    }
+
+    def "api jobsAjax without daysAhead param"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime=200*1000
+        job1.execCount=100
+        job1.save()
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        params.id=testUUID
+        params.project='AProject'
+        response.format='json'
+        def result = controller.jobsAjax()
+
+        then:
+        1 * controller.frameworkService.authResourceForJob(_) >> [authorized:true, action:AuthConstants.ACTION_READ,resource:job1]
+        1 * controller.frameworkService.authorizeProjectResource(_,_,_,_) >> true
+        1 * controller.frameworkService.authorizeProjectResources(_,_,_,_) >> [ [authorized:true, 
+                                    action:AuthConstants.ACTION_READ,
+                                    resource:[group:job1.groupPath,name:job1.jobName]] ]
+        1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
+        1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist : [job1]]
+        1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
+                                                                        offset:0,
+                                                                        paginateParams:[:],
+                                                                        displayParams:[:]]
+        1 * controller.scheduledExecutionService.nextExecutionTimes(_) >> [ (job1.id) :new Date()]
+        response.json != null
+        response.json.count == 1
+        response.json.jobs
+        response.json.jobs[0].nextScheduledExecution
+        !response.json.jobs[0].futureScheduledExecutions
+    }
+
+    def "api jobsAjax with daysAhead param"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid:testUUID))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime=200*1000
+        job1.execCount=100
+        job1.save()
+        job1.scheduledExecutionService = Mock(ScheduledExecutionService){
+            createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
+        }
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        params.id=testUUID
+        params.project='AProject'
+        params.daysAhead='2'
+        response.format='json'
+        def result = controller.jobsAjax()
+
+        then:
+        1 * controller.frameworkService.authResourceForJob(_) >> [authorized:true, action:AuthConstants.ACTION_READ,resource:job1]
+        1 * controller.frameworkService.authorizeProjectResource(_,_,_,_) >> true
+        1 * controller.frameworkService.authorizeProjectResources(_,_,_,_) >> [ [authorized:true, 
+                                    action:AuthConstants.ACTION_READ,
+                                    resource:[group:job1.groupPath,name:job1.jobName]] ]
+        1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
+        1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist : [job1]]
+        1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
+                                                                        offset:0,
+                                                                        paginateParams:[:],
+                                                                        displayParams:[:]]
+        1 * controller.scheduledExecutionService.nextExecutionTimes(_) >> [ (job1.id) :new Date()]
+        response.json != null
+        response.json.count == 1
+        response.json.jobs
+        response.json.jobs[0].nextScheduledExecution
+        response.json.jobs[0].futureScheduledExecutions
     }
 }
