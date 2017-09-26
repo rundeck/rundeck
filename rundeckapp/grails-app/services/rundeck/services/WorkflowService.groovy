@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowState
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStateImpl
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStateListener
 import com.dtolabs.rundeck.app.internal.workflow.MutableWorkflowStepStateImpl
+import com.dtolabs.rundeck.app.internal.workflow.PeriodicFileChecker
 import com.dtolabs.rundeck.app.internal.workflow.WorkflowStateListenerAction
 import com.dtolabs.rundeck.app.internal.workflow.ExceptionHandlingMutableWorkflowState
 import com.dtolabs.rundeck.app.support.ExecutionContext
@@ -41,6 +42,7 @@ import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
+import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.logging.ExecutionFile
 import rundeck.services.logging.ExecutionFileDeletePolicy
 import rundeck.services.logging.ExecutionFileProducer
@@ -48,6 +50,8 @@ import rundeck.services.logging.ExecutionLogState
 import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.logging.WorkflowStateFileLoader
 import rundeck.services.workflow.StateMapping
+
+import java.util.concurrent.TimeUnit
 
 class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     public static final String STATE_FILE_FILETYPE = "state.json"
@@ -57,6 +61,8 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     def ApplicationContext applicationContext
     def LogFileStorageService logFileStorageService
     def grailsApplication
+    def grailsEvents
+    def ConfigurationService configurationService
     static transactional = false
     def stateMapping = new StateMapping()
     /**
@@ -172,6 +178,70 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         return new MutableWorkflowStateImpl(parent ? (parent.nodes.nodeNames as List) : null, wf.commands.size(),
                 substeps, parentId,framework.frameworkNodeName)
     }
+
+    def long getLogstoreCheckpointTimeSecondsPeriod() {
+        configurationService.getTimeDuration(
+                'execution.logs.fileStorage.checkpoint.time.interval',
+                '30s',
+                TimeUnit.SECONDS
+        )
+    }
+
+    def long getLogstoreCheckpointTimeSecondsMinimum() {
+        configurationService.getTimeDuration(
+                'execution.logs.fileStorage.checkpoint.time.minimum',
+                '30s',
+                TimeUnit.SECONDS
+        )
+    }
+
+    def long getLogstoreCheckpointFilesizeMinimum() {
+        configurationService.getFileSize('execution.logs.fileStorage.checkpoint.fileSize.minimum', 0)
+    }
+
+    def long getLogstoreCheckpointFilesizeIncrement() {
+        configurationService.getFileSize('execution.logs.fileStorage.checkpoint.fileSize.increment', 0)
+    }
+
+    def createPeriodicCheckpoint(Execution execution) {
+        def File logfile = logFileStorageService.getFileForExecutionFiletype(
+                execution,
+                LoggingService.LOG_FILE_FILETYPE,
+                true
+        )
+        if (logFileStorageService.pluginEnabledForPartialStorage(execution)) {
+            def execid = execution.id
+            def checker = new PeriodicFileChecker(
+                    periodUnit: TimeUnit.SECONDS,
+                    period: logstoreCheckpointTimeSecondsPeriod,
+                    periodThreshold: logstoreCheckpointTimeSecondsMinimum,
+                    sizeThreshold: logstoreCheckpointFilesizeMinimum,
+                    sizeIncrement: logstoreCheckpointFilesizeIncrement,
+                    logfile: logfile,
+                    //OR means: trigger action if initial size OR time threshold met
+                    thresholdBehavior: PeriodicFileChecker.Behavior.OR,
+                    action: { long fileSizeChange, long timediff ->
+                        log.error("Partial log file storage triggger for ${execid}")
+                        grailsEvents?.event(
+                                null,
+                                'executionCheckpoint',
+                                new ExecutionCompleteEvent(
+                                        state: 'partial',
+                                        execution: execution,
+                                        context: [fileSizeChange: fileSizeChange, timediff: timediff]
+
+                                )
+                        )
+                    }
+            )
+            log.error("Partial log file storage enabled for execution ${execid} with checker ${checker}")
+            return { long duration ->
+                if (checker.triggerCheck()) {
+                    log.error("periodic check succeeded after ${duration}")
+                }
+            }
+        }
+    }
     /**
      * Create and return a listener for changes to the workflow state for an execution
      * @param execution
@@ -203,13 +273,9 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         def mutablestate = new MutableWorkflowStateListener(state)
         def chain = [mutablestate]
         def File outfile = getStateFileForExecution(execution)
-        def storagerequest = null//logFileStorageService.prepareForFileStorage(execution, STATE_FILE_FILETYPE, outfile)
         chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
             ExecutionState executionState, Date timestamp, List<String> nodeSet ->
-                if (executionState.completedState) {
-                    //workflow finished:
-                    persistExecutionState(storagerequest, execution.id, state, outfile)
-                }
+                persistExecutionState(execution.id, state, outfile)
         })
         if (Environment.getCurrent() == Environment.DEVELOPMENT) {
             chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
@@ -231,12 +297,11 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         logFileStorageService.getFileForExecutionFiletype(execution, STATE_FILE_FILETYPE, true)
     }
 
-    def persistExecutionState(Closure storagerequest, Long id, WorkflowState state, File file) {
+    def persistExecutionState(Long id, WorkflowState state, File file) {
         Map data=serializeStateJson(id, state, file)
         stateCache.put(id, data)
         activeStates.remove(id)
-        storagerequest?.call()
-        log.debug("${id}: execution state.json persisted to file. [submitted for remote storage? ${storagerequest?true:false}]")
+        log.debug("${id}: execution state.json persisted to file.")
     }
 
     def Map serializeStateJson(Long id,WorkflowState state, File file){

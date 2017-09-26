@@ -27,6 +27,7 @@ class MultiFileStorageRequestImpl implements MultiFileStorageRequestErrors {
     Map<String, File> files
     Map<String, Boolean> completion = [:]
     Map<String, String> errors = [:]
+    boolean completed=true
 
     @Override
     void storageResultForFiletype(final String filetype, boolean success) {
@@ -49,7 +50,7 @@ class MultiFileStorageRequestImpl implements MultiFileStorageRequestErrors {
         if (!files[filetype]) {
             return null
         }
-        new StorageFileImpl(filetype: filetype, file: files[filetype], complete: true)
+        new StorageFileImpl(filetype: filetype, file: files[filetype], complete: completed)
     }
 }
 

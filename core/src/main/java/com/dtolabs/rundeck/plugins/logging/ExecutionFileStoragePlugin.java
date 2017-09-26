@@ -53,7 +53,7 @@ public interface ExecutionFileStoragePlugin extends ExecutionFileStorage {
      *
      * @throws ExecutionFileStorageException if there is an error determining the availability
      */
-    default boolean isAvailablePartial(String filetype) throws ExecutionFileStorageException {
+    default boolean isPartialAvailable(String filetype) throws ExecutionFileStorageException {
         return false;
     }
 

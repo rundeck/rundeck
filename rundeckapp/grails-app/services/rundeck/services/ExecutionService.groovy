@@ -1011,6 +1011,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     jobcontext,
                     extraParamsExposed
             )
+            def checkpoint = workflowService.createPeriodicCheckpoint(execution)
 
             def wfEventListener = new WorkflowEventLoggerListener(executionListener)
             def logOutFlusher = new LogFlusher()
@@ -1108,8 +1109,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
             thread.start()
             log.debug("started thread")
-            return [thread            : thread, loghandler: loghandler, noderecorder: recorder, execution: execution,
-                    scheduledExecution: scheduledExecution, threshold: threshold]
+            return [
+                    thread            : thread,
+                    loghandler        : loghandler,
+                    noderecorder      : recorder,
+                    execution         : execution,
+                    scheduledExecution: scheduledExecution,
+                    threshold         : threshold,
+                    periodicCheck     : checkpoint
+            ]
         }catch(Exception e) {
             log.error("Failed while starting execution: ${execution.id}", e)
             loghandler.logError('Failed to start execution: ' + e.getClass().getName() + ": " + e.message)

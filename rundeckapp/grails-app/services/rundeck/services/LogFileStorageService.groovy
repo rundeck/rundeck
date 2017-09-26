@@ -97,11 +97,11 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     private Set<Long> failedRequests = new HashSet<>()
     private Map<Long,List<String>> failures = new HashMap<>()
     /**
-     * Queue of log storage requests
+     * Queue of log storage requests, processed by {@link #runStorageRequest(java.util.Map)}
      */
     private BlockingQueue<Map> storageRequests = new LinkedBlockingQueue<Map>()
     /**
-     * Queue of log retrieval requests
+     * Queue of log retrieval requests, processed by {@link #runRetrievalRequest(java.util.Map)}
      */
     private BlockingQueue<Map> retrievalRequests = new LinkedBlockingQueue<Map>()
     /**
@@ -181,56 +181,78 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         def success = false
 
         def filetype=task.filetype
+        def requestId = task.requestId
+        def partial = task.partial
+        def execId = task.execId
         List<String> typelist = filetype != '*' ? (filetype.split(',') as List) : []
 
-        LogFileStorageRequest.withNewSession {
-            Execution execution = Execution.get(task.request.execution.id)
+        //TODO: partial storage requests should not be retained...
+        if (!partial) {
+            LogFileStorageRequest.withNewSession {
+                Execution execution = Execution.get(execId)
 
-            def files = getExecutionFiles(execution, typelist)
-            try {
-                def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files)
-                success = didsucceed
-                if(!success) {
-                    failures.put(task.requestId, new ArrayList<String>(failuremap.values()))
-                }
-                if (!success && failuremap && failuremap.size()>1 || !failuremap[filetype]) {
-                    def ftype=failuremap.keySet().findAll{it!=null && it!='null'}.join(',')
-                    LogFileStorageRequest request = LogFileStorageRequest.get(task.requestId)
-                    if(request.filetype!=ftype || request.completed!=success) {
-                        while(true) {
-                            request = LogFileStorageRequest.get(task.requestId)
-                            request.filetype = ftype
-                            request.completed = success
-                            try {
-                                request.save(flush: true)
-                                break
-                            } catch (Exception e) {
-                                log.debug("Error: ${e}", e)
+                def files = getExecutionFiles(execution, typelist)
+                try {
+                    def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files)
+                    success = didsucceed
+                    if (!success) {
+                        failures.put(requestId, new ArrayList<String>(failuremap.values()))
+                    }
+                    if (!success && failuremap && failuremap.size() > 1 || !failuremap[filetype]) {
+                        def ftype = failuremap.keySet().findAll { it != null && it != 'null' }.join(',')
+                        LogFileStorageRequest request = LogFileStorageRequest.get(requestId)
+                        if (request.filetype != ftype || request.completed != success) {
+                            while (true) {
+                                request = LogFileStorageRequest.get(requestId)
+                                request.filetype = ftype
+                                request.completed = success
+                                try {
+                                    request.save(flush: true)
+                                    break
+                                } catch (Exception e) {
+                                    log.debug("Error: ${e}", e)
+                                }
                             }
                         }
                     }
+                } catch (IOException | ExecutionFileStorageException e) {
+                    success = false
+                    log.error("Failure: Storage request [ID#${task.id}]: ${e.message}", e)
                 }
-            }catch (IOException | ExecutionFileStorageException e) {
+            }
+        } else {
+            def files=[:]
+            log.debug("Partial: Storage request [ID#${task.id}]: for types: $typelist")
+            Execution.withNewSession {
+                Execution execution = Execution.get(execId)
+
+                files = getExecutionFiles(execution, typelist)
+            }
+            try {
+                def (didsucceed, failuremap) = storeLogFiles(typelist, task.storage, task.id, files, true)
+                success = didsucceed
+                log.debug("Partial: Storage request [ID#${task.id}]: succeeded")
+            } catch (IOException | ExecutionFileStorageException e) {
                 success = false
                 log.error("Failure: Storage request [ID#${task.id}]: ${e.message}", e)
             }
         }
 
-        if (!success && count < retry) {
+        if (!success && count < retry && !partial) {
             log.debug("Storage request [ID#${task.id}] was not successful, retrying in ${delay} seconds...")
             running.remove(task)
             queueLogStorageRequest(task, delay)
-        } else if (!success) {
+        } else if (!success && !partial) {
             getStorageFailedCounter()?.inc()
             if(getConfiguredStorageFailureCancel()){
                 log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, cancelling")
                 //if policy, remove the request from db
                 executorService.execute {
                     //use executorService to run within hibernate session
-                    LogFileStorageRequest request = LogFileStorageRequest.get(task.requestId)
+                    LogFileStorageRequest request = LogFileStorageRequest.get(requestId)
                     while(!request){
                         Thread.sleep(500)
-                        request = LogFileStorageRequest.get(task.requestId)
+                        request = LogFileStorageRequest.get(requestId)
                     }
                     request.delete(flush:true)
                     running.remove(task)
@@ -239,20 +261,20 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             }else{
                 log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
                 running.remove(task)
-                failedRequests.add(task.requestId)
+                failedRequests.add(requestId)
             }
-        } else {
-            failedRequests.remove(task.requestId)
-            failures.remove(task.requestId)
+        } else if (!partial) {
+            failedRequests.remove(requestId)
+            failures.remove(requestId)
             //use executorService to run within hibernate session
             executorService.execute {
                 log.debug("executorService saving storage request status...")
-                LogFileStorageRequest request = LogFileStorageRequest.get(task.requestId)
+                LogFileStorageRequest request = LogFileStorageRequest.get(requestId)
                 while(!request){
                     Thread.sleep(500)
-                    request = LogFileStorageRequest.get(task.requestId)
+                    request = LogFileStorageRequest.get(requestId)
                     if(request){
-                        log.debug("Loaded LogFileStorageRequest ${task.requestId} [ID#${task.id}] after retry")
+                        log.debug("Loaded LogFileStorageRequest ${requestId} [ID#${task.id}] after retry")
                     }
                 }
                 request.completed = success
@@ -393,6 +415,37 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         return writer
     }
 
+    /**
+     * Submit asynchronous request to store log files for the execution
+     * @param e
+     */
+    boolean pluginEnabledForPartialStorage(Execution e) {
+        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+        return plugin ? pluginSupportsPartialStorage(plugin) : false
+    }
+    /**
+     * Submit asynchronous request to store log files for the execution
+     * @param e
+     */
+    void submitForPartialStorage(Execution e, long sizeChange, long timeDiff) {
+        def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
+        if (null == plugin || !pluginSupportsPartialStorage(plugin)) {
+            return
+        }
+        log.error("partial storage triggered...[${sizeChange} bytes, after ${timeDiff} ms]")
+        //TODO: check if currently running
+        if (sizeChange < 1) {
+            //todo: configurable threshold
+            log.error("partial storage skipped: ${sizeChange} bytes")
+            return
+        }
+        //TODO: overwrite existing request if present
+        def reqid = e.id + ':checkpoint:' + UUID.randomUUID().toString()
+
+        Collection<ExecutionFileProducer> beans = listExecutionFileProducers()
+        String filetype = beans.findAll { !it.isExecutionFileGenerated() }*.executionFileType.join(',')
+        storeLogFileAsyncPartial(reqid, plugin, e.id, filetype)
+    }
 
     /**
      * Submit asynchronous request to store log files for the execution
@@ -411,8 +464,12 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     }
 
     private LogFileStorageRequest createStorageRequest(Execution e, String filetype) {
-        LogFileStorageRequest request = new LogFileStorageRequest(execution: e,
-                pluginName: getConfiguredPluginName(), completed: false, filetype: filetype)
+        LogFileStorageRequest request = new LogFileStorageRequest(
+                execution: e,
+                pluginName: getConfiguredPluginName(),
+                completed: false,
+                filetype: filetype
+        )
         request.save(flush:true)
         request
     }
@@ -474,7 +531,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
             if (null != plugin && pluginSupportsStorage(plugin)) {
                 //re-queue storage request immediately, pass -1 to skip counter increment
-                storeLogFileAsync(e.id.toString() + ":" + request.filetype, plugin, request,-1)
+                storeLogFileAsync(e.id.toString() + ":" + request.filetype, plugin, request, -1)
             } else {
                 log.error(
                         "cannot re-queue incomplete log storage request for execution ${e.id}, plugin was not available: ${getConfiguredPluginName()}"
@@ -847,6 +904,26 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         }
         true
     }
+
+    def pluginSupportsPartialStorage(Object plugin) {
+        if (!pluginSupportsStorage(plugin)) {
+            return false
+        }
+        if (plugin instanceof ExecutionFileStorageOptions) {
+            return ((ExecutionFileStorageOptions) plugin).partialStoreSupported
+        }
+        false
+    }
+
+    def pluginSupportsPartialRetrieval(Object plugin) {
+        if (!pluginSupportsRetrieve(plugin)) {
+            return false
+        }
+        if (plugin instanceof ExecutionFileStorageOptions) {
+            return ((ExecutionFileStorageOptions) plugin).partialRetrieveSupported
+        }
+        false
+    }
     /**
      * Get a previous retrieval cache result, if it is not expired, or has no more retries
      * @param key
@@ -952,6 +1029,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     def LogFileLoader requestLogFileLoad(Execution e, String filetype, boolean performLoad) {
         //handle cases where execution is still running or just started
         //and the file may not be available yet
+        //TODO: load partial file if enabled
         if (e.dateCompleted == null && e.dateStarted != null) {
             //execution is running
             if (frameworkService.isClusterModeEnabled() && e.serverNodeUUID != frameworkService.getServerUUID()) {
@@ -1078,7 +1156,36 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                         storage  : storage,
                         filetype : executionLogStorage.filetype,
                         request  : executionLogStorage,
-                        requestId: executionLogStorage.id
+                        requestId: executionLogStorage.id,
+                        execId   : executionLogStorage.execution.id,
+                        partial  : false
+                ],
+                delay
+        )
+    }
+    /**
+     * Asynchronously start a request to store a log file for a completed execution using the storage method
+     * @param id the request id
+     * @param file the file to store
+     * @param storage the storage method
+     * @param executionLogStorage the persisted object that records the result
+     * @param delay seconds to delay the request
+     */
+    private void storeLogFileAsyncPartial(
+            String id,
+            ExecutionFileStorage storage,
+            Long execId,
+            String filetype,
+            int delay = 0
+    )
+    {
+        queueLogStorageRequest(
+                [
+                        id      : id,
+                        storage : storage,
+                        filetype: filetype,
+                        execId  : execId,
+                        partial : true
                 ],
                 delay
         )
@@ -1151,7 +1258,8 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             List<String> filter,
             ExecutionFileStorage storage,
             String ident,
-            Map<String, ExecutionFile> files
+            Map<String, ExecutionFile> files,
+            boolean partial = false
     )
     {
         log.debug("Storage request [ID#${ident}], start, type ${filter}")
@@ -1162,10 +1270,10 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         def list = [:]
         def List<ExecutionFile> deletions=[]
         if (storage instanceof ExecutionMultiFileStorage) {
-            list = storeMultiLogFiles(files, storage, ident)
+            list = storeMultiLogFiles(files, storage, ident, partial)
         } else {
             files.each { type, file ->
-                def (result,message) = storeSingleLogFile(file.localFile, type, storage, ident)
+                def (result, message) = storeSingleLogFile(file.localFile, type, storage, ident, partial)
                 if (!result) {
                     list[type]=message
                 }
@@ -1195,14 +1303,20 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @param ident storage request ident
      * @return list of filetypes which were not successful
      */
-    private Map<String,String> storeMultiLogFiles(Map<String,ExecutionFile> files, ExecutionMultiFileStorage storage, String ident) {
+    private Map<String, String> storeMultiLogFiles(
+            Map<String, ExecutionFile> files,
+            ExecutionMultiFileStorage storage,
+            String ident,
+            boolean partial = false
+    )
+    {
         log.debug("Storage request storeMultiLogFiles [ID#${ident}], start")
 
         Map<String,String> failures = [:]
 
         Map<String, File> localfiles = files.collectEntries { [it.key, it.value.localFile] }
 
-        def request = new MultiFileStorageRequestImpl(files: localfiles)
+        def request = new MultiFileStorageRequestImpl(files: localfiles, completed: !partial)
 
         storage.storeMultiple(request)
 
@@ -1221,7 +1335,14 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @param execution
      * @param storage plugin that is already initialized
      */
-    private def storeSingleLogFile(File file, String filetype, ExecutionFileStorage storage, String ident) {
+    private def storeSingleLogFile(
+            File file,
+            String filetype,
+            ExecutionFileStorage storage,
+            String ident,
+            boolean partial = false
+    )
+    {
         log.debug("Storage request [ID#${ident}], start")
         def success = false
         String message=null
@@ -1229,7 +1350,11 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         long length = file.length()
         try{
             file.withInputStream { input ->
-                success = storage.store(filetype, input,length,lastModified)
+                if (partial) {
+                    success = storage.partialStore(filetype, input, length, lastModified)
+                } else {
+                    success = storage.store(filetype, input, length, lastModified)
+                }
                 message="No message"
             }
         }catch (Throwable e) {
