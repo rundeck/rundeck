@@ -40,7 +40,7 @@ class PeriodicFileCheckerSpec extends Specification {
         testfile.deleteOnExit()
     }
 
-    def teardown() {
+    def cleanup() {
         testfile?.delete()
     }
 
