@@ -351,11 +351,21 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     }
     /**
      * Summarize the data for only the selected nodes
-     * @param loader
-     * @param nodes
+     * @param e execution
+     * @param nodes list of selected nodes to get state for
+     * @param selectedOnly if ture, only get state for the nodes, otherwise all node states are returned
+     * @param performLoad if true, ask log storage to load the log if necessary
+     * @param stepStates if true, include individual step states
      * @return
      */
-    WorkflowStateFileLoader requestStateSummary(Execution e, List<String> nodes,boolean selectedOnly=false,boolean performLoad = true, boolean stepStates=false){
+    WorkflowStateFileLoader requestStateSummary(
+            Execution e,
+            List<String> nodes,
+            boolean selectedOnly = false,
+            boolean performLoad = true,
+            boolean stepStates = false
+    )
+    {
         //look for active state
         def state1 = activeStates[e.id]
         if (state1) {
