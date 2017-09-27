@@ -24,7 +24,7 @@ import com.dtolabs.utils.Streams;
 import java.io.*;
 import java.nio.file.Files;
 
-public class S3Base implements AWSCredentials,ResourceModelSource {
+public class S3Base implements AWSCredentials,ResourceModelSource, WriteableModelSource {
     private String AWSAccessKeyId;
     private String AWSSecretKey;
     private boolean useKey = false;
@@ -114,6 +114,10 @@ public class S3Base implements AWSCredentials,ResourceModelSource {
         return object.getObjectContent();
     }
 
+    public void putFile(File file){
+        AmazonS3 amazonS3 = getAmazonS3();
+        amazonS3.putObject(bucket,filePath,file);
+    }
 
 
     public INodeSet getNodes() throws ResourceModelSourceException {
@@ -146,7 +150,10 @@ public class S3Base implements AWSCredentials,ResourceModelSource {
         return writable ? SourceType.READ_WRITE : SourceType.READ_ONLY;
     }
 
-
+    @Override
+    public WriteableModelSource getWriteable() {
+        return writable ? this : null;
+    }
 
 
     private String getMimeType(){
@@ -181,7 +188,61 @@ public class S3Base implements AWSCredentials,ResourceModelSource {
         AWSSecretKey = key;
     }
 
+    @Override
+    public String getSyntaxMimeType() {
+        try {
+            return getResourceFormatParser().getPreferredMimeType();
+        } catch (UnsupportedFormatException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
+    @Override
+    public String getSourceDescription() {
+        return "S3 bucket: "+bucket+", file:"+filePath;
+    }
+
+    @Override
+    public long readData(OutputStream sink) throws IOException, ResourceModelSourceException {
+        if (!hasData()) {
+            return 0;
+        }
+        try (InputStream inputStream = getFile()) {
+            return Streams.copyStream(inputStream, sink);
+        }
+    }
+
+    @Override
+    public boolean hasData() {
+        return true;//TODO
+    }
+
+    @Override
+    public long writeData(InputStream data) throws IOException, ResourceModelSourceException {
+        if (!writable) {
+            throw new IllegalArgumentException("Cannot write to file, it is not configured to be writeable");
+        }
+        try {
+            final ResourceFormatParser parser = getResourceFormatParser();
+            File temp = Files.createTempFile("temp", "." + parser.getPreferredFileExtension()).toFile();
+            temp.deleteOnExit();
+
+            try (FileOutputStream fos = new FileOutputStream(temp)) {
+                Streams.copyStream(data, fos);
+            }
+            try {
+                final INodeSet set = parser.parseDocument(temp);
+            } catch (ResourceFormatParserException e) {
+                throw new ResourceModelSourceException(e);
+            }
+            putFile(temp);
+            return temp.length();
+        }catch (UnsupportedFormatException e){
+            throw new ResourceModelSourceException(
+                    "Response content type is not supported: " + extension, e);
+        }
+    }
 
     private void displayTextInputStream(InputStream data)
             throws IOException {
