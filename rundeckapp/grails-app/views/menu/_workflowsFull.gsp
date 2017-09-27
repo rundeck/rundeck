@@ -122,6 +122,30 @@
                                 <g:textField name="descFilter" id="${rkey}descFilter" value="${params.descFilter}"
                                              class="form-control"/>
                             </div>
+                            <div class="form-group">
+                                <label for="${enc(attr:rkey)}scheduledFilter"><g:message code="jobquery.title.scheduledFilter"/></label>:
+                                <br>
+                                ${params.scheduledFilter}
+                                <label class="radio-inline">
+                                    <g:radio name="scheduledFilter" id="${rkey}scheduledFilter" value="true" checked="${params.scheduledFilter==true}"/>
+                                    <g:message code="yes" />
+                                </label>
+                                <label class="radio-inline">
+                                    <g:radio name="scheduledFilter" id="${rkey}scheduledFilter" value="false" checked="${params.scheduledFilter == false}"/>
+                                    <g:message code="no" />
+                                </label>
+                                <label class="radio-inline">
+                                    <g:radio name="scheduledFilter" id="${rkey}scheduledFilter" value="" checked="${params.scheduledFilter == null}"/>
+                                    <g:message code="all"/>
+                                </label>
+                            </div>
+                            <g:if test="${clusterModeEnabled}">
+                            <div class="form-group">
+                                <label for="${enc(attr:rkey)}serverNodeUUIDFilter"><g:message code="jobquery.title.serverNodeUUIDFilter"/></label>:
+                                <g:textField name="serverNodeUUIDFilter" id="${rkey}serverUuid" value="${params.serverNodeUUIDFilter}"
+                                         class="form-control"/>
+                            </div>
+                            </g:if>
 
 
                             <div class="form-group">

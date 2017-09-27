@@ -32,4 +32,20 @@ import com.dtolabs.rundeck.core.common.INodeSet;
  */
 public interface ResourceModelSource {
     public INodeSet getNodes() throws ResourceModelSourceException;
+
+    /**
+     * @return the type of source, which may be writeable, by default return READ_ONLY.  If it is writeable, it must
+     * implement
+     * {@link WriteableModelSource}
+     */
+    default SourceType getSourceType() {
+        return SourceType.READ_ONLY;
+    }
+
+    /**
+     * @return a WriteableModelSource if the source type is READ_WRITE
+     */
+    default WriteableModelSource getWriteable() {
+        return null;
+    }
 }

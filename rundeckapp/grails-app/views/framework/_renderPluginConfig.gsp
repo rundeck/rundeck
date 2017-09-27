@@ -22,55 +22,21 @@
 
 <%@ page contentType="text/html;charset=UTF-8" %>
 <g:if test="${description}">
+
     <div class="row">
-    <div class="col-sm-12">
-        <g:if test="${showPluginIcon}">
-            <stepplugin:pluginIcon service="${serviceName}"
-                                   name="${description.name}"
-                                   width="16px"
-                                   height="16px">
-                <i class="rdicon icon-small plugin"></i>
-            </stepplugin:pluginIcon>
-        </g:if>
-        <g:if test="${showNodeIcon}">
-            <i class="rdicon icon-small node"></i>
-        </g:if>
-        <span class=" text-info">
-            <g:if test="${!hideTitle}">
-                <stepplugin:message
-                        service="${serviceName}"
-                        name="${description.name}"
-                        code="plugin.title"
-                        default="${description.title}"/>
-            </g:if>
-        </span>
-            <g:if test="${!hideDescription}">
-            <g:if test="${!fullDescription}">
+        <div class="col-sm-12">
 
-                <g:render template="/scheduledExecution/description"
-                          model="[description: stepplugin.messageText(
-                                  service: serviceName,
-                                  name: description.name,
-                                  code: 'plugin.description',
-                                  default: description.description
-                          ),
-                                  service:serviceName,
-                                  name:description.name,
-                                  markdownCss: 'small text-muted',
-                                  textCss    : 'small text-muted',
-                                  mode       : 'collapsed', rkey: g.rkey()]"/>
-            </g:if>
-                <g:else>
-                    <small class="text-muted"><stepplugin:message
-                            service="${serviceName}"
-                            name="${description.name}"
-                            code="plugin.description"
-                            default="${description.description}"/></small>
+            <g:render template="/framework/renderPluginDesc" model="${[
+                    serviceName    : serviceName,
+                    description    : description,
+                    showPluginIcon : showPluginIcon,
+                    showNodeIcon   : showNodeIcon,
+                    hideTitle      : hideTitle,
+                    hideDescription: hideDescription,
+                    fullDescription: fullDescription
+            ]}"/>
 
-                </g:else>
-            </g:if>
-
-    </div>
+        </div>
     </div>
 </g:if>
 <div class="row">

@@ -86,8 +86,18 @@ public class ResourceJsonFormatParser implements ResourceFormatParser, Describab
         return FILE_EXTENSIONS;
     }
 
+    @Override
+    public String getPreferredFileExtension() {
+        return "json";
+    }
+
     public Set<String> getMIMETypes() {
         return MIME_TYPES;
+    }
+
+    @Override
+    public String getPreferredMimeType() {
+        return "application/json";
     }
 
     public INodeSet parseDocument(File file) throws ResourceFormatParserException {

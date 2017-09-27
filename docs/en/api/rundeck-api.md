@@ -55,6 +55,12 @@ View the [Index](#index) listing API paths.
 
 Changes introduced by API Version number:
 
+**Version 21**:
+
+* Removed Endpoints.
+    - `POST /api/2/project/[PROJECT]/resources`
+    - `POST /api/2/project/[PROJECT]/resources/refresh`
+
 **Version 20**:
 
 * Updated Endpoints.
@@ -1121,6 +1127,233 @@ The `memory` section describes memory usage in bytes:
 `threads/active`
 
 :   Number of active Threads in the JVM
+
+## User Profile
+
+### List users
+
+Get a list of all the users.
+
+**Request:**
+
+    GET /api/20/user/list/
+
+**Response:**
+
+Success response, with a list of users:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<user>
+  <login>user</login>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+<user>
+  <login>admin</login>
+  <firstName />
+  <lastName />
+  <email />
+</user>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+[{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+},
+{
+    "login":"admin",
+    "firstName":"Admin",
+    "lastName":"Admin",
+    "email":"admin@server.com"
+}]
+~~~
+
+
+### Get user profile
+
+Get same user profile data.
+
+**Request:**
+
+    GET /api/20/user/info/
+
+**Response:**
+
+Success response, with profile data:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<user>
+  <login>user</login>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}
+~~~
+
+
+### Get another user profile
+
+Get another user profile data. Requieres system `admin` permission.
+
+**Request:**
+
+    GET /api/20/user/info/[User]
+
+**Response:**
+
+Success response, with profile data:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<user>
+  <login>user</login>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}
+~~~
+
+### Modify user profile
+
+Modify same user profile data.
+
+**Request:**
+
+    POST /api/20/user/info/
+
+XML Content:
+
+~~~ {.xml}
+<user>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+~~~
+
+or JSON Content:
+
+~~~ {.json}
+{
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}
+~~~
+
+**Response:**
+
+Success response, with profile updated data:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<user>
+  <login>user</login>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}
+~~~
+
+### Modify another user profile
+
+Modify another user profile data. Requieres system `admin` permission.
+
+**Request:**
+
+    POST /api/20/user/info/[User]
+
+XML Content:
+
+~~~ {.xml}
+<user>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+~~~
+
+or JSON Content:
+
+~~~ {.json}
+{
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}
+~~~
+
+**Response:**
+
+Success response, with profile updated data:
+
+`Content-Type: application/xml`:
+
+~~~ {.xml}
+<user>
+  <login>user</login>
+  <firstName>Name</firstName>
+  <lastName>LastName</lastName>
+  <email>user@server.com</email>
+</user>
+~~~
+
+`Content-Type: application/json`:
+
+~~~ {.json}
+{
+    "login":"user",
+    "firstName":"Name",
+    "lastName":"LastName",
+    "email":"user@server.com"
+}
+~~~
+
 
 ## Log Storage
 
@@ -4726,84 +4959,6 @@ for the project, and a POST request will update the resources. (**API version 2*
 
 See [Listing Resources](#listing-resources).
 
-#### Update Resources for a Project
-
-**Request:**
-
-    POST /api/2/project/[PROJECT]/resources
-
-POSTing to this URL will set the resources for the project to the content of the request.
-
-Expected POST Content: For API version 2: either `text/xml` or `text/yaml` Content-Type containing the
-Resource Model definition in [resource-xml](../man5/resource-xml.html) or [resource-yaml](../man5/resource-yaml.html) formats as the request body. (Note: any MIME type ending with '/yaml' or '/x-yaml' or '/xml' will be accepted).
-
-**Since API version 3**: You can also POST data using a content type supported by a Resource Format Parser plugin.  This requires using API version `3`.
-
-POST Result: A success or failure API response. (See [Response Format][]).
-
-Example POST request:
-
-    POST /api/2/project/test/resources
-    Content-Type: text/yaml
-
-    node1:
-      hostname: node1
-      username: bob
-
-    node2:
-      hostname: node2
-      username: bob
-
-**Response:**
-
-    200 OK
-
-    <result success="true">
-        <success>
-            <message>Resources were successfully updated for project test</message>
-        </success>
-    </result>
-
-
-### Refreshing Resources for a Project
-
-**DEPRECATED**
-
-Refresh the resources for a project via its Resource Model Provider URL. The URL can be
-specified as a request parameter, or the pre-configured URL for the project
-can be used. (**API version 2** required.)
-
-**Request:**
-
-    POST /api/2/project/[PROJECT]/resources/refresh
-
-Optional Parameters:
-
-`providerURL`
-
-:   Specify the Resource Model Provider URL to refresh the resources from.  If
-    not specified then the configured provider URL in the `project.properties`
-    file will be used.
-
-**Response:**
-
-A success or failure result with a message.
-
-The URL requested as the `providerURL` must be allowed by the `project.properties` and `framework.properties` configuration settings according to these rules:
-
-* If the `providerURL` matches the value of `project.resources.url`, it is allowed.
-* Otherwise, these properties are checked as regular expressions to match the URL:
-    * `project.resources.allowedURL.X` in project.properties (X starts at 0).
-    * `framework.resources.allowedURL.X` in framework.properties
-* If both files define allowedURL regexes, the URL must match a regex in both of them.
-* Otherwise, if only one file defines regexes, the URL must match one of them.
-* Otherwise if no regexes are defined in either file, the URL is rejected.
-
-Multiple regexes can be specified in those config files by adding multiple properties:
-
-    project.resources.allowedURL.0=^http://myserver:9090/resources/.*$
-    project.resources.allowedURL.1=^http://server2:9090/resources/.*$
-
 ### Project Readme File
 
 The `readme.md` and `motd.md` files,
@@ -6127,15 +6282,10 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/project/[PROJECT]/resources][]
 
 * `GET` [Listing Resources](#listing-resources)
-* `POST` [Update Resources for a Project](#update-resources-for-a-project)
 
 [/api/V/project/[PROJECT]/resource/[NAME]][]
 
 * `GET` [Getting Resource Info](#getting-resource-info)
-
-[/api/V/project/[PROJECT]/resources/refresh][]
-
-* `POST` [Refreshing Resources for a Project](#refreshing-resources-for-a-project)
 
 [/api/V/project/[PROJECT]/run/command][]
 
@@ -6367,11 +6517,8 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/project/[PROJECT]/jobs/import]:#importing-jobs
 
 [/api/V/project/[PROJECT]/resources]:#listing-resources
-[POST /api/V/project/[PROJECT]/resources]:#update-resources-for-a-project
 
 [/api/V/project/[PROJECT]/resource/[NAME]]:#getting-resource-info
-
-[/api/V/project/[PROJECT]/resources/refresh]:#refreshing-resources-for-a-project
 
 [/api/V/projects]:#listing-projects
 

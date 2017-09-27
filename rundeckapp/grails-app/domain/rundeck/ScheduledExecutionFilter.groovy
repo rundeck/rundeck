@@ -37,6 +37,9 @@ public class ScheduledExecutionFilter {
 
     String idlist
 
+    String scheduledFilter
+    String serverNodeUUIDFilter
+
     static belongsTo = [user:User]
     static constraints={
         name(blank: false, matches: /^[^<>&'"\/]+$/)
@@ -46,10 +49,17 @@ public class ScheduledExecutionFilter {
         groupPath(nullable:true)
         descFilter(nullable:true)
         loglevelFilter(nullable:true)
+        scheduledFilter(nullable:true)
+        serverNodeUUIDFilter(nullable:true)
     }
 
     public ScheduledExecutionQuery createQuery(){
         ScheduledExecutionQuery query = new ScheduledExecutionQuery(this.properties.findAll{it.key=~/(.*Filter|groupPath|idlist)$/})
+        if(scheduledFilter){
+            query.scheduledFilter=Boolean.valueOf(this.scheduledFilter)
+        }else{
+            query.scheduledFilter=null
+        }
         return query
     }
 
@@ -59,7 +69,7 @@ public class ScheduledExecutionFilter {
         return filter
     }
     public void fix(){
-        ['idlist','jobFilter','projFilter','groupPath', 'descFilter', 'loglevelFilter'].each{
+        ['idlist','jobFilter','projFilter','groupPath', 'descFilter', 'loglevelFilter', 'scheduledFilter', 'serverNodeUUIDFilter'].each{
             if(!this[it]){
                 this[it]=''
             }

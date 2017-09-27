@@ -46,6 +46,7 @@ import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
 import rundeck.PluginStep
 import rundeck.ScheduledExecution
+import rundeck.services.framework.RundeckProjectConfigurable
 
 import javax.security.auth.Subject
 
@@ -110,7 +111,57 @@ class FrameworkService implements ApplicationContextAware {
     def getServerUUID(){
         return serverUUID
     }
-   
+
+    /**
+     *
+     * @return the config dir used by the framework
+     */
+    File getFrameworkConfigDir() {
+        rundeckFramework.getConfigDir()
+    }
+
+    /**
+     *
+     * @param name file name in config dir
+     * @return true if a file with the name exists in the config dir
+     */
+    boolean existsFrameworkConfigFile(String name) {
+        new File(frameworkConfigDir, name).isFile()
+    }
+    /**
+     *
+     * @param name file name in config dir
+     * @return true if a file with the name exists in the config dir
+     */
+    String readFrameworkConfigFile(String name, String charset = 'UTF-8') {
+        new File(frameworkConfigDir, name).getText(charset)
+    }
+    /**
+     *
+     * @param name file name in config dir
+     * @return true if a file with the name exists in the config dir
+     */
+    long writeFrameworkConfigFile(String name, String text = null, Closure withOutputStream = null) throws IOException {
+        def file = new File(frameworkConfigDir, name)
+
+        if (text) {
+            file.text = text
+        } else if (withOutputStream) {
+            file.withOutputStream(withOutputStream)
+        }
+
+        file.length()
+    }
+
+    /**
+     * Deletes the framework config file
+     * @param name file name
+     * @return true if deleted
+     */
+    boolean deleteFrameworkConfigFile(String name) {
+        def file = new File(frameworkConfigDir, name)
+        file.delete()
+    }
 
 /**
      * Return a list of FrameworkProject objects
@@ -126,8 +177,8 @@ class FrameworkService implements ApplicationContextAware {
             projMap[proj.name] = proj;
             resources << authResourceForProject(proj.name)
         }
-        def authed = authorizeApplicationResourceSet(authContext, resources, 'read')
-        return new ArrayList(authed.collect{projMap[it.name]})
+        def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
+        return new ArrayList(new HashSet(authed.collect{it.name}).sort().collect{projMap[it]})
     }
     def projectNames (AuthContext authContext) {
         //authorize the list of projects
@@ -135,8 +186,8 @@ class FrameworkService implements ApplicationContextAware {
         for (projName in rundeckFramework.frameworkProjectMgr.listFrameworkProjectNames()) {
             resources << authResourceForProject(projName)
         }
-        def authed = authorizeApplicationResourceSet(authContext, resources, 'read')
-        return new ArrayList(authed.collect{it.name}).sort()
+        def authed = authorizeApplicationResourceSet(authContext, resources, [AuthConstants.ACTION_READ,AuthConstants.ACTION_ADMIN] as Set)
+        return new ArrayList(new HashSet(authed.collect{it.name})).sort()
     }
 
     def existsFrameworkProject(String project) {
@@ -489,17 +540,17 @@ class FrameworkService implements ApplicationContextAware {
      * return all authorized resources for the action evaluated in the application context
      * @param framework
      * @param resources requested resources to authorize
-     * @param action
+     * @param actions set of any actions to authorize
      * @return set of authorized resources
      */
-    def Set authorizeApplicationResourceSet(AuthContext authContext, Set<Map> resources, String action) {
+    def Set authorizeApplicationResourceSet(AuthContext authContext, Set<Map> resources, Set<String> actions) {
         if (null == authContext) {
             throw new IllegalArgumentException("null authContext")
         }
         def decisions = metricService.withTimer(this.class.name,'authorizeApplicationResourceSet') {
             authContext.evaluate(
                     resources,
-                    [action] as Set,
+                    actions,
                     Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "application"), 'rundeck')))
         }
         return decisions.findAll {it.authorized}.collect {it.resource}
@@ -875,6 +926,11 @@ class FrameworkService implements ApplicationContextAware {
         fproject.projectNodes.listResourceModelConfigurations()
     }
 
+    public def listWriteableResourceModelSources(String project) {
+        def fproject = getFrameworkProject(project)
+        fproject.projectNodes.writeableResourceModelSources
+    }
+
     public def listResourceModelConfigurations(Properties properties) {
         ProjectNodeSupport.listResourceModelConfigurations(properties)
     }
@@ -1074,5 +1130,129 @@ class FrameworkService implements ApplicationContextAware {
      */
     Map queryExecutions(ExecutionQuery query, int offset=0, int max=-1) {
         executionService.queryExecutions(query,offset,max)
+    }
+
+    /**
+     * Load the input map for project configurable beans
+     * @param prefix prefix for each bean for the result
+     * @param projectInputProps input project properties
+     * @param category optional category to limit properties
+     * @return Map of [(beanName): Map [ name: String, configurable: Bean, values: demapped value Map, prefix: bean prefix] ]
+     */
+    Map<String, Map> loadProjectConfigurableInput(String prefix, Map projectInputProps, String category = null) {
+        Map<String, RundeckProjectConfigurable> projectConfigurableBeans = applicationContext.getBeansOfType(
+                RundeckProjectConfigurable
+        )
+
+        Map<String, Map> extraConfig = [:]
+        projectConfigurableBeans.each { k, v ->
+            if (k.endsWith('Profiled')) {
+                //skip profiled versions of beans
+                return
+            }
+            def categoriesMap = v.categories
+            def valid = []
+            if (category) {
+                valid = categoriesMap.keySet().findAll { k2 -> categoriesMap[k2] == category }
+                if (!valid) {
+                    return
+                }
+            } else {
+                valid = categoriesMap.keySet()
+            }
+            //construct existing values from project properties
+            Map<String, String> mapping = v.getPropertiesMapping()
+            if (category) {
+                mapping = mapping.subMap(valid)
+            }
+            def values = Validator.demapProperties(projectInputProps, mapping, true)
+            extraConfig[k] = [
+                    name        : k,
+                    configurable: v,
+                    values      : values,
+                    prefix      : prefix + k + '.',
+            ]
+        }
+        extraConfig
+    }
+    /**
+     * Validate the input to ProjectConfigurable beans
+     * @param inputMap map of name to config map for each bean name being validated
+     * @param prefix prefix string for output
+     * @param category optional category to limit validation/output
+     * @return map [errors:List, config: Map, props: Map, remove: List]
+     */
+    Map validateProjectConfigurableInput(Map<String, Map> inputMap, String prefix, String category = null) {
+        Map<String, RundeckProjectConfigurable> projectConfigurableBeans = applicationContext.getBeansOfType(
+                RundeckProjectConfigurable
+        )
+        def errors = []
+        def extraConfig = [:]
+        def projProps = [:]
+        def removePrefixes = []
+
+        projectConfigurableBeans.each { k, RundeckProjectConfigurable v ->
+            if (k.endsWith('Profiled')) {
+                //skip profiled versions of beans
+                return
+            }
+            def categoriesMap = v.categories
+            def valid = []
+            if (category) {
+                valid = categoriesMap.keySet().findAll { k2 -> categoriesMap[k2] == category }
+                if (!valid) {
+                    return
+                }
+            } else {
+                valid = categoriesMap.keySet()
+            }
+            //construct input values for the bean
+
+            Map input = inputMap.get(k) ?: [:]
+            def beanData = [
+                    name        : k,
+                    configurable: v,
+                    prefix      : prefix + k + '.',
+                    values      : input
+            ]
+
+            def validProps = v.getProjectConfigProperties().findAll { it.name in valid }
+            validProps.findAll { it.type == Property.Type.Boolean }.
+                    each {
+                        if (input[it.name] != 'true') {
+                            input[it.name] = 'false'
+                        }
+                    }
+            validProps.findAll { it.type == Property.Type.Options }.
+                    each {
+                        if (input[it.name] instanceof Collection) {
+                            input[it.name] = input[it.name].join(',')
+                        } else if (input[it.name] instanceof String[]) {
+                            input[it.name] = input[it.name].join(',')
+                        }
+                    }
+            //validate
+            def report = Validator.validate(input as Properties, validProps)
+            beanData.report = report
+            if (!report.valid) {
+                errors << ("Some configuration was invalid: " + report)
+            } else {
+                Map<String, String> mapping = v.getPropertiesMapping()
+                if (category) {
+                    mapping = mapping.subMap(valid)
+                }
+                def projvalues = Validator.performMapping(input, mapping, true)
+                projProps.putAll(projvalues)
+                //remove all previous settings
+                removePrefixes.addAll(mapping.values())
+            }
+            extraConfig[k] = beanData
+        }
+        [
+                errors: errors,
+                config: extraConfig,
+                props : projProps,
+                remove: removePrefixes
+        ]
     }
 }

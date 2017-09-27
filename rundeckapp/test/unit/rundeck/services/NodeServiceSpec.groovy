@@ -65,7 +65,14 @@ class NodeServiceSpec extends Specification {
         }
         INodeSet nodeSet = new NodeSetImpl()
         nodeSet.putNode(new NodeEntryImpl('anode'))
-        def properties = ['project.resources.file': '/tmp/test.xml','project.nodeCache.enabled':'false']
+        def properties = [
+
+                'resources.source.1.type'                            : 'file',
+                'resources.source.1.config.file'                     : '/tmp/test.xml',
+                'resources.source.1.config.generateFileAutomatically': 'false',
+                'resources.source.1.config.includeServerNode'        : 'true',
+                          'project.nodeCache.enabled':'false'
+        ]
 
         def projConfig = new PropsConfig(
                 projectProperties: properties,
@@ -124,7 +131,10 @@ class NodeServiceSpec extends Specification {
         INodeSet nodeSet = new NodeSetImpl()
         nodeSet.putNode(new NodeEntryImpl('anode'))
         def properties = [
-                'project.resources.file': '/tmp/test.xml',
+                'resources.source.1.type'                            : 'file',
+                'resources.source.1.config.file'                     : '/tmp/test.xml',
+                'resources.source.1.config.generateFileAutomatically': 'false',
+                'resources.source.1.config.includeServerNode'        : 'true',
 
         ]
         if (null != isenabled) {
@@ -191,7 +201,10 @@ class NodeServiceSpec extends Specification {
         preloadedNodes.putNode(new NodeEntryImpl('bnode'))
 
         def properties = [
-                'project.resources.file': '/tmp/test.xml',
+                'resources.source.1.type'                            : 'file',
+                'resources.source.1.config.file'                     : '/tmp/test.xml',
+                'resources.source.1.config.generateFileAutomatically': 'false',
+                'resources.source.1.config.includeServerNode'        : 'true',
 
         ]
         properties['project.nodeCache.enabled'] = 'true'
@@ -260,7 +273,11 @@ class NodeServiceSpec extends Specification {
         modelNodes.putNode(new NodeEntryImpl('anode'))
 
         def properties = [
-                'project.resources.file': '/tmp/test.xml',
+
+                'resources.source.1.type'                            : 'file',
+                'resources.source.1.config.file'                     : '/tmp/test.xml',
+                'resources.source.1.config.generateFileAutomatically': 'false',
+                'resources.source.1.config.includeServerNode'        : 'true',
 
         ]
         properties['project.nodeCache.enabled'] = 'true'
@@ -324,7 +341,11 @@ class NodeServiceSpec extends Specification {
         modelNodes.putNode(new NodeEntryImpl('anode'))
 
         def properties = [
-                'project.resources.file': '/tmp/test.xml',
+
+                'resources.source.1.type'                            : 'file',
+                'resources.source.1.config.file'                     : '/tmp/test.xml',
+                'resources.source.1.config.generateFileAutomatically': 'false',
+                'resources.source.1.config.includeServerNode'        : 'true',
 
         ]
         properties['project.nodeCache.enabled'] = 'true'

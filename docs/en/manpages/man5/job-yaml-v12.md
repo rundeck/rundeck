@@ -828,10 +828,10 @@ Deprecated Example:
 
 ### Notification
 
-Defines a notification for the job.  You can include any of `onsuccess`, `onfailure` or `onstart` notifications. Each type of notification can define any of the built in notifications, or define plugin notifications.
+Defines a notification for the job.  You can include any of `onsuccess`, `onfailure`, `onstart` or `onavgduration` notifications. Each type of notification can define any of the built in notifications, or define plugin notifications.
 
 
-`onsuccess`/`onfailure`/`onstart`
+`onsuccess`/`onfailure`/`onstart`/`onavgduration`
 
 :    A Map containing either or both of:
 
@@ -868,6 +868,13 @@ Example:
           type: otherplugin
           configuration:
             a: b
+    onavgduration:
+      email:
+        recipients: test@example.com
+        subject: Job Exceeded average duration
+      plugin:
+        configuration: {}
+        type: MinimalNotificationPlugin
 ~~~~~~~~ 
 
 * For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](../manual/jobs.html#webhooks).

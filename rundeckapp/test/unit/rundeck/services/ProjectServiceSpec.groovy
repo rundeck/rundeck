@@ -31,6 +31,7 @@ import rundeck.Execution
 import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.Workflow
+import rundeck.services.authorization.PoliciesValidation
 import spock.lang.Specification
 
 /**
@@ -167,10 +168,10 @@ class ProjectServiceSpec extends Specification {
             getName()>>'myproject'
         }
         service.authorizationService=Mock(AuthorizationService){
-            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(Validation){
+            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(PoliciesValidation){
                 isValid()>>true
             }
-            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(Validation){
+            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(PoliciesValidation){
                 isValid()>>true
             }
             0 * _(*_)
@@ -200,12 +201,12 @@ class ProjectServiceSpec extends Specification {
             getName()>>'myproject'
         }
         service.authorizationService=Mock(AuthorizationService){
-            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(Validation){
+            1 * validateYamlPolicy('myproject','files/acls/test.aclpolicy',_) >> Mock(PoliciesValidation){
                 isValid()>>false
                 getErrors()>>['blah':['blah']]
                 toString()>>'test validation failure'
             }
-            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(Validation){
+            1 * validateYamlPolicy('myproject','files/acls/test2.aclpolicy',_) >> Mock(PoliciesValidation){
                 isValid()>>true
             }
             0 * _(*_)

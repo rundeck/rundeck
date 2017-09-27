@@ -64,6 +64,8 @@ class ScheduledExecution extends ExecutionContext {
     String notifySuccessUrl
     String notifyFailureUrl
     String notifyStartUrl
+    String notifyAvgDurationRecipients
+    String notifyAvgDurationUrl
     Boolean multipleExecutions = false
     Orchestrator orchestrator
 
@@ -74,7 +76,7 @@ class ScheduledExecution extends ExecutionContext {
 
     static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
-                         'crontabString','averageDuration']
+                         'crontabString','averageDuration','notifyAvgDurationRecipients','notifyAvgDurationUrl']
 
     static constraints = {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
