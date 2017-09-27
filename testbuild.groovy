@@ -50,7 +50,7 @@ def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
 
 //the list of bundled plugins to verify in the war and jar
-def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','orchestrator', 'source-refresh']
+def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','orchestrator', 'source-refresh', 'aws-s3-model-source']
 def externalPlugins=['rundeck-ansible-plugin']
 
 //manifest describing expected build results
@@ -116,6 +116,7 @@ def manifest=[
     "plugins/job-state-plugin/${target}/rundeck-job-state-plugin-${version}.jar":[:],
     "plugins/flow-control-plugin/${target}/rundeck-flow-control-plugin-${version}.jar":[:],
     "plugins/source-refresh-plugin/${target}/rundeck-source-refresh-plugin-${version}.jar":[:],
+    "plugins/aws-s3-model-source/${target}/rundeck-aws-s3-model-source-${version}.jar":[:],
 ]
 def pluginsum=1
 //generate list of plugin files in the jar to validate
