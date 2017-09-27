@@ -17,7 +17,10 @@
 package rundeck
 
 import grails.test.mixin.TestFor
+import org.springframework.context.MessageSource
+import rundeck.codecs.HTMLAttributeCodec
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Created by greg on 6/21/16.
@@ -55,5 +58,46 @@ class UtilityTagLibSpec extends Specification {
 123
 456'''
 
+    }
+
+    @Unroll
+    def "relativeDateString optional html output"() {
+        given:
+        messageSource.addMessages(['format.time.sec.abbrev' : '{0}s',
+                                   'format.time.min.abbrev' : '{0}m',
+                                   'format.time.hour.abbrev': '{0}h',
+                                   'format.time.day.abbrev' : '{0}d'], request.locale
+        )
+
+        Date now = new Date()
+        Date then = new Date(now.time - diff)
+        def codec1 = mockCodec(HTMLAttributeCodec)
+
+        expect:
+        expect == tagLib.relativeDateString(
+                [
+                        start     : reverse ? now : then, end: reverse ? then : now,
+                        html      : isHtml,
+                        agoClass  : agoClass,
+                        untilClass: untilClass
+                ]
+        )
+
+
+
+        where:
+        isHtml | agoClass | untilClass | reverse | diff           || expect
+        false  | null     | null       | false   | 12000          || '12s'
+        false  | null     | null       | true    | 12000          || '12s'
+        false  | null     | null       | false   | 120000         || '2m'
+        false  | null     | null       | false   | 125000         || '2m5s'
+        false  | null     | null       | false   | 3600000        || '1h'
+        false  | null     | null       | false   | 5400000        || '1h30m'
+        false  | null     | null       | false   | (24 * 3600000) || '1d'
+        false  | null     | null       | false   | (26 * 3600000) || '1d2h'
+        true   | null     | null       | false   | 12000          || '<span class="ago">12s</span>'
+        true   | 'Xago2'  | null       | false   | 12000          || '<span class="Xago2">12s</span>'
+        true   | null     | null       | true    | 12000          || '<span class="until">12s</span>'
+        true   | null     | 'xUntil3'  | true    | 12000          || '<span class="xUntil3">12s</span>'
     }
 }

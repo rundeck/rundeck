@@ -15,7 +15,12 @@
  */
 
 package rundeck.codecs
-import org.markdownj.MarkdownProcessor
+
+import org.commonmark.node.*;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
+import org.commonmark.Extension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
 
 /*
  * MarkdownCodec.java
@@ -26,12 +31,19 @@ import org.markdownj.MarkdownProcessor
  */
 
  /**
-  * MarkdownCodec converts markdown text to html, using {@link MarkdownProcessor}
+  * MarkdownCodec converts markdown text to html, using {@link HtmlRenderer}
   */
 class MarkdownCodec {
-    static MarkdownProcessor p = new MarkdownProcessor();
+    static List<Extension> extensions = Arrays.asList(TablesExtension.create());
+    static Parser parser = Parser.builder()
+            .extensions(Arrays.asList(TablesExtension.create())).build();
+    static HtmlRenderer renderer = HtmlRenderer.builder()
+            .extensions(extensions)
+            .build();
+
     static String decodeStr (String str){
-        return SanitizedHTMLCodec.encode(p.markdown(str))
+        Node doc = parser.parse(str);
+        return SanitizedHTMLCodec.encode("<article class=\"markdown-body\">" + renderer.render(doc) + "</article>");
     }
     static decode = { str ->
         return decodeStr(str)

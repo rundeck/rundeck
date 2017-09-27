@@ -33,6 +33,7 @@
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <asset:stylesheet href="rundeck.css"/>
     <asset:stylesheet href="ansicolor.css"/>
+    <asset:stylesheet href="github-markdown.css"/>
 
     <asset:stylesheet href="jquery-ui.css"/>
     <!--[if lt IE 9]>

@@ -121,7 +121,8 @@ grails.project.dependency.resolution = {
                 'com.google.guava:guava:15.0',
                 'org.owasp.encoder:encoder:1.2',
                 'org.quartz-scheduler:quartz:2.2.1',
-                'org.markdownj:markdownj-core:0.4',
+                'com.atlassian.commonmark:commonmark:0.9.0',
+                'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.9.0',
                 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20160614.1'
 
         compile("org.rundeck:rundeck-core:${rundeckVersion}")

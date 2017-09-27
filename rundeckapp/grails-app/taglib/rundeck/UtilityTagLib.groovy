@@ -229,7 +229,7 @@ class UtilityTagLib{
     }
 
     def relativeDate = { attrs, body ->
-        out<<relativeDateString(attrs,body)
+        out << relativeDateString(attrs + [html: attrs.html != null ? attrs.html : true], body)
     }
 
     def relativeDateString = { attrs, body ->
@@ -258,7 +258,7 @@ class UtilityTagLib{
             }
             return val.toString()
         }else if(attrs.elapsed || attrs.start && attrs.end){
-            def Date date = attrs.elapsed
+            def Date date = (attrs.elapsed instanceof Date) ? attrs.elapsed : null
             def Date enddate = new Date()
             if(attrs.start && attrs.end){
                 date = attrs.start
@@ -283,36 +283,42 @@ class UtilityTagLib{
 
 
             if(test < 60 ){
-                val << "${s}s"
+                val << g.message(code: 'format.time.sec.abbrev', args: [s].toArray())
             }else if(test <  (5 * 60) ){
-                val <<  "${m}m"
+                val << g.message(code: 'format.time.min.abbrev', args: [m].toArray())
                 if(s > 0){
-                    val << "${s}s"
+                    val << g.message(code: 'format.time.sec.abbrev', args: [s].toArray())
                 }
             }else if(test < (60 * 60) ){
-                val <<  "${m}m"
+                val << g.message(code: 'format.time.min.abbrev', args: [m].toArray())
 
             }else if (test < (24 * 60 * 60)){
-                val << "${h}h"
+                val << g.message(code: 'format.time.hour.abbrev', args: [h].toArray())
                 if(m > 0 ){
-                    val << "${m}m"
+                    val << g.message(code: 'format.time.min.abbrev', args: [m].toArray())
                 }
             }else{
-                val << "${d}d"
+                val << g.message(code: 'format.time.day.abbrev', args: [d].toArray())
                 if(h > 0 ){
-                    val << "${h}h"
+                    val << g.message(code: 'format.time.hour.abbrev', args: [h].toArray())
                 }
             }
             def StringBuffer val2 = new StringBuffer()
 
-            if(diff > 0 && !attrs.end){
-                val2 << "in "
+            if (diff > 0 && (!attrs.end || attrs.elapsed)) {
+                val2 << g.message(code: 'in') + " "
             }
-            val2 << "<span class=\"${enc(attr:diff > 0 ? (attrs.untilClass?:'until') : (attrs.agoClass ?: 'ago'))}\" >"
+            if (attrs.html) {
+                val2 << """<span class="${
+                    enc(attr: diff > 0 ? (attrs.untilClass ?: 'until') : (attrs.agoClass ?: 'ago'))
+                }">"""
+            }
             val2 << val.toString()
-            val2 << "</span>"
-            if(diff < 0 && !attrs.end){
-                val2 << " ago"
+            if (attrs.html) {
+                val2 << "</span>"
+            }
+            if (diff < 0 && (!attrs.end || attrs.elapsed)) {
+                val2 << " " + g.message(code: 'ago')
             }
             return val2.toString()
         } else {
@@ -517,51 +523,56 @@ class UtilityTagLib{
                 year = c.get(GregorianCalendar.YEAR)
         }
 
-        out << "\
-            <input type='text' id='${namePicker}' name='${optionName?:namePicker}' placeholder='${placeholder}' class='${htmlClass}' ${htmlRequired} style='position: relative; z-index:999;'/>\
-            \
-            \
-            <input type='hidden' id='${name}' name='${name}' value='date.struct' />\
-            \
-            <input type='hidden' id='${nameMinute}' name='${nameMinute}' value='${minute}' />\
-            <input type='hidden' id='${nameHour}' name='${nameHour}' value='${hour}' />\
-            <input type='hidden' id='${nameDay}' name='${nameDay}' value='${day}' />\
-            <input type='hidden' id='${nameMonth}' name='${nameMonth}' value='${month}' />\
-            <input type='hidden' id='${nameYear}' name='${nameYear}' value='${year}' />\
-                    "
+        out << """
+            <input type='text' id='${namePicker}' name='${optionName ?: namePicker}' placeholder='${
+            placeholder
+        }' class='${htmlClass}' ${htmlRequired} style='position: relative; z-index:999;'/>
+            
+           
+            <input type='hidden' id='${name}' name='${name}' value='date.struct' />
+            
+            <input type='hidden' id='${nameMinute}' name='${nameMinute}' value='${minute}' />
+            <input type='hidden' id='${nameHour}' name='${nameHour}' value='${hour}' />
+            <input type='hidden' id='${nameDay}' name='${nameDay}' value='${day}' />
+            <input type='hidden' id='${nameMonth}' name='${nameMonth}' value='${month}' />
+            <input type='hidden' id='${nameYear}' name='${nameYear}' value='${year}' />
+                    """
 
-        out << "\
-            <script type='text/javascript'>\
-            jQuery(document).ready(function(){\n\
-                 jQuery('#${namePicker}').datetimepicker(${options});\n\
-                 jQuery('#${namePicker}').datetimepicker('option',jQuery.timepicker.regional['${locale}']);\n\
-                 jQuery('#${namePicker}').on('change', function(){\n\
-                         selDate = jQuery('#${namePicker}').datetimepicker('getDate');\n\
-                         jQuery('#${nameMinute}').val(selDate?selDate.getMinutes():null);\n\
-                         jQuery('#${nameHour}').val(selDate?selDate.getHours():null);\n\
-                         jQuery('#${nameDay}').val(selDate?selDate.getDate():null);\n\
-                         jQuery('#${nameMonth}').val(selDate?selDate.getMonth()+1:null);\n\
-                         jQuery('#${nameYear}').val(selDate?selDate.getFullYear():null);\n\
-                 });\n\
-                 var dateFormat = jQuery('#${namePicker}').datetimepicker( 'option', 'dateFormat');\n\
-                 var timeFormat = jQuery('#${namePicker}').datetimepicker( 'option', 'timeFormat');\n\
-                 var controlType = jQuery('#${namePicker}').datetimepicker( 'option', 'select');\n\
-            "
+        out << """
+            <script type='text/javascript'>
+            jQuery(document).ready(function(){\n
+                 jQuery('#${namePicker}').datetimepicker(${options});\n
+                 jQuery('#${namePicker}').datetimepicker('option',jQuery.timepicker.regional['${locale}']);\n
+                 jQuery('#${namePicker}').on('change', function(){\n
+                         selDate = jQuery('#${namePicker}').datetimepicker('getDate');\n
+                         jQuery('#${nameMinute}').val(selDate?selDate.getMinutes():null);\n
+                         jQuery('#${nameHour}').val(selDate?selDate.getHours():null);\n
+                         jQuery('#${nameDay}').val(selDate?selDate.getDate():null);\n
+                         jQuery('#${nameMonth}').val(selDate?selDate.getMonth()+1:null);\n
+                         jQuery('#${nameYear}').val(selDate?selDate.getFullYear():null);\n
+                 });\n
+                 var dateFormat = jQuery('#${namePicker}').datetimepicker( 'option', 'dateFormat');\n
+                 var timeFormat = jQuery('#${namePicker}').datetimepicker( 'option', 'timeFormat');\n
+                 var controlType = jQuery('#${namePicker}').datetimepicker( 'option', 'select');\n
+            """
         // If a value is specified it overrides the default date
         if(attrs['value']){
-            out << "\
-                //Set date from value\n\
-                jQuery('#${namePicker}').datetimepicker('option', 'defaultDate',new Date(${year},${month-1},${day},${hour},${minute}));\n\
-            "
+            out << """
+                //Set date from value\n
+                jQuery('#${namePicker}').datetimepicker('option', 'defaultDate',new Date(${year},${month - 1},${day},${
+                hour
+            },${minute}));\n
+            """
         }
-        out << "\
-            var defaultDate = jQuery('#${namePicker}').datetimepicker( 'option', 'defaultDate');\n\
-            //Set default date\n\
-            jQuery('#${namePicker}').val(jQuery.datepicker.formatDate(dateFormat, defaultDate) + ' ' + (defaultDate.getHours()<10?'0':'') + defaultDate.getHours() + ':' + (defaultDate.getMinutes()<10?'0':'') + defaultDate.getMinutes())\n\
-            });\n\
-            </script>\
-            \
-            "
+        out << """
+            var defaultDate = jQuery('#${namePicker}').datetimepicker( 'option', 'defaultDate');\n
+            //Set default date\n
+            jQuery('#${namePicker}').val(jQuery.datepicker.formatDate(dateFormat, defaultDate) + ' ' + (defaultDate
+.getHours()<10?'0':'') + defaultDate.getHours() + ':' + (defaultDate.getMinutes()<10?'0':'') + defaultDate.getMinutes())\n
+            });\n
+            </script>
+            
+            """
     }
 
     def autoLink={ attrs,body->
