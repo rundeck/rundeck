@@ -68,6 +68,11 @@ public class S3Base implements AWSCredentials,ResourceModelSource, WriteableMode
     private Framework framework;
     private AmazonS3 amazonS3;
 
+
+    public void setAmazonS3(AmazonS3 amazonS3){
+        this.amazonS3 = amazonS3;
+    }
+
     public S3Base(String bucket, String filePath,
            String extension, Framework framework){
         this.bucket=bucket;
@@ -111,7 +116,7 @@ public class S3Base implements AWSCredentials,ResourceModelSource, WriteableMode
         InputStream remoteFile;
         try {
             remoteFile = getFile();
-        }catch (AmazonClientException e){//file doesnt exist
+        }catch (AmazonClientException e){//file doesn't exist
             throw new ResourceModelSourceException(
                     "Error requesting Resource Model Source from S3",e);
         }
