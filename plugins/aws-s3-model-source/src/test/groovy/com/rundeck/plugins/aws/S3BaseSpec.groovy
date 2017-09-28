@@ -47,35 +47,6 @@ class S3BaseSpec extends Specification{
 
     }
 
-    def "failed retrieve resource because of wrong mimetype (only xml and json)"(){
-        given:
-        def nodeSet = Mock(INodeSet)
-        def framework = getFramework(nodeSet)
-        def amazonMock = Mock(AmazonS3){
-        }
-        def s3Meta = Mock(ObjectMetadata){
-            getContentType() >> remoteType
-        }
-        def s3obj = Mock(S3Object){
-            getObjectMetadata() >> s3Meta
-        }
-
-        S3Base s3 = new S3Base(bucket, filePath, extension, framework)
-        s3.setAmazonS3(amazonMock)
-
-        when:
-        s3.getNodes()
-
-        then:
-        thrown ResourceModelSourceException
-        1 * amazonMock.getObject(bucket,filePath) >> s3obj
-
-        where:
-        bucket  | filePath                  | extension | remoteType
-        'test'  | 'resources/resources.xml' | 'xml'     | 'application/octet-stream'
-        'test'  | 'resources/resources.json'| 'json'    | 'application/octet-stream'
-    }
-
 
     def "catch AmazonClientException and throws ResourceModelSourceException"(){
         def nodeSet = Mock(INodeSet)
@@ -98,6 +69,108 @@ class S3BaseSpec extends Specification{
 
     }
 
+    def "write data remote resource"(){
+        given:
+
+        def nodeSet = Mock(INodeSet)
+        def framework = getFramework(nodeSet)
+
+        def is = new ByteArrayInputStream("a".getBytes())
+        S3Base s3 = new S3Base(bucket, filePath, extension, framework)
+        s3.setWritable()
+        def amazonMock = Mock(AmazonS3)
+        s3.setAmazonS3(amazonMock)
+
+        when:
+        def result = s3.writeData(is)
+
+        then:
+        1 * amazonMock.putObject(bucket, filePath, _)
+        result == 1
+
+        where:
+        bucket  | filePath                  | extension
+        'test'  | 'resources/resources.xml' | 'xml'
+        'test'  | 'resources/resources.yaml'| 'yaml'
+        'test'  | 'resources/resources.json'| 'json'
+    }
+
+    def "write data on a read only configuration"(){
+        given:
+
+        def nodeSet = Mock(INodeSet)
+        def framework = getFramework(nodeSet)
+
+        def is = new ByteArrayInputStream("a".getBytes())
+        S3Base s3 = new S3Base(bucket, filePath, extension, framework)
+        def amazonMock = Mock(AmazonS3)
+        s3.setAmazonS3(amazonMock)
+
+        when:
+        s3.writeData(is)
+
+        then:
+        thrown IllegalArgumentException
+        0 * amazonMock.putObject(bucket, filePath, _)
+
+        where:
+        bucket  | filePath                  | extension
+        'test'  | 'resources/resources.xml' | 'xml'
+        'test'  | 'resources/resources.yaml'| 'yaml'
+        'test'  | 'resources/resources.json'| 'json'
+    }
+
+    def "has data"(){
+        def nodeSet = Mock(INodeSet)
+        def framework = getFramework(nodeSet)
+        def amazonMock = Mock(AmazonS3){
+        }
+        def s3Meta = Mock(ObjectMetadata){
+            getContentType() >> remoteType
+        }
+        def s3obj = Mock(S3Object){
+            getObjectMetadata() >> s3Meta
+        }
+
+        S3Base s3 = new S3Base(bucket, filePath, extension, framework)
+        s3.setAmazonS3(amazonMock)
+
+        when:
+        def result = s3.hasData()
+
+        then:
+        1 * amazonMock.getObject(bucket,filePath) >> s3obj
+        result
+
+        where:
+        bucket  | filePath                  | extension | remoteType
+        'test'  | 'resources/resources.xml' | 'xml'     | 'application/xml'
+        'test'  | 'resources/resources.yaml'| 'yaml'    | null
+        'test'  | 'resources/resources.json'| 'json'    | 'application/json'
+    }
+
+    def "cant read file, so has no data"(){
+        def nodeSet = Mock(INodeSet)
+        def framework = getFramework(nodeSet)
+        def amazonMock = Mock(AmazonS3){
+            getObject(_,_) >> {throw new AmazonClientException('')}
+        }
+
+        S3Base s3 = new S3Base(bucket, filePath, extension, framework)
+        s3.setAmazonS3(amazonMock)
+
+        when:
+        def result = s3.hasData()
+
+        then:
+        !result
+
+        where:
+        bucket  | filePath                  | extension | remoteType
+        'test'  | 'resources/resources.xml' | 'xml'     | 'application/xml'
+        'test'  | 'resources/resources.yaml'| 'yaml'    | null
+        'test'  | 'resources/resources.json'| 'json'    | 'application/json'
+    }
     
 
 

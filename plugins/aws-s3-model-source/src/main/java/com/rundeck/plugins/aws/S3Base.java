@@ -231,7 +231,7 @@ public class S3Base implements AWSCredentials,ResourceModelSource, WriteableMode
         return amazonS3;
     }
 
-    private InputStream getFile() throws AmazonClientException,ResourceModelSourceException {
+    private InputStream getFile() throws AmazonClientException {
         AmazonS3 amazonS3 = getAmazonS3();
         S3Object object;
         logger.info("Reading Resource from S3. "+bucket+" "+filePath);
@@ -240,8 +240,8 @@ public class S3Base implements AWSCredentials,ResourceModelSource, WriteableMode
         //we can check the xml and json content type from amazon object data
         if(extension.equalsIgnoreCase("xml") || extension.equalsIgnoreCase("json")){
             if(!amazonContentType.equalsIgnoreCase(getMimeType())){
-                logger.error("S3Object content type isn't equals to input content type.");
-                throw new ResourceModelSourceException(
+                logger.warn("S3Object content type isn't equals to input content type.");
+                logger.warn(
                         "S3 Object content type: "+amazonContentType + " expected content type:"+getMimeType());
             }
         }
