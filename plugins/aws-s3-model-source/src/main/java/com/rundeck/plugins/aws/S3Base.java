@@ -20,11 +20,16 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserException;
 import com.dtolabs.rundeck.core.resources.format.UnsupportedFormatException;
 import com.dtolabs.utils.Streams;
+import org.apache.log4j.Logger;
 
 import java.io.*;
+import java.net.URLConnection;
 import java.nio.file.Files;
 
 public class S3Base implements AWSCredentials,ResourceModelSource, WriteableModelSource {
+
+    private static final Logger logger = Logger.getLogger(S3Base.class);
+
     private String AWSAccessKeyId;
     private String AWSSecretKey;
     private boolean useKey = false;
@@ -44,7 +49,7 @@ public class S3Base implements AWSCredentials,ResourceModelSource, WriteableMode
     private String extension;
 
 
-    private boolean writable=true;//TODO
+    private boolean writable=false;
 
     private Framework framework;
     private AmazonS3 amazonS3;
@@ -73,6 +78,10 @@ public class S3Base implements AWSCredentials,ResourceModelSource, WriteableMode
         this.useRegion = true;
     }
 
+    public void setWritable(){
+        this.writable=true;
+    }
+
     public void setEndpoint(String endpoint){
         this.endpoint = endpoint;
         this.useEndpoint = true;
@@ -83,48 +92,12 @@ public class S3Base implements AWSCredentials,ResourceModelSource, WriteableMode
         this.useClientOptions = true;
     }
 
-    private AmazonS3 getAmazonS3(){
-        if(null == amazonS3){
-            if(useKey) {
-                amazonS3 = new AmazonS3Client(this);
-            }else if(useFile){
-                amazonS3 = new AmazonS3Client(cred);
-            }else{
-                amazonS3 = new AmazonS3Client();
-            }
-            if(useRegion) {
-                Region region = RegionUtils.getRegion(regionName);
-                amazonS3.setRegion(region);
-            }else if(useEndpoint){
-                amazonS3.setEndpoint(endpoint);
-            }
-
-            if(useClientOptions){
-                amazonS3.setS3ClientOptions(clientOptions);
-            }
-        }
-        return amazonS3;
-    }
-
-    public InputStream getFile() throws AmazonClientException {
-        AmazonS3 amazonS3 = getAmazonS3();
-        S3Object object;
-        object = amazonS3.getObject(bucket,filePath);
-        //remoteFile = object.getObjectContent();
-        return object.getObjectContent();
-    }
-
-    public void putFile(File file){
-        AmazonS3 amazonS3 = getAmazonS3();
-        amazonS3.putObject(bucket,filePath,file);
-    }
-
-
+    @Override
     public INodeSet getNodes() throws ResourceModelSourceException {
         InputStream remoteFile;
         try {
             remoteFile = getFile();
-        }catch (AmazonClientException e){
+        }catch (AmazonClientException e){//file doesnt exist
             throw new ResourceModelSourceException(
                     "Error requesting Resource Model Source from S3",e);
         }
@@ -155,21 +128,6 @@ public class S3Base implements AWSCredentials,ResourceModelSource, WriteableMode
         return writable ? this : null;
     }
 
-
-    private String getMimeType(){
-        if(extension.equalsIgnoreCase("yaml")){
-            return "text/yaml";
-        }
-        if(extension.equalsIgnoreCase("json")){
-            return "application/json";
-        }
-        return "application/xml";
-    }
-
-    private ResourceFormatParser getResourceFormatParser() throws UnsupportedFormatException {
-        return framework.getResourceFormatParserService().getParserForMIMEType(getMimeType());
-    }
-
     @Override
     public String getAWSAccessKeyId() {
         return AWSAccessKeyId;
@@ -180,13 +138,6 @@ public class S3Base implements AWSCredentials,ResourceModelSource, WriteableMode
         return AWSSecretKey;
     }
 
-    public void setAWSAccessKeyId(String keyId){
-        AWSAccessKeyId = keyId;
-    }
-
-    public void setAWSSecretKey(String key){
-        AWSSecretKey = key;
-    }
 
     @Override
     public String getSyntaxMimeType() {
@@ -215,7 +166,12 @@ public class S3Base implements AWSCredentials,ResourceModelSource, WriteableMode
 
     @Override
     public boolean hasData() {
-        return true;//TODO
+        try{
+            getFile();
+        }catch (Exception e){
+            return false;
+        }
+        return true;
     }
 
     @Override
@@ -223,39 +179,90 @@ public class S3Base implements AWSCredentials,ResourceModelSource, WriteableMode
         if (!writable) {
             throw new IllegalArgumentException("Cannot write to file, it is not configured to be writeable");
         }
+        File temp = isToFile(data);
+        try {
+            final INodeSet set = getResourceFormatParser().parseDocument(temp);
+        } catch (ResourceFormatParserException e) {
+            throw new ResourceModelSourceException(e);
+        }
+        putFile(temp);
+        return temp.length();
+    }
+
+    private AmazonS3 getAmazonS3(){
+        if(null == amazonS3){
+            if(useKey) {
+                amazonS3 = new AmazonS3Client(this);
+            }else if(useFile){
+                amazonS3 = new AmazonS3Client(cred);
+            }else{
+                amazonS3 = new AmazonS3Client();
+            }
+            if(useRegion) {
+                Region region = RegionUtils.getRegion(regionName);
+                amazonS3.setRegion(region);
+            }else if(useEndpoint){
+                amazonS3.setEndpoint(endpoint);
+            }
+
+            if(useClientOptions){
+                amazonS3.setS3ClientOptions(clientOptions);
+            }
+        }
+        return amazonS3;
+    }
+
+    private InputStream getFile() throws AmazonClientException,ResourceModelSourceException {
+        AmazonS3 amazonS3 = getAmazonS3();
+        S3Object object;
+        logger.info("Reading Resource from S3. "+bucket+" "+filePath);
+        object = amazonS3.getObject(bucket,filePath);
+        String amazonContentType = object.getObjectMetadata().getContentType();
+        //we can check the xml and json content type from amazon object data
+        if(extension.equalsIgnoreCase("xml") || extension.equalsIgnoreCase("json")){
+            if(!amazonContentType.equalsIgnoreCase(getMimeType())){
+                logger.error("S3Object content type isn't equals to input content type.");
+                throw new ResourceModelSourceException(
+                        "S3 Object content type: "+amazonContentType + " expected content type:"+getMimeType());
+            }
+        }
+        return object.getObjectContent();
+    }
+
+    private void putFile(File file){
+        AmazonS3 amazonS3 = getAmazonS3();
+        logger.info("Writing Resource to S3. "+bucket+" "+filePath);
+        amazonS3.putObject(bucket,filePath,file);
+    }
+
+
+    private String getMimeType(){
+        if(extension.equalsIgnoreCase("yaml")){
+            return "text/yaml";
+        }
+        if(extension.equalsIgnoreCase("json")){
+            return "application/json";
+        }
+        return "application/xml";
+    }
+
+    private ResourceFormatParser getResourceFormatParser() throws UnsupportedFormatException {
+        return framework.getResourceFormatParserService().getParserForMIMEType(getMimeType());
+    }
+
+    private File isToFile(InputStream is) throws IOException, ResourceModelSourceException {
         try {
             final ResourceFormatParser parser = getResourceFormatParser();
             File temp = Files.createTempFile("temp", "." + parser.getPreferredFileExtension()).toFile();
             temp.deleteOnExit();
-
             try (FileOutputStream fos = new FileOutputStream(temp)) {
-                Streams.copyStream(data, fos);
+                Streams.copyStream(is, fos);
             }
-            try {
-                final INodeSet set = parser.parseDocument(temp);
-            } catch (ResourceFormatParserException e) {
-                throw new ResourceModelSourceException(e);
-            }
-            putFile(temp);
-            return temp.length();
-        }catch (UnsupportedFormatException e){
+            return temp;
+        } catch (UnsupportedFormatException e) {
             throw new ResourceModelSourceException(
                     "Response content type is not supported: " + extension, e);
         }
-    }
-
-    private void displayTextInputStream(InputStream data)
-            throws IOException {
-        // Read one text line at a time and display.
-        BufferedReader reader = new BufferedReader(new
-                InputStreamReader(data));
-        while (true) {
-            String line = reader.readLine();
-            if (line == null) break;
-
-            System.out.println("    " + line);
-        }
-        System.out.println();
     }
 
 }

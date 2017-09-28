@@ -34,6 +34,7 @@ public class S3ResourceModelSource implements ResourceModelSourceFactory,Describ
 
     public static final String FILE = "file";
     public static final String EXTENSION = "extension";
+    public static final String WRITABLE="writable";
 
 
 
@@ -96,6 +97,9 @@ public class S3ResourceModelSource implements ResourceModelSourceFactory,Describ
                     "Whether to access the Endpoint using `endpoint/bucket` style, default: false. The default will " +
                             "use DNS style `bucket.endpoint`, which may be incompatible with non-AWS S3-compatible services",
                     false,"false"))
+            .property(PropertyUtil.bool(WRITABLE, "Writable",
+                    "Allow to write the remote file.",
+                    false,"false"))
             .build();
 
 
@@ -137,6 +141,10 @@ public class S3ResourceModelSource implements ResourceModelSourceFactory,Describ
         } else {
             s3.setEndpoint(properties.getProperty(ENDPOINT));
         }
+        if (Boolean.valueOf(properties.getProperty(WRITABLE))) {
+            s3.setWritable();
+        }
+
 
         if(Boolean.valueOf(properties.getProperty(PATHSTYLE))) {
             S3ClientOptions clientOptions = new S3ClientOptions();
