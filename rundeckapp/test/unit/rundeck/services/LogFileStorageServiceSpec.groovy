@@ -422,12 +422,14 @@ class LogFileStorageServiceSpec extends Specification {
         given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStorage.remotePendingDelay = pend
-        def outFile = new File(tempDir, "1.rdlog")
-        def outFilePart = new File(tempDir, "1.rdlog.part")
+        def outFile = new File(tempDir, "rundeck/test/run/logs/1.rdlog")
+        def outFilePart = new File(tempDir, "rundeck/test/run/logs/1.rdlog.part")
         if (loData) {
-            outFile.text = 'test-partial.complete'
+            outFile.parentFile.mkdirs()
+            outFile.text = 'test-complete'
         }
         if (loPart) {
+            outFile.parentFile.mkdirs()
             outFilePart.text = 'test-partial'
         }
         def now = new Date()
@@ -443,6 +445,13 @@ class LogFileStorageServiceSpec extends Specification {
             getPartialRetrieveSupported() >> supports
             isAvailable(filetype) >> reData
             isPartialAvailable(filetype) >> rePart
+        }
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProperties() >> (['framework.logs.dir': tempDir.getAbsolutePath()] as Properties)
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getTimeDuration('execution.logs.fileStorage.checkpoint.time.interval', '30s', _) >> 30
         }
         when:
         def result = service.getLogFileState(exec, filetype, plugin, getPart)

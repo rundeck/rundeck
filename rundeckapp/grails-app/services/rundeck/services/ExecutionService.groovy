@@ -1612,9 +1612,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //aggregate all files to delete
             execs << e
             [LoggingService.LOG_FILE_FILETYPE, WorkflowService.STATE_FILE_FILETYPE].each { ftype ->
-                def file = logFileStorageService.getFileForExecutionFiletype(e, ftype, true)
+                def file = logFileStorageService.getFileForExecutionFiletype(e, ftype, true, false)
                 if (null != file && file.exists()) {
                     files << file
+                }
+                def fileb = logFileStorageService.getFileForExecutionFiletype(e, ftype, true, true)
+                if (null != fileb && fileb.exists()) {
+                    files << fileb
+                }
+                def file2 = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, false)
+                if (null != file2 && file2.exists()) {
+                    files << file2
+                }
+                def file2b = logFileStorageService.getFileForExecutionFiletype(e, ftype, false, true)
+                if (null != file2b && file2b.exists()) {
+                    files << file2b
                 }
             }
             //delete all job file records

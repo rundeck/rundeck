@@ -131,7 +131,8 @@ class LoggingServiceTests  {
             assertEquals([test: "blah"], defaultMeta)
             writer
         }
-        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+        lfmock.demand.getFileForExecutionFiletype(1..1) {
+            Execution e2, String filetype, boolean stored, boolean partial ->
             assertEquals(1, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
@@ -204,7 +205,8 @@ class LoggingServiceTests  {
             assertEquals(null,x)
             writer
         }
-        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+        lfmock.demand.getFileForExecutionFiletype(1..1) {
+            Execution e2, String filetype, boolean stored, boolean partial ->
             assertEquals(1, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
@@ -243,7 +245,8 @@ class LoggingServiceTests  {
             assertNotNull("expected a value watcher for logging file size threshold",x)
             writer
         }
-        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+        lfmock.demand.getFileForExecutionFiletype(1..1) {
+            Execution e2, String filetype, boolean stored, boolean partial ->
             assertEquals(1, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
@@ -279,7 +282,8 @@ class LoggingServiceTests  {
             assertNull("expected no logging file size threshold",x)
             writer
         }
-        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+        lfmock.demand.getFileForExecutionFiletype(1..1) {
+            Execution e2, String filetype, boolean stored, boolean partial ->
             assertEquals(1, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
@@ -321,7 +325,8 @@ class LoggingServiceTests  {
             assertNull("expected no logging file size threshold",x)
             writer
         }
-        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+        lfmock.demand.getFileForExecutionFiletype(1..1) {
+            Execution e2, String filetype, boolean stored, boolean partial ->
             assertEquals(1, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)

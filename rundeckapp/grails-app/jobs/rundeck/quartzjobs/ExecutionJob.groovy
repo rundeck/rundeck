@@ -392,9 +392,7 @@ class ExecutionJob implements InterruptableJob {
                     avgNotificationSent=true
                 }
             }
-            if(periodicCheck){
-                periodicCheck.accept(duration)
-            }
+            periodicCheck?.accept(duration)
             if (
             !wasInterrupted
                     && !wasTimeout

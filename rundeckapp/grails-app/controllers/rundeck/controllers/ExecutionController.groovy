@@ -386,7 +386,7 @@ class ExecutionController extends ControllerBase{
                 true,
                 params.stepStates == 'true'
         )
-        if (loader.state == ExecutionLogState.AVAILABLE) {
+        if (loader.state in [ExecutionLogState.AVAILABLE, ExecutionLogState.AVAILABLE_PARTIAL]) {
             data.state = loader.workflowState
         }else if(loader.state in [ExecutionLogState.NOT_FOUND]) {
             data.state = [error: 'not found',
@@ -398,9 +398,21 @@ class ExecutionController extends ControllerBase{
                 ExecutionLogState.AVAILABLE_REMOTE, ExecutionLogState.PENDING_REMOTE]) {
             data.state = [error: 'pending',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
+        } else if (loader.state in [ExecutionLogState.AVAILABLE_REMOTE_PARTIAL]) {
+            data.state = [error       : 'pending',
+                          errorMessage: g.message(
+                                  code: 'execution.state.storage.state.' + loader.state,
+                                  default: "Pending"
+                          )]
+        } else {
+            data.state = [error       : 'unknown',
+                          errorMessage: g.message(
+                                  code: 'execution.state.storage.state.UNKNOWN',
+                                  args: ["state: " + loader.state].toArray()
+                          )]
         }
         def limit=grailsApplication.config.rundeck?.ajax?.executionState?.compression?.nodeThreshold?:500
-        if(selectedNodes || data.state.allNodes?.size()>limit) {
+        if (selectedNodes || data.state?.allNodes?.size() > limit) {
             return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
         }else{
             return render(contentType: 'application/json', text: data.encodeAsJSON())

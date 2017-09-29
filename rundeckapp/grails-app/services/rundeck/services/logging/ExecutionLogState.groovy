@@ -61,6 +61,10 @@ public enum ExecutionLogState {
      * Error determining state
      */
     ERROR
+
+    public boolean isAvailableOrPartial() {
+        return this in [AVAILABLE, AVAILABLE_PARTIAL]
+    }
     /**
      * Return an {@link ExecutionLogState} given a local and remote {@link LogFileState}
      * @param local

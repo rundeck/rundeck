@@ -51,6 +51,7 @@ import rundeck.services.logging.ProducedExecutionFile
 import rundeck.services.logging.WorkflowStateFileLoader
 import rundeck.services.workflow.StateMapping
 
+import java.nio.file.Files
 import java.util.concurrent.TimeUnit
 
 class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
@@ -90,9 +91,46 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     }
 
     @Override
+    boolean isCheckpointable() {
+        return true
+    }
+
+    @Override
     ExecutionFile produceStorageFileForExecution(final Execution e) {
         File localfile = getStateFileForExecution(e)
         new ProducedExecutionFile(localFile: localfile,fileDeletePolicy: ExecutionFileDeletePolicy.WHEN_RETRIEVABLE)
+    }
+
+    @Override
+    ExecutionFile produceStorageCheckpointForExecution(final Execution e) {
+        File tempFile
+        if (activeStates[e.id]) {
+            tempFile = Files.createTempFile("WorkflowService-storage-${e.id}", ".json").toFile()
+            persistExecutionStateCheckpoint(e.id, activeStates[e.id], tempFile)
+            return new ProducedExecutionFile(
+                    localFile: tempFile,
+                    fileDeletePolicy: ExecutionFileDeletePolicy.ALWAYS
+            )
+        }
+        File localfile = getStateFileForExecution(e)
+
+        def localproduced = new ProducedExecutionFile(
+                localFile: getStateFileForExecution(e),
+                fileDeletePolicy: ExecutionFileDeletePolicy.WHEN_RETRIEVABLE
+        )
+        if (e.dateCompleted != null && localfile.exists()) {
+            return localproduced
+        }
+        def statemap = stateCache.getIfPresent(e.id)
+        if (statemap) {
+            tempFile = Files.createTempFile("WorkflowService-storage-${e.id}", ".json").toFile()
+            serializeStateDataJson(e.id, statemap, tempFile)
+            return new ProducedExecutionFile(
+                    localFile: tempFile,
+                    fileDeletePolicy: ExecutionFileDeletePolicy.ALWAYS
+            )
+        }
+        return localproduced
     }
 
     /**
@@ -179,44 +217,26 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
                 substeps, parentId,framework.frameworkNodeName)
     }
 
-    def long getLogstoreCheckpointTimeSecondsPeriod() {
-        configurationService.getTimeDuration(
-                'execution.logs.fileStorage.checkpoint.time.interval',
-                '30s',
-                TimeUnit.SECONDS
-        )
-    }
-
-    def long getLogstoreCheckpointTimeSecondsMinimum() {
-        configurationService.getTimeDuration(
-                'execution.logs.fileStorage.checkpoint.time.minimum',
-                '30s',
-                TimeUnit.SECONDS
-        )
-    }
-
-    def long getLogstoreCheckpointFilesizeMinimum() {
-        configurationService.getFileSize('execution.logs.fileStorage.checkpoint.fileSize.minimum', 0)
-    }
-
-    def long getLogstoreCheckpointFilesizeIncrement() {
-        configurationService.getFileSize('execution.logs.fileStorage.checkpoint.fileSize.increment', 0)
-    }
-
+    /**
+     * TODO: move to logfileStorageService
+     * @param execution
+     * @return
+     */
     def createPeriodicCheckpoint(Execution execution) {
         def File logfile = logFileStorageService.getFileForExecutionFiletype(
                 execution,
                 LoggingService.LOG_FILE_FILETYPE,
-                true
+                false,
+                false
         )
         if (logFileStorageService.pluginEnabledForPartialStorage(execution)) {
             def execid = execution.id
             def checker = new PeriodicFileChecker(
                     periodUnit: TimeUnit.SECONDS,
-                    period: logstoreCheckpointTimeSecondsPeriod,
-                    periodThreshold: logstoreCheckpointTimeSecondsMinimum,
-                    sizeThreshold: logstoreCheckpointFilesizeMinimum,
-                    sizeIncrement: logstoreCheckpointFilesizeIncrement,
+                    period: logFileStorageService.logstoreCheckpointTimeSecondsPeriod,
+                    periodThreshold: logFileStorageService.logstoreCheckpointTimeSecondsMinimum,
+                    sizeThreshold: logFileStorageService.logstoreCheckpointFilesizeMinimum,
+                    sizeIncrement: logFileStorageService.logstoreCheckpointFilesizeIncrement,
                     logfile: logfile,
                     //OR means: trigger action if initial size OR time threshold met
                     thresholdBehavior: PeriodicFileChecker.Behavior.OR,
@@ -240,6 +260,8 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
                     log.error("periodic check succeeded after ${duration}")
                 }
             }
+        } else {
+            log.error("Plugin is NOT enabled for partial storage")
         }
     }
     /**
@@ -275,7 +297,9 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         def File outfile = getStateFileForExecution(execution)
         chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
             ExecutionState executionState, Date timestamp, List<String> nodeSet ->
-                persistExecutionState(execution.id, state, outfile)
+                if (executionState.completedState) {
+                    persistExecutionStateFinal(execution.id, state, outfile)
+                }
         })
         if (Environment.getCurrent() == Environment.DEVELOPMENT) {
             chain << new WorkflowStateListenerAction(onWorkflowExecutionStateChanged: {
@@ -294,19 +318,27 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
      * @return
      */
     public File getStateFileForExecution(Execution execution) {
-        logFileStorageService.getFileForExecutionFiletype(execution, STATE_FILE_FILETYPE, true)
+        logFileStorageService.getFileForExecutionFiletype(execution, STATE_FILE_FILETYPE, false, false)
     }
 
-    def persistExecutionState(Long id, WorkflowState state, File file) {
-        Map data=serializeStateJson(id, state, file)
+    def persistExecutionStateCheckpoint(Long id, WorkflowState state, File file) {
+        Map data = serializeStateJson(id, state, file)
+    }
+
+    def persistExecutionStateFinal(Long id, WorkflowState state, File file) {
+        Map data = serializeStateJson(id, state, file)
         stateCache.put(id, data)
         activeStates.remove(id)
         log.debug("${id}: execution state.json persisted to file.")
     }
 
-    def Map serializeStateJson(Long id,WorkflowState state, File file){
+    def Map serializeStateJson(Long id, WorkflowState state, File file) {
         def data = stateMapping.mapOf(id, state)
-        file.withWriter { w->
+        serializeStateDataJson(id, data, file)
+    }
+
+    def Map serializeStateDataJson(Long id, Map data, File file) {
+        file.withWriter { w ->
             w << data.encodeAsJSON()
         }
         return data
@@ -387,7 +419,10 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
         if (loader.file) {
             //cache local data
             statemap = deserializeState(loader.file)
-            stateCache.put(e.id,statemap)
+            if (loader.state == ExecutionLogState.AVAILABLE) {
+                //final state, so cache result.  If AVAILABLE_PARTIAL, do not cache it
+                stateCache.put(e.id, statemap)
+            }
             statemap=stateMapping.summarize(new HashMap(statemap),nodes,selectedOnly,stepStates)
         }
         return new WorkflowStateFileLoader(workflowState: statemap, state: loader.state, errorCode: loader.errorCode,
