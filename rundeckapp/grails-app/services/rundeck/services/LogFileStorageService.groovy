@@ -862,7 +862,6 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     )
     {
         File file = getFileForExecutionFiletype(execution, filetype, false, false)
-        System.err.println("file: $file")
         def key = logFileRetrievalKey(execution,filetype)
         def keyPartial = logFileRetrievalKey(execution, filetype, true)
 
@@ -889,6 +888,8 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         List errorData=null
 
 
+        def extra = [:]
+        ExecutionLogState state = ExecutionLogState.NOT_FOUND
         //query plugin to see if it is available
         if (null == remote && null != plugin && pluginSupportsRetrieve(plugin)) {
             def errorMessage = null
@@ -922,39 +923,33 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                     logFileRetrievalResults.remove(key)
                 }
             }
+            state = ExecutionLogState.forFileStates(LogFileState.NOT_FOUND, remote, remoteNotFound)
             if (remote != LogFileState.AVAILABLE && supportsPartial) {
                 //check if partial file is locally available
-                File filepart = supportsPartial ? getFileForExecutionFiletype(execution, filetype, false, true) : null
+                File filepart = getFileForExecutionFiletype(execution, filetype, false, true)
 
-                LogFileState localpart = (supportsPartial && filepart != null && filepart.exists()) ?
+                LogFileState localPartialState = (filepart != null && filepart.exists()) ?
                         LogFileState.AVAILABLE_PARTIAL :
-                        remote
-                if (localpart == LogFileState.AVAILABLE_PARTIAL) {
-                    //if partial file was updated within the cache time, do not attempt to update
+                        LogFileState.NOT_FOUND
+                LogFileState remotePartialState
 
-                    log.debug(
-                            "getLogFileState(${execution.id},${filetype},partial) AVAILABLE_PARTIAL: " +
-                                    "${filepart.length()}b"
-                    )
-                    return [state: ExecutionLogState.AVAILABLE_PARTIAL]
-                }
                 //query plugin to see if it is available in partial data
-                def previousPartial = getRetrievalCacheResult(
-                        keyPartial,
-                        (int) Math.floor(logstoreCheckpointTimeSecondsPeriod / 2)
-                )
+                def cacheLifeSecs = (int) Math.floor(logstoreCheckpointTimeSecondsPeriod / 2)
+                def previousPartial = getRetrievalCacheResult(keyPartial, cacheLifeSecs)
                 if (previousPartial != null) {
                     //retrieval result is fresh within the cache
-                    remote = previousPartial.state
+                    remotePartialState = previousPartial.state
                     errorCode = previousPartial.errorCode
                     errorData = previousPartial.errorData
 
                     log.debug(
-                            "getLogFileState(${keyPartial}): cached state: ${remote}"
+                            "getLogFileState(${keyPartial}): cached state: ${remotePartialState}"
                     )
                 } else {
                     try {
-                        remote = plugin.isPartialAvailable(filetype) ? LogFileState.AVAILABLE_PARTIAL : remote
+                        remotePartialState = plugin.isPartialAvailable(filetype) ?
+                                LogFileState.AVAILABLE_PARTIAL :
+                                LogFileState.NOT_FOUND
                     } catch (Throwable e) {
                         def pluginName = getConfiguredPluginName()
                         log.error("Log file partial availability could not be determined ${pluginName}: " + e.message)
@@ -965,26 +960,31 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                         errorCode = 'execution.log.storage.state.ERROR'
                         errorMessage = e.message
                         errorData = [pluginName, errorMessage]
-                        remote = LogFileState.ERROR
+                        remotePartialState = LogFileState.ERROR
                     }
-                    log.debug("getLogFileState(${keyPartial}): plugin state: ${remote}")
-                    if (!(remote in [LogFileState.AVAILABLE, LogFileState.AVAILABLE_PARTIAL])) {
+                    log.debug("getLogFileState(${keyPartial}): plugin state: ${remotePartialState}")
+                    if (!(remotePartialState in [LogFileState.AVAILABLE, LogFileState.AVAILABLE_PARTIAL])) {
                         //otherwise cache the result check
-                        cacheRetrievalState(keyPartial, remote, 0, errorMessage, errorCode, errorData)
+                        cacheRetrievalState(keyPartial, remotePartialState, 0, errorMessage, errorCode, errorData)
                     } else {
                         logFileRetrievalResults.remove(keyPartial)
                     }
                 }
-
+                extra.remotePartialState = remotePartialState
+                state = ExecutionLogState.forFileStates(
+                        localPartialState,
+                        remotePartialState,
+                        state
+                )
             }
         }
 
-        def state = ExecutionLogState.forFileStates(LogFileState.NOT_FOUND, remote, remoteNotFound)
+
 
         log.debug(
                 "getLogFileState(${execution.id},${filetype}): tested ${remote}, result: ${state}"
         )
-        return [state: state, errorCode: errorCode, errorData: errorData]
+        return [state: state, errorCode: errorCode, errorData: errorData] + extra
     }
     def pluginSupportsRetrieve(Object plugin){
         if(plugin instanceof ExecutionFileStorageOptions){
@@ -1119,7 +1119,9 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             reader = getLogReaderForFile(loader.file)
         }
         return new ExecutionLogReader(state: loader.state, reader: reader,
-                errorCode: loader.errorCode, errorData: loader.errorData)
+                                      errorCode: loader.errorCode,
+                                      errorData: loader.errorData,
+        )
     }
 
     def LogFileLoader requestLogFileLoad(Execution e, String filetype, boolean performLoad) {
@@ -1151,14 +1153,14 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         def result = getLogFileState(e, filetype, plugin, isClusterExec)
         state = result.state
         def file = null
-        log.debug("requestLogFileLoad(${e.id},${filetype}): file state: ${state}")
+        log.debug("requestLogFileLoad(${e.id},${filetype}): file state: ${state}: ${result}")
         switch (state) {
             case ExecutionLogState.AVAILABLE:
                 file = getFileForExecutionFiletype(e, filetype, false, false)
                 break
             case ExecutionLogState.AVAILABLE_PARTIAL:
                 file = getFileForExecutionFiletype(e, filetype, false, true)
-                if (performLoad) {
+                if (performLoad && result.remotePartialState == LogFileState.AVAILABLE_PARTIAL) {
                     //intiate another partial retrieval if delay interval has passed
                     def retriev = requestLogFileRetrievalPartial(e, filetype, plugin)
                 }
@@ -1169,12 +1171,13 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 }
                 break
             case ExecutionLogState.AVAILABLE_REMOTE_PARTIAL:
-                if (performLoad) {
+                if (performLoad && result.remotePartialState == LogFileState.AVAILABLE_PARTIAL) {
                     state = requestLogFileRetrievalPartial(e, filetype, plugin)
                     if (state == ExecutionLogState.AVAILABLE_PARTIAL) {
                         file = getFileForExecutionFiletype(e, filetype, false, true)
                     }
                 }
+                break
         }
         log.debug("requestLogFileLoad(${e.id},${filetype},${performLoad}): result ${state}")
 

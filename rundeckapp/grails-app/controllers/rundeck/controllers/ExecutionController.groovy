@@ -386,7 +386,7 @@ class ExecutionController extends ControllerBase{
                 true,
                 params.stepStates == 'true'
         )
-        if (loader.state in [ExecutionLogState.AVAILABLE, ExecutionLogState.AVAILABLE_PARTIAL]) {
+        if (loader.state.isAvailableOrPartial()) {
             data.state = loader.workflowState
         }else if(loader.state in [ExecutionLogState.NOT_FOUND]) {
             data.state = [error: 'not found',
@@ -396,9 +396,11 @@ class ExecutionController extends ControllerBase{
             data.state = [error: 'error', errorMessage: g.message(code: loader.errorCode, args: loader.errorData)]
         }else if (loader.state in [ ExecutionLogState.PENDING_LOCAL, ExecutionLogState.WAITING,
                 ExecutionLogState.AVAILABLE_REMOTE, ExecutionLogState.PENDING_REMOTE]) {
+            data.completed = false
             data.state = [error: 'pending',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
         } else if (loader.state in [ExecutionLogState.AVAILABLE_REMOTE_PARTIAL]) {
+            data.completed = false
             data.state = [error       : 'pending',
                           errorMessage: g.message(
                                   code: 'execution.state.storage.state.' + loader.state,
@@ -410,6 +412,10 @@ class ExecutionController extends ControllerBase{
                                   code: 'execution.state.storage.state.UNKNOWN',
                                   args: ["state: " + loader.state].toArray()
                           )]
+        }
+        if (loader.state == ExecutionLogState.AVAILABLE_PARTIAL) {
+            data.completed = false
+            data.state.partial = true
         }
         def limit=grailsApplication.config.rundeck?.ajax?.executionState?.compression?.nodeThreshold?:500
         if (selectedNodes || data.state?.allNodes?.size() > limit) {
@@ -437,7 +443,7 @@ class ExecutionController extends ControllerBase{
         def data=[:]
         def selectedNode=params.node
         def loader = workflowService.requestStateSummary(e,[selectedNode],true)
-        if (loader.state == ExecutionLogState.AVAILABLE) {
+        if (loader.state.isAvailableOrPartial()) {
             data = [
                     name:selectedNode,
                     summary:loader.workflowState.nodeSummaries[selectedNode],
@@ -453,6 +459,12 @@ class ExecutionController extends ControllerBase{
                 ExecutionLogState.AVAILABLE_REMOTE, ExecutionLogState.PENDING_REMOTE]) {
             data = [error: 'pending',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
+        } else {
+            data.state = [error       : 'unknown',
+                          errorMessage: g.message(
+                                  code: 'execution.state.storage.state.UNKNOWN',
+                                  args: ["state: " + loader.state].toArray()
+                          )]
         }
         return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
     }
@@ -974,16 +986,16 @@ class ExecutionController extends ControllerBase{
         else if (null == reader || reader.state in [ExecutionLogState.PENDING_LOCAL, ExecutionLogState.PENDING_REMOTE, ExecutionLogState.WAITING]) {
             //pending data
             def dataMap=[
-                    message:"Pending",
-                    pending: g.message(code: 'execution.log.storage.state.' + reader.state, default: "Pending"),
-                    id:params.id.toString(),
-                    offset: params.offset ? params.offset.toString() : "0",
-                    completed:false,
-                    execCompleted:jobcomplete,
+                    message       :"Pending",
+                    pending       : g.message(code: 'execution.log.storage.state.' + reader.state, default: "Pending"),
+                    id            :params.id.toString(),
+                    offset        : params.offset ? params.offset.toString() : "0",
+                    completed     :false,
+                    execCompleted :jobcomplete,
                     hasFailedNodes:hasFailedNodes,
-                    execState:execState,
-                    statusString: statusString,
-                    execDuration:execDuration
+                    execState     :execState,
+                    statusString  : statusString,
+                    execDuration  : execDuration,
             ]
             withFormat {
                 xml {
@@ -1002,8 +1014,8 @@ class ExecutionController extends ControllerBase{
                     response.addHeader('X-Rundeck-ExecOutput-Message', dataMap.message.toString())
                     response.addHeader('X-Rundeck-ExecOutput-Pending', dataMap.pending.toString())
                     response.addHeader('X-Rundeck-ExecOutput-Offset', dataMap.offset.toString())
-                    response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.execCompleted.toString())
-                    response.addHeader('X-Rundeck-Exec-Completed', dataMap.completed.toString())
+                    response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.completed.toString())
+                    response.addHeader('X-Rundeck-Exec-Completed', dataMap.execCompleted.toString())
                     response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
                     response.addHeader('X-Rundeck-Exec-Status-String', dataMap.statusString?.toString())
                     response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
@@ -1059,18 +1071,18 @@ class ExecutionController extends ControllerBase{
 
             if (lastmodl <= ll && (offset==0 || totsize <= offset)) {
                 def dataMap=[
-                        message:"Unmodified",
-                        unmodified:true,
-                        id:params.id.toString(),
-                        offset:params.offset ? params.offset.toString() : "0",
-                        completed:jobcomplete,
-                        execCompleted:jobcomplete,
+                        message       : "Unmodified",
+                        unmodified    : true,
+                        id            : params.id.toString(),
+                        offset        : params.offset ? params.offset.toString() : "0",
+                        completed     : reader.state == ExecutionLogState.AVAILABLE,
+                        execCompleted : jobcomplete,
                         hasFailedNodes:hasFailedNodes,
-                        execState:execState,
-                        statusString: statusString,
-                        lastModified:lastmodl.toString(),
-                        execDuration:execDuration,
-                        totalSize:totsize
+                        execState     : execState,
+                        statusString  : statusString,
+                        lastModified  : lastmodl.toString(),
+                        execDuration  : execDuration,
+                        totalSize     : totsize,
                 ]
 
                 withFormat {
@@ -1090,8 +1102,8 @@ class ExecutionController extends ControllerBase{
                         response.addHeader('X-Rundeck-ExecOutput-Message', dataMap.message.toString())
                         response.addHeader('X-Rundeck-ExecOutput-Unmodified', dataMap.unmodified.toString())
                         response.addHeader('X-Rundeck-ExecOutput-Offset', dataMap.offset.toString())
-                        response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.execCompleted.toString())
-                        response.addHeader('X-Rundeck-Exec-Completed', dataMap.completed.toString())
+                        response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.completed.toString())
+                        response.addHeader('X-Rundeck-Exec-Completed', dataMap.execCompleted.toString())
                         response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
                         response.addHeader('X-Rundeck-Exec-Status-String', dataMap.statusString?.toString())
                         response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
@@ -1165,7 +1177,9 @@ class ExecutionController extends ControllerBase{
             }
         }
         storeoffset= logread.offset
-        completed = logread.complete || (jobcomplete && storeoffset==totsize)
+        //not completed if the reader state is only AVAILABLE_PARTIAL
+        completed = reader.state == ExecutionLogState.AVAILABLE &&
+                (logread.complete || (jobcomplete && storeoffset == totsize))
         log.debug("finish stream iterator, offset: ${storeoffset}, completed: ${completed}")
         if (storeoffset == offset) {
             //don't change last modified unless new data has been read
@@ -1241,19 +1255,19 @@ class ExecutionController extends ControllerBase{
 
         def resultData= [
                 id: e.id.toString(),
-                offset: storeoffset.toString(),
-                completed: completed,
-                execCompleted: jobcomplete,
-                hasFailedNodes: hasFailedNodes,
-                execState: execState,
-                statusString: statusString,
-                lastModified: lastmodl.toString(),
-                execDuration: execDuration,
-                percentLoaded: percent,
-                totalSize: totsize,
+                offset            : storeoffset.toString(),
+                completed         : completed,
+                execCompleted     : jobcomplete,
+                hasFailedNodes    : hasFailedNodes,
+                execState         : execState,
+                statusString      : statusString,
+                lastModified      : lastmodl.toString(),
+                execDuration      : execDuration,
+                percentLoaded     : percent,
+                totalSize         : totsize,
                 lastlinesSupported: lastlinesSupported,
-                nodename:params.nodename,
-                stepctx:params.stepctx
+                nodename          :params.nodename,
+                stepctx           : params.stepctx,
         ]
         withFormat {
             xml {
