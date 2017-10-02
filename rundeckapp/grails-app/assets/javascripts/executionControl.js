@@ -722,6 +722,9 @@ var FollowControl = Class.create({
             if(this.runningcmd.pending != null){
                 time= (this.tailmode && this.taildelay > 0) ? this.taildelay * 5000 : 5000
             }
+            if (data.retryBackoff) {
+                time = Math.max(data.retryBackoff,time);
+            }
             setTimeout(function() {
                 obj.loadMoreOutput(obj.runningcmd.id, obj.runningcmd.offset);
             }, time);

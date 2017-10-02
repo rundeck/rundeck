@@ -417,6 +417,9 @@ class ExecutionController extends ControllerBase{
             data.completed = false
             data.state.partial = true
         }
+        if(loader.retryBackoff>0){
+            data.retryBackoff = loader.retryBackoff
+        }
         def limit=grailsApplication.config.rundeck?.ajax?.executionState?.compression?.nodeThreshold?:500
         if (selectedNodes || data.state?.allNodes?.size() > limit) {
             return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
@@ -796,8 +799,8 @@ class ExecutionController extends ControllerBase{
      * Use a builder delegate to render tailExecutionOutput result in XML or JSON
      */
     private def renderOutputClosure= {String outf, Map data, List outputData, apiVersion,delegate, stateoutput=false ->
-        def keys= ['id','offset','completed','empty','unmodified', 'error','message','execCompleted', 'hasFailedNodes',
-                'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize', 'lastLinesSupported']
+        def keys= ['id', 'offset', 'completed', 'empty', 'unmodified', 'error', 'message', 'execCompleted', 'hasFailedNodes',
+                   'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize', 'lastLinesSupported', 'retryBackoff']
         def setProp={k,v->
             if(outf=='json'){
                 delegate[k]=v
@@ -996,6 +999,7 @@ class ExecutionController extends ControllerBase{
                     execState     :execState,
                     statusString  : statusString,
                     execDuration  : execDuration,
+                    retryBackoff  : reader.retryBackoff
             ]
             withFormat {
                 xml {
@@ -1019,6 +1023,7 @@ class ExecutionController extends ControllerBase{
                     response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
                     response.addHeader('X-Rundeck-Exec-Status-String', dataMap.statusString?.toString())
                     response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
+                    response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', dataMap.retryBackoff.toString())
                     render(contentType: "text/plain") {
                         ''
                     }
@@ -1083,6 +1088,7 @@ class ExecutionController extends ControllerBase{
                         lastModified  : lastmodl.toString(),
                         execDuration  : execDuration,
                         totalSize     : totsize,
+                        retryBackoff  : reader.retryBackoff
                 ]
 
                 withFormat {
@@ -1109,6 +1115,7 @@ class ExecutionController extends ControllerBase{
                         response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
                         response.addHeader('X-Rundeck-ExecOutput-LastModifed', dataMap.lastModified.toString())
                         response.addHeader('X-Rundeck-ExecOutput-TotalSize', dataMap.totalSize.toString())
+                        response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', dataMap.retryBackoff.toString())
                         render(contentType: "text/plain") {
                             ''
                         }
@@ -1268,6 +1275,7 @@ class ExecutionController extends ControllerBase{
                 lastlinesSupported: lastlinesSupported,
                 nodename          :params.nodename,
                 stepctx           : params.stepctx,
+                retryBackoff      : reader.retryBackoff
         ]
         withFormat {
             xml {
@@ -1292,6 +1300,7 @@ class ExecutionController extends ControllerBase{
                 response.addHeader('X-Rundeck-ExecOutput-LastModifed', lastmodl.toString())
                 response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
                 response.addHeader('X-Rundeck-ExecOutput-LastLinesSupported', lastlinesSupported.toString())
+                response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', reader.retryBackoff.toString())
                 def lineSep = System.getProperty("line.separator")
                 response.setHeader("Content-Type","text/plain")
                 response.outputStream.withWriter("UTF-8"){w->

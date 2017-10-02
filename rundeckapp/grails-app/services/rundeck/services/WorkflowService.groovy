@@ -425,7 +425,13 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
             }
             statemap=stateMapping.summarize(new HashMap(statemap),nodes,selectedOnly,stepStates)
         }
-        return new WorkflowStateFileLoader(workflowState: statemap, state: loader.state, errorCode: loader.errorCode,
-                                           errorData: loader.errorData, file: loader.file)
+        return new WorkflowStateFileLoader(
+                workflowState: statemap,
+                state: loader.state,
+                errorCode: loader.errorCode,
+                errorData: loader.errorData,
+                file: loader.file,
+                retryBackoff: loader.retryBackoff
+        )
     }
 }

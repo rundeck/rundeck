@@ -936,11 +936,13 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 //query plugin to see if it is available in partial data
                 def cacheLifeSecs = (int) Math.floor(logstoreCheckpointTimeSecondsPeriod / 2)
                 def previousPartial = getRetrievalCacheResult(keyPartial, cacheLifeSecs)
+                extra.retryBackoff = (cacheLifeSecs * 1000L)
                 if (previousPartial != null) {
                     //retrieval result is fresh within the cache
                     remotePartialState = previousPartial.state
                     errorCode = previousPartial.errorCode
                     errorData = previousPartial.errorData
+                    extra.retryBackoff = previousPartial.backoff ?: 0
 
                     log.debug(
                             "getLogFileState(${keyPartial}): cached state: ${remotePartialState}"
@@ -1121,6 +1123,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         return new ExecutionLogReader(state: loader.state, reader: reader,
                                       errorCode: loader.errorCode,
                                       errorData: loader.errorData,
+                                      retryBackoff: loader.retryBackoff
         )
     }
 
@@ -1153,6 +1156,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         def result = getLogFileState(e, filetype, plugin, isClusterExec)
         state = result.state
         def file = null
+        long retryBackoff = result.retryBackoff ?: 0
         log.debug("requestLogFileLoad(${e.id},${filetype}): file state: ${state}: ${result}")
         switch (state) {
             case ExecutionLogState.AVAILABLE:
@@ -1160,6 +1164,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 break
             case ExecutionLogState.AVAILABLE_PARTIAL:
                 file = getFileForExecutionFiletype(e, filetype, false, true)
+                retryBackoff = Math.max(getBackoffForPartialFile(e, filetype), retryBackoff)
                 if (performLoad && result.remotePartialState == LogFileState.AVAILABLE_PARTIAL) {
                     //intiate another partial retrieval if delay interval has passed
                     def retriev = requestLogFileRetrievalPartial(e, filetype, plugin)
@@ -1175,13 +1180,20 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                     state = requestLogFileRetrievalPartial(e, filetype, plugin)
                     if (state == ExecutionLogState.AVAILABLE_PARTIAL) {
                         file = getFileForExecutionFiletype(e, filetype, false, true)
+                        retryBackoff = Math.max(getBackoffForPartialFile(e, filetype), retryBackoff)
                     }
                 }
                 break
         }
         log.debug("requestLogFileLoad(${e.id},${filetype},${performLoad}): result ${state}")
 
-        return new LogFileLoader(state: state, file: file, errorCode: result.errorCode, errorData: result.errorData)
+        return new LogFileLoader(
+                state: state,
+                file: file,
+                errorCode: result.errorCode,
+                errorData: result.errorData,
+                retryBackoff: retryBackoff
+        )
     }
 
     /**
@@ -1302,6 +1314,13 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         )
         retrievalRequests << newstate
         return ExecutionLogState.PENDING_LOCAL
+    }
+
+    long getBackoffForPartialFile(Execution execution, String filetype) {
+        def file = getFileForExecutionFiletype(execution, filetype, false, true)
+        def cacheTime = (long) Math.floor(logstoreCheckpointTimeSecondsPeriod / 2)
+        def lastMod = file.lastModified()
+        return (cacheTime * 1000L) - (System.currentTimeMillis() - file.lastModified())
     }
 
     /**
