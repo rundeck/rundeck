@@ -30,10 +30,12 @@ import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
 import rundeck.Execution
+import rundeck.UtilityTagLib
 import rundeck.codecs.AnsiColorCodec
 import rundeck.codecs.HTMLElementCodec
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.ApiService
+import rundeck.services.ApiServiceSpec
 import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
@@ -285,5 +287,106 @@ class ExecutionControllerSpec extends Specification {
         '<script>alert("hi");</script> \033[31mred\033[0m' |
                 '&lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; <span class="ansi-fg-red">red</span><span ' +
                 'class="ansi-mode-normal"></span>'
+    }
+
+    /**
+     * compacted=true, the log entries returned will include only the changed
+     * attributes, and if only the "log" is changed, will produce only a string instead of a map.
+     * an empty map means the same entries as previously, an null map entry means remove the previous
+     * value.
+     * @return
+     */
+    def "api execution output compacted"() {
+        given:
+
+        def assetTaglib = mockTagLib(UtilityTagLib)
+        Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+        controller.loggingService = Mock(LoggingService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.frameworkService = Mock(FrameworkService) {
+            authorizeProjectExecutionAll(*_) >> true
+            1 * getAuthContextForSubjectAndProject(*_)
+            1 * isClusterModeEnabled()
+            _ * getServerUUID()
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            requireVersion(*_) >> true
+            requireExists(*_) >> true
+            0 * _(*_)
+        }
+        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def date1 = new Date(90000000)
+        reader.reader = new TestReader(logs:
+                                               [
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message1',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message2',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message2',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message3',
+                                                               metadata: [stepctx: '1'],
+                                                               loglevel: LogLevel.DEBUG
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message4',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.DEBUG
+                                                       ),
+                                               ]
+        )
+        when:
+        params.id = e1.id.toString()
+        params.compacted = 'true'
+        request.api_version = 12
+        response.format = 'json'
+        controller.apiExecutionOutput()
+        def json = response.json
+        then:
+        1 * controller.loggingService.getLogReader(e1) >> reader
+        json.compacted == true
+        json.compactedAttr == 'log'
+        json.entries.size() == 5
+        json.entries[0] == [
+                absolute_time: '1970-01-02T01:00:00Z',
+                log          : 'message1',
+                level        : 'NORMAL',
+                time         : '17:00:00',
+        ]
+        json.entries[1] == 'message2'
+        json.entries[2] == [:]
+        json.entries[3] == [log: 'message3', stepctx: '1', level: 'DEBUG']
+        json.entries[4] == [log: 'message4', stepctx: null]
+
+
     }
 }

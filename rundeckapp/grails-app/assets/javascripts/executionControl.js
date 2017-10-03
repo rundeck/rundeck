@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+//= require util/compactMapList
 /**
  * Control execution follow page state for an execution
  */
@@ -683,14 +685,24 @@ var FollowControl = Class.create({
         var entries = $A(data.entries);
         //if tail mode, count number of rows
         var rowcount= this.countTableRows(this.cmdoutputtbl);
+        var compacted = data.compacted;
+        var compactedAttr = data.compactedAttr;
         if (entries != null && entries.length > 0) {
             var tr;
-            for (var i = 0 ; i < entries.length ; i++) {
-                var e = entries[i];
+            var self=this;
+            var eachEntry = function (e) {
+                "use strict";
                 //this.runningcmd.entries.push(e);
-                tr=this.genDataRow(e, this.cmdoutputtbl);
+                tr=self.genDataRow(e, self.cmdoutputtbl);
                 //if tail mode and count>last lines, remove 1 row from top
                 rowcount++;
+            };
+            if (compacted) {
+                _decompactMapList(entries, compactedAttr, eachEntry);
+            } else {
+                for (var i = 0; i < entries.length; i++) {
+                    eachEntry(entries[i]);
+                }
             }
             if (this.refresh && rowcount > this.lastlines && !data.lastlinesSupported && this.truncateToTail) {
                 //remove extra lines
@@ -862,6 +874,7 @@ var FollowControl = Class.create({
             if (this.tailmode && this.lastlines && this.truncateToTail && offset == 0) {
                 params.lastlines = this.lastlines;
             }
+            params.compacted = 'true';
             return jQuery.ajax({
                 url: _genUrl(url, params) + this.extraParams,
                 type: 'post',

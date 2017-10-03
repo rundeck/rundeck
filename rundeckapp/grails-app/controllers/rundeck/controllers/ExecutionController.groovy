@@ -807,6 +807,7 @@ class ExecutionController extends ControllerBase{
                 'id', 'offset', 'completed', 'empty', 'unmodified', 'error', 'message', 'execCompleted',
                 'hasFailedNodes', 'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize',
                 'lastLinesSupported', 'retryBackoff', 'clusterExec', 'serverNodeUUID',
+                'compacted',
         ]
         def setProp={k,v->
             if(outf=='json'){
@@ -832,6 +833,13 @@ class ExecutionController extends ControllerBase{
 
 
         def timeFmt = new SimpleDateFormat("HH:mm:ss")
+        def compacted = data.compacted
+        def compactedAttr = null
+        if (compacted && outf == 'json') {
+            setProp('compactedAttr', 'log')
+            compactedAttr = 'log'
+        }
+        def prev = [:]
         def dataClos= {
             outputData.each {
                 def datamap = stateoutput?(it + [
@@ -847,16 +855,37 @@ class ExecutionController extends ControllerBase{
                 if (it.loghtml) {
                     datamap.loghtml = it.loghtml
                 }
+                if (compacted) {
+                    def origmap = new HashMap(datamap)
+                    prev.each { k, v ->
+                        if (datamap[k] == prev[k]) {
+                            datamap.remove(k)
+                        } else if (null == datamap[k] && null != prev[k]) {
+                            datamap[k] = null
+                        }
+                    }
+                    prev = origmap
+                    if (compactedAttr && datamap.size() == 1 && datamap[compactedAttr] != null) {
+                        //compact the single attribute into just the string
+                        datamap = datamap[compactedAttr]
+                    }
+                }
                 if (outf == 'json') {
-                    delegate.'entries'(datamap)
-                } else {
-                    datamap.log = datamap.log.replaceAll(invalidXmlPattern, '')
-                    //xml
-                    if (apiVersion <= ApiRequestFilters.V5) {
-                        def text = datamap.remove('log')
-                        delegate.'entry'(datamap, text)
+                    if (datamap instanceof Map) {
+                        delegate.'entries'(datamap)
                     } else {
-                        delegate.'entry'(datamap)
+                        delegate.element(datamap)
+                    }
+                } else {
+                    if (datamap instanceof Map) {
+                        datamap.log = datamap.log.replaceAll(invalidXmlPattern, '')
+                        //xml
+                        if (apiVersion <= ApiRequestFilters.V5) {
+                            def text = datamap.remove('log')
+                            delegate.'entry'(datamap, text)
+                        } else {
+                            delegate.'entry'(datamap)
+                        }
                     }
                 }
             }
@@ -941,6 +970,8 @@ class ExecutionController extends ControllerBase{
                 serverNodeUUID: e.serverNodeUUID,
                 clusterExec   : isClusterExec
         ]
+        def compacted = params.compacted == 'true' &&
+                !configurationService.getBoolean('gui.execution.logs.compacted.disabled', false)
 
         ExecutionLogReader reader
         reader = loggingService.getLogReader(e)
@@ -1291,6 +1322,7 @@ class ExecutionController extends ControllerBase{
                 nodename          :params.nodename,
                 stepctx           : params.stepctx,
                 retryBackoff      : reader.retryBackoff,
+                compacted         : compacted
         ] + clusterInfo
         withFormat {
             xml {
@@ -1316,6 +1348,7 @@ class ExecutionController extends ControllerBase{
                 response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
                 response.addHeader('X-Rundeck-ExecOutput-LastLinesSupported', lastlinesSupported.toString())
                 response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', reader.retryBackoff.toString())
+                response.addHeader('X-Rundeck-ExecOutput-Compacted', compacted.toString())
                 def lineSep = System.getProperty("line.separator")
                 response.setHeader("Content-Type","text/plain")
                 response.outputStream.withWriter("UTF-8"){w->
