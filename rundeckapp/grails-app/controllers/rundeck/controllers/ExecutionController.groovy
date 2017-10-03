@@ -355,16 +355,20 @@ class ExecutionController extends ControllerBase{
             def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
             jobAverage = avg
         }
+        def isClusterExec = frameworkService.isClusterModeEnabled() && e.serverNodeUUID !=
+                frameworkService.getServerUUID()
         def data=[
-            completed:jobcomplete,
-            execDuration: execDuration,
-            executionState:execState.toUpperCase(),
-            executionStatusString:e.customStatusString,
-            jobAverageDuration: jobAverage,
-            startTime:StateMapping.encodeDate(e.dateStarted),
-            endTime: StateMapping.encodeDate(e.dateCompleted),
-            retryAttempt: e.retryAttempt,
-            retry: e.retry,
+                completed            : jobcomplete,
+                execDuration         : execDuration,
+                executionState       : execState.toUpperCase(),
+                executionStatusString: e.customStatusString,
+                jobAverageDuration   : jobAverage,
+                startTime            : StateMapping.encodeDate(e.dateStarted),
+                endTime              : StateMapping.encodeDate(e.dateCompleted),
+                retryAttempt         : e.retryAttempt,
+                retry                : e.retry,
+                serverNodeUUID       : e.serverNodeUUID,
+                clusterExec          : isClusterExec
         ]
         if(e.retryExecution){
             data['retryExecutionId']=e.retryExecution.id
@@ -799,8 +803,11 @@ class ExecutionController extends ControllerBase{
      * Use a builder delegate to render tailExecutionOutput result in XML or JSON
      */
     private def renderOutputClosure= {String outf, Map data, List outputData, apiVersion,delegate, stateoutput=false ->
-        def keys= ['id', 'offset', 'completed', 'empty', 'unmodified', 'error', 'message', 'execCompleted', 'hasFailedNodes',
-                   'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize', 'lastLinesSupported', 'retryBackoff']
+        def keys = [
+                'id', 'offset', 'completed', 'empty', 'unmodified', 'error', 'message', 'execCompleted',
+                'hasFailedNodes', 'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize',
+                'lastLinesSupported', 'retryBackoff', 'clusterExec', 'serverNodeUUID',
+        ]
         def setProp={k,v->
             if(outf=='json'){
                 delegate[k]=v
@@ -925,7 +932,15 @@ class ExecutionController extends ControllerBase{
         def execState = e.executionState
         def statusString = e.customStatusString
         def execDuration = 0L
-        execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
+        execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted
+                                                                                                     .getTime()
+
+        def isClusterExec = frameworkService.isClusterModeEnabled() && e.serverNodeUUID !=
+                frameworkService.getServerUUID()
+        def clusterInfo = [
+                serverNodeUUID: e.serverNodeUUID,
+                clusterExec   : isClusterExec
+        ]
 
         ExecutionLogReader reader
         reader = loggingService.getLogReader(e)
@@ -938,16 +953,16 @@ class ExecutionController extends ControllerBase{
             def errmsg = g.message(code: "execution.log.storage.state.NOT_FOUND")
             //execution has not be started yet
             def dataMap= [
-                    empty:true,
-                    id: params.id.toString(),
-                    offset: "0",
-                    completed: jobcomplete,
-                    execCompleted: jobcomplete,
+                    empty         : true,
+                    id            : params.id.toString(),
+                    offset        : "0",
+                    completed     : jobcomplete,
+                    execCompleted : jobcomplete,
                     hasFailedNodes: hasFailedNodes,
-                    execState: execState,
-                    statusString: statusString,
-                    execDuration: execDuration
-            ]
+                    execState     : execState,
+                    statusString  : statusString,
+                    execDuration  : execDuration
+            ] + clusterInfo
             if (e.dateCompleted) {
                 dataMap.error=errmsg
             } else {
@@ -1000,7 +1015,7 @@ class ExecutionController extends ControllerBase{
                     statusString  : statusString,
                     execDuration  : execDuration,
                     retryBackoff  : reader.retryBackoff
-            ]
+            ] + clusterInfo
             withFormat {
                 xml {
                     apiService.renderSuccessXml(request,response) {
@@ -1089,7 +1104,7 @@ class ExecutionController extends ControllerBase{
                         execDuration  : execDuration,
                         totalSize     : totsize,
                         retryBackoff  : reader.retryBackoff
-                ]
+                ] + clusterInfo
 
                 withFormat {
                     xml {
@@ -1275,8 +1290,8 @@ class ExecutionController extends ControllerBase{
                 lastlinesSupported: lastlinesSupported,
                 nodename          :params.nodename,
                 stepctx           : params.stepctx,
-                retryBackoff      : reader.retryBackoff
-        ]
+                retryBackoff      : reader.retryBackoff,
+        ] + clusterInfo
         withFormat {
             xml {
                 apiService.renderSuccessXml(request,response) {

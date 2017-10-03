@@ -75,6 +75,7 @@ var FollowControl = Class.create({
     appLinks: null,
     workflow:null,
     multiworkflow:null,
+    clusterExec: null,
 
     initialize: function(eid,elem,params){
         this.executionId=eid;
@@ -667,6 +668,7 @@ var FollowControl = Class.create({
             $(this.viewoptionsCompleteId).hide();
             return;
         }
+        this.clusterExec = data.clusterExec && data.serverNodeUUID || null;
 
         this.runningcmd.id = data.id;
         this.runningcmd.offset = data.offset;
@@ -702,6 +704,12 @@ var FollowControl = Class.create({
 
         if (typeof(this.onAppend) == 'function') {
             this.onAppend();
+        }
+        if (this.clusterExec && !this.runningcmd.completed) {
+            //show cluster loading info
+            jQuery('#' + this.parentElement + '_clusterinfo').show();
+        } else {
+            jQuery('#' + this.parentElement + '_clusterinfo').hide();
         }
 
         if (this.runningcmd.completed && this.runningcmd.jobcompleted) {
