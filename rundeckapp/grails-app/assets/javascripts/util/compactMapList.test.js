@@ -62,4 +62,4 @@ jQuery(function () {
             self.assert('remove attributes', {log: 'blah4', user: 'auser', level: 'NORMAL'}, newarr[4]);
         }
     });
-})();
+});
