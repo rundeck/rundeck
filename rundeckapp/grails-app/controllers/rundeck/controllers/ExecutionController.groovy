@@ -37,7 +37,6 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.converters.JSON
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
-import org.codehaus.groovy.grails.web.servlet.mvc.GrailsParameterMap
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -87,13 +86,15 @@ class ExecutionController extends ControllerBase{
             cancelExecution:'POST'
     ]
 
-    def index ={
+    def index() {
         redirect(controller:'menu',action:'index')
     }
-    def follow ={
+
+    def follow() {
         return render(view:'show',model:show())
     }
-    def followFragment ={
+
+    def followFragment() {
         return render(view:'showFragment',model:show())
     }
     /**
@@ -276,7 +277,8 @@ class ExecutionController extends ControllerBase{
                 clusterModeEnabled    : frameworkService.isClusterModeEnabled()
         ]
     }
-    def delete = {
+
+    def delete() {
         withForm{
         def Execution e = Execution.get(params.id)
         if (notFoundResponse(e, 'Execution ID', params.id)) {
@@ -475,7 +477,8 @@ class ExecutionController extends ControllerBase{
         }
         return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
     }
-    def mail ={
+
+    def mail() {
         def Execution e = Execution.get(params.id)
         if (notFoundResponse(e, 'Execution ID', params.id)) {
             return
@@ -521,7 +524,7 @@ class ExecutionController extends ControllerBase{
     }
 
 
-    def xmlerror={
+    private def xmlerror() {
         render(contentType:"text/xml",encoding:"UTF-8"){
             result(error:"true"){
                 delegate.'error'{
@@ -558,7 +561,7 @@ class ExecutionController extends ControllerBase{
                     }
                 }
                 xml {
-                    xmlerror.call()
+                    xmlerror()
                 }
             }
         }
@@ -573,7 +576,7 @@ class ExecutionController extends ControllerBase{
                     }
                 }
                 xml {
-                    xmlerror.call()
+                    xmlerror()
                 }
             }
         }
@@ -618,7 +621,7 @@ class ExecutionController extends ControllerBase{
         }
     }
 
-    def downloadOutput = {
+    def downloadOutput() {
         Execution e = Execution.get(Long.parseLong(params.id))
         if(!e){
             log.error("Execution with id "+params.id+" not found")
@@ -677,7 +680,8 @@ class ExecutionController extends ControllerBase{
         }
         iterator.close()
     }
-    def renderOutput = {
+
+    def renderOutput() {
         Execution e = Execution.get(Long.parseLong(params.id))
         if(!e){
             log.error("Execution with id "+params.id+" not found")
@@ -784,7 +788,7 @@ class ExecutionController extends ControllerBase{
     /**
      * API: /api/execution/{id}/output, version 5
      */
-    def apiExecutionOutput = {
+    def apiExecutionOutput() {
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
             return
         }
@@ -802,7 +806,7 @@ class ExecutionController extends ControllerBase{
     /**
      * Use a builder delegate to render tailExecutionOutput result in XML or JSON
      */
-    private def renderOutputClosure= {String outf, Map data, List outputData, apiVersion,delegate, stateoutput=false ->
+    private def renderOutputFormat(String outf, Map data, List outputData, apiVersion, delegate, stateoutput = false) {
         def keys = [
                 'id', 'offset', 'completed', 'empty', 'unmodified', 'error', 'message', 'execCompleted',
                 'hasFailedNodes', 'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize',
@@ -899,7 +903,7 @@ class ExecutionController extends ControllerBase{
     /**
      * API: /api/execution/{id}/output/state, version ?
      */
-    def apiExecutionStateOutput = {
+    def apiExecutionStateOutput() {
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V10)) {
             return
         }
@@ -930,7 +934,7 @@ class ExecutionController extends ControllerBase{
                         response.setStatus(status)
                     }
                     render(contentType: "application/json") {
-                        renderOutputClosure('json', [
+                        renderOutputFormat('json', [
                                 error: message,
                                 id: params.id.toString(),
                                 offset: "0",
@@ -1003,13 +1007,13 @@ class ExecutionController extends ControllerBase{
                 xml {
                     apiService.renderSuccessXml(request,response) {
                         output{
-                            renderOutputClosure('xml', dataMap, [], request.api_version, delegate)
+                            renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
                         }
                     }
                 }
                 json {
                     render(contentType: "application/json") {
-                        renderOutputClosure('json', dataMap, [], request.api_version, delegate)
+                        renderOutputFormat('json', dataMap, [], request.api_version, delegate)
                     }
                 }
                 text {
@@ -1051,13 +1055,13 @@ class ExecutionController extends ControllerBase{
                 xml {
                     apiService.renderSuccessXml(request,response) {
                         output {
-                            renderOutputClosure('xml', dataMap, [], request.api_version, delegate)
+                            renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
                         }
                     }
                 }
                 json {
                     render(contentType: "application/json") {
-                        renderOutputClosure('json', dataMap, [], request.api_version, delegate)
+                        renderOutputFormat('json', dataMap, [], request.api_version, delegate)
                     }
                 }
                 text {
@@ -1141,13 +1145,13 @@ class ExecutionController extends ControllerBase{
                     xml {
                         apiService.renderSuccessXml(request,response) {
                             output {
-                                renderOutputClosure('xml', dataMap, [], request.api_version, delegate)
+                                renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
                             }
                         }
                     }
                     json {
                         render(contentType: "application/json") {
-                            renderOutputClosure('json', dataMap, [], request.api_version, delegate)
+                            renderOutputFormat('json', dataMap, [], request.api_version, delegate)
                         }
                     }
                     text {
@@ -1328,13 +1332,13 @@ class ExecutionController extends ControllerBase{
             xml {
                 apiService.renderSuccessXml(request,response) {
                     output {
-                        renderOutputClosure('xml', resultData, entry, request.api_version, delegate, stateoutput)
+                        renderOutputFormat('xml', resultData, entry, request.api_version, delegate, stateoutput)
                     }
                 }
             }
             json {
                 render(contentType: "application/json") {
-                    renderOutputClosure('json', resultData, entry, request.api_version, delegate, stateoutput)
+                    renderOutputFormat('json', resultData, entry, request.api_version, delegate, stateoutput)
                 }
             }
             text{
@@ -1477,7 +1481,7 @@ class ExecutionController extends ControllerBase{
     /**
      * Render execution list xml given a List of executions, and a builder delegate
      */
-    public def renderApiExecutions= { LinkGenerator grailsLinkGenerator, List execlist, paging=[:],delegate ->
+    private def renderApiExecutions(LinkGenerator grailsLinkGenerator, List execlist, paging, delegate) {
         apiService.renderExecutionsXml(execlist.collect{ Execution e->
             [
                 execution:e,
