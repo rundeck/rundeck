@@ -327,7 +327,7 @@ To install the launcher on Windows as a service, follow these instructions:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
 
 * This will create the usual structure under `%RDECK_BASE%`, but will just install it, not execute it.
-* If `--installonly` dosen't create all folders, just run `java -jar rundeck-launcher-x.x.x.jar` and stop the instance after the startup process finished.
+* If `--installonly` doesn't create all folders, just run `java -jar rundeck-launcher-x.x.x.jar` and stop the instance after the startup process finished.
 * Customize `%RDECK_BASE%\etc\profile.bat` according to your installation (for example `-Xmx4096m -Xms1024m`)
 * Customize `%RDECK_BASE%\server\config\rundeck-config.properties` accordingly to the docs
 * Create a bat file (e.g. `start_rundeck.bat`) and place it under `%RDECK_BASE%`
@@ -354,7 +354,7 @@ To install the launcher on Windows as a service, follow these instructions:
 
 ###IIS as a reverse proxy
 
-This steps allow to "integrate" rundeck with IIS. This could be neccesary for example for these user cases:
+This steps allow to "integrate" rundeck with IIS. This could be necessary for example for these user cases:
 
 * to get rundeck through the port 80 in a subdirectory of IIS (e.g. `http://yoursite/rundeck`)
 * when It is already set up a SSL certificate for a site and you want to reuse it without fiddling with the java certstore
@@ -396,7 +396,7 @@ matches the pattern (using regular expression): `rundeck.*` (or a regex matching
 * rewrite url: `http://127.0.0.1:81/{R:0}`
 * check `append query string`
 
-Then, any request coming to http://yoursite/rundeck will be proxying to your rundeck instance running on port 81 on the same server, and you'll be sure that every request will come in only proxyied by IIS, since rundeck is only listening to 127.0.0.1.
+Then, any request coming to http://yoursite/rundeck will be proxying to your rundeck instance running on port 81 on the same server, and you'll be sure that every request will come in only proxied by IIS, since rundeck is only listening to 127.0.0.1.
 
 #### Troubleshooting
 
