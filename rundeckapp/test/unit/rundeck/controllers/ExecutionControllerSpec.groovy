@@ -48,6 +48,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.servlet.http.HttpServletResponse
+import java.text.SimpleDateFormat
 
 /**
  * Created by greg on 1/6/16.
@@ -443,6 +444,9 @@ class ExecutionControllerSpec extends Specification {
         }
         def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
         def date1 = new Date(90000000)
+        def sdf=new SimpleDateFormat('yyyy-MM-dd\'T\'HH:mm:ssXXX')
+        sdf.timeZone=TimeZone.getTimeZone('GMT')
+        def abstime=sdf.format(date1)
         reader.reader = new TestReader(logs:
                                                [
                                                        new DefaultLogEvent(
@@ -495,7 +499,7 @@ class ExecutionControllerSpec extends Specification {
         xml.compacted.text() == 'true'
         xml.entries.entry.size() == 5
 
-        xml.entries.entry[0]."@absolute_time".text() == '1970-01-02T01:00:00Z'
+        xml.entries.entry[0]."@absolute_time".text() == abstime
         xml.entries.entry[0]."@log".text() == 'message1'
         xml.entries.entry[0]."@level".text() == 'NORMAL'
         xml.entries.entry[0]."@time".text() == '17:00:00'

@@ -50,7 +50,7 @@ class LegacyLogEntryLineIteratorTest  {
                 new Date(nowtime - (30000) /*30 sec ago*/),
                 new Date(nowtime),
         ]
-        w3cDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        w3cDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         w3cDateFormat.timeZone=TimeZone.getTimeZone("GMT")
         def lines=[
                 "^^^${w3cDateFormat.format(dates[0])}|ERROR|user1|||nodea|ctx1|This is a test^^^\n",
