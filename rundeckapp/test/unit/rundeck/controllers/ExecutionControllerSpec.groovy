@@ -367,7 +367,7 @@ class ExecutionControllerSpec extends Specification {
         when:
         params.id = e1.id.toString()
         params.compacted = 'true'
-        request.api_version = 12
+        request.api_version = 21
         response.format = 'json'
         controller.apiExecutionOutput()
         def json = response.json

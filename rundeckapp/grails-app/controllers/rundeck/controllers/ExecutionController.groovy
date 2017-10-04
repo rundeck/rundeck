@@ -798,6 +798,9 @@ class ExecutionController extends ControllerBase{
             params.nodename = null
             params.stepctx = null
         }
+        if (request.api_version < ApiRequestFilters.V21) {
+            params.remove('compacted')
+        }
         return tailExecutionOutput()
     }
     static final String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
@@ -908,6 +911,9 @@ class ExecutionController extends ControllerBase{
             return
         }
         params.stateOutput = true
+        if (request.api_version < ApiRequestFilters.V21) {
+            params.remove('compacted')
+        }
         return tailExecutionOutput()
     }
     /**
