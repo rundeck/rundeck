@@ -60,6 +60,8 @@ Changes introduced by API Version number:
 * Removed Endpoints.
     - `POST /api/2/project/[PROJECT]/resources`
     - `POST /api/2/project/[PROJECT]/resources/refresh`
+* Updated Endpoints.
+    - [`/api/21/execution/[ID]/output`][/api/V/execution/[ID]/output] - Execution output, supports `compacted=true` query parameter for less verbose xml/json results
 
 **Version 20**:
 
@@ -3910,6 +3912,7 @@ Optional Parameters:
 * `lastlines`: number of lines to retrieve from the end of the available output. If specified it will override the `offset` value and return only the specified number of lines at the end of the log.
 * `lastmod`: epoch datestamp in milliseconds, return results only if modification changed since the specified date OR if more data is available at the given `offset`
 * `maxlines`: maximum number of lines to retrieve forward from the specified offset.
+* `compacted`: `true/false`, (API v21+), if true, results will be in *compacted form* (see below).
 
 **Response:**
 
@@ -4010,6 +4013,8 @@ Entries:
 * `filter` - if a `node` or `step` filter was used
     - `nodename` - value of the node name filter
     - `stepctx` - value of the step context filter
+* `compacted`: `true` if compacted form was requested and is used in the response (API v21+)
+* `compactedAttr`: name of JSON log entry key used by default for fully compacted entries (API v21+)
 
 Each log entry will be included in a section called `entries`.
 
@@ -4019,16 +4024,93 @@ Each log entry will be included in a section called `entries`.
 Content of each Log Entry:
 
 * `time`: Timestamp in format: "HH:MM:SS"
+* `absolute_time`: Timestamp in format: "yyyy-MM-dd'T'HH:mm:ssZ"
 * `level`: Log level, one of: SEVERE,WARNING,INFO,CONFIG,FINEST
 * `log`: The log message
 * `user`: User name
 * `command`: Workflow command context string
 * `node`: Node name
+* `stepctx`: The step context such as `1` or `1/2/3`
 
 **Note for API version 5:**
 
 For API requests using version `5` only, the XML `entry` will have the log message as the text value. Otherwise the log entry
 value will be within the `log` attribute.
+
+
+##### Log Entries in Compacted Form (API v21+)
+
+As of API v21, you can specify `compacted=true` in the URL parameters, which will send the Output Content in "compacted" form. This will be indicated by the `compacted`=`true` value in
+the result data.  
+
+In this mode, Log Entries are compacted by only including the changed values from the
+previous Log Entry in the list.  The first Log Entry in the results will always have complete information.  Subsequent entries may include only changed values.
+
+In JSON format, if the `compactedAttr` value is `log` in the response data, and only the `log` value changed relative to a previous Log Entry, the Log Entry may consist only of the log message string. That is, the array entry will be a string, not a hash. 
+
+When no values changed from the previous Log Entry, the Log Entry will be an empty hash.
+
+When an entry value is not present in the subsequent Log Entry, but was present in the previous
+one, in JSON this will be represented with a `null` value, and in XML the entry name will be
+included in a `removed` attribute.
+
+Example (JSON):
+
+In this example, four log entries are included. The first includes all Log Entry fields.
+The second is only a String, indicating only `log` value changed.
+The third is an empty hash, indicating the previous Log Entry was repeated identically.
+The fourth specifies a new value for `stepctx` and `log` and `level` to use.
+The fifth specifies a `node` and `stepctx` of `null`: indicating the `node` and `stepctx` values should be removed for 
+this Log Entry.
+
+~~~{.json}
+{
+  "id": 1,
+  ... (snip) ...
+  "compacted": "true",
+  "compactedAttr": "log",
+  "entries": [
+    {
+      "time": "17:00:00",
+      "absolute_time": "1970-01-02T01:00:00Z",
+      "level": "NORMAL",
+      "log": "This is the first log message",
+      "user": "bob",
+      "node": "anode1",
+      "stepctx": "1"
+    },
+    "This is the second log message",
+    {},
+    {
+      "stepctx": "2",
+      "level": "DEBUG",
+      "log": "This is the fourth log message"
+    },
+    {
+      "stepctx": null,
+      "log": "This is the fifth log message",
+      "node": null
+    }
+  ]
+}
+~~~
+
+Example (XML) with the same sequence as above:
+
+~~~{.xml}
+<output>
+  <id>1</id>
+  <!-- ... snip ... -->
+  <compacted>true</compacted>
+  <entries>
+    <entry time='17:00:00' absolute_time='1970-01-02T01:00:00Z' log='This is the first log message' level='NORMAL' user="bob" node="anode1" stepctx="1"/>
+    <entry log='This is the second log message' />
+    <entry />
+    <entry log='This is the fourth log message' level='DEBUG' stepctx='2' />
+    <entry log='This is the fifth log message' removed='node,stepctx' />
+  </entries>
+</output>
+~~~
 
 #### Text Format Content
 
