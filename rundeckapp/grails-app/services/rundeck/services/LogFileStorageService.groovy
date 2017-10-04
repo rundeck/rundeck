@@ -1034,10 +1034,10 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             return previous + [backoff: remain]
         } else if (previous != null && !isResultCacheItemAllowedRetry(previous)) {
             //no more retries
-            log.warn("getRetrievalCacheResult, reached max retry count of ${previous.count} for ${key}, not retrying")
+            log.debug("getRetrievalCacheResult, reached max retry count of ${previous.count} for ${key}, not retrying")
             return previous
         }else if(previous!=null){
-            log.warn("getRetrievalCacheResult, expired cache result: ${previous}")
+            log.debug("getRetrievalCacheResult, expired cache result: ${previous}")
 //            logFileRetrievalResults.remove(key)
         }
         return null
