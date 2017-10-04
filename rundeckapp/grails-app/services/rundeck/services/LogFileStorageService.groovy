@@ -20,6 +20,7 @@ import com.codahale.metrics.Counter
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogWriter
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
+import com.dtolabs.rundeck.app.internal.workflow.PeriodicFileChecker
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorage
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
 import com.dtolabs.rundeck.core.logging.ExecutionMultiFileStorage
@@ -38,6 +39,7 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.core.task.AsyncTaskExecutor
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
+import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.execution.ValueHolder
 import rundeck.services.execution.ValueWatcher
 import rundeck.services.logging.ExecutionFile
@@ -82,6 +84,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     ApplicationContext applicationContext
     def metricService
     def configurationService
+    def grailsEvents
 
     /**
      * Scheduled executor for retries
@@ -438,6 +441,50 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     }
 
     /**
+     * @param execution
+     * @return
+     */
+    def createPeriodicCheckpoint(Execution execution) {
+        def File logfile = getFileForExecutionFiletype(
+                execution,
+                LoggingService.LOG_FILE_FILETYPE,
+                false,
+                false
+        )
+        if (pluginEnabledForPartialStorage(execution)) {
+            def execid = execution.id
+            def checker = new PeriodicFileChecker(
+                    periodUnit: TimeUnit.SECONDS,
+                    period: logstoreCheckpointTimeSecondsPeriod,
+                    periodThreshold: logstoreCheckpointTimeSecondsMinimum,
+                    sizeThreshold: logstoreCheckpointFilesizeMinimum,
+                    sizeIncrement: logstoreCheckpointFilesizeIncrement,
+                    logfile: logfile,
+                    //OR means: trigger action if initial size OR time threshold met
+                    thresholdBehavior: PeriodicFileChecker.Behavior.OR,
+                    action: { long fileSizeChange, long timediff ->
+                        log.debug("Partial log file storage trigger for ${execid}")
+                        grailsEvents?.event(
+                                null,
+                                'executionCheckpoint',
+                                new ExecutionCompleteEvent(
+                                        state: 'partial',
+                                        execution: execution,
+                                        context: [fileSizeChange: fileSizeChange, timediff: timediff]
+
+                                )
+                        )
+                    }
+            )
+            log.debug("Partial log file storage enabled for execution ${execid} with checker ${checker}")
+            return { long duration ->
+                if (checker.triggerCheck()) {
+                    log.debug("periodic check succeeded after ${duration}")
+                }
+            }
+        }
+    }
+    /**
      * Submit asynchronous request to store log files for the execution
      * @param e
      */
@@ -454,11 +501,11 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         if (null == plugin || !pluginSupportsPartialStorage(plugin)) {
             return
         }
-        log.error("partial storage triggered...[${sizeChange} bytes, after ${timeDiff} ms]")
+        log.debug("partial storage triggered...[${sizeChange} bytes, after ${timeDiff} ms]")
         //TODO: check if currently running
         if (sizeChange < 1) {
             //todo: configurable threshold
-            log.error("partial storage skipped: ${sizeChange} bytes")
+            log.debug("partial storage skipped: ${sizeChange} bytes")
             return
         }
         //TODO: overwrite existing request if present

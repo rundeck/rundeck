@@ -218,53 +218,6 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     }
 
     /**
-     * TODO: move to logfileStorageService
-     * @param execution
-     * @return
-     */
-    def createPeriodicCheckpoint(Execution execution) {
-        def File logfile = logFileStorageService.getFileForExecutionFiletype(
-                execution,
-                LoggingService.LOG_FILE_FILETYPE,
-                false,
-                false
-        )
-        if (logFileStorageService.pluginEnabledForPartialStorage(execution)) {
-            def execid = execution.id
-            def checker = new PeriodicFileChecker(
-                    periodUnit: TimeUnit.SECONDS,
-                    period: logFileStorageService.logstoreCheckpointTimeSecondsPeriod,
-                    periodThreshold: logFileStorageService.logstoreCheckpointTimeSecondsMinimum,
-                    sizeThreshold: logFileStorageService.logstoreCheckpointFilesizeMinimum,
-                    sizeIncrement: logFileStorageService.logstoreCheckpointFilesizeIncrement,
-                    logfile: logfile,
-                    //OR means: trigger action if initial size OR time threshold met
-                    thresholdBehavior: PeriodicFileChecker.Behavior.OR,
-                    action: { long fileSizeChange, long timediff ->
-                        log.error("Partial log file storage triggger for ${execid}")
-                        grailsEvents?.event(
-                                null,
-                                'executionCheckpoint',
-                                new ExecutionCompleteEvent(
-                                        state: 'partial',
-                                        execution: execution,
-                                        context: [fileSizeChange: fileSizeChange, timediff: timediff]
-
-                                )
-                        )
-                    }
-            )
-            log.error("Partial log file storage enabled for execution ${execid} with checker ${checker}")
-            return { long duration ->
-                if (checker.triggerCheck()) {
-                    log.error("periodic check succeeded after ${duration}")
-                }
-            }
-        } else {
-            log.error("Plugin is NOT enabled for partial storage")
-        }
-    }
-    /**
      * Create and return a listener for changes to the workflow state for an execution
      * @param execution
      */
