@@ -1038,8 +1038,8 @@ class ExecutionController extends ControllerBase{
                         response.addHeader('X-Rundeck-ExecOutput-Message', errmsg.toString())
                     }
                     response.addHeader('X-Rundeck-ExecOutput-Empty', dataMap.empty.toString())
-                    response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.execCompleted.toString())
-                    response.addHeader('X-Rundeck-Exec-Completed', dataMap.completed.toString())
+                    response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.completed.toString())
+                    response.addHeader('X-Rundeck-Exec-Completed', dataMap.execCompleted.toString())
                     response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
                     response.addHeader('X-Rundeck-Exec-Status-String', dataMap.statusString.toString())
                     response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
