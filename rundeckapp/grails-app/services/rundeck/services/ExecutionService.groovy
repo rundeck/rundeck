@@ -908,6 +908,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext.loglevel = textLogLevels[execution.loglevel] ?: execution.loglevel
         jobcontext.retryAttempt=Integer.toString(execution.retryAttempt?:0)
         jobcontext.wasRetry=Boolean.toString(execution.retryAttempt?true:false)
+        jobcontext.threadcount=Integer.toString(execution.nodeThreadcount?:1)
         jobcontext
     }
 
