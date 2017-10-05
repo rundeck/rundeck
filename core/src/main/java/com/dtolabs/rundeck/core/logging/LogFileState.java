@@ -25,6 +25,10 @@ public enum LogFileState {
     /** Available  */
     AVAILABLE,
     /**
+     * Partially Available
+     */
+    AVAILABLE_PARTIAL,
+    /**
      * In process of being transferred to local storage
      */
     PENDING,

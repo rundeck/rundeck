@@ -86,7 +86,6 @@ class TreeExecutionFileStoragePlugin
     boolean isAvailable(final String filetype) throws ExecutionFileStorageException {
         Path path = createFilePath(filetype)
         def hasResource = rundeckStorageTree.hasResource(path)
-//        System.err.println("$this: isAvailable: $filetype: $hasResource")
         return hasResource
     }
 
@@ -99,7 +98,7 @@ class TreeExecutionFileStoragePlugin
             'execution.xml': 'application/xml'
     ]
 
-    Map<String, String> createMetadata(String type, long length, Date lastModified) {
+    static Map<String, String> createMetadata(String type, long length, Date lastModified) {
         /*
         [loglevel:INFO, wasRetry:false, url:http://ecto1.local:4440/project/ctest/execution/follow/1701,
         id:cb1f39af-5d15-4d13-bcfe-b3e963c9b21e, project:ctest, username:admin, retryAttempt:0, user.name:admin,
@@ -147,6 +146,7 @@ class TreeExecutionFileStoragePlugin
         resource.contents.writeContent(stream)
         return true
     }
+
 
     @Override
     void storeMultiple(final MultiFileStorageRequest files) throws IOException, ExecutionFileStorageException {

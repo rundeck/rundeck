@@ -38,7 +38,7 @@ class RundeckLogFormatTest  {
 
     
     public void setUp() throws Exception {
-        dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
         event = new DefaultLogEvent()
         event.loglevel = LogLevel.DEBUG

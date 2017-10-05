@@ -132,6 +132,16 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
     }
 
     @Override
+    boolean isCheckpointable() {
+        return false
+    }
+
+    @Override
+    ExecutionFile produceStorageCheckpointForExecution(final Execution e) {
+        return null
+    }
+
+    @Override
     ExecutionFile produceStorageFileForExecution(final Execution e) {
         File localfile = getExecutionXmlFileForExecution(e)
 
@@ -1280,8 +1290,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
                 if (e.outputfilepath && execout[e.outputfilepath]) {
                     File oldfile = execout[e.outputfilepath]
                     //move to appropriate location and update outputfilepath
-                    String filename = logFileStorageService.getFileForExecutionFiletype(e,
-                            LoggingService.LOG_FILE_FILETYPE, false)
+                    String filename = logFileStorageService.getFileForExecutionFiletype(
+                            e,
+                            LoggingService.LOG_FILE_FILETYPE,
+                            false,
+                            false
+                    )
                     File newfile = new File(filename)
                     try{
                         FileUtils.moveFile(oldfile, newfile)
@@ -1298,8 +1312,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
                 //copy state.json file
                 if(execout["state-${oldids[e]}.state.json"]){
                     File statefile= execout["state-${oldids[e]}.state.json"]
-                    String filename = logFileStorageService.getFileForExecutionFiletype(e,
-                            WorkflowService.STATE_FILE_FILETYPE, false)
+                    String filename = logFileStorageService.getFileForExecutionFiletype(
+                            e,
+                            WorkflowService.STATE_FILE_FILETYPE,
+                            false,
+                            false
+                    )
                     File newfile = new File(filename)
                     try {
                         FileUtils.moveFile(statefile, newfile)

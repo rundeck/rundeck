@@ -103,8 +103,9 @@ var FlowState = Class.create({
         return parent?parent:$(elem).parentNode;
     },
     /**
-     * Create a clone of a template node, which has data-template=(template name), and attach it to the discovered parent node, which is
-     * either the immediate parentNode, or an ancestor node with data-template-parent=(template name).
+     * Create a clone of a template node, which has data-template=(template name), and attach it to the discovered
+     * parent node, which is either the immediate parentNode, or an ancestor node with data-template-parent=(template
+     * name).
      * @param e target node containing the template node
      * @param templ name of the template
      * @returns cloned node, or null if the template was not found
@@ -230,8 +231,13 @@ var FlowState = Class.create({
         }else{
             this.updateError(data.error,json);
         }
+
         if (data.error && this.retry>=0 || !json.completed && this.shouldUpdate) {
-            this.timer = setTimeout(this.callUpdate.bind(this), this.reloadInterval);
+            var reloadTime = this.reloadInterval;
+            if (json.retryBackoff) {
+                reloadTime = Math.max(this.reloadInterval, json.retryBackoff);
+            }
+            this.timer = setTimeout(this.callUpdate.bind(this), reloadTime);
         } else {
             this.stopFollowing(json.completed);
         }

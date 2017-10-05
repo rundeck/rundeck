@@ -771,9 +771,15 @@ class LogFileStorageServiceTests  {
         String executionFileType
         File testfile
         boolean executionFileGenerated = false
+        boolean checkpointable = false
         @Override
         ExecutionFile produceStorageFileForExecution(final Execution e) {
             new ProducedExecutionFile(localFile: testfile, fileDeletePolicy: ExecutionFileDeletePolicy.NEVER)
+        }
+
+        @Override
+        ExecutionFile produceStorageCheckpointForExecution(final Execution e) {
+            produceStorageFileForExecution e
         }
     }
 
@@ -959,7 +965,7 @@ class LogFileStorageServiceTests  {
         def test = new testStoragePlugin()
         test.available = false
 
-        def reader = performReaderRequest(test, false, testLogFile1, false, createExecution(), true){svc->
+        def reader = performReaderRequest(test, false, testLogFile1, false, createExecution(), false) { svc ->
 
             svc.configurationService=mockWith(ConfigurationService){
                 getString{String prop,String defval->null}
@@ -969,10 +975,10 @@ class LogFileStorageServiceTests  {
         //initialize should not have been called
         assert !test.initializeCalled
 
-        assertNotNull(reader)
-        assertEquals(ExecutionLogState.AVAILABLE, reader.state)
-        assertNotNull(reader.reader)
-        assertTrue(reader.reader instanceof FSStreamingLogReader)
+        assert null != (reader)
+        assert ExecutionLogState.AVAILABLE == reader.state
+        assert null != (reader.reader)
+        assert (reader.reader instanceof FSStreamingLogReader)
     }
 
     @DirtiesRuntime
@@ -1041,7 +1047,7 @@ class LogFileStorageServiceTests  {
         test.available = true
 
         def e = createExecution()
-        def reader = performReaderRequest(test, false, testLogFileDNE, false, e, false) { LogFileStorageService svc ->
+        def reader = performReaderRequest(test, false, testLogFileDNE, true, e, false) { LogFileStorageService svc ->
             svc.logFileRetrievalRequests[e.id + ':rdlog'] = [state: ExecutionLogState.PENDING_LOCAL]
         }
 
@@ -1106,7 +1112,7 @@ class LogFileStorageServiceTests  {
         def e = createExecution()
         e.outputfilepath = "/test/file/path.rdlog"
 
-        def file = service.getFileForExecutionFiletype(e, "rdlog", true)
+        def file = service.getFileForExecutionFiletype(e, "rdlog", true, false)
         assertNotNull(file)
         assertEquals(file, new File(e.outputfilepath))
     }
@@ -1120,7 +1126,7 @@ class LogFileStorageServiceTests  {
         def e = createExecution()
         e.outputfilepath = "/test/file/path.rdlog"
 
-        def file = service.getFileForExecutionFiletype(e, "json.state", true)
+        def file = service.getFileForExecutionFiletype(e, "json.state", true, false)
         assertNotNull(file)
         assertEquals(file, new File("/test/file/path.json.state"))
     }
@@ -1140,7 +1146,7 @@ class LogFileStorageServiceTests  {
         }
         service.frameworkService=fwkMock.createMock()
 
-        def file = service.getFileForExecutionFiletype(e, "json.state", false)
+        def file = service.getFileForExecutionFiletype(e, "json.state", false, false)
         assertNotNull(file)
         assertEquals("/test2/logs/rundeck/${e.project}/run/logs/${e.id}.json.state", file.absolutePath)
     }
@@ -1160,7 +1166,7 @@ class LogFileStorageServiceTests  {
         }
         service.frameworkService=fwkMock.createMock()
 
-        def file = service.getFileForExecutionFiletype(e, "rdlog", false)
+        def file = service.getFileForExecutionFiletype(e, "rdlog", false, false)
         assertNotNull(file)
         assertEquals("/test2/logs/rundeck/${e.project}/run/logs/${e.id}.rdlog", file.absolutePath)
     }
@@ -1181,7 +1187,7 @@ class LogFileStorageServiceTests  {
         }
         service.frameworkService=fwkMock.createMock()
 
-        def file = service.getFileForExecutionFiletype(e, "rdlog", false)
+        def file = service.getFileForExecutionFiletype(e, "rdlog", false, false)
         assertNotNull(file)
         assertEquals("/test2/logs/rundeck/${e.project}/job/test-uuid/logs/${e.id}.rdlog", file.absolutePath)
     }
@@ -1202,7 +1208,7 @@ class LogFileStorageServiceTests  {
         }
         service.frameworkService=fwkMock.createMock()
 
-        def file = service.getFileForExecutionFiletype(e, "json.state", false)
+        def file = service.getFileForExecutionFiletype(e, "json.state", false, false)
         assertNotNull(file)
         assertEquals("/test2/logs/rundeck/${e.project}/job/test-uuid/logs/${e.id}.json.state", file.absolutePath)
     }
@@ -1225,7 +1231,7 @@ class LogFileStorageServiceTests  {
         }
         service.frameworkService=fwkMock.createMock()
 
-        def file = service.getFileForExecutionFiletype(e, "rdlog", true)
+        def file = service.getFileForExecutionFiletype(e, "rdlog", true, false)
         assertNotNull(file)
         assertEquals("/test/file/path.rdlog", file.absolutePath)
     }
@@ -1246,7 +1252,7 @@ class LogFileStorageServiceTests  {
         }
         service.frameworkService=fwkMock.createMock()
 
-        def file = service.getFileForExecutionFiletype(e, "json.state", true)
+        def file = service.getFileForExecutionFiletype(e, "json.state", true, false)
         assertNotNull(file)
         assertEquals("/test/file/path.json.state", file.absolutePath)
     }
@@ -1258,6 +1264,11 @@ class LogFileStorageServiceTests  {
         def fmock = mockFor(FrameworkService)
         fmock.demand.getFrameworkPropertyResolver() { project ->
             assert project == "testprojz"
+        }
+        fmock.demand.getFrameworkProperties(1..2) { ->
+            [
+                    'framework.logs.dir': '/tmp/dir'
+            ] as Properties
         }
         def pmock = mockFor(PluginService)
         pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
@@ -1284,12 +1295,15 @@ class LogFileStorageServiceTests  {
             UUID.randomUUID()
         }
         service.pluginService = pmock.createMock()
-        List useStoredValues = [true, usesStoredPath]
+        List useStoredValues = [false, false]
+        List partialValues = [false, false]
         int useStoredNdx=0
-        service.metaClass.getFileForExecutionFiletype = { Execution e2, String filetype, boolean useStored ->
+        service.metaClass.getFileForExecutionFiletype = {
+            Execution e2, String filetype, boolean useStored, boolean partial ->
             assert e == e2
             assert "rdlog"==filetype
             assert useStored==useStoredValues[useStoredNdx]
+                assert partial == partialValues[useStoredNdx]
             useStoredNdx++
             logfile
         }
