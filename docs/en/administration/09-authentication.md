@@ -718,7 +718,7 @@ This method can be enabled with this config in `rundeck-config.properties`:
 
 This configuration requires some additional setup to enable:
 
-1. The file `WEB-INF/web.xml` inside the war contents **must** be modified to remove the `<auth-constraint>` element.  This disables the behavior which causes the Container to trigger its authentication mechanism when a user browses to a Rundeck page requiring authorizaton.
+1. The file `WEB-INF/web.xml` inside the war contents **must** be modified to remove the `<auth-constraint>` element.  This disables the behavior which causes the Container to trigger its authentication mechanism when a user browses to a Rundeck page requiring authorization.
 
 2. Apache HTTPD and Tomcat must be configured to communicate so that a list of User Roles is sent to Tomcat as a request Attribute with the given "attributeName".
 
