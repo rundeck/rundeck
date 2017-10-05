@@ -328,6 +328,12 @@ class ExecutionControllerSpec extends Specification {
         }
         def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
         def date1 = new Date(90000000)
+        def sdf=new SimpleDateFormat('yyyy-MM-dd\'T\'HH:mm:ssXXX')
+        sdf.timeZone=TimeZone.getTimeZone('GMT')
+        def abstime=sdf.format(date1)
+        def sdf2=new SimpleDateFormat('HH:mm:ss')
+//        sdf2.timeZone=TimeZone.getTimeZone('GMT')
+        def timestr=sdf2.format(date1)
         reader.reader = new TestReader(logs:
                                                [
                                                        new DefaultLogEvent(
@@ -380,10 +386,10 @@ class ExecutionControllerSpec extends Specification {
         json.compactedAttr == 'log'
         json.entries.size() == 5
         json.entries[0] == [
-                absolute_time: '1970-01-02T01:00:00Z',
+                absolute_time: abstime,
                 log          : 'message1',
                 level        : 'NORMAL',
-                time         : '17:00:00',
+                time         : timestr,
         ]
         json.entries[1] == 'message2'
         json.entries[2] == [:]
@@ -447,6 +453,9 @@ class ExecutionControllerSpec extends Specification {
         def sdf=new SimpleDateFormat('yyyy-MM-dd\'T\'HH:mm:ssXXX')
         sdf.timeZone=TimeZone.getTimeZone('GMT')
         def abstime=sdf.format(date1)
+        def sdf2=new SimpleDateFormat('HH:mm:ss')
+//        sdf2.timeZone=TimeZone.getTimeZone('GMT')
+        def timestr=sdf2.format(date1)
         reader.reader = new TestReader(logs:
                                                [
                                                        new DefaultLogEvent(
@@ -502,7 +511,7 @@ class ExecutionControllerSpec extends Specification {
         xml.entries.entry[0]."@absolute_time".text() == abstime
         xml.entries.entry[0]."@log".text() == 'message1'
         xml.entries.entry[0]."@level".text() == 'NORMAL'
-        xml.entries.entry[0]."@time".text() == '17:00:00'
+        xml.entries.entry[0]."@time".text() == timestr
         xml.entries.entry[0]."@time".size() == 1
         xml.entries.entry[0]."@node".size() == 0
         xml.entries.entry[0]."@stepctx".size() == 0
