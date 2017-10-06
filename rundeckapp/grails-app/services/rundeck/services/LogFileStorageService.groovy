@@ -1106,7 +1106,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         }
         def previous = logFileRetrievalResults.put(key, cache)
         if (null != previous) {
-            log.warn("cacheRetrievalState: replacing cached state for ${key}: ${cache}")
+            log.debug("cacheRetrievalState: replacing cached state for ${key}: ${cache}")
             cache.count=previous.count
         }else{
             log.debug("cacheRetrievalState: cached state for ${key}: ${cache}")
