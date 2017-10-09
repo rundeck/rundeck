@@ -1288,7 +1288,7 @@ List all executions with incomplete log storage.
 
 `localFilesPresent`
 
-:   True if all local files (`rdlog` and `state.json`) are available for upload.  False if one of them is not proesent on disk.
+:   True if all local files (`rdlog` and `state.json`) are available for upload.  False if one of them is not present on disk.
 
 ### Resume Incomplete Log Storage
 
@@ -1479,11 +1479,11 @@ If request was XML, then Standard API response containing the following addition
         * `server`
             *  `@uuid` - this cluster server's UUID
     *  `server`
-        *  `@uuid` - requested server UUID to take over, if specifed in the request
+        *  `@uuid` - requested server UUID to take over, if specified in the request
         *  `@all` - `true` if requested
     *  `project` - name of project, if specified in request
     *  `job`
-        *  `@id` - requested job UUID to take over, if specifed in the request
+        *  `@id` - requested job UUID to take over, if specified in the request
     *  `jobs` - set of successful and failed jobs taken over
         *  `successful`/`failed` - job set
             *  `@count` number of jobs in the set
@@ -3309,12 +3309,12 @@ The state information for a Node will not contain the full set of details for th
 
 The result set contains this top-level structure:
 
-* general overal state information
+* general overall state information
     - `startTime` execution start time (see *Timestamp format* below)
     - `endTime` execution end time if complete
     - `updateTime` last update time
     - `executionState` overall execution state
-* `allNodes` contains a *Node Name List* (see below) of nodes known to be targetted in some workflow
+* `allNodes` contains a *Node Name List* (see below) of nodes known to be targeted in some workflow
 * `nodes` contains an *Overall Node State List* of per-node step states
 * `serverNode` name of the server node
 * `executionId` current execution ID
@@ -5374,7 +5374,7 @@ If a validation error occurs, the response will include information about the re
 }
 ~~~~~~~~~~
 
-If the result is successul:
+If the result is successful:
 
     HTTP/1.1 200 OK
 
