@@ -101,7 +101,7 @@ The simplest way to do this is to use [Plugin Annotations - Plugin Properties](p
 
 ### Groovy plugin type
 
-The Groovy plugin development method for Loggig Plugins is similar to [Notification Plugin - Groovy Plugins](notification-plugin.html#groovy-plugin-type).
+The Groovy plugin development method for Logging Plugins is similar to [Notification Plugin - Groovy Plugins](notification-plugin.html#groovy-plugin-type).
 
 Create a Groovy script, and define your plugin by calling the `rundeckPlugin` method, and pass it both the Class of the type of plugin, and a Closure used to build the plugin object.
 
@@ -361,7 +361,7 @@ Rundeck uses this interface to read the log events to display in the GUI, or sen
 
 The implementation of the `isComplete` method is important, because it signals to Rundeck that all log events for the stream have been read and no more are expected to be available.  To be clear, this differs from the `java.util.Iterator#hasNext()` method, which returns true if any events are actually available.  `isComplete` should return false until no more events will ever be available.  
 
-If you are developing a `StreamingLogWriter` in conjuction with a `StreamingLogReader`, keep in mind that the writer's `close` method will be called to indicate the end of the stream, which would be reflected on the reader side by `isComplete` returning true.
+If you are developing a `StreamingLogWriter` in conjunction with a `StreamingLogReader`, keep in mind that the writer's `close` method will be called to indicate the end of the stream, which would be reflected on the reader side by `isComplete` returning true.
 
 ### Groovy StreamingLogReader
 
@@ -481,7 +481,7 @@ Additional optional interfaces provide extended behaviors that your plugin can a
 * [ExecutionMultiFileStorage](#executionmultifilestorage) - adds a method to store all available files in one method call ([javadoc](../javadoc/com/dtolabs/rundeck/core/logging/ExecutionMultiFileStorage.html)).
 * [ExecutionFileStorageOptions](#executionfilestorageoptions) - define whether both retrieve and store are supported ([javadoc](../javadoc/com/dtolabs/rundeck/core/logging/ExecutionFileStorageOptions.html)).
     
-Exection file storage allows Rundeck to store the files elsewhere, in case local file storage is not suitable for long-term retention. 
+Execution file storage allows Rundeck to store the files elsewhere, in case local file storage is not suitable for long-term retention. 
 
 The ExecutionFileStorage service is used by two aspects of the Rundeck server currently.
 
@@ -728,7 +728,7 @@ The plugin is used in this manner:
     * The `available` closure is called before retrieving the file, to determine if it is available, passing the filetype
     * The `retrieve` closure is called when a file needs to be retrieved, with the [contextual data](#execution-context-data), configuration Map, and OutputStream to write the log file content
 2. If `storeMultiple` is defined:
-    * The `storeMultiple` closure is called when files needsto be stored, with the [MultiFileStorageRequest][], the [contextual data](#execution-context-data), and configuration Map.
+    * The `storeMultiple` closure is called when files needs to be stored, with the [MultiFileStorageRequest][], the [contextual data](#execution-context-data), and configuration Map.
 3. Else if `store` is defined:
     * The `store` closure is called when a file needs to be stored, with the filetype, the [contextual data](#execution-context-data), configuration Map, and InputStream which will produce the log data. Additionally `length` and `lastModified` properties are in the closure binding, providing the file length, and last modification Date.
 
