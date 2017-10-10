@@ -49,7 +49,7 @@ no matching rule that denies it.
 
 The YAML format has changed since version 1.2 to address several issues:
 
-1. Acccess control on resources other than Jobs can now be declared
+1. Access control on resources other than Jobs can now be declared
 2. Project level access control is now supported
 3. "Deny" rules can now be declared
 4. Application level access control is also supported, replacing the Role mapping
@@ -101,7 +101,7 @@ by:
 ~~~~~~~~
 
 An .aclpolicy supports multiple policy definitions in the form of YAML
-documents usign the `---` separator.  There are four elements that make a
+documents using the `---` separator.  There are four elements that make a
 policy definition: `decription`, `context`, `for`, `by`.  
 
 It's recommended that this description be short and descriptive as it appears
