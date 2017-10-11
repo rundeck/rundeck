@@ -161,7 +161,10 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                 ctx.nodes = original.getNodes();
                 ctx.loglevel = original.getLoglevel();
                 ctx.charsetEncoding = original.getCharsetEncoding();
-                ctx.dataContext = original.getDataContextObject();
+                DataContext dataContextObject = original.getDataContextObject();
+                ctx.dataContext = null != dataContextObject
+                                  ? new BaseDataContext(dataContextObject)
+                                  : new BaseDataContext();
                 ctx.privateDataContext = original.getPrivateDataContextObject();
                 ctx.executionListener = original.getExecutionListener();
                 ctx.workflowExecutionListener = original.getWorkflowExecutionListener();
@@ -268,6 +271,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
         }
 
         public Builder nodeContextData(INodeEntry node) {
+            ctx.dataContext.remove("node");
             ctx.dataContext.merge(new BaseDataContext("node", DataContextUtils.nodeData(node)));
             ctx.sharedDataContext.merge(
                     ContextView.node(node.getNodename()),
