@@ -427,7 +427,6 @@ in the year 2010, using a single crontab attribute to express it:
 
 For more information, see
 http://www.quartz-scheduler.org/documentation/quartz-2.2.x/tutorials/tutorial-lesson-06.html
-or https://www.stonebranch.com/
 
 
 ### crontab ###
