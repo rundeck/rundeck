@@ -21,7 +21,7 @@ Depending on your installation preference, either is viable but there are pros a
 
 The advantage of the standalone installation is convenience and simplicity. The standalone install defines a set of conventions about install locations and environment. The downside of the standalone installation is it can be more opaque to manage and control the internal Jetty container.
 
-The advantage of a WAR deployment is greater managability of the container, of course. If you have a standard container for your organization, chances are there is already tooling for managing an HA failover process, balancing load across multiple instances, monitoring the webapps, and controlling the container as a service. The downside to the WAR deployment is that it might be less convenient to install for new users. They will have to install the container, drop in the WAR and then configure the webapp. 
+The advantage of a WAR deployment is greater manageability of the container, of course. If you have a standard container for your organization, chances are there is already tooling for managing an HA failover process, balancing load across multiple instances, monitoring the webapps, and controlling the container as a service. The downside to the WAR deployment is that it might be less convenient to install for new users. They will have to install the container, drop in the WAR and then configure the webapp. 
 
 Using either install, the goal is to create a high performing and available production Rundeck.
 
@@ -84,7 +84,7 @@ Rundeck failover can be achieved with an Active/Standby cluster configuration. T
 
 The process of taking the active primary role is called failover or _takeover_. The takeover procedure is generally a multi-step one, 
 involving taking over job schedules,
-notifiying monitoring and administrators, updating naming services, and any custom steps needed for your environment.
+notifying monitoring and administrators, updating naming services, and any custom steps needed for your environment.
 
 Depending on your service level availability requirements, the failover process might be done automatically within seconds or the process might go through an Ops escalation and be done in minutes. 
 
@@ -109,7 +109,7 @@ Oracle, Mysql, and MS-SQL offer solutions to enable activation of multiple SQL s
 
 An HA Rundeck requires Rundeck instances share the same log store. Job execution output is stored locally to the Rundeck instance that ran the job but this output can be loaded into a common storage facility (eg, AWS S3, WebDAV, custom). See [Logging Plugin Development](../developer/logging-plugin.html) to learn how to implement your own log storage. Of course, you can configure your Rundeck instances to share a file system using a NAS/SAN or NFS but those methods are typically less desirable or impossible in a cloud environment. Without a shared logstore, job output files would need to be synchronized across Rundecks via a tool like `rsync`.
 
-With a configured Log store, the executing Rundeck instance copies the local output file to the log store after job completion. If the standby rundeck instance is activated, any request for that output log will cause the standby to retrieve it from the log store and copy it locally for future acccess.
+With a configured Log store, the executing Rundeck instance copies the local output file to the log store after job completion. If the standby rundeck instance is activated, any request for that output log will cause the standby to retrieve it from the log store and copy it locally for future access.
 
 Rundeck will make multiple attempts to store a log file if the logstore is unavailable.
 
@@ -155,7 +155,7 @@ Proxy/Loadbalancer
 
 Scripted
 
-:   This approach uses several scripts to perform the check and takover procedures (monitor, check, takeover). The "monitor" script is the main driver which periodiclly runs the "check" script which performs the various levels of health tests. When the check script detects the primary is down, the monitor script invokes the "takeover" script. The scripts can be run from the standby Rundeck server or from an adminstrative station. 
+:   This approach uses several scripts to perform the check and takeover procedures (monitor, check, takeover). The "monitor" script is the main driver which periodically runs the "check" script which performs the various levels of health tests. When the check script detects the primary is down, the monitor script invokes the "takeover" script. The scripts can be run from the standby Rundeck server or from an administrative station. 
 
 Monitoring station
 

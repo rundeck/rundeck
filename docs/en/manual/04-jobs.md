@@ -1653,6 +1653,7 @@ Job context variables:
 * `job.user.email`: Executing user's email address set in [User profile](user.html).
 * `job.retryAttempt`: A number indicating the attempt, if this execution is a [retry](#retry).
 * `job.wasRetry`: `true` if this execution is a retry, otherwise `false`. See: [retry](#retry).
+* `job.threadcount`: Threadcount (number of nodes run at once) of the Job
 
 Node context variables:
 

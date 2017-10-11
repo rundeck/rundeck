@@ -963,7 +963,7 @@ class ScheduledExecutionController  extends ControllerBase{
      *
      */
     private Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5){
-        log.warn("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
+        log.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
         //attempt to get the URL JSON data
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){

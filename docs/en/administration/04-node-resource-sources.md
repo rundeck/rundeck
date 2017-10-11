@@ -161,7 +161,7 @@ You can manage the set of Nodes that gets returned from the plugin by organizing
 
 The EC2 plugin will automatically add tags for the nodes based on an EC2 Instance Tag named "Rundeck-Tags", as well as the Instance's state.  You can also add "Mapping parameters" to the EC2 Plugin configuration to add additional tags.
 
-You can add filters to the EC2 Plugin configuration under the "Filter Params" configuration area, with the sytanx of: `filter=value;filter2=value2`. The available filter names are listed in [AWS API - DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-DescribeInstances.html).
+You can add filters to the EC2 Plugin configuration under the "Filter Params" configuration area, with the syntax of: `filter=value;filter2=value2`. The available filter names are listed in [AWS API - DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-DescribeInstances.html).
 
 You can also configure your EC2 Plugin manually or automatically by creating or modifying the [project.properties] file, and defining a [Resource Model Source] provider, like this:
 
@@ -255,7 +255,7 @@ The first argument to `postMessage` is one of the message codes shown below.  Th
 Rundeck can receive the following messages sent by the remote site:
 
 `rundeck:node:edit:started`
-  ~ Sent as soon as the remote edit URL is loaded and indicates that the remote Site understands the messaging protocol and has loaded the correct edit page.  You would probably send this on the "edit" or "form" page for the targetted node.
+  ~ Sent as soon as the remote edit URL is loaded and indicates that the remote Site understands the messaging protocol and has loaded the correct edit page.  You would probably send this on the "edit" or "form" page for the targeted node.
 
 `rundeck:node:edit:error` or `rundeck:node:edit:error:An error message`
   ~ Sent if some error occurs.  The remote editing form will close and the error message (if any) will be shown.  You would probably send this on the "edit" or "view" page if there is an error locating the targeted Node or loading anything required for the edit process.
