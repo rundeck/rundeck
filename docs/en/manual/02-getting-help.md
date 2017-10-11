@@ -5,7 +5,7 @@
 
 ## Mailing list:
 
-* [http://groups.google.com/group/rundeck-discuss](http://groups.google.com/group/rundeck-discuss)  
+* [https://groups.google.com/group/rundeck-discuss](https://groups.google.com/group/rundeck-discuss)  
 
 ## IRC
 
