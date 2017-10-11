@@ -1304,6 +1304,72 @@ class ExecutionServiceSpec extends Specification {
 
     }
 
+    def "loadSecureOptionStorageDefaults failed required"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec(
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                )
+                        ]
+                ),
+                options: [
+                        new Option(
+                                name: 'opt1',
+                                secureInput: true,
+                                secureExposed: false,
+                                defaultStoragePath: 'keys/opt1',
+                                required: true
+                        )
+                ]
+        )
+        job.save()
+
+        Map secureOptsExposed = [:]
+        secureOptsExposed.putAll(inputExposed)
+        Map secureOpts = [:]
+        secureOpts.putAll(inputSecure)
+        def authContext = Mock(AuthContext)
+        service.storageService = Mock(StorageService)
+
+
+        when:
+        service.loadSecureOptionStorageDefaults(job, secureOptsExposed, secureOpts, authContext, true)
+
+        then:
+        1 * service.storageService.storageTreeWithContext(authContext) >> Mock(KeyStorageTree) {
+            readPassword('keys/opt1') >> {
+                if (!readerr) {
+                    return 'newopt1'.bytes
+                }
+                if (readerr) {
+                    throw new StorageException(
+                            "not found",
+                            StorageException.Event.READ,
+                            PathUtil.asPath('keys/opt1')
+                    )
+                }
+            }
+
+        }
+        opt1result == secureOpts['opt1']
+        ExecutionServiceException e = thrown()
+        e.message.contains(expecterr)
+
+        where:
+        inputExposed | inputSecure | opt1result | readerr | expecterr
+        [:]          | [:]         | null       | true    | 'not found'
+
+    }
+
     def "validate option values, required opt with default storage"() {
         given:
         ScheduledExecution se = new ScheduledExecution()
