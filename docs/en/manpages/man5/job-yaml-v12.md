@@ -58,7 +58,7 @@ Each Job definition requires these values:
     * `WARN`
     * `ERROR`
 
-If the description contains more than one line of text, then the first line is used as the "short description" of the job, and rendered exactly as text. The remaining lines are the "extended description", rendered using Markdown format as HTML in the Rundeck GUI. Markdown can also embed HTML directly if you like.  See [Wikipedia - Markdown](http://en.wikipedia.org/wiki/Markdown#Example).  
+If the description contains more than one line of text, then the first line is used as the "short description" of the job, and rendered exactly as text. The remaining lines are the "extended description", rendered using Markdown format as HTML in the Rundeck GUI. Markdown can also embed HTML directly if you like.  See [Wikipedia - Markdown](https://en.wikipedia.org/wiki/Markdown#Example).
 
 The HTML is sanitized to remove disallowed tags before rendering to the browser (such as `<script>`, etc.).
 You can disable all extended description HTML rendering
@@ -163,7 +163,7 @@ In addition, these optional entries can be present:
 `loglimitAction`
 
 :    The action to perform if the `loglimit` value is exceeded.
-     If `loglimit` is sepcified, but no `loglimitAction` is set, it will default to a 
+     If `loglimit` is specified, but no `loglimitAction` is set, it will default to a
      value of `halt`. Allowed values:
 
     * `halt` - halt and fail the job (default)
@@ -592,7 +592,7 @@ Optional map entries are:
 
 `dateFormat`
 
-:    The date/time format to use in the UI. Using the [momentjs format](http://momentjs.com/docs/#/displaying/format/).
+:    The date/time format to use in the UI. Using the [momentjs format](https://momentjs.com/docs/#/displaying/format/).
 
 `sortIndex` (deprecated)
 
