@@ -1181,8 +1181,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //load secure option defaults from key storage
             def keystore = storageService.storageTreeWithContext(authContext)
             found?.each {
+                def defStoragePath = it.defaultStoragePath
                 try {
-                    def defStoragePath = it.defaultStoragePath
                     //search and replace ${option.
                     if (args && defStoragePath?.contains('${option.')) {
                         defStoragePath = DataContextUtils.replaceDataReferencesInString(defStoragePath, DataContextUtils.addContext("option", args, null)).trim()
@@ -1194,8 +1194,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                         secureOpts[it.name] = new String(password)
                     }
                 } catch (StorageException e) {
-                    if(it.required&&failIfMissingRequired){
-                        throw new ExecutionServiceException("Required option '${it.name}' default value could not be loaded from storage: ${e.message}",e)
+                    if (it.required && failIfMissingRequired) {
+                        throw new ExecutionServiceException(
+                                "Required option '${it.name}' default value could not be loaded from key storage " +
+                                        "path: ${defStoragePath}: ${e.message}",
+                                e
+                        )
+                    } else {
+                        log.warn(
+                                "Required option '${it.name}' default value could not be loaded from key storage " +
+                                        "path: ${defStoragePath}: ${e.message}",
+                                e
+                        )
                     }
                 }
 

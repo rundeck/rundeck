@@ -224,7 +224,7 @@ included.
 The job description is a sub-element of [job](#job) and allows a short
 description of the job.  
 
-If the description contains more than one line of text, then the first line is used as the "short description" of the job, and rendered exactly as text. The remaining lines are the "extended description", rendered using Markdown format as HTML in the Rundeck GUI. Markdown can also embed HTML directly if you like.  See [Wikipedia - Markdown](http://en.wikipedia.org/wiki/Markdown#Example).  
+If the description contains more than one line of text, then the first line is used as the "short description" of the job, and rendered exactly as text. The remaining lines are the "extended description", rendered using Markdown format as HTML in the Rundeck GUI. Markdown can also embed HTML directly if you like.  See [Wikipedia - Markdown](https://en.wikipedia.org/wiki/Markdown#Example).
 
 The HTML is sanitized to remove disallowed tags before rendering to the browser (such as `<script>`, etc.). 
 You can disable all extended description HTML rendering
@@ -426,15 +426,14 @@ in the year 2010, using a single crontab attribute to express it:
     <schedule crontab="02 00 06,07,08 ? * * 2010"/>
 
 For more information, see
-http://www.quartz-scheduler.org/docs/tutorials/crontrigger.html
-or http://www.stonebranch.com 
+http://www.quartz-scheduler.org/documentation/quartz-2.2.x/tutorials/tutorial-lesson-06.html
 
 
 ### crontab ###
 
 Attribute of the [schedule](#schedule), sets the schedule with a full
 crontab string. For more information, see
-http://www.quartz-scheduler.org/docs/tutorials/crontrigger.html. 
+http://www.quartz-scheduler.org/documentation/quartz-2.2.x/tutorials/tutorial-lesson-06.html
 
 If specified, then the embedded schedule elements are not used.
 
@@ -594,7 +593,7 @@ isDate
 
 dateFormat
 
-:    The date/time format to use in the UI. Using the [momentjs format](http://momentjs.com/docs/#/displaying/format/).
+:    The date/time format to use in the UI. Using the [momentjs format](https://momentjs.com/docs/#/displaying/format/).
 
 *Example*
 
