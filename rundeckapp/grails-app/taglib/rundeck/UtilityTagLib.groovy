@@ -813,7 +813,11 @@ class UtilityTagLib{
         def campaign = attrs.campaign?:'helplink'
         def sourceName = g.message(code:'main.app.id',default: 'rundeckapp')
         def helpParams = [utm_source: sourceName, utm_medium: medium, utm_campaign: campaign, utm_content: (controllerName + '/' + actionName)]
-        return helpParams.collect { k, v -> k + '=' + v }.join('&')
+        return genUrlParam(helpParams)
+    }
+
+    def String genUrlParam(Map<String, Serializable> params) {
+        params.collect { k, v -> k.encodeAsURIComponent() + '=' + v.encodeAsURIComponent() }.join('&')
     }
     def helpLinkUrl={attrs,body->
         def path=''

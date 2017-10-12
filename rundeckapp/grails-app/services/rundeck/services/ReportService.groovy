@@ -229,10 +229,6 @@ class ReportService  {
                 tags: 'tags',
         ]
 
-        def filters = [:]
-        filters.putAll(txtfilters)
-        filters.putAll(eqfilters)
-
         //in cancel case the real stat is failed but AbortedByUser != null
         boolean fixCancel = (query.statFilter=='cancel' && !query.abortedByFilter)
 
@@ -367,10 +363,14 @@ class ReportService  {
                 title: 'title',
                 tags: 'tags',
         ]
+        def specialfilters = [
+                execnode: 'execnode'
+        ]
 
         def filters = [:]
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
+
         def runlist=ExecReport.createCriteria().list {
 
             if (query?.max) {
@@ -405,6 +405,7 @@ class ReportService  {
         def total = ExecReport.createCriteria().count{
             applyExecutionCriteria(query, delegate,isJobs)
         };
+        filters.putAll(specialfilters)
 
         return [
             query:query,
