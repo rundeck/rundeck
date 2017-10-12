@@ -19,6 +19,7 @@ package rundeck
 import grails.test.mixin.TestFor
 import org.springframework.context.MessageSource
 import rundeck.codecs.HTMLAttributeCodec
+import rundeck.codecs.URIComponentCodec
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -99,5 +100,21 @@ class UtilityTagLibSpec extends Specification {
         true   | 'Xago2'  | null       | false   | 12000          || '<span class="Xago2">12s</span>'
         true   | null     | null       | true    | 12000          || '<span class="until">12s</span>'
         true   | null     | 'xUntil3'  | true    | 12000          || '<span class="xUntil3">12s</span>'
+    }
+
+    def "url params"() {
+        when:
+        mockCodec(URIComponentCodec)
+        def result = tagLib.genUrlParam(input)
+        then:
+        result == expected
+
+        where:
+        input            | expected
+        [a: 'b']         | 'a=b'
+        [a: 'b', c: 'd'] | 'a=b&c=d'
+        [a: 'b', c: 'd e'] | 'a=b&c=d%20e'
+        [a: 'b', 'c f': 'd e'] | 'a=b&c%20f=d%20e'
+
     }
 }
