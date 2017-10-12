@@ -101,6 +101,7 @@ class ReportServiceTests extends GroovyTestCase {
         assert result.total==3
         assert result.reports.size()==3
         assert result.reports.contains(r1)
+        assert result._filters.containsKey('execnode')
 
         assertQueryResult([execnodeFilter: 'name: test'], [r1,r2,r4])
         assertQueryResult([execnodeFilter: 'test'], [r1,r2,r4])
