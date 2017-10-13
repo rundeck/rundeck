@@ -22,9 +22,8 @@ import java.util.function.Supplier;
 
 
 /**
- * Allows installing plugins into the logging stream, the {@link #installPlugin(LogFilterPlugin)} method
- * must be called before {@link #begin()}, and {@link #end()} must be called to
- * uninstall logging plugins.
+ * Allows installing plugins into the logging stream. The {@link #begin()} must be called before {@link #end()},
+ * or the {@link #runWith(Supplier)} can be used to wrap another action with begin/end.
  *
  * @author greg
  * @since 5/11/17
