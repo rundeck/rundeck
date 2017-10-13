@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.logging.LoggingManagerImpl
 import com.dtolabs.rundeck.core.logging.OverridableStreamingLogWriter
+import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -1247,8 +1248,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     public StepExecutionContext createContext(ExecutionContext execMap, StepExecutionContext origContext,
                                               Map<String, String> jobcontext, String[] inputargs = null,
-                                              Map extraParams = null, Map extraParamsExposed = null) {
-        createContext(execMap, 
+                                              Map extraParams = null, Map extraParamsExposed = null,
+                                              String charsetEncoding = null,
+                                              LoggingManager manager = null
+    )
+    {
+        createContext(execMap,
                       origContext,
                       origContext.framework,
                       origContext.authContext,
@@ -1258,7 +1263,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                       origContext.workflowExecutionListener,
                       inputargs,
                       extraParams,
-                      extraParamsExposed
+                      extraParamsExposed,
+                      charsetEncoding,
+                      manager
         )
     }
     /**
@@ -3050,13 +3057,24 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext.username = executionContext.getUser()
         jobcontext['user.name'] = jobcontext.username
 
+        def loggingFilters = se  ?
+                ExecutionUtilService.createLogFilterConfigs(
+                        se.workflow.getPluginConfigDataList(ServiceNameConstants.LogFilter)
+                ) :
+                []
+        def workflowLogManager = executionContext.loggingManager?.createManager(
+                loggingFilters
+        )
+
         def newContext = createContext(
                 se,
                 executionContext,
                 jobcontext,
                 newargs,
                 evalSecAuthOpts,
-                evalSecOpts
+                evalSecOpts,
+                null,
+                workflowLogManager
         )
 
         if (nodeFilter || nodeIntersect) {
@@ -3180,7 +3198,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
 
         def wresult = metricService.withTimer(this.class.name,'runJobReference'){
-            service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+            newContext.getLoggingManager().createPluginLogging(newContext,null).runWith {
+                service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+            }
         }
 
         if (!wresult || !wresult.success) {

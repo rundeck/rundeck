@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader;
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
 
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.function.Supplier;
 
 /**
@@ -38,6 +39,7 @@ public class LoggingManagerImpl implements LoggingManager {
     private final ExecutionLogger directLogger;
     private final SimplePluginProviderLoader<LogFilterPlugin> pluginLoader;
     private List<PluginConfiguration> globalPluginConfigs;
+    LinkedBlockingQueue<MyPluginLoggingManager> logging = new LinkedBlockingQueue<>();
 
 
     /**
@@ -55,6 +57,14 @@ public class LoggingManagerImpl implements LoggingManager {
         this.directLogger = directLogger;
         this.pluginLoader = pluginLoader;
         this.globalPluginConfigs = globalPluginConfigs;
+    }
+
+    @Override
+    public LoggingManager createManager(
+            final List<PluginConfiguration> globalPluginConfigs
+    )
+    {
+        return new LoggingManagerImpl(writer, directLogger, pluginLoader, globalPluginConfigs);
     }
 
     @Override
@@ -103,6 +113,7 @@ public class LoggingManagerImpl implements LoggingManager {
     private class MyPluginLoggingManager implements PluginLoggingManager {
         private final PluginFilteredStreamingLogWriter pluginFilteredStreamingLogWriter;
         boolean pluginsAdded = false;
+        int pluginCount=0;
 
         MyPluginLoggingManager(final PluginFilteredStreamingLogWriter pluginFilteredStreamingLogWriter) {
             this.pluginFilteredStreamingLogWriter = pluginFilteredStreamingLogWriter;
@@ -110,6 +121,7 @@ public class LoggingManagerImpl implements LoggingManager {
 
         private void installPlugin(final LogFilterPlugin plugin) {
             pluginFilteredStreamingLogWriter.addPlugin(plugin);
+            pluginCount++;
             pluginsAdded = true;
         }
 
@@ -127,14 +139,19 @@ public class LoggingManagerImpl implements LoggingManager {
         public void begin() {
             if (pluginsAdded) {
                 writer.setOverride(pluginFilteredStreamingLogWriter);
+            }else{
+                writer.pushEmpty();
             }
         }
+
 
         @Override
         public void end() {
             if (pluginsAdded) {
                 writer.removeOverride();
                 pluginFilteredStreamingLogWriter.close();
+            }else{
+                writer.removeOverride();
             }
         }
     }
