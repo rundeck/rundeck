@@ -23,6 +23,7 @@ import grails.converters.JSON
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.User
+import rundeck.filters.ApiRequestFilters
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 
@@ -179,7 +180,7 @@ class UserController extends ControllerBase{
     }
 
     def apiUserData(){
-        if (!apiService.requireApi(request, response)) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V21)) {
             return
         }
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
@@ -286,7 +287,7 @@ class UserController extends ControllerBase{
     }
 
     def apiUserList(){
-        if (!apiService.requireApi(request, response)) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V21)) {
             return
         }
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])

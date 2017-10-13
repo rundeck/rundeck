@@ -62,6 +62,12 @@ Changes introduced by API Version number:
     - `POST /api/2/project/[PROJECT]/resources/refresh`
 * Updated Endpoints.
     - [`/api/21/execution/[ID]/output`][/api/V/execution/[ID]/output] - Execution output, supports `compacted=true` query parameter for less verbose xml/json results
+* New Endpoints.
+    - [`GET /api/21/user/list`][/api/V/user/list] - List user profiles
+    - [`GET /api/21/user/info`][/api/V/user/info] - Get current user profile
+    - [`POST /api/21/user/info`][POST /api/V/user/info] - Modify current user profile
+    - [`GET /api/21/user/info/[USER]`][/api/V/user/info/[USER]] - Get another user's profile
+    - [`POST /api/21/user/info/[USER]`][POST /api/V/user/info/[USER]] - Modify another user's profile
 
 **Version 20**:
 
@@ -1138,7 +1144,7 @@ Get a list of all the users.
 
 **Request:**
 
-    GET /api/20/user/list/
+    GET /api/21/user/list/
 
 **Response:**
 
@@ -1185,7 +1191,7 @@ Get same user profile data.
 
 **Request:**
 
-    GET /api/20/user/info/
+    GET /api/21/user/info/
 
 **Response:**
 
@@ -1220,7 +1226,7 @@ Get another user profile data. Requieres system `admin` permission.
 
 **Request:**
 
-    GET /api/20/user/info/[User]
+    GET /api/21/user/info/[User]
 
 **Response:**
 
@@ -1254,7 +1260,7 @@ Modify same user profile data.
 
 **Request:**
 
-    POST /api/20/user/info/
+    POST /api/21/user/info/
 
 XML Content:
 
@@ -1308,7 +1314,7 @@ Modify another user profile data. Requieres system `admin` permission.
 
 **Request:**
 
-    POST /api/20/user/info/[User]
+    POST /api/21/user/info/[User]
 
 XML Content:
 
@@ -6487,6 +6493,21 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 * `DELETE` [Delete a token](#delete-a-token)
 
 
+[/api/V/user/list][]
+
+* `GET` [List users][/api/V/user/list]
+
+[/api/V/user/info][]
+
+* `GET` [Get user profile][/api/V/user/info]
+* `POST`[Modify user profile][POST /api/V/user/info]
+
+
+[/api/V/user/info/[USER]][]
+
+* `GET` [Get another user profile][/api/V/user/info/[USER]]
+* `POST` [Modify another user profile][POST /api/V/user/info/[USER]]
+
 [Response Format]:#xml-response-format
 
 
@@ -6638,5 +6659,12 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [POST /api/V/tokens/[USER]]:#create-a-token
 [/api/V/token/[ID]]:#get-a-token
 [DELETE /api/V/token/[ID]]:#delete-a-token
+
+
+[/api/V/user/list]:#list-users
+[/api/V/user/info]:#get-user-profile
+[POST /api/V/user/info]:#modify-user-profile
+[/api/V/user/info/[USER]]:#get-another-user-profile
+[POST /api/V/user/info/[USER]]:#modify-another-user-profile
 
 [ACLPOLICY]:../man5/aclpolicy.html

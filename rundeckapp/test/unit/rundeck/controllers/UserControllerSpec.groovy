@@ -29,7 +29,7 @@ class UserControllerSpec extends Specification{
             1 * getAuthContextForSubject(_)>>auth
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireVersion(_,_,21) >> true
             0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
@@ -57,7 +57,7 @@ class UserControllerSpec extends Specification{
             1 * authorizeApplicationResourceAny(_,_,_) >> true
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireVersion(_,_,21) >> true
             0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
@@ -88,7 +88,7 @@ class UserControllerSpec extends Specification{
             1 * authorizeApplicationResourceAny(_,_,_) >> false
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireVersion(_,_,21) >> true
             1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
@@ -119,7 +119,7 @@ class UserControllerSpec extends Specification{
             0 * authorizeApplicationResourceAny(_,_,_) >> false
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireVersion(_,_,21) >> true
             1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
@@ -151,7 +151,7 @@ class UserControllerSpec extends Specification{
             1 * getAuthContextForSubject(_)>>auth
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireVersion(_,_,21) >> true
             0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
@@ -189,7 +189,7 @@ class UserControllerSpec extends Specification{
             1 * getAuthContextForSubject(_)>>auth
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireVersion(_,_,21) >> true
             0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
@@ -227,7 +227,7 @@ class UserControllerSpec extends Specification{
             1 * authorizeApplicationResourceAny(_,_,_) >> true
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireVersion(_,_,21) >> true
             0 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
@@ -256,7 +256,7 @@ class UserControllerSpec extends Specification{
             1 * authorizeApplicationResourceAny(_,_,_) >> true
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireVersion(_,_,21) >> true
             0 * renderErrorJson(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
@@ -286,7 +286,7 @@ class UserControllerSpec extends Specification{
             1 * authorizeApplicationResourceAny(_,_,_) >> false
         }
         controller.apiService=Mock(ApiService){
-            1 * requireApi(_,_) >> true
+            1 * requireVersion(_,_,21) >> true
             1 * renderErrorXml(_,_) >> {HttpServletResponse response, Map error->
                 response.status=error.status
                 null
