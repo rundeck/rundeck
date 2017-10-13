@@ -61,13 +61,18 @@
                 </bs:dropdown>
             </span>
         </g:if>
-        <!-- ko if: meta() && meta().description -->
-        <span class="text-muted" data-bind="text: meta().description">
-        </span>
-        <!-- /ko -->
-        <!-- ko if: meta() && meta().count && meta().count > 1 -->
-        <span class="text-muted">(<span data-bind="text: meta().count"></span> Policies)</span>
-        <!-- /ko -->
+        <ul data-bind="foreach:  { data: meta().policies, as: 'policy' }">
+            <li>
+                <span class="text-muted" data-bind="text: policy.description()">
+                </span>
+                <ul>
+                    <li>
+                        <span class="text-muted" data-bind="text: policy.by()">
+                        </span>
+                    </li>
+                </ul>
+            </li>
+        </ul>
     </td>
 
     <td style="width: 100px">

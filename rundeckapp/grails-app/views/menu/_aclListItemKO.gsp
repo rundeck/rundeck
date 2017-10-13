@@ -27,4 +27,5 @@
        title="${message(code: "aclpolicy.format.validation.failed")}"></i>
 </span>
 <span data-bind="text: name"></span>
+<span data-bind="text: resume()"></span>
 </script>

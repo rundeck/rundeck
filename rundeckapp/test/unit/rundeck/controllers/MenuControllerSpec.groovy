@@ -24,6 +24,8 @@ import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.Policies
+import com.dtolabs.rundeck.core.authorization.providers.Policy
+import com.dtolabs.rundeck.core.authorization.providers.PolicyCollection
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
@@ -660,5 +662,51 @@ class MenuControllerSpec extends Specification {
         'deleteProjectAclFile' | new ProjAclFile()                                    | [project: 'aproject']
         'saveSystemAclFile'    | new SaveSysAclFile(fileType: 'fs', fileText: 'asdf') | [:]
         'deleteSystemAclFile'  | new SysAclFile(fileType: 'fs')                       | [:]
+    }
+
+
+    def "meta on policy"() {
+        given:
+        def id = 'test.aclpolicy'
+        // def input = new SaveProjAclFile(id: id, fileText: fileText, create: create)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+        def project = 'test'
+        def description = 'description'
+        PoliciesValidation policy =  new PoliciesValidation(validation: new ValidationSet(valid: true))
+        def policyM = Mock(Policy){
+            getDescription() >> description
+        }
+
+
+        PolicyCollection policies = Mock(PolicyCollection){
+            getPolicies() >> [policyM]
+            countPolicies() >> 1
+        }
+        policy.setPolicies(policies)
+
+        when:
+        request.method = 'POST'
+        setupFormTokens(params)
+        params.project = project
+        def result = controller.projectAcls()
+        then:
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, _) >> true
+        1 * controller.frameworkService.getFrameworkProject(project) >> Mock(IRundeckProject) {
+            1 * listDirPaths('acls/') >> {
+                ['test.aclpolicy']
+            }
+            //existsFileResource('acls/' + id) >> exists
+            getName() >> project
+        }
+        1 * controller.authorizationService.validateYamlPolicy(project, id, _) >>
+                policy
+        result
+        result.acllist
+        result.acllist.size == 1
+        result.acllist[0].meta
+        result.acllist[0].meta.policies
+        result.acllist[0].meta.policies.size == 1
+        result.acllist[0].meta.policies[0].description == description
     }
 }

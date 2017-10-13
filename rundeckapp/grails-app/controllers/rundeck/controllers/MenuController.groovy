@@ -1161,6 +1161,21 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if (policiesvalidation?.policies?.countPolicies()) {
             meta.count = policiesvalidation?.policies?.countPolicies()
+            //
+            meta.policies = policiesvalidation?.policies?.policies.collect(){
+                def by = 'by:'
+                if(it.groups?.size()>0){
+                    by = by+' group: '+it.groups.join(", ")
+                }
+                if(it.usernames?.size()>0){
+                    by = by+' usernames: '+it.usernames.join(", ")
+                }
+
+                [
+                        description: it.description,
+                        by: by
+                ]
+            }
         }
         meta ?: null
     }

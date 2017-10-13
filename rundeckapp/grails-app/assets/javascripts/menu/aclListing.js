@@ -115,6 +115,16 @@ function PolicyDocument(data) {
         self.showValidation(!self.showValidation());
     };
 
+    self.resume = function () {
+        var count = self.meta().count;
+        if(count > 1){
+            return '('+count+' Policies)';
+        }
+        return '('+count+' Policy)';
+
+    };
+
+
     ko.mapping.fromJS(data,{},self);
 }
 
