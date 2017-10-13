@@ -290,6 +290,9 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
         //DispatcherResult contains map {nodename: NodeStepResult}
         for (final String nodeName : dispatcherResult.getResults().keySet()) {
             final NodeStepResult stepResult = dispatcherResult.getResults().get(nodeName);
+            if (stepResult.getSharedContext() != null) {
+                wfSharedContext.merge(stepResult.getSharedContext());
+            }
 
             //This NodeStepResult is produced by the DispatchedWorkflow wrapper
             WorkflowExecutionResult result = DispatchedWorkflow.extractWorkflowResult(stepResult);
@@ -459,6 +462,7 @@ public class NodeFirstWorkflowExecutor extends BaseWorkflowExecutor {
                                 .getClass() + ": " + result.getException().getMessage(),
                         node);
             }
+            result1.setSharedContext(result.getSharedContext());
             result1.setSourceResult(result);
             return result1;
         }

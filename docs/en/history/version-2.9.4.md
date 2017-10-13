@@ -1,3 +1,7 @@
+% Version 2.9.4
+% greg
+% 10/13/2017
+
 Release 2.9.4
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: HotPink"><span class="glyphicon glyphicon-briefcase"><
 
 ## Upgrading from Earlier versions
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 

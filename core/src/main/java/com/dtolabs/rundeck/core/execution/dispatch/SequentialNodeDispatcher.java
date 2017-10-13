@@ -134,6 +134,9 @@ public class SequentialNodeDispatcher implements NodeDispatcher {
                 }
                 //merge step+node context output data into the node context
                 WFSharedContext sharedContext = outputContext.getSharedContext();
+                if (null != result.getSharedContext()) {
+                    sharedContext.merge(result.getSharedContext());
+                }
                 DataContext data = sharedContext.getData(stepContextView);
                 if (data != null) {
                     sharedContext.merge(ContextView.node(node.getNodename()), data);

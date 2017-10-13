@@ -372,21 +372,27 @@ function Option(data) {
     self.loadRemoteValues = function (values, selvalue) {
         self.remoteError(null);
         var tvalues = [];
-        if (self.useinit() && self.initvalue()) {
+        var tmultivalues = [];
+        if (self.useinit() && self.initvalue() && !self.multivalued()) {
             tvalues[1] = (self.initvalue());
             self.useinit(false);
+        } else if (self.useinit() && self.multivalued() && self.selectedMultiValues().length > 0) {
+            tmultivalues[1] = self.selectedMultiValues();
+            self.useinit(false);
         }
-        if (selvalue && tvalues.indexOf(selvalue) < 0) {
+        if (selvalue && tvalues.indexOf(selvalue) < 0 && !self.multivalued()) {
             tvalues[0] = selvalue;
+        } else if (self.multivalued() && selvalue) {
+            tmultivalues[0] = selvalue.split(self.delimiter());
         }
         var rvalues = [];
         var tselected = -1;
-        var remoteselected;
+        var remoteselectedArr = [];
         ko.utils.arrayForEach(values, function (val) {
             var optval;
             if (typeof(val) === 'object') {
-                if (!remoteselected && val.selected) {
-                    remoteselected = val.value;
+                if (val.selected) {
+                    remoteselectedArr.push(val.value)
                 }
                 optval = new OptionVal({label: val.name, value: val.value, selected: val.selected});
             } else if (typeof(val) === 'string') {
@@ -399,20 +405,40 @@ function Option(data) {
                 }
             }
         });
-        //choose value to select, by preference:
-        //1: init value
-        //2: remote "selected" value
-        //3: input "selected" value
 
-        var touse = tselected === 1 ? tvalues[tselected] :( remoteselected || (tselected >= 0 ? tvalues[tselected] : null));
+        //choose value to select, by preference:
+        //1: init value(s)
+        //2: remote "selected" value(s)
+        //3: input "selected" value(s)
+
+        if (!self.multivalued()) {
+            var touse = tselected === 1 ?
+                tvalues[tselected] :
+                (
+                    (remoteselectedArr.length > 0 && remoteselectedArr[0]) ||
+                    (tselected >= 0 ? tvalues[tselected] : null)
+                );
+
+            if (touse) {
+                //choose correct value
+                self.selectedOptionValue(touse);
+            }
+        } else if (self.multivalued()) {
+            var touse =
+                tmultivalues[1] ||
+                (
+                    (remoteselectedArr.length > 0 && remoteselectedArr) ||
+                    (tmultivalues[0])
+                );
+
+            if (touse && touse.length > 0) {
+                //choose correct value
+                self.selectedMultiValues(touse);
+            }
+        }
 
         //triggers refresh of "selectOptions" populating select box
         self.remoteValues(rvalues);
-
-        if ((touse) && !self.multivalued()) {
-            //choose correct value
-            self.selectedOptionValue(touse);
-        }
     };
     /**
      * Option values data loaded from remote JSON request

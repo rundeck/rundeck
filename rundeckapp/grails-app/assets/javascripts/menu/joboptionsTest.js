@@ -553,6 +553,81 @@ jQuery(function () {
                 }
             );
         },
+        loadRemote_json_data_twice_with_multi_remote_selected_Test: function (pref) {
+            "use strict";
+            var self = this;
+            self.testMatrix(
+                " loadRemoteValues({0})",
+                [
+                    [
+
+                        {
+                            loaded: [
+                                {
+                                    values: [
+                                        {value: 'x', name: 'X'},
+                                        {value: 'y', name: 'Y'}
+                                    ],
+                                    selectedvalue: 'y'
+                                },
+                                {
+                                    values: [
+                                        {value: 'a', name: 'A', selected: true},
+                                        {value: 'x', name: 'X', selected: true},
+                                        {value: 'z', name: 'Y'}
+                                    ],
+                                    selectedvalue: 'y'
+                                }
+                            ],
+                            init: ''
+                        },
+
+                        [
+                            {
+                                value: '',
+                                selectedMultiValues: ['y'],
+                                remoteValues: 'x,y',
+                                initvalue: '',
+                                useinit: false
+                            },
+                            {
+                                value: '',
+                                selectedMultiValues: ['a', 'x'],
+                                remoteValues: 'a,x,z',
+                                initvalue: '',
+                                useinit: false
+                            }
+                        ]
+                    ]
+                ],
+                function (val) {
+                    var opt = mkopt({value: val.init, selectedOptionValue: null, multivalued: true, delimiter: ','});
+                    opt.loadRemoteValues(val.loaded[0].values, val.loaded[0].selectedvalue);
+
+                    var result = [{
+                        value: opt.value(),
+                        selectedMultiValues: opt.selectedMultiValues(),
+                        remoteValues: ko.utils.arrayMap(opt.remoteValues(), function (val) {
+                            return val.value();
+                        }).join(','),
+                        initvalue: opt.initvalue(),
+                        useinit: opt.useinit()
+                    }];
+                    opt.loadRemoteValues(val.loaded[1].values, val.loaded[1].selectedvalue);
+
+                    result.push({
+                        value: opt.value(),
+                        selectedMultiValues: opt.selectedMultiValues(),
+                        remoteValues: ko.utils.arrayMap(opt.remoteValues(), function (val) {
+                            return val.value();
+                        }).join(','),
+                        initvalue: opt.initvalue(),
+                        useinit: opt.useinit()
+                    });
+                    return result;
+                }
+            );
+        },
 
         loadRemote_json_data_with_multiple_selected_Test: function (pref) {
             "use strict";
