@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
@@ -779,7 +780,7 @@ class ExecutionServiceTests  {
 
 
             Execution se = new Execution(argString:"-test args",user:"testuser",project:"testproj", loglevel:'WARN',doNodedispatch: false)
-            def val= service.createContext(se,null,null,null,null,null,null)
+            def val= service.createContext(se,null,null,null,null,null,(WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNull(val.nodeSelector)
             assertEquals("testproj",val.frameworkProject)
@@ -811,7 +812,7 @@ class ExecutionServiceTests  {
         //check datacontext
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = service.createContext(se, null,null, null, null, null, null)
+            def val = service.createContext(se, null,null, null, null, null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.dataContext)
             assertNotNull(val.dataContext.job)
@@ -888,7 +889,7 @@ class ExecutionServiceTests  {
         //check datacontext, include job data
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = service.createContext(se, null,null, null, null, [id:"3",name:"testjob"], null, null)
+            def val = service.createContext(se, null,null, null, null, [id:"3",name:"testjob"], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.dataContext)
             assertNotNull(val.dataContext.job)
@@ -919,7 +920,7 @@ class ExecutionServiceTests  {
         //check nodeset, empty
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = service.createContext(se, null,null, null, null, [id:"3",name:"testjob"], null, null)
+            def val = service.createContext(se, null,null, null, null, [id:"3",name:"testjob"], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNull(val.nodeSelector)
     }
@@ -946,7 +947,7 @@ class ExecutionServiceTests  {
         //check nodeset, filtered from execution obj. include name
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeIncludeName: "testnode")
-            def val = service.createContext(se, null, null, null, null, [id: "3", name: "testjob"], null, null)
+            def val = service.createContext(se, null, null, null, null, [id: "3", name: "testjob"], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -1007,7 +1008,7 @@ class ExecutionServiceTests  {
         //check nodeset, filtered from execution obj. exclude name
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeExcludeName: "testnode")
-            def val = service.createContext(se, null, null, null, null, [id: "3", name: "testjob"], null, null)
+            def val = service.createContext(se, null, null, null, null, [id: "3", name: "testjob"], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -1052,7 +1053,7 @@ class ExecutionServiceTests  {
 
             Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true,nodeIncludeName: "basic")
             def val = service.createContext(se, null, null, null, null, [id:'3',name:'blah',group:'something/else',
-                    username:'bill',project:'testproj'], null, null)
+                    username:'bill',project:'testproj'], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -1095,7 +1096,7 @@ class ExecutionServiceTests  {
                     nodeExcludePrecedence: false,
             )
             def val = service.createContext(execution, null, null, null, null, [id:'3',name:'blah',group:'something/else',
-                    username:'bill',project:'testproj'], null, null)
+                    username:'bill',project:'testproj'], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -1150,7 +1151,7 @@ class ExecutionServiceTests  {
                 nodeExcludeOsVersion: "n,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
             )
             def val = service.createContext(se, null, null, null, null, [id:'3',name:'blah',group:'something/else',
-                    username:'bill',project:'testproj'], null, null)
+                    username:'bill',project:'testproj'], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -1196,7 +1197,7 @@ class ExecutionServiceTests  {
             filter: "monkey:a,\${option.test} !environment:b,\${option.test3},d",
         )
         def val = service.createContext(se, null, null, null, null, [id:'3',name:'blah',group:'something/else',
-                username:'bill',project:'testproj'], null, null)
+                username:'bill',project:'testproj'], null, (WorkflowExecutionListener)null)
         assertNotNull(val)
         assertNotNull(val.nodeSelector)
         assertNotNull(val.nodeSelector.exclude)
@@ -1239,7 +1240,7 @@ class ExecutionServiceTests  {
             filter: "\${option.test}",
         )
         def val = service.createContext(execution, null, null, null, null, [id:'3',name:'blah',group:'something/else',
-                username:'bill',project:'testproj'], null, null)
+                username:'bill',project:'testproj'], null, (WorkflowExecutionListener)null)
         assertNotNull(val)
         assertNotNull(val.nodeSelector)
         assertNotNull(val.nodeSelector.exclude)
