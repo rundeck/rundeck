@@ -28,6 +28,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -661,7 +662,7 @@ public class YamlParsePolicy implements Policy {
                                     if (null != validation) {
                                         validation.addError(
                                                 currentIdentity(),
-                                                "Error parsing the policy document: " + e.getCause().getMessage()
+                                                "Error parsing the policy document: " +extractSyntaxError(e.getCause().getMessage())
                                         );
                                     }
                                     return null;
@@ -697,6 +698,17 @@ public class YamlParsePolicy implements Policy {
                 };
             }
 
+            private String extractSyntaxError(String error){
+                if(error != null) {
+                    Pattern pattern = Pattern.compile("Unable to find property\\s(.+)\\son class");
+                    Matcher matcher = pattern.matcher(error);
+                    if (matcher.find() && null != matcher.group(1)) {
+                        return "Unknown property: " + matcher.group(1);
+                    }
+                }
+                return error;
+
+            }
 
             @Override
             public void close() throws IOException {
