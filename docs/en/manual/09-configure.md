@@ -5,7 +5,7 @@ If you have `admin` role access, when you log in you will see the "Configure" ic
 
 ![Configure page link](../figures/fig0701.png)
 
-This page contains links to manage Project configuration as well as system level configuraiton information.
+This page contains links to manage Project configuration as well as system level configuration information.
 
 ![Configure menu](../figures/fig0702.png)
 
@@ -24,7 +24,7 @@ There are several configuration sections: Resource Model Sources, Default Node E
 
 This section lets you add and modify Resource Model Sources for the project.
 These sources contain the node definitions for the project. 
-One source will already be defined as a result of the inital project creation. 
+One source will already be defined as a result of the initial project creation.
 You can figure as many as you need. Rundeck will aggregate the data from each
 one providing a merged view.
 
