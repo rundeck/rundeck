@@ -413,7 +413,7 @@ File listing: restart.xml
 
 Note that we don't define a `<nodefilters>` or `<dispatch>` section for Restart, because we
 only want this sequence to execute **once**, on the server node.  The Job
-references will each be called once, and the "start", "stop" and "staus" Jobs will
+references will each be called once, and the "start", "stop" and "status" Jobs will
 each be dispatched to the nodes they define.
 
 Saving the XML definitions files located on the Rundeck server,
