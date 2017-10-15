@@ -501,7 +501,7 @@ local-ttl-ssh-agent=<time in sec>
     * There are many resources
 available on how to configure ssh to use public key authentication
 instead of passwords such as:
-[Password-less logins with OpenSSH](http://www.debian-administration.org/articles/152).
+[Password-less logins with OpenSSH](https://debian-administration.org/article/152/Password-less_logins_with_OpenSSH)
     * If your private key file has a passphrase, each Job definition that will execute on the node must be configured correctly.
 * For password authentication:
     * each Node definition must be configured to allow password authentication
@@ -579,7 +579,7 @@ If you are running Rundeck on Windows, we heartily recommend using
 Unix-like tools that are useful when you work in a command line
 environment.
 
-[Cygwin]: http://www.cygwin.org
+[Cygwin]: https://cygwin.org/
 
 
 ### Passing environment variables through remote command
@@ -597,4 +597,4 @@ Example in sshd_config:
     # pass Rundeck variables
     AcceptEnv RD_*
 
-[SSH]: http://en.wikipedia.org/wiki/Secure_Shell
+[SSH]: https://en.wikipedia.org/wiki/Secure_Shell
