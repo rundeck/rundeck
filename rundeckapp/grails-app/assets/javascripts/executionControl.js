@@ -78,6 +78,7 @@ var FollowControl = Class.create({
     workflow:null,
     multiworkflow:null,
     clusterExec: null,
+    showClusterExecWarning: true,
 
     initialize: function(eid,elem,params){
         this.executionId=eid;
@@ -717,11 +718,13 @@ var FollowControl = Class.create({
         if (typeof(this.onAppend) == 'function') {
             this.onAppend();
         }
-        if (this.clusterExec && !this.runningcmd.completed) {
-            //show cluster loading info
-            jQuery('#' + this.parentElement + '_clusterinfo').show();
-        } else {
-            jQuery('#' + this.parentElement + '_clusterinfo').hide();
+        if (this.clusterExec && this.showClusterExecWarning) {
+            if (!this.runningcmd.completed) {
+                //show cluster loading info
+                jQuery('#' + $(this.parentElement).identify() + '_clusterinfo').show();
+            } else {
+                jQuery('#' + $(this.parentElement).identify() + '_clusterinfo').hide();
+            }
         }
 
         if (this.runningcmd.completed && this.runningcmd.jobcompleted) {
@@ -829,7 +832,7 @@ var FollowControl = Class.create({
         }
         if(this.lineCount == 0) {
             //show empty message
-            jQuery('#' + this.parentElement+'_empty').show();
+            jQuery('#' + $(this.parentElement).identify() + '_empty').show();
         }
     },
     toggleDataBody: function(ctxid) {
