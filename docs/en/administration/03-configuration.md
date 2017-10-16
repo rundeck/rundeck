@@ -106,7 +106,7 @@ Global variables can be overridden in the [`project.properties`](#project.proper
 Rundeck uses [log4j] as its application logging facility. This file
 defines the logging configuration for the Rundeck server.
 
-[log4j]: http://logging.apache.org/log4j/
+[log4j]: https://logging.apache.org/log4j/2.x/
 
 ## cli-log4j.properties
 
@@ -301,7 +301,7 @@ Delay is in milliseconds. If a max is set to `-1`, then retries will happen inde
 
 ### Metrics servlets
 
-Rundeck includes the [Metrics](http://metrics.codahale.com) servlets.  You can selectively disable these by setting these config values:
+Rundeck includes the [Metrics](http://metrics.dropwizard.io/3.0.2/) servlets.  You can selectively disable these by setting these config values:
 
 `rundeck.web.metrics.servlets.[name].enabled=true/false`
 
