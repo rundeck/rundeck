@@ -35,6 +35,8 @@ import rundeck.services.FrameworkService
 import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
 
+import java.util.function.Consumer
+
 class ExecutionJob implements InterruptableJob {
 
     public static final int DEFAULT_STATS_RETRY_MAX = 5
@@ -364,7 +366,10 @@ class ExecutionJob implements InterruptableJob {
         int killcount = 0;
         def killLimit = 100
         def WorkflowExecutionServiceThread thread = execmap.thread
+        def Consumer<Long> periodicCheck = execmap.periodicCheck
         def ThresholdValue threshold = execmap.threshold
+        def jobAverageDuration = execmap.scheduledExecution?execmap.scheduledExecution.averageDuration:0
+        def boolean avgNotificationSent = false
         def boolean stop=false
         boolean never=true
         while (thread.isAlive() || never) {
@@ -374,11 +379,25 @@ class ExecutionJob implements InterruptableJob {
             } catch (InterruptedException e) {
                 //do nada
             }
+            def duration = System.currentTimeMillis() - startTime
+            if(!avgNotificationSent && jobAverageDuration>0){
+                if(duration > jobAverageDuration){
+                    def res = executionService.avgDurationExceeded(
+                            execmap.scheduledExecution.id,
+                            [
+                                    execution: execmap.execution,
+                                    context:execmap
+                            ]
+                    )
+                    avgNotificationSent=true
+                }
+            }
+            periodicCheck?.accept(duration)
             if (
             !wasInterrupted
                     && !wasTimeout
                     && shouldCheckTimeout
-                    && (System.currentTimeMillis() - startTime) > timeoutms
+                    && duration > timeoutms
             ) {
                 wasTimeout = true
                 interrupt()
@@ -495,7 +514,6 @@ class ExecutionJob implements InterruptableJob {
             Map execmap
     )
     {
-
         Map<String, Object> failedNodes = extractFailedNodes(execmap)
         Set<String> succeededNodes = extractSucceededNodes(execmap)
 

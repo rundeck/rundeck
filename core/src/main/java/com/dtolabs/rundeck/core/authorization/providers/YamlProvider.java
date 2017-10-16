@@ -19,6 +19,7 @@ package com.dtolabs.rundeck.core.authorization.providers;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Validation;
 import com.dtolabs.rundeck.core.authorization.ValidationSet;
+import com.dtolabs.rundeck.core.authorization.providers.yaml.model.ACLPolicyDoc;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.*;
@@ -218,8 +219,8 @@ public class YamlProvider {
             }
 
             @Override
-            public Iterable<Object> loadAll(final Yaml yaml) throws IOException {
-                return yaml.loadAll(content);
+            public Iterable<ACLPolicyDoc> loadAll(final Yaml yaml) throws IOException {
+                return YamlParsePolicy.documentIterable(yaml.loadAll(content));
             }
 
             @Override
@@ -264,12 +265,12 @@ public class YamlProvider {
         }
 
         @Override
-        public Iterable<Object> loadAll(final Yaml yaml) throws IOException
+        public Iterable<ACLPolicyDoc> loadAll(final Yaml yaml) throws IOException
         {
             if (null == fileInputStream) {
                 fileInputStream = new FileInputStream(file);
             }
-            return yaml.loadAll(fileInputStream);
+            return YamlParsePolicy.documentIterable(yaml.loadAll(fileInputStream));
         }
 
         @Override
@@ -327,8 +328,8 @@ public class YamlProvider {
         }
 
         @Override
-        public Iterable<Object> loadAll(final Yaml yaml) throws IOException {
-            return yaml.loadAll(stream);
+        public Iterable<ACLPolicyDoc> loadAll(final Yaml yaml) throws IOException {
+            return YamlParsePolicy.documentIterable(yaml.loadAll(stream));
         }
 
         @Override

@@ -23,24 +23,24 @@
            title="${message(code: "aclpolicy.format.validation.failed")}"></i>
     </g:else>
     <span class="${validation.valid ? '' : 'text-warning'}">${policyFile}</span>
+    <g:if test="${editHref}">
+        <a href="${editHref}" class="btn btn-link btn-sm">
+            <g:icon name="edit"/>
+            <g:message code="edit.file"/>
+        </a>
+    </g:if>
+    <g:if test="${flashMessage}">
+        <span class="badge badge-default flash_info">
+            ${flashMessage}
+        </span>
+    </g:if>
     <g:set var="akey" value="${g.rkey()}"/>
     <g:if test="${!validation.valid}">
         <g:expander key="${akey}"><g:message code="more"/></g:expander>
         <div class="well well-sm well-embed" id="${akey}" style="display: none">
 
-            <ol>
-                <g:each in="${validation.errors.keySet().sort()}" var="ident">
-
-                    <li><code>${ident}</code><g:helpTooltip css="text-info"
-                                                            code="acl.validation.error.sourceIdentity.help"/>
-                        <ol>
-                            <g:each in="${validation.errors[ident]}" var="message">
-                                <li><code>${message}</code></li>
-                            </g:each>
-                        </ol>
-                    </li>
-                </g:each>
-            </ol>
+            <g:render template="aclValidationReport"
+                      model="${[validation: validation, documentPrefix: (prefix?:'')+policyFile]}"/>
         </div>
     </g:if>
 </li>

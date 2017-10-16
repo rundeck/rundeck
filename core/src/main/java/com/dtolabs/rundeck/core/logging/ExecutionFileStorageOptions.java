@@ -26,7 +26,21 @@ public interface ExecutionFileStorageOptions {
     boolean getRetrieveSupported();
 
     /**
+     * @return true if a partial retrieve request is supported
+     */
+    default boolean getPartialRetrieveSupported() {
+        return false;
+    }
+
+    /**
      * @return true if store is supported, false otherwise
      */
     boolean getStoreSupported();
+
+    /**
+     * @return true if a partial storage request is supported
+     */
+    default boolean getPartialStoreSupported() {
+        return false;
+    }
 }

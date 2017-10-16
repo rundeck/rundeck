@@ -28,6 +28,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Collectors;
@@ -449,6 +450,11 @@ public class YamlParsePolicy implements Policy {
     }
 
     @Override
+    public String getDescription() {
+        return policyDoc.getDescription();
+    }
+
+    @Override
     public EnvironmentalContext getEnvironment() {
         return environment.toBasic();
     }
@@ -594,6 +600,31 @@ public class YamlParsePolicy implements Policy {
 
     }
 
+    public static Iterable<ACLPolicyDoc> documentIterable(final Iterable<Object> iterator) {
+        return documentIterable(iterator.iterator());
+    }
+
+    public static Iterable<ACLPolicyDoc> documentIterable(final Iterator<Object> iterator) {
+        return () -> new Iterator<ACLPolicyDoc>() {
+
+            @Override
+            public boolean hasNext() {
+                return iterator.hasNext();
+            }
+
+            @Override
+            public ACLPolicyDoc next() {
+                Object next = iterator.next();
+
+                if (next == null) {
+                    return null;
+                }
+
+                return (ACLPolicyDoc) next;
+            }
+
+        };
+    }
 
     static YamlPolicyCollection.YamlSourceLoader<ACLPolicyDoc> loader(
             final YamlSource source1,
@@ -604,8 +635,12 @@ public class YamlParsePolicy implements Policy {
             @Override
             public Iterable<ACLPolicyDoc> loadAll() throws IOException {
                 final Yaml yaml = new Yaml(new YamlPolicyDocConstructor());
-                Iterable<Object> objects = source1.loadAll(yaml);
-                Iterator<Object> iterator = objects.iterator();
+                Iterable<ACLPolicyDoc> objects = source1.loadAll(yaml);
+                Iterator<ACLPolicyDoc> iterator = objects.iterator();
+                return documentIterable(iterator);
+            }
+
+            public Iterable<ACLPolicyDoc> documentIterable(final Iterator<ACLPolicyDoc> iterator) {
                 return new Iterable<ACLPolicyDoc>() {
                     @Override
                     public Iterator<ACLPolicyDoc> iterator() {
@@ -624,16 +659,14 @@ public class YamlParsePolicy implements Policy {
                                 try {
                                     next = iterator.next();
                                 } catch (ConstructorException e) {
-                                    e.printStackTrace();
                                     if (null != validation) {
                                         validation.addError(
                                                 currentIdentity(),
-                                                "Error parsing the policy document: " + e.getCause().getMessage()
+                                                "Error parsing the policy document: " +extractSyntaxError(e.getCause().getMessage())
                                         );
                                     }
                                     return null;
                                 } catch (YAMLException e) {
-                                    e.printStackTrace();
                                     if (null != validation) {
                                         validation.addError(
                                                 currentIdentity(),
@@ -663,6 +696,18 @@ public class YamlParsePolicy implements Policy {
                         };
                     }
                 };
+            }
+
+            private String extractSyntaxError(String error){
+                if(error != null) {
+                    Pattern pattern = Pattern.compile("Unable to find property\\s(.+)\\son class");
+                    Matcher matcher = pattern.matcher(error);
+                    if (matcher.find() && null != matcher.group(1)) {
+                        return "Unknown property: " + matcher.group(1);
+                    }
+                }
+                return error;
+
             }
 
             @Override

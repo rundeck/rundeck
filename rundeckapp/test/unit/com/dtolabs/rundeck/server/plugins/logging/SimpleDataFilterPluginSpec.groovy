@@ -119,4 +119,57 @@ class SimpleDataFilterPluginSpec extends Specification {
         LogLevel.DEBUG   | null
         LogLevel.VERBOSE | null
     }
+
+    @Unroll
+    def "named capture test"() {
+        given:
+        def plugin = new SimpleDataFilterPlugin()
+        plugin.regex = regex
+        plugin.logData = dolog
+        plugin.name = name
+        def sharedoutput = new DataOutput(ContextView.global())
+        def context = Mock(PluginLoggingContext) {
+            getOutputContext() >> sharedoutput
+        }
+        def events = []
+        lines.each { line ->
+            events << Mock(LogEventControl) {
+                getMessage() >> line
+                getEventType() >> 'log'
+                getLoglevel() >> LogLevel.NORMAL
+            }
+        }
+        when:
+        plugin.init(context)
+        events.each {
+            plugin.handleEvent(context, it)
+        }
+        plugin.complete(context)
+        then:
+
+        sharedoutput.getSharedContext().getData(ContextView.global())?.getData() == (expect ? ['data': expect] : null)
+        if (expect) {
+            if (dolog) {
+                1 * context.log(2, _, _)
+            } else {
+                0 * context.log(*_)
+            }
+        }
+
+
+        where:
+        dolog | regex                    | name | lines                           | expect
+        true  | '^RUNDECK:DATA:(.+?)$'   | 'wimple' | ['RUNDECK:DATA:zangief'] | [wimple: 'zangief']
+        false | '^RUNDECK:DATA:(.+?)$'   | 'wimple' | ['RUNDECK:DATA:zangief'] | [wimple: 'zangief']
+        true  | '^RUNDECK:DATA:(.+?)$'   | 'wimple' | ['blah', 'blee']         | [:]
+        true  | '^RUNDECK:DATA:(.+?)$'   | 'wimple' | ['RUNDECK:DATA:']        | [:]
+        true  | '^RUNDECK:DATA:(.+?)$'   | 'wimple' |
+                [
+                        'RUNDECK:DATA:bogarting: sailboat heathen',
+                        'RUNDECK:DATA:::djkjdf= ',
+                ]                                                                |
+                [
+                        'wimple': '::djkjdf= '
+                ]
+    }
 }

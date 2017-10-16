@@ -77,7 +77,7 @@ public class ScriptURLNodeStepExecutor implements NodeStepExecutor {
 
     public ScriptURLNodeStepExecutor(Framework framework) {
         this.framework = framework;
-        cacheDir = new File(Constants.getBaseVar(framework.getFilesystemFramework().getBaseDir().getAbsolutePath())
+        cacheDir = new File(Constants.getBaseVar(framework.getBaseDir().getAbsolutePath())
                             + "/cache/ScriptURLNodeStepExecutor");
     }
 

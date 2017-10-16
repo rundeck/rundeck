@@ -276,4 +276,15 @@
     </div>
     </div>
 </div>
+<div id="commandPerform_clusterinfo" style="display: none">
+    <div class="row"><div class="col-sm-12">
+        <div class="well well-nobg inline">
+            <p class="text-muted">
+                <i class="glyphicon glyphicon-info-sign"></i>
+                <em><g:message code="execution.log.clusterExec.log.delayed.message" /></em>
+            </p>
+        </div>
+    </div>
+    </div>
+</div>
 </div>

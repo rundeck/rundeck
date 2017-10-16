@@ -208,7 +208,7 @@ class ProjectServiceTest extends GroovyTestCase {
         assertTrue resultoutfile.delete()
         def errs=[]
         def result
-        projectService.logFileStorageService.metaClass.getFileForExecutionFiletype={Execution execution, String filetype, boolean useStoredPath->
+        projectService.logFileStorageService.metaClass.getFileForExecutionFiletype={Execution execution, String filetype, boolean useStoredPath, boolean partial->
             resultoutfile
         }
         Execution.withNewSession {
@@ -245,7 +245,7 @@ class ProjectServiceTest extends GroovyTestCase {
         ]
         def errs=[]
         def result
-        projectService.logFileStorageService.metaClass.getFileForExecutionFiletype={Execution execution, String filetype, boolean useStoredPath->
+        projectService.logFileStorageService.metaClass.getFileForExecutionFiletype={Execution execution, String filetype, boolean useStoredPath, boolean partial->
             files[filetype]
         }
         Execution.withNewSession {

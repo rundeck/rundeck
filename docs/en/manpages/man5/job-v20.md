@@ -1183,6 +1183,10 @@ Defines email, webhook or plugin notifications for Job success and failure, with
 
 :    define notifications for job start
 
+[onavgduration][]
+
+:    define notifications when exceed average duration
+
 *Example*
 
 ~~~~~~~~ {.xml}
@@ -1201,6 +1205,10 @@ Defines email, webhook or plugin notifications for Job success and failure, with
           </configuration>
         </plugin>
    </onstart>
+   <onavgduration>
+        <email recipients='test@example.com' subject='Job Exceeded average duration' />
+        <plugin type='MinimalNotificationPlugin' />
+      </onavgduration>
 </notification>      
 ~~~~~~~~ 
 
@@ -1238,9 +1246,20 @@ Embed an [webhook](#webhook) element to perform a HTTP POST to some URLs, within
 Embed an [plugin](#plugin) element to perform a custom action, within
 [notification](#notification).
 
+### onavgduration 
+
+Embed an [email](#email) element to send email on success, within
+[notification](#notification).
+
+Embed an [webhook](#webhook) element to perform a HTTP POST to some URLs, within
+[notification](#notification).
+
+Embed an [plugin](#plugin) element to perform a custom action, within
+[notification](#notification).
+
 ### email 
 
-Define email recipients for Job execution result, within [onsuccess][], [onfailure][] or [onstart][].
+Define email recipients for Job execution result, within [onsuccess][], [onfailure][], [onstart][] or [onavgduration][].
 
 *Attributes*
 
@@ -1254,7 +1273,7 @@ recipients
 
 ### webhook
 
-Define URLs to submit a HTTP POST to containing the job execution result, within [onsuccess][], [onfailure][] or [onstart][].
+Define URLs to submit a HTTP POST to containing the job execution result, within [onsuccess][], [onfailure][], [onstart][] or [onavgduration][].
 
 
 *Attributes*
@@ -1274,7 +1293,7 @@ urls
 
 ### plugin
 
-Defines a configuration for a plugin to perform a Notification, within [onsuccess][], [onfailure][] or [onstart][].
+Defines a configuration for a plugin to perform a Notification, within [onsuccess][], [onfailure][], [onstart][] or [onavgduration][].
 
 *Attributes*
 
@@ -1338,3 +1357,4 @@ The Rundeck source code and all documentation may be downloaded from
 [onsuccess]: #onsuccess
 [onfailure]: #onfailure
 [onstart]: #onstart
+[onavgduration]: #onavgduration

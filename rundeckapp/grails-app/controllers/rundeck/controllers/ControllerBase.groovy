@@ -291,4 +291,21 @@ class ControllerBase {
     protected def renderErrorFragment(Map model) {
         render(template: "/common/errorFragment",model:model)
     }
+
+    /**
+     * Test for valid request token
+     * @return true if token is valid, false if error response has been sent
+     */
+    protected boolean requestHasValidToken() {
+        boolean valid = false
+        withForm {
+            valid = true
+        }.invalidToken {
+        }
+        if (!valid) {
+            request.errorCode = 'request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
+        valid
+    }
 }

@@ -17,6 +17,7 @@
 package rundeck.services
 
 import asset.pipeline.grails.LinkGenerator
+import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
@@ -24,9 +25,19 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
+import rundeck.services.logging.ExecutionLogState
 import spock.lang.Specification
+import spock.lang.Unroll
 
+import java.nio.file.Files
 import java.util.concurrent.ScheduledExecutorService
+
+import static rundeck.services.logging.ExecutionLogState.AVAILABLE
+import static rundeck.services.logging.ExecutionLogState.AVAILABLE_PARTIAL
+import static rundeck.services.logging.ExecutionLogState.AVAILABLE_REMOTE
+import static rundeck.services.logging.ExecutionLogState.AVAILABLE_REMOTE_PARTIAL
+import static rundeck.services.logging.ExecutionLogState.NOT_FOUND
+import static rundeck.services.logging.ExecutionLogState.PENDING_REMOTE
 
 /**
  * Created by greg on 3/28/16.
@@ -34,6 +45,16 @@ import java.util.concurrent.ScheduledExecutorService
 @Mock([LogFileStorageRequest, Execution])
 @TestFor(LogFileStorageService)
 class LogFileStorageServiceSpec extends Specification {
+    File tempDir
+
+    def setup() {
+        tempDir = Files.createTempDirectory("LogFileStorageServiceSpec").toFile()
+    }
+
+    def cleanup() {
+
+
+    }
 
     def "resume incomplete delayed"() {
         given:
@@ -342,5 +363,129 @@ class LogFileStorageServiceSpec extends Specification {
         1 == service.retryIncompleteRequests.size()
         2 == LogFileStorageRequest.count()
 
+    }
+
+    @Unroll
+    def "generateLocalPathForExecutionFile"() {
+        given:
+        def exec = new Execution(dateStarted: new Date(),
+                                 dateCompleted: null,
+                                 user: 'user1',
+                                 project: 'test',
+                                 serverNodeUUID: null
+        ).save()
+
+
+        expect:
+        result == service.generateLocalPathForExecutionFile(exec, type, partial)
+
+        where:
+        type    | partial | result
+        'rdlog' | false   | 'test/run/logs/1.rdlog'
+        'rdlog' | true    | 'test/run/logs/1.rdlog.part'
+    }
+
+    @Unroll
+    def "getFileForExecutionFiletype partial"() {
+        given:
+        def exec = new Execution(dateStarted: new Date(),
+                                 dateCompleted: null,
+                                 user: 'user1',
+                                 project: 'test',
+                                 serverNodeUUID: null,
+                                 outputfilepath: '/tmp/test/logs/blah/1.rdlog'
+        ).save()
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProperties() >> (['framework.logs.dir': '/tmp/test/logs'] as Properties)
+        }
+
+        when:
+        def result = service.getFileForExecutionFiletype(exec, type, useStored, true)
+        then:
+        result == new File(expected)
+
+        where:
+        type         | useStored | expected
+        'rdlog'      | false     | '/tmp/test/logs/rundeck/test/run/logs/1.rdlog.part'
+        'state.json' | false     | '/tmp/test/logs/rundeck/test/run/logs/1.state.json.part'
+        'rdlog'      | true      | '/tmp/test/logs/blah/1.rdlog.part'
+        'state.json' | true      | '/tmp/test/logs/blah/1.state.json.part'
+    }
+
+    static interface TestFilePlugin extends ExecutionFileStoragePlugin, ExecutionFileStorageOptions {
+
+    }
+
+    @Unroll
+    def "getLogFileState"() {
+        given:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStorage.remotePendingDelay = pend
+        def outFile = new File(tempDir, "rundeck/test/run/logs/1.rdlog")
+        def outFilePart = new File(tempDir, "rundeck/test/run/logs/1.rdlog.part")
+        if (loData) {
+            outFile.parentFile.mkdirs()
+            outFile.text = 'test-complete'
+        }
+        if (loPart) {
+            outFile.parentFile.mkdirs()
+            outFilePart.text = 'test-partial'
+        }
+        def now = new Date()
+        def exec = new Execution(dateStarted: new Date(now.time - 20000),
+                                 dateCompleted: done ? new Date(now.time - 10000) : null,
+                                 user: 'user1',
+                                 project: 'test',
+                                 serverNodeUUID: null,
+                                 outputfilepath: outFile.absolutePath
+        ).save()
+        def plugin = Mock(TestFilePlugin) {
+            getRetrieveSupported() >> true
+            getPartialRetrieveSupported() >> supports
+            isAvailable(filetype) >> reData
+            isPartialAvailable(filetype) >> rePart
+        }
+
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProperties() >> (['framework.logs.dir': tempDir.getAbsolutePath()] as Properties)
+        }
+        service.configurationService = Mock(ConfigurationService) {
+            getTimeDuration('execution.logs.fileStorage.checkpoint.time.interval', '30s', _) >> 30
+        }
+        when:
+        def result = service.getLogFileState(exec, filetype, plugin, getPart)
+        then:
+        result.state == eState
+
+        where:
+        filetype | done  | getPart | supports | loData | loPart | reData | rePart | pend | eState
+        //not requesting partial check
+        'rdlog'  | false | false   | false    | false  | false  | false  | false  | 120  | PENDING_REMOTE
+        'rdlog'  | true  | false   | false    | false  | false  | false  | false  | 120  | PENDING_REMOTE
+        'rdlog'  | true  | false   | false    | false  | false  | false  | false  | 1    | NOT_FOUND
+        'rdlog'  | false | false   | false    | true   | false  | false  | false  | 120  | AVAILABLE
+        'rdlog'  | false | false   | false    | false  | true   | false  | false  | 120  | PENDING_REMOTE
+        'rdlog'  | false | false   | false    | false  | false  | true   | false  | 120  | AVAILABLE_REMOTE
+        'rdlog'  | false | false   | false    | false  | false  | false  | true   | 120  | PENDING_REMOTE
+        'rdlog'  | false | false   | false    | false  | false  | true   | true   | 120  | AVAILABLE_REMOTE
+        //requesting partial check, not supported
+        'rdlog'  | false | true    | false    | false  | false  | false  | false  | 120  | PENDING_REMOTE
+        'rdlog'  | true  | true    | false    | false  | false  | false  | false  | 120  | PENDING_REMOTE
+        'rdlog'  | true  | true    | false    | false  | false  | false  | false  | 1    | NOT_FOUND
+        'rdlog'  | false | true    | false    | true   | false  | false  | false  | 120  | AVAILABLE
+        'rdlog'  | false | true    | false    | false  | true   | false  | false  | 120  | PENDING_REMOTE
+        'rdlog'  | false | true    | false    | false  | false  | true   | false  | 120  | AVAILABLE_REMOTE
+        'rdlog'  | false | true    | false    | false  | false  | false  | true   | 120  | PENDING_REMOTE
+        'rdlog'  | false | true    | false    | false  | false  | true   | true   | 120  | AVAILABLE_REMOTE
+        //requesting partial check, is supported
+        'rdlog'  | false | true    | true     | false  | false  | false  | false  | 120  | PENDING_REMOTE
+        'rdlog'  | true  | true    | true     | false  | false  | false  | false  | 120  | PENDING_REMOTE
+        'rdlog'  | true  | true    | true     | false  | false  | false  | false  | 1    | NOT_FOUND
+        'rdlog'  | false | true    | true     | true   | false  | false  | false  | 120  | AVAILABLE
+        'rdlog'  | false | true    | true     | false  | true   | false  | false  | 120  | AVAILABLE_PARTIAL
+        'rdlog'  | false | true    | true     | false  | false  | true   | false  | 120  | AVAILABLE_REMOTE
+        'rdlog'  | false | true    | true     | false  | false  | false  | true   | 120  | AVAILABLE_REMOTE_PARTIAL
+        'rdlog'  | false | true    | true     | false  | false  | true   | true   | 120  | AVAILABLE_REMOTE
     }
 }

@@ -31,7 +31,6 @@
     <title><g:message code="edit.configuration" /></title>
 
     <g:javascript library="prototype/effects"/>
-    <g:javascript library="resourceModelConfig"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="storageBrowseKO.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
@@ -40,8 +39,6 @@
     var configControl;
     var confirm = new PageConfirm(message('page.unsaved.changes'));
     function init(){
-        configControl=new ResourceModelConfigControl('${enc(js:prefixKey)}',confirm.setNeedsConfirm);
-        configControl.pageInit();
         $$('input').each(function(elem){
             if(elem.type=='text'){
                 elem.observe('keypress',noenter);

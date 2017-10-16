@@ -44,8 +44,10 @@ import java.util.*;
 public class ResourceYamlFormatGenerator implements ResourceFormatGenerator,Describable {
     public static final String SERVICE_PROVIDER_TYPE = "resourceyaml";
 
-    public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("yaml",
-        "yml")));
+    public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            "yaml",
+            "yml"
+    )));
     public static final List<String> MIME_TYPES = Collections.unmodifiableList(Arrays.asList(
         "text/yaml", "text/x-yaml", "application/yaml", "application/x-yaml"));
 
@@ -53,9 +55,15 @@ public class ResourceYamlFormatGenerator implements ResourceFormatGenerator,Desc
         return EXTENSIONS;
     }
 
+    @Override
+    public String getPreferredFileExtension() {
+        return "yaml";
+    }
+
     public List<String> getMIMETypes() {
         return MIME_TYPES;
     }
+
 
     public void generateDocument(final INodeSet nodeset, final OutputStream stream) throws
         ResourceFormatGeneratorException,

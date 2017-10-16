@@ -44,4 +44,17 @@ public interface ExecutionFileStoragePlugin extends ExecutionFileStorage {
      */
     public boolean isAvailable(String filetype) throws ExecutionFileStorageException;
 
+    /**
+     * Return true if the file type has partial content available, false otherwise
+     *
+     * @param filetype file type or extension of the file to check
+     *
+     * @return true if a file with the given filetype is partially available
+     *
+     * @throws ExecutionFileStorageException if there is an error determining the availability
+     */
+    default boolean isPartialAvailable(String filetype) throws ExecutionFileStorageException {
+        return false;
+    }
+
 }

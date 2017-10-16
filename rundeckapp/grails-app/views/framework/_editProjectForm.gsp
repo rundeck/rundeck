@@ -49,75 +49,10 @@
             <g:textField name="description" size="50"  value="${projectDescription}" class="form-control"/>
         </div>
     </div>
-<g:if test="${resourceModelConfigDescriptions}">
-    <div class="list-group-item">
-    <span class="h4 ">
-        <g:message code="framework.service.ResourceModelSource.label" />
-    </span>
-
-    <div class="help-block">
-        <g:message code="domain.Project.edit.ResourceModelSource.explanation" />
-    </div>
-
-    <div class="alert alert-warning" id="errors" style="display:none;">
-
-    </div>
-    <ol id="configs" >
-        <g:if test="${configs}">
-            <g:each var="config" in="${configs}" status="n">
-                <li>
-                    <div class="inpageconfig">
-                        <g:set var="desc" value="${resourceModelConfigDescriptions.find {it.name==config.type}}"/>
-                        <g:if test="${!desc}">
-                            <span
-                                class="warn note invalidProvider">Invalid Resource Model Source configuration: Provider not found: <g:enc>${config.type}</g:enc></span>
-                        </g:if>
-                        <g:render template="viewResourceModelConfig"
-                                  model="${[prefix: prefixKey+'.'+(n+1)+'.', values: config.props, includeFormFields: true, description: desc, saved:true,type:config.type]}"/>
-                    </div>
-                </li>
-            </g:each>
-        </g:if>
-    </ol>
-
-    <div id="sourcebutton" >
-        <button class="btn btn-success btn-sm">
-            Add Source
-            <i class="glyphicon glyphicon-plus"></i>
-        </button>
-    </div>
-
-    <div id="sourcepicker" class="panel panel-success sourcechrome" style="display:none;">
-        <div class="panel-heading">
-            <g:message code="framework.service.ResourceModelSource.add.title"/>
-        </div>
-        <div class="list-group">
-            <g:each in="${resourceModelConfigDescriptions}" var="description">
-                <a onclick="configControl.addConfig('${enc(js: description.name)}');
-                return false;"
-                    href="#"
-                   class="list-group-item">
-                    <strong>
-                        <i class="glyphicon glyphicon-plus"></i>
-                        <g:enc>${description.title}</g:enc>
-                    </strong>
-                    <span class="help-block"><g:enc>${description.description}</g:enc></span>
-                </a>
-            </g:each>
-        </div>
-
-        <div id="sourcecancel" class="panel-footer">
-            <button class="btn btn-default btn-sm">Cancel</button>
-        </div>
-
-    </div>
-    </div>
-
-</g:if>
     <g:set var="categories"
            value="${new HashSet(extraConfig?.values()?.collect { it.configurable.categories?.values() }.flatten())}"/>
 
-    <g:each in="${categories.sort()}" var="category">
+    <g:each in="${categories.sort() - 'resourceModelSource'}" var="category">
 
 
         <g:render template="projectConfigurableForm"

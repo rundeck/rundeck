@@ -134,9 +134,9 @@ class UrlMappings {
                 action: 'apiProjectExportAsyncDownload'
         )
         "/api/$api_version/project/$project/import"(controller: 'project',action: 'apiProjectImport')
-        "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
+//        "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
         "/api/$api_version/project/$project/resources"(controller: 'framework') {
-            action = [GET: "apiResourcesv2",/* PUT: "update", DELETE: "delete",*/ POST: "apiProjectResourcesPost"]
+            action = [GET: "apiResourcesv2",/* PUT: "update", DELETE: "delete", POST: "apiProjectResourcesPost"*/]
         }
         "/api/$api_version/project/$project/jobs"(controller: 'menu', action: 'apiJobsListv2')
         "/api/$api_version/project/$project/resource/$name"(controller: 'framework',action:"apiResourcev14")
@@ -210,6 +210,8 @@ class UrlMappings {
                     DELETE: "apiDeleteResource"
             ]
         }
+        "/api/$api_version/user/info/$username?"(controller: 'user', action: 'apiUserData')
+        "/api/$api_version/user/list"(controller: 'user', action: 'apiUserList')
 
         "/api/$api_version/incubator/feature/$featureName?"(controller: 'api',action: 'featureToggle')
 
@@ -244,10 +246,18 @@ class UrlMappings {
         "/resources/$action?/$id?"(controller: 'framework')
         "/project/$project/events/$action?/$id?(.$format)?"(controller: 'reports')
         "/project/$project/configure"(controller: 'framework', action: 'editProject')
+        "/project/$project/nodes/sources"(controller: 'framework', action: 'projectNodeSources')
+        "/project/$project/nodes/sources/edit"(controller: 'framework', action: 'editProjectNodeSources')
+        "/project/$project/nodes/source/$index/edit"(controller: 'framework', action: 'editProjectNodeSourceFile')
+        "/project/$project/nodes/source/$index/save"(controller: 'framework', action: 'saveProjectNodeSourceFile')
         "/project/$project/export"(controller: 'menu', action: 'projectExport')
         "/project/$project/import"(controller: 'menu', action: 'projectImport')
         "/project/$project/admin/delete"(controller: 'menu', action: 'projectDelete')
         "/project/$project/admin/acls"(controller: 'menu', action: 'projectAcls')
+        "/project/$project/admin/acls/create"(controller: 'menu', action: 'createProjectAclFile')
+        "/project/$project/admin/acls/edit/$id**"(controller: 'menu', action: 'editProjectAclFile')
+        "/project/$project/admin/acls/save"(controller: 'menu', action: 'saveProjectAclFile')
+        "/project/$project/admin/acls/delete/$id**"(controller: 'menu', action: 'deleteProjectAclFile')
         "/project/$project/execution/show/$id"(controller: 'execution',action: 'show')
         "/project/$project/execution/$action/$id"(controller: 'execution')
         "/project/$project/exportPrepare"(controller: 'project',action: 'exportPrepare')
@@ -256,6 +266,10 @@ class UrlMappings {
         "/project/$project/importArchive"(controller: 'project',action: 'importArchive')
         "/project/$project"(redirect:[controller: 'menu',action: 'index'])
         "/project/$project/$action"(controller: 'project')
+        "/menu/acls/create"(controller: 'menu', action: 'createSystemAclFile')
+        "/menu/acls/edit/$id**"(controller: 'menu', action: 'editSystemAclFile')
+        "/menu/acls/save"(controller: 'menu', action: 'saveSystemAclFile')
+        "/menu/acls/delete/$id**"(controller: 'menu', action: 'deleteSystemAclFile')
         "/menu/storage/$resourcePath**"(controller: 'menu', action: 'storage')
         "/storage/access/keys/$resourcePath**"(controller: 'storage', action: 'keyStorageAccess')
         "/storage/access/keys"(controller: 'storage', action: 'keyStorageAccess')

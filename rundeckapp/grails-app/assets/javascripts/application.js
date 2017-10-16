@@ -394,7 +394,7 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
     }
 
     //add controls
-    var addSoftWrapCheckbox=data.aceControlSoftWrap?data.aceControlSoftWrap:false
+    var addSoftWrapCheckbox=data.aceControlSoftWrap?data.aceControlSoftWrap:false;
     if(addSoftWrapCheckbox){
         var _soft = jQuery('<input/>')
             .attr('type', 'checkbox')
