@@ -1,9 +1,9 @@
-Release 2.9.4
+Release 2.10.0
 ===========
 
-Date: 2017-10-13
+Date: 2017-10-16
 
-Name: <span style="color: HotPink"><span class="glyphicon glyphicon-briefcase"></span> "caffe latte hotpink briefcase"</span>
+Name: <span style="color: Teal"><span class="glyphicon glyphicon-glass"></span> "cafe mocha teal glass"</span>
 
 ## Upgrading from Earlier versions
 
@@ -11,61 +11,45 @@ Name: <span style="color: HotPink"><span class="glyphicon glyphicon-briefcase"><
 
 ## Notes
 
-Bugfix release.
+New features:
 
-Previous changes in 2.9.0: [Relese 2.9.0](https://github.com/rundeck/rundeck/blob/v2.9.0/RELEASE.md)
+* GUI editable Resource Model source plugins.  Allows the xml/yaml/json resource data to be edited in the GUI.
+	* The built-in File model source can be marked as "writeable", allowing admins to edit the resources file in the GUI
+* GUI editable ACLs. Modify the aclpolicy yaml files in the GUI and see validation info.
+* Jobs can define Notifications in the event of Average Duration Exceeded
+* API updated to allow user profile modifications
+* Job Filters can specify whether a job is scheduled
+* Key Value Data capture Log Filter can capture a value and specify a hardcoded name for the variable
 
-For more detail see [2.9.0 Changes](https://github.com/rundeck/rundeck/issues/2577)
-
-**Many Thanks** to Michihito Shigemura for increasing the signal-to-noise ratio of our documentation by
-diligently fixing numerous typos!
+Plus: bug fixes, documentation typo fixes
 
 ## Contributors
 
-* Bob van Bokkem (BobVanB)
 * Greg Schueler (gschueler)
-* Krzysztof Walkowicz (krzwalko)
 * Michihito Shigemura (shigemk2)
 * damageboy
 * jtobard
-* tomcs (braintreeps)
 
 ## Bug Reporters
 
-* BobVanB
-* crile
-* damageboy
-* genoaction
-* geraldh
 * gschueler
-* hugospinto
 * jtobard
-* krzwalko
-* methom90wh
-* niphlod
-* sebastianbello
+* ltamaster
+* ronave
 * shigemk2
-* tcsalameh
 
 ## Issues
 
-[Milestone 2.9.4](https://github.com/rundeck/rundeck/milestone/63)
+[Milestone 2.10.0](https://github.com/rundeck/rundeck/milestone/62)
 
-* [Log filter plugins do not show GUI controls for input properties](https://github.com/rundeck/rundeck/issues/2835)
-* [Key value data captured in node-first workflow is not carried forward](https://github.com/rundeck/rundeck/issues/2831)
-* [Fix typo administration/installation](https://github.com/rundeck/rundeck/pull/2789)
-* [Can't view second results page in the activity view when filter is in use](https://github.com/rundeck/rundeck/issues/2787)
-* [update log message getRemoteJSON to debug](https://github.com/rundeck/rundeck/pull/2782)
-* [Switch to commonmark-java from markdownj, enable gfm tables extension](https://github.com/rundeck/rundeck/pull/2768)
-* [Missing node attribute is taken from another node](https://github.com/rundeck/rundeck/issues/2766)
-* [Add threadcount as a job context variable](https://github.com/rundeck/rundeck/pull/2759)
-* [Fix #2757 fix arguments to message code](https://github.com/rundeck/rundeck/pull/2758)
-* [Notification plugin name truncated when there's no plugin configuration properties](https://github.com/rundeck/rundeck/issues/2757)
-* [Rundeck shared data context unavailable for RemoteScriptNodeStep](https://github.com/rundeck/rundeck/issues/2734)
-* [Key Value data filter fails in sub job](https://github.com/rundeck/rundeck/issues/2732)
-* [Fix nested Job Reference](https://github.com/rundeck/rundeck/pull/2727)
-* [fix: relativeDateString tag issues](https://github.com/rundeck/rundeck/pull/2726)
-* [Improve ISO 8601 date handling with timezone when scheduling ad-hoc job](https://github.com/rundeck/rundeck/pull/2725)
-* [Referenced jobs not found by job from another project](https://github.com/rundeck/rundeck/issues/2718)
-* [Log filters: not working when referenced job is invoked](https://github.com/rundeck/rundeck/issues/2691)
-* [multi valued options with "selected=true" fetched from remote URL don't work](https://github.com/rundeck/rundeck/issues/2604)
+* [Fix typo in tutorials/project-setup](https://github.com/rundeck/rundeck/pull/2847)
+* [Execution log storage partial checkpointing](https://github.com/rundeck/rundeck/pull/2790)
+* [Key Storage Selector doesn't work on Config Page](https://github.com/rundeck/rundeck/issues/2785)
+* [List Future Schedule on jobsAjax](https://github.com/rundeck/rundeck/pull/2778)
+* [ACL File editor](https://github.com/rundeck/rundeck/pull/2772)
+* [Feature: GUI editable File resource model sources](https://github.com/rundeck/rundeck/pull/2753)
+* [Api endpoint to modify user profile.](https://github.com/rundeck/rundeck/pull/2741)
+* [Jobs filter enhancement](https://github.com/rundeck/rundeck/pull/2733)
+* [Named pattern log filter](https://github.com/rundeck/rundeck/pull/2720)
+* [Job Notification for jobs exceeding average duration](https://github.com/rundeck/rundeck/pull/2665)
+* [API acl system level bug](https://github.com/rundeck/rundeck/issues/2569)
