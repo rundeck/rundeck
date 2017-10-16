@@ -116,7 +116,7 @@ network and represents a single management endpoint. In the end,
 the ssh node executor plugin formulates an ssh command string similar to:
 "ssh username@hostname command". The ssh identity is resolved via configuration
 at run time. In this example, the project default is used as specified in the
-[project.properties] configuraiton file. 
+[project.properties] configuration file.
 (e.g.,  project.ssh-keypath=/var/lib/rundeck/.ssh/id_rsa).
 
 See [ssh-plugins guide](../plugins-user-guide/ssh-plugins.html#configuring-remote-machine-for-ssh) to learn about configuring remote machines for ssh.
