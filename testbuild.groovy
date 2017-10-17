@@ -51,7 +51,7 @@ def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${ve
 
 //the list of bundled plugins to verify in the war and jar
 def plugins=['script','stub','localexec','copyfile','job-state','flow-control','jasypt-encryption','git','orchestrator', 'source-refresh']
-def externalPlugins=['rundeck-ansible-plugin']
+def externalPlugins=['rundeck-ansible-plugin','aws-s3-model-source']
 
 //manifest describing expected build results
 def manifest=[

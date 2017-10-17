@@ -89,7 +89,8 @@ dependencies {
             project(':plugins:orchestrator-plugin'),
             project(':plugins:git-plugin'),
             project(':plugins:source-refresh-plugin'),
-            "com.github.Batix:rundeck-ansible-plugin:2.0.2"
+            "com.github.Batix:rundeck-ansible-plugin:2.0.2",
+            "com.github.rundeck-plugins:aws-s3-model-source:v1.0"
 }
 
 task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
