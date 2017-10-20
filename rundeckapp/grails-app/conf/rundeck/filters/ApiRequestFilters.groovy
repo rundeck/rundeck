@@ -104,7 +104,7 @@ public class ApiRequestFilters {
         }
     }
 
-    def allowed_actions = ["renderError", "invalid", "error"]
+    def allowed_actions = ["renderError", "error"]
     def allowed_pre_api_reqs=[
             'user':['login','loggedout'],
             'menu':['index','home'],
