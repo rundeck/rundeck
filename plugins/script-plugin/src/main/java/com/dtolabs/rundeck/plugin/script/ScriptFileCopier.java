@@ -32,7 +32,6 @@ import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
 import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
-import com.dtolabs.rundeck.core.execution.service.MultiFileCopier;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepFailureReason;
@@ -280,7 +279,7 @@ public class ScriptFileCopier implements FileCopier, Describable {
                         && !copiedFilepath.endsWith("/")) {
                     copiedFilepath += "/";
                 }
-                copiedFilepath = DataContextUtils.replaceDataReferences(copiedFilepath, newDataContext);
+                copiedFilepath = DataContextUtils.replaceDataReferencesInString(copiedFilepath, newDataContext);
             }
         } else {
             //we are copying to a specific destination

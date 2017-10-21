@@ -68,7 +68,7 @@ Attributes:
 * `@SelectValues`
     * `values` (String[]) the set of values that can be chosen
     * `freeSelect` (boolean) whether the user can enter values not in the list. Default: false.
-    * `multiOption` (boolean) wheter multiple values can be selected as checkboxes, cannot be used with freeSelect. Default: false.
+    * `multiOption` (boolean) whether multiple values can be selected as checkboxes, cannot be used with freeSelect. Default: false.
 
 Examples:
 

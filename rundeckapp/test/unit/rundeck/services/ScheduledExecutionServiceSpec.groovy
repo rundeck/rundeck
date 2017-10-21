@@ -16,19 +16,25 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategyService
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.quartz.ListenerManager
 import org.quartz.Scheduler
 import org.quartz.core.QuartzScheduler
+import org.springframework.context.MessageSource
 import rundeck.Execution
 import rundeck.CommandExec
 import rundeck.JobExec
@@ -61,6 +67,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             isClusterModeEnabled()>>enabled
             getServerUUID()>>TEST_UUID1
             getFrameworkPropertyResolverWithProps(*_)>>Mock(PropertyResolver)
+            projectNames(*_)>>[]
         }
         service.pluginService=Mock(PluginService)
         service.executionServiceBean=Mock(ExecutionService)
@@ -155,8 +162,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
         }
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+
         service.frameworkService = Mock(FrameworkService) {
             getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
         }
         def job = new ScheduledExecution(
                 createJobParams(
@@ -188,8 +200,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
         }
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
         service.frameworkService = Mock(FrameworkService) {
             getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
         }
         def job = new ScheduledExecution(
                 createJobParams(
@@ -201,7 +217,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         ).save()
 
         when:
-        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], 0, null)
+        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], null)
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
@@ -220,8 +236,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
         }
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+
         service.frameworkService = Mock(FrameworkService) {
             getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
         }
         def job = new ScheduledExecution(
                 createJobParams(
@@ -243,7 +264,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         startTime.set(year: 1999, month: 1, dayOfMonth: 1, hourOfDay: 1, minute: 2, seconds: 42)
 
         when:
-        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], 0, startTime)
+        service.scheduleAdHocJob(job, "user", null, Mock(Execution), [:], [:], startTime)
 
         then:
         1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
@@ -263,8 +284,13 @@ class ScheduledExecutionServiceSpec extends Specification {
         service.quartzScheduler = Mock(Scheduler) {
             getListenerManager() >> Mock(ListenerManager)
         }
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+
         service.frameworkService = Mock(FrameworkService) {
             getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
         }
         def job = new ScheduledExecution(
                 createJobParams(
@@ -343,6 +369,225 @@ class ScheduledExecutionServiceSpec extends Specification {
          "commands[2]": [jobName: 'test1', jobGroup: 'a/test']] | _
 
     }
+
+    def "validate workflow step log filter"() {
+        given:
+        def step = new CommandExec([
+                adhocRemoteString: 'test buddy',
+                pluginConfig     : [
+                        LogFilter: [
+                                [
+                                        type  : 'abc',
+                                        config: [a: 'b']
+                                ]
+                        ]
+                ]]
+        )
+        service.pluginService = Mock(PluginService)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        valid
+        !step.hasErrors()
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true
+        ]
+
+    }
+
+    def "validate workflow step missing plugin type"() {
+        given:
+        def step = new PluginStep([
+                type         : 'atype',
+                configuration: [
+                        a: 'b'
+                ]]
+        )
+        service.pluginService = Mock(PluginService)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        !valid
+        step.hasErrors()
+        step.errors.hasFieldErrors('type')
+        service.frameworkService.getStepPluginDescription('atype') >> {
+            throw new MissingProviderException('NodeStep', 'atype')
+        }
+
+    }
+
+    def "validate workflow step log filter invalid"() {
+        given:
+        def step = new CommandExec([
+                adhocRemoteString: 'test buddy',
+                pluginConfig     : [
+                        LogFilter: [
+                                [
+                                        type  : 'abc',
+                                        config: [a: 'b']
+                                ]
+                        ]
+                ]]
+        )
+        service.pluginService = Mock(PluginService)
+        service.frameworkService = Mock(FrameworkService)
+        when:
+        def valid = service.validateWorkflowStep(step)
+
+        then:
+        !valid
+        step.hasErrors()
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+
+    }
+
+    def "do validate step log filter"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams()
+        params.workflow.strategy = 'node-first'
+        params = params + [
+                '_sessionwf'          : 'true',
+                '_sessionEditWFObject': new Workflow(
+                        keepgoing: true,
+                        strategy: 'node-first',
+                        commands: [new CommandExec([
+                                adhocRemoteString: 'test buddy',
+                                pluginConfig     : [
+                                        LogFilter: [
+                                                [
+                                                        type  : 'abc',
+                                                        config: [a: 'b']
+                                                ]
+                                        ]
+                                ]]
+                        )]
+                ),
+        ]
+        when:
+        def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+        !results.failed
+        !results.scheduledExecution.workflow.commands[0].hasErrors()
+        results.scheduledExecution.workflow.commands[0].pluginConfig.LogFilter != null
+        results.scheduledExecution.workflow.commands[0].pluginConfig.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true
+        ]
+
+    }
+
+    def "do validate step log filter invalid"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams()
+        params.workflow.strategy = 'node-first'
+        params = params + [
+                '_sessionwf'          : 'true',
+                '_sessionEditWFObject': new Workflow(
+                        keepgoing: true,
+                        strategy: 'node-first',
+                        commands: [new CommandExec([
+                                adhocRemoteString: 'filter test',
+                                pluginConfig     : [
+                                        LogFilter: [
+                                                [
+                                                        type  : 'abc',
+                                                        config: [a: 'b']
+                                                ]
+                                        ]
+                                ]]
+                        )]
+                ),
+        ]
+        when:
+        def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+        results.failed
+        results.scheduledExecution.workflow.commands[0].hasErrors()
+
+        results.scheduledExecution.workflow.commands[0].pluginConfig.LogFilter != null
+        results.scheduledExecution.workflow.commands[0].pluginConfig.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+
+    }
+    def "do validate workflow log filters"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams()
+        params.workflow.globalLogFilters = [
+                '0': [
+                        type  : 'abc',
+                        config: [a: 'b']
+                ]
+        ]
+        when:
+        def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+        !results.failed
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true
+        ]
+
+    }
+
+    def "do validate workflow log filters invalid"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams()
+        params.workflow.globalLogFilters = [
+                '0': [
+                        type  : 'abc',
+                        config: [a: 'b']
+                ]
+        ]
+        when:
+        def results = service._dovalidate(params, Mock(UserAndRoles))
+
+        then:
+        results.failed
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        results.scheduledExecution.errors.hasFieldErrors('workflow')
+        params['logFilterValidation']["0"] == 'bogus'
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+
+    }
     @Unroll
     def "do validate node-first strategy error handlers"() {
         given:
@@ -404,6 +649,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         def params = baseJobParams() + [
                 workflow: [threadcount: 1, keepgoing: true, "commands[0]": cmd],
         ]
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
         when:
         def results = service._dovalidate(params, Mock(UserAndRoles))
 
@@ -515,6 +763,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'
         ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'c@example.com,d@example.com'
         ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'
+        ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com,d@example.com'
     }
     def "validate notifications email data any domain"() {
         given:
@@ -545,6 +794,8 @@ class ScheduledExecutionServiceSpec extends Specification {
         ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | 'example@any.domain'
         ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'email' | '${job.user.email}'
         ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'monkey@internal'
+        ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'user@test'
+
     }
     def "invalid notifications data"() {
         given:
@@ -581,6 +832,10 @@ class ScheduledExecutionServiceSpec extends Specification {
         ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
         ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | ''
         ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
+        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | ''
+        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
+        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | ''
+        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
     }
     def "do update job invalid notifications"() {
         given:
@@ -613,6 +868,8 @@ class ScheduledExecutionServiceSpec extends Specification {
         ScheduledExecutionController.NOTIFY_FAILURE_URL|ScheduledExecutionController.ONFAILURE_TRIGGER_NAME | 'url' | 'monkey@ example.com'
         ScheduledExecutionController.NOTIFY_START_RECIPIENTS|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
         ScheduledExecutionController.NOTIFY_START_URL|ScheduledExecutionController.ONSTART_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
+        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'email' | 'c@example.com d@example.com'
+        ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL|ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME   | 'url' | 'c@example.com d@example.com'
     }
     def "validate notifications email form fields"() {
         given:
@@ -635,6 +892,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         'onsuccess'|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL | ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS | 'c@example.com,d@example.com'
         'onfailure'|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS | 'c@example.com,d@example.com'
         'onstart'|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL | ScheduledExecutionController.NOTIFY_START_RECIPIENTS | 'c@example.com,d@example.com'
+        'onavgduration'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL | ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS | 'c@example.com,d@example.com'
     }
     def "invalid notifications email form fields"() {
         given:
@@ -656,6 +914,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         'onsuccess'|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL | ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS | 'c@example.'
         'onfailure'|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS | '@example.com'
         'onstart'|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL | ScheduledExecutionController.NOTIFY_START_RECIPIENTS | 'c@example.'
+        'onavgduration'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL | ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS | 'c@example.'
     }
 
 
@@ -855,6 +1114,9 @@ class ScheduledExecutionServiceSpec extends Specification {
     }
     def setupDoUpdate(enabled=false){
         def uuid=UUID.randomUUID().toString()
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
         service.frameworkService=Mock(FrameworkService){
             authorizeProjectJobAll(*_)>>true
             authorizeProjectResourceAll(*_)>>true
@@ -870,6 +1132,7 @@ class ScheduledExecutionServiceSpec extends Specification {
                     getStrategyForWorkflow(*_)>>Mock(WorkflowStrategy)
                 }
             }
+            getFrameworkProject(_) >> projectMock
         }
         service.executionServiceBean=Mock(ExecutionService){
             executionsAreActive()>>false
@@ -878,6 +1141,50 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         service.executionUtilService=Mock(ExecutionUtilService){
             createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
+        }
+        service.quartzScheduler = Mock(Scheduler)
+        uuid
+    }
+
+    def setupDoUpdateJob(enabled = false) {
+        def uuid = UUID.randomUUID().toString()
+
+        def projectMock = Mock(IRundeckProject) {
+            getProperties() >> [:]
+            getProjectProperties() >> [:]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            _ * authorizeProjectJobAll(*_) >> true
+            _ * authorizeProjectResourceAll(*_) >> true
+            _ * existsFrameworkProject('AProject') >> true
+            _ * getFrameworkProject('AProject') >> projectMock
+            _ * existsFrameworkProject('BProject') >> true
+            _ * getAuthContextWithProject(_, _) >> { args ->
+                return args[0]
+            }
+            _ * projectNames(_ as AuthContext) >> ['AProject', 'BProject']
+            _ * isClusterModeEnabled() >> enabled
+            _ * getServerUUID() >> uuid
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService() >> Mock(WorkflowStrategyService) {
+                    _ * getStrategyForWorkflow(*_) >> Mock(WorkflowStrategy) {
+                        _ * validate(_)
+                    }
+                }
+            }
+            _ * getFrameworkPropertyResolverWithProps(_, _)
+        }
+        service.executionServiceBean = Mock(ExecutionService) {
+            _ * getExecutionsAreActive() >> false
+        }
+        service.pluginService = Mock(PluginService) {
+            _ * validatePlugin('node-first', _ as WorkflowStrategyService, _, _)
+        }
+
+        service.executionUtilService = Mock(ExecutionUtilService) {
+            _ * createExecutionItemForWorkflow(_) >> Mock(WorkflowExecutionItem) {
+                _ * getWorkflow()
+            }
         }
         service.quartzScheduler = Mock(Scheduler)
         uuid
@@ -895,6 +1202,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         setupDoUpdate()
         def se = new ScheduledExecution(createJobParams(orig)).save()
         service.fileUploadService = Mock(FileUploadService)
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -929,6 +1239,9 @@ class ScheduledExecutionServiceSpec extends Specification {
             getRoles() >> new HashSet<String>(['test'])
         }
 
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _) >> { it[0].toString() }
+        }
 
         when:
         def results = service._doupdateJob(se.id,newjob, mockAuth())
@@ -1075,6 +1388,8 @@ class ScheduledExecutionServiceSpec extends Specification {
 
         def se = new ScheduledExecution(createJobParams(orig)).save()
         def newJob = new ScheduledExecution(createJobParams(inparams))
+        service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
+        service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
 
 
 
@@ -1210,6 +1525,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         'onsuccess'|ScheduledExecutionController.NOTIFY_ONSUCCESS_EMAIL | ScheduledExecutionController.NOTIFY_SUCCESS_RECIPIENTS | 'c@example.com,d@example.com'
         'onfailure'|ScheduledExecutionController.NOTIFY_ONFAILURE_EMAIL | ScheduledExecutionController.NOTIFY_FAILURE_RECIPIENTS | 'c@example.com,d@example.com'
         'onstart'|ScheduledExecutionController.NOTIFY_ONSTART_EMAIL | ScheduledExecutionController.NOTIFY_START_RECIPIENTS | 'c@example.com,d@example.com'
+        'onavgduration'|ScheduledExecutionController.NOTIFY_OVERAVGDURATION_EMAIL | ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS | 'c@example.com,d@example.com'
     }
     @Unroll
     def "do update options modify"(){
@@ -1403,8 +1719,18 @@ class ScheduledExecutionServiceSpec extends Specification {
             isClusterModeEnabled() >> false
             existsFrameworkProject(projectName) >> true
             getFrameworkProject(projectName) >> projectMock
+
+            getRundeckFramework()>>Mock(Framework){
+                getWorkflowStrategyService()>>Mock(WorkflowStrategyService){
+                    getStrategyForWorkflow(*_)>>Mock(WorkflowStrategy)
+                }
+            }
         }
         service.fileUploadService = Mock(FileUploadService)
+        service.pluginService = Mock(PluginService)
+        service.executionUtilService=Mock(ExecutionUtilService){
+            createExecutionItemForWorkflow(_)>>Mock(WorkflowExecutionItem)
+        }
 
 
 
@@ -1430,7 +1756,6 @@ class ScheduledExecutionServiceSpec extends Specification {
         def scheduledExecution = results.scheduledExecution
         if (scheduledExecution && scheduledExecution.errors.hasErrors()) {
             scheduledExecution.errors.allErrors.each {
-                System.err.println(it);
             }
         }
         then:
@@ -1549,6 +1874,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         given:
         def uuid=setupDoUpdate(enabled)
         def se = new ScheduledExecution(createJobParams()).save()
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         when:
         def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
@@ -1565,6 +1891,160 @@ class ScheduledExecutionServiceSpec extends Specification {
         [jobName: 'newName', scheduled: false] | true
         [jobName: 'newName', scheduled: false] | false
     }
+
+    @Unroll
+    def "do update workflow log filters"() {
+        given:
+        setupDoUpdate()
+        def se = new ScheduledExecution(createJobParams()).save()
+        def passparams = [id: se.id.toString()] + inparams
+        when:
+        def results = service._doupdate(passparams, mockAuth())
+
+
+        then:
+        results.success
+
+
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        !results.scheduledExecution.errors.hasFieldErrors('workflow')
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true,
+        ]
+        where:
+        inparams | orig | expect
+        [workflow: [globalLogFilters: [
+                '0': [
+                        type  : 'abc',
+                        config: [a: 'b']
+                ]
+        ]]]      | _    | _
+    }
+
+    @Unroll
+    def "do update workflow log filters invalid"() {
+        given:
+        setupDoUpdate()
+        def se = new ScheduledExecution(createJobParams()).save()
+        def passparams = [id: se.id.toString()] + inparams
+        when:
+        def results = service._doupdate(passparams, mockAuth())
+
+
+        then:
+        !results.success
+
+
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == [
+                [config: [a: 'b'], type: 'abc']
+        ]
+        results.scheduledExecution.errors.hasFieldErrors('workflow')
+        passparams['logFilterValidation']["0"] == 'bogus'
+        1 * service.pluginService.getPluginDescriptor('abc', LogFilterPlugin) >>
+                new DescribedPlugin(null, null, 'abc', null)
+        service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+        where:
+        inparams | orig | expect
+        [workflow: [globalLogFilters: [
+                '0': [
+                        type  : 'abc',
+                        config: [a: 'b']
+                ]
+        ]]]      | _    | _
+    }
+
+    @Unroll
+    def "do update job workflow log filters"() {
+        given:
+        setupDoUpdateJob()
+        def se = new ScheduledExecution(createJobParams()).save()
+        def newJob = new ScheduledExecution(
+                createJobParams(
+                        [
+                                workflow: new Workflow(
+                                        keepgoing: true,
+                                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])],
+                                        pluginConfigMap: pluginConfigMap
+                                )
+                        ]
+                )
+        )
+        def pluginService = service.pluginService
+        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
+        0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
+        1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: true,
+        ]
+        0 * service.frameworkService.validateDescription(*_)
+        0 * _
+        when:
+        def results = service._doupdateJob(se.id, newJob, mockAuth())
+
+
+        then:
+        results.success
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == pluginConfigMap.LogFilter
+        !results.scheduledExecution.errors.hasFieldErrors('workflow')
+
+
+        where:
+        pluginConfigMap                                | _
+        [LogFilter: [type: 'abc', config: [a: 'b']]]   | _
+        [LogFilter: [[type: 'abc', config: [a: 'b']]]] | _
+    }
+
+
+    @Unroll
+    def "do update job workflow log filters invalid"() {
+        given:
+        setupDoUpdateJob()
+        def se = new ScheduledExecution(createJobParams()).save()
+        def newJob = new ScheduledExecution(
+                createJobParams(
+                        [
+                                workflow: new Workflow(
+                                        keepgoing: true,
+                                        commands: [new CommandExec([adhocRemoteString: 'test buddy'])],
+                                        pluginConfigMap: pluginConfigMap
+                                )
+                        ]
+                )
+        )
+
+        def pluginService = service.pluginService
+
+        1 * pluginService.getPluginDescriptor('abc', LogFilterPlugin) >> new DescribedPlugin(null, null, 'abc', null)
+        0 * pluginService.getPluginDescriptor(_, LogFilterPlugin)
+        1 * service.frameworkService.validateDescription(_, '', [a: 'b'], _, _, _) >> [
+                valid: false, report: 'bogus'
+        ]
+        0 * service.frameworkService.validateDescription(*_)
+        0 * _
+        when:
+        def results = service._doupdateJob(se.id, newJob, mockAuth())
+
+
+        then:
+        !results.success
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter != null
+        results.scheduledExecution.workflow.pluginConfigMap.LogFilter == pluginConfigMap.LogFilter
+        results.scheduledExecution.errors.hasFieldErrors('workflow')
+
+        where:
+        pluginConfigMap                                 | _
+        [LogFilter: [type: 'abc', config: [a: 'b']]]    | _
+        [LogFilter: [[type: 'abc', config: [a: 'b']]]]  | _
+    }
+
 
     def "do validate cluster mode sets serverNodeUUID when enabled"(){
         given:
@@ -1593,7 +2073,7 @@ class ScheduledExecutionServiceSpec extends Specification {
             getUsername() >> 'test'
             getRoles() >> new HashSet<String>(['test'])
         }
-
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         when:
         def results = service._doupdateJob(se.id,newJob, auth)
@@ -1804,7 +2284,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         def job1 = new ScheduledExecution(createJobParams(userRoleList: 'a,b', user: 'bob')).save()
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler)
-        service.frameworkService = Mock(FrameworkService)
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
         when:
         def result = service.rescheduleJobs(null)
 
@@ -1831,8 +2316,14 @@ class ScheduledExecutionServiceSpec extends Specification {
         ).save(flush: true)
         service.executionServiceBean = Mock(ExecutionService)
         service.quartzScheduler = Mock(Scheduler)
-        service.frameworkService = Mock(FrameworkService)
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
         service.fileUploadService = Mock(FileUploadService)
+        service.jobSchedulerService = Mock(JobSchedulerService)
         when:
         def result = service.rescheduleJobs(null)
 
@@ -1846,10 +2337,10 @@ class ScheduledExecutionServiceSpec extends Specification {
         !job1.shouldScheduleExecution()
         job1.user == 'bob'
         job1.userRoles == ['a', 'b']
-        1 * service.frameworkService.getAuthContextForUserAndRoles('bob', ['a', 'b']) >> Mock(UserAndRolesAuthContext)
+        1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> Mock(UserAndRolesAuthContext)
         1 * service.executionServiceBean.getExecutionsAreActive() >> true
         1 * service.frameworkService.getRundeckBase() >> ''
-        1 * service.quartzScheduler.scheduleJob(_, _) >> new Date()
+        1 * service.jobSchedulerService.scheduleJob(_, _, _, exec1.dateStarted) >> exec1.dateStarted
     }
     def "reschedule adhoc execution getAuthContext error"() {
         given:
@@ -1879,7 +2370,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         !job1.shouldScheduleExecution()
         job1.user == 'bob'
         job1.userRoles == ['a', 'b']
-        1 * service.frameworkService.getAuthContextForUserAndRoles('bob', ['a', 'b']) >> {
+        1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['a', 'b'],job1.project) >> {
             throw new RuntimeException("getAuthContextForUserAndRoles failure")
         }
         0 * service.executionServiceBean.getExecutionsAreActive() >> true
@@ -1892,6 +2383,7 @@ class ScheduledExecutionServiceSpec extends Specification {
         def uuid = setupDoUpdate(true)
         
         def se = new ScheduledExecution(createJobParams()).save()
+        service.jobSchedulerService=Mock(JobSchedulerService)
         when:
         def params = baseJobParams()+[
                 
@@ -1996,6 +2488,216 @@ class ScheduledExecutionServiceSpec extends Specification {
         'xyz'      | true       | false   | false     | false
         'xyz'      | false      | true    | true      | true
         'xyz'      | false      | false   | false     | false
+    }
+
+
+    def "timezone validations on save"() {
+        given:
+        setupDoValidate()
+        def params = baseJobParams() +[scheduled: true,
+                                       crontabString: '0 1 2 3 4 ? *',
+                                       useCrontabString: 'true',
+                                        timeZone: timezone]
+        when:
+
+        def results = service._dovalidate(params, mockAuth())
+
+        then:
+
+        results.failed == expectFailed
+
+        where:
+        timezone    | expectFailed
+        null        | false
+        ''          | false
+        'America/Los_Angeles'   |false
+        'GMT-8:00'  | false
+        'PST'       | false
+        'XXXX'      |true
+        'AAmerica/Los_Angeles' | true
+
+    }
+
+    def "timezone validations on update"(){
+        given:
+        setupDoUpdate()
+        def params = baseJobParams() +[scheduled: true,
+                                       crontabString: '0 1 2 3 4 ? *',
+                                       useCrontabString: 'true',
+                                       timeZone: timezone]
+        def se = new ScheduledExecution(createJobParams()).save()
+        service.fileUploadService = Mock(FileUploadService)
+
+        when:
+        def results = service._doupdate([id: se.id.toString()] + params, mockAuth())
+
+        then:
+        results.success == expectSuccess
+
+        where:
+        timezone    | expectSuccess
+        null        | true
+        ''          | true
+        'America/Los_Angeles'   |true
+        'GMT-8:00'  | true
+        'PST'       | true
+        'XXXX'      |false
+        'AAmerica/Los_Angeles' | false
+    }
+
+    @Unroll
+    def "scheduleJob with or without TimeZone shouldn't fail"() {
+        given:
+        service.executionServiceBean = Mock(ExecutionService)
+        service.quartzScheduler = Mock(Scheduler) {
+            getListenerManager() >> Mock(ListenerManager)
+        }
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getRundeckBase() >> ''
+            getFrameworkProject('AProject') >> projectMock
+        }
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: true,
+                        scheduleEnabled: true,
+                        executionEnabled: true,
+                        userRoleList: 'a,b',
+                        crontabString: '0 0 10 0 0 ? *',
+                        useCrontabString: 'true',
+                        timeZone: timezone
+                )
+        ).save()
+        def scheduleDate = new Date()
+
+        when:
+        def result = service.scheduleJob(job, null, null)
+
+        then:
+        1 * service.executionServiceBean.getExecutionsAreActive() >> executionsAreActive
+        1 * service.quartzScheduler.scheduleJob(_, _) >> scheduleDate
+        result == scheduleDate
+
+        where:
+        executionsAreActive | timezone
+        true                | 'America/Los_Angeles'
+        true                | null
+        true                | ''
+    }
+
+
+
+    def "project passive mode execution"() {
+        given:
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.executions':property]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
+        when:
+        def result = service.isProjectExecutionEnabled(null)
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        property   | expect
+        null       | true
+        ''         | true
+        'true'     | false
+        'false'    | true
+    }
+
+    def "project passive mode schedule"() {
+        given:
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.schedule':property]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
+        when:
+        def result = service.isProjectScheduledEnabled(null)
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        property   | expect
+        null       | true
+        ''         | true
+        'true'     | false
+        'false'    | true
+    }
+
+    def "project passive mode should schedule"() {
+        given:
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.schedule':disableSchedule,
+                                       'project.disable.executions':disableExecution]
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkProject(_) >> projectMock
+        }
+        when:
+        def result = service.shouldScheduleInThisProject('proj')
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        disableSchedule   |disableExecution   | expect
+        null              |null               | true
+        ''                |''                 | true
+        'true'            |'true'             | false
+        'true'            |'false'            | false
+        'false'           |'false'            | true
+        'false'           |'true'             | false
+
+
+
+    }
+
+    @Unroll
+    def "nextExecutionTime on remote Cluster"() {
+        given:
+        setupDoValidate(true)
+        service.quartzScheduler = Mock(Scheduler)
+        service.quartzScheduler.getTrigger(_) >> null
+
+        def job = new ScheduledExecution(
+                createJobParams(
+                        scheduled: hasSchedule,
+                        scheduleEnabled: scheduleEnabled,
+                        executionEnabled: executionEnabled,
+                        userRoleList: 'a,b',
+                        serverNodeUUID: TEST_UUID2
+                )
+        ).save()
+
+        when:
+        def result = service.nextExecutionTime(job)
+
+        then:
+        if(expectScheduled){
+            result != null
+        }else{
+            result == null
+        }
+
+
+        where:
+        scheduleEnabled | executionEnabled | hasSchedule | expectScheduled
+        true            | true             | true        | true
+        false           | true             | true        | false
+        true            | false            | true        | false
+        false           | false            | true        | false
     }
 
 }

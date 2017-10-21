@@ -36,6 +36,10 @@ public abstract class JobRefCommand extends BaseExecutionItem implements JobExec
         return isNodeStep() ? NodeDispatchStepExecutor.STEP_EXECUTION_TYPE : JobExecutionItem.STEP_EXECUTION_TYPE;
     }
 
+    public String getProject(){
+        return null;
+    }
+
     public String getNodeStepType() {
         return STEP_EXECUTION_TYPE;
     }

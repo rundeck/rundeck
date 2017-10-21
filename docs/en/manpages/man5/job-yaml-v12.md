@@ -58,7 +58,7 @@ Each Job definition requires these values:
     * `WARN`
     * `ERROR`
 
-If the description contains more than one line of text, then the first line is used as the "short description" of the job, and rendered exactly as text. The remaining lines are the "extended description", rendered using Markdown format as HTML in the Rundeck GUI. Markdown can also embed HTML directly if you like.  See [Wikipedia - Markdown](http://en.wikipedia.org/wiki/Markdown#Example).  
+If the description contains more than one line of text, then the first line is used as the "short description" of the job, and rendered exactly as text. The remaining lines are the "extended description", rendered using Markdown format as HTML in the Rundeck GUI. Markdown can also embed HTML directly if you like.  See [Wikipedia - Markdown](https://en.wikipedia.org/wiki/Markdown#Example).
 
 The HTML is sanitized to remove disallowed tags before rendering to the browser (such as `<script>`, etc.).
 You can disable all extended description HTML rendering
@@ -130,7 +130,27 @@ In addition, these optional entries can be present:
 
     * An integer number indicating the maximum retries
     * `${option.retry}` reference to a job option value
-    
+
+   Alternatively the retry can be set with delay between retries:
+   
+    * `120` - indicates 120 seconds
+    * `6h 30m` indicates 6 hours and 30 minutes
+    * `${option.delay}` reference to a job option value
+   
+   Example of retry with delay:
+
+~~~~~~~~ {.yaml}
+  retry:
+      delay: 1h1m1s
+      retry: '${option.retry}'
+~~~~~~~~ 
+
+   Example of simple retry:
+
+~~~~~~~~ {.yaml}
+  retry: ${option.retry}
+~~~~~~~~ 
+
 `loglimit`
 
 :    An optional logging limit.
@@ -143,7 +163,7 @@ In addition, these optional entries can be present:
 `loglimitAction`
 
 :    The action to perform if the `loglimit` value is exceeded.
-     If `loglimit` is sepcified, but no `loglimitAction` is set, it will default to a 
+     If `loglimit` is specified, but no `loglimitAction` is set, it will default to a
      value of `halt`. Allowed values:
 
     * `halt` - halt and fail the job (default)
@@ -572,7 +592,7 @@ Optional map entries are:
 
 `dateFormat`
 
-:    The date/time format to use in the UI. Using the [momentjs format](http://momentjs.com/docs/#/displaying/format/).
+:    The date/time format to use in the UI. Using the [momentjs format](https://momentjs.com/docs/#/displaying/format/).
 
 `sortIndex` (deprecated)
 
@@ -808,10 +828,10 @@ Deprecated Example:
 
 ### Notification
 
-Defines a notification for the job.  You can include any of `onsuccess`, `onfailure` or `onstart` notifications. Each type of notification can define any of the built in notifications, or define plugin notifications.
+Defines a notification for the job.  You can include any of `onsuccess`, `onfailure`, `onstart` or `onavgduration` notifications. Each type of notification can define any of the built in notifications, or define plugin notifications.
 
 
-`onsuccess`/`onfailure`/`onstart`
+`onsuccess`/`onfailure`/`onstart`/`onavgduration`
 
 :    A Map containing either or both of:
 
@@ -848,6 +868,13 @@ Example:
           type: otherplugin
           configuration:
             a: b
+    onavgduration:
+      email:
+        recipients: test@example.com
+        subject: Job Exceeded average duration
+      plugin:
+        configuration: {}
+        type: MinimalNotificationPlugin
 ~~~~~~~~ 
 
 * For more information about the Webhook mechanism used, see the chapter [Integration - Webhooks](../manual/jobs.html#webhooks).

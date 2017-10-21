@@ -26,8 +26,6 @@ package com.dtolabs.rundeck.core.execution.impl.jsch;
 import com.dtolabs.rundeck.core.cli.CLIUtils;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.IRundeckProject;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionListener;
 import com.dtolabs.rundeck.core.execution.impl.common.AntSupport;
@@ -136,9 +134,28 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final boolean DEFAULT_SUDO_SUCCESS_ON_PROMPT_THRESHOLD = true;
     public static final String PROJECT_SSH_USER = PROJ_PROP_PREFIX + "ssh.user";
 
+    /**
+     * deprecated Global command & connection timeout framework property
+     */
+    public static final String SSH_TIMEOUT_PROP = "framework.ssh.timeout";
+
+    public static final String NODE_ATTR_SSH_COMMAND_TIMEOUT_PROP = "ssh-command-timeout";
+    public static final String FRAMEWORK_SSH_COMMAND_TIMEOUT_PROP = "framework.ssh.command.timeout";
+
+    public static final String NODE_ATTR_SSH_CONNECT_TIMEOUT_PROP = "ssh-connect-timeout";
+    public static final String FRAMEWORK_SSH_CONNECT_TIMEOUT_PROP = "framework.ssh.connect.timeout";
+
+
+    public static final String PROJ_PROP_CON_TIMEOUT = PROJ_PROP_PREFIX + NODE_ATTR_SSH_CONNECT_TIMEOUT_PROP;
+    public static final String FWK_PROP_CON_TIMEOUT = FWK_PROP_PREFIX + NODE_ATTR_SSH_CONNECT_TIMEOUT_PROP;
+
+    public static final String PROJ_PROP_COMMAND_TIMEOUT = PROJ_PROP_PREFIX + NODE_ATTR_SSH_COMMAND_TIMEOUT_PROP;
+    public static final String FWK_PROP_COMMAND_TIMEOUT = FWK_PROP_PREFIX + NODE_ATTR_SSH_COMMAND_TIMEOUT_PROP;
+
     public static final String SSH_CONFIG_PREFIX = "ssh-config-";
     public static final String FWK_SSH_CONFIG_PREFIX = FWK_PROP_PREFIX + SSH_CONFIG_PREFIX;
     public static final String PROJ_SSH_CONFIG_PREFIX = PROJ_PROP_PREFIX + SSH_CONFIG_PREFIX;
+
     private Framework framework;
 
     public JschNodeExecutor(final Framework framework) {
@@ -151,6 +168,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String CONFIG_SUDO_PASSSTORE_PATH = "sudopasswordstoragepath";
     public static final String CONFIG_AUTHENTICATION = "authentication";
     public static final String CONFIG_SET_PTY = "always-set-pty";
+    public static final String CONFIG_CON_TIMEOUT = "ssh-connection-timeout";
+    public static final String CONFIG_COMMAND_TIMEOUT = "ssh-command-timeout";
 
     static final Description DESC ;
 
@@ -188,6 +207,21 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             "Always force use of new pty",
             false, "false");
 
+    public static final Property PROP_CON_TIMEOUT = PropertyUtil.longProp(CONFIG_CON_TIMEOUT, "Connection Timeout",
+                                                                          "SSH Connection timeout in milliseconds. (0" +
+                                                                          " for no timeout)",
+                                                                          false, "0"
+    );
+
+    public static final Property PROP_COMMAND_TIMEOUT = PropertyUtil.longProp(
+            CONFIG_COMMAND_TIMEOUT,
+            "Command Timeout",
+            "Maximum duration of commands: timeout " +
+            "in milliseconds. (0 for no timeout)",
+            false,
+            "0"
+    );
+
     static {
         DescriptionBuilder builder = DescriptionBuilder.builder();
         builder.name(SERVICE_PROVIDER_TYPE)
@@ -200,6 +234,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         builder.property(SSH_PASSWORD_STORAGE_PROP);
         builder.property(SSH_AUTH_TYPE_PROP);
         builder.property(ALWAYS_SET_PTY);
+        builder.property(PROP_CON_TIMEOUT);
+        builder.property(PROP_COMMAND_TIMEOUT);
 
         builder.mapping(CONFIG_KEYPATH, PROJ_PROP_SSH_KEYPATH);
         builder.frameworkMapping(CONFIG_KEYPATH, FWK_PROP_SSH_KEYPATH);
@@ -209,8 +245,15 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         builder.frameworkMapping(CONFIG_PASSSTORE_PATH, FWK_PROP_SSH_PASSWORD_STORAGE_PATH);
         builder.mapping(CONFIG_AUTHENTICATION, PROJ_PROP_SSH_AUTHENTICATION);
         builder.frameworkMapping(CONFIG_AUTHENTICATION, FWK_PROP_SSH_AUTHENTICATION);
+
         builder.mapping(CONFIG_SET_PTY, PROJ_PROP_SET_PTY);
         builder.frameworkMapping(CONFIG_SET_PTY, FWK_PROP_SET_PTY);
+
+        builder.mapping(CONFIG_CON_TIMEOUT, PROJ_PROP_CON_TIMEOUT);
+        builder.frameworkMapping(CONFIG_CON_TIMEOUT, FWK_PROP_CON_TIMEOUT);
+
+        builder.mapping(CONFIG_COMMAND_TIMEOUT, PROJ_PROP_COMMAND_TIMEOUT);
+        builder.frameworkMapping(CONFIG_COMMAND_TIMEOUT, FWK_PROP_COMMAND_TIMEOUT);
 
         DESC=builder.build();
     }
@@ -242,7 +285,6 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         //perform jsch sssh command
         final NodeSSHConnectionInfo nodeAuthentication = new NodeSSHConnectionInfo(node, framework,
                                                                                    context);
-        final int timeout = nodeAuthentication.getSSHTimeout();
         try {
 
             sshexec = SSHTaskBuilder.build(node, command, project, context.getDataContext(),
@@ -299,7 +341,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             //first sudo prompt responder
             ResponderTask responder = new ResponderTask(sudoResponder, responderInput, responderOutput, resultHandler);
 
-            /**
+            /*
              * Callable will be executed by the ExecutorService
              */
             final Callable<ResponderTask.ResponderResult> responderResultCallable;
@@ -376,6 +418,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         }
         String errormsg = null;
         FailureReason failureReason=null;
+        final long contimeout = nodeAuthentication.getConnectTimeout();
+        final long commandtimeout = nodeAuthentication.getCommandTimeout();
         try {
             if(forceNewPty) {
                 sshexec.setAllocatePty(true);
@@ -383,7 +427,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             sshexec.execute();
             success = true;
         } catch (BuildException e) {
-            final ExtractFailure extractJschFailure = extractFailure(e,node, timeout, framework);
+            final ExtractFailure extractJschFailure = extractFailure(e, node, commandtimeout, contimeout, framework);
             errormsg = extractJschFailure.getErrormsg();
             failureReason = extractJschFailure.getReason();
             context.getExecutionListener().log(0, errormsg);
@@ -411,7 +455,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             }
         }
         final int resultCode = sshexec.getExitStatus();
-
+        if(null!=context.getOutputContext()){
+            context.getOutputContext().addOutput("exec", "exitCode", String.valueOf(resultCode));
+        }
         if (success) {
             return NodeExecutorResultImpl.createSuccess(node);
         } else {
@@ -445,18 +491,30 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         SSHProtocolFailure
     }
 
-    static ExtractFailure extractFailure(BuildException e, INodeEntry node, int timeout, Framework framework) {
+    static ExtractFailure extractFailure(
+            BuildException e,
+            INodeEntry node,
+            long commandTimeout,
+            long connectTimeout,
+            Framework framework
+    )
+    {
         String errormsg;
         FailureReason failureReason;
 
-        if (e.getMessage().contains("Timeout period exceeded, connection dropped")) {
+        if (e.getMessage().contains(ExtSSHExec.COMMAND_TIMEOUT_MESSAGE)) {
             errormsg =
-                "Failed execution for node: " + node.getNodename() + ": Execution Timeout period exceeded (after "
-                + timeout + "ms), connection dropped";
+                    "Failed execution for node: " + node.getNodename() + ": Execution Timeout period exceeded (after "
+                    + commandTimeout + "ms), connection dropped";
+            failureReason = NodeStepFailureReason.ConnectionTimeout;
+        } else if (e.getMessage().contains(ExtSSHExec.CON_TIMEOUT_MESSAGE)) {
+            errormsg =
+                    "Failed execution for node: " + node.getNodename() + ": Connection Timeout period exceeded (after "
+                    + connectTimeout + "ms).";
             failureReason = NodeStepFailureReason.ConnectionTimeout;
         } else if (null != e.getCause() && e.getCause() instanceof JSchException) {
             JSchException jSchException = (JSchException) e.getCause();
-            return extractJschFailure(node, timeout, jSchException, framework);
+            return extractJschFailure(node, commandTimeout, connectTimeout, jSchException, framework);
         } else if (e.getMessage().contains("Remote command failed with exit status")) {
             errormsg = e.getMessage();
             failureReason = NodeStepFailureReason.NonZeroResultCode;
@@ -468,7 +526,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     }
 
     static ExtractFailure extractJschFailure(final INodeEntry node,
-                                             final int timeout,
+                                             final long commandTimeout,
+                                             final long connectionTimeout,
                                              final JSchException jSchException, final Framework framework) {
         String errormsg;
         FailureReason reason;
@@ -501,7 +560,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             } else if (cause instanceof UnknownHostException) {
                 reason = NodeStepFailureReason.HostNotFound;
             } else if (cause instanceof SocketTimeoutException) {
-                errormsg = "Connection Timeout (after " + timeout + "ms): " + cause.getMessage();
+                errormsg = "Connection Timeout (after " + connectionTimeout + "ms): " + cause.getMessage();
                 reason = NodeStepFailureReason.ConnectionTimeout;
             } else if (cause instanceof SocketException) {
                 reason = NodeStepFailureReason.ConnectionFailure;

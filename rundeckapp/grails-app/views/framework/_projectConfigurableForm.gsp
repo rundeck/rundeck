@@ -27,14 +27,15 @@
             <g:set var="configurable" value="${configdata.configurable}"/>
 
             <g:set var="pluginprefix" value="${configdata.get('prefix')}"/>
+            <g:set var="categoryProps" value="${configurable.projectConfigProperties.findAll{configdata.configurable.categories[it.name]==category}}"/>
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                    properties         : configurable.projectConfigProperties,
+                    properties         : categoryProps,
                     report             : configdata.get('report'),
                     prefix             : pluginprefix,
                     values             : configdata.get('values') ?: [:],
                     fieldnamePrefix    : pluginprefix,
                     origfieldnamePrefix: 'orig.' + pluginprefix,
-                    allowedScope       : com.dtolabs.rundeck.core.plugins.configuration.PropertyScope.Project
+                    allowedScope       : PropertyScope.Project
             ]}"/>
 
         </g:each>

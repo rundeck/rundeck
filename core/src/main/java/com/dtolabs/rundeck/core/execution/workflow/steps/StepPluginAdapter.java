@@ -24,7 +24,8 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
@@ -81,8 +82,15 @@ class StepPluginAdapter implements StepExecutor, Describable {
         {
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         if (null != instanceConfiguration) {
-            instanceConfiguration = DataContextUtils.replaceDataReferences(instanceConfiguration,
-                                                                           executionContext.getDataContext());
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                    instanceConfiguration,
+                    ContextView.global(),
+                    ContextView::nodeStep,
+                    null,
+                    executionContext.getSharedDataContext(),
+                    false,
+                    true
+            );
         }
         final String providerName = item.getType();
         final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(executionContext,

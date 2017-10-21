@@ -98,85 +98,6 @@ function myToggleClassName(elem, name) {
 }
 
 
-/** job cancellation code*/
-
-function updatecancel(data,elem,id){
-
-    var orig=data;
-    if(typeof(data) == "string"){
-        eval("data="+data);
-    }
-    if(data['cancelled']){
-        if($(elem)){
-            setHtml(elem,'<span class="fail">Killed</span>');
-        }
-        if($('exec-'+id+'-spinner')){
-            clearHtml($('exec-'+id+'-spinner'));
-            var img=new Element('img');
-            img.src= appLinks.iconTinyWarn;
-            $('exec-'+id+'-spinner').appendChild(img);
-        }
-        if($('exec-'+id+'-dateCompleted')){
-            clearHtml($('exec-'+id+'-dateCompleted'));
-            if($('exec-'+id+'-dateCompleted').onclick){
-                $(elem).onclick=$('exec-'+id+'-dateCompleted').onclick;
-            }
-        }
-
-    }else if(data['status']!='success'){
-        if($(elem)){
-            var sp = new Element('span');
-            sp.addClassName('fail');
-            setText(sp, (data['error'] ? data['error'] : 'Failed to Kill job.'));
-            clearHtml(elem);
-            $(elem).appendChild(sp);
-        }
-    }else if(data['status']=='success'){
-        if($(elem)){
-            setText(elem,'Job Completed.');
-        }
-        if($('exec-'+id+'-spinner')){
-            clearHtml('exec-' + id + '-spinner');
-            var img = new Element('img');
-            img.src = appLinks.iconTinyOk;
-            $('exec-' + id + '-spinner').appendChild(img);
-        }
-        if($('exec-'+id+'-dateCompleted')){
-            clearHtml('exec-' + id + '-dateCompleted');
-            if($('exec-'+id+'-dateCompleted').onclick){
-                $(elem).onclick=$('exec-'+id+'-dateCompleted').onclick;
-            }
-        }
-    }
-}
-
-function canceljob(id,elem){
-    if($(elem)){
-        clearHtml(elem);
-        var img = new Element('img');
-        img.src = appLinks.iconSpinner;
-        $(elem).appendChild(img);
-        appendText(elem,' Killing Job ...');
-    }
-    new Ajax.Request(appLinks.executionCancelExecution, {
-        parameters: "id="+id,
-        onSuccess: function(transport) {
-            try{
-                updatecancel(transport.responseText,elem,id);
-            }catch(e){
-                alert(e);
-            }
-        },
-        onFailure: function(reponse) {
-            updatecancel({error:"Request failed: "+reponse.statusText},elem,id);
-            cancelJobError("Request failed: "+reponse.statusText,elem,id);
-        }
-    });
-}
-
-function cancelJobError(mesg,elem,id){
-}
-
 var Expander = {
     toggle: function(elem, contain,expression) {
         var e = $(elem);
@@ -473,7 +394,7 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
     }
 
     //add controls
-    var addSoftWrapCheckbox=data.aceControlSoftWrap?data.aceControlSoftWrap:false
+    var addSoftWrapCheckbox=data.aceControlSoftWrap?data.aceControlSoftWrap:false;
     if(addSoftWrapCheckbox){
         var _soft = jQuery('<input/>')
             .attr('type', 'checkbox')
@@ -595,7 +516,7 @@ function _genUrl(url,params){
             urlparams.push(encodeURIComponent(e) + "=" + encodeURIComponent(params[e]));
         }
     }
-    return url + (url.indexOf('?') > 0 ? '&' : '?') + urlparams.join("&");
+    return url + (urlparams.length ? ( (url.indexOf('?') > 0 ? '&' : '?') + urlparams.join("&")) : '');
 }
 /**
  * Generate a link

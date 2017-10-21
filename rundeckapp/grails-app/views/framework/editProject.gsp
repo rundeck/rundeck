@@ -26,11 +26,11 @@
     <g:set var="rkey" value="${g.rkey()}"/>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <meta name="tabpage" content="configure"/>
-    <title><g:message code="domain.Project.choose.title" default="Edit Project"/></title>
+    <meta name="tabpage" content="projectconfigure"/>
+    <meta name="projtabtitle" content="${message(code:'configuration')}"/>
+    <title><g:message code="edit.configuration" /></title>
 
     <g:javascript library="prototype/effects"/>
-    <g:javascript library="resourceModelConfig"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="storageBrowseKO.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
@@ -39,8 +39,6 @@
     var configControl;
     var confirm = new PageConfirm(message('page.unsaved.changes'));
     function init(){
-        configControl=new ResourceModelConfigControl('${enc(js:prefixKey)}',confirm.setNeedsConfirm);
-        configControl.pageInit();
         $$('input').each(function(elem){
             if(elem.type=='text'){
                 elem.observe('keypress',noenter);
@@ -54,7 +52,11 @@
 
 <body>
 
-
+<div class="row">
+    <div class="col-sm-12">
+        <g:render template="/common/messages"/>
+    </div>
+</div>
     <div class="row">
         <g:form action="saveProject" method="post"
                 useToken="true"
@@ -62,10 +64,21 @@
         <div class="col-sm-10 col-sm-offset-1">
             <div class="panel panel-primary"  id="createform">
                 <div class="panel-heading">
-                        <span class="h3">
+                    <span class="panel-title">
                             <g:message code="domain.Project.edit.message"
                                        default="Configure Project"/>: <g:enc>${params.project ?: request.project}</g:enc>
                     </span>
+                    <g:link controller="framework" action="editProjectConfig"
+                            params="[project: params.project ?: request.project]"
+                            class="has_tooltip pull-right panel-title"
+                            data-placement="bottom"
+                            title="${message(
+                                    code: 'page.admin.EditProjectConfigFile.title',
+                                    default: 'Advanced: Edit config file directly'
+                            )}">
+                        <g:icon name="file"/>
+                        <g:message code="page.admin.EditProjectConfigFile.button" default="Edit Configuration File"/>
+                    </g:link>
                 </div>
                 <g:render template="editProjectForm" model="${[editOnly:true,project: params.project ?: request.project]}"/>
                 <div class="panel-footer">

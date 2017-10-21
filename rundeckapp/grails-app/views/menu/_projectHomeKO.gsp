@@ -16,6 +16,11 @@
 
 %{--Template for project details--}%
 <div class="container" data-bind="attr: { 'data-project': projectName }, ">
+    <!-- ko if: project.showMotd() -->
+    <div class="well">
+        <span data-bind="html: project.readme().motdHTML()"></span>
+    </div>
+    <!-- /ko -->
     <div class="row">
         <div class="col-sm-6 col-md-4">
             <a href="${g.createLink(action: 'projectHome', controller: 'menu', params: [project: '<$>'])}"
@@ -91,7 +96,7 @@
                         <g:img file="spinner-gray.gif" width="24px" height="24px"/>
                     </span>
                     <span data-bind="if: project.auth().admin">
-                        <a href="${g.createLink(controller: "menu", action: "admin", params: [project: '<$>'])}"
+                        <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"
                            data-bind="urlPathParam: projectName"
                            class="btn btn-default btn-sm">
                             <g:message code="gui.menu.Admin"/>
@@ -142,39 +147,8 @@
         <div class="row row-space"
              data-bind="if: project.showMessage() ">
             <div class="col-sm-12">
-                <!-- ko if: project.showMotd() -->
-                <div class="well well autoshow">
-
-                    <span data-bind="if: project.auth().admin">
-                        <a href="${g.createLink(
-                                controller: "framework",
-                                action: "editProjectFile",
-                                params: [project: '<$>', filename: 'motd.md']
-                        )}"
-                           data-bind="urlPathParam: projectName"
-                           class="btn btn-link btn-sm pull-right autohide">
-                            <g:icon name="pencil"/>
-                            <g:message code="button.Edit.label" />
-                        </a>
-                    </span>
-                    <span data-bind="html: project.readme().motdHTML()"></span>
-                </div>
-                <!-- /ko -->
-
                 <!-- ko if: project.showReadme() -->
-                <div class="well well well-nobg autoshow">
-                <span data-bind="if: project.auth().admin">
-                    <a href="${g.createLink(
-                            controller: "framework",
-                            action: "editProjectFile",
-                            params: [project: '<$>', filename: 'readme.md']
-                    )}"
-                       data-bind="urlPathParam: projectName"
-                       class="btn btn-link btn-sm pull-right autohide">
-                        <g:icon name="pencil"/>
-                        <g:message code="button.Edit.label" />
-                    </a>
-                </span>
+                <div class="well well-nobg">
                     <span data-bind="html: project.readme().readmeHTML()"></span>
                 </div>
                 <!-- /ko -->

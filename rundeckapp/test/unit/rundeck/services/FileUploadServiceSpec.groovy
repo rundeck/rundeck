@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
@@ -189,11 +190,7 @@ class FileUploadServiceSpec extends Specification {
 
         1 * service.pluginService.configurePlugin('filesystem-temp', _, FileUploadPlugin) >>
                 new ConfiguredPlugin<FileUploadPlugin>(plugin, null)
-        1 * context.getDataContext() >> [
-                option: [
-                        (optionName): ref
-                ]
-        ]
+        1 * context.getDataContext() >> new BaseDataContext([option: [(optionName): ref]])
         1 * context.getExecutionListener() >> Mock(ExecutionListener)
         result[optionName] != null
         result[optionName + '.fileName'] != null
@@ -331,7 +328,6 @@ class FileUploadServiceSpec extends Specification {
         )
         exec.validate()
         if (exec.errors.hasErrors()) {
-            System.err.println(exec.errors.allErrors*.toString())
         }
         exec.save(flush: true)
     }

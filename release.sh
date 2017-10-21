@@ -1,7 +1,8 @@
 #!/bin/bash
 #/ Update version to release version, create a release tag and, then update to new snapshot version.
-#/ usage: [--commit]
-#/   --commit: commit changes. otherwise a DRYRUN is performed
+#/ usage: [--dryrun|--commit]
+#/   --dryrun: don't commit changes
+#/   --commit: commit changes
 
 set -euo pipefail
 IFS=$'\n\t'
@@ -48,7 +49,7 @@ commit_tag(){
     do_dryrun git tag -a $TAG -m "$MESSAGE"
 }
 check_args(){
-    if [ ${#ARGS[@]} -gt 1 ] ; then
+    if [ ${#ARGS[@]} -ne 1 ] ; then
         usage
         exit 2
     fi
@@ -58,6 +59,11 @@ check_args(){
     fi
     if [ ${#ARGS[@]} -gt 0 ] && [ "${ARGS[0]}" == "--commit" ] ; then
         DRYRUN=0
+    elif [ ${#ARGS[@]} -gt 0 ] && [ "${ARGS[0]}" == "--dryrun" ] ; then
+        DRYRUN=1
+    else
+        usage
+        exit 2
     fi
 }
 check_release_notes(){

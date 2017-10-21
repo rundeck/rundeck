@@ -37,6 +37,7 @@ import rundeck.WorkflowStep
 import rundeck.services.FrameworkService
 import rundeck.services.PasswordFieldsService
 import rundeck.services.PasswordFieldsServiceTests
+import rundeck.services.ScheduledExecutionService
 import rundeck.services.UserService
 
 /**
@@ -270,33 +271,33 @@ class FrameworkControllerTest {
                     ],
             ]
         }
+        fwk.demand.listWriteableResourceModelSources { project -> [] }
         fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
         fwk.demand.getDefaultNodeExecutorService { -> null }
         fwk.demand.getDefaultFileCopyService { -> null }
         fwk.demand.getNodeExecConfigurationForType { -> null }
         fwk.demand.getFileCopyConfigurationForType { -> null }
+        fwk.demand.loadProjectConfigurableInput {prefix,props -> [:] }
 
         def proj = mockFor(IRundeckProject,true)
-        proj.demand.getProjectProperties{-> [:]}
+        proj.demand.getProjectProperties(1..3){-> [:]}
 
         fwk.demand.getFrameworkProject { name-> proj.createMock() }
 
         controller.frameworkService = fwk.createMock()
 
-        def resourcePFmck = mockFor(PasswordFieldsService)
         def execPFmck = mockFor(PasswordFieldsService)
         def fcopyPFmck = mockFor(PasswordFieldsService)
 
-        resourcePFmck.demand.reset{ -> return null}
-        resourcePFmck.demand.track{a, b -> return null}
         execPFmck.demand.reset{ -> return null}
         execPFmck.demand.track{a, b -> return null}
         fcopyPFmck.demand.reset{ -> return null}
         fcopyPFmck.demand.track{a, b -> return null}
 
-        controller.resourcesPasswordFieldsService = resourcePFmck.createMock()
+
         controller.execPasswordFieldsService = execPFmck.createMock()
         controller.fcopyPasswordFieldsService = fcopyPFmck.createMock()
+
 
         def passwordFieldsService = new PasswordFieldsService()
         passwordFieldsService.fields.put("dummy", "stuff")
@@ -310,7 +311,6 @@ class FrameworkControllerTest {
         then:
         assertEquals("plugin", model["prefixKey"])
         assertEquals(model["project"], "edit_test_project")
-        assertEquals(1, model["configs"].size())
         assertEquals(1, passwordFieldsService.fields.size())
     }
 
@@ -393,6 +393,7 @@ class FrameworkControllerTest {
         fwk.demand.addProjectNodeExecutorPropertiesForType {type, props, config, remove ->
             props.setProperty("foobar", "barbaz")
         }
+        fwk.demand.validateProjectConfigurableInput {data,prefix -> [:] }
 
         fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
             ["success":props.size() != 0]
@@ -400,15 +401,10 @@ class FrameworkControllerTest {
 
         controller.frameworkService = fwk.createMock()
 
-        def resourcePFmck = mockFor(PasswordFieldsService)
         def execPFmck = mockFor(PasswordFieldsService)
         def fcopyPFmck = mockFor(PasswordFieldsService)
 
-        controller.resourcesPasswordFieldsService = mockWith(PasswordFieldsService){
-            adjust{a -> return null}
-            untrack{a, b -> return null}
-            reset{ -> }
-        }
+
         controller.execPasswordFieldsService = mockWith(PasswordFieldsService){
             untrack{a, b -> return null}
             reset{ -> }
@@ -420,6 +416,12 @@ class FrameworkControllerTest {
         controller.userService = mockWith(UserService){
             storeFilterPref { -> true }
         }
+
+        def seServiceControl = mockFor(ScheduledExecutionService)
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
+        seServiceControl.demand.isProjectScheduledEnabled{ project -> true}
+        controller.scheduledExecutionService = seServiceControl.createMock()
 
         request.method = "POST"
 

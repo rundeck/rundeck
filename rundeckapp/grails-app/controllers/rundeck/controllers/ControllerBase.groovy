@@ -41,7 +41,10 @@ class ControllerBase {
             'menu/home',
             'menu/projectHome',
             'menu/executionMode',
-            'menu/admin',
+            'menu/projectExport',
+            'menu/projectImport',
+            'menu/projectDelete',
+            'menu/projectAcls',
             "menu/logStorage",
             "menu/securityConfig",
             "menu/acls",
@@ -61,6 +64,7 @@ class ControllerBase {
             "framework/createProject",
             "framework/editProject",
             "framework/editProjectConfig",
+            "framework/editProjectFile",
             "scm/index",
             "reports/index",
     ]
@@ -286,5 +290,22 @@ class ControllerBase {
      */
     protected def renderErrorFragment(Map model) {
         render(template: "/common/errorFragment",model:model)
+    }
+
+    /**
+     * Test for valid request token
+     * @return true if token is valid, false if error response has been sent
+     */
+    protected boolean requestHasValidToken() {
+        boolean valid = false
+        withForm {
+            valid = true
+        }.invalidToken {
+        }
+        if (!valid) {
+            request.errorCode = 'request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
+        valid
     }
 }

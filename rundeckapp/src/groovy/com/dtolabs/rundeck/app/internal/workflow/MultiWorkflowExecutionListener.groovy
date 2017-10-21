@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.app.internal.workflow
 
+import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionListener
@@ -42,6 +43,7 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
     List<WorkflowExecutionListener> listenerList;
     List<WorkflowExecutionListener> reversedListenerList;
     ExecutionListener delegate;
+    private boolean ignoreError
 
     private MultiWorkflowExecutionListener(ExecutionListener delegate,List<WorkflowExecutionListener> listenerList) {
         this.delegate = delegate;
@@ -57,6 +59,11 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
      */
     public static MultiWorkflowExecutionListener create(ExecutionListener delegate, List<WorkflowExecutionListener> listenerList) {
         return new MultiWorkflowExecutionListener(delegate,listenerList);
+    }
+
+    @Override
+    public void ignoreErrors(boolean value) {
+        ignoreError = value;
     }
 
     @Override
@@ -109,19 +116,21 @@ class MultiWorkflowExecutionListener implements WorkflowExecutionListener,Execut
         reversedListenerList*.finishExecuteNodeStep(result, context, item, node)
     }
 
-    @Override
-    boolean isTerse() {
-        return delegate.isTerse()
-    }
-
-    @Override
-    String getLogFormat() {
-        return delegate.getLogFormat()
-    }
 
     @Override
     void log(int level, String message) {
-        delegate.log(level,message)
+        if (ignoreError && level < Constants.INFO_LEVEL) {
+            level = Constants.INFO_LEVEL
+        }
+        delegate.log(level, message)
+    }
+
+    @Override
+    void log(int level, final String message, final Map eventMeta) {
+        if (ignoreError && level < Constants.INFO_LEVEL) {
+            level = Constants.INFO_LEVEL
+        }
+        delegate.log(level, message, eventMeta)
     }
 
     @Override

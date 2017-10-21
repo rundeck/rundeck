@@ -1,6 +1,511 @@
 % Changelog
 % greg
-% 04/19/2017
+% 10/16/2017
+
+Release 2.10.0
+===========
+
+Date: 2017-10-16
+
+Name: <span style="color: Teal"><span class="glyphicon glyphicon-glass"></span> "cafe mocha teal glass"</span>
+
+## Upgrading from Earlier versions
+
+* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+
+## Notes
+
+New features:
+
+* GUI editable Resource Model source plugins.  Allows the xml/yaml/json resource data to be edited in the GUI.
+	* The built-in File model source can be marked as "writeable", allowing admins to edit the resources file in the GUI
+* GUI editable ACLs. Modify the aclpolicy yaml files in the GUI and see validation info.
+* Jobs can define Notifications in the event of Average Duration Exceeded
+* API updated to allow user profile modifications
+* Job Filters can specify whether a job is scheduled
+* Key Value Data capture Log Filter can capture a value and specify a hardcoded name for the variable
+
+Plus: bug fixes, documentation typo fixes
+
+## Contributors
+
+* Greg Schueler (gschueler)
+* Michihito Shigemura (shigemk2)
+* damageboy
+* jtobard
+
+## Bug Reporters
+
+* gschueler
+* jtobard
+* ltamaster
+* ronave
+* shigemk2
+
+## Issues
+
+[Milestone 2.10.0](https://github.com/rundeck/rundeck/milestone/62)
+
+* [Fix typo in tutorials/project-setup](https://github.com/rundeck/rundeck/pull/2847)
+* [Execution log storage partial checkpointing](https://github.com/rundeck/rundeck/pull/2790)
+* [Key Storage Selector doesn't work on Config Page](https://github.com/rundeck/rundeck/issues/2785)
+* [List Future Schedule on jobsAjax](https://github.com/rundeck/rundeck/pull/2778)
+* [ACL File editor](https://github.com/rundeck/rundeck/pull/2772)
+* [Feature: GUI editable File resource model sources](https://github.com/rundeck/rundeck/pull/2753)
+* [Api endpoint to modify user profile.](https://github.com/rundeck/rundeck/pull/2741)
+* [Jobs filter enhancement](https://github.com/rundeck/rundeck/pull/2733)
+* [Named pattern log filter](https://github.com/rundeck/rundeck/pull/2720)
+* [Job Notification for jobs exceeding average duration](https://github.com/rundeck/rundeck/pull/2665)
+* [API acl system level bug](https://github.com/rundeck/rundeck/issues/2569)
+
+---
+
+Release 2.9.4
+===========
+
+Date: 2017-10-13
+
+Name: <span style="color: HotPink"><span class="glyphicon glyphicon-briefcase"></span> "caffe latte hotpink briefcase"</span>
+
+## Upgrading from Earlier versions
+
+* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+
+## Notes
+
+Bugfix release.
+
+Previous changes in 2.9.0: [Relese 2.9.0](https://github.com/rundeck/rundeck/blob/v2.9.0/RELEASE.md)
+
+For more detail see [2.9.0 Changes](https://github.com/rundeck/rundeck/issues/2577)
+
+**Many Thanks** to Michihito Shigemura for increasing the signal-to-noise ratio of our documentation by
+diligently fixing numerous typos!
+
+## Contributors
+
+* Bob van Bokkem (BobVanB)
+* Greg Schueler (gschueler)
+* Krzysztof Walkowicz (krzwalko)
+* Michihito Shigemura (shigemk2)
+* damageboy
+* jtobard
+* tomcs (braintreeps)
+
+## Bug Reporters
+
+* BobVanB
+* crile
+* damageboy
+* genoaction
+* geraldh
+* gschueler
+* hugospinto
+* jtobard
+* krzwalko
+* methom90wh
+* niphlod
+* sebastianbello
+* shigemk2
+* tcsalameh
+
+## Issues
+
+[Milestone 2.9.4](https://github.com/rundeck/rundeck/milestone/63)
+
+* [Log filter plugins do not show GUI controls for input properties](https://github.com/rundeck/rundeck/issues/2835)
+* [Key value data captured in node-first workflow is not carried forward](https://github.com/rundeck/rundeck/issues/2831)
+* [Fix typo administration/installation](https://github.com/rundeck/rundeck/pull/2789)
+* [Can't view second results page in the activity view when filter is in use](https://github.com/rundeck/rundeck/issues/2787)
+* [update log message getRemoteJSON to debug](https://github.com/rundeck/rundeck/pull/2782)
+* [Switch to commonmark-java from markdownj, enable gfm tables extension](https://github.com/rundeck/rundeck/pull/2768)
+* [Missing node attribute is taken from another node](https://github.com/rundeck/rundeck/issues/2766)
+* [Add threadcount as a job context variable](https://github.com/rundeck/rundeck/pull/2759)
+* [Fix #2757 fix arguments to message code](https://github.com/rundeck/rundeck/pull/2758)
+* [Notification plugin name truncated when there's no plugin configuration properties](https://github.com/rundeck/rundeck/issues/2757)
+* [Rundeck shared data context unavailable for RemoteScriptNodeStep](https://github.com/rundeck/rundeck/issues/2734)
+* [Key Value data filter fails in sub job](https://github.com/rundeck/rundeck/issues/2732)
+* [Fix nested Job Reference](https://github.com/rundeck/rundeck/pull/2727)
+* [fix: relativeDateString tag issues](https://github.com/rundeck/rundeck/pull/2726)
+* [Improve ISO 8601 date handling with timezone when scheduling ad-hoc job](https://github.com/rundeck/rundeck/pull/2725)
+* [Referenced jobs not found by job from another project](https://github.com/rundeck/rundeck/issues/2718)
+* [Log filters: not working when referenced job is invoked](https://github.com/rundeck/rundeck/issues/2691)
+* [multi valued options with "selected=true" fetched from remote URL don't work](https://github.com/rundeck/rundeck/issues/2604)
+
+---
+
+Release 2.9.3
+===========
+
+Date: 2017-08-25
+
+Name: <span style="color: Goldenrod"><span class="glyphicon glyphicon-book"></span> "caffe latte goldenrod book"</span>
+
+## Upgrading from Earlier versions
+
+* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+
+## Notes
+
+Bugfix release.
+
+Previous changes in 2.9.0: [Relese 2.9.0](https://github.com/rundeck/rundeck/blob/v2.9.0/RELEASE.md)
+
+For more detail see [2.9.0 Changes](https://github.com/rundeck/rundeck/issues/2577)
+
+Stay tuned! We are also adding many new features to [Rundeck Pro](http://rundeck.com).
+
+## Contributors
+
+* Greg Schueler (gschueler)
+* Luis Toledo (ltamaster)
+* jtobard
+* 黑牛 (chenlingmin)
+
+## Bug Reporters
+
+* ahonor
+* chenlingmin
+* emiliohh
+* giovanimarin
+* jtobard
+* ltamaster
+
+## Issues
+
+[Milestone 2.9.3](https://github.com/rundeck/rundeck/milestone/61)
+
+* [When upload job's definition them project always is filled with the current project](https://github.com/rundeck/rundeck/issues/2715)
+* [Expose delete executions for plugins](https://github.com/rundeck/rundeck/pull/2709)
+* [Add "footer" message on login page.](https://github.com/rundeck/rundeck/pull/2692)
+* [jobref to other project uses other project's nodes](https://github.com/rundeck/rundeck/issues/2685)
+* [sync chinese message properties](https://github.com/rundeck/rundeck/pull/2678)
+* ["Next scheduled execution" message is inconsistent on Cluster Mode](https://github.com/rundeck/rundeck/issues/2677)
+* [Importing job with node intersection issue ](https://github.com/rundeck/rundeck/issues/2625)
+
+---
+
+Release 2.9.2
+===========
+
+Date: 2017-08-07
+
+Name: <span style="color: Fuchsia"><span class="glyphicon glyphicon-bell"></span> "caffe latte fuchsia bell"</span>
+
+## Upgrading from Earlier versions
+
+* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+
+## Notes
+
+Bugfix release.
+
+Previous changes in 2.9.0: [Relese 2.9.0](https://github.com/rundeck/rundeck/blob/v2.9.0/RELEASE.md)
+
+For more detail see [2.9.0 Changes](https://github.com/rundeck/rundeck/issues/2577)
+
+Stay tuned! We are also adding many new features to [Rundeck Pro](http://rundeck.com).
+
+## Contributors
+
+* Greg Schueler (gschueler)
+
+## Bug Reporters
+
+* FritsHoogland
+
+## Issues
+
+[Milestone 2.9.2](https://github.com/rundeck/rundeck/milestone/60)
+
+* [Running an ad-hoc command with ansible plugin results in java.lang.NoSuchMethodError: com.dtolabs.rundeck.core.execution.ExecutionContext.getDataContext()Ljava/util/Map;](https://github.com/rundeck/rundeck/issues/2675)
+
+---
+
+Release 2.9.1
+===========
+
+Date: 2017-08-04
+
+Name: <span style="color: ForestGreen"><span class="glyphicon glyphicon-sunglasses"></span> "caffe latte forestgreen sunglasses"</span>
+
+## Upgrading from Earlier versions
+
+* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+
+## Notes
+
+Bugfix release.
+
+Previous changes in 2.9.0: [Relese 2.9.0](https://github.com/rundeck/rundeck/blob/v2.9.0/RELEASE.md)
+
+For more detail see [2.9.0 Changes](https://github.com/rundeck/rundeck/issues/2577)
+
+Stay tuned! We are also adding many new features to [Rundeck Pro](http://rundeck.com).
+
+## Contributors
+
+* Greg Schueler (gschueler)
+
+## Bug Reporters
+
+* gschueler
+* ltamaster
+* qicaihuoyan
+* uprooted
+
+## Issues
+
+[Milestone 2.9.1](https://github.com/rundeck/rundeck/milestone/59)
+
+* [Editing Project Configuration File](https://github.com/rundeck/rundeck/issues/2673)
+* [Fix: Execution Summary step start times show in wrong time zone](https://github.com/rundeck/rundeck/pull/2672)
+* [fix: edit project config file shows error after saving](https://github.com/rundeck/rundeck/pull/2671)
+* [Error on Log Output tab on rundeck 2.9.0](https://github.com/rundeck/rundeck/issues/2667)
+* [yum installation broken: "Transaction check error" for web.xml](https://github.com/rundeck/rundeck/issues/2666)
+
+---
+
+Release 2.9.0
+===========
+
+Date: 2017-08-03
+
+Name: <span style="color: FireBrick"><span class="glyphicon glyphicon-grain"></span> "caffe latte firebrick grain"</span>
+
+## Upgrading from Earlier versions
+
+* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+
+## Notes
+
+This release contains a number of enhancements:
+
+For more detail see [2.9.0 Changes](https://github.com/rundeck/rundeck/issues/2577)
+
+1. Data Capture/Data Passing between steps 
+	* Data capture plugin to match a regular expression in a step's log output and pass the values to later steps
+2. Log Filter Plugins
+	* These plugins can be applied to individual steps, or to the entire workflow
+	* Data type plugins can detect or mark formatted data such as JSON, CSV, HTML, Markdown, etc. and render it in the GUI
+	* Mask Passwords plugin removes any values from secure input options before it is logged
+	* Highlighting/quelling: highlight keywords or selectively quell output from verbose scripts
+	* (And of course, you can write your own plugins...)
+2. New Job and Project features: 
+	* Export a project to another Rundeck instance
+	* Copy a Job to another Project
+	* Reference a Job in another Project
+	* Check state of a job in another project
+	* Disable Job Schedules or all Executions for a project
+	* Improved Time Zone support
+	* Allow matching 0 nodes as success condition
+	* Retry delay
+4. GUI changes
+	* Rearranged the Project and System configuration pages and navigation
+	* Job workflow editor enhancements
+
+Stay tuned! We are also adding many new features to [Rundeck Pro](http://rundeck.com).
+
+## Contributors
+
+* Greg Schueler (gschueler)
+* Luis Toledo (ltamaster)
+* Marcel Dorenkamp (mdorenkamp)
+* jtobard
+
+## Bug Reporters
+
+* damageboy
+* daveres
+* gschueler
+* hiribarne
+* jtobard
+* ltamaster
+* mdorenkamp
+* mrala
+* pgressa
+* roller
+
+## Issues
+
+[Milestone 2.9.0](https://github.com/rundeck/rundeck/milestone/56)
+
+* [Project ACLS not applied to scheduled jobs, SCM context](https://github.com/rundeck/rundeck/issues/2660)
+* [Error viewing execution after deleting job using orchestrator](https://github.com/rundeck/rundeck/issues/2657)
+* [support chinese ](https://github.com/rundeck/rundeck/pull/2642)
+* [Export project to another instance](https://github.com/rundeck/rundeck/pull/2641)
+* [Activity Node Filter doesn't work as expected](https://github.com/rundeck/rundeck/issues/2640)
+* [UI updates](https://github.com/rundeck/rundeck/pull/2626)
+* [Search executions and retry jobs for plugins](https://github.com/rundeck/rundeck/pull/2617)
+* [Enable responsive css](https://github.com/rundeck/rundeck/pull/2613)
+* [Configuration GUI overhaul](https://github.com/rundeck/rundeck/pull/2611)
+* [Add GUI toggle for not wrapping long lines in the log output](https://github.com/rundeck/rundeck/issues/2608)
+* [Delay between retries](https://github.com/rundeck/rundeck/pull/2576)
+* [Add autocomplete for job name in Job Reference editor](https://github.com/rundeck/rundeck/pull/2567)
+* [Include Batix/rundeck-ansible-plugin](https://github.com/rundeck/rundeck/pull/2556)
+* [Copy job to another project](https://github.com/rundeck/rundeck/pull/2546)
+* [Passive mode for project](https://github.com/rundeck/rundeck/pull/2534)
+* [External Job State Conditional plugin.](https://github.com/rundeck/rundeck/pull/2524)
+* [Job Reference on another Project](https://github.com/rundeck/rundeck/pull/2519)
+* [Time Zone support](https://github.com/rundeck/rundeck/pull/2504)
+* [Shared data context and data passing between steps](https://github.com/rundeck/rundeck/pull/2482)
+* [Random subset orchestrator doesn't work as expected](https://github.com/rundeck/rundeck/issues/2472)
+* [Flag for success when node filter does not match any node](https://github.com/rundeck/rundeck/pull/2456)
+* [Feature Request - Support JOB Markdown output](https://github.com/rundeck/rundeck/issues/2325)
+* [Navbar invisible on mobile devices](https://github.com/rundeck/rundeck/issues/2278)
+* [Delay between retries](https://github.com/rundeck/rundeck/issues/2083)
+* [Masked Passwords are exposed if a job is run in debug mode](https://github.com/rundeck/rundeck/issues/1780)
+* [added web.xml to rpmbuild spec so it doesnt get replaced on update](https://github.com/rundeck/rundeck/pull/1591)
+* [RPM Update overwrites web.xml](https://github.com/rundeck/rundeck/issues/1590)
+* [grep ansi color log output doesn't work](https://github.com/rundeck/rundeck/issues/1463)
+* [Support custom Timezone in all views](https://github.com/rundeck/rundeck/issues/906)
+* [Scheduled job Time zone support](https://github.com/rundeck/rundeck/issues/138)
+* [Possibility to pass data between a job's steps](https://github.com/rundeck/rundeck/issues/116)
+
+---
+
+Release 2.8.4
+===========
+
+Date: 2017-07-12
+
+Name: <span style="color: Purple"><span class="glyphicon glyphicon-gift"></span> "cafe cubano purple gift"</span>
+
+## Upgrading from 2.8.0
+
+**Important Note**: please see the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html) if you are using Mysql or H2 database,
+and are upgrading from Rundeck 2.8.0.
+
+A DB schema change requires a manual fix before upgrading.
+
+## Upgrading from Earlier versions
+
+* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+
+## Notes
+
+This release is primarily bug fixes. 
+
+## Contributors
+
+* GitHub (web-flow)
+* Greg Schueler (gschueler)
+* René Kroon
+
+## Bug Reporters
+
+* JustRiedy
+* ReneKroon
+* simple365
+
+## Issues
+
+[Milestone 2.8.4](https://github.com/rundeck/rundeck/milestone/57)
+
+* [Mysql syntax error after login](https://github.com/rundeck/rundeck/issues/2609)
+* [Move to Gradle 3.5](https://github.com/rundeck/rundeck/pull/2600)
+* [Node List - Fails to display greater than 100 nodes per page](https://github.com/rundeck/rundeck/issues/2514)
+
+---
+
+Release 2.8.3
+===========
+
+Date: 2017-06-30
+
+Name: <span style="color: OrangeRed"><span class="glyphicon glyphicon-flash"></span> "cafe cubano orangered flash"</span>
+
+## Upgrading from 2.8.0
+
+**Important Note**: please see the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html) if you are using Mysql or H2 database,
+and are upgrading from Rundeck 2.8.0.
+
+A DB schema change requires a manual fix before upgrading.
+
+## Upgrading from Earlier versions
+
+* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+
+## Notes
+
+This release is primarily bug fixes. 
+
+Some other changes:
+
+* If a step has an Error Handler that is marked as "keepgoing on success", then Error level log output from the step is changed to Normal level
+* Executions that were running when the Rundeck server was shutdown will be set to "Incomplete" when the server restarts.
+* Some internal library versions were upgraded
+
+## Contributors
+
+* Alex Honor (ahonor)
+* Greg Schueler (gschueler)
+* Loïc Blot (nerzhul)
+* Sean Reifschneider (linsomniac)
+* jtobard
+* ltamaster
+
+## Bug Reporters
+
+* arthurlogilab
+* cr42
+* flapp
+* gschueler
+* jtobard
+* kmusard
+* linsomniac
+* ltamaster
+* matthewsrogers
+* nerzhul
+* ronave
+* schast
+* shoelzle
+* soar
+* tomdeblende
+* uralk
+* willemdh
+* zionio
+
+## Issues
+
+[Milestone 2.8.3](https://github.com/rundeck/rundeck/milestone/55)
+
+* [Add documentation for unlimited max token expiration time if set to 0](https://github.com/rundeck/rundeck/pull/2599)
+* [single valued options with "selected=true" fetched from remote URL don't work](https://github.com/rundeck/rundeck/issues/2585)
+* [2.8: ACL policy causes exception for matching clause of a resource attribute that is not present](https://github.com/rundeck/rundeck/issues/2559)
+* [single valued options with "selected=true" fetched from remote URL should not used on run again](https://github.com/rundeck/rundeck/issues/2552)
+* [Framework ssh timeout value used for both connect and command max time](https://github.com/rundeck/rundeck/issues/2547)
+* [Potential fix to #2538](https://github.com/rundeck/rundeck/pull/2539)
+* [Exception: property not found: framework.var.dir](https://github.com/rundeck/rundeck/issues/2538)
+* [Exception when exporting archive without project_acl authorization](https://github.com/rundeck/rundeck/issues/2528)
+* [Problem adding the first api token](https://github.com/rundeck/rundeck/issues/2525)
+* [Strange code editor behavior: delete option doesn't work](https://github.com/rundeck/rundeck/issues/2523)
+* [Fix problem with S3 plugin](https://github.com/rundeck/rundeck/pull/2512)
+* [Documentation: Changing wording of project global variable override.](https://github.com/rundeck/rundeck/pull/2510)
+* [Issue exporting job with node intersection](https://github.com/rundeck/rundeck/issues/2503)
+* [Documentation fix: java 8 is required](https://github.com/rundeck/rundeck/pull/2502)
+* [js issue when running job from popup](https://github.com/rundeck/rundeck/issues/2494)
+* [Generated tokens always are created with same user roles](https://github.com/rundeck/rundeck/issues/2492)
+* [Job Editor completion helper breaks when editing a job with a file upload](https://github.com/rundeck/rundeck/issues/2487)
+* [LocalCommand: empty option variable is not expanded](https://github.com/rundeck/rundeck/issues/2486)
+* [SCM GIT job exports different on different servers](https://github.com/rundeck/rundeck/issues/2483)
+* [java.lang.NullPointerException on debian jessie install ](https://github.com/rundeck/rundeck/issues/2481)
+* [Update postgresql connector to 42.0.0](https://github.com/rundeck/rundeck/pull/2480)
+* [API: Rundeck 2.8.0, Token creation response for api v18 request is incorrect](https://github.com/rundeck/rundeck/issues/2479)
+* [Reduce Error logs on steps with Error Handler](https://github.com/rundeck/rundeck/pull/2474)
+* [Ad hoc scheduled executions could not be rescheduled after a restart and will be killed](https://github.com/rundeck/rundeck/issues/2470)
+* [Cleaned up executions marked as "incomplete"](https://github.com/rundeck/rundeck/pull/2466)
+* [Add autocomplete to notification fields in job editor](https://github.com/rundeck/rundeck/pull/2462)
+* [Improve slow db queries related to activity page and home page](https://github.com/rundeck/rundeck/pull/2457)
+* [Update not-yet-commons-ssl dependency to 0.3.17](https://github.com/rundeck/rundeck/pull/2454)
+* [Update jackson-databind to 2.8.8.1](https://github.com/rundeck/rundeck/pull/2453)
+* [Upgrade jsch to 0.1.54](https://github.com/rundeck/rundeck/pull/2450)
+* [Simplify rdb queries for project home page statistics](https://github.com/rundeck/rundeck/issues/2448)
+* [Scheduled job executions broken after restart](https://github.com/rundeck/rundeck/issues/2271)
+* [Rescheduling ad hoc execution fails when restarting rundeckd](https://github.com/rundeck/rundeck/issues/2167)
+* [rd-acl test suggests incorrect policy for key storage](https://github.com/rundeck/rundeck/issues/1626)
+
+---
 
 Release 2.8.2
 ===========

@@ -40,6 +40,8 @@ apply plugin: 'eclipse'
 apply plugin: 'idea'
 apply plugin: 'maven'
 apply plugin: 'signing'
+apply plugin: 'com.google.osdetector'
+
 
 // set the convention to rundeck:<branch>:<path>:<projectName>
 eclipse.project.name =  "${project.getParent().eclipse.project.name}:webapp"
@@ -54,9 +56,10 @@ def grailsZipFileLocation = "${grailsZipFileBasePath}/${grailsZipFile}"
 def grailsInstallLocation = "${rootProject.projectDir}/local"
 def grailsLocalRepo = hasProperty('grailsLocalRepo') ? grailsLocalRepo : 'grails-app/plugins'
 def grailsCentral = hasProperty('disableGrailsCentral') && disableGrailsCentral=='true' ? "-Ddisable.grails.central=${disableGrailsCentral}" : "-Dgrails.central.url=${grailsCentralUrl}"
-def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
-def grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
-def grailsCommandLine = "${grailsHome}/bin/grails"
+//def grailsDownloadUrl = "http://dist.springframework.org.s3.amazonaws.com/release/GRAILS/grails-${grailsVersion}.zip"
+def grailsDownloadUrl = "https://github.com/grails/grails-core/releases/download/v${grailsVersion}/grails-${grailsVersion}.zip"
+ext.grailsHome = "${grailsInstallLocation}/${grailsBaseName}"
+def grailsCommandLine() { if (osdetector.os.contains("windows")) { return "${grailsHome}/bin/grails.bat" } else { "${grailsHome}/bin/grails" } }
 def mavenCredsDefined = hasProperty('mavenUser') && hasProperty('mavenPassword') && hasProperty('mavenRealm') && hasProperty('mavenHost')
 def mavenCreds = mavenCredsDefined ? "-Dmaven.user=${mavenUser} -Dmaven.password=${mavenPassword} -Dmaven.realm=${mavenRealm} -Dmaven.host=${mavenHost}" : ''
 def warFileName = "rundeck-${version}.war"
@@ -70,7 +73,11 @@ configurations{
     }
     pluginFiles.extendsFrom(runtime)
 }
-
+allprojects {
+    repositories {
+        maven { url "https://jitpack.io" }
+    }
+}
 dependencies {
     pluginFiles project(':plugins:script-plugin'),
             project(':plugins:stub-plugin'),
@@ -81,10 +88,11 @@ dependencies {
             project(':plugins:jasypt-encryption-plugin'),
             project(':plugins:orchestrator-plugin'),
             project(':plugins:git-plugin'),
-            project(':plugins:source-refresh-plugin')
+            project(':plugins:source-refresh-plugin'),
+            "com.github.Batix:rundeck-ansible-plugin:2.0.2"
 }
 
-task copyPluginLibs(dependsOn: configurations.pluginFiles)<< {
+task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
     File libextDir = new File(additionalFileLocation, "WEB-INF/rundeck/plugins")
     File manifestFile = new File(additionalFileLocation, "WEB-INF/rundeck/plugins/manifest.properties")
 
@@ -190,7 +198,7 @@ def projDeps = [
  * "core" needs to be built and installed into the local ~/.m2 repo before
  * we attempt to do anything further with Grails.
  */
-task installDependencies(dependsOn: projDeps) << {
+task('installDependencies').dependsOn(projDeps).doLast {
     description = "Builds and installs dependencies on other subprojects"
 }
 
@@ -206,7 +214,7 @@ task installJettyPlugin(type: Exec, dependsOn: [extractGrails]) {
 
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
+    commandLine grailsCommandLine()
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "${grailsCentral}",
@@ -228,7 +236,7 @@ task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
     ignoreExitValue=true
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
+    commandLine grailsCommandLine()
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "${grailsCentral}",
@@ -236,19 +244,21 @@ task cleanGrails(type: Exec, dependsOn: [extractGrails]) {
             "-DRUNDECK_VERSION=${version}", 'clean'
 }
 
-task clean(overwrite: true, dependsOn: [cleanEclipse, cleanWar, cleanGrails]) {
+task cleanAll(dependsOn: [cleanEclipse, cleanWar, cleanGrails]) {
 }
+
+clean.dependsOn cleanAll
 
 /**
  * Wrapper task for grails test-app
  */
-task testGrails(type: Exec, overwrite: true, dependsOn: [ installDependencies, extractGrails]) {
+task testGrails(type: Exec, overwrite: true, dependsOn: [installDependencies, extractGrails]) {
+    def rdbase=new File(temporaryDir,'rdeck_base')
+    rdbase.mkdirs()
     inputs.dir file(grailsHome)
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
-    def rdbase=new File(temporaryDir,'rdeck_base')
-    rdbase.mkdirs()
+    commandLine grailsCommandLine()
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "${grailsCentral}",
@@ -257,7 +267,13 @@ task testGrails(type: Exec, overwrite: true, dependsOn: [ installDependencies, e
             "-Drdeck.base=${rdbase}",
             'test-app'
 }
+testGrails.doFirst {
+    def rdbase=new File(temporaryDir,'rdeck_base')
+    rdbase.mkdirs()
+
+}
 test.dependsOn testGrails
+
 
 /**
  * Run grails compile
@@ -266,7 +282,7 @@ task grailsCompile(type: Exec, overwrite: true, dependsOn: [extractGrails]) {
     inputs.dir file(grailsHome)
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
+    commandLine grailsCommandLine()
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "${grailsCentral}",
@@ -280,11 +296,11 @@ task grailsCompile(type: Exec, overwrite: true, dependsOn: [extractGrails]) {
  */
 task grailsWar(type: Exec, overwrite:true, dependsOn: [ installDependencies,extractGrails, copyPluginLibs]) {
     inputs.dir file(grailsHome)
-    inputs.sourceDir file("${projectDir}/src")
+    inputs.dir(file("${projectDir}/src")).skipWhenEmpty()
     outputs.file file(warFileLocation)
     workingDir project.projectDir
     environment 'GRAILS_HOME', grailsHome
-    commandLine grailsCommandLine
+    commandLine grailsCommandLine()
     args "-Dmaven.central.url=${mavenCentralUrl}",
             "${mavenCreds}",
             "${grailsCentral}",
@@ -306,11 +322,12 @@ artifacts{
     }
 }
 
-task build(overwrite: true, dependsOn: [test, grailsWar]) {
+task buildAll(overwrite: true, dependsOn: [test, grailsWar]) {
     // noop build because this isn't actually a java project
     // besides the war task is handling building by issuing a "grails war"
 }
 
+build.dependsOn buildAll
 
 //********* artifact signing *********
 if(isReleaseBuild && project.hasProperty("signing.keyId")) {

@@ -19,6 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
@@ -26,6 +27,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCom
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.execution.JobExecutionItem
+import com.dtolabs.rundeck.execution.JobRefCommand
 import grails.test.mixin.*
 import org.grails.plugins.metricsweb.MetricService
 import org.junit.*
@@ -140,6 +142,11 @@ class ExecutionUtilServiceTests {
             @Override
             String toString() {
                 "abcd"
+            }
+
+            @Override
+            WFSharedContext getSharedContext() {
+                return null
             }
         }
         def logcontrol = mockFor(ExecutionLogWriter)
@@ -432,5 +439,101 @@ class ExecutionUtilServiceTests {
         assertEquals('def', item.getNodeFilter())
         assertEquals(true, item.getNodeIntersect())
 
+    }
+
+    void testItemForWFCmdItem_jobref_externalProject() {
+        def testService = service
+        //file url script path
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: 'anotherProject')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof ScriptURLCommandExecutionItem)
+        assertTrue(res instanceof JobRefCommand)
+        JobRefCommand item = (JobRefCommand) res
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertNotNull(item.args)
+        assertEquals([], item.args as List)
+    }
+
+    void testItemForWFCmdItem_jobref_args_externalProject() {
+        def testService = service
+        //file url script path
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: 'anotherProject')
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof ScriptURLCommandExecutionItem)
+        assertTrue(res instanceof JobRefCommand)
+        JobRefCommand item = (JobRefCommand) res
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertEquals('anotherProject', item.getProject())
+        assertNotNull(item.args)
+        assertEquals([], item.args as List)
+    }
+
+    void testItemForWFCmdItem_jobref_sameproject() {
+        def testService = service
+        //file url script path
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: 'jobProject')
+        def res = testService.itemForWFCmdItem(ce, null,'jobProject')
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof ScriptURLCommandExecutionItem)
+        assertTrue(res instanceof JobExecutionItem)
+        JobExecutionItem item = (JobExecutionItem) res
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertNotNull(item.args)
+        assertEquals([], item.args as List)
+        JobRefCommand jrc = (JobRefCommand) res
+        jrc.project=='jobProject'
+    }
+
+    void testItemForWFCmdItem_jobref_otherproject() {
+        def testService = service
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz',jobProject: 'refProject')
+        def res = testService.itemForWFCmdItem(ce,null,'jobProject')
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof ScriptURLCommandExecutionItem)
+        assertTrue(res instanceof JobExecutionItem)
+        JobExecutionItem item = (JobExecutionItem) res
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertNotNull(item.args)
+        assertEquals([], item.args as List)
+        JobRefCommand jrc = (JobRefCommand) res
+        jrc.project=='refProject'
+    }
+
+    void testItemForWFCmdItem_jobref_nullproject() {
+        def testService = service
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: null)
+        def res = testService.itemForWFCmdItem(ce)
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof ScriptURLCommandExecutionItem)
+        assertTrue(res instanceof JobExecutionItem)
+        JobExecutionItem item = (JobExecutionItem) res
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertNotNull(item.args)
+        assertEquals([], item.args as List)
+        JobRefCommand jrc = (JobRefCommand) res
+        jrc.project==null
+    }
+
+    void testItemForWFCmdItem_jobref_setproject() {
+        def testService = service
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: null)
+        def res = testService.itemForWFCmdItem(ce, null, 'jobProject')
+        assertNotNull(res)
+        assertTrue(res instanceof StepExecutionItem)
+        assertFalse(res instanceof ScriptURLCommandExecutionItem)
+        assertTrue(res instanceof JobExecutionItem)
+        JobExecutionItem item = (JobExecutionItem) res
+        assertEquals('xyz/abc', item.getJobIdentifier())
+        assertNotNull(item.args)
+        assertEquals([], item.args as List)
+        JobRefCommand jrc = (JobRefCommand) res
+        jrc.project=='jobProject'
     }
 }

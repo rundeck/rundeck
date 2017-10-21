@@ -68,7 +68,7 @@ public class ZipResourceLoader implements PluginResourceLoader {
             basedirListing = Arrays.asList(list);
             return list;
         }
-        return null;
+        return new String[0];
     }
 
     /**

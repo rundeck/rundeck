@@ -55,9 +55,10 @@
 </div>
 <g:set var="runAccess" value="${auth.jobAllowedTest(
         job: scheduledExecution,
-        action: com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_RUN
+        action: com.dtolabs.rundeck.server.
+                authorization.AuthConstants.ACTION_RUN
 )}"/>
-<g:set var="runEnabled" value="${g.executionMode(is: 'active')}"/>
+<g:set var="runEnabled" value="${g.executionMode(is: 'active', project:params.project ?: request.project)}"/>
 <g:set var="canRunJob" value="${runAccess && runEnabled}"/>
 <g:set var="extendeddesc" value="${g.textRemainingLines(text: scheduledExecution.description)}"/>
 <g:set var="rundoctext"

@@ -159,7 +159,7 @@ The following define [Application scope resources](../administration/access-cont
 
 ### List Command Options
 
-The `list` command uses these [Test Comand Options](#test-command-options) to set the aclpolicy files to be evaluated: `-f,--file` and `-d,--dir`.
+The `list` command uses these [Test Command Options](#test-command-options) to set the aclpolicy files to be evaluated: `-f,--file` and `-d,--dir`.
 
 It also allows these options from the [Common Options](#common-options):
 

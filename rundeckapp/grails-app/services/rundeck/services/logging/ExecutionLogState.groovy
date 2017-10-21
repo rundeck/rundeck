@@ -34,6 +34,10 @@ public enum ExecutionLogState {
      */
     AVAILABLE,
     /**
+     * Partial data present locally
+     */
+    AVAILABLE_PARTIAL,
+    /**
      * Waiting for output
      */
     WAITING,
@@ -41,6 +45,10 @@ public enum ExecutionLogState {
      * Present on remote storage
      */
     AVAILABLE_REMOTE,
+    /**
+     * Partial data on remote storage
+     */
+    AVAILABLE_REMOTE_PARTIAL,
     /**
      * Pending presence on remote storage
      */
@@ -53,6 +61,10 @@ public enum ExecutionLogState {
      * Error determining state
      */
     ERROR
+
+    public boolean isAvailableOrPartial() {
+        return this in [AVAILABLE, AVAILABLE_PARTIAL]
+    }
     /**
      * Return an {@link ExecutionLogState} given a local and remote {@link LogFileState}
      * @param local
@@ -69,10 +81,17 @@ public enum ExecutionLogState {
      * @param notFoundState a state to return if both states are NOT_FOUND
      * @return
      */
-    public static ExecutionLogState forFileStates(LogFileState local, LogFileState remote, ExecutionLogState notFoundState) {
+    public static ExecutionLogState forFileStates(
+            LogFileState local,
+            LogFileState remote,
+            ExecutionLogState notFoundState
+    )
+    {
         switch (local) {
             case LogFileState.AVAILABLE:
                 return AVAILABLE
+            case LogFileState.AVAILABLE_PARTIAL:
+                return AVAILABLE_PARTIAL
             case LogFileState.PENDING:
                 return PENDING_LOCAL
             case LogFileState.NOT_FOUND:
@@ -81,6 +100,8 @@ public enum ExecutionLogState {
                         return ERROR
                     case LogFileState.AVAILABLE:
                         return AVAILABLE_REMOTE
+                    case LogFileState.AVAILABLE_PARTIAL:
+                        return AVAILABLE_REMOTE_PARTIAL
                     case LogFileState.PENDING:
                         return PENDING_REMOTE
                     case LogFileState.NOT_FOUND:

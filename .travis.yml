@@ -12,7 +12,7 @@ before_install:
   - sudo apt-get install -y xmlstarlet jq
   - sudo chsh --shell $(which bash)
 script:
-    - './gradlew clean build && groovy testbuild.groovy -gradle && make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb && bash run-api-tests.sh && bash run-docker-tests.sh && bash run-docker-ssl-tests.sh && DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash run-docker-api-tests.sh'
+    - './gradlew clean build && groovy testbuild.groovy -gradle && make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb && DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash run-docker-api-tests.sh && bash run-docker-tests.sh && bash run-docker-ssl-tests.sh && bash run-docker-ansible-tests.sh'
 addons:
   hostname: rdbuild
   apt:
@@ -22,13 +22,14 @@ addons:
     - make
     - zip
     - unzip
+    - fakeroot
     #- xmlstarlet #once added to whitelist
     #- jq #once added to whitelist
 # whitelist
 branches:
   only:
     - master
-    - '2.7.x'
+    - prerelease-2.10.0
 
 notifications:
   irc:

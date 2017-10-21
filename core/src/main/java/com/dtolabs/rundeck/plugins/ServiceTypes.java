@@ -22,10 +22,7 @@ import com.dtolabs.rundeck.core.execution.service.NodeExecutor;
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceFactory;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatGenerator;
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser;
-import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin;
-import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin;
-import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin;
-import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin;
+import com.dtolabs.rundeck.plugins.logging.*;
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
 import com.dtolabs.rundeck.plugins.orchestrator.OrchestratorPlugin;
 import com.dtolabs.rundeck.plugins.rundeck.UIPlugin;
@@ -72,6 +69,7 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.ScmExport, ScmExportPluginFactory.class);
         map.put(ServiceNameConstants.ScmImport, ScmImportPluginFactory.class);
         map.put(ServiceNameConstants.UI, UIPlugin.class);
+        map.put(ServiceNameConstants.LogFilter, LogFilterPlugin.class);
 
 
         TYPES = Collections.unmodifiableMap(map);

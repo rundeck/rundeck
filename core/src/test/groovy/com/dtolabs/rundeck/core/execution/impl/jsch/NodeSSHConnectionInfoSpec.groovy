@@ -20,13 +20,16 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContext
+import com.dtolabs.rundeck.core.execution.ExecutionListener
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import org.rundeck.storage.api.Resource
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * Created by greg on 3/18/15.
@@ -548,8 +551,137 @@ class NodeSSHConnectionInfoSpec extends Specification {
         'wrong-attribute'                 | '/some/file2.password' | 'testpassword'  | null
 
     }
+    static String fwkSSHTimeoutPropA = JschNodeExecutor.FRAMEWORK_SSH_CONNECT_TIMEOUT_PROP
+    static String fwkSSHTimeoutPropB = JschNodeExecutor.SSH_TIMEOUT_PROP
 
-    private  NodeSSHConnectionInfo setupStorageVal(
+    @Unroll
+    def "ssh connection timeout config"() {
+
+
+        setup:
+        def context = Mock(ExecutionContext) {
+            getFrameworkProject() >> 'NodeSSHConnectionInfoTest'
+        }
+        def propName = JschNodeExecutor.NODE_ATTR_SSH_CONNECT_TIMEOUT_PROP
+        def projectPropName = JschNodeExecutor.PROJ_PROP_CON_TIMEOUT
+        def frameworkPropName = JschNodeExecutor.FWK_PROP_CON_TIMEOUT
+//        def frameworkPropName2 = JschNodeExecutor.FRAMEWORK_SSH_CONNECT_TIMEOUT_PROP
+
+        NodeEntryImpl node = setupProps(
+                propName,
+                nodepropval,
+                projectPropName,
+                projectpropval,
+                [
+                        (frameworkPropName)                                  : fwkpropval,
+                        (JschNodeExecutor.FRAMEWORK_SSH_CONNECT_TIMEOUT_PROP): !useDeprecated ? fwkpropval2 : null,
+                        (JschNodeExecutor.SSH_TIMEOUT_PROP)                  : useDeprecated ? fwkpropval2 : null
+                ],
+                )
+        when:
+        NodeSSHConnectionInfo info = new NodeSSHConnectionInfo(node, framework, context)
+
+        then:
+        info.getConnectTimeout() == expected
+
+        where:
+
+        nodepropval | projectpropval | fwkpropval | fwkpropval2 | useDeprecated | expected
+        null        | null           | null       | null        | false         | 0l
+        '123'       | null           | null       | null        | false         | 123l
+        '123'       | '321'          | null       | null        | false         | 123l
+        '123'       | '321'          | '456'      | null        | false         | 123l
+        '123'       | '321'          | '456'      | '789'       | false         | 123l
+        null        | '321'          | '456'      | '789'       | false         | 321L
+        null        | null           | '456'      | '789'       | false         | 456L
+        null        | null           | null       | '789'       | false         | 789L
+        null        | null           | null       | null        | true          | 0l
+        '123'       | null           | null       | null        | true          | 123l
+        '123'       | '321'          | null       | null        | true          | 123l
+        '123'       | '321'          | '456'      | null        | true          | 123l
+        '123'       | '321'          | '456'      | '789'       | true          | 123l
+        null        | '321'          | '456'      | '789'       | true          | 321L
+        null        | null           | '456'      | '789'       | true          | 456L
+        null        | null           | null       | '789'       | true          | 789L
+
+    }
+
+    private NodeEntryImpl setupProps(
+            String propName,
+            String nodepropval,
+            String projectPropName,
+            String projectpropval,
+            Map<String, String> fwkProps
+    )
+    {
+        INodeEntry node = new NodeEntryImpl("test1");
+        if (nodepropval) {
+            node.getAttributes().put(propName, nodepropval)
+        }
+        if (projectpropval) {
+            def projprops = new Properties()
+            projprops.put(projectPropName, projectpropval)
+            def testProject = framework.getFrameworkProjectMgr().getFrameworkProject('NodeSSHConnectionInfoTest')
+            testProject.mergeProjectProperties(projprops, [] as Set)
+            testProject.hasProperty(projectPropName)//trigger refresh
+        }
+        removeProps(
+                new File(framework.getBaseDir(), "etc/framework.properties"),
+                fwkProps.keySet()
+        )
+        if (fwkProps) {
+            def pfwkProps = new Properties()
+            fwkProps.each { k, v ->
+                if (v) {
+                    pfwkProps.setProperty(k, v)
+                }
+            }
+            mergeProps(new File(framework.getBaseDir(), "etc/framework.properties"), pfwkProps)
+        }
+        node
+    }
+
+    @Unroll
+    def "ssh command timeout config"() {
+        setup:
+        def context = Mock(ExecutionContext) {
+            getFrameworkProject() >> 'NodeSSHConnectionInfoTest'
+        }
+        def propName = JschNodeExecutor.NODE_ATTR_SSH_COMMAND_TIMEOUT_PROP
+        def projectPropName = JschNodeExecutor.PROJ_PROP_COMMAND_TIMEOUT
+        def frameworkPropName = JschNodeExecutor.FWK_PROP_COMMAND_TIMEOUT
+        def frameworkPropName2 = JschNodeExecutor.FRAMEWORK_SSH_COMMAND_TIMEOUT_PROP
+
+        NodeEntryImpl node = setupProps(
+                propName,
+                nodepropval,
+                projectPropName,
+                projectpropval,
+                [
+                        (frameworkPropName) : fwkpropval,
+                        (frameworkPropName2): fwkpropval2
+                ],
+                )
+        when:
+        NodeSSHConnectionInfo info = new NodeSSHConnectionInfo(node, framework, context)
+
+        then:
+        info.getCommandTimeout() == expected
+
+        where:
+        nodepropval | projectpropval | fwkpropval | fwkpropval2 | expected
+        null        | null           | null       | null        | 0l
+        '123'       | null           | null       | null        | 123l
+        '123'       | '321'          | null       | null        | 123l
+        '123'       | '321'          | '456'      | null        | 123l
+        '123'       | '321'          | '456'      | '789'       | 123l
+        null        | '321'          | '456'      | '789'       | 321L
+        null        | null           | '456'      | '789'       | 456L
+        null        | null           | null       | '789'       | 789L
+
+    }
+
+    private NodeSSHConnectionInfo setupStorageVal(
             String propname,
             String path,
             String storageVal
@@ -622,8 +754,8 @@ class NodeSSHConnectionInfoSpec extends Specification {
                 framework,
                 Mock(ExecutionContext) {
                     getFrameworkProject() >> 'NodeSSHConnectionInfoTest'
-                    getPrivateDataContext() >> privateDataContext
-                    getDataContext() >> dataContext
+                    getPrivateDataContext() >> DataContextUtils.context(privateDataContext)
+                    getDataContext() >> DataContextUtils.context(dataContext)
                 }
         )
     }

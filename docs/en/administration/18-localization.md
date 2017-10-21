@@ -37,7 +37,7 @@ please [Submit an issue report](https://github.com/rundeck/rundeck/issues/new?ti
 If you would like to translate Rundeck to another language, please submit your new messages file as a Pull Request 
 via Github, so that we can include it in the next Rundeck release.
 
-There is a page on the [Rundeck wiki: Internationalizaton](https://github.com/rundeck/rundeck/wiki/Internationalization) that can help if you are new to git.
+There is a page on the [Rundeck wiki: Internationalization](https://github.com/rundeck/rundeck/wiki/Internationalization) that can help if you are new to git.
 
 ## Date formats
 

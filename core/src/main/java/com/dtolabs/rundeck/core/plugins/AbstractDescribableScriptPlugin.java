@@ -25,6 +25,7 @@ package com.dtolabs.rundeck.core.plugins;
 
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.plugins.configuration.*;
@@ -89,7 +90,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
     /**
      * @return data with exported plugin details
      */
-    public Map<String,String> createPluginDataContext() {
+    public Map<String,String> createPluginData() {
         final Map<String,String> pluginDataContext = new HashMap<String, String>();
 
         pluginDataContext.put("file", provider.getArchiveFile().getAbsolutePath());
@@ -396,7 +397,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                 if (StringRenderingConstants.ValueConversion.STORAGE_PATH_AUTOMATIC_READ.equalsOrString(conversion)) {
                     convertStoragePathValue(data, context.getStorageTree(), name, propValue, renderingOptions);
                 } else if (StringRenderingConstants.ValueConversion.PRIVATE_DATA_CONTEXT.equalsOrString(conversion)) {
-                    convertPrivateDataValue(data, context.getPrivateDataContext(), name, propValue, renderingOptions);
+                    convertPrivateDataValue(data, context.getPrivateDataContextObject(), name, propValue, renderingOptions);
                 }
             }
         }
@@ -476,7 +477,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
      */
     private void convertPrivateDataValue(
             final Map<String, String> data,
-            final Map<String, Map<String, String>> privateDataContext,
+            final DataContext privateDataContext,
             final String name,
             final String propValue,
             final Map<String, Object> renderingOptions
@@ -493,7 +494,7 @@ public abstract class AbstractDescribableScriptPlugin implements Describable {
                     propValue
             );
         }
-        String newvalue = DataContextUtils.resolve(privateDataContext, prop[0], prop[1]);
+        String newvalue = privateDataContext.resolve(prop[0], prop[1]);
 
         if (null == newvalue) {
             if(clearValue) {

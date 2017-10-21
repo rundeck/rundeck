@@ -73,11 +73,9 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
 
     }
 
-    public void testGetNodeDispatcher() throws Exception {
+    public void testGetNodeDispatcher_parallel_node2_threadcount2() throws Exception {
         final Framework frameworkInstance = getFrameworkInstance();
-        final NodeDispatcherService service = NodeDispatcherService.getInstanceForFramework(
-            frameworkInstance);
-        {
+        final NodeDispatcherService service = NodeDispatcherService.getInstanceForFramework(frameworkInstance);
             final NodeSet nodeSet = new NodeSet();
             nodeSet.createInclude().setName(".*");
             nodeSet.setThreadCount(2);
@@ -99,12 +97,19 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
 
             final NodeDispatcher nodeDispatcher = service.getNodeDispatcher(context);
             assertNotNull(nodeDispatcher);
-            assertTrue(nodeDispatcher instanceof ParallelNodeDispatcher);
+        assertTrue(
+                "expected parallel dispatcher but is: " + nodeDispatcher.getClass(),
+                nodeDispatcher instanceof ParallelNodeDispatcher
+        );
 
         }
 
-        {   //get node dispatcher for a context.  nodeset>1 and threadcount<2 returns sequential provider
+    public void testGetNodeDispatcher_Sequential_node2_threadcount1() throws Exception {
+        //get node dispatcher for a context.  nodeset>1 and threadcount<2 returns sequential provider
 
+        final Framework frameworkInstance = getFrameworkInstance();
+        final NodeDispatcherService service = NodeDispatcherService.getInstanceForFramework(
+                frameworkInstance);
             final NodeSet nodeSet = new NodeSet();
             nodeSet.createInclude().setName(".*");
             nodeSet.setThreadCount(1);
@@ -124,8 +129,11 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
 
         }
 
-        {   //get node dispatcher for a context.  nodeset<2 and threadcount<2 returns sequential provider
+    public void testGetNodeDispatcher_Sequential_node1_threadcount1() throws Exception {
+        //get node dispatcher for a context.  nodeset<2 and threadcount<2 returns sequential provider
 
+        final Framework frameworkInstance = getFrameworkInstance();
+        final NodeDispatcherService service = NodeDispatcherService.getInstanceForFramework(frameworkInstance);
             final NodeSet nodeSet = new NodeSet();
             nodeSet.setSingleNodeName("test1");
             nodeSet.setThreadCount(1);
@@ -145,8 +153,11 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
 
         }
 
-        {   //get node dispatcher for a context.  nodeset<2 and threadcount>1 returns sequential provider
+    public void testGetNodeDispatcher_Sequential_node1_threacount2() throws Exception {
+        //get node dispatcher for a context.  nodeset<2 and threadcount>1 returns sequential provider
 
+        final Framework frameworkInstance = getFrameworkInstance();
+        final NodeDispatcherService service = NodeDispatcherService.getInstanceForFramework(frameworkInstance);
             final NodeSet nodeSet = new NodeSet();
             nodeSet.setSingleNodeName("test1");
             nodeSet.setThreadCount(2);
@@ -168,7 +179,6 @@ public class TestNodeDispatcherService extends AbstractBaseTest {
             assertNotNull(nodeDispatcher);
             assertTrue(nodeDispatcher instanceof SequentialNodeDispatcher);
 
-        }
     }
 
     /**

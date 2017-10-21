@@ -52,9 +52,9 @@ function _addOption(data) {
 function _removeOptionName(name) {
     "use strict";
     var findname = function (e) {
-        return e.name == name;
+        return e.name === name;
     };
-    var found = _jobOptionData.find(findName);
+    var found = _jobOptionData.find(findname);
     if (found >= 0) {
         _jobOptionData.splice(found, 1);
     }
@@ -92,9 +92,10 @@ function _jobVarData() {
             'loglevel': {title: 'Execution log level', desc: 'Logging level, one of: INFO, DEBUG'},
             'user.email': {title: 'Email of user executing the job'},
             'retryAttempt': {title: 'Retry attempt number'},
-            'wasRetry': {title: 'True if execution is a retry'}
+            'wasRetry': {title: 'True if execution is a retry'},
+            'threadcount': {title: 'Job Threadcount'}
         };
-        ['id', 'execid', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry'].each(function (e) {
+        ['id', 'execid', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry', 'threadcount'].each(function (e) {
             _VAR_DATA['job'].push({key: 'job.' + e, category: 'Job', title: jobdata[e].title, desc: jobdata[e].desc});
         });
     }
@@ -175,7 +176,7 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         if (isscriptStep) {
             var key = liitem.find('._wfiedit').data('rkey');
             if (key) {
-                workflowEditor.steps()[key].guessAceMode.subscribe(function (val) {
+                workflowEditor.scriptSteps()[key].guessAceMode.subscribe(function (val) {
                     setAceSyntaxMode(val, editor);
                 });
             }
@@ -184,7 +185,7 @@ function postLoadItemEdit(item, iseh, isnodestep) {
         var obj = jQuery(elem);
         if (obj.hasClass('context_env_autocomplete')) {
             var key = liitem.find('._wfiedit').data('rkey');
-            return (key && workflowEditor.steps()[key] && workflowEditor.steps()[key].guessAceMode() || 'sh');
+            return (key && workflowEditor.scriptSteps()[key] && workflowEditor.scriptSteps()[key].guessAceMode() || 'sh');
         }
         return null;
     });
@@ -359,6 +360,31 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
         })
     });
 }
+function _initJobPickerAutocomplete(nameid, groupid, projid) {
+    "use strict";
+    var currentProject = jQuery('#schedEditFrameworkProject').val();
+    jQuery("#" + nameid).devbridgeAutocomplete({
+        minChars: 0,
+        deferRequestBy: 500,
+        lookup: function (q, callback) {
+            var project = projid && jQuery('#' + projid).val() || currentProject;
+            var results = jQuery.ajax({
+                url: _genUrl(appLinks.menuJobSearchJson, {jobFilter: q, project: project, runAuthRequired: true}),
+                success: function (data, x) {
+                    callback({
+                        suggestions: jQuery.map(data, function (item) {
+                            return {value: item.name, data: item};
+                        })
+                    });
+                }
+            });
+        },
+        onSelect: function (selected) {
+            //set group from selected job
+            jQuery('#' + groupid).val(selected.data.group);
+        }
+    });
+}
 var _iseditting=null;
 function _wfiedit(key,num,isErrorHandler) {
     if(_iseditting){
@@ -373,6 +399,10 @@ function _wfiedit(key,num,isErrorHandler) {
         _hideWFItemControls(key);
         postLoadItemEdit('#wfli_' + key, isErrorHandler);
     });
+}
+
+function _wficopy(key,num,isErrorHandler) {
+    _ajaxWFAction(appLinks.workflowCopy,{num:num,edit:true});
 }
 
 function _wfiview(key,num,isErrorHandler) {
@@ -1058,37 +1088,44 @@ function _doRevertOptsAction() {
 //job chooser
 var jobNameFieldId;
 var jobGroupFieldId;
-function jobChosen(name, group) {
+function jobChosen(name, group, elem) {
     jobWasEdited();
     if (jobNameFieldId && jobGroupFieldId) {
         jQuery('#' + jobNameFieldId).val(name);
         jQuery('#' + jobGroupFieldId).val(group);
+        doyftsuccess(jobNameFieldId);
+        doyftsuccess(jobGroupFieldId);
     }
-    hideJobChooser();
+    if (jQuery(elem).closest('.modal').length === 1) {
+        jQuery(elem).closest('.modal').modal('hide');
+    }
 }
-function loadJobChooser(elem, nameid, groupid) {
+
+function loadJobChooserModal(elem, nameid, groupid, projectid, modalid, modalcontentid) {
     if (jQuery(elem).hasClass('active')) {
-        hideJobChooser();
+        jQuery('#' + modalid).modal('hide');
         return;
     }
     jobNameFieldId = nameid;
     jobGroupFieldId = groupid;
     var project = selFrameworkProject;
+
+    if (projectid) {
+        project = jQuery('#' + projectid).val();
+    }
     jQuery(elem).button('loading').addClass('active');
     jQuery.ajax({
-        url:_genUrl(appLinks.menuJobsPicker, {jobsjscallback: 'true', runAuthRequired: true}),
-        success: function (resp, status, jqxhr){
-            jQuery(elem).popover({html: true, container: 'body', placement: 'left', content: resp, trigger: 'manual'}).popover('show');
-            jQuery(elem).button('reset');
+        url: _genUrl(appLinks.menuJobsPicker, {jobsjscallback: 'true', runAuthRequired: true, projFilter: project}),
+        success: function (resp, status, jqxhr) {
+            jQuery(elem).button('reset').removeClass('active');
+            jQuery('#' + modalcontentid).html(resp);
+            jQuery('#' + modalid).modal('show');
         },
-        error: function (resp, status, jqxhr){
+        error: function (resp, status, jqxhr) {
             showError("Error performing request: menuJobsPicker: " + transport);
-            jQuery(elem).button('reset');
+            jQuery(elem).button('reset').removeClass('active');
         }
     });
-}
-function hideJobChooser() {
-    jQuery('.btn.act_choose_job').removeClass('active').button('reset').popover('hide');
 }
 
 //group chooser

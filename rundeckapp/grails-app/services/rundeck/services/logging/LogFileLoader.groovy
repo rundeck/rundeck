@@ -27,4 +27,5 @@ class LogFileLoader {
     String errorCode
     List errorData
     File file
+    long retryBackoff
 }

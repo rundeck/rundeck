@@ -23,6 +23,7 @@ import grails.converters.JSON
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.User
+import rundeck.filters.ApiRequestFilters
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
 
@@ -44,6 +45,8 @@ class UserController extends ControllerBase{
             generateUserToken  : 'POST',
             renderUsertoken    : 'POST',
             removeExpiredTokens: 'POST',
+            apiUserData        : ['GET','POST'],
+            apiUserList        : 'GET'
     ]
 
     def index = {
@@ -175,6 +178,172 @@ class UserController extends ControllerBase{
             return render(view: 'edit', model: [user: user])
         }
     }
+
+    def apiUserData(){
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V21)) {
+            return
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        UserAndRolesAuthContext auth = frameworkService.getAuthContextForSubject(session.subject)
+        def user = params.username?:auth.username
+        if(user!=auth.username){
+            //requiere admin privileges
+            if(!frameworkService.authorizeApplicationResourceAny(
+                    auth,
+                    AuthConstants.RESOURCE_TYPE_SYSTEM,
+                    [ AuthConstants.ACTION_ADMIN]
+            )){
+                def errorMap= [status: HttpServletResponse.SC_FORBIDDEN, code: 'request.error.unauthorized.message', args: ['get info','from other','User.']]
+
+                withFormat {
+                    json {
+                        return apiService.renderErrorJson(response, errorMap)
+                    }
+                    xml {
+                        return apiService.renderErrorXml(response, errorMap)
+                    }
+                    '*' {
+                        return apiService.renderErrorXml(response, errorMap)
+                    }
+                }
+                return
+            }
+        }
+        User u = User.findByLogin(user)
+        if(!u){
+            def errorMap= [status: HttpServletResponse.SC_NOT_FOUND, code: 'request.error.notfound.message', args: ['User',user]]
+            withFormat {
+                xml {
+                    return apiService.renderErrorXml(response, errorMap)
+                }
+                json {
+                    return apiService.renderErrorJson(response, errorMap)
+                }
+                '*' {
+                    return apiService.renderErrorXml(response, errorMap)
+                }
+            }
+            return
+        }
+        if (request.method == 'POST'){
+            def config
+            def succeed = apiService.parseJsonXmlWith(request, response, [
+                    xml: { xml ->
+                        config = [:]
+                            config.email=xml?.email?.text()
+                            config.firstName=xml?.firstName?.text()
+                            config.lastName=xml?.lastName?.text()
+                    },
+                    json: { json ->
+                        config = json
+                    }
+            ])
+            if(!succeed){
+                return
+            }
+            if(config.email){
+                u.email=config.email
+            }
+            if(config.firstName){
+                u.firstName=config.firstName
+            }
+            if(config.lastName){
+                u.lastName=config.lastName
+            }
+
+            if(!u.save(flush:true)){
+                def errorMsg= u.errors.allErrors.collect { g.message(error:it) }.join(";")
+                return apiService.renderErrorFormat(response,[
+                        status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                        message:errorMsg,
+                        format:respFormat
+                ])
+            }
+        }
+        withFormat {
+            def xmlClosure = {
+                delegate.'user' {
+                    login(u.login)
+                    firstName(u.firstName)
+                    lastName(u.lastName)
+                    email(u.email)
+                }
+            }
+            xml {
+                return apiService.renderSuccessXml(request, response, xmlClosure)
+            }
+            json {
+                return apiService.renderSuccessJson(response) {
+                    delegate.login=u.login
+                    delegate.firstName=u.firstName
+                    delegate.lastName=u.lastName
+                    delegate.email=u.email
+                }
+            }
+            '*' {
+                return apiService.renderSuccessXml(request, response, xmlClosure)
+            }
+        }
+    }
+
+    def apiUserList(){
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V21)) {
+            return
+        }
+        def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json'])
+        UserAndRolesAuthContext auth = frameworkService.getAuthContextForSubject(session.subject)
+
+        if(!frameworkService.authorizeApplicationResourceAny(
+                auth,
+                AuthConstants.RESOURCE_TYPE_SYSTEM,
+                [ AuthConstants.ACTION_ADMIN]
+        )){
+            def errorMap= [status: HttpServletResponse.SC_FORBIDDEN, code: 'request.error.unauthorized.message', args: ['get info','from other','User.']]
+
+            withFormat {
+                json {
+                    return apiService.renderErrorJson(response, errorMap)
+                }
+                xml {
+                    return apiService.renderErrorXml(response, errorMap)
+                }
+                '*' {
+                    return apiService.renderErrorXml(response, errorMap)
+                }
+            }
+            return
+        }
+
+        def users = User.findAll()
+        withFormat {
+            def xmlClosure = {
+                    users.each { u ->
+                        delegate.'user' {
+                            login(u.login)
+                            firstName(u.firstName)
+                            lastName(u.lastName)
+                            email(u.email)
+                        }
+                    }
+            }
+            xml {
+                return apiService.renderSuccessXml(request, response, xmlClosure)
+            }
+            json {
+                return apiService.renderSuccessJson(response) {
+                    users.each {
+                        def u = [login: it.login, firstName: it.firstName, lastName: it.lastName, email: it.email]
+                        element(u)
+                    }
+                }
+            }
+            '*' {
+                return apiService.renderSuccessXml(request, response, xmlClosure)
+            }
+        }
+
+    }
+
     public def update (User user) {
         withForm{
         if (user.hasErrors()) {
@@ -209,10 +378,10 @@ class UserController extends ControllerBase{
         }
     }
 
-    def cancel={
+    def cancel(){
         return redirect(action:'profile')
     }
-    def edit={
+    def edit(){
         def model=profile()
         return model
     }
@@ -265,7 +434,7 @@ class UserController extends ControllerBase{
             )
             result = [result: true, /*apitoken: token.token, */ tokenid: token.uuid]
         } catch (Exception e) {
-            result = [result: false, error: e.message]
+            result = [result: false, error: e.getCause().message]
         }
         return renderTokenGenerateResult(result, params.login)
     }

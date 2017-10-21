@@ -259,17 +259,17 @@ class ScriptResourceUtil {
         //use script-copy attribute and replace datareferences
         if (null != scriptargs || null!=scriptargsarr) {
             if (interpreterArgsQuoted) {
-                final String newargs = null != scriptargs ? DataContextUtils.replaceDataReferences(
+                final String newargs = null != scriptargs ? DataContextUtils.replaceDataReferencesInString(
                         scriptargs,
                         newDataContext
-                ) : DataContextUtils.join(Arrays.asList(DataContextUtils.replaceDataReferences(
+                ) : DataContextUtils.join(Arrays.asList(DataContextUtils.replaceDataReferencesInArray(
                         scriptargsarr,
                         newDataContext
                 )), " ");
                 shells.add(scriptfile.getAbsolutePath() + " " + newargs);
             } else {
                 shells.add(scriptfile.getAbsolutePath());
-                shells.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(
+                shells.addAll(Arrays.asList(DataContextUtils.replaceDataReferencesInArray(
                         null!=scriptargsarr?scriptargsarr:scriptargs.split(" "),
                         newDataContext
                 )));
@@ -330,15 +330,15 @@ class ScriptResourceUtil {
         final ArrayList<String> list = new ArrayList<String>();
         list.add(scriptfile.getAbsolutePath());
         if (null != scriptargsarr && scriptargsarr.length > 0) {
-            list.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargsarr, newDataContext)));
+            list.addAll(Arrays.asList(DataContextUtils.replaceDataReferencesInArray(scriptargsarr, newDataContext)));
         }else if (null != scriptargs && !"".equals(scriptargs)) {
-            list.addAll(Arrays.asList(DataContextUtils.replaceDataReferences(scriptargs.split(" "), newDataContext)));
+            list.addAll(Arrays.asList(DataContextUtils.replaceDataReferencesInArray(scriptargs.split(" "), newDataContext)));
         }
         final String[] args = list.toArray(new String[list.size()]);
 
         //create system environment variables from the data context
         final Map<String, String> envMap = DataContextUtils.generateEnvVarsFromContext(envContext);
-        final ArrayList<String> envlist = new ArrayList<String>();
+        final ArrayList<String> envlist = new ArrayList<>();
         for (final Map.Entry<String, String> entry : envMap.entrySet()) {
             envlist.add(entry.getKey() + "=" + entry.getValue());
         }

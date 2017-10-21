@@ -1,5 +1,4 @@
-
-<h4>%{--
+%{--
   - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,7 +14,6 @@
   - limitations under the License.
   --}%
 
-<g:message code="scm.${integration}.title"/></h4>
 <span class="help-block">
     <g:message code="scm.${integration}.plugins.help"/>
 </span>

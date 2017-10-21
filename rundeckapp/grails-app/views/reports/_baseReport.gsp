@@ -73,7 +73,8 @@
             </g:if>
 
 
-        <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'} autoclickable" colspan="${rpt?.jcJobId?1:2}">
+            <g:set var="hasJobArgs" value="${rpt?.jcJobId && execution && execution.argString}"/>
+        <td class="eventtitle ${rpt?.jcJobId ? 'job' : 'adhoc'} autoclickable" colspan="${hasJobArgs?1:2}">
             <g:link controller="execution" action="show" id="${rpt.jcExecId}" class="_defaultAction"
                 params="[project:execution?execution.project:rpt.ctxProject?:params.project]"
                     title="View execution output" absolute="${absoluteLinks}">#<g:enc>${rpt.jcExecId}</g:enc></g:link>
@@ -105,7 +106,7 @@
                 <span class="exec-status-text custom-status">${execution.status}</span>
             </g:if>
         </td>
-            <g:if test="${rpt?.jcJobId}">
+            <g:if test="${rpt?.jcJobId && execution && execution.argString}">
         <td class="eventargs autoclickable">
             <div class="argstring-scrollable">
             <g:if test="${execution && execution.argString}">

@@ -33,4 +33,12 @@ class ExecutionEventsService {
 
         logFileStorageService.submitForStorage(e.execution)
     }
+    /**
+     * Checkpoint during job execution to allow partiallog storage
+     * @param event
+     */
+    @Listener
+    def executionCheckpoint(ExecutionCompleteEvent e) {
+        logFileStorageService.submitForPartialStorage(e.execution, e.context.fileSizeChange, e.context.timediff)
+    }
 }

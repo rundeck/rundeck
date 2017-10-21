@@ -51,6 +51,11 @@ public class StubNodeExecutor implements NodeExecutor, Describable {
 
     public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
                                              final INodeEntry node) {
+        return executeCommand(context, command, node, true);
+    }
+
+    public NodeExecutorResult executeCommand(final ExecutionContext context, final String[] command,
+                                             final INodeEntry node, boolean showError) {
         //replace data context in args
         int tcode = 0;
         boolean tsuccess = true;
@@ -69,6 +74,10 @@ public class StubNodeExecutor implements NodeExecutor, Describable {
                 context.getExecutionListener().log(Constants.WARN_LEVEL,
                                                    "[stub] (failed to parse " + STUB_EXEC_SUCCESS + " for node)");
             }
+        }
+
+        if(null!=context.getOutputContext()){
+            context.getOutputContext().addOutput("exec", "exitCode", String.valueOf(tcode));
         }
         if (tsuccess) {
             context.getExecutionListener().log(Constants.WARN_LEVEL,

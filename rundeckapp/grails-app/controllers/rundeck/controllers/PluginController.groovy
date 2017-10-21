@@ -16,7 +16,8 @@ class PluginController {
         }
         def profile = uiPluginService.getProfileFor(resourceReq.service, resourceReq.name)
         if (!profile.icon) {
-            return respond([status: 404])
+            response.status = 404
+            return render(view: '/404')
         }
         resourceReq.path = profile.icon
         pluginFile(resourceReq)
@@ -33,7 +34,8 @@ class PluginController {
         }
         def istream = uiPluginService.openResourceForPlugin(resourceReq.service, resourceReq.name, resourceReq.path)
         if (null == istream) {
-            return respond([status: 404])
+            response.status = 404
+            return render(view: '/404')
         }
         try {
             def format = servletContext.getMimeType(resourceReq.path)
@@ -92,7 +94,7 @@ class PluginController {
 
         if (null == istream) {
             response.status = 404
-            return respond([status: 404])
+            return render(view: '/404')
         }
         if (resourceReq.path.endsWith(".properties") && response.format == 'json') {
             //parse java .properties content and emit as json

@@ -156,8 +156,8 @@ class ScriptUIPluginSpec extends Specification {
         then:
         plugin.doesApply('a/test')
         plugin.resourcesForPath('a/test') == expectAll
-        plugin.scriptResourcesForPath('a/test') == (scripts == null ? null : ['a/b'])
-        plugin.styleResourcesForPath('a/test') == (styles == null ? null : ['a/c'])
+        plugin.scriptResourcesForPath('a/test') == (!scripts ? [] : ['a/b'])
+        plugin.styleResourcesForPath('a/test') == (!styles ? [] : ['a/c'])
 
 
         where:
@@ -193,11 +193,11 @@ class ScriptUIPluginSpec extends Specification {
         then:
         plugin.doesApply('a/test')
         plugin.resourcesForPath('a/test') == expectA
-        plugin.scriptResourcesForPath('a/test') == (scripts == null ? null : ['a/b'])
-        plugin.styleResourcesForPath('a/test') == (styles == null ? null : ['a/c'])
+        plugin.scriptResourcesForPath('a/test') == (!scripts  ? [] : ['a/b'])
+        plugin.styleResourcesForPath('a/test') == (!styles  ? [] : ['a/c'])
         plugin.resourcesForPath('b/test') == expectB
-        plugin.scriptResourcesForPath('b/test') == (scripts2 == null ? null : ['b/c'])
-        plugin.styleResourcesForPath('b/test') == (styles2 == null ? null : ['b/d'])
+        plugin.scriptResourcesForPath('b/test') == (!scripts2  ? [] : ['b/c'])
+        plugin.styleResourcesForPath('b/test') == (!styles2 ? [] : ['b/d'])
 
 
         where:
@@ -229,8 +229,8 @@ class ScriptUIPluginSpec extends Specification {
         then:
         plugin.doesApply('a/test')
         plugin.resourcesForPath('a/test') == expectA
-        plugin.scriptResourcesForPath('a/test') == (scripts == null ? null : ['a/b'])
-        plugin.styleResourcesForPath('a/test') == (styles == null ? null : ['a/c'])
+        plugin.scriptResourcesForPath('a/test') == (!scripts  ? [] : ['a/b'])
+        plugin.styleResourcesForPath('a/test') == (!styles ? [] : ['a/c'])
         plugin.resourcesForPath('b/test') == expectA
 
 
@@ -240,6 +240,38 @@ class ScriptUIPluginSpec extends Specification {
         ['a/test', 'b/test'] | null    | 'a/c'   | ['a/c']
         ['a/test', 'b/test'] | ['a/b'] | null    | ['a/b']
         ['a/test', 'b/test'] | null    | ['a/c'] | ['a/c']
+    }
+
+    def "script resources for page with glob"() {
+        given:
+        def provider = Mock(ScriptPluginProvider) {
+            getMetadata() >> [
+                    ui: [
+                            [pages  : '*',
+                             scripts: 'a/glob/script',
+                             styles : 'a/glob/style'],
+
+                            [pages  : pages,
+                             scripts: scripts,
+                             styles : styles]
+                    ]
+
+            ]
+        }
+        when:
+        def plugin = new ScriptUIPlugin(provider, Mock(Framework))
+
+        then:
+        plugin.doesApply('a/test')
+        plugin.resourcesForPath('a/test').containsAll expectRes
+        plugin.resourcesForPath('a/test').size() == expectRes.size()
+        plugin.scriptResourcesForPath('a/test').containsAll expectScript
+        plugin.scriptResourcesForPath('a/test').size() == expectScript.size()
+
+
+        where:
+        pages       | scripts | styles | expectRes                                | expectScript
+        ['a/test',] | 'a/b'   | null   | ['a/b', 'a/glob/script', 'a/glob/style'] | ['a/b', 'a/glob/script']
     }
 
 }

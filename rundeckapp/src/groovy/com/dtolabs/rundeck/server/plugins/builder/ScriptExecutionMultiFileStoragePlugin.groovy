@@ -34,7 +34,8 @@ class ScriptExecutionMultiFileStoragePlugin extends ScriptExecutionFileStoragePl
     @Override
     void initialize(final Map<String, ? extends Object> context) {
         super.initialize(context)
-        this.storeSupported = handlers['storeMultiple'] ? true : false
+        this.storeSupported = (handlers['storeMultiple'] || handlers['partialStoreMultiple'])
+        this.partialStoreSupported = handlers['partialStoreMultiple'] ? true : false
     }
 
     @Override
@@ -49,11 +50,11 @@ class ScriptExecutionMultiFileStoragePlugin extends ScriptExecutionFileStoragePl
 
     @Override
     void storeMultiple(final MultiFileStorageRequest files) throws IOException, ExecutionFileStorageException {
-        if (!storeSupported) {
+        if (!storeSupported && !partialStoreSupported) {
             throw new IllegalStateException("store is not supported")
         }
         logger.debug("storeMultiple($files) ${pluginContext}")
-        def closure = handlers.storeMultiple
+        def closure = handlers.partialStoreMultiple ?: handlers.storeMultiple
         def binding = [
                 configuration: configuration,
                 context      : pluginContext + (files ? [files: files] : [:]),

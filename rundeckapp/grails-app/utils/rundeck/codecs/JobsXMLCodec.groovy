@@ -344,6 +344,12 @@ class JobsXMLCodec {
                 }
             }
         }
+        if(map.retry instanceof Map){
+            if(map.retry.delay){
+                map.retryDelay = map.retry.delay
+            }
+            map.retry = map.retry['<text>']
+        }
         return map
     }
     static convertXmlWorkflowToMap(Map data){
@@ -380,6 +386,11 @@ class JobsXMLCodec {
                     }
                     if (null != cmd.jobref.dispatch && (cmd.jobref.nodefilters instanceof Map)) {
                         cmd.jobref.nodefilters.dispatch = cmd.jobref.remove('dispatch')
+                    } else if (null != cmd.jobref.dispatch) {
+                        cmd.jobref.nodefilters = [dispatch: cmd.jobref.remove('dispatch')]
+                    }
+                    if (cmd.project) {
+                        cmd.jobref.project = cmd.remove('project')
                     }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
                     def parsePluginConfig={ plc->
@@ -412,6 +423,17 @@ class JobsXMLCodec {
                 if(null!= cmd.keepgoingOnSuccess){
                     cmd.keepgoingOnSuccess= XmlParserUtil.stringToBool(cmd.keepgoingOnSuccess,false)
                 }
+                if (cmd.plugins && cmd.plugins instanceof Map && cmd.plugins.LogFilter ) {
+                    if(!(cmd.plugins.LogFilter instanceof Collection)){
+                        cmd.plugins.LogFilter = [cmd.plugins.remove('LogFilter')]
+                    }
+                    cmd.plugins.LogFilter.each {
+                        if (!it.config) {
+                            //remove potential empty string result
+                            it.remove('config')
+                        }
+                    }
+                }
             }
             data.commands.each(fixup)
             data.commands.each {
@@ -422,6 +444,18 @@ class JobsXMLCodec {
         }
         if(null!=data.keepgoing && data.keepgoing instanceof String){
             data.keepgoing = XmlParserUtil.stringToBool(data.keepgoing,false)
+        }
+        if (data.pluginConfig && data.pluginConfig instanceof Map
+                && data.pluginConfig?.LogFilter ) {
+            if(!(data.pluginConfig?.LogFilter instanceof Collection)){
+                data.pluginConfig.LogFilter = [data.pluginConfig.remove('LogFilter')]
+            }
+            data.pluginConfig.LogFilter.each {
+                if (!it.config) {
+                    //remove potential empty string result
+                    it.remove('config')
+                }
+            }
         }
     }
     /**
@@ -563,6 +597,10 @@ class JobsXMLCodec {
                 map.schedule.year=BuilderUtil.toAttrMap('year',map.schedule.remove('year'))
             }
         }
+        if(map.retry instanceof Map && map.retry.delay){
+            map.retry = ['<text>':map.retry.retry,delay:map.retry.delay]
+            BuilderUtil.makeAttribute(map.retry,'delay')
+        }
 
         convertWorkflowMapForBuilder(map.sequence)
         if(map.notification){
@@ -616,6 +654,16 @@ class JobsXMLCodec {
         BuilderUtil.makeAttribute(map, 'keepgoing')
         BuilderUtil.makeAttribute(map, 'strategy')
         map.command = map.remove('commands')
+        if(map.pluginConfig?.LogFilter) {
+            map.pluginConfig.LogFilter.each { Map plugindef ->
+                BuilderUtil.makeAttribute(plugindef, 'type')
+                if (!plugindef.config) {
+                    //remove null or empty config map
+                    plugindef.remove('config')
+                }
+            }
+        }
+
         //convert script args values to idiosyncratic label
 
         def gencmd= { cmd, iseh=false ->
@@ -637,6 +685,11 @@ class JobsXMLCodec {
                     BuilderUtil.makeAttribute(cmd.jobref, 'group')
                 } else {
                     cmd.jobref.remove('group')
+                }
+                if (cmd.jobref.project) {
+                    BuilderUtil.makeAttribute(cmd.jobref, 'project')
+                } else {
+                    cmd.jobref.remove('project')
                 }
                 final def remove = cmd.jobref.remove('args')
                 if (null != remove) {
@@ -672,6 +725,15 @@ class JobsXMLCodec {
             }
             if(iseh){
                 BuilderUtil.makeAttribute(cmd, 'keepgoingOnSuccess')
+            }
+            if(cmd.plugins?.LogFilter) {
+                cmd.plugins.LogFilter.each { Map plugindef ->
+                    BuilderUtil.makeAttribute(plugindef, 'type')
+                    if (!plugindef.config) {
+                        //remove null or empty config map
+                        plugindef.remove('config')
+                    }
+                }
             }
         }
         map.command.each(gencmd)

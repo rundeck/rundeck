@@ -224,7 +224,7 @@ included.
 The job description is a sub-element of [job](#job) and allows a short
 description of the job.  
 
-If the description contains more than one line of text, then the first line is used as the "short description" of the job, and rendered exactly as text. The remaining lines are the "extended description", rendered using Markdown format as HTML in the Rundeck GUI. Markdown can also embed HTML directly if you like.  See [Wikipedia - Markdown](http://en.wikipedia.org/wiki/Markdown#Example).  
+If the description contains more than one line of text, then the first line is used as the "short description" of the job, and rendered exactly as text. The remaining lines are the "extended description", rendered using Markdown format as HTML in the Rundeck GUI. Markdown can also embed HTML directly if you like.  See [Wikipedia - Markdown](https://en.wikipedia.org/wiki/Markdown#Example).
 
 The HTML is sanitized to remove disallowed tags before rendering to the browser (such as `<script>`, etc.). 
 You can disable all extended description HTML rendering
@@ -317,20 +317,23 @@ These are all valid values:
 ## retry
 
 Retry count indicating the maximum number of times to retry the job if it fails or times out. 
+You can also set a delay between retries.
 
 Allowed values:
 
 *  An integer number, indicating maximum number of retries
 * `${option.retry}` reference to a job option value
+* Optional delay attribute, with the same format as [timeout](#timeout)
 
 
 ~~~~~~~~ {.xml }
 <job>
     <name>iffy job</name>
     <description>Job which might need to be retried</description>
-    <retry>${option.retry}</retry>
+    <retry delay='1h1m1s'>${option.retry}</retry>
 </job>
 ~~~~~~~~ 
+
 
 ## logging
 
@@ -423,15 +426,14 @@ in the year 2010, using a single crontab attribute to express it:
     <schedule crontab="02 00 06,07,08 ? * * 2010"/>
 
 For more information, see
-http://www.quartz-scheduler.org/docs/tutorials/crontrigger.html
-or http://www.stonebranch.com 
+http://www.quartz-scheduler.org/documentation/quartz-2.2.x/tutorials/tutorial-lesson-06.html
 
 
 ### crontab ###
 
 Attribute of the [schedule](#schedule), sets the schedule with a full
 crontab string. For more information, see
-http://www.quartz-scheduler.org/docs/tutorials/crontrigger.html. 
+http://www.quartz-scheduler.org/documentation/quartz-2.2.x/tutorials/tutorial-lesson-06.html
 
 If specified, then the embedded schedule elements are not used.
 
@@ -591,7 +593,7 @@ isDate
 
 dateFormat
 
-:    The date/time format to use in the UI. Using the [momentjs format](http://momentjs.com/docs/#/displaying/format/).
+:    The date/time format to use in the UI. Using the [momentjs format](https://momentjs.com/docs/#/displaying/format/).
 
 *Example*
 
@@ -1181,6 +1183,10 @@ Defines email, webhook or plugin notifications for Job success and failure, with
 
 :    define notifications for job start
 
+[onavgduration][]
+
+:    define notifications when exceed average duration
+
 *Example*
 
 ~~~~~~~~ {.xml}
@@ -1199,6 +1205,10 @@ Defines email, webhook or plugin notifications for Job success and failure, with
           </configuration>
         </plugin>
    </onstart>
+   <onavgduration>
+        <email recipients='test@example.com' subject='Job Exceeded average duration' />
+        <plugin type='MinimalNotificationPlugin' />
+      </onavgduration>
 </notification>      
 ~~~~~~~~ 
 
@@ -1236,9 +1246,20 @@ Embed an [webhook](#webhook) element to perform a HTTP POST to some URLs, within
 Embed an [plugin](#plugin) element to perform a custom action, within
 [notification](#notification).
 
+### onavgduration 
+
+Embed an [email](#email) element to send email on success, within
+[notification](#notification).
+
+Embed an [webhook](#webhook) element to perform a HTTP POST to some URLs, within
+[notification](#notification).
+
+Embed an [plugin](#plugin) element to perform a custom action, within
+[notification](#notification).
+
 ### email 
 
-Define email recipients for Job execution result, within [onsuccess][], [onfailure][] or [onstart][].
+Define email recipients for Job execution result, within [onsuccess][], [onfailure][], [onstart][] or [onavgduration][].
 
 *Attributes*
 
@@ -1252,7 +1273,7 @@ recipients
 
 ### webhook
 
-Define URLs to submit a HTTP POST to containing the job execution result, within [onsuccess][], [onfailure][] or [onstart][].
+Define URLs to submit a HTTP POST to containing the job execution result, within [onsuccess][], [onfailure][], [onstart][] or [onavgduration][].
 
 
 *Attributes*
@@ -1272,7 +1293,7 @@ urls
 
 ### plugin
 
-Defines a configuration for a plugin to perform a Notification, within [onsuccess][], [onfailure][] or [onstart][].
+Defines a configuration for a plugin to perform a Notification, within [onsuccess][], [onfailure][], [onstart][] or [onavgduration][].
 
 *Attributes*
 
@@ -1336,3 +1357,4 @@ The Rundeck source code and all documentation may be downloaded from
 [onsuccess]: #onsuccess
 [onfailure]: #onfailure
 [onstart]: #onstart
+[onavgduration]: #onavgduration

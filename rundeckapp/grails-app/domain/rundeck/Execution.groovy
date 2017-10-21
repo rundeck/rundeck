@@ -43,9 +43,10 @@ class Execution extends ExecutionContext {
     Boolean willRetry=false
     Execution retryExecution
     Orchestrator orchestrator;
+    String userRoleList
 
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
-    static transients=['executionState','customStatusString']
+    static transients = ['executionState', 'customStatusString', 'userRoles']
     static constraints = {
         project(matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX, validator:{val,Execution obj->
             if(obj.scheduledExecution && obj.scheduledExecution.project!=val){
@@ -99,6 +100,9 @@ class Execution extends ExecutionContext {
         retryExecution(nullable: true)
         willRetry(nullable: true)
         nodeFilterEditable(nullable: true)
+        userRoleList(nullable: true)
+        retryDelay(nullable:true)
+        successOnEmptyNodeFilter(nullable: true)
     }
 
     static mapping = {
@@ -106,7 +110,6 @@ class Execution extends ExecutionContext {
         //mapping overrides superclass, so we need to relist these
         user column: "rduser"
         argString type: 'text'
-        logFileStorageRequest fetch: 'join'
 
         failedNodeList type: 'text'
         succeededNodeList type: 'text'
@@ -128,6 +131,7 @@ class Execution extends ExecutionContext {
         filter(type: 'text')
         timeout( type: 'text')
         retry( type: 'text')
+        userRoleList(type: 'text')
 
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_IDX_1', ['id', 'project', 'dateCompleted']
@@ -144,6 +148,9 @@ class Execution extends ExecutionContext {
         withServerNodeUUID { uuid ->
             eq 'serverNodeUUID', uuid
         }
+        withProject{ project ->
+            eq 'project', project
+        }
 	}
 
 
@@ -151,6 +158,17 @@ class Execution extends ExecutionContext {
         return "Workflow execution: ${workflow}"
     }
 
+    public setUserRoles(List l) {
+        setUserRoleList(l?.join(","))
+    }
+
+    public List getUserRoles() {
+        if (userRoleList) {
+            return Arrays.asList(userRoleList.split(/,/))
+        } else {
+            return []
+        }
+    }
     public boolean statusSucceeded(){
         return getExecutionState()==ExecutionService.EXECUTION_SUCCEEDED
     }
@@ -243,6 +261,9 @@ class Execution extends ExecutionContext {
         if(this.retry){
             map.retry=this.retry
         }
+        if(this.retryDelay){
+            map.retryDelay=this.retryDelay
+        }
         if(this.retryExecution){
             map.retryExecutionId=retryExecution.id
         }
@@ -295,6 +316,9 @@ class Execution extends ExecutionContext {
         }
         if(data.retry){
             exec.retry=data.retry
+        }
+        if(data.retryDelay){
+            exec.retryDelay=data.retryDelay
         }
         if(data.retryExecutionId){
             exec.retryExecution=Execution.get(data.retryExecutionId)

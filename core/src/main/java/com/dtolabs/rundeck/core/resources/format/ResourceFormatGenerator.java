@@ -45,10 +45,31 @@ public interface ResourceFormatGenerator {
     public Set<String> getFileExtensions();
 
     /**
+     * @return the single preferred file extension, or null
+     */
+    public default String getPreferredFileExtension() {
+        Set<String> strings = getFileExtensions();
+        if (strings.size() == 0) {
+            return strings.iterator().next();
+        }
+        return null;
+    }
+    /**
      * @return the list of MIME types that this format generator can generate. If more than one
      * are returned, then the first value will be used by default if necessary.
      */
     public List<String> getMIMETypes();
+
+    /**
+     * @return the single preferred mime type, or null
+     */
+    public default String getPreferredMimeType() {
+        List<String> strings = getMIMETypes();
+        if (strings.size() > 0) {
+            return strings.iterator().next();
+        }
+        return null;
+    }
 
     /**
      * generate formatted output

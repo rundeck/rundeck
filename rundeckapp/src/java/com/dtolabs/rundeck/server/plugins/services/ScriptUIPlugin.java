@@ -169,13 +169,13 @@ public class ScriptUIPlugin extends AbstractDescribableScriptPlugin implements U
     }
 
     private List<String> keyAppliedForPath(String path, Map<String, List<String>> map) {
-
+        List<String> result = new ArrayList<>();
         for (String s : map.keySet()) {
             if ("*".equals(s) || s.equals(path) || path.matches(s)) {
-                return map.get(s);
+                result.addAll(map.get(s));
             }
         }
-        return null;
+        return result;
     }
 
     @Override

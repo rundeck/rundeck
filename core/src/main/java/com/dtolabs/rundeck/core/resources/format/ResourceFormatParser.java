@@ -41,10 +41,32 @@ public interface ResourceFormatParser {
     public Set<String> getFileExtensions();
 
     /**
+     * @return the single preferred file extension, or null
+     */
+    public default String getPreferredFileExtension() {
+        Set<String> strings = getFileExtensions();
+        if (strings.size() == 0) {
+            return strings.iterator().next();
+        }
+        return null;
+    }
+
+    /**
      * @return  the list of MIME types that this format parser can parse. This may include wildcards such as
      * "*&#47;xml".
      */
     public Set<String> getMIMETypes();
+
+    /**
+     * @return the single preferred mime type, or null
+     */
+    public default String getPreferredMimeType() {
+        Set<String> strings = getMIMETypes();
+        if (strings.size() == 0) {
+            return strings.iterator().next();
+        }
+        return null;
+    }
 
     /**
      * Parse a file

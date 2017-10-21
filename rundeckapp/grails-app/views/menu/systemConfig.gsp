@@ -28,6 +28,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
+    <meta name="tabtitle" content="${g.message(code: 'gui.menu.SystemConfig')}"/>
     <title><g:message code="gui.menu.SystemConfig" /></title>
 </head>
 
@@ -38,19 +39,13 @@
     </div>
 </div>
 <div class="row">
-    <div class="col-sm-3">
-        <g:render template="configNav" model="[selected: 'syscfg']"/>
-
-    </div>
 
     <g:set var="flatConfig" value="${grailsApplication.config.flatten()}"/>
     <g:set var="fwkProps" value="${rundeckFramework.propertyLookup.propertiesMap}"/>
-    <div class="col-sm-9">
-    <div class="well well-sm">
-    <div class="text-info">
-        <g:message code="page.SystemConfiguration.description" />
-    </div>
-    </div>
+    <div class="col-sm-10 col-sm-offset-1">
+        <div class="panel panel-default">
+
+            <div class="panel-body">
     <h4>Server Connection Info</h4>
         <g:set var="fwkPropFile" value="${FilesystemFramework.getPropertyFile(rundeckFramework.getConfigDir())}"/>
 
@@ -99,6 +94,14 @@
             <code><g:enc>${loginmodule}</g:enc></code>
         </div>
     </div>
+
+    </div>
+            <div class="panel-footer">
+                <div class="text-info">
+                    <g:message code="page.SystemConfiguration.description"/>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 </body>

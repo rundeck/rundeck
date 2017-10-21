@@ -33,7 +33,7 @@
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <asset:stylesheet href="rundeck.css"/>
     <asset:stylesheet href="ansicolor.css"/>
-    <asset:stylesheet href="non_responsive.css"/>
+    <asset:stylesheet href="github-markdown.css"/>
 
     <asset:stylesheet href="jquery-ui.css"/>
     <!--[if lt IE 9]>
@@ -116,12 +116,6 @@
 
     </g:if>
     <g:layoutHead/>
-    <g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
-        <g:javascript>
-            //call after gsp page has loaded javascript
-            jQuery(function(){window.rundeckPage.onPageLoad();});
-        </g:javascript>
-    </g:if>
 </head>
 <body>
 <g:render template="/common/topbar"/>
@@ -136,5 +130,12 @@
 <g:profilerOutput />
 -->
 <miniprofiler:javascript/>
+
+<g:if test="${uiplugins && uipluginsPath && params.uiplugins!='false'}">
+    <script type="text/javascript" defer>
+        //call after gsp page has loaded javascript
+        jQuery(function(){window.rundeckPage.onPageLoad();});
+    </script>
+</g:if>
 </body>
 </html>

@@ -21,4 +21,5 @@ import rundeck.services.events.ExecutionCompleteEvent
 events = {
     executionComplete filter: ExecutionCompleteEvent, fork: true
     executionBeforeStart filter: ExecutionPrepareEvent, fork: false
+    executionCheckpoint filter: ExecutionCompleteEvent, fork: false
 }

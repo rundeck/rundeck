@@ -80,7 +80,7 @@ public class DispatcherResultImpl implements DispatcherResult, HasDispatcherResu
             return "Dispatch successful (" + results.size() + " nodes)";
         }else{
             int i=0;
-            ArrayList<String> names = new ArrayList<String>();
+            ArrayList<String> names = new ArrayList<>();
             for (final String s : results.keySet()) {
                 NodeStepResult stepResult = results.get(s);
                 if(!stepResult.isSuccess()){

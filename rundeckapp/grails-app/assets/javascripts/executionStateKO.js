@@ -629,16 +629,20 @@ function RDNodeStep(data, node, flow){
     self.executionState = ko.observable(data.executionState || null);
     self.parameterizedStep = ko.observable(data.stepctx.indexOf('@')>=0);
     self.startTimeSimple=ko.pureComputed(function(){
-        return MomentUtil.formatTimeSimple(self.startTime());
+        //TODO: fix incorrect startTime format: it is not actually UTC time
+        return MomentUtil.formatTimeSimpleUTC(self.startTime());
     });
     self.startTimeFormat=function(format){
-        return MomentUtil.formatTime(self.startTime(),format);
+        //TODO: fix incorrect startTime format: it is not actually UTC time
+        return MomentUtil.formatTimeUTC(self.startTime(),format);
     };
     self.endTimeSimple=ko.pureComputed(function(){
-        return MomentUtil.formatTimeSimple(self.endTime());
+        //TODO: fix incorrect endTime format: it is not actually UTC time
+        return MomentUtil.formatTimeSimpleUTC(self.endTime());
     });
     self.endTimeFormat= function (format) {
-        return MomentUtil.formatTime(self.endTime(), format);
+        //TODO: fix incorrect endTime format: it is not actually UTC time
+        return MomentUtil.formatTimeUTC(self.endTime(), format);
     };
     self.durationCalc=ko.pureComputed(function(){
         var dur=self.duration();
@@ -881,7 +885,7 @@ function RDNode(name, steps,flow){
     }
 }
 
-function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
+function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflow, data) {
     var self=this;
     self.workflow=workflow;
     self.multiWorkflow=multiworkflow;
@@ -892,10 +896,12 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
     self.nodes=ko.observableArray([ ]).extend({ rateLimit: 500 });
     self.selectedNodes=ko.observableArray([ ]);
     self.followingStep=ko.observable();
+    self.execFollowingControl = data.followControl;
     self.followingControl=null;
     self.followOutputUrl= outputUrl;
     self.nodeStateUpdateUrl= nodeStateUpdateUrl;
     self.completed=ko.observable();
+    self.partial=ko.observable();
     self.executionState=ko.observable();
     self.executionStatusString=ko.observable();
     self.retryExecutionId=ko.observable();
@@ -907,7 +913,7 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
     self.jobAverageDuration=ko.observable();
     self.startTime=ko.observable();
     self.endTime=ko.observable();
-    self.executionId=ko.observable();
+    self.executionId = ko.observable(data.executionId);
     self.outputScrollOffset=0;
     self.activeTab=ko.observable("summary");
     self.scheduled = ko.pureComputed(function () {
@@ -928,6 +934,51 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
     self.displayStatusString = ko.computed(function () {
         var statusString = self.executionStatusString();
         return statusString != null && self.executionState() != statusString.toUpperCase() && !self.incompleteState();
+    });
+    self.canKillExec = ko.computed(function () {
+        return self.execFollowingControl && self.execFollowingControl.killjobauth
+    });
+    self.killRequested = ko.observable(false);
+    self.killResponseData = ko.observable({});
+    self.killExecAction = function () {
+        if (self.execFollowingControl) {
+            self.execFollowingControl.docancel().then(function (data) {
+                self.killRequested(true);
+                self.killResponseData(data);
+            });
+        }
+    };
+    self.killStatusFailed = ko.computed(function () {
+        "use strict";
+        var req = self.killRequested();
+        var data = self.killResponseData();
+        if (!req) {
+            return false;
+        }
+        return data && !data.cancelled;
+    });
+    self.killStatusPending = ko.computed(function () {
+        "use strict";
+        var req = self.killRequested();
+        var data = self.killResponseData();
+        if (!req) {
+            return false;
+        }
+        return data && data.cancelled && data.abortstate === 'pending';
+    });
+    self.killStatusText = ko.computed(function () {
+        var req = self.killRequested();
+        var data = self.killResponseData();
+        if (!req) {
+            return "";
+        }
+        if (data && data.cancelled && data.abortstate === 'pending') {
+            return data.reason || 'Killing Job...';
+        } else if (data && data.cancelled && data.abortstate === 'aborted') {
+            return data.reason || 'Killed.';
+        } else {
+            return (data ? data['error'] || data.reason : '') || 'Failed to Kill Job.';
+        }
     });
     self.totalNodeCount=ko.observable(0);
     self.nodeIndex={};
@@ -1055,6 +1106,7 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
         }
         var ctrl = new FollowControl(null, null, {
             parentElement: targetElement,
+            showClusterExecWarning: false,
             extraParams: '&' + Object.toQueryString(params),
             appLinks: {tailExecutionOutput: self.followOutputUrl},
             finishedExecutionAction: false,
@@ -1283,7 +1335,8 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
         });
     };
     self.formatTimeAtDate=function(text){
-        return MomentUtil.formatTimeAtDate(text);
+        //TODO: fix incorrect endTime/startTime format: it is not actually UTC time
+        return MomentUtil.formatTimeAtDateUTC(text);
     };
     self.formatDurationHumanize=function(ms){
         return MomentUtil.formatDurationHumanize(ms);
@@ -1307,6 +1360,54 @@ function NodeFlowViewModel(workflow,outputUrl,nodeStateUpdateUrl,multiworkflow){
     self.execDurationHumanized = ko.pureComputed(function () {
         return MomentUtil.formatDurationHumanize(self.execDuration());
     });
+    self.followFlowState = function (flowState,followNodes) {
+        "use strict";
+        flowState.addUpdater({
+            updateError: function (error, data) {
+                if (error !== 'pending') {
+                    self.stateLoaded(false);
+                    self.errorMessage(data.state.errorMessage ? data.state.errorMessage : error);
+                } else {
+                    self.statusMessage(data.state.errorMessage ? data.state.errorMessage : error);
+                }
+                ko.mapping.fromJS({
+                    executionState: data.executionState,
+                    executionStatusString: data.executionStatusString,
+                    retryExecutionId: data.retryExecutionId,
+                    retryExecutionUrl: data.retryExecutionUrl,
+                    retryExecutionState: data.retryExecutionState,
+                    retryExecutionAttempt: data.retryExecutionAttempt,
+                    retry: data.retry,
+                    completed: data.completed,
+                    partial: data.partial,
+                    execDuration: data.execDuration,
+                    jobAverageDuration: data.jobAverageDuration,
+                    startTime: data.startTime ? data.startTime : data.state ? data.state.startTime : null,
+                    endTime: data.endTime ? data.endTime : data.state ? data.state.endTime : null
+                }, {}, self);
+            },
+            updateState: function (data) {
+                ko.mapping.fromJS({
+                    executionState: data.executionState,
+                    executionStatusString: data.executionStatusString,
+                    retryExecutionId: data.retryExecutionId,
+                    retryExecutionUrl: data.retryExecutionUrl,
+                    retryExecutionState: data.retryExecutionState,
+                    retryExecutionAttempt: data.retryExecutionAttempt,
+                    retry: data.retry,
+                    completed: data.completed,
+                    partial: data.partial,
+                    execDuration: data.execDuration,
+                    jobAverageDuration: data.jobAverageDuration,
+                    startTime: data.startTime ? data.startTime : data.state ? data.state.startTime : null,
+                    endTime: data.endTime ? data.endTime : data.state ? data.state.endTime : null
+                }, {}, self);
+                if(followNodes) {
+                    self.updateNodes(data.state);
+                }
+            }
+        });
+    }
 }
 
 

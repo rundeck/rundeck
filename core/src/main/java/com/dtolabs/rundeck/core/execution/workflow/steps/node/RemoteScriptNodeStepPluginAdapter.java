@@ -24,6 +24,8 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps.node;
 
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.*;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
@@ -102,8 +104,15 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
 
         Map<String, Object> instanceConfiguration = getStepConfiguration(item);
         if (null != instanceConfiguration) {
-            instanceConfiguration = DataContextUtils.replaceDataReferences(instanceConfiguration,
-                                                                           context.getDataContext());
+            instanceConfiguration = SharedDataContextUtils.replaceDataReferences(
+                    instanceConfiguration,
+                    ContextView.node(node.getNodename()),
+                    ContextView::nodeStep,
+                    null,
+                    context.getSharedDataContext(),
+                    false,
+                    true
+            );
         }
         final String providerName = item.getNodeStepType();
         final PropertyResolver resolver = PropertyResolverFactory.createStepPluginRuntimeResolver(context,
@@ -114,7 +123,6 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
         final PluginStepContextImpl pluginContext = PluginStepContextImpl.from(context);
         Description description = getDescription();
         final Map<String, Object> config = PluginAdapterUtility.configureProperties(resolver, description, plugin, PropertyScope.InstanceOnly);
-
         final GeneratedScript script;
         try {
             script = plugin.generateScript(pluginContext, config, node);
@@ -136,7 +144,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                         .build(),
                 node,
                 script,
-                DataContextUtils.resolve(context.getDataContext(), "job", "execid"),
+                context.getDataContextObject().resolve("job", "execid"),
                 providerName
         );
     }

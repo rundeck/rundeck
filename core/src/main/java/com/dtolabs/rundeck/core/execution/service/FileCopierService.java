@@ -60,7 +60,7 @@ public class FileCopierService extends NodeSpecifiedService<FileCopier> implemen
     }
 
     public List<String> getBundledProviderNames() {
-        return Collections.unmodifiableList(new ArrayList<String>(registry.keySet()));
+        return Collections.unmodifiableList(new ArrayList<>(registry.keySet()));
     }
 
     FileCopierService(Framework framework) {

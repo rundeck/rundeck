@@ -28,8 +28,8 @@ archivesBaseName = 'rundeck-launcher'
 defaultTasks 'clean','launcherJar'
 ext.launcherMainClass = mainClassName
 ext.launcherStartClass = "com.dtolabs.rundeck.RunServer"
-ext.launcherJettyLibs = "javax.servlet-3.0.0.v201112011016.jar jetty-${jettyVersion}.jar jetty-security-${jettyVersion}.jar jetty-server-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-io-${jettyVersion}.jar jetty-http-${jettyVersion}.jar jetty-jaas-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.11.jar"
-ext.launcherJettyLibsUnexpanded = 'javax.servlet-3.0.0.v201112011016.jar jetty-${jettyVersion}.jar jetty-security-${jettyVersion}.jar jetty-server-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-io-${jettyVersion}.jar jetty-http-${jettyVersion}.jar jetty-jaas-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.11.jar'
+ext.launcherJettyLibs = "javax.servlet-3.0.0.v201112011016.jar jetty-${jettyVersion}.jar jetty-security-${jettyVersion}.jar jetty-server-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-io-${jettyVersion}.jar jetty-http-${jettyVersion}.jar jetty-jaas-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.17.jar"
+ext.launcherJettyLibsUnexpanded = 'javax.servlet-3.0.0.v201112011016.jar jetty-${jettyVersion}.jar jetty-security-${jettyVersion}.jar jetty-server-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-io-${jettyVersion}.jar jetty-http-${jettyVersion}.jar jetty-jaas-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.17.jar'
 ext.launcherJettyLibPath = "pkgs/webapp/WEB-INF/lib"
 
 ext.launcherContentsDir = new File("$projectDir/build/launcher-contents")
@@ -57,11 +57,11 @@ dependencies {
     }
 }
 
-task setupLauncherContent << {
+task('setupLauncherContent').doLast {
     launcherContentsDir.mkdirs()
 }
 
-task expandCli(dependsOn: setupLauncherContent) << {
+task('expandCli').dependsOn(setupLauncherContent).doLast {
     //copy libs to a tools lib dir
     def dep = configurations.compile.allDependencies.find { dep -> dep.name == 'commons-cli' }
     FileTree cliJar = zipTree(configurations.compile.files(dep).find{it})
@@ -72,7 +72,7 @@ task expandCli(dependsOn: setupLauncherContent) << {
     }
 }
 
-task expandWar(dependsOn: setupLauncherContent) << {
+task('expandWar').dependsOn(setupLauncherContent).doLast {
     //copy libs to a tools lib dir
     File webappDir=new File(launcherContentsDir,"pkgs/webapp")
     webappDir.mkdirs()
@@ -83,7 +83,7 @@ task expandWar(dependsOn: setupLauncherContent) << {
     }
 }
 
-task copyJettyServerLib(dependsOn: setupLauncherContent) << {
+task('copyJettyServerLib').dependsOn(setupLauncherContent).doLast {
     File libDir=new File(launcherContentsDir,"lib")
     libDir.mkdirs()
     def serverlibjar = configurations.jettyServerLib.files
@@ -104,7 +104,7 @@ jar {
 jar.dependsOn(expandCli, expandWar, copyJettyServerLib)
 
 apply plugin: 'maven'
-task createPom << {
+task('createPom').doLast {
     pom {
         project {
             artifactId archivesBaseName

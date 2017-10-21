@@ -96,6 +96,73 @@ jQuery(function(){
 </g:javascript>
 
 </div>
+    <g:set var="workflowLogFilterPluginConfigs" value="${workflow?.getPluginConfigDataList('LogFilter')}"/>
+    <g:if test="${logFilterPlugins}">
+        <div id="logfilterplugins_wf">
+            <div class="form-inline">
+                <div class="form-group ${hasErrors(bean: workflow, field: 'strategy', 'has-error')}">
+                    <label class=""><g:message code="global.log.filters" /></label>
+
+                    <div class="">
+                        <!-- ko foreach: {data: filters, as: 'filter' } -->
+                        <span class="btn btn-xs btn-info-hollow autohilite"
+                              data-bind="click: $root.editFilter"
+                              title="${message(code:"click.to.edit.filter")}">
+                            <!-- ko if: plugin() -->
+                            <!-- ko with: plugin() -->
+                            <!-- ko if: iconSrc -->
+                            <img width="16px" height="16px" data-bind="attr: {src: iconSrc}"/>
+                            <!-- /ko -->
+                            <!-- ko if: !iconSrc() -->
+                            <i class="rdicon icon-small plugin"></i>
+                            <!-- /ko -->
+                            <!-- /ko -->
+                            <!-- /ko -->
+
+
+                            <span data-bind="text: title"></span>
+                        </span>
+                        <span class="textbtn textbtn-danger textbtn-deemphasize"
+                              data-bind="click: $root.removeFilter"
+                              title="${message(code:"remove.filter")}">
+                            <g:icon name="remove"/></span>
+
+                        <!--define hidden inputs for the configured filter -->
+                        <input type="hidden"
+                               data-bind="attr: { name: 'workflow.globalLogFilters.'+index()+'.type', value: type}"/>
+                        <!--config values-->
+                        <span data-bind="foreachprop: config">
+
+                            <input type="hidden"
+                                   data-bind="attr: { name: 'workflow.globalLogFilters.'+filter.index()+'.config.'+key, value: value}"/>
+                        </span>
+
+
+                        <!-- /ko -->
+                        <span class="textbtn textbtn-success" data-bind="click: addFilterPopup">
+                            <g:icon name="plus"/>
+                            <g:message code="add" />
+                        </span>
+                        <g:embedJSON id="logFilterData_wf" data="${[
+                                global: true,
+                                description: "All workflow steps",
+                                filters: workflowLogFilterPluginConfigs ?: []
+                        ]
+                        }"/>
+                        <script type="text/javascript">
+                            fireWhenReady("logfilterplugins_wf", function () {
+                                var step = workflowEditor.bindStepFilters('logfilterplugins_wf', 'logfilterplugins_wf', loadJsonData('logFilterData_wf'), {
+                                    editor: function (x) {
+                                        return new WorkflowGlobalLogFilterEditor(x);
+                                    }
+                                });
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </g:if>
 </g:if>
 </g:unless>
 <div class="pflowlist ${edit?'edit':''} rounded ${isAdhoc?'adhoc':''}" style="">
@@ -183,6 +250,29 @@ jQuery(function(){
     </span>
 
     </div>
+    <g:set var="workflowLogFilterPluginConfigs" value="${workflow?.getPluginConfigDataList('LogFilter')}"/>
+    <g:if test="${workflowLogFilterPluginConfigs}">
+        <div>
+
+            <span class="text-muted text-em">
+                Log Filters:
+                <div id="workflowlogfilterdetail">
+                    <g:embedJSON id="workflowlogfilterconfigdata"
+                                 data="${[filters: workflowLogFilterPluginConfigs]}"/>
+                    <g:each in="${workflowLogFilterPluginConfigs}" var="config">
+
+                        <g:render template="/framework/renderPluginConfig"
+                                  model="[showPluginIcon: true,
+                                          type          : config.type,
+                                          values        : config.config,
+                                          description   : logFilterPlugins?.values()?.
+                                                  find { it.name == config.type }?.description
+                                  ]"/>
+                    </g:each>
+                </div>
+            </span>
+        </div>
+    </g:if>
 </g:if>
 <div class="clear"></div>
 

@@ -205,7 +205,10 @@ public class PluginAdapterUtility {
         if (type == Property.Type.Options) {
             final SelectValues selectAnnotation = field.getAnnotation(SelectValues.class);
             if (null != selectAnnotation) {
-                pbuild.values(selectAnnotation.values());
+                String[] values = selectAnnotation.values();
+                pbuild.values(values);
+
+                extractSelectLabels(pbuild, values, field.getAnnotation(SelectLabels.class));
             }
         }else if (type == Property.Type.String) {
             StringRenderingConstants.DisplayType renderBehaviour = StringRenderingConstants.DisplayType.SINGLE_LINE;
@@ -216,7 +219,9 @@ public class PluginAdapterUtility {
                         selectAnnotation.multiOption() ? Property.Type.Options :
                         (selectAnnotation.freeSelect() ? Property.Type.FreeSelect : Property.Type.Select)
                 );
-                pbuild.values(selectAnnotation.values());
+                String[] values = selectAnnotation.values();
+                pbuild.values(values);
+                extractSelectLabels(pbuild, values, field.getAnnotation(SelectLabels.class));
             }
 
             if (field.getAnnotation(TextArea.class) != null) {
@@ -287,6 +292,22 @@ public class PluginAdapterUtility {
         }
 
         return pbuild.build();
+    }
+
+    private static void extractSelectLabels(
+            final PropertyBuilder pbuild,
+            final String[] values,
+            final SelectLabels labelsAnnotation
+    )
+    {
+        if (null != labelsAnnotation) {
+            String[] labels = labelsAnnotation.values();
+            HashMap<String, String> labelsMap = new HashMap<>();
+            for (int i = 0; i < values.length && i < labels.length; i++) {
+                labelsMap.put(values[i], labels[i]);
+            }
+            pbuild.labels(labelsMap);
+        }
     }
 
     private static boolean notBlank(final String string) {

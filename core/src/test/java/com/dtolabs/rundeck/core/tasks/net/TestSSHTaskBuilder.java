@@ -59,6 +59,8 @@ public class TestSSHTaskBuilder extends TestCase {
         private String host;
         private int port;
         private long timeout;
+        private long connectTimeout;
+        private long commandTimeout;
         private SSHUserInfo userInfo;
         String username;
         private String keyfile;
@@ -204,6 +206,26 @@ public class TestSSHTaskBuilder extends TestCase {
         public Integer getTtlSSHAgent(){
           return this.ttlSSHAgent;
         }
+
+        @Override
+        public long getConnectTimeout() {
+            return connectTimeout;
+        }
+
+        @Override
+        public void setConnectTimeout(long connectTimeout) {
+            this.connectTimeout = connectTimeout;
+        }
+
+        @Override
+        public long getCommandTimeout() {
+            return commandTimeout;
+        }
+
+        @Override
+        public void setCommandTimeout(long commandTimeout) {
+            this.commandTimeout = commandTimeout;
+        }
     }
 
     static class testSCPInterface extends testSSHBaseInterface implements SSHTaskBuilder.SCPInterface {
@@ -261,7 +283,9 @@ public class TestSSHTaskBuilder extends TestCase {
         String privateKeyResourcePath;
         String passwordStoragePath;
         String password;
-        int SSHTimeout;
+        long timeout;
+        private long connectTimeout;
+        private long commandTimeout;
         Boolean localSSHAgent;
         Integer localTtlSSHAgent;
         String username;
@@ -289,8 +313,8 @@ public class TestSSHTaskBuilder extends TestCase {
             return password;
         }
 
-        public int getSSHTimeout() {
-            return SSHTimeout;
+        public long getTimeout() {
+            return timeout;
         }
 
         public String getUsername() {
@@ -366,6 +390,24 @@ public class TestSSHTaskBuilder extends TestCase {
         public byte[] getPrivateKeyPassphraseStorageData() throws IOException {
             return privateKeyPassphraseStorageData;
         }
+
+        @Override
+        public long getConnectTimeout() {
+            return connectTimeout;
+        }
+
+        public void setConnectTimeout(long connectTimeout) {
+            this.connectTimeout = connectTimeout;
+        }
+
+        @Override
+        public long getCommandTimeout() {
+            return commandTimeout;
+        }
+
+        public void setCommandTimeout(long commandTimeout) {
+            this.commandTimeout = commandTimeout;
+        }
     }
 
     File testKeyfile;
@@ -431,6 +473,16 @@ public class TestSSHTaskBuilder extends TestCase {
         @Override
         public void log(int level, String message) {
         }
+
+        @Override
+        public void log(final int level, final String message, final Map eventMeta) {
+
+        }
+
+        @Override
+        public void event(final String eventType, final String message, final Map eventMeta) {
+
+        }
     };
     public void testBuildSSHDefault() throws Exception {
         final testState state = new testState();
@@ -460,7 +512,7 @@ public class TestSSHTaskBuilder extends TestCase {
         final testSSHExecInterface test = new testSSHExecInterface();
 
         state.node.setHostname("hostname:33");
-        state.sshConnectionInfo.SSHTimeout = 600;
+        state.sshConnectionInfo.timeout = 600;
         state.sshConnectionInfo.username = "usernameValue";
 
         runBuildSSH(state, test, testLogger);
@@ -483,7 +535,7 @@ public class TestSSHTaskBuilder extends TestCase {
         final testSSHExecInterface test = new testSSHExecInterface();
 
         state.node.setHostname("hostname:33");
-        state.sshConnectionInfo.SSHTimeout = 600;
+        state.sshConnectionInfo.timeout = 600;
         state.sshConnectionInfo.username = "usernameValue";
         state.sshConnectionInfo.privateKeyPassphrase = "passphraseValue";
 

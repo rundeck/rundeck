@@ -35,86 +35,69 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ContextualExecutionListener extends ExecutionListenerOverrideBase implements ContextLoggerExecutionListener {
-    private ContextLogger logger;
+class ContextualExecutionListener extends ExecutionListenerOverrideBase {
     private ContextualExecutionListener delegate;
-    protected ContextualExecutionListener(ContextualExecutionListener delegate){
-        super(delegate);
-        this.delegate=delegate;
-    }
+    private final ExecutionLogger logger;
 
-    public ContextualExecutionListener(
-        final FailedNodesListener failedNodesListener,
-        final ContextLogger logger,
-        final boolean terse,
-        final String logFormat
-    ) {
-        super(failedNodesListener, terse, logFormat);
+    private boolean ignoreError;
+
+    public void ignoreErrors(boolean value) {
+        ignoreError = value;
+    }
+    protected ContextualExecutionListener(
+            ContextualExecutionListener delegate,
+            final ExecutionLogger logger
+    )
+    {
+        super(delegate);
+        this.delegate = delegate;
         this.logger = logger;
     }
 
-    public final void log(final int level, final String message) {
-        if(null!=delegate) {
-            delegate.log(level, message);
-        }else{
-            log(level, message, getLoggingContext());
-        }
-    }
-    private Map<String,String> mergeMap(Map a,Map<String, String> b) {
-        HashMap<String, String> hashMap = new HashMap<String, String>();
-        if(null!=a){
-            for (Object k : a.keySet()) {
-                hashMap.put(k.toString(), a.get(k).toString());
-            }
-        }
-        if(null!=b){
-            hashMap.putAll(b);
-        }
-        return hashMap;
+    public ContextualExecutionListener(
+            final FailedNodesListener failedNodesListener,
+            final ExecutionLogger logger
+    ) {
+        super(failedNodesListener);
+        this.logger = logger;
     }
 
     @Override
     public void event(String eventType, String message, Map eventMeta) {
         if (null != delegate) {
             delegate.event(eventType, message, eventMeta);
-        } else {
-            emitEvent(eventType, LogLevel.NORMAL, message, mergeMap(eventMeta, getLoggingContext()));
+        } else if (null != logger) {
+            logger.event(eventType, message, eventMeta);
         }
-
     }
 
-    private void emitEvent(String eventType, LogLevel normal, String message, Map<String, String> loggingContext) {
-        logger.emit(eventType, normal, message, loggingContext);
-    }
-
-    public void log(final int level, final String message, Map<String, String> data) {
+    @Override
+    public void log(int level, final String message) {
+        if (ignoreError && level < Constants.INFO_LEVEL) {
+            level = Constants.INFO_LEVEL;
+        }
         if (null != delegate) {
-            delegate.log(level, message, data);
-            return ;
+            delegate.log(level, message);
+        } else if (null != logger) {
+            logger.log(level, message);
         }
-        if (level >= Constants.DEBUG_LEVEL) {
-            logger.verbose(message, data);
-        } else if (level >= Constants.VERBOSE_LEVEL) {
-            logger.verbose(message, data);
-        } else if (level >= Constants.INFO_LEVEL) {
-            logger.log(message, data);
-        } else if (level >= Constants.WARN_LEVEL) {
-            logger.warn(message, data);
-        } else if (level >= Constants.ERR_LEVEL) {
-            logger.error(message, data);
-        } else {
-            logger.log(message, data);
+
+    }
+
+    @Override
+    public void log(final int level, final String message, final Map eventMeta) {
+        if (null != delegate) {
+            delegate.log(level, message, eventMeta);
+        } else if (null != logger) {
+            logger.log(level, message, eventMeta);
         }
     }
 
     public ExecutionListenerOverride createOverride() {
-        return new ContextualExecutionListener(this);
+        return new ContextualExecutionListener(this, logger);
     }
 
-    /**
-     */
-    public Map<String, String> getContext() {
-        return getLoggingContext();
+    public ExecutionLogger getLogger() {
+        return logger;
     }
-
 }

@@ -390,7 +390,9 @@ class ScmServiceSpec extends Specification {
             getType()>>'atype'
             getConfig()>>config
         }
-        service.frameworkService.getAuthContextForUserAndRoles(_,_)>>Mock(UserAndRolesAuthContext){
+        service.frameworkService.getAuthContextForUserAndRolesAndProject(_, _, 'testProject') >> Mock(
+                UserAndRolesAuthContext
+        ) {
             getUsername()>>'testuser'
             getRoles()>>new HashSet<String>(['arole'])
         }
@@ -436,7 +438,9 @@ class ScmServiceSpec extends Specification {
             getType()>>'atype'
             getConfig()>>config
         }
-        service.frameworkService.getAuthContextForUserAndRoles(_,_)>>Mock(UserAndRolesAuthContext){
+        service.frameworkService.getAuthContextForUserAndRolesAndProject(_, _, 'testProject') >> Mock(
+                UserAndRolesAuthContext
+        ) {
             getUsername()>>'testuser'
             getRoles()>>new HashSet<String>(['arole'])
         }
@@ -543,7 +547,8 @@ class ScmServiceSpec extends Specification {
         1 * service.frameworkService.projectNames() >> ['projectA']
         2 * service.pluginConfigService.loadScmConfig('projectA', 'etc/scm-import.properties', 'scm.import') >> config1
 
-        1 * service.frameworkService.getAuthContextForUserAndRoles('bob', ['arole']) >> Mock(UserAndRolesAuthContext) {
+        1 * service.frameworkService.getAuthContextForUserAndRolesAndProject('bob', ['arole'], 'projectA') >>
+                Mock(UserAndRolesAuthContext) {
             getUsername() >> 'bob'
         }
         1 * service.frameworkService.getFrameworkPropertyResolver(*_)

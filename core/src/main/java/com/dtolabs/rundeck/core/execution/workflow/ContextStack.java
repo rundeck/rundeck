@@ -33,19 +33,19 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class ContextStack<T> {
+public class ContextStack<T> {
     private List<T> stack;
 
-    private ContextStack() {
-        stack = new ArrayList<T>();
+    public ContextStack() {
+        stack = new ArrayList<>();
     }
 
-    private ContextStack(final List<T> stack) {
-        this.stack = new ArrayList<T>(stack);
+    public ContextStack(final List<T> stack) {
+        this.stack = new ArrayList<>(stack);
     }
 
-    private ContextStack(final T item) {
-        this.stack = new ArrayList<T>(1);
+    public ContextStack(final T item) {
+        this.stack = new ArrayList<>(1);
         push(item);
     }
 
@@ -87,7 +87,7 @@ class ContextStack<T> {
      * Return a new stack based with the same contents
      */
     public ContextStack<T> copy() {
-        return new ContextStack<T>(this.stack);
+        return new ContextStack<>(this.stack);
     }
     /**
      * Return a new stack based with the same contents and one value pushed
@@ -118,14 +118,14 @@ class ContextStack<T> {
      * Create a new stack with a single item
      */
     public static <T> ContextStack<T> create(final T value) {
-        return new ContextStack<T>(value);
+        return new ContextStack<>(value);
     }
 
     /**
      * Return a copy of the stack
      */
     public List<T> stack() {
-        return new ArrayList<T>(stack);
+        return new ArrayList<>(stack);
     }
 
     /**

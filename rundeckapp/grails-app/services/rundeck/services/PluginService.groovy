@@ -18,6 +18,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
+import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -121,6 +122,17 @@ class PluginService {
         configurePlugin(name, configuration, rundeckPluginRegistry?.createPluggableService(type))
     }
 
+    def <T> SimplePluginProviderLoader<T> createSimplePluginLoader(
+            String projectName,
+            Framework framework,
+            PluggableProviderService<T> service
+    )
+    {
+        return { String provider, Map<String, Object> config ->
+            def plugin = configurePlugin(provider, (Map) config, projectName, framework, service)
+            plugin?.instance
+        } as SimplePluginProviderLoader<T>
+    }
     /**
      * Configure a new plugin using only instance-scope configuration values
      * @param name provider name
@@ -132,6 +144,10 @@ class PluginService {
                                                 Framework framework,
                               PluggableProviderService<T> service) {
         def validation = rundeckPluginRegistry?.validatePluginByName(name, service, framework, projectName, configuration)
+        if (!validation) {
+            logValidationErrors(service.name, name, Validator.errorReport('provider', 'Not found: ' + name))
+            return null
+        }
         if (!validation.valid) {
             logValidationErrors(service.name, name, validation.report)
             return null
@@ -291,7 +307,7 @@ class PluginService {
         return rundeckPluginRegistry?.validatePluginByName(name, rundeckPluginRegistry?.createPluggableService(clazz), config)
     }
 
-    def <T> Map listPlugins(Class<T> clazz) {
+    def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz) {
         listPlugins(clazz, rundeckPluginRegistry?.createPluggableService(clazz))
     }
     /**
@@ -299,7 +315,7 @@ class PluginService {
      * @param service
      * @return map of [name: DescribedPlugin]
      */
-    def <T> Map listPlugins(Class<T> clazz,PluggableProviderService<T> service) {
+    def <T> Map<String, DescribedPlugin<T>> listPlugins(Class<T> clazz,PluggableProviderService<T> service) {
         def plugins = rundeckPluginRegistry?.listPluginDescriptors(clazz, service)
         //XX: avoid groovy bug where generic types referenced in closure can cause NPE: http://jira.codehaus.org/browse/GROOVY-5034
         String svcName=service.name

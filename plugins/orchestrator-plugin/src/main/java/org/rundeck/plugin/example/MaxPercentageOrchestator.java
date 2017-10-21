@@ -36,7 +36,7 @@ public class MaxPercentageOrchestator implements Orchestrator {
 
 
     public MaxPercentageOrchestator(StepExecutionContext context, Collection<INodeEntry> nodes, int percentage) {
-        this.list = new ArrayList<INodeEntry>(nodes);
+        this.list = new ArrayList<>(nodes);
         percentage = validPercentage(percentage);
         this.max = calculateMax(nodes.size(), percentage);
         if (context != null) {

@@ -1,0 +1,42 @@
+version: '2'
+
+services:
+  rundeck1:
+    hostname: rundeck1
+    build:
+      context: dockers/rundeckansible/
+    environment:
+      - RUNDECK_NODE=rundeck1
+      - RUNDECK_URL=http://rundeck1:4440/
+      - LAUNCHER_URL=${LAUNCHER_URL}
+      - CLI_DEB_URL=${CLI_DEB_URL}
+      - CLI_VERS=${CLI_VERS}
+      - WAIT_NODES=rundeck1
+      - CONFIG_SCRIPT_PRESTART=scripts/config-ansible.sh
+      - SETUP_TEST_PROJECT=atest
+      - CONFIG_TEST_PROJECT_FILE=atest/atest-project.properties
+      - NODE_CACHE_FIRST_LOAD_SYNCH=1
+    volumes:
+      - logs:/home/rundeck/logs:rw
+      - resources:/home/rundeck/resources:rw
+    networks:
+      localnet:
+        ipv4_address: 192.168.234.11
+    ports:
+      - "2222:22"
+      - "4440:4440"
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet: 192.168.234.0/24
+        gateway: 192.168.234.1
+
+volumes:
+  logs:
+  resources:
+
+

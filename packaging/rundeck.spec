@@ -93,7 +93,7 @@ fi
 /var/lib/rundeck/bootstrap/jna-3.2.2.jar
 /var/lib/rundeck/bootstrap/libpam4j-1.5.jar
 /var/lib/rundeck/bootstrap/rundeck-jetty-server-%{_vname}.jar
-/var/lib/rundeck/bootstrap/not-yet-commons-ssl-0.3.11.jar
+/var/lib/rundeck/bootstrap/not-yet-commons-ssl-0.3.17.jar
 
 # CLI Lib Support
 %dir /var/lib/rundeck/cli
@@ -131,9 +131,14 @@ fi
 /var/lib/rundeck/cli/xercesImpl-2.11.0.jar
 /var/lib/rundeck/cli/xml-apis-1.4.01.jar
 /var/lib/rundeck/cli/xom-1.0.jar
-/var/lib/rundeck/cli/jackson-annotations-2.5.3.jar
-/var/lib/rundeck/cli/jackson-core-2.5.3.jar
-/var/lib/rundeck/cli/jackson-databind-2.5.3.jar
+/var/lib/rundeck/cli/jackson-annotations-2.8.8.jar
+/var/lib/rundeck/cli/jackson-core-2.8.8.jar
+/var/lib/rundeck/cli/jackson-databind-2.8.8.1.jar
+/var/lib/rundeck/cli/converter-jackson-2.2.0.jar
+/var/lib/rundeck/cli/okhttp-3.6.0.jar
+/var/lib/rundeck/cli/okio-1.11.0.jar
+/var/lib/rundeck/cli/retrofit-2.2.0.jar
+
 
 
 # CLI Tools

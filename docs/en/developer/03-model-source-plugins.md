@@ -53,7 +53,7 @@ Instance scoped properties for ResourceModelSources are loaded from the project'
 ### Example
 
 Here is an example `plugin.yaml` script-based ResourceModelSource plugin 
-declaring a provider clled "mysource" that produces resource-format `resourceyaml` output.
+declaring a provider called "mysource" that produces resource-format `resourceyaml` output.
 The provider declares three config properties (account, url, region)
 and illustrates the use
 of three different types (Integer, String, FreeSelect).

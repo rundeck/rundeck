@@ -101,12 +101,12 @@ having the passwords in plaintext within the configuration file.
 To accomplish this, you'll need a properly hashed or encrypted
 password to use in the config.  Pass the
 username and password to the `Password` utility which is part of the
-`jetty-all-7.6.0.v20120127.jar` file.
+`jetty-all-9.0.7.v20131107.jar` file.
 
 Location:
 
-* Launcher install: `$RDECK_BASE/server/lib/jetty-all-7.6.0.v20120127.jar`
-* RPM/Deb install: `/var/lib/rundeck/bootstrap/jetty-all-7.6.0.v20120127.jar`
+* Launcher install: `$RDECK_BASE/server/lib/jetty-all-9.0.7.v20131107.jar`
+* RPM/Deb install: `/var/lib/rundeck/bootstrap/jetty-all-9.0.7.v20131107.jar`
 
 Use the correct path below.
 
@@ -114,7 +114,7 @@ In this example,
 we'll setup a new user named "jsmith", with a password of "mypass":
 
 ~~~~~~ {.bash }
-$ java -cp jetty-all-7.6.0.v20120127.jar org.eclipse.jetty.util.security.Password jsmith mypass
+$ java -cp jetty-all-9.0.7.v20131107.jar org.eclipse.jetty.util.security.Password jsmith mypass
 ~~~~~~
 
 ~~~~~~
@@ -718,7 +718,7 @@ This method can be enabled with this config in `rundeck-config.properties`:
 
 This configuration requires some additional setup to enable:
 
-1. The file `WEB-INF/web.xml` inside the war contents **must** be modified to remove the `<auth-constraint>` element.  This disables the behavior which causes the Container to trigger its authentication mechanism when a user browses to a Rundeck page requiring authorizaton.
+1. The file `WEB-INF/web.xml` inside the war contents **must** be modified to remove the `<auth-constraint>` element.  This disables the behavior which causes the Container to trigger its authentication mechanism when a user browses to a Rundeck page requiring authorization.
 
 2. Apache HTTPD and Tomcat must be configured to communicate so that a list of User Roles is sent to Tomcat as a request Attribute with the given "attributeName".
 

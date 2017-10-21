@@ -16,6 +16,7 @@
 
 package rundeck
 
+import com.dtolabs.rundeck.core.common.FrameworkResourceException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import grails.util.Environment
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
@@ -57,6 +58,7 @@ class UtilityTagLib{
     private static Random rand=new java.util.Random()
     def HMacSynchronizerTokensManager hMacSynchronizerTokensManager
     def configurationService
+    def scheduledExecutionService
     /**
      * Return a new random string every time it is called.  Attrs are:
      * len: number of random bytes to use
@@ -227,7 +229,7 @@ class UtilityTagLib{
     }
 
     def relativeDate = { attrs, body ->
-        out<<relativeDateString(attrs,body)
+        out << relativeDateString(attrs + [html: attrs.html != null ? attrs.html : true], body)
     }
 
     def relativeDateString = { attrs, body ->
@@ -256,7 +258,7 @@ class UtilityTagLib{
             }
             return val.toString()
         }else if(attrs.elapsed || attrs.start && attrs.end){
-            def Date date = attrs.elapsed
+            def Date date = (attrs.elapsed instanceof Date) ? attrs.elapsed : null
             def Date enddate = new Date()
             if(attrs.start && attrs.end){
                 date = attrs.start
@@ -281,36 +283,42 @@ class UtilityTagLib{
 
 
             if(test < 60 ){
-                val << "${s}s"
+                val << g.message(code: 'format.time.sec.abbrev', args: [s].toArray())
             }else if(test <  (5 * 60) ){
-                val <<  "${m}m"
+                val << g.message(code: 'format.time.min.abbrev', args: [m].toArray())
                 if(s > 0){
-                    val << "${s}s"
+                    val << g.message(code: 'format.time.sec.abbrev', args: [s].toArray())
                 }
             }else if(test < (60 * 60) ){
-                val <<  "${m}m"
+                val << g.message(code: 'format.time.min.abbrev', args: [m].toArray())
 
             }else if (test < (24 * 60 * 60)){
-                val << "${h}h"
+                val << g.message(code: 'format.time.hour.abbrev', args: [h].toArray())
                 if(m > 0 ){
-                    val << "${m}m"
+                    val << g.message(code: 'format.time.min.abbrev', args: [m].toArray())
                 }
             }else{
-                val << "${d}d"
+                val << g.message(code: 'format.time.day.abbrev', args: [d].toArray())
                 if(h > 0 ){
-                    val << "${h}h"
+                    val << g.message(code: 'format.time.hour.abbrev', args: [h].toArray())
                 }
             }
             def StringBuffer val2 = new StringBuffer()
 
-            if(diff > 0 && !attrs.end){
-                val2 << "in "
+            if (diff > 0 && (!attrs.end || attrs.elapsed)) {
+                val2 << g.message(code: 'in') + " "
             }
-            val2 << "<span class=\"${enc(attr:diff > 0 ? (attrs.untilClass?:'until') : (attrs.agoClass ?: 'ago'))}\" >"
+            if (attrs.html) {
+                val2 << """<span class="${
+                    enc(attr: diff > 0 ? (attrs.untilClass ?: 'until') : (attrs.agoClass ?: 'ago'))
+                }">"""
+            }
             val2 << val.toString()
-            val2 << "</span>"
-            if(diff < 0 && !attrs.end){
-                val2 << " ago"
+            if (attrs.html) {
+                val2 << "</span>"
+            }
+            if (diff < 0 && (!attrs.end || attrs.elapsed)) {
+                val2 << " " + g.message(code: 'ago')
             }
             return val2.toString()
         } else {
@@ -436,7 +444,7 @@ class UtilityTagLib{
      * renders a java date as the W3C format used by dc:date in RSS feed
      */
     def w3cDateValue = {attrs,body ->
-        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'",Locale.US);
+        SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX",Locale.US);
         dateFormater.setTimeZone(TimeZone.getTimeZone("GMT"));
         return dateFormater.format(attrs.date);
     }
@@ -515,51 +523,56 @@ class UtilityTagLib{
                 year = c.get(GregorianCalendar.YEAR)
         }
 
-        out << "\
-            <input type='text' id='${namePicker}' name='${optionName?:namePicker}' placeholder='${placeholder}' class='${htmlClass}' ${htmlRequired} style='position: relative; z-index:999;'/>\
-            \
-            \
-            <input type='hidden' id='${name}' name='${name}' value='date.struct' />\
-            \
-            <input type='hidden' id='${nameMinute}' name='${nameMinute}' value='${minute}' />\
-            <input type='hidden' id='${nameHour}' name='${nameHour}' value='${hour}' />\
-            <input type='hidden' id='${nameDay}' name='${nameDay}' value='${day}' />\
-            <input type='hidden' id='${nameMonth}' name='${nameMonth}' value='${month}' />\
-            <input type='hidden' id='${nameYear}' name='${nameYear}' value='${year}' />\
-                    "
+        out << """
+            <input type='text' id='${namePicker}' name='${optionName ?: namePicker}' placeholder='${
+            placeholder
+        }' class='${htmlClass}' ${htmlRequired} style='position: relative; z-index:999;'/>
+            
+           
+            <input type='hidden' id='${name}' name='${name}' value='date.struct' />
+            
+            <input type='hidden' id='${nameMinute}' name='${nameMinute}' value='${minute}' />
+            <input type='hidden' id='${nameHour}' name='${nameHour}' value='${hour}' />
+            <input type='hidden' id='${nameDay}' name='${nameDay}' value='${day}' />
+            <input type='hidden' id='${nameMonth}' name='${nameMonth}' value='${month}' />
+            <input type='hidden' id='${nameYear}' name='${nameYear}' value='${year}' />
+                    """
 
-        out << "\
-            <script type='text/javascript'>\
-            jQuery(document).ready(function(){\n\
-                 jQuery('#${namePicker}').datetimepicker(${options});\n\
-                 jQuery('#${namePicker}').datetimepicker('option',jQuery.timepicker.regional['${locale}']);\n\
-                 jQuery('#${namePicker}').on('change', function(){\n\
-                         selDate = jQuery('#${namePicker}').datetimepicker('getDate');\n\
-                         jQuery('#${nameMinute}').val(selDate?selDate.getMinutes():null);\n\
-                         jQuery('#${nameHour}').val(selDate?selDate.getHours():null);\n\
-                         jQuery('#${nameDay}').val(selDate?selDate.getDate():null);\n\
-                         jQuery('#${nameMonth}').val(selDate?selDate.getMonth()+1:null);\n\
-                         jQuery('#${nameYear}').val(selDate?selDate.getFullYear():null);\n\
-                 });\n\
-                 var dateFormat = jQuery('#${namePicker}').datetimepicker( 'option', 'dateFormat');\n\
-                 var timeFormat = jQuery('#${namePicker}').datetimepicker( 'option', 'timeFormat');\n\
-                 var controlType = jQuery('#${namePicker}').datetimepicker( 'option', 'select');\n\
-            "
+        out << """
+            <script type='text/javascript'>
+            jQuery(document).ready(function(){\n
+                 jQuery('#${namePicker}').datetimepicker(${options});\n
+                 jQuery('#${namePicker}').datetimepicker('option',jQuery.timepicker.regional['${locale}']);\n
+                 jQuery('#${namePicker}').on('change', function(){\n
+                         selDate = jQuery('#${namePicker}').datetimepicker('getDate');\n
+                         jQuery('#${nameMinute}').val(selDate?selDate.getMinutes():null);\n
+                         jQuery('#${nameHour}').val(selDate?selDate.getHours():null);\n
+                         jQuery('#${nameDay}').val(selDate?selDate.getDate():null);\n
+                         jQuery('#${nameMonth}').val(selDate?selDate.getMonth()+1:null);\n
+                         jQuery('#${nameYear}').val(selDate?selDate.getFullYear():null);\n
+                 });\n
+                 var dateFormat = jQuery('#${namePicker}').datetimepicker( 'option', 'dateFormat');\n
+                 var timeFormat = jQuery('#${namePicker}').datetimepicker( 'option', 'timeFormat');\n
+                 var controlType = jQuery('#${namePicker}').datetimepicker( 'option', 'select');\n
+            """
         // If a value is specified it overrides the default date
         if(attrs['value']){
-            out << "\
-                //Set date from value\n\
-                jQuery('#${namePicker}').datetimepicker('option', 'defaultDate',new Date(${year},${month-1},${day},${hour},${minute}));\n\
-            "
+            out << """
+                //Set date from value\n
+                jQuery('#${namePicker}').datetimepicker('option', 'defaultDate',new Date(${year},${month - 1},${day},${
+                hour
+            },${minute}));\n
+            """
         }
-        out << "\
-            var defaultDate = jQuery('#${namePicker}').datetimepicker( 'option', 'defaultDate');\n\
-            //Set default date\n\
-            jQuery('#${namePicker}').val(jQuery.datepicker.formatDate(dateFormat, defaultDate) + ' ' + (defaultDate.getHours()<10?'0':'') + defaultDate.getHours() + ':' + (defaultDate.getMinutes()<10?'0':'') + defaultDate.getMinutes())\n\
-            });\n\
-            </script>\
-            \
-            "
+        out << """
+            var defaultDate = jQuery('#${namePicker}').datetimepicker( 'option', 'defaultDate');\n
+            //Set default date\n
+            jQuery('#${namePicker}').val(jQuery.datepicker.formatDate(dateFormat, defaultDate) + ' ' + (defaultDate
+.getHours()<10?'0':'') + defaultDate.getHours() + ':' + (defaultDate.getMinutes()<10?'0':'') + defaultDate.getMinutes())\n
+            });\n
+            </script>
+            
+            """
     }
 
     def autoLink={ attrs,body->
@@ -800,7 +813,11 @@ class UtilityTagLib{
         def campaign = attrs.campaign?:'helplink'
         def sourceName = g.message(code:'main.app.id',default: 'rundeckapp')
         def helpParams = [utm_source: sourceName, utm_medium: medium, utm_campaign: campaign, utm_content: (controllerName + '/' + actionName)]
-        return helpParams.collect { k, v -> k + '=' + v }.join('&')
+        return genUrlParam(helpParams)
+    }
+
+    def String genUrlParam(Map<String, Serializable> params) {
+        params.collect { k, v -> k.encodeAsURIComponent() + '=' + v.encodeAsURIComponent() }.join('&')
     }
     def helpLinkUrl={attrs,body->
         def path=''
@@ -1096,8 +1113,33 @@ class UtilityTagLib{
         }else if(null!=attrs.is){
             testIsActive=attrs.is =='active'
         }
+        if(null!=attrs.project){
+            try {
+                def projectExec = scheduledExecutionService.isProjectExecutionEnabled(attrs.project)
+                if(!projectExec){
+                    return testIsActive==projectExec
+                }
+            }catch (FrameworkResourceException e){
+                log.warn(e.message)
+            }
+        }
         return testIsActive==configurationService.executionModeActive
     }
+
+    def scheduleMode={attrs,body->
+        def testIsActive = true
+        if(null!=attrs.is){
+            testIsActive=attrs.is =='active'
+        }
+        if(null!=attrs.project){
+            try {
+                return testIsActive==scheduledExecutionService.isProjectScheduledEnabled(attrs.project)
+            }catch (FrameworkResourceException e){
+                log.warn(e.message)
+            }
+        }
+    }
+
     def ifExecutionMode={attrs,body->
         if(executionMode(attrs,body)){
             out<<body()
@@ -1714,9 +1756,11 @@ ansi-bg-default'''))
         out << "</tr>"
 
         attrs.data.each { row ->
+            out << '<tr>'
             attrs.columns.each {
                 out << "<td>${row.hasProperty(it) || row.properties[it] ? row[it] : ''}</td>"
             }
+            out << '</tr>'
         }
         out << '</table>'
     }
@@ -1737,7 +1781,7 @@ ansi-bg-default'''))
             out << "<tr>"
             out << "<td>${attrs.fieldTitle?.get(it) ?: it}</td>"
             def val = (data.hasProperty(it) || data[it]) ? data[it] : ''
-            def title = (attrs.dataTitles?.hasProperty(it) || attrs.dataTitles.get(it)) ? attrs.dataTitles[it] : ''
+            def title = (attrs.dataTitles?.hasProperty(it) || attrs.dataTitles?.get(it)) ? attrs.dataTitles[it] : ''
             out << "<td title=\"${title}\">${val}</td>"
             out << "</tr>"
         }

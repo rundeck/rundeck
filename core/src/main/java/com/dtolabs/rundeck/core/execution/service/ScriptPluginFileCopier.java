@@ -178,7 +178,7 @@ class ScriptPluginFileCopier extends BaseScriptPlugin implements FileCopier {
             destFilePath += srcFile.getName();
         }
         //add some more data context values to allow templatized script-copy attribute
-        final HashMap<String, String> scptexec = new HashMap<String, String>();
+        final HashMap<String, String> scptexec = new HashMap<>();
         //set up the data context to include the local temp file
         scptexec.put("file", srcFile.getAbsolutePath());
         scptexec.put("destination", null != destFilePath ? destFilePath : "");

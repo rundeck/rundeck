@@ -43,35 +43,18 @@ import java.util.Map;
  * @version $Revision$
  */
 public interface ExecutionListener extends PluginLogger {
-    /**
-     * @return true if output should be terse and not prefixed
-     */
-    public boolean isTerse();
 
     /**
-     * @return log message format
+     * Ignore error messages and transform them into standard output
+     * @param ignore
      */
-    public String getLogFormat();
-
-    /**
-     * Log a message
-     *
-     * @param level   the log level
-     * @param message Message being logged. <code>null</code> messages are not logged, however, zero-length strings
-     *                are.
-     */
-    public void log(final int level, final String message);
-
-    public void event(String eventType, final String message, final Map eventMeta);
-
+    public void ignoreErrors(boolean ignore);
     /**
      * Return a listener for failed node list
      *
      * @return listener
      */
     public FailedNodesListener getFailedNodesListener();
-
-
 
     /**
      * Called before execution of command on node

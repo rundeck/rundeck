@@ -1,11 +1,5 @@
-<div class="modal" id="storagebrowse" tabindex="-1" role="dialog" aria-labelledby="storagebrowsetitle"
-     aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="storagebrowsetitle">%{--
-  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+%{--
+  - Copyright 2016 Rundeck, Inc. (http://rundeck.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -20,7 +14,15 @@
   - limitations under the License.
   --}%
 
-<g:message code="storage.select.a.file" /></h4>
+<div class="modal" id="storagebrowse" tabindex="-1" role="dialog" aria-labelledby="storagebrowsetitle"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title" id="storagebrowsetitle">
+                <g:message code="storage.select.a.file" />
+                </h4>
             </div>
 
             <div class="modal-body" style="max-height: 500px; overflow-y: scroll">
