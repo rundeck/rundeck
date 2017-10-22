@@ -23,9 +23,9 @@ To add authentication:
 	grails.mail.password=pass
 
 ### Advanced SMTP settings
-If you need more advanced configuration (e.g., authenticated and secured over SSL), 
-see the grails Mail plugin configuration: 
-[Grails Mail Configuration](http://www.grails.org/plugin/mail#Configuration)
+If you need more advanced configuration (e.g., authenticated and secured over SSL),
+see the grails Mail plugin configuration:
+[Grails Mail Configuration](https://plugins.grails.org/plugin/grails/mail#Configuration)
 
 The caveat for using this is that in our experience it requires using a .groovy formatted configuration file to support the extended configuration properties.
 
