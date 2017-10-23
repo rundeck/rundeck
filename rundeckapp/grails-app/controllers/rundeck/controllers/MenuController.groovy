@@ -674,9 +674,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             filter.name=params.newFilterName
             filter.user=u
             if(!filter.validate()){
-                flash.error=filter.errors.allErrors.collect { g.message(error:it).encodeAsHTML()}.join("<br>")
+                flash.errors = filter.errors
                 params.saveFilter=true
-                return redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
+                def map = params.subMap(params.keySet().findAll { !it.startsWith('_') })
+                return redirect(controller:'menu',action:'jobs',params:map)
             }
             u.addToJobfilters(filter)
             saveuser=true
@@ -692,14 +693,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             return redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
         }
         if(!filter.save(flush:true)){
-            flash.error=filter.errors.allErrors.collect { g.message(error:it)
-            }.join("<br>")
+            flash.errors = filter.errors
             params.saveFilter=true
             return redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
         }
         if(saveuser){
             if(!u.save(flush:true)){
-                return renderErrorView(filter.errors.allErrors.collect { g.message(error: it).encodeAsHTML() }.join("\n"))
+                return renderErrorView([beanErrors: filter.errors])
             }
         }
         redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[filterName:filter.name,project:params.project])
