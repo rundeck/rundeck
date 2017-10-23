@@ -580,9 +580,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def nodesFragment(ExtNodeFilters query) {
         if (query.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
-            return renderErrorFragment(
-                    g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; "))
-            )
+            return renderErrorFragment([beanErrors:query.errors])
         }
         def result= nodesFragmentData(query)
         render(template:"allnodes",model: result)
@@ -593,9 +591,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     def nodesQueryAjax(ExtNodeFilters query) {
         if (query.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
-            return renderErrorFragment(
-                    g.message(error: query.errors.allErrors.collect { g.message(error: it) }.join("; "))
-            )
+            return renderErrorFragment([beanErrors:query.errors])
         }
         Map result= nodesFragmentData(query)
         result.remove('selectedProject')
