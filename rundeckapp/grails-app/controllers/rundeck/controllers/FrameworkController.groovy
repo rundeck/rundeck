@@ -664,7 +664,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 return renderErrorView(u.errors.allErrors.collect { g.message(error: it) }.join("\n"))
             }
         }
-        redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[filterName:filter.name,project:params.project])
+        redirect(controller:'framework',action:'nodes',params:[filterName:filter.name,project:params.project])
         }.invalidToken{
             response.status=HttpServletResponse.SC_BAD_REQUEST
             renderErrorView(g.message('request.error.invalidtoken.message'))
@@ -678,7 +678,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             if(ffilter){
                 ffilter.delete(flush:true)
             }
-            redirect(controller:'framework',action:params.fragment?'nodesFragment':'nodes',params:[project: params.project])
+            redirect(controller:'framework',action:'nodes',params:[project: params.project])
         }.invalidToken{
             request.error=g.message(code:'request.error.invalidtoken.message')
             renderErrorView([:])

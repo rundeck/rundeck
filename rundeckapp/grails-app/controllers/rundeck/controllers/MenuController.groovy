@@ -662,7 +662,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (storeFilterCommand.hasErrors()) {
             flash.errors = storeFilterCommand.errors
             params.saveFilter = true
-            return redirect(controller: 'menu', action: params.fragment ? 'jobsFragment' : 'jobs',
+            return redirect(controller: 'menu', action: 'jobs',
                     params: params.subMap(['newFilterName', 'existsFilterName', 'project', 'saveFilter']))
         }
 
@@ -690,19 +690,19 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }else if(!params.newFilterName && !params.existsFilterName){
             flash.error="Filter name not specified"
             params.saveFilter=true
-            return redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
+            return redirect(controller:'menu',action:'jobs',params:params)
         }
         if(!filter.save(flush:true)){
             flash.errors = filter.errors
             params.saveFilter=true
-            return redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
+            return redirect(controller:'menu',action:'jobs',params:params)
         }
         if(saveuser){
             if(!u.save(flush:true)){
                 return renderErrorView([beanErrors: filter.errors])
             }
         }
-        redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[filterName:filter.name,project:params.project])
+        redirect(controller:'menu',action:'jobs',params:[filterName:filter.name,project:params.project])
         }.invalidToken {
             renderErrorView(g.message(code:'request.error.invalidtoken.message'))
         }
@@ -718,7 +718,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             ffilter.delete(flush:true)
             flash.message="Filter deleted: ${filtername.encodeAsHTML()}"
         }
-        redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[project: params.project])
+        redirect(controller:'menu',action:'jobs',params:[project: params.project])
         }.invalidToken{
             renderErrorView(g.message(code:'request.error.invalidtoken.message'))
         }
