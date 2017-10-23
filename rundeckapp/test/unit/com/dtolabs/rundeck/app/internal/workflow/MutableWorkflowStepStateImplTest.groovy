@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.app.internal.workflow
 
+import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
 
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils

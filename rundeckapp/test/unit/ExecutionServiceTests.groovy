@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.utils.NodeSet
 import grails.test.GrailsMock
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
 import grails.test.mixin.web.ControllerUnitTestMixin
 import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin
 import org.grails.plugins.metricsweb.MetricService
