@@ -166,15 +166,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
     
     def nowrunningFragment = {QueueQuery query->
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'index',controller: 'reports',params: params)
+        if (requireAjax(action: 'index', controller: 'reports', params: params)) {
+            return
         }
         def results = nowrunning(query)
         return results
     }
     def nowrunningAjax = {QueueQuery query->
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'index', controller: 'reports', params: params)
+        if (requireAjax(action: 'index', controller: 'reports', params: params)) {
+            return
         }
         def results = nowrunning(query)
         //structure dataset for client-side event status processing
@@ -319,8 +319,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * @return
      */
     def jobsAjax(ScheduledExecutionQuery query){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'jobs', controller: 'menu', params: params)
+        if (requireAjax(action: 'jobs', controller: 'menu', params: params)) {
+            return
         }
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
@@ -963,8 +963,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
     }
     def logStorageIncompleteAjax(BaseQuery query){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'logStorage',controller: 'menu',params: params)
+        if (requireAjax(action: 'logStorage', controller: 'menu', params: params)) {
+            return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -1022,8 +1022,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def logStorageMissingAjax(BaseQuery query){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'logStorage',controller: 'menu',params: params)
+        if (requireAjax(action: 'logStorage', controller: 'menu', params: params)) {
+            return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -1065,8 +1065,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
     }
     def logStorageAjax(){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'logStorage',controller: 'menu',params: params)
+        if (requireAjax(action: 'logStorage', controller: 'menu', params: params)) {
+            return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -2240,8 +2240,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )
     }
     def homeAjax(BaseQuery paging){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'home')
+        if (requireAjax(action: 'home')) {
+            return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         long start=System.currentTimeMillis()
@@ -2318,8 +2318,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )
     }
     def homeSummaryAjax(){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'home')
+        if(requireAjax(action: 'home')) {
+            return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         Framework framework = frameworkService.rundeckFramework

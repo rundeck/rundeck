@@ -589,6 +589,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * nodesFragment renders a set of nodes in HTML snippet, for ajax
      */
     def nodesQueryAjax(ExtNodeFilters query) {
+        if (requireAjax(action: 'nodes', params: params)) {
+            return
+        }
         if (query.hasErrors()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST)
             return renderErrorFragment([beanErrors:query.errors])
