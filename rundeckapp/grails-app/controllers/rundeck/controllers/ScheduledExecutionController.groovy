@@ -4114,11 +4114,11 @@ class ScheduledExecutionController  extends ControllerBase{
         return apiJobExecutionsResult(true)
     }
     /**
-     * API: /api/job/{id}/executions , version 1
+     * non-api interface to job executions results
      */
     def jobExecutionsAjax() {
-        if ('true' != request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'jobs', controller: 'menu', params: params)
+        if (requireAjax(action: 'jobs', controller: 'menu', params: params)) {
+            return
         }
         return apiJobExecutionsResult(false)
     }

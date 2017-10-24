@@ -308,4 +308,18 @@ class ControllerBase {
         }
         valid
     }
+
+    /**
+     * Require the request to contain x-rundeck-ajax:true header, otherwise
+     * redirect with the given params
+     * @param params redirect params
+     * @return true if redirected
+     */
+    protected boolean requireAjax(Map params) {
+        boolean invalid = 'true' != request.getHeader('x-rundeck-ajax')
+        if (invalid) {
+            redirect(params)
+        }
+        invalid
+    }
 }

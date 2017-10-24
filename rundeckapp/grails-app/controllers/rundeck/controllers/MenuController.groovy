@@ -166,15 +166,15 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
     
     def nowrunningFragment = {QueueQuery query->
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'index',controller: 'reports',params: params)
+        if (requireAjax(action: 'index', controller: 'reports', params: params)) {
+            return
         }
         def results = nowrunning(query)
         return results
     }
     def nowrunningAjax = {QueueQuery query->
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'index', controller: 'reports', params: params)
+        if (requireAjax(action: 'index', controller: 'reports', params: params)) {
+            return
         }
         def results = nowrunning(query)
         //structure dataset for client-side event status processing
@@ -319,8 +319,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * @return
      */
     def jobsAjax(ScheduledExecutionQuery query){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'jobs', controller: 'menu', params: params)
+        if (requireAjax(action: 'jobs', controller: 'menu', params: params)) {
+            return
         }
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
@@ -662,7 +662,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if (storeFilterCommand.hasErrors()) {
             flash.errors = storeFilterCommand.errors
             params.saveFilter = true
-            return redirect(controller: 'menu', action: params.fragment ? 'jobsFragment' : 'jobs',
+            return redirect(controller: 'menu', action: 'jobs',
                     params: params.subMap(['newFilterName', 'existsFilterName', 'project', 'saveFilter']))
         }
 
@@ -674,9 +674,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             filter.name=params.newFilterName
             filter.user=u
             if(!filter.validate()){
-                flash.error=filter.errors.allErrors.collect { g.message(error:it).encodeAsHTML()}.join("<br>")
+                flash.errors = filter.errors
                 params.saveFilter=true
-                return redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
+                def map = params.subMap(params.keySet().findAll { !it.startsWith('_') })
+                return redirect(controller:'menu',action:'jobs',params:map)
             }
             u.addToJobfilters(filter)
             saveuser=true
@@ -689,20 +690,19 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }else if(!params.newFilterName && !params.existsFilterName){
             flash.error="Filter name not specified"
             params.saveFilter=true
-            return redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
+            return redirect(controller:'menu',action:'jobs',params:params)
         }
         if(!filter.save(flush:true)){
-            flash.error=filter.errors.allErrors.collect { g.message(error:it)
-            }.join("<br>")
+            flash.errors = filter.errors
             params.saveFilter=true
-            return redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:params)
+            return redirect(controller:'menu',action:'jobs',params:params)
         }
         if(saveuser){
             if(!u.save(flush:true)){
-                return renderErrorView(filter.errors.allErrors.collect { g.message(error: it).encodeAsHTML() }.join("\n"))
+                return renderErrorView([beanErrors: filter.errors])
             }
         }
-        redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[filterName:filter.name,project:params.project])
+        redirect(controller:'menu',action:'jobs',params:[filterName:filter.name,project:params.project])
         }.invalidToken {
             renderErrorView(g.message(code:'request.error.invalidtoken.message'))
         }
@@ -718,7 +718,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             ffilter.delete(flush:true)
             flash.message="Filter deleted: ${filtername.encodeAsHTML()}"
         }
-        redirect(controller:'menu',action:params.fragment?'jobsFragment':'jobs',params:[project: params.project])
+        redirect(controller:'menu',action:'jobs',params:[project: params.project])
         }.invalidToken{
             renderErrorView(g.message(code:'request.error.invalidtoken.message'))
         }
@@ -963,8 +963,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
     }
     def logStorageIncompleteAjax(BaseQuery query){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'logStorage',controller: 'menu',params: params)
+        if (requireAjax(action: 'logStorage', controller: 'menu', params: params)) {
+            return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -1022,8 +1022,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def logStorageMissingAjax(BaseQuery query){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'logStorage',controller: 'menu',params: params)
+        if (requireAjax(action: 'logStorage', controller: 'menu', params: params)) {
+            return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -1065,8 +1065,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
     }
     def logStorageAjax(){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'logStorage',controller: 'menu',params: params)
+        if (requireAjax(action: 'logStorage', controller: 'menu', params: params)) {
+            return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -2240,8 +2240,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )
     }
     def homeAjax(BaseQuery paging){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'home')
+        if (requireAjax(action: 'home')) {
+            return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         long start=System.currentTimeMillis()
@@ -2318,8 +2318,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         )
     }
     def homeSummaryAjax(){
-        if('true'!=request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'home')
+        if(requireAjax(action: 'home')) {
+            return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         Framework framework = frameworkService.rundeckFramework

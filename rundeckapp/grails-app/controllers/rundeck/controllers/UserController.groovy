@@ -165,9 +165,7 @@ class UserController extends ControllerBase{
         u = new User(user.properties.subMap(['login','firstName','lastName','email']))
 
         if(!u.save(flush:true)){
-            def errmsg= u.errors.allErrors.collect { g.message(error:it) }.join("\n")
-            flash.error="Error updating user: ${errmsg}"
-            flash.message = "Error updating user: ${errmsg}"
+            flash.error = "Error updating user"
             flash.errors = user.errors
             return render(view:'edit',model:[user:u])
         }
@@ -366,8 +364,8 @@ class UserController extends ControllerBase{
         bindData(u,params.subMap(['firstName','lastName','email']))
 
         if(!u.save(flush:true)){
-            def errmsg= u.errors.allErrors.collect { g.message(error:it) }.join("\n")
-            request.error="Error updating user: ${errmsg}"
+            request.error = "Error updating user"
+            request.errors = u.errors
             return render(view:'edit',model:[user:u])
         }
         flash.message="User profile updated: ${params.login}"
