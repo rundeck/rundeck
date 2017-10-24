@@ -6,7 +6,7 @@ Rundeck customization and localization/internationalization.
 
 Rundeck uses Grails, based on Spring, which provides localization/internationalization by means of a `messages` file.
 
-For reference, see [Grails Internationalization](https://docs.grails.org/2.4.4/guide/i18n.html).
+For reference, see [Grails Internationalization](https://docs.grails.org/2.5.6/guide/i18n.html).
 
 This file is in Java Properties format, and defines message strings.
 
@@ -23,7 +23,7 @@ The Locale code you use is based on language code and country code.
 
 ### Testing your changes
 
-You can [change the locale used in Rundeck](https://docs.grails.org/2.4.4/guide/i18n.html#changingLocales)
+You can [change the locale used in Rundeck](https://docs.grails.org/2.5.6/guide/i18n.html#changingLocales)
 by appending a `?lang=XX` to the URL in your request.
 
 ### Missing Strings
