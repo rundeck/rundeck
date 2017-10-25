@@ -189,7 +189,8 @@ class LoggingServiceTests  {
         assertEquals(plugin1, multiWriters[0].writer)
         assertTrue(multiWriters[1] instanceof DisablingLogWriter)
         assertEquals(plugin2, multiWriters[1].writer)
-        assertEquals(writer,multiWriters[2])
+        assertTrue(multiWriters[2] instanceof DisablingLogWriter)
+        assertEquals(writer, multiWriters[2].writer)
     }
     void testOpenLogWriterNoPlugins(){
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
@@ -229,7 +230,8 @@ class LoggingServiceTests  {
         assertTrue(filtered.writer instanceof MultiLogWriter)
         MultiLogWriter multi= filtered.writer
         assertEquals(1,multi.writers.size())
-        assertEquals([writer],multi.writers)
+        assertTrue(multi.writers[0] instanceof DisablingLogWriter)
+        assertEquals(writer, multi.writers[0].writer)
     }
     void testOpenLogWriter_with_fileSizeThresholdWatcher(){
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)

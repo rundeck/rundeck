@@ -22,7 +22,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 /**
- * Can override the log writer sink for the current and child threads
+ * Stack based override of the log writer sink for the current and child threads, each child thread gets a copy of the stack
  * @author greg
  * @since 5/10/17
  */
@@ -32,6 +32,14 @@ public class OverridableStreamingLogWriter extends FilterStreamingLogWriter {
                 @Override
                 protected ContextStack<Optional<StreamingLogWriter>> initialValue() {
                     return new ContextStack<>();
+                }
+
+                @Override
+                protected ContextStack<Optional<StreamingLogWriter>> childValue(
+                        final ContextStack<Optional<StreamingLogWriter>> parentValue
+                )
+                {
+                    return new ContextStack<>(parentValue.stack());
                 }
             };
 

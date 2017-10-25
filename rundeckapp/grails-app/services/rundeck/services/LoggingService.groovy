@@ -136,10 +136,13 @@ class LoggingService implements ExecutionFileProducer {
         }
         def outfilepath = null
         if (plugins.size() < 1 || isLocalFileStorageEnabled()) {
-            plugins << logFileStorageService.getLogFileWriterForExecution(
+            plugins << DisablingLogWriter.create(
+                    logFileStorageService.getLogFileWriterForExecution(
                     execution,
                     defaultMeta,
                     threshold?.watcherForType(LoggingThreshold.TOTAL_FILE_SIZE)
+                    ),
+                    "FSStreamingLogWriter(execution:${execution.id})"
             )
             outfilepath = logFileStorageService.getFileForExecutionFiletype(execution, LOG_FILE_FILETYPE, false, false)
         } else {
