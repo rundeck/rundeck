@@ -285,6 +285,13 @@ public class WorkflowEngine implements WorkflowSystem {
         public X getOperation() {
             return operation;
         }
+
+        @Override
+        public String toString() {
+            return operation +
+                   ": " +
+                   (null != success ? success : null != throwable ? throwable.getClass().getSimpleName() : "?");
+        }
     }
 
 
