@@ -8,14 +8,14 @@ There are currently two ways to develop plugins:
 2. [Script Plugin Development](#script-plugin-development): Write shell/system scripts that implement your desired behavior and put them in a zip file with some metadata.
 3. Groovy Plugin Development: Write groovy scripts to implement Notification and Logging plugins.
 
-Either way, the resultant plugin archive file, either a .jar java archive, 
-or a .zip file archive, will be placed in the plugin directory 
+Either way, the resultant plugin archive file, either a .jar java archive,
+or a .zip file archive, will be placed in the plugin directory
 (Launcher: `$RDECK_BASE/libext`, RPM,DEB: `/var/lib/rundeck/libext`).
 
 
 ## Java Plugin Development
 
-Java plugins are distributed as .jar files containing the necessary classes for 
+Java plugins are distributed as .jar files containing the necessary classes for
 one or more service provider, as well as any other java jar dependency files.
 
 Each classname listed must be a valid "[Provider Class](#provider-classes)" as defined below,
@@ -96,11 +96,11 @@ Then include the jar files in the Plugin's jar contents:
     lib/anotherjar-1.3.jar
 
 ### Available Services
-The Rundeck core makes use of several different "Services" that provide functionality for 
+The Rundeck core makes use of several different "Services" that provide functionality for
 executing steps, getting information about Nodes or sending notifications.
 
-Plugins can contain one or more Service Provider implementations. 
-Each plugin file could contain multiple Providers for different types of services, 
+Plugins can contain one or more Service Provider implementations.
+Each plugin file could contain multiple Providers for different types of services,
 however typically each plugin file would contain only providers related in some fashion.
 
 Node Execution services:
@@ -122,7 +122,7 @@ Workflow Step services (described in [Workflow Step Plugin](workflow-step-plugin
 
 Notification services (described in [Notification Plugin](notification-plugin.html)):
 
-* `Notification` - performs an action after a Job state trigger. 
+* `Notification` - performs an action after a Job state trigger.
 
 Storage services:
 
@@ -143,7 +143,7 @@ Orchestrator:
 ### Provider Classes
 
 A "Provider Class" is a java class that implements a particular interface and declares
-itself as a provider for a particular Rundeck "Service".  
+itself as a provider for a particular Rundeck "Service".
 
 Each plugin also defines a "Name" that identifies it for use in Rundeck.  The Name
 of a plugin is also referred to as a "Provider Name", as the plugin class is a
@@ -151,7 +151,7 @@ provider of a particular service.
 
 You should choose a unique but simple name for your provider.
 
-Each plugin class must have the 
+Each plugin class must have the
 [Plugin](../javadoc/com/dtolabs/rundeck/core/plugins/Plugin.html) annotation applied to it.
 
 ~~~~~ {.java}
@@ -161,17 +161,17 @@ public class MyProvider implements NodeExecutor {
 }
 ~~~~~~~
 
-Your provider class must have at least a zero-argument constructor, and optionally 
-can have a single-argument constructor with a 
+Your provider class must have at least a zero-argument constructor, and optionally
+can have a single-argument constructor with a
 `com.dtolabs.rundeck.core.common.Framework` parameter, in which case your
 class will be constructed with this constructor and passed the Framework
 instance.
 
-You may log messages to the ExecutionListener available via 
+You may log messages to the ExecutionListener available via
 [ExecutionContext#getExecutionListener()](../javadoc/com/dtolabs/rundeck/core/execution/ExecutionContext.html) method.
 
 
-You can also send output to `System.err` and `System.out` and it will be 
+You can also send output to `System.err` and `System.out` and it will be
 captured as output of the execution.
 
 ### Provider Lifecycle
@@ -188,11 +188,11 @@ careful not to use un-threadsafe operations.
 
 ### Plugin failure results
 
-Some plugin methods return a "Result" interface which indicates the result status of the call to the plugin class. If there is an error, some plugins allow an Exception to be thrown or for the error to be included in the Result class.  In both cases, there is a "FailureReason" that must be specified.  
+Some plugin methods return a "Result" interface which indicates the result status of the call to the plugin class. If there is an error, some plugins allow an Exception to be thrown or for the error to be included in the Result class.  In both cases, there is a "FailureReason" that must be specified.
 See the javadoc:
 [FailureReason](../javadoc/com/dtolabs/rundeck/core/execution/workflow/steps/FailureReason.html).
 
-This can be any implementation of the FailureReason interface, and this object's `toString()` method will be used to return the reason value (for example, it is passed to Error Handler steps in a Workflow as the "result.reason" string). The mechanism used internally is to provide an Enum implementation of the FailureReason interface, and to enumerate the possible reasons for failure within the enum. 
+This can be any implementation of the FailureReason interface, and this object's `toString()` method will be used to return the reason value (for example, it is passed to Error Handler steps in a Workflow as the "result.reason" string). The mechanism used internally is to provide an Enum implementation of the FailureReason interface, and to enumerate the possible reasons for failure within the enum.
 
 You are encouraged to re-use existing FailureReasons as much as possible as they provide some basic failure causes. Existing classes:
 
@@ -215,7 +215,7 @@ There are several ways to declare your plugin's Description:
 
 **Collaborator interface**
 
-Implement the 
+Implement the
 [DescriptionBuilder.Collaborator](../javadoc/com/dtolabs/rundeck/plugins/util/DescriptionBuilder.Collaborator.html) interface
 in your plugin class, and it will be given an opportunity to perform actions on the Builder object before it finally constructs a Description.
 
@@ -223,7 +223,7 @@ in your plugin class, and it will be given an opportunity to perform actions on 
 **Describable interface**
 
 If you want to build the Description object yourself, you can do so by
-implementing the 
+implementing the
 [Describable](../javadoc/com/dtolabs/rundeck/core/plugins/configuration/Describable.html)
 interface. Return a
 [Description](../javadoc/com/dtolabs/rundeck/core/plugins/configuration/Description.html) instance. You can
@@ -289,7 +289,7 @@ You must create a zip file with the following structure:
 
 Here is an example:
 
-    $ unzip -l example-1.0-plugin.zip 
+    $ unzip -l example-1.0-plugin.zip
     Archive:  example-1.0-plugin.zip
       Length     Date   Time    Name
      --------    ----   ----    ----
@@ -302,14 +302,14 @@ Here is an example:
          4309                   5 files
 
 The filename of the plugin zip must end with "-plugin.zip" to be recognized as a
-plugin archive. The zip must contain a top-level directory with the same base name 
+plugin archive. The zip must contain a top-level directory with the same base name
 as the zip file (sans ".zip").
 
 The file `plugin.yaml` must have this structure:
 
 ~~~~~~~ {.yaml}
 # yaml plugin metadata
- 
+
 name: plugin name
 version: plugin version
 rundeckPluginVersion: 1.2
@@ -338,16 +338,16 @@ These are optional:
 * `date` - optional release date info in ISO8601 format
 * `url` - optional website URL
 
-This provides the necessary metadata about the plugin, including one or more 
+This provides the necessary metadata about the plugin, including one or more
 entries in the `providers` list to declare those providers defined in the plugin.
 
 ### Plugin version changes
 
 The value of `rundeckPluginVersion` defines some features of the loaded plugin.
 
-* `1.2` 
+* `1.2`
     * allows use of [Plugin Localization][] with message resources and [Plugin Icons][].
-* `1.1` 
+* `1.1`
     * uses a default of `true` for `mergeEnvironment` (see below)
 * `1.0` first release
     * uses a default of `false` for `mergeEnvironment` (see below)
@@ -368,22 +368,22 @@ Required provider entries:
 
 For `ResourceModelSource` service, this additional entry is required:
 
-* `resource-format` - Must be the name of one of the supported 
+* `resource-format` - Must be the name of one of the supported
 [Resource Model Document Formats](../plugins-user-guide/resource-model-source-plugins.html#resource-model-document-formats).
 
 Optional entries:
 
-* `script-interpreter` - A system command that should be used to execute the 
+* `script-interpreter` - A system command that should be used to execute the
     script.  This can be a single binary path, e.g. `/bin/bash`, or include
     any args to the command, such as `/bin/bash -c`.
 * `script-args` - the arguments to use when executing the script file.
-* `interpreter-args-quoted` - true/false - (default false). If true, the execution will 
+* `interpreter-args-quoted` - true/false - (default false). If true, the execution will
     be done by passing the file and args as a single argument to the interpreter:
      `${interpreter} "${file} ${arg1} ${arg2}..."`. If false,
     the execution will be done by passing the file and args as separate arguments:
      `${interpreter} ${file} ${arg1} ${arg2}...`
 
-* `use-original-extension`: (`true/false`, default `true`), whether to force the 
+* `use-original-extension`: (`true/false`, default `true`), whether to force the
   remotely copied script to have the same file extension as the original specified by `script-file`.
   (Available for `RemoteScriptNodeStep` only.)
 * `script-file-extension`: A file extension to use for the remotely copied script.
@@ -437,7 +437,7 @@ Here is an example:
 
 ~~~~~~~ {.yaml}
 # yaml plugin metadata
- 
+
 name: plugin name
 version: plugin version
 rundeckPluginVersion: 1.0
@@ -500,7 +500,7 @@ All script-plugins will also be provided with these context entries:
 * `plugin.tmpdir` - temp dir the plugin can use
 
 In addition, all of the data-context properties that are available in the
-`script-args` are provided as environment variables to the 
+`script-args` are provided as environment variables to the
 script or interpreter when it is executed.
 
 Environment variables are generated in all-caps with this format:
@@ -535,7 +535,7 @@ For `NodeExecutor`
 
 For `FileCopier`
 
-:   The first line of output of `STDOUT` MUST be the filepath of the file copied 
+:   The first line of output of `STDOUT` MUST be the filepath of the file copied
     to the target node.  Other output is ignored. All output to `STDERR` will be
     captured for the job's output.
 
@@ -629,7 +629,7 @@ Available rendering option keys:
     - Value is the name of a Node attribute to use for instance-scoped properties for *Node Services* plugins `NodeExecutor` and `FileCopier` only.
 * `selectionAccessor`, values:
     - `STORAGE_PATH` - display an additional input to select a Storage Path string from Rundeck's [Key Storage Facility](../administration/key-storage.html).
-* `storage-path-root` 
+* `storage-path-root`
     - Value is a Storage Path indicating the root to use if the selectionAccessor is `STORAGE_PATH`.
 * `storage-file-meta-filter`
     - Value is a Storage metadata filter string, indicating the types of Storage Files to select from if selectionAccessor is `STORAGE_PATH`. Filt string format: `metadatakey=value`, e.g. `Rundeck-key-type=private`.
@@ -691,7 +691,7 @@ If you have multiple Providers in your plugin file, can use separate messages fi
 
 You can combine the Locale and Service/Provider:
 
-* `resources/i18n/SERVICE.PROVIDER.messages_LANG_COUNTRY.properties` 
+* `resources/i18n/SERVICE.PROVIDER.messages_LANG_COUNTRY.properties`
 
 Here is an example:
 
@@ -699,7 +699,7 @@ Here is an example:
 
 ### Defining Plugin Localization Messages
 
-When displaying a plugin in the GUI, Rundeck will look for localized versions of text for the plugin, using the 
+When displaying a plugin in the GUI, Rundeck will look for localized versions of text for the plugin, using the
 localization messages if they are found. If they are not found, it will use the text
 versions defined in the Plugin Description (Java annotations or plugin.yaml file).
 
@@ -707,7 +707,7 @@ The `messages.properties` file is a [Java Properties Format](https://docs.oracle
 
 The following message Codes will be used:
 
-* `plugin.title` Plugin Title 
+* `plugin.title` Plugin Title
 * `plugin.description` Plugin Description
 * `property.NAME.title` Title for configuration property named "NAME"
 * `property.NAME.description` Description for configuration property named "NAME"
