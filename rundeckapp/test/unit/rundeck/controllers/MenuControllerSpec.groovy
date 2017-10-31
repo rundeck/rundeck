@@ -615,6 +615,8 @@ class MenuControllerSpec extends Specification {
         response.status == (exists ? 200 : 404)
         if(exists) {
             view ==~ '/menu/(create|update)SystemAclFile'
+            model.id == id
+            model.name == 'test'
         }else{
             
         }

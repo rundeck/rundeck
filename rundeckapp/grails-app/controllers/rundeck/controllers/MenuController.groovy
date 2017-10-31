@@ -1596,7 +1596,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     [
                             input   : input,
                             fileText: input.fileText,
-                            file    : input.name,
+                            id      : input.id,
+                            name    : input.name ?: input.idToName(),
                             fileType: input.fileType,
                             size    : input.fileText?.length(),
                     ] + model
