@@ -14,7 +14,9 @@
  * limitations under the License.
  */
 
-ext.pluginClassNames = 'org.rundeck.plugin.nodes.NodeRefreshWorkflowStep'
+ext.pluginClassNames = 'org.rundeck.plugin.nodes.NodeRefreshWorkflowStep,' +
+        'org.rundeck.plugin.nodes.ExportVarWorkflowStep,' +
+        'org.rundeck.plugin.nodes.UpvarWorkflowStep'
 ext.pluginName = 'Node Refresh Plugin'
 ext.pluginDescription = 'Force refresh node list'
 
