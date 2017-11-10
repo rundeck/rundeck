@@ -1,4 +1,4 @@
-package org.rundeck.plugin.nodes;
+package org.rundeck.plugin.vars;
 
 import com.dtolabs.rundeck.core.data.DataContext;
 import com.dtolabs.rundeck.core.data.MultiDataContext;
@@ -39,40 +39,15 @@ public class UpvarWorkflowStep implements StepPlugin {
         ObjectMapper objectMapper = new ObjectMapper();
         Set<ContextView> keys = new TreeSet<>(sharedDataContext.getKeys());
         for (ContextView view : keys) {
-            DataContext data = sharedDataContext.getData(view);
-            Map<String, Map<String, String>> mapdata = data.getData();
+            if(!view.isGlobal()){
+                DataContext data = sharedDataContext.getData(view);
+                if(null != data.get("export")){
+                    context.getOutputContext().addOutput(ContextView.global(),"globals",data.get("export"));
+                }
 
-
-            StringWriter stringWriter = new StringWriter();
-            try {
-                objectMapper.writeValue(stringWriter, mapdata);
-
-                HashMap<String, String> meta = new HashMap<>();
-                meta.put("content-data-type", "application/json");
-                meta.put("content-meta:table-title", viewString(view));
-                context.getExecutionContext().getExecutionListener().log(
-                        2,
-                        stringWriter.toString(),
-                        meta
-                );
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
 
-    }
-
-    public String viewString(final ContextView view) {
-        if (view.isGlobal()) {
-            return "global";
-        }
-        if (null != view.getNodeName()) {
-            return (view.getStepNumber() != null ? view.getStepNumber() : "") + "@" + view.getNodeName();
-        }
-        if (null != view.getStepNumber()) {
-            return view.getStepNumber().toString();
-        }
-        return view.toString();
     }
 
 
