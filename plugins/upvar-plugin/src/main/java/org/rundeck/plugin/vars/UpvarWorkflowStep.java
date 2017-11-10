@@ -12,16 +12,14 @@ import com.dtolabs.rundeck.plugins.step.PluginStepContext;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
-import java.io.StringWriter;
-import java.util.HashMap;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
 @Plugin(name = UpvarWorkflowStep.PROVIDER_NAME, service = ServiceNameConstants.WorkflowStep)
-@PluginDescription(title = "Up Var",
-        description = "Up vars.")
+@PluginDescription(title = "Uplift Variables",
+        description = "Uplift to global all the variables on the export group.")
 
 
 public class UpvarWorkflowStep implements StepPlugin {
@@ -36,7 +34,6 @@ public class UpvarWorkflowStep implements StepPlugin {
         MultiDataContext<ContextView, DataContext> sharedDataContext = context.getExecutionContext()
                 .getSharedDataContext()
                 .consolidate();
-        ObjectMapper objectMapper = new ObjectMapper();
         Set<ContextView> keys = new TreeSet<>(sharedDataContext.getKeys());
         for (ContextView view : keys) {
             if(!view.isGlobal()){
