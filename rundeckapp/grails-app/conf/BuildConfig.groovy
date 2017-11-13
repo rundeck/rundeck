@@ -90,7 +90,6 @@ grails.project.dependency.resolution = {
     println "Application Version: ${rundeckVersion}"
 
     plugins {
-        test    ':code-coverage:2.0.3-3'
         compile (':less-asset-pipeline:2.7.2')
         compile ':twitter-bootstrap:3.3.2.1'
         compile (':asset-pipeline:2.7.2')
