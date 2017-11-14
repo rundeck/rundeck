@@ -107,11 +107,9 @@ fi
 /var/lib/rundeck/cli/commons-httpclient-3.0.1.jar
 /var/lib/rundeck/cli/commons-lang-2.6.jar
 /var/lib/rundeck/cli/commons-logging-1.1.1.jar
-/var/lib/rundeck/cli/dom4j-1.6.1.jar
+/var/lib/rundeck/cli/dom4j-2.1.0.jar
 /var/lib/rundeck/cli/guava-15.0.jar
-/var/lib/rundeck/cli/icu4j-2.6.1.jar
-/var/lib/rundeck/cli/jaxen-1.1.jar
-/var/lib/rundeck/cli/jdom-1.0.jar
+/var/lib/rundeck/cli/jaxen-1.1.6.jar
 /var/lib/rundeck/cli/jna-4.1.0.jar
 /var/lib/rundeck/cli/jna-platform-4.1.0.jar
 /var/lib/rundeck/cli/jsch.agentproxy.connector-factory-0.0.9.jar
@@ -128,9 +126,6 @@ fi
 /var/lib/rundeck/cli/rundeck-storage-conf-%{_vname}.jar
 /var/lib/rundeck/cli/rundeck-storage-data-%{_vname}.jar
 /var/lib/rundeck/cli/snakeyaml-1.9.jar
-/var/lib/rundeck/cli/xercesImpl-2.11.0.jar
-/var/lib/rundeck/cli/xml-apis-1.4.01.jar
-/var/lib/rundeck/cli/xom-1.0.jar
 /var/lib/rundeck/cli/jackson-annotations-2.8.8.jar
 /var/lib/rundeck/cli/jackson-core-2.8.8.jar
 /var/lib/rundeck/cli/jackson-databind-2.8.8.1.jar
