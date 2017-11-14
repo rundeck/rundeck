@@ -23,25 +23,57 @@ public class ExportVarWorkflowStep implements StepPlugin {
             description = "Value of the variable, can be a reference to another variable, like ${data.var1} or ${data.var1@node1}.",
             required = true)
     private String value;
+    @PluginProperty(title = "Group",
+            description = "Group of the new variable.",
+            required = true)
+    private String group;
     @PluginProperty(title = "Name",
             description = "Name of the new variable.",
             required = true)
     private String export;
 
     public enum UpvarFailureReason implements FailureReason {
-        EmptyValue
+        EmptyValue,
+        NoGroup,
+        NoName
     }
 
     @Override
     public void executeStep(PluginStepContext context, Map<String, Object> configuration) throws StepException {
-        if(value.trim().length() == 0){
+        if(null== value || value.trim().length() == 0){
             //empty value or not resolved
             throw new StepException(
                     "Empty value",
                     UpvarFailureReason.EmptyValue
             );
         }
-        context.getOutputContext().addOutput("export",export,value);
+        if(group== value || group.trim().length() == 0){
+            //empty value or not resolved
+            throw new StepException(
+                    "Required Group",
+                    UpvarFailureReason.NoGroup
+            );
+        }
+        if(export== value || export.trim().length() == 0){
+            //empty value or not resolved
+            throw new StepException(
+                    "Required Name",
+                    UpvarFailureReason.NoName
+            );
+        }
+        context.getOutputContext().addOutput(ContextView.global(),group,export,value);
+    }
+
+    /**
+     * Properties set for test purpose
+     * @param value
+     * @param group
+     * @param name
+     */
+    public void setProperties(String value, String group, String name){
+        this.value= value;
+        this.group = group;
+        this.export=name;
     }
 
 }
