@@ -36,7 +36,6 @@
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
 
-    var configControl;
     var confirm = new PageConfirm(message('page.unsaved.changes'));
     function init(){
         $$('input').each(function(elem){
