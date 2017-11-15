@@ -3230,6 +3230,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         result.sourceResult = wresult
 
+        Map<String, Map<String, String>> data = ((WorkflowExecutionResult)wresult).getSharedContext().getData(ContextView.global())
+        executionContext.getOutputContext().addOutput(ContextView.global(),data)
         return result
     }
 
