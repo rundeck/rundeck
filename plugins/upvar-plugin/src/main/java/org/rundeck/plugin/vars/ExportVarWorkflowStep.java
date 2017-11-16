@@ -13,7 +13,7 @@ import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import java.util.Map;
 
 @Plugin(name = ExportVarWorkflowStep.PROVIDER_NAME, service = ServiceNameConstants.WorkflowStep)
-@PluginDescription(title = "Uplift Variable",
+@PluginDescription(title = "Global Variable",
         description = "Creates a global variable.")
 
 
@@ -24,11 +24,12 @@ public class ExportVarWorkflowStep implements StepPlugin {
             required = true)
     private String value;
     @PluginProperty(title = "Group",
-            description = "Group of the new variable.",
+            description = "Group of the new variable. Variables on the export group are exported to the parent Job",
             required = true)
     private String group;
     @PluginProperty(title = "Name",
             description = "Name of the new variable.",
+            defaultValue = "export",
             required = true)
     private String export;
 

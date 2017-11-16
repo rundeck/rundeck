@@ -161,7 +161,11 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                 for (String s : globals.keySet()) {
                     Map<String, String> map = globals.get(s);
                     for (String key : map.keySet()) {
-                        stringStringHashMap.put(s + "." + key, map.get(key));
+
+                        if(!workflowEngine.getState().getState().containsKey(s + "." + key) ||
+                                !workflowEngine.getState().getState().get(s + "." + key).equals(map.get(key))){
+                            stringStringHashMap.put(s + "." + key, map.get(key));
+                        }
                     }
                 }
                 changes.putAll(stringStringHashMap);
