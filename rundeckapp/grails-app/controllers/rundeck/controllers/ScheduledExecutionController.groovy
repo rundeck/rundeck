@@ -454,24 +454,18 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
         dataMap.projectNames = authProjectsToCreate
+
         withFormat{
             html{
                 dataMap
             }
             yaml{
+                response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.yaml\"")
                 render(text:JobsYAMLCodec.encode([scheduledExecution] as List),contentType:"text/yaml",encoding:"UTF-8")
             }
 
             xml{
-                def fname=scheduledExecution.jobName.replaceAll(' ','_')
-                fname=fname.replaceAll('"','_')
-                fname=fname.replaceAll('\\\\','_')
-                final Pattern s = Pattern.compile("[\\r\\n]")
-                fname=fname.replaceAll(s,'_')
-                if(fname.size()>74){
-                    fname = fname.substring(0,74)
-                }
-                response.setHeader("Content-Disposition","attachment; filename=\"${fname}.xml\"")
+                response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
                 response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs found: 1")
 
                 def writer = new StringWriter()
@@ -482,6 +476,14 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
         dataMap
+    }
+    private static String getFname(name){
+        final Pattern s = Pattern.compile("[\\r\\n \"\\\\]")
+        def fname=name.replaceAll(s,'_')
+        if(fname.size()>74){
+            fname = fname.substring(0,74)
+        }
+        fname
     }
     def runbook () {
         log.debug("ScheduledExecutionController: show : params: " + params)
