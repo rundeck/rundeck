@@ -221,7 +221,7 @@ class UrlMappings {
         }
 
         //catchall
-        "/api/$api_version/$extra**?"(controller: 'api', action: 'invalid')
+        "/api/$api_version/$other/$extra**?"(controller: 'api', action: 'invalid')
 
         //simplified url mappings for link generation
         "/project/$project/home"(controller: 'menu', action: 'projectHome')
