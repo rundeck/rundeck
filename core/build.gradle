@@ -40,7 +40,7 @@ dependencies {
         'commons-codec:commons-codec:1.5',
         'commons-beanutils:commons-beanutils:1.9.3',
         'commons-collections:commons-collections:3.2.2',
-        'commons-logging:commons-logging:1.1.1',
+        'commons-logging:commons-logging:1.2',
         'commons-lang:commons-lang:2.6',
         'org.dom4j:dom4j:2.1.0',
         'commons-cli:commons-cli:1.0',
