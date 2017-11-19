@@ -3230,6 +3230,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         result.sourceResult = wresult
 
+        Map<String, String> data = ((WorkflowExecutionResult)wresult)?.getSharedContext()?.getData(ContextView.global())?.get("export")
+        if(data) {
+            executionContext.getOutputContext().addOutput(ContextView.global(),"export",data)
+        }
         return result
     }
 
