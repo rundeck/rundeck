@@ -175,7 +175,7 @@ class ScheduledExecution extends ExecutionContext {
         description type: 'text'
         groupPath type: 'string'
 //        orchestrator type: 'text'
-        options lazy: false
+        //options lazy: false
         timeout(type: 'text')
         retry(type: 'text')
         retryDelay(type: 'text')
@@ -206,6 +206,22 @@ class ScheduledExecution extends ExecutionContext {
     public static final monthsofyearlist = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
 
     String toString() { generateFullName()+" - $description" }
+
+    Map refreshOptions(){
+
+        HashMap map = new HashMap()
+        if(options){
+            map.options = []
+            options.sort().each{Option option->
+
+                def map1 = option.toMap()
+                map1.remove('sortIndex')
+                map.options.add(map1 + [name: option.name])
+            }
+        }
+        return map
+    }
+
     Map toMap(){
         HashMap map = new HashMap()
         map.name=jobName
