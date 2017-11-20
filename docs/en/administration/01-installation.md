@@ -27,7 +27,7 @@ directory containing a set of default logins. Logins are defined in
 terms of a username and password as well as one or more user
 groups. An alternative configuration to the flat file user directory,
 is LDAP (e.g., ActiveDirectory) but Rundeck authentication and authorization
-is customizable via [JAAS](http://en.wikipedia.org/wiki/Java_Authentication_and_Authorization_Service).
+is customizable via [JAAS](https://en.wikipedia.org/wiki/Java_Authentication_and_Authorization_Service).
 Users must also be authorized to perform actions like define a job
 or execute one. This is controlled by an access control facility that reads
 policy files defined by the Rundeck administrator. Privilege is
@@ -63,7 +63,7 @@ recommend using a dedicated user account such as "rundeck".
 If there is need for root access, please set up the Rundeck user
 to have access via [sudo].
 
-[sudo]: http://en.wikipedia.org/wiki/Sudo
+[sudo]: https://en.wikipedia.org/wiki/Sudo
 
 #### Java
 
@@ -71,7 +71,7 @@ Rundeck is a Java-Servlet based server and therefore requires the Java
 runtime.
 
 The install process requires that the latest version of Java 8
-be installed. Both the [Open JDK](http://openjdk.java.net/) and [Sun/Oracle](http://java.com/) JVMs can be used.
+be installed. Both the [Open JDK](http://openjdk.java.net/) and [Sun/Oracle](https://java.com/) JVMs can be used.
 You must have the JAVA_HOME environment variable defined
 in your environment before running the launcher.  The RPM will use the java found on your path. See [Setting JAVA_HOME](startup-and-shutdown.html#setting-java_home) if you want to run a different version of java.
 
@@ -118,7 +118,7 @@ in the Administration chapter.
 There are various ways for installing SSH on Windows; we recommend
 [Cygwin].
 
-[Cygwin]: http://www.cygwin.com/
+[Cygwin]: https://www.cygwin.com/
     
 ### Installing from Source
 
@@ -141,7 +141,7 @@ To build clean:
 
     make clean
 
-Documentation can be built using: `make clean docs`.  Documentation build requires [pandoc](http://johnmacfarlane.net/pandoc/).  The RPM build depends on the the 
+Documentation can be built using: `make clean docs`.  Documentation build requires [pandoc](https://pandoc.org/).  The RPM build depends on the
 documentation as well.
 
 ### Installing with RPM
@@ -308,7 +308,7 @@ rundeck : rundeck
 
 Consult the [usermod] command to modify a user account.
 
-[usermod]: http://linux.die.net/man/8/usermod
+[usermod]: https://linux.die.net/man/8/usermod
 
 ## Install on Windows
 
@@ -338,7 +338,7 @@ To install the launcher on Windows as a service, follow these instructions:
     java %RDECK_CLI_OPTS% %RDECK_SSL_OPTS% -jar rundeck-launcher-2.6.10.jar --skipinstall -d
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 
     
-* fetch `nssm.exe` from [http://nssm.cc/](http://nssm.cc/)
+* fetch `nssm.exe` from [https://nssm.cc/](https://nssm.cc/)
 * Place the executable under `%RDECK_BASE%` (you can place it elsewhere, but for the sake of the example let's use always the root dir)
 * Open a prompt and issue these commands (Administrator mode required to install a service)
 
