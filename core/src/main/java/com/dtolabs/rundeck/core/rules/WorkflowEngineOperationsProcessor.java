@@ -16,6 +16,9 @@
 
 package com.dtolabs.rundeck.core.rules;
 
+import com.dtolabs.rundeck.core.data.DataContext;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -110,6 +113,9 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                     continue;
                 }
 
+                getContextGlobalData(changes);
+
+
                 //handle state changes
                 processStateChanges(changes);
 
@@ -143,6 +149,27 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
                 sharedData.addData(result);
             }
             task = stateChangeQueue.poll();
+        }
+    }
+
+    private void getContextGlobalData(final Map<String, String> changes){
+        DAT inputData = null != sharedData ? sharedData.produceNext() : null;
+        if(inputData != null && inputData instanceof WFSharedContext) {
+            DataContext globals = ((WFSharedContext) inputData).getData().get(ContextView.global());
+            if (null != globals) {
+                HashMap<String, String> stringStringHashMap = new HashMap<>();
+                for (String s : globals.keySet()) {
+                    Map<String, String> map = globals.get(s);
+                    for (String key : map.keySet()) {
+
+                        if(!workflowEngine.getState().getState().containsKey(s + "." + key) ||
+                                !workflowEngine.getState().getState().get(s + "." + key).equals(map.get(key))){
+                            stringStringHashMap.put(s + "." + key, map.get(key));
+                        }
+                    }
+                }
+                changes.putAll(stringStringHashMap);
+            }
         }
     }
 
