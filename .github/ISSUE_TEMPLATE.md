@@ -16,9 +16,4 @@ Issue type: Bug report/Enhancement Request
 **Expected Behavior**
 
 
-
-**Actual Behavior**
-
-
-
-**How to reproduce Behavior**
+**How to Reproduce**
