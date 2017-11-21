@@ -75,11 +75,6 @@ class UserController extends ControllerBase{
         }
     }
 
-    def handleLogin = {
-        // Simple pass threw for now!
-        session.user = params.login
-        redirect(controller:'menu', action:'index')
-    }
     def denied={
         response.setStatus(403)
         renderErrorView('Access denied')

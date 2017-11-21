@@ -49,8 +49,8 @@ import javax.servlet.http.HttpServletResponse
  */
 public class ProjectSelectFilters {
     def frameworkService
-    
-    def dependsOn = [ApiRequestFilters]
+
+    def dependsOn = [ApiRequestFilters, AuthorizationFilters]
     
     def filters = {
         /**
@@ -72,7 +72,7 @@ public class ProjectSelectFilters {
                 if(controllerName=='assets'){
                     return
                 }
-                if (session && session.user) {
+                if (session && session.user && session.subject) {
                     //get user authorizations
                     def AuthContext authContext = frameworkService.userAuthContext(session)
 
