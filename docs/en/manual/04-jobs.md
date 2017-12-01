@@ -1654,6 +1654,7 @@ Job context variables:
 * `job.retryAttempt`: A number indicating the attempt, if this execution is a [retry](#retry).
 * `job.wasRetry`: `true` if this execution is a retry, otherwise `false`. See: [retry](#retry).
 * `job.threadcount`: Threadcount (number of nodes run at once) of the Job
+* `job.filter`: The filter used to select the nodes for this job (if applicable)
 
 Node context variables:
 
