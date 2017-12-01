@@ -101,7 +101,11 @@
         storageKeysApi: '${createLink(uri:'/storage/access/keys')}',
         storageKeysDownload: '${createLink(uri:'/storage/download/keys')}',
         storageKeysDelete: '${createLink(uri:'/storage/delete/keys')}',
-        apiExecutionsBulkDelete: '${createLink(controller:'execution',action: 'deleteBulkApi')}'
+        apiExecutionsBulkDelete: '${createLink(controller:'execution',action: 'deleteBulkApi')}',
+
+
+        scmjobs: '${createLink(controller:'menu',action:'listExport',params: projParams)}',
+        togglescm: '${createLink(controller:'menu',action:'projectToggleSCM',params: projParams)}'
     } ;
     <g:if test="${Environment.current==Environment.DEVELOPMENT}" >
     function _messageMissingError(code){

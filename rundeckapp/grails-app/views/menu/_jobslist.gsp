@@ -119,6 +119,20 @@
                                                       importCommit  : importStatus?.commit,
                                               ]"/>
                                 </g:if>
+
+
+                                <span style="display: none;" data-bind="visible: (displayBadge('${scheduledExecution.extid}') && (jobSynchState('${scheduledExecution.extid}') == 'EXPORT_NEEDED'))" class="has_tooltip" title="${g.message(code: 'scm.export.status.EXPORT_NEEDED.description')}">
+                                    <span class="text-info">
+                                        <i class="glyphicon glyphicon-exclamation-sign "></i>
+                                    </span>
+                                </span>
+                                <span style="display: none;" data-bind="visible: (displayBadge('${scheduledExecution.extid}') && (jobSynchState('${scheduledExecution.extid}') == 'IMPORT_NEEDED'))" class="has_tooltip" title="${g.message(code: 'scm.import.status.IMPORT_NEEDED.description')}">
+                                    <span class="text-warning">
+                                        <i class="glyphicon glyphicon-exclamation-sign "></i>
+                                    </span>
+                                </span>
+
+
                                     <g:link action="show"
                                             controller="scheduledExecution"
                                             id="${scheduledExecution.extid}"

@@ -162,6 +162,32 @@
     <g:if test="${!params.compact}">
         <div class=" pull-right" id="jobpageactionbuttons">
 
+
+            <span style="display: none;" data-bind="visible: displaySCMMEssage()" id="scm_message" class="" data-placement="left" data-toggle="popover" data-popover-content-ref="#scmStatusPopoverOK" data-trigger="hover" title="" data-original-title="Project Import/Export Status">
+                <span class="text-info">
+                    <i class="glyphicon glyphicon-exclamation-sign "></i>
+                    <!--ko text: defaultDisplayText()--><!--/ko-->
+                </span>
+            </span>
+            <div id="scmStatusPopoverOK" style="display: none;">
+                <!-- ko if: displayExport() -->
+                <dl>
+                    <dt><g:message code="scm.export.title"/></dt>
+                    <dd>
+                        <!--ko text: exportMessage() --><!--/ko-->
+                    </dd>
+                </dl>
+                <!-- /ko -->
+                <!-- ko if: displayImport() -->
+                <dl>
+                    <dt><g:message code="scm.import.title"/></dt>
+                    <dd>
+                        <!--ko text: importMessage() --><!--/ko-->
+                    </dd>
+                </dl>
+                <!-- /ko -->
+            </div>
+
             <g:if test="${scmExportEnabled && scmExportStatus || scmImportEnabled  && scmImportStatus}">
             %{--SCM synch status--}%
                 <g:set var="projectExportStatus" value="${scmExportEnabled ?scmExportStatus :null}"/>
@@ -210,6 +236,7 @@
                         <g:message code="job.bulk.activate.menu.label" />
                     </a>
                 </li>
+
             <g:if test="${(scmExportEnabled && scmExportActions) || (scmImportEnabled && scmImportActions)}">
                 <g:if test="${scmExportEnabled && scmExportActions}">
                     <li class="divider">
@@ -258,6 +285,16 @@
 
                 </g:if>
                 </g:if>
+
+            <g:if test="${hasConfiguredPlugins}">
+                <g:set var="status" value="${(scmImportEnabled || scmExportEnabled)?'OFF':'ON'}"/>
+                <li class="divider"></li>
+                <li>
+                    <g:link controller="menu" action="projectToggleSCM" params="${[
+                            project    : params.project]}">
+                        Toggle SCM ${status} </g:link>
+                </li>
+            </g:if>
             </ul>
             </div>
         </div>
