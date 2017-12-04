@@ -120,17 +120,13 @@
                                               ]"/>
                                 </g:if>
 
-
-                                <span style="display: none;" data-bind="visible: (displayBadge('${scheduledExecution.extid}') && (jobSynchState('${scheduledExecution.extid}') == 'EXPORT_NEEDED'))" class="has_tooltip" title="${g.message(code: 'scm.export.status.EXPORT_NEEDED.description')}">
-                                    <span class="text-info">
-                                        <i class="glyphicon glyphicon-exclamation-sign "></i>
+                                <!-- ko if: displayBadge('${scheduledExecution.extid}') -->
+                                <span data-bind="attr: {'title': jobText('${scheduledExecution.extid}') }" class="has_tooltip">
+                                    <span data-bind="css: jobClass('${scheduledExecution.extid}')">
+                                        <i data-bind="css: jobIcon('${scheduledExecution.extid}')" class="glyphicon "></i>
                                     </span>
                                 </span>
-                                <span style="display: none;" data-bind="visible: (displayBadge('${scheduledExecution.extid}') && (jobSynchState('${scheduledExecution.extid}') == 'IMPORT_NEEDED'))" class="has_tooltip" title="${g.message(code: 'scm.import.status.IMPORT_NEEDED.description')}">
-                                    <span class="text-warning">
-                                        <i class="glyphicon glyphicon-exclamation-sign "></i>
-                                    </span>
-                                </span>
+                                <!-- /ko -->
 
 
                                     <g:link action="show"

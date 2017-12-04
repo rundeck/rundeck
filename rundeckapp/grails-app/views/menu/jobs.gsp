@@ -570,6 +570,111 @@
                 return (displayExport || displayImport);
             };
 
+            self.jobText = function(jobid){
+                var exportStatus = null;
+                var importStatus = null;
+                var text = null;
+                if(self.scmStatus() && self.scmStatus()[jobid]){
+                    exportStatus = self.scmStatus()[jobid].synchState.name;
+                    switch(exportStatus) {
+                        case "EXPORT_NEEDED":
+                            text = "${message(code: "scm.export.status.EXPORT_NEEDED.description")}";
+                            break;
+                        case "CREATE_NEEDED":
+                            text = "${message(code: "scm.export.status.CREATE_NEEDED.description")}";
+                            break;
+                        case "CLEAN":
+                            text = "${message(code: "scm.export.status.CLEAN.description")}";
+                            break;
+                        default:
+                            text = exportStatus;
+                    }
+                }
+                if(self.scmImportJobStatus() && self.scmImportJobStatus()[jobid]){
+                    if(text){
+                        text +=', ';
+                    }else{
+                        text = '';
+                    }
+                    importStatus = self.scmImportJobStatus()[jobid].synchState.name;
+                    switch(importStatus) {
+                        case "IMPORT_NEEDED":
+                            text += "${message(code: "scm.import.status.IMPORT_NEEDED.description")}";
+                            break;
+                        case "DELETE_NEEDED":
+                            text += "${message(code: "scm.import.status.DELETE_NEEDED.description")}";
+                            break;
+                        case "CLEAN":
+                            text += "${message(code: "scm.import.status.CLEAN.description")}";
+                            break;
+                        case "REFRESH_NEEDED":
+                            text += "${message(code: "scm.import.status.REFRESH_NEEDED.description")}";
+                            break;
+                        case "UNKNOWN":
+                            text += "${message(code: "scm.import.status.UNKNOWN.description")}";
+                            break;
+                        default:
+                            text += importStatus;
+                    }
+
+                }
+                return text;
+            };
+
+            self.jobClass = function(jobid){
+                switch(self.jobSynchState(jobid)) {
+                    case "EXPORT_NEEDED":
+                        return "text-info";
+                        break;
+                    case "CREATE_NEEDED":
+                        return "text-success";
+                        break;
+                    case "UNKNOWN":
+                        return "text-muted";
+                        break;
+                    case "IMPORT_NEEDED":
+                        return "text-warning";
+                        break;
+                    case "REFRESH_NEEDED":
+                        return "text-warning";
+                        break;
+                    case "DELETED":
+                        return "text-danger";
+                        break;
+                    case "CLEAN":
+                        return "text-muted";
+                        break;
+                }
+                return 'text-muted';
+            };
+
+            self.jobIcon = function(jobid){
+                switch(self.jobSynchState(jobid)) {
+                    case "EXPORT_NEEDED":
+                        return "glyphicon-exclamation-sign";
+                        break;
+                    case "CREATE_NEEDED":
+                        return "glyphicon-exclamation-sign";
+                        break;
+                    case "UNKNOWN":
+                        return "glyphicon-question-sign";
+                        break;
+                    case "IMPORT_NEEDED":
+                        return "glyphicon-exclamation-sign";
+                        break;
+                    case "REFRESH_NEEDED":
+                        return "glyphicon-exclamation-sign";
+                        break;
+                    case "DELETED":
+                        return "glyphicon-minus-sign";
+                        break;
+                    case "CLEAN":
+                        return "glyphicon-ok";
+                        break;
+                }
+                return 'glyphicon-plus';
+            };
+
             self.exportMessage = function(){
                 if(self.scmExportStatus()){
                     return self.scmExportStatus().message;
