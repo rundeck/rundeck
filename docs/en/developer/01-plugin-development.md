@@ -277,15 +277,25 @@ These Services support Script Plugins:
 
 >Note, the ResourceFormatParser and ResourceFormatGenerator services *do not* support the Script Plugin type.
 
+### UI Plugin Development
+
+UI Plugins are supported with a `ui` plugin type, which is similar to a Script Plugin.
+
+See: [UI Plugins][].
+
+
 ### Script plugin zip structure
 You must create a zip file with the following structure:
 
     [name]-plugin.zip
     \- [name]-plugin/ -- root directory of zip contents, same name as zip file
        |- plugin.yaml -- plugin metadata file
-       \- contents/
-          |- ...      -- script or resource files
-          \- ...
+       |- contents/
+       |  |- ...      -- script or resource files
+       |  \- ...
+       \- resources/  -- i18n resources, icons, (and for UI plugins: scripts/css)
+          |- i18n/
+          |- ...
 
 Here is an example:
 
@@ -363,7 +373,7 @@ Required provider entries:
     * `ResourceModelSource`
     * `WorkflowNodeStep`
     * `RemoteScriptNodeStep`
-* `plugin-type` - must be "script" currently.
+* `plugin-type` - must be `script` for these types (or `ui` for [UI Plugins][])
 * `script-file` - must be the name of a file relative to the `contents` directory
 
 For `ResourceModelSource` service, this additional entry is required:
@@ -759,3 +769,4 @@ You can define a custom icon for each Provider in your plugin file, or a single 
 
 [Plugin Localization]: #plugin-localization
 [Plugin Icons]: #plugin-icons
+[UI Plugins]: ui-plugins.html
