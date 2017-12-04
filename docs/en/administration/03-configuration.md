@@ -356,6 +356,24 @@ Change this by setting:
 
     rundeck.jobs.options.remoteUrlRetry=[total]
 
+### Job File Option Uploads
+
+Values to configure file uploads for File type Job options:
+
+Max temp file size.
+File size in bytes or with a suffix of `k`,`m`,`g`,`t` (kilo,mega,giga,tera).
+
+    rundeck.fileUploadService.tempfile.maxsize=200M
+
+Max temp file expiration (duration in milliseconds).
+The uploaded file will be removed if not used as a job option within ths time period.
+(This primarily affects Job executions performed via API
+because the File Upload and Job Run are performed as separate steps.)
+
+    # default is 10 minutes
+    rundeck.fileUploadService.tempfile.expiration=600000
+
+
 ### Groovy config format
 
 You can change you rundeck-config.properties to a rundeck-config.groovy. 
