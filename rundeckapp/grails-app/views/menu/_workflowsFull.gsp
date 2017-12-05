@@ -45,6 +45,15 @@
 
 <g:set var="rkey" value="${rkey?:g.rkey()}"/>
 
+<g:set var="authProjectSCMAdmin" value="${auth.resourceAllowedTest(
+        context: 'application',
+        type: 'project',
+        action: [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_IMPORT],
+        any: true,
+        name: params.project
+)}"/>
+<g:set var="status" value="${(scmImportEnabled || scmExportEnabled)?'off':'on'}"/>
+
 <g:if test="${session.user && User.findByLogin(session.user)?.jobfilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.jobfilters}"/>
 </g:if>
@@ -286,13 +295,14 @@
                 </g:if>
                 </g:if>
 
-            <g:if test="${hasConfiguredPlugins}">
-                <g:set var="status" value="${(scmImportEnabled || scmExportEnabled)?'OFF':'ON'}"/>
+            <g:if test="${authProjectSCMAdmin && hasConfiguredPlugins}">
+
                 <li class="divider"></li>
                 <li>
-                    <g:link controller="menu" action="projectToggleSCM" params="${[
-                            project    : params.project]}">
-                        Toggle SCM ${status} </g:link>
+                    <a id="toggle_btn"
+                       data-toggle="modal"
+                       href="#toggle_confirm
+                       class="">${g.message(code:'job.toggle.scm.menu.'+status)}</a>
                 </li>
             </g:if>
             </ul>
@@ -378,6 +388,44 @@
 
                 <span id="busy" style="display:none"></span>
 <g:timerEnd key="head"/>
+        <g:if test="${authProjectSCMAdmin && hasConfiguredPlugins}">
+            <g:form controller="menu" params="[project: params.project ?: request.project]">
+                <div class="modal fade" id="toggle_confirm" tabindex="-1" role="dialog" aria-hidden="true">
+                    <div class="modal-dialog">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <button type="button" class="close" data-dismiss="modal"
+                                        aria-hidden="true">&times;</button>
+                                <h4 class="modal-title"><g:message code="job.toggle.scm.confirm.panel.title" /></h4>
+                            </div>
+
+                            <div class="modal-body">
+                                <p><g:message code="job.toggle.scm.confirm.${status}"/></p>
+                            </div>
+
+                            <div class="modal-footer">
+                                <button type="button"
+                                        class="btn btn-default"
+                                        data-bind="click: cancel"
+                                        data-dismiss="modal" ><g:message code="no"/></button>
+
+                <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_DELETE  }"
+                                      project="${params.project ?: request.project}">
+
+                                <span>
+                                    <g:actionSubmit controller="menu" action="projectToggleSCM"
+                                                    value="${message(code:'job.toggle.scm.button.label.'+status)}"
+                                        class="btn btn-danger"
+                                    />
+                                </span>
+                </auth:resourceAllowed>
+
+                            </div>
+                        </div><!-- /.modal-content -->
+                    </div><!-- /.modal-dialog -->
+                </div><!-- /.modal -->
+            </g:form>
+        </g:if>
                     <g:form controller="scheduledExecution"  useToken="true" params="[project: params.project ?: request.project]">
                         <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true">
                             <div class="modal-dialog">
