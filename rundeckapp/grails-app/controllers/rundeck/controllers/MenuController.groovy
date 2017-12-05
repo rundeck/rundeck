@@ -468,20 +468,27 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     results.warning = "Failed to update SCM Import status: ${e.message}"
                 }
             }
-            if(minScm){
-                def pluginData = [:]
-                def ePluginConfig = scmService.loadScmConfig(params.project, 'export')
-                def iPluginConfig = scmService.loadScmConfig(params.project, 'import')
-                def eConfiguredPlugin = null
-                def iConfiguredPlugin = null
-                if (ePluginConfig?.type) {
-                    eConfiguredPlugin = scmService.getPluginDescriptor('export', ePluginConfig.type)
+            if (frameworkService.authorizeApplicationResourceAny(authContext,
+                    frameworkService.authResourceForProject(
+                            params.project
+                    ),
+                    [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT, AuthConstants.ACTION_IMPORT]
+            )) {
+                if (minScm) {
+                    def pluginData = [:]
+                    def ePluginConfig = scmService.loadScmConfig(params.project, 'export')
+                    def iPluginConfig = scmService.loadScmConfig(params.project, 'import')
+                    def eConfiguredPlugin = null
+                    def iConfiguredPlugin = null
+                    if (ePluginConfig?.type) {
+                        eConfiguredPlugin = scmService.getPluginDescriptor('export', ePluginConfig.type)
+                    }
+                    if (iPluginConfig?.type) {
+                        iConfiguredPlugin = scmService.getPluginDescriptor('import', iPluginConfig.type)
+                    }
+                    pluginData.hasConfiguredPlugins = (eConfiguredPlugin || iConfiguredPlugin)
+                    results.putAll(pluginData)
                 }
-                if (iPluginConfig?.type) {
-                    iConfiguredPlugin = scmService.getPluginDescriptor('import', iPluginConfig.type)
-                }
-                pluginData.hasConfiguredPlugins = (eConfiguredPlugin || iConfiguredPlugin)
-                results.putAll(pluginData)
             }
         }
 
