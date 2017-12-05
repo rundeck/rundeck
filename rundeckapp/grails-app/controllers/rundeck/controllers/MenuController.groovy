@@ -3038,8 +3038,6 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         def ePluginConfig = scmService.loadScmConfig(params.project, 'export')
         def iPluginConfig = scmService.loadScmConfig(params.project, 'import')
-        def eplugins = scmService.listPlugins('export')
-        def iplugins = scmService.listPlugins('import')
         def eConfiguredPlugin = null
         def iConfiguredPlugin = null
         if (ePluginConfig?.type) {

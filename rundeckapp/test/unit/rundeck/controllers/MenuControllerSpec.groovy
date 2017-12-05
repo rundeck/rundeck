@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -41,7 +42,9 @@ import rundeck.services.AuthorizationService
 import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
+import rundeck.services.ScmService
 import rundeck.services.authorization.PoliciesValidation
+import rundeck.services.scm.ScmPluginConfig
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -710,5 +713,132 @@ class MenuControllerSpec extends Specification {
         result.acllist[0].meta.policies
         result.acllist[0].meta.policies.size == 1
         result.acllist[0].meta.policies[0].description == description
+    }
+
+    def "list Export"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        def project = 'test'
+
+        when:
+        request.method = 'POST'
+        params.project = project
+        controller.listExport()
+        then:
+
+        1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist : []]
+        1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
+                                                                        offset:0,
+                                                                        paginateParams:[:],
+                                                                        displayParams:[:]]
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]) >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]) >> true
+        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
+        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
+
+        response.json
+        response.json.scmExportEnabled
+        !response.json.scmImportEnabled
+    }
+
+    def "project Toggle SCM off"(){
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        def project = 'test'
+
+        def type = 'git'
+        def econfig = new ScmPluginConfig(new Properties(), 'prefix')
+        econfig.setType(type)
+        econfig.setEnabled(true)
+
+        def descPlugin = Mock(DescribedPlugin)
+        descPlugin.name >> 'git-export'
+
+        when:
+        request.method = 'POST'
+        params.project = project
+        controller.projectToggleSCM()
+        then:
+        1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+        1 * controller.scmService.loadScmConfig(project, 'export') >> econfig
+        1 * controller.scmService.loadScmConfig(project, 'import')
+
+        1* controller.scmService.projectHasConfiguredPlugin('export', project) >> true
+
+        1 * controller.scmService.getPluginDescriptor('export', type) >> descPlugin
+        1 * controller.scmService.disablePlugin('export', project, 'git-export')
+
+
+        response.status == 302
+    }
+
+    def "project Toggle SCM on"(){
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        def project = 'test'
+
+        def type = 'git'
+        def econfig = new ScmPluginConfig(new Properties(), 'prefix')
+        econfig.setType(type)
+        econfig.setEnabled(false)
+
+        def descPlugin = Mock(DescribedPlugin)
+        descPlugin.name >> 'git-export'
+
+        when:
+        request.method = 'POST'
+        params.project = project
+        controller.projectToggleSCM()
+        then:
+        1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+        1 * controller.scmService.loadScmConfig(project, 'export') >> econfig
+        1 * controller.scmService.loadScmConfig(project, 'import')
+
+        1 * controller.scmService.getPluginDescriptor('export', type) >> descPlugin
+        0 * controller.scmService.disablePlugin(_, project, _)
+        1 * controller.scmService.enablePlugin(_, 'export', project, 'git-export')
+
+
+        response.status == 302
+    }
+
+    def "project Toggle SCM do nothing without configured plugins"(){
+        given:
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        def project = 'test'
+
+        def type = 'git'
+        def econfig = new ScmPluginConfig(new Properties(), 'prefix')
+        econfig.setType(type)
+        econfig.setEnabled(false)
+
+        def descPlugin = Mock(DescribedPlugin)
+        descPlugin.name >> 'git-export'
+
+        when:
+        request.method = 'POST'
+        params.project = project
+        controller.projectToggleSCM()
+        then:
+        1 * controller.frameworkService.authorizeApplicationResourceAll(_, _, [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]) >> true
+        1 * controller.scmService.loadScmConfig(project, 'export')
+        1 * controller.scmService.loadScmConfig(project, 'import')
+
+        0 * controller.scmService.disablePlugin(_, project, _)
+        0 * controller.scmService.enablePlugin(_, _, project, _)
+
+        response.status == 302
     }
 }
