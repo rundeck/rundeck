@@ -19,7 +19,7 @@ Java plugins are distributed as .jar files containing the necessary classes for
 one or more service provider, as well as any other java jar dependency files.
 
 Each classname listed must be a valid "[Provider Class](#provider-classes)" as defined below,
-and must have a `@Plugin` annotation to define it's service type and provider name.
+and must have a `@Plugin` annotation to define its service type and provider name.
 
 The `.jar` file you distribute must have this metadata within the main Manifest
 for the jar file to be correctly loaded by the system:
