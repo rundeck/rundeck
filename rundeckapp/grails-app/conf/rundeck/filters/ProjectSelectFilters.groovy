@@ -80,9 +80,9 @@ public class ProjectSelectFilters {
                     def selected = params.project
                     if (selected && !frameworkService.existsFrameworkProject(selected)) {
                         response.setStatus(404)
-                        flash.title= 'Not Found'
-                        flash.errorCode= 'scheduledExecution.project.invalid.message'
-                        flash.errorArgs= [params.project]
+                        request.title= 'Not Found'
+                        request.errorCode= 'scheduledExecution.project.invalid.message'
+                        request.errorArgs= [params.project]
                         params.project=null
                         render(view: '/common/error')
                         AA_TimerFilters.afterRequest(request, response, session)
