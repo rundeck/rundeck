@@ -19,6 +19,7 @@ package rundeck.filters
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 
 import javax.servlet.http.HttpServletResponse
@@ -78,6 +79,14 @@ public class ProjectSelectFilters {
 
 
                     def selected = params.project
+                    if (selected && !(selected =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
+                        response.setStatus(400)
+                        request.errorCode = 'project.name.invalid'
+                        params.project = null
+                        render(view: '/common/error')
+                        AA_TimerFilters.afterRequest(request, response, session)
+                        return false
+                    }
                     if (selected && !frameworkService.existsFrameworkProject(selected)) {
                         response.setStatus(404)
                         request.title= 'Not Found'

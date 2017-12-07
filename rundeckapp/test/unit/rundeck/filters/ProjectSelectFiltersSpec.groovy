@@ -117,6 +117,45 @@ class ProjectSelectFiltersSpec extends Specification {
 
     }
 
+    def "projectSelection project name invalid"() {
+        given:
+
+        defineBeans {
+            frameworkService(MethodInvokingFactoryBean) {
+                targetObject = this
+                targetMethod = "buildMockFrameworkService"
+                arguments = [true, true]
+
+            }
+        }
+        session.user = 'bob'
+        session.subject = new Subject()
+        request.remoteUser = 'bob'
+        request.userPrincipal = Mock(Principal) {
+            getName() >> 'bob'
+        }
+        params.project = projectName
+
+        when:
+        withFilters(action: 'index') {
+            controller.index()
+        }
+        then:
+        response.status == 400
+
+        flash.error == null
+        request.title == null
+        request.titleCode == null
+        request.errorCode == 'project.name.invalid'
+        request.errorArgs == null
+
+        where:
+        projectName   | _
+        'Name/asdf'   | _
+        'Name asdf'   | _
+        'Name \'asdf' | _
+    }
+
     def "projectSelection project authorized"() {
         given:
 
