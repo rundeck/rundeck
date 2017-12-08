@@ -112,6 +112,9 @@ public class RunServer {
 
         server.setHandler(context);
         //context.getSessionHandler().getSessionManager().setHttpOnly(true);//TODO: upgrade jetty to support HttpOnly session cookies
+        SessionManager sessionManager = context.getSessionHandler().getSessionManager();
+
+        sessionManager.setSessionIdPathParameterName("none");
 
         configureRealms(server);
         try {
