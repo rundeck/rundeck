@@ -52,6 +52,7 @@ import org.codehaus.groovy.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.rundeck.util.Toposort
+import org.springframework.transaction.TransactionDefinition
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.MultipartRequest
@@ -283,7 +284,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def total = -1
         if (keys.contains('total') || !keys) {
-            total = Execution.countByScheduledExecution(scheduledExecution)
+            total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+                Execution.countByScheduledExecution(scheduledExecution)
+            }
         }
 
         def remoteClusterNodeUUID = null
@@ -396,7 +399,9 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.countByScheduledExecution(scheduledExecution)
+        def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+            Execution.countByScheduledExecution(scheduledExecution)
+        }
 
         def remoteClusterNodeUUID=null
         if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
@@ -508,7 +513,9 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.countByScheduledExecution(scheduledExecution)
+        def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+            Execution.countByScheduledExecution(scheduledExecution)
+        }
 
         def remoteClusterNodeUUID=null
         if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
