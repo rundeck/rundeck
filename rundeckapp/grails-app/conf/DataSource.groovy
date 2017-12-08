@@ -1,9 +1,9 @@
 dataSource {
-	pooled = false; //it is recommended not to use connection pool unless file encryption is enabled
+    pooled = false; //it is recommended not to use connection pool unless file encryption is enabled
 	jmxExport = true
-	driverClassName = "org.h2.Driver"
-	username = "sa"
-	password = ""
+    driverClassName = "org.h2.Driver"
+    username = "sa"
+    password = ""
 }
 hibernate {
 	cache.use_second_level_cache = true
@@ -34,8 +34,8 @@ environments {
 	development {
 		dataSource {
 			dbCreate = "create-drop" // one of 'create', 'create-drop','update'
-			url = "jdbc:h2:file:db/devDb"
-		}
+            url = "jdbc:h2:file:db/devDb"
+        }
 	}
 	test {
 		dataSource {
