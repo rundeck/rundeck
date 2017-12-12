@@ -3220,6 +3220,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
 
+        ScheduledExecution.withTransaction { status ->
+            Execution exec = Execution.get(execid as Long)
+            def notifresult = notificationService.triggerJobNotification('start', id,
+                    [execution: exec, context: newContext])
+        }
+
         def wresult = metricService.withTimer(this.class.name,'runJobReference'){
             newContext.getLoggingManager().createPluginLogging(newContext,null).runWith {
                 service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
@@ -3230,6 +3236,33 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
         } else {
             result = createSuccess()
+        }
+        ScheduledExecution.withTransaction { status ->
+            Execution execution = Execution.get(execid as Long)
+
+
+            def sucCount = 0
+            wresult?.results.dispatcherResult.results.each{
+                it.each{ k,v ->
+                    if(v.success) {
+                        sucCount++
+                    }
+                }
+            }
+            def failedCount = 0
+            wresult?.failures.each{ k,v ->
+                failedCount+= v.size()
+
+            }
+            notificationService.triggerJobNotification(
+                    wresult?.success ? 'success' : 'failure',
+                    id,
+                    [
+                            execution: execution,
+                            nodestatus: [succeeded: sucCount,failed:failedCount,total: newContext.getNodes().getNodeNames().size()],
+                            context: newContext
+                    ]
+            )
         }
         result.sourceResult = wresult
 
