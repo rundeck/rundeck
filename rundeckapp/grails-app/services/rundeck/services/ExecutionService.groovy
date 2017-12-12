@@ -1660,7 +1660,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Execution.findAllByRetryExecution(e).each{e2->
                 e2.retryExecution=null
             }
-            e.delete(flush: true)
+            e.delete()
             //delete all files
             def deletedfiles = 0
             files.each { file ->
