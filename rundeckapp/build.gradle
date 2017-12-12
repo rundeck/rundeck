@@ -38,6 +38,8 @@ def springBootVersion = "1.5.8.RELEASE"
 dependencies {
     // From BuildConfig.groovy.
     compile 'org.quartz-scheduler:quartz:2.2.1'
+    compile 'org.grails.plugins:quartz:2.0.12'
+    compile 'org.yaml:snakeyaml:1.19'
     compile project(":core")
 
     // Defined by create-app
