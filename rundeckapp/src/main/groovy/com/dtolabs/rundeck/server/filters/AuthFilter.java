@@ -16,8 +16,8 @@
 
 package com.dtolabs.rundeck.server.filters;
 
+import grails.core.GrailsApplication;
 import org.apache.log4j.Logger;
-import org.codehaus.groovy.grails.commons.GrailsApplication;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
