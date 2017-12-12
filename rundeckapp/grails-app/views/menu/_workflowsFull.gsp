@@ -301,7 +301,7 @@
                 <li>
                     <a id="toggle_btn"
                        data-toggle="modal"
-                       href="#toggle_confirm
+                       href="#toggle_confirm"
                        class="">${g.message(code:'job.toggle.scm.menu.'+status)}</a>
                 </li>
             </g:if>
