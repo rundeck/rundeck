@@ -27,6 +27,8 @@ subprojects{
     defaultTasks 'clean','assemble'
     ext.jettyVersion='9.0.7.v20131107'
     repositories {
+        mavenLocal()
+        maven { url "https://repo.grails.org/grails/core" }
         flatDir dirs: "$rootDir/locallib"
     }
 }

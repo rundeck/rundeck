@@ -45,7 +45,7 @@ dependencies {
     compile project(":rundeck-launcher:rundeck-jetty-server"),
 		'commons-cli:commons-cli:1.0'
 	
-    warBundle project(':rundeckapp')
+    warBundle project(path: ':rundeckapp', configuration: 'war')
 	
 
     jettyServerLib(project(path:":rundeck-launcher:rundeck-jetty-server", configuration:'runtime')) {
