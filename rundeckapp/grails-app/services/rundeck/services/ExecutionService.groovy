@@ -3162,6 +3162,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         id = schedlist[0].id
         def StepExecutionContext newContext
         def WorkflowExecutionItem newExecItem
+        def averageDuration = 0
         String execid=executionContext.dataContext.job?.execid
         if(!execid){
             def msg = "Execution identifier (job.execid) not found in data context"
@@ -3171,6 +3172,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         ScheduledExecution.withTransaction { status ->
             ScheduledExecution se = ScheduledExecution.get(id)
+            averageDuration = se.averageDuration
             Execution exec = Execution.get(execid as Long)
             if(!exec){
                 def msg = "Execution not found: ${execid}"
@@ -3222,13 +3224,23 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         ScheduledExecution.withTransaction { status ->
             Execution exec = Execution.get(execid as Long)
-            def notifresult = notificationService.triggerJobNotification('start', id,
+            notificationService.triggerJobNotification('start', id,
                     [execution: exec, context: newContext])
         }
-
+        long startTime = System.currentTimeMillis()
         def wresult = metricService.withTimer(this.class.name,'runJobReference'){
             newContext.getLoggingManager().createPluginLogging(newContext,null).runWith {
                 service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+            }
+        }
+        def duration = System.currentTimeMillis() - startTime
+        if(averageDuration > 0 && duration>averageDuration){
+            ScheduledExecution.withTransaction { status ->
+                Execution exec = Execution.get(execid as Long)
+                avgDurationExceeded(id, [
+                        execution: exec,
+                        context  : newContext
+                ])
             }
         }
 
