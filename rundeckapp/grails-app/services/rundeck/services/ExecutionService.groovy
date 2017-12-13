@@ -898,6 +898,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobcontext.id = execution.scheduledExecution.extid
             jobcontext.successOnEmptyNodeFilter=execution.scheduledExecution.successOnEmptyNodeFilter?"true":"false"
         }
+        if (execution.filter) {
+            jobcontext.filter = execution.filter
+        }
         jobcontext.execid = execution.id.toString()
         jobcontext.executionType = execution.executionType
         jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)

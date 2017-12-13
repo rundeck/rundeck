@@ -29,6 +29,6 @@ class PluginResourceReq {
     static constraints = {
         service(nullable: false, blank: false, matches: /^[-a-zA-Z0-9\.]+$/)
         name(nullable: false, blank: false, matches: /^[-a-zA-Z0-9\.]+$/)
-        path(nullable: true, blank: true, matches: /^(((?!\.)[-a-zA-Z0-9+_\.]+)(\/((?!\.)[-a-zA-Z0-9+_\.]+))*)*$/)
+        path(nullable: true, blank: true, matches: /^[-a-zA-Z0-9+_][-a-zA-Z0-9+_\.]*(\/([-a-zA-Z0-9+_][-a-zA-Z0-9+_\.]*))*$/)
     }
 }
