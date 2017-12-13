@@ -92,9 +92,11 @@ function _jobVarData() {
             'loglevel': {title: 'Execution log level', desc: 'Logging level, one of: INFO, DEBUG'},
             'user.email': {title: 'Email of user executing the job'},
             'retryAttempt': {title: 'Retry attempt number'},
-            'wasRetry': {title: 'True if execution is a retry'}
+            'wasRetry': {title: 'True if execution is a retry'},
+            'threadcount': {title: 'Job Threadcount'},
+            'filter': {title: 'Job Node Filter Query'}
         };
-        ['id', 'execid', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry'].each(function (e) {
+        ['id', 'execid', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry', 'threadcount', 'filter'].each(function (e) {
             _VAR_DATA['job'].push({key: 'job.' + e, category: 'Job', title: jobdata[e].title, desc: jobdata[e].desc});
         });
     }

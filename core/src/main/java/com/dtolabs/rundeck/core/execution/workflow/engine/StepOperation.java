@@ -206,7 +206,7 @@ public class StepOperation implements WorkflowSystem.Operation<WFSharedContext,O
 
     @Override
     public String toString() {
-        return "EngineWorkflowStepOperation{" +
+        return "Step{" +
                "stepNum=" + stepNum +
                ", label='" + label + '\'' +
                '}';

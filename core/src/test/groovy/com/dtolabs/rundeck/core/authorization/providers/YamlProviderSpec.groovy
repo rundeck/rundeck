@@ -223,7 +223,7 @@ for:
         !validation.valid
         validation.errors.size()==1
         validation.errors['test1[1]'].size() == 1
-        validation.errors['test1[1]'][0] =~ /Cannot create property=blonk/
+        validation.errors['test1[1]'][0] =~ /Unknown property: 'blonk'/
     }
     def "validate by group: not a string"(){
         when:

@@ -13,7 +13,7 @@ Rundeck includes these Built-in plugins in the core installation:
 
 `directory`
 
-:    looks at all files in a directory for suppored file extensions, and internally uses the `file` provider for
+:    looks at all files in a directory for supported file extensions, and internally uses the `file` provider for
      each file that matches.
 
 `script`

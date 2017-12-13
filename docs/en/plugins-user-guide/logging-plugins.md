@@ -9,7 +9,7 @@ There are two types of Logging plugins:
 
 ## Execution file storage plugins
 
-These provide a mechanism to store and retrieve execution files (output logs and state data) to and from another system. This facilitates Rundeck's Cluster Mode feature, by allowing execution logs and metadata created on one Rundeck server to be stored in an intermedidate location, and retrieved by another server for viewing by the user.
+These provide a mechanism to store and retrieve execution files (output logs and state data) to and from another system. This facilitates Rundeck's Cluster Mode feature, by allowing execution logs and metadata created on one Rundeck server to be stored in an intermediate location, and retrieved by another server for viewing by the user.
 
 ## Streaming log plugins
 
@@ -19,7 +19,7 @@ Streaming Log Writers
 :   can write log data to another system (e.g. a search or log storage system) as the log data is received.  Multiple Log Writers can be configured for a server, and Rundeck's filesystem-based log writer is used by default.
 
 Streaming Log Readers
-:   can load the log data from another system, rather than from the local file system.  Only a single Log Reader can be configured for the a server, and Rundeck's filesyste-based log reader is used by default.
+:   can load the log data from another system, rather than from the local file system.  Only a single Log Reader can be configured for the a server, and Rundeck's filesystem-based log reader is used by default.
 
 ## Develop your own
 

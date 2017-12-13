@@ -39,6 +39,8 @@ public class ScheduledExecutionQuery extends BaseQuery{
     Boolean executionEnabledFilter
     String serverNodeUUIDFilter
 
+    Integer daysAhead
+
     /**
      * text filters
      */
@@ -101,6 +103,7 @@ public class ScheduledExecutionQuery extends BaseQuery{
                 return false
             }
         })
+        daysAhead(nullable: true)
     }
 
 

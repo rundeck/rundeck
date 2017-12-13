@@ -47,4 +47,34 @@ class ScheduledExecutionFilterTests {
         filter.validate()
         assertTrue(filter.errors.allErrors.collect { it.toString() }.join("; "), filter.hasErrors())
     }
+
+    void testScheduledFilterNull(){
+        def filter = new ScheduledExecutionFilter(name: 'name',scheduledFilter: null, user: new User())
+        def query = filter.createQuery()
+        assertNull(query.scheduledFilter)
+    }
+    void testScheduledFilterEmpty(){
+        def filter = new ScheduledExecutionFilter(name: 'name',scheduledFilter: '', user: new User())
+        def query = filter.createQuery()
+        assertNull(query.scheduledFilter)
+    }
+    void testScheduledFilterTrue(){
+        def filter = new ScheduledExecutionFilter(name: 'name',scheduledFilter: 'true', user: new User())
+        def query = filter.createQuery()
+        assertTrue(query.scheduledFilter)
+    }
+    void testScheduledFilterFalse(){
+        def filter = new ScheduledExecutionFilter(name: 'name',scheduledFilter: 'false', user: new User())
+        def query = filter.createQuery()
+        assertFalse(query.scheduledFilter)
+        assertFalse(query.scheduledFilter == null)
+    }
+    void testServerNodeUUIDFilter(){
+        def uuid = '7184c972-2292-4a30-82be-93cd333e4dec'
+        def filter = new ScheduledExecutionFilter(name: 'name',serverNodeUUIDFilter: uuid, user: new User())
+        def query = filter.createQuery()
+        assertNotNull(query.serverNodeUUIDFilter)
+        assertEquals(uuid, query.serverNodeUUIDFilter)
+    }
+
 }

@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.authorization.providers;
 
+import com.dtolabs.rundeck.core.authorization.providers.yaml.model.ACLPolicyDoc;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.Closeable;
@@ -27,5 +28,5 @@ import java.io.IOException;
  */
 public interface YamlSource extends Closeable{
     public String getIdentity();
-    public Iterable<Object> loadAll(Yaml yaml) throws IOException;
+    public Iterable<ACLPolicyDoc> loadAll(Yaml yaml) throws IOException;
 }

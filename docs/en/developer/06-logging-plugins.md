@@ -2,7 +2,7 @@
 % Greg Schueler
 % June 5, 2013
 
-## About 
+## About
 
 A Logging provider stores or forwards execution log data.
 
@@ -27,7 +27,7 @@ Rundeck has another component:
 
 * *Execution File Storage* - A way of storing and retrieving file data in an external system
 
-Rundeck has a plugin mechanism for all three of these components, allowing the logging system and file storage system to be adapted to different needs.  
+Rundeck has a plugin mechanism for all three of these components, allowing the logging system and file storage system to be adapted to different needs.
 
 Log Events are written to all configured Writer plugins, as well as the **Local File Log** if not disabled:
 
@@ -97,11 +97,11 @@ Your plugin class should implement the appropriate Java interface as described i
 
 To define configuration properties for your plugin, you use the same mechanisms as for Workflow Steps, described under the chapter [Plugin Annotations - Plugin Descriptions](plugin-annotations.html#plugin-description).
 
-The simplest way to do this is to use [Plugin Annotations - Plugin Properties](plugin-annotations.html#plugin-properties). 
+The simplest way to do this is to use [Plugin Annotations - Plugin Properties](plugin-annotations.html#plugin-properties).
 
 ### Groovy plugin type
 
-The Groovy plugin development method for Loggig Plugins is similar to [Notification Plugin - Groovy Plugins](notification-plugin.html#groovy-plugin-type).
+The Groovy plugin development method for Logging Plugins is similar to [Notification Plugin - Groovy Plugins](notification-plugin.html#groovy-plugin-type).
 
 Create a Groovy script, and define your plugin by calling the `rundeckPlugin` method, and pass it both the Class of the type of plugin, and a Closure used to build the plugin object.
 
@@ -117,12 +117,12 @@ rundeckPlugin(StreamingLogWriterPlugin){
 See the source directory `examples/example-groovy-log-plugins` for
 examples of all three provider types written in Groovy.
 
-* On github: [example-groovy-log-plugins](https://github.com/rundeck/rundeck/tree/development/examples/example-groovy-log-plugins) 
+* On github: [example-groovy-log-plugins](https://github.com/rundeck/rundeck/tree/development/examples/example-groovy-log-plugins)
 
 See the source directory `examples/example-java-logging-plugins` for
 Java examples.
 
-* On github: [example-java-logging-plugins](https://github.com/rundeck/rundeck/tree/development/examples/example-java-logging-plugins) 
+* On github: [example-java-logging-plugins](https://github.com/rundeck/rundeck/tree/development/examples/example-java-logging-plugins)
 
 ## Execution Context Data
 
@@ -148,7 +148,7 @@ Create a Java class that implements the interface [StreamingLogWriterPlugin](../
  */
 public interface StreamingLogWriterPlugin extends StreamingLogWriter {
     /**
-     * Sets the execution context information for the log information 
+     * Sets the execution context information for the log information
      * being written, will be called prior to other
      * methods {@link #openStream()}
      *
@@ -169,13 +169,13 @@ public interface StreamingLogWriter {
      * Open a stream, called before addEvent is called
      */
     void openStream() throws IOException;
- 
+
     /**
      * Add a new event
      * @param event
      */
     void addEvent(LogEvent event);
- 
+
     /**
      * Close the stream.
      */
@@ -195,7 +195,7 @@ The plugin is used in this manner:
 
 Create a groovy script that calls the `rundeckPlugin` method and passes the `StreamingLogWriterPlugin` as the type of plugin:
 
-~~~~~~ {.java}    
+~~~~~~ {.java}
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
 rundeckPlugin(StreamingLogWriterPlugin){
     //plugin definition
@@ -227,9 +227,9 @@ open { Map execution, Map config ->
 
 ~~~~~~{.java}
 /**
- * "addEvent" closure is called to append a new event to the stream.  
+ * "addEvent" closure is called to append a new event to the stream.
  * It is passed the Map of stream context created in the "open" closure, and a LogEvent
- * 
+ *
  */
 addEvent { Map context, LogEvent event->
    // write the event to my stream
@@ -242,9 +242,9 @@ addEvent { Map context, LogEvent event->
 /**
  * "close" closure is called to end writing to the stream.
  *
- * In this example we don't declare any arguments, but an implicit 
+ * In this example we don't declare any arguments, but an implicit
  * 'context' variable is available with the stream context data.
- * 
+ *
  */
 close { Map context ->
     // close my stream
@@ -259,7 +259,7 @@ The plugin is used in this manner:
 
 ## StreamingLogReader
 
-The `StreamingLogReader` system reads log events from somewhere for a specific execution and returns them in an iterator-like fashion.  Readers must also support an "offset", allowing the event stream to resume from some index within the stream.  These offset indices can be opaque to Rundeck (they could correspond to bytes, or event number, it is up to the plugin).  The plugin is expected to report an offset value when reading events, and be able to resume from a previously reported offset value. 
+The `StreamingLogReader` system reads log events from somewhere for a specific execution and returns them in an iterator-like fashion.  Readers must also support an "offset", allowing the event stream to resume from some index within the stream.  These offset indices can be opaque to Rundeck (they could correspond to bytes, or event number, it is up to the plugin).  The plugin is expected to report an offset value when reading events, and be able to resume from a previously reported offset value.
 
 Additionally, these plugins should be able to report a `totalSize` (in an opaque manner), and a `lastModified` timestamp, indicating the last log event timestamp that was received.
 
@@ -273,15 +273,15 @@ Create a Java class that implements the interface [StreamingLogReaderPlugin](../
  */
 public interface StreamingLogReaderPlugin extends StreamingLogReader {
     /**
-     * Sets the execution context information for the log information 
+     * Sets the execution context information for the log information
      * being requested, will be called
-     * prior to other methods {@link #openStream(Long)}, and must return 
+     * prior to other methods {@link #openStream(Long)}, and must return
      * true to indicate the stream is ready to be open, false otherwise.
      * @param context execution context data
      * @return true if the stream is ready to open
      */
     public boolean initialize(Map<String, ? extends Object> context);
- 
+
 }
 ~~~~~~~~
 
@@ -305,16 +305,16 @@ public interface StreamingLogReader extends LogEventIterator, Closeable {
      * @return
      */
     void openStream(Long offset) throws IOException;
- 
+
     /**
      * Return the total size
      *
      * @return
      */
     long getTotalSize();
- 
+
     /**
-     * Return the last modification time of the log 
+     * Return the last modification time of the log
      * (e.g. last log entry time, or null if not modified)
      *
      * @return
@@ -330,14 +330,14 @@ Additional methods that must be implemented from super-interfaces:
 LogEvent next();
 boolean hasNext();
 void remove(); //unused
- 
+
 /**
  * Returns the current opaque offset within the underlying data stream
  *
  * @return
  */
 long getOffset(); //from OffsetIterator
- 
+
 /**
  * Return true if the underlying source is completely exhausted, whether
  * or not there are any items to produce (may return false even if {@link Iterator#hasNext()} returns false).
@@ -359,15 +359,15 @@ The plugin is used in this manner:
 
 Rundeck uses this interface to read the log events to display in the GUI, or send out via its API.  It uses the `offset`, as well as `lastModified`, to resume reading the log from a certain point, and to check whether there is more data since the last time it was read.
 
-The implementation of the `isComplete` method is important, because it signals to Rundeck that all log events for the stream have been read and no more are expected to be available.  To be clear, this differs from the `java.util.Iterator#hasNext()` method, which returns true if any events are actually available.  `isComplete` should return false until no more events will ever be available.  
+The implementation of the `isComplete` method is important, because it signals to Rundeck that all log events for the stream have been read and no more are expected to be available.  To be clear, this differs from the `java.util.Iterator#hasNext()` method, which returns true if any events are actually available.  `isComplete` should return false until no more events will ever be available.
 
-If you are developing a `StreamingLogWriter` in conjuction with a `StreamingLogReader`, keep in mind that the writer's `close` method will be called to indicate the end of the stream, which would be reflected on the reader side by `isComplete` returning true.
+If you are developing a `StreamingLogWriter` in conjunction with a `StreamingLogReader`, keep in mind that the writer's `close` method will be called to indicate the end of the stream, which would be reflected on the reader side by `isComplete` returning true.
 
 ### Groovy StreamingLogReader
 
 Create a groovy script that calls the `rundeckPlugin` method and passes the `StreamingLogReaderPlugin` as the type of plugin:
 
-~~~~~ {.java}    
+~~~~~ {.java}
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 rundeckPlugin(StreamingLogReaderPlugin){
     //plugin definition
@@ -382,10 +382,10 @@ Define these closures inside your definition:
 
 ~~~~~~ {.java}
 /**
- * The 'info' closure is called to retrieve some metadata about the stream, 
+ * The 'info' closure is called to retrieve some metadata about the stream,
  * such as whether it is available to read, totalSize of the content, and last
  *  modification time
- * 
+ *
  * It should return a Map containing these two entries:
  *  `ready` : a boolean indicating whether 'open' will work
  * `lastModified`: Long (unix epoch) or Date indicating last modification of the log
@@ -393,7 +393,7 @@ Define these closures inside your definition:
  *     merely a measurement of total data size
  */
 info {Map execution, Map configuration->
-  
+
     //return map containing metadata about the stream
     // it SHOULD contain these two elements:
     [
@@ -413,21 +413,21 @@ info {Map execution, Map configuration->
  * It should return a Map containing any context to store between calls.
  */
 open { Map execution, Map configuration, long offset ->
-    
+
     //return map of context data for your plugin to reuse later,
     [
         myfile: ...,
         mycounter:...
     ]
 }
-~~~~~~~~~    
+~~~~~~~~~
 
 `next`
 
 ~~~~~ {.java}
 /**
  * Next is called to produce the next event, it should return a Map
- * containing: [event: (event data), offset: (next offset), complete: (true/false)].  
+ * containing: [event: (event data), offset: (next offset), complete: (true/false)].
  * The event data can be a LogEvent, or a Map containing:
  * [
  * message: (String),
@@ -480,8 +480,8 @@ Additional optional interfaces provide extended behaviors that your plugin can a
 
 * [ExecutionMultiFileStorage](#executionmultifilestorage) - adds a method to store all available files in one method call ([javadoc](../javadoc/com/dtolabs/rundeck/core/logging/ExecutionMultiFileStorage.html)).
 * [ExecutionFileStorageOptions](#executionfilestorageoptions) - define whether both retrieve and store are supported ([javadoc](../javadoc/com/dtolabs/rundeck/core/logging/ExecutionFileStorageOptions.html)).
-    
-Exection file storage allows Rundeck to store the files elsewhere, in case local file storage is not suitable for long-term retention. 
+
+Execution file storage allows Rundeck to store the files elsewhere, in case local file storage is not suitable for long-term retention.
 
 The ExecutionFileStorage service is used by two aspects of the Rundeck server currently.
 
@@ -523,7 +523,7 @@ If there is an error discovering availability, your plugin should throw an Excep
 
 ### ExecutionMultiFileStorage
 
-This optional interface for you Java plugin indicates that `store` requests should all be made at once via the `storeMultiple` method.  
+This optional interface for you Java plugin indicates that `store` requests should all be made at once via the `storeMultiple` method.
 
 * [ExecutionMultiFileStorage javadoc](../javadoc/com/dtolabs/rundeck/core/logging/ExecutionMultiFileStorage.html)
 
@@ -536,7 +536,7 @@ If storage for a filetype is not successful, it will be retried at a later point
 If your plugin requires access to all available filetypes at once, you should indicate `false` for the success status for all filetypes if you want them all to be retried at once.
 
 In addition to the *Log file* and *State files* ('rdlog', and 'state.json' filetypes), an ExecutionMultiFileStorage
-will be given access to a `execution.xml` filetype.  This file is the XML serialized version of the Execution itself, in the format used by the Project Archive contents.  
+will be given access to a `execution.xml` filetype.  This file is the XML serialized version of the Execution itself, in the format used by the Project Archive contents.
 
 ### ExecutionFileStorageOptions
 
@@ -561,14 +561,14 @@ public interface ExecutionFileStoragePlugin extends ExecutionFileStorage {
      * @param context
      */
     public void initialize(Map<String, ? extends Object> context);
- 
+
     /**
-     * Returns true if the file for the context and the given filetype 
+     * Returns true if the file for the context and the given filetype
      * is available, false otherwise
      *
      * @param filetype file type or extension of the file to check
      *
-     * @return true if a file with the given filetype is available 
+     * @return true if a file with the given filetype is available
      * for the context
      *
      * @throws com.dtolabs.rundeck.core.logging.ExecutionFileStorageException
@@ -599,10 +599,10 @@ public interface ExecutionFileStorage {
      *
      * @throws java.io.IOException
      */
-    boolean store(String filetype, InputStream stream, 
-                  long length, Date lastModified) 
+    boolean store(String filetype, InputStream stream,
+                  long length, Date lastModified)
           throws IOException, ExecutionFileStorageException;
- 
+
     /**
      * Write a file of the given file type to the given stream
      *
@@ -613,7 +613,7 @@ public interface ExecutionFileStorage {
      *
      * @throws IOException
      */
-    boolean retrieve(String filetype, OutputStream stream) 
+    boolean retrieve(String filetype, OutputStream stream)
        throws IOException, ExecutionFileStorageException;
 }
 ~~~~~~~
@@ -639,7 +639,7 @@ When `storage` is needed:
 
 Create a groovy script that calls the `rundeckPlugin` method and passes the `ExecutionFileStoragePlugin` as the type of plugin:
 
-~~~~~ {.java}    
+~~~~~ {.java}
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 rundeckPlugin(ExecutionFileStoragePlugin){
     //plugin definition
@@ -680,7 +680,7 @@ import com.dtolabs.rundeck.plugins.logging.MultiFileStorageRequest
  */
 storeMultiple { MultiFileStorageRequest files, Map execution, Map configuration ->
     //store all the files
-    files.availableFileTypes.each{ filetype-> 
+    files.availableFileTypes.each{ filetype->
         //...write somewhere
         def filedata=files.getStorageFile(filetype)
         def inputStream = filedata.inputStream
@@ -696,7 +696,7 @@ If `store` or `storeMultiple` are not defined, then this is the equivalent of us
 
 ~~~~~ {.java}
 /**
- * Called to determine the file availability, return true to indicate it is available, 
+ * Called to determine the file availability, return true to indicate it is available,
  * false to indicate it is not available. An exception indicates an error.
  */
 available { String filetype, Map execution, Map configuration->
@@ -728,7 +728,7 @@ The plugin is used in this manner:
     * The `available` closure is called before retrieving the file, to determine if it is available, passing the filetype
     * The `retrieve` closure is called when a file needs to be retrieved, with the [contextual data](#execution-context-data), configuration Map, and OutputStream to write the log file content
 2. If `storeMultiple` is defined:
-    * The `storeMultiple` closure is called when files needsto be stored, with the [MultiFileStorageRequest][], the [contextual data](#execution-context-data), and configuration Map.
+    * The `storeMultiple` closure is called when files needs to be stored, with the [MultiFileStorageRequest][], the [contextual data](#execution-context-data), and configuration Map.
 3. Else if `store` is defined:
     * The `store` closure is called when a file needs to be stored, with the filetype, the [contextual data](#execution-context-data), configuration Map, and InputStream which will produce the log data. Additionally `length` and `lastModified` properties are in the closure binding, providing the file length, and last modification Date.
 

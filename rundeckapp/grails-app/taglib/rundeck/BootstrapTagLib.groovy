@@ -84,56 +84,89 @@ class BootstrapTagLib {
         if (isHidden) {
             return
         }
-        if ((attrs.separator || attrs.divider ||
-                (!attrs.header && !attrs.headerCode && !attrs.href && !attrs.action))
+        def separator = attrs.remove('separator')
+        def divider = attrs.remove('divider')
+        def headercode = attrs.remove('headerCode')
+        def href = attrs.remove('href')
+        def action = attrs.remove('action')
+        def controller = attrs.remove('controller')
+        def params = attrs.remove('params')
+        def header = attrs.remove('header')
+        if ((separator || divider ||
+                (!header && !headercode && !href && !action))
                 && !body) {
             out << '<li role="separator" class="divider"></li>'
-            if (!attrs.header && !attrs.headerCode && !attrs.href && !attrs.action) {
+            if (!header && !headercode && !href && !action) {
                 return
             }
         }
-        if (attrs.header || attrs.headerCode || (!attrs.href && !attrs.action)) {
+        if (header || headercode || (!href && !action)) {
             out << '<li class="dropdown-header">'
-            if (attrs.headerCode) {
-                out << message(code: attrs.headerCode)
-            } else if (attrs.header) {
-                out << attrs.header
+            if (headercode) {
+                out << message(code: headercode)
+            } else if (header) {
+                out << header
             } else if (body) {
                 out << body()
             }
             out << '</li>'
-            if (!attrs.href && !attrs.action) {
+            if (!href && !action) {
                 return
             }
         }
-        def isDisabled = null != attrs.disabled ? attrs.disabled : (null != attrs.enabled ? !attrs.enabled : false)
+        def disabled = attrs.remove('disabled')
+        def enabled = attrs.remove('enabled')
+        boolean isDisabled = null != disabled ? disabled : (null != enabled ? !enabled : false)
         out << '<li'
         if (isDisabled) {
             out << ' class="disabled"'
         }
         out << '>'
         out << '<a href="'
-        out << getAnchorHref(isDisabled, attrs)
+        out << getAnchorHref(isDisabled, [href: href, action: action, controller: controller, params: params])
         out << '"'
+
+
         out << ' title="'
-        if (isDisabled && attrs.disabledTitleCode) {
-            out << message(code: attrs.disabledTitle).encodeAsHTML()
-        } else if (isDisabled && attrs.disabledTitle) {
-            out << attrs.disabledTitle?.encodeAsHTML()
-        } else if (!isDisabled && attrs.titleCode) {
-            out << message(code: attrs.titleCode).encodeAsHTML()
-        } else if (!isDisabled && attrs.title) {
-            out << attrs.title?.encodeAsHTML()
+        def disabledTitleCode = attrs.remove('disabledTitleCode')
+        def disabledTitle = attrs.remove('disabledTitle')
+        def titleCode = attrs.remove 'titleCode'
+        def title = attrs.remove 'title'
+        if (isDisabled && disabledTitleCode) {
+            out << g.message(code: disabledTitle).encodeAsHTML()
+        } else if (isDisabled && disabledTitle) {
+            out << disabledTitle?.encodeAsHTML()
+        } else if (!isDisabled && titleCode) {
+            out << g.message(code: titleCode).encodeAsHTML()
+        } else if (!isDisabled && title) {
+            out << title?.encodeAsHTML()
         }
-        out << '">'
-        if (attrs.icon) {
-            out << icon(name: attrs.icon)
+        out << '"'
+
+
+        def iconAfter = attrs.remove('iconAfter')
+        def iconAttr = attrs.remove('icon')
+        def code = attrs.remove('code')
+
+        //remaining attrs
+        attrs.each { k, v ->
+            out << " ${k.encodeAsHTML()}=\"" + (v.toString()).encodeAsHTMLAttribute() + '"'
+        }
+
+
+        out << '>'
+        if (iconAttr && !iconAfter) {
+            out << g.icon(name: iconAttr)
             out << ' '
         }
-        if (attrs.code) {
-            out << message(code: attrs.code).encodeAsHTML()
+        if (code) {
+            out << g.message(code: code).encodeAsHTML()
         } else if (body) {
             out << body()
+        }
+        if (iconAttr && iconAfter) {
+            out << ' '
+            out << g.icon(name: iconAttr)
         }
         out << '</a>'
 

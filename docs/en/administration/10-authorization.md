@@ -77,7 +77,7 @@ If an authorization request occurs in the context of a specific Project
 (e.g. "does a user have Run access for a specific Job in this project?")
 then the Project-level policies created via the API area also used to evaluate the authorization request.
 
-Otherwise, only the policies on the filesystem, and uploaded ot the System ACLs API are evaluated for the request.
+Otherwise, only the policies on the filesystem, and uploaded to the System ACLs API are evaluated for the request.
 
 ### rd-acl
 

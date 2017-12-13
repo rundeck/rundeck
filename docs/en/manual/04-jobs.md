@@ -128,7 +128,7 @@ The information in the Job detail view includes:
 
 * Steps the job will execute
 * Options presented to the user at the time of job run
-* Node filter expression with a button to show thematched nodes
+* Node filter expression with a button to show the matched nodes
 * Job UUID
 * Creation date
 * Statistics about the job executions
@@ -443,7 +443,7 @@ To configure a custom email template, see the [Administration - Configuration Fi
 Rundeck Jobs can be configured to POST data to a webhook URL when they succeed or fail.
 
 * For more info about configuring jobs to use webhook notifications, see the chapter [Job Notifications](#job-notifications).
-* For more info about webhooks in general see: <http://webhooks.pbwiki.com/>
+* For more info about webhooks in general see: <https://webhooks.pbworks.com/w/page/13385124/FrontPage>
 
 When a Rundeck Job webhook notification is triggered, the server will send a POST request to one or more configured URLs.  The request will contain XML content containing information about the Execution that has finished.  The request will also contain special HTTP Headers to include some information about the notification and the Execution.  You can also configure your URLs to have property tokens that will be replaced with specific details about the Job, Execution or Notification prior to the webhook request being submitted.
 
@@ -554,7 +554,7 @@ Jobs by looking at the Activity section.
 
 You can click on any past execution in the list to see the full execution for that job run.
 
-You can also navigate to the Acitity page from the top navigation bar and use the 
+You can also navigate to the Activity page from the top navigation bar and use the
 search filter to find executions by typing in the job name.
 
 ![Job executions matches](../figures/fig0310.png)
@@ -762,7 +762,7 @@ Input Type
 Date Format
 
 :   If "Date" Input Type is chosen, you can enter a date format to use when selecting the date
-in the user interface. Using the [momentjs format](http://momentjs.com/docs/#/displaying/format/).
+in the user interface. Using the [momentjs format](https://momentjs.com/docs/#/displaying/format/).
 
 Default Value
 
@@ -1460,7 +1460,7 @@ sudo -u username ${scriptfile}
 
 This will then allow your script to make use of [Sudo authentication](plugins.html#configuring-secondary-sudo-password-authentication).
 
-The effecitve commandline for your script will become:
+The effective commandline for your script will become:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
 sudo -u username [scriptfile] arguments ...
@@ -1614,7 +1614,7 @@ It is a good practice, when you are defining Error Handlers, to **always** have 
 > Note, Error-handlers can be attached to either Node Steps or Workflow Steps, and the type of step and the Strategy of the Workflow determines what type of Error-handler steps can be attached to a step.  The only restriction is in the case that the Workflow is "Node-oriented", which means that the workflow is executed independently for each node.  In this case, Node Steps can only have other Node steps as Error Handlers.  In other cases, the Error Handler can be other Workflow steps.
 
 To add an error handler press the "+ error handler" button on the step you want to handle.
-The form presened includes the normal set of steps you can add to a workflow.
+The form presented includes the normal set of steps you can add to a workflow.
 
 ![Adding an error handler](../figures/fig0410.png)
 
@@ -1653,6 +1653,8 @@ Job context variables:
 * `job.user.email`: Executing user's email address set in [User profile](user.html).
 * `job.retryAttempt`: A number indicating the attempt, if this execution is a [retry](#retry).
 * `job.wasRetry`: `true` if this execution is a retry, otherwise `false`. See: [retry](#retry).
+* `job.threadcount`: Threadcount (number of nodes run at once) of the Job
+* `job.filter`: The filter used to select the nodes for this job (if applicable)
 
 Node context variables:
 

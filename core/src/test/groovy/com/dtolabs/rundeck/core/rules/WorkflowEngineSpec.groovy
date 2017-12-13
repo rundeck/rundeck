@@ -1,5 +1,8 @@
 package com.dtolabs.rundeck.core.rules
 
+import com.dtolabs.rundeck.core.data.BaseDataContext
+import com.dtolabs.rundeck.core.dispatcher.ContextView
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import spock.lang.Specification
 
 import java.util.concurrent.ExecutorService
@@ -12,6 +15,11 @@ class WorkflowEngineSpec extends Specification {
     class TestOpCompleted implements WorkflowSystem.OperationCompleted<Map> {
         StateObj newState
         Map result
+    }
+
+    class TestOpCompletedB implements WorkflowSystem.OperationCompleted<WFSharedContext> {
+        StateObj newState
+        WFSharedContext result
     }
 
     class TestOperation implements WorkflowSystem.Operation<Map, TestOpCompleted> {
@@ -49,6 +57,49 @@ class WorkflowEngineSpec extends Specification {
 
         @Override
         TestOpCompleted apply(final Map o) throws Exception {
+            hasRun = true
+            input=o
+            def result = toCall?.call()
+            return result
+        }
+    }
+
+
+    class TestOperationB implements WorkflowSystem.Operation<WFSharedContext, TestOpCompletedB> {
+        Closure<TestOpCompletedB> toCall
+        Closure<Boolean> shouldRunClos
+        private boolean shouldRun
+        Closure<Boolean> shouldSkipClos
+        private boolean shouldSkip
+        StateObj failureState
+        StateObj skipState
+        Long id
+        boolean hasRun = false
+        WFSharedContext input = null
+
+        @Override
+        boolean shouldRun(final StateObj state) {
+            return shouldRunClos?.call(state) ?: shouldRun
+        }
+
+        @Override
+        StateObj getFailureState(final Throwable t) {
+            return failureState
+        }
+
+        @Override
+        boolean shouldSkip(final StateObj state) {
+            return shouldSkipClos?.call(state) ?: shouldSkip
+        }
+
+        @Override
+        StateObj getSkipState(final StateObj state) {
+            skipState
+        }
+
+
+        @Override
+        TestOpCompletedB apply(final WFSharedContext o) throws Exception {
             hasRun = true
             input=o
             def result = toCall?.call()
@@ -359,6 +410,49 @@ class WorkflowEngineSpec extends Specification {
         operations[1].input == [c: 'd']
     }
 
+    def "global data refresh"() {
+        given:
+        RuleEngine ruleEngine = Rules.createEngine()
+        MutableStateObj state = States.mutable()
+        ExecutorService executor = Executors.newFixedThreadPool(1)
+        WorkflowEngine engine = new WorkflowEngine(ruleEngine, state, executor)
+        def shared = new Sharedcontext()
+        Set<TestOperationB> operations = [
+                new TestOperationB(
+                        id: 1,
+                        shouldRunClos: {
+                            StateObj st
+                                ->
+                                st.hasState(Workflows.WORKFLOW_STATE_KEY, Workflows.WORKFLOW_STATE_STARTED)
+                        },
+                        toCall: {
+                            shared.addData(WFSharedContext.with(ContextView.global(), new BaseDataContext(map)))
+                            return new TestOpCompletedB(newState: States.state('akey', 'avalue'), result: null)
+                        }
+                ),
+                new TestOperationB(
+                        id: 2,
+                        shouldRunClos: {
+                            StateObj st -> st.hasState('akey', 'avalue')
+                        },
+                        toCall: {
+                            return new TestOpCompletedB(newState: States.state('bkey', 'bvalue'), result: null)
+                        },
+                ),
+        ]
+        when:
+        def result = engine.processOperations(operations, shared)
+
+        then:
+        state.state.containsKey(expect)
+        state.state.get(expect) == value
+
+        where:
+        map                         | expect        | value
+        [test: [val: "something"]]  | 'test.val'    | 'something'
+        [export: [a: "b"]]          | 'export.a'    | 'b'
+    }
+
     static class SharedMap implements WorkflowSystem.SharedData<Map> {
         List<Map> addedData = []
 
@@ -372,4 +466,19 @@ class WorkflowEngineSpec extends Specification {
             addedData.isEmpty() ? [:] : addedData.last()
         }
     }
+
+    static class Sharedcontext implements WorkflowSystem.SharedData<WFSharedContext> {
+        WFSharedContext data = new WFSharedContext()
+
+        @Override
+        void addData(final WFSharedContext item) {
+            data.merge(item)
+        }
+
+        @Override
+        WFSharedContext produceNext() {
+            data
+        }
+    }
+
 }

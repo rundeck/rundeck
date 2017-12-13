@@ -22,9 +22,11 @@ import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.ProjectManager
 import com.dtolabs.rundeck.core.plugins.configuration.Description
+import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import grails.test.mixin.TestFor
+import rundeck.services.framework.RundeckProjectConfigurable
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -156,5 +158,89 @@ class FrameworkServiceSpec extends Specification {
         'b'            || 'false'
         'anythingelse' || 'false'
         prefix = ''
+    }
+
+    static class TestConfigurableBean implements RundeckProjectConfigurable {
+
+        Map<String, String> categories = [:]
+
+        List<Property> projectConfigProperties = []
+
+        Map<String, String> propertiesMapping = [:]
+    }
+
+    def "loadProjectConfigurableInput"() {
+
+        given:
+
+        defineBeans {
+            testConfigurableBean(TestConfigurableBean) {
+                projectConfigProperties = ScheduledExecutionService.ProjectConfigProperties
+                propertiesMapping = ScheduledExecutionService.ConfigPropertiesMapping
+                categories = [groupExpandLevel: 'gui', disableExecution: 'executionMode', disableSchedule: 'executionMode',]
+            }
+        }
+        String prefix = 'extraConfig.'
+        def category = null
+        service.applicationContext = applicationContext
+        when:
+        def result = service.loadProjectConfigurableInput(prefix, projProps, category)
+
+        then:
+        result['testConfigurableBean'] != null
+        result['testConfigurableBean'].name == 'testConfigurableBean'
+        result['testConfigurableBean'].configurable != null
+        result['testConfigurableBean'].values == expect
+
+        where:
+        projProps                                                                    | expect
+        [:]                                                                          | [:]
+        ['project.disable.executions': 'false', 'project.disable.schedule': 'false'] | [disableExecution: 'false',
+                                                                                        disableSchedule: 'false']
+        ['project.disable.executions': 'true', 'project.disable.schedule': 'false']  | [disableExecution: 'true',
+                                                                                        disableSchedule: 'false']
+        ['project.disable.executions': 'false', 'project.disable.schedule': 'true']  | [disableExecution: 'false',
+                                                                                        disableSchedule: 'true']
+        ['project.disable.executions': 'false', 'project.disable.schedule': 'true']  | [disableExecution: 'false',
+                                                                                        disableSchedule: 'true']
+        ['project.jobs.gui.groupExpandLevel': '3']                                   | [groupExpandLevel: '3']
+    }
+
+    @Unroll
+    def "validateProjectConfigurableInput"() {
+
+        given:
+
+        defineBeans {
+            testConfigurableBean(TestConfigurableBean) {
+                projectConfigProperties = ScheduledExecutionService.ProjectConfigProperties
+                propertiesMapping = ScheduledExecutionService.ConfigPropertiesMapping
+                categories = [groupExpandLevel: 'gui', disableExecution: 'executionMode', disableSchedule: 'executionMode',]
+            }
+        }
+        String prefix = 'extraConfig.'
+        def category = null
+        service.applicationContext = applicationContext
+        when:
+        def result = service.validateProjectConfigurableInput([testConfigurableBean: input], prefix, category)
+
+        then:
+
+        result.errors == []
+        result.config['testConfigurableBean'].name == 'testConfigurableBean'
+        result.config['testConfigurableBean'].configurable != null
+        result.config['testConfigurableBean'].prefix == prefix + 'testConfigurableBean.'
+        result.config['testConfigurableBean'].values == values
+        result.config['testConfigurableBean'].report != null
+        result.config['testConfigurableBean'].report.valid
+        result.props == expect
+        result.remove == ScheduledExecutionService.ConfigPropertiesMapping.values().toList()
+        where:
+        input                       | values|expect
+        [:]                         | [disableExecution:'false', disableSchedule:'false']|['project.disable.executions': 'false','project.disable.schedule': 'false']
+        [groupExpandLevel: '2']     | [groupExpandLevel:'2',disableExecution:'false', disableSchedule:'false']|['project.disable.executions': 'false','project.disable.schedule': 'false','project.jobs.gui.groupExpandLevel': '2']
+        [disableExecution: 'false'] | [disableExecution:'false', disableSchedule:'false']|['project.disable.executions': 'false','project.disable.schedule': 'false']
+        [disableExecution: 'blah']  | [disableExecution:'false', disableSchedule:'false']|['project.disable.executions': 'false','project.disable.schedule': 'false']
+        [disableExecution: 'true']  | [disableExecution:'true', disableSchedule:'false']|['project.disable.executions': 'true','project.disable.schedule': 'false']
     }
 }

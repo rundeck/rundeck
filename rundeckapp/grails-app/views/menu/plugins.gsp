@@ -236,7 +236,7 @@
                                             hideMissingFrameworkMapping:(serviceName in ['NodeExecutor','FileCopier'])
                                     ]}"/>
                     </g:each>
-                    <g:unless test="${pluginDescription?.properties?.any{!(it.scope==null||it.scope==PropertyScope.Unspecified? serviceDefaultScope.isInstanceLevel(): it.scope.isInstanceLevel())}}">
+                    <g:unless test="${pluginDescription?.properties?.any{!(it.scope==null||it.scope==PropertyScope.Unspecified? (serviceDefaultScope == PropertyScope.InstanceOnly): (it.scope == PropertyScope.InstanceOnly))}}">
                         %{--no config properties--}%
                         <p class="text-muted">
                             <g:message code="no.configuration" />

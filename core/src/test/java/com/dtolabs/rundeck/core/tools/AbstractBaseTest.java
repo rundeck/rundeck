@@ -82,11 +82,10 @@ public abstract class AbstractBaseTest extends TestCase {
             throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
         }
         Properties properties = new Properties();
-//        properties.put("resources.source.1.type", "file");
-//        properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
-        properties.put("project.resources.file", resourcesfile.getAbsolutePath());
-//        properties.put("resources.source.1.config.generateFileAutomatically", "false");
-//        properties.put("resources.source.1.config.includeServerNode", "true");
+        properties.put("resources.source.1.type", "file");
+        properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
+        properties.put("resources.source.1.config.generateFileAutomatically", "false");
+        properties.put("resources.source.1.config.includeServerNode", "true");
 
         Set<String> prefixes=new HashSet<String>();
         prefixes.add("resources.source");
@@ -103,11 +102,10 @@ public abstract class AbstractBaseTest extends TestCase {
             throw new RuntimeException("Caught Setup exception: " + e.getMessage(), e);
         }
         Properties properties = new Properties();
-//        properties.put("resources.source.1.type", "file");
-//        properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
-        properties.put("project.resources.file", resourcesfile.getAbsolutePath());
-//        properties.put("resources.source.1.config.generateFileAutomatically", "false");
-//        properties.put("resources.source.1.config.includeServerNode", "true");
+        properties.put("resources.source.1.type", "file");
+        properties.put("resources.source.1.config.file", resourcesfile.getAbsolutePath());
+        properties.put("resources.source.1.config.generateFileAutomatically", "false");
+        properties.put("resources.source.1.config.includeServerNode", "true");
         return properties;
     }
     protected String getExistingFilePath(String filename, String type)

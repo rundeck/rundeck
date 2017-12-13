@@ -46,6 +46,8 @@ By default, to produce a key/value entry, echo a line similar to this:
 
 Where `(key)` is the key name, and `(value)` is the value.
 
+If you provide a regular expression with only one group, the `name` input is required.
+
 You can define the regular expression used.
 ''')
 
@@ -66,6 +68,12 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
             validatorClass = SimpleDataFilterPlugin.RegexValidator
     )
     String regex
+
+    @PluginProperty(
+            title = 'Name Data',
+            description = '''If only one groups is provided, the name of the captured variable'''
+    )
+    String name
 
     @PluginProperty(
             title = 'Log Data',
@@ -104,8 +112,14 @@ See the [Java Pattern](https://docs.oracle.com/javase/8/docs/api/java/util/regex
         if (event.eventType == 'log' && event.loglevel == LogLevel.NORMAL && event.message?.length() > 0) {
             Matcher match = dataPattern.matcher(event.message)
             if (match.matches()) {
-                def key = match.group(1)
-                def value = match.group(2)
+                def key,value
+                if(match.groupCount()==1 && name){
+                    key = name
+                    value = match.group(1)
+                }else {
+                    key = match.group(1)
+                    value = match.group(2)
+                }
                 if (key && value) {
                     allData[key] = value
                     outputContext.addOutput("data", key, value)

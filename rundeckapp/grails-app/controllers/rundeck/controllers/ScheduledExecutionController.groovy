@@ -52,6 +52,7 @@ import org.codehaus.groovy.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.rundeck.util.Toposort
+import org.springframework.transaction.TransactionDefinition
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.MultipartRequest
@@ -87,6 +88,13 @@ class ScheduledExecutionController  extends ControllerBase{
     public static final String ONSUCCESS_TRIGGER_NAME = 'onsuccess'
     public static final String ONFAILURE_TRIGGER_NAME = 'onfailure'
     public static final String ONSTART_TRIGGER_NAME = 'onstart'
+    public static final String OVERAVGDURATION_TRIGGER_NAME = 'onavgduration'
+    public static final String NOTIFY_OVERAVGDURATION_EMAIL = 'notifyAvgDurationEmail'
+    public static final String NOTIFY_OVERAVGDURATION_URL = 'notifyAvgDurationUrl'
+    public static final String NOTIFY_ONOVERAVGDURATION_URL = 'notifyOnAvgDurationUrl'
+    public static final String NOTIFY_OVERAVGDURATION_RECIPIENTS = 'notifyAvgDurationRecipients'
+    public static final String NOTIFY_OVERAVGDURATION_SUBJECT = 'notifyAvgDurationSubject'
+
     public static final String EMAIL_NOTIFICATION_TYPE = 'email'
     public static final String WEBHOOK_NOTIFICATION_TYPE = 'url'
     public static final ArrayList<String> NOTIFICATION_ENABLE_FIELD_NAMES = [
@@ -95,7 +103,9 @@ class ScheduledExecutionController  extends ControllerBase{
             NOTIFY_ONSUCCESS_EMAIL,
             NOTIFY_ONSUCCESS_URL,
             NOTIFY_ONSTART_EMAIL,
-            NOTIFY_ONSTART_URL
+            NOTIFY_ONSTART_URL,
+            NOTIFY_OVERAVGDURATION_EMAIL,
+            NOTIFY_ONOVERAVGDURATION_URL
     ]
 
     def Scheduler quartzScheduler
@@ -274,7 +284,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def total = -1
         if (keys.contains('total') || !keys) {
-            total = Execution.countByScheduledExecution(scheduledExecution)
+            total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+                Execution.countByScheduledExecution(scheduledExecution)
+            }
         }
 
         def remoteClusterNodeUUID = null
@@ -387,7 +399,9 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.countByScheduledExecution(scheduledExecution)
+        def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+            Execution.countByScheduledExecution(scheduledExecution)
+        }
 
         def remoteClusterNodeUUID=null
         if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
@@ -445,24 +459,18 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
         dataMap.projectNames = authProjectsToCreate
+
         withFormat{
             html{
                 dataMap
             }
             yaml{
+                response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.yaml\"")
                 render(text:JobsYAMLCodec.encode([scheduledExecution] as List),contentType:"text/yaml",encoding:"UTF-8")
             }
 
             xml{
-                def fname=scheduledExecution.jobName.replaceAll(' ','_')
-                fname=fname.replaceAll('"','_')
-                fname=fname.replaceAll('\\\\','_')
-                final Pattern s = Pattern.compile("[\\r\\n]")
-                fname=fname.replaceAll(s,'_')
-                if(fname.size()>74){
-                    fname = fname.substring(0,74)
-                }
-                response.setHeader("Content-Disposition","attachment; filename=\"${fname}.xml\"")
+                response.setHeader("Content-Disposition","attachment; filename=\"${getFname(scheduledExecution.jobName)}.xml\"")
                 response.setHeader(Constants.X_RUNDECK_RESULT_HEADER,"Jobs found: 1")
 
                 def writer = new StringWriter()
@@ -473,6 +481,14 @@ class ScheduledExecutionController  extends ControllerBase{
             }
         }
         dataMap
+    }
+    private static String getFname(name){
+        final Pattern s = Pattern.compile("[\\r\\n \"\\\\]")
+        def fname=name.replaceAll(s,'_')
+        if(fname.size()>74){
+            fname = fname.substring(0,74)
+        }
+        fname
     }
     def runbook () {
         log.debug("ScheduledExecutionController: show : params: " + params)
@@ -497,7 +513,9 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.countByScheduledExecution(scheduledExecution)
+        def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+            Execution.countByScheduledExecution(scheduledExecution)
+        }
 
         def remoteClusterNodeUUID=null
         if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
@@ -954,7 +972,7 @@ class ScheduledExecutionController  extends ControllerBase{
      *
      */
     private Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5){
-        log.warn("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
+        log.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
         //attempt to get the URL JSON data
         def stats=[:]
         if(url.startsWith("http:") || url.startsWith("https:")){
@@ -4105,11 +4123,11 @@ class ScheduledExecutionController  extends ControllerBase{
         return apiJobExecutionsResult(true)
     }
     /**
-     * API: /api/job/{id}/executions , version 1
+     * non-api interface to job executions results
      */
     def jobExecutionsAjax() {
-        if ('true' != request.getHeader('x-rundeck-ajax')) {
-            return redirect(action: 'jobs', controller: 'menu', params: params)
+        if (requireAjax(action: 'jobs', controller: 'menu', params: params)) {
+            return
         }
         return apiJobExecutionsResult(false)
     }

@@ -50,10 +50,22 @@ public class ResourceXMLFormatParser implements ResourceFormatParser, Describabl
 
     public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList("xml")));
     public static final Set<String> MIME_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-        "*/xml")));
+            "text/xml",
+            "*/xml"
+    )));
 
     public Set<String> getFileExtensions() {
         return EXTENSIONS;
+    }
+
+    @Override
+    public String getPreferredFileExtension() {
+        return "xml";
+    }
+
+    @Override
+    public String getPreferredMimeType() {
+        return "text/xml";
     }
 
     public Set<String> getMIMETypes() {

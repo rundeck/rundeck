@@ -502,6 +502,61 @@ class ScheduledExecutionControllerSpec extends Specification {
 
     }
 
+    @Unroll
+    def "show job download #format has content-disposition header"() {
+        given:
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter: 'name: ${option.nodes}',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString        : '-delay 12 -monkey cheese -particle'
+                                ]
+                                )
+                        ]
+                )
+        ).save()
+
+
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+
+
+
+        controller.frameworkService = Mock(FrameworkService) {
+            authorizeProjectJobAll(_, _, _, _) >> true
+            filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
+            filterNodeSet(_, _) >> testNodeSetB
+            getRundeckFramework() >> Mock(Framework) {
+                getFrameworkNodeName() >> 'fwnode'
+            }
+        }
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            getByIDorUUID(_) >> se
+        }
+        controller.notificationService = Mock(NotificationService)
+        controller.orchestratorPluginService = Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        when:
+        request.parameters = [id: se.id.toString(), project: 'project1']
+        response.format = format
+        def model = controller.show()
+        then:
+        response.status == 200
+        response.header('Content-Disposition') == "attachment; filename=\"test1.$format\""
+        where:
+        format << ['xml', 'yaml']
+
+    }
+
     def "run job now"() {
         given:
         def se = new ScheduledExecution(

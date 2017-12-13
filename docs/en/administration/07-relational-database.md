@@ -34,7 +34,7 @@ dataSource.password = dbpass
 
 NB: for Mysql, the `autoReconnect=true` will fix a common problem where the Rundeck server's connection to Mysql is dropped after a period of inactivity, resulting in an error message: "Message: Can not read response from server. Expected to read 4 bytes, read 0 bytes before connection was unexpectedly lost."
 
-See the [Mysql Setup Guide](#mysql-setup-guide) for 
+See the [Mysql Setup Guide](#mysql-setup-guide) for
 instructions on creating the rundeck database and granting access.
 
 See more about [configuring the Mysql JDBC Connector/J URL](https://dev.mysql.com/doc/connector-j/5.1/en/connector-j-reference-configuration-properties.html).
@@ -54,9 +54,9 @@ This is a simple guide for setting up Mysql for use with Rundeck.
 
 ## Install Mysql
 
-You can "yum install" or "apt-get install" the server, or you can download rpms manually if you like. See [mysql linux installation](http://dev.mysql.com/doc/refman/5.5/en/linux-installation-native.html)
+You can "yum install" or "apt-get install" the server, or you can download rpms manually if you like. See [mysql linux installation](https://dev.mysql.com/doc/refman/5.5/en/linux-installation-native.html)
 
-After install, run the [mysql_secure_installation script](http://dev.mysql.com/doc/refman/5.5/en/mysql-secure-installation.html). This will let prompt you to set the root password for mysql, as well as disable anonymous access.
+After install, run the [mysql_secure_installation script](https://dev.mysql.com/doc/refman/5.5/en/mysql-secure-installation.html). This will let prompt you to set the root password for mysql, as well as disable anonymous access.
 
 ## Setup Rundeck Database
 
@@ -109,7 +109,7 @@ With recent Rundeck version, MySQL connector is already there.
 You can check if present in this path: `$RDECK_BASE/exp/webapp/WEB-INF/lib/`
 
 Else:
-* [Download the mysql connector jar](http://dev.mysql.com/downloads/connector/j/).
+* [Download the mysql connector jar](https://dev.mysql.com/downloads/connector/j/).
 * Copy the mysql-connector-java-5.x.x-bin.jar to `$RDECK_BASE/server/lib` (for launcher install) or `$WEBAPPS/rundeck/WEB-INF/lib` (for Tomcat).
 
 Finally you can start rundeck.  If you see a startup error about database access, make sure that the hostname that the Mysql server sees from the client is the same one you granted access to.
@@ -181,7 +181,7 @@ For each project you want to retain, Export the archive via the GUI:
 
 Note: make sure to click the final link that is presented to download the file.
 
-Save each project archive file (named "[project name]-XXXX.rdproject.jar") 
+Save each project archive file (named "[project name]-XXXX.rdproject.jar")
 in a place you can upload it later.
 
 ## Backup your Rundeck data
@@ -189,7 +189,7 @@ in a place you can upload it later.
 * Make a backup of your Projects
     * RPM/Debian install location: `/var/rundeck/projects`
     * Launcher location: `$RDECK_BASE/prjoects`
-* Make a backup of your H2 database, which you can revert back to in case of error, 
+* Make a backup of your H2 database, which you can revert back to in case of error,
     * RPM/Debian install location: `/var/lib/rundeck/data`
     * Launcher location: `$RDECK_BASE/server/data`
 
@@ -218,7 +218,7 @@ Then execute this sql:
 
 ## Configure rundeck-config.properties
 
-Set the datasource URL to point to your Mysql host, with appropriate database name, 
+Set the datasource URL to point to your Mysql host, with appropriate database name,
 username and password.
 
 Modify the rundeck config file.
@@ -236,7 +236,7 @@ Replace the `dataSource.url` entry with these lines:
 
 ## Configure project config in DB
 
-Enable DB storage for Project configurations, and Key Storage. Optionally enable encryption. 
+Enable DB storage for Project configurations, and Key Storage. Optionally enable encryption.
 
 For more info refer to:
 

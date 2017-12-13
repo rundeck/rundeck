@@ -53,11 +53,11 @@ file using the following patterns:
 
 * `setup.property.NAME.title` Title for setup property named "NAME"
 * `setup.property.NAME.description` Description for setup property named "NAME"
-* `action.ID.title` Title for action view with ID "ID" 
-* `action.ID.description` Description for action view with ID "ID" 
-* `action.ID.buttonTitle` Button Title for action view with ID "ID" 
-* `action.ID.property.NAME.title` Title for property named "NAME" for action view with ID "ID" 
-* `action.ID.property.NAME.description` Description for property named "NAME" for action view with ID "ID" 
+* `action.ID.title` Title for action view with ID "ID"
+* `action.ID.description` Description for action view with ID "ID"
+* `action.ID.buttonTitle` Button Title for action view with ID "ID"
+* `action.ID.property.NAME.title` Title for property named "NAME" for action view with ID "ID"
+* `action.ID.property.NAME.description` Description for property named "NAME" for action view with ID "ID"
 
 
 [Plugin Development - Plugin Localization]: plugin-development.html#plugin-localization

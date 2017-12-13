@@ -85,7 +85,7 @@ while [[ $ddone == "false" && $dc -lt $dmax ]]; do
     unmod=$(grep 'X-Rundeck-ExecOutput-Unmodified:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
     doff=$(grep 'X-Rundeck-ExecOutput-Offset:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
     dlast=$(grep 'X-Rundeck-ExecOutput-LastModifed:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
-    ddone=$(grep 'X-Rundeck-ExecOutput-Completed:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
+    ddone=$(grep 'X-Rundeck-Exec-Completed:' $DIR/headers.out | cut -d' ' -f 2 | tr -d "\r\n")
     #echo "unmod $unmod"
     #echo "doff $doff"
     #echo "dlast $dlast"

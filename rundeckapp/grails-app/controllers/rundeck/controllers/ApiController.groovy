@@ -46,7 +46,7 @@ class ApiController extends ControllerBase{
             apiTokenRemoveExpired: ['POST']
     ]
     def invalid = {
-        return apiService.renderErrorXml(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
+        return apiService.renderErrorFormat(response,[code:'api.error.invalid.request',args:[request.forwardURI],status:HttpServletResponse.SC_NOT_FOUND])
     }
     /**
      * Respond with a 400 error and information about new endpoint location

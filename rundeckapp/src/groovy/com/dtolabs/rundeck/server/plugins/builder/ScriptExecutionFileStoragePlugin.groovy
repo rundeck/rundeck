@@ -36,7 +36,9 @@ class ScriptExecutionFileStoragePlugin
     Map configuration
     Map<String, ? extends Object> pluginContext
     boolean storeSupported
+    boolean partialStoreSupported
     boolean retrieveSupported
+    boolean partialRetrieveSupported
 
     ScriptExecutionFileStoragePlugin(Map<String, Closure> handlers, Description description) {
         this.handlers = handlers
@@ -55,16 +57,9 @@ class ScriptExecutionFileStoragePlugin
     void initialize(Map<String, ? extends Object> context) {
         this.pluginContext = context
         this.storeSupported = handlers['store'] ? true : false
+        this.partialStoreSupported = handlers['partialStore'] ? true : false
+        this.partialRetrieveSupported = handlers['partialAvailable'] && handlers['partialRetrieve'] ? true : false
         this.retrieveSupported = (handlers['available'] != null && handlers['retrieve'] != null)
-        if(retrieveSupported) {
-            ['available', 'retrieve'].each {
-                if (!handlers[it]) {
-                    throw new RuntimeException(
-                            "ScriptExecutionFileStoragePlugin: '${it}' closure not defined for plugin ${description.name}"
-                    )
-                }
-            }
-        }
     }
 
     boolean isAvailable(String filetype) throws ExecutionFileStorageException {
@@ -105,6 +100,49 @@ class ScriptExecutionFileStoragePlugin
         return result ? true : false
     }
 
+    boolean isPartialAvailable(String filetype) throws ExecutionFileStorageException {
+
+        if (!partialRetrieveSupported) {
+            throw new IllegalStateException("partialRetrieve/partialAvailable is not supported")
+        }
+        logger.debug("isAvailable(${filetype}) ${pluginContext}")
+        return execAvailableClosure(filetype)
+    }
+
+    private boolean execAvailableClosure(String filetype, String action) {
+        def closure = handlers[action]
+        def binding = [
+                configuration: configuration,
+                context      : pluginContext + (filetype ? [filetype: filetype] : [:])
+        ]
+        def result = null
+        if (closure.getMaximumNumberOfParameters() == 3) {
+            def Closure newclos = closure.clone()
+            newclos.resolveStrategy = Closure.DELEGATE_ONLY
+            newclos.delegate = binding
+            try {
+                result = newclos.call(filetype, binding.context, binding.configuration)
+            } catch (Exception e) {
+                throw new ExecutionFileStorageException(e.getMessage(), e)
+            }
+        } else if (closure.getMaximumNumberOfParameters() == 2) {
+            def Closure newclos = closure.clone()
+            newclos.delegate = binding
+            newclos.resolveStrategy = Closure.DELEGATE_ONLY
+            try {
+                result = newclos.call(filetype, binding.context)
+            } catch (Exception e) {
+                throw new ExecutionFileStorageException(e.getMessage(), e)
+            }
+        } else {
+            throw new RuntimeException(
+                    "ScriptExecutionFileStoragePlugin: '${action}' closure signature invalid for plugin " +
+                            "${description.name}, cannot open"
+            )
+        }
+        return result ? true : false
+    }
+
     boolean store(String filetype, InputStream stream, long length, Date lastModified)
             throws IOException, ExecutionFileStorageException
     {
@@ -112,7 +150,6 @@ class ScriptExecutionFileStoragePlugin
             throw new IllegalStateException("store is not supported")
         }
         logger.debug("store($filetype) ${pluginContext}")
-        def closure = handlers.store
         def binding = [
                 configuration: configuration,
                 context      : pluginContext + (filetype ? [filetype: filetype] : [:]),
@@ -120,6 +157,34 @@ class ScriptExecutionFileStoragePlugin
                 length       : length,
                 lastModified : lastModified
         ]
+        return execStoreClosure(binding, filetype, 'store')
+    }
+
+    boolean partialStore(String filetype, InputStream stream, long length, Date lastModified)
+            throws IOException, ExecutionFileStorageException
+    {
+        if (!partialStoreSupported) {
+            throw new IllegalStateException("partialStore is not supported")
+        }
+        logger.debug("partialStore($filetype) ${pluginContext}")
+        def binding = [
+                configuration: configuration,
+                context      : pluginContext + (filetype ? [filetype: filetype] : [:]),
+                stream       : stream,
+                length       : length,
+                lastModified : lastModified
+        ]
+        return execStoreClosure(binding, filetype, 'partialStore')
+    }
+
+    private Object execStoreClosure(
+            LinkedHashMap<String, Object> binding,
+            String filetype,
+            String action
+    )
+    {
+        def closure = handlers[action]
+
         if (closure.getMaximumNumberOfParameters() == 4) {
             def Closure newclos = closure.clone()
             newclos.resolveStrategy = Closure.DELEGATE_ONLY
@@ -149,7 +214,8 @@ class ScriptExecutionFileStoragePlugin
             }
         } else {
             throw new RuntimeException(
-                    "ScriptExecutionFileStoragePlugin: 'store' closure signature invalid for plugin ${description.name}, cannot open"
+                    "ScriptExecutionFileStoragePlugin: '$action' closure signature invalid for plugin " +
+                            "${description.name}, cannot open"
             )
         }
     }
@@ -160,8 +226,21 @@ class ScriptExecutionFileStoragePlugin
         if(!retrieveSupported){
             throw new IllegalStateException("retrieve/available is not supported")
         }
-        logger.debug("retrieve($filetype) ${pluginContext}")
-        def closure = handlers.retrieve
+        return execRetrieveClosure(filetype, stream, 'retrieve')
+    }
+
+    @Override
+    boolean partialRetrieve(String filetype, OutputStream stream) throws IOException, ExecutionFileStorageException {
+
+        if (!partialRetrieveSupported) {
+            throw new IllegalStateException("partialRetrieve/partialAvailable is not supported")
+        }
+        return execRetrieveClosure(filetype, stream, 'partialRetrieve')
+    }
+
+    private Object execRetrieveClosure(String filetype, OutputStream stream, String action) {
+        logger.debug("$action($filetype) ${pluginContext}")
+        def closure = handlers[action]
         def binding = [
                 configuration: configuration,
                 context      : pluginContext + (filetype ? [filetype: filetype] : [:]),
@@ -196,7 +275,8 @@ class ScriptExecutionFileStoragePlugin
             }
         } else {
             throw new RuntimeException(
-                    "ScriptExecutionFileStoragePlugin: 'retrieve' closure signature invalid for plugin ${description.name}, cannot open"
+                    "ScriptExecutionFileStoragePlugin: '$action' closure signature invalid for plugin " +
+                            "${description.name}, cannot open"
             )
         }
     }
