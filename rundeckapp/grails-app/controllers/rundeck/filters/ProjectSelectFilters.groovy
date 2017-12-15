@@ -48,6 +48,7 @@ import javax.servlet.http.HttpServletResponse
  * The filter is applied to all actions except: createProject, selectProject and projectSelect (framework controller), to
  * allow the create project form to be used. 
  */
+@Deprecated
 public class ProjectSelectFilters {
     def frameworkService
 

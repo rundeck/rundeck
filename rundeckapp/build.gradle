@@ -36,11 +36,24 @@ repositories {
 def springBootVersion = "1.5.8.RELEASE"
 
 dependencies {
+
+    // Rundeck project dependencies.
+    compile project(':core')
+    compile project(':rundeck-storage:rundeck-storage-filesys')
+
     // From BuildConfig.groovy.
-    compile 'org.quartz-scheduler:quartz:2.2.1'
+    compile 'org.quartz-scheduler:quartz:2.3.0'
     compile 'org.grails.plugins:quartz:2.0.12'
-    compile 'org.yaml:snakeyaml:1.19'
-    compile project(":core")
+    compile 'org.yaml:snakeyaml:1.14'
+    compile 'com.codahale.metrics:metrics-core:3.0.2'
+    compile 'com.atlassian.commonmark:commonmark:0.10.0'
+    compile 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
+    compile 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20171016.1'
+    compile 'org.owasp.encoder:encoder:1.2.1'
+
+    // Grails Plugins.
+    compile 'org.grails:grails-plugin-filters:3.0.17'
+
 
     // Defined by create-app
     compile "org.springframework.boot:spring-boot-starter-logging"

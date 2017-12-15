@@ -28,8 +28,7 @@ import grails.validation.Validateable
 /**
  * Used as a command object for the reports action, for date conversion from g:datePicker in gsp page
  */
-@Validateable
-class ReportQuery extends BaseQuery{
+class ReportQuery extends BaseQuery implements Validateable{
 
     Date startafterFilter
     Date startbeforeFilter

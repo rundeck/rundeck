@@ -16,6 +16,7 @@
 
 package rundeck.filters
 
+@Deprecated
 class ZZ_TimerFilters {
 
     def dependsOn = [AA_TimerFilters]

@@ -25,8 +25,7 @@ import grails.validation.Validateable
  * Created: Feb 29, 2008 3:17:13 PM
  * $Id$
  */
-@Validateable
-class ExecQuery extends ReportQuery{
+class ExecQuery extends ReportQuery implements Validateable{
     String controllerFilter
     String cmdFilter
     String groupPathFilter

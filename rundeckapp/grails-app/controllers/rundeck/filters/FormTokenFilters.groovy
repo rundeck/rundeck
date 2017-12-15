@@ -16,12 +16,13 @@
 
 package rundeck.filters
 
-import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 
 /**
  * Allows using HTTP headers to supply synchronizer tokens, they are injected in the parameters map before invoking
  * the controller, which may do withForm{} to validate them as parameters.
  */
+@Deprecated
 class FormTokenFilters {
 
     public static final String TOKEN_KEY_HEADER = 'X-RUNDECK-TOKEN-KEY'

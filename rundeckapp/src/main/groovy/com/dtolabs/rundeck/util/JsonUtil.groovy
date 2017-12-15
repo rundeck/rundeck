@@ -16,7 +16,8 @@
 
 package com.dtolabs.rundeck.util
 
-import org.codehaus.groovy.grails.web.json.JSONObject
+import org.grails.web.json.JSONObject
+
 
 /**
  * JSON request handling utilities
