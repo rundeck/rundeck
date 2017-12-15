@@ -3154,6 +3154,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         project = project?project:executionContext.getFrameworkProject()
         def schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, project)
+
         if (!schedlist || 1 != schedlist.size()) {
             def msg = "Job [${jitem.jobIdentifier}] not found, project: ${project}"
             executionContext.getExecutionListener().log(0, msg)
@@ -3225,7 +3226,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         ScheduledExecution.withTransaction { status ->
             Execution exec = Execution.get(execid as Long)
             notificationService.triggerJobNotification('start', id,
-                    [execution: exec, context: newContext])
+                    [execution: exec, context: newContext,isjobref: true])
         }
         long startTime = System.currentTimeMillis()
         def wresult = metricService.withTimer(this.class.name,'runJobReference'){
@@ -3239,7 +3240,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 Execution exec = Execution.get(execid as Long)
                 avgDurationExceeded(id, [
                         execution: exec,
-                        context  : newContext
+                        context  : newContext,
+                        isjobref: true
                 ])
             }
         }
@@ -3254,25 +3256,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
 
             def sucCount = 0
-            wresult?.results.dispatcherResult.results.each{
-                it.each{ k,v ->
-                    if(v.success) {
+            def failedCount = 0
+            if(wresult instanceof WorkflowExecutionResult){
+                WorkflowExecutionResult data = ((WorkflowExecutionResult)wresult)
+                for (StepExecutionResult temp : data.getResultSet()) {
+                    println(temp)
+                    if(temp.success){
                         sucCount++
+                    }else{
+                        failedCount++
                     }
                 }
             }
-            def failedCount = 0
-            wresult?.failures.each{ k,v ->
-                failedCount+= v.size()
 
-            }
             notificationService.triggerJobNotification(
                     wresult?.success ? 'success' : 'failure',
                     id,
                     [
                             execution: execution,
                             nodestatus: [succeeded: sucCount,failed:failedCount,total: newContext.getNodes().getNodeNames().size()],
-                            context: newContext
+                            context: newContext,
+                            isjobref: true
                     ]
             )
         }
