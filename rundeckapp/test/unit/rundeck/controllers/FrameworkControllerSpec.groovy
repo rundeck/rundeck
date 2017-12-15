@@ -645,7 +645,7 @@ class FrameworkControllerSpec extends Specification {
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'
         },_) >> [success:true]
-        1 * fwkService.validateProjectConfigurableInput(_,_)>>[:]
+        1 * fwkService.validateProjectConfigurableInput(_,_,{!it.test('resourceModelSource')})>>[:]
 
     }
     def "save project with out description"(){
@@ -677,7 +677,7 @@ class FrameworkControllerSpec extends Specification {
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == ''
         },_) >> [success:true]
-        1 * fwkService.validateProjectConfigurableInput(_,_)>>[:]
+        1 * fwkService.validateProjectConfigurableInput(_,_,{!it.test('resourceModelSource')})>>[:]
 
     }
     def "get project resources, project dne"(){
@@ -847,7 +847,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         def fwkService = Mock(FrameworkService) {
-            validateProjectConfigurableInput(_, _) >> [config: [testConfigurableBean: [
+            validateProjectConfigurableInput(_, _,_) >> [config: [testConfigurableBean: [
                     disableExecution: disableExecution,
                     disableSchedule : disableSchedule
             ]],props:[
