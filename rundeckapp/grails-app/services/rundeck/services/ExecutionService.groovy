@@ -38,7 +38,6 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.logging.LoggingManagerImpl
 import com.dtolabs.rundeck.core.logging.OverridableStreamingLogWriter
-import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -3154,7 +3153,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         project = project?project:executionContext.getFrameworkProject()
         def schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, project)
-
         if (!schedlist || 1 != schedlist.size()) {
             def msg = "Job [${jitem.jobIdentifier}] not found, project: ${project}"
             executionContext.getExecutionListener().log(0, msg)
