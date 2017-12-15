@@ -41,7 +41,7 @@ import java.time.Clock
 * Created: Feb 2, 2010 11:08:13 AM
 * $Id$
 */
-
+@Deprecated
 public class AuthorizationFilters implements ApplicationContextAware{
     def FrameworkService frameworkService
     def ApplicationContext applicationContext

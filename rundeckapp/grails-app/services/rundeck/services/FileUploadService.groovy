@@ -3,8 +3,8 @@ package rundeck.services
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
-import grails.events.Listener
-import grails.transaction.Transactional
+import grails.events.annotation.gorm.Listener
+import grails.gorm.transactions.Transactional
 import org.rundeck.util.SHAInputStream
 import org.rundeck.util.SHAOutputStream
 import org.rundeck.util.Sizes

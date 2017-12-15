@@ -21,7 +21,7 @@ import grails.converters.JSON
 import grails.converters.XML
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
-import org.codehaus.groovy.grails.web.util.WebUtils
+import org.grails.web.util.WebUtils
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -33,7 +33,7 @@ import javax.servlet.http.HttpServletResponse
  * Created: Feb 1, 2011 12:14:56 PM
  * 
  */
-
+@Deprecated
 public class ApiRequestFilters {
     static final Logger logger = Logger.getLogger('org.rundeck.api.requests')
     private static final String METRIC_TIMER = 'ApiRequestFilters._METRIC_TIMER'

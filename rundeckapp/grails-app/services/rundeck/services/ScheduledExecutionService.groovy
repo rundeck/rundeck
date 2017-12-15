@@ -37,7 +37,7 @@ import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.plugins.quartz.listeners.SessionBinderJobListener
-import grails.transaction.Transactional
+import grails.gorm.transactions.Transactional
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.hibernate.StaleObjectStateException

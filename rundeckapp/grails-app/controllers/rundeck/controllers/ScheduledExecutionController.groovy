@@ -48,7 +48,8 @@ import org.apache.commons.httpclient.util.DateParseException
 import org.apache.commons.httpclient.util.DateUtil
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
-import org.codehaus.groovy.grails.web.json.JSONElement
+import org.grails.web.json.JSONElement
+import org.grails.web.json.JSONObject
 import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.rundeck.util.Toposort
@@ -776,7 +777,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 if(result){
                     if( result instanceof Collection){
                         result.eachWithIndex { entry,i->
-                            if(entry instanceof org.codehaus.groovy.grails.web.json.JSONObject){
+                            if(entry instanceof JSONObject){
                                 if(!entry.name){
                                     validationerrors<<"Item: ${i} has no 'name' entry"
                                     valid=false;
@@ -790,8 +791,8 @@ class ScheduledExecutionController  extends ControllerBase{
                                 validationerrors << "Item: ${i} expected string or map like {name:\"..\",value:\"..\"}"
                             }
                         }
-                    } else if (result instanceof org.codehaus.groovy.grails.web.json.JSONObject) {
-                        org.codehaus.groovy.grails.web.json.JSONObject jobject = result
+                    } else if (result instanceof JSONObject) {
+                        JSONObject jobject = result
                         result = []
                         jobject.keys().sort().each {k ->
                             result << [name: k, value: jobject.get(k)]

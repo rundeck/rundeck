@@ -31,8 +31,7 @@ import grails.validation.Validateable
 /**
  * Represents a query corresponding to the filters available for a NodeSet
  */
-@Validateable
-public class BaseNodeFilters {
+public class BaseNodeFilters implements Validateable{
 
     String nodeInclude
     String nodeExclude

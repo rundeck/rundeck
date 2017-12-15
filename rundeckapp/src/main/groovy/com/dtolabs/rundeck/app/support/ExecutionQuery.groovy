@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.app.support
 
+import grails.validation.Validateable
 import rundeck.controllers.ExecutionController
 import rundeck.services.ExecutionService
 
@@ -26,8 +27,7 @@ import rundeck.services.ExecutionService
  * Created: 9/10/12 3:49 PM
  * 
  */
-@grails.validation.Validateable
-class ExecutionQuery extends ScheduledExecutionQuery{
+class ExecutionQuery extends ScheduledExecutionQuery implements Validateable{
 
     String statusFilter
     String abortedbyFilter

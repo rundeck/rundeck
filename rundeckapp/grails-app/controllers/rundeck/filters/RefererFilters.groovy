@@ -36,6 +36,7 @@ import java.util.regex.Pattern
  * rundeck.security.csrf.referer.requireHttps=true|false
  * </pre></code>
  */
+@Deprecated
 class RefererFilters {
     def configurationService
     def dependsOn = [ApiRequestFilters]

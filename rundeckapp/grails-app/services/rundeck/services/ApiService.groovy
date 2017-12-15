@@ -25,7 +25,7 @@ import grails.transaction.Transactional
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
-import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
+import org.grails.web.converters.exceptions.ConverterException
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.Execution

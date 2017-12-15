@@ -16,8 +16,10 @@
 
 package rundeck.services
 
-import grails.events.Listener
-import grails.transaction.Transactional
+import grails.events.annotation.gorm.Listener
+import grails.gorm.transactions.Transactional
+
+//import grails.events.Listener
 import rundeck.services.events.ExecutionCompleteEvent
 
 @Transactional

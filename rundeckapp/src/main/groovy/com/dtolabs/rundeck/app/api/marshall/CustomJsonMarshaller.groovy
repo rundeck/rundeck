@@ -17,11 +17,8 @@
 package com.dtolabs.rundeck.app.api.marshall
 
 import grails.converters.JSON
-import grails.converters.XML
-import grails.util.GrailsNameUtils
-import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
-import org.codehaus.groovy.grails.web.converters.marshaller.NameAwareMarshaller
-import org.codehaus.groovy.grails.web.converters.marshaller.ObjectMarshaller
+import org.grails.web.converters.exceptions.ConverterException
+import org.grails.web.converters.marshaller.ObjectMarshaller
 
 /**
  * Custom JSON marshaller which handles "wrapper" objects. If a {@link ApiResource} class defines

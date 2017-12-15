@@ -17,7 +17,7 @@
 package org.rundeck.web.infosec
 
 import org.apache.log4j.Logger
-import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 
 import javax.servlet.http.HttpSession
 

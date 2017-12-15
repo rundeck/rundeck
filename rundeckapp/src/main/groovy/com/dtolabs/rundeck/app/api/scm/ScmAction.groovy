@@ -18,14 +18,11 @@ package com.dtolabs.rundeck.app.api.scm
 
 import com.dtolabs.rundeck.util.JsonUtil
 import grails.validation.Validateable
-import org.codehaus.groovy.grails.web.json.JSONObject
-import org.grails.databinding.BindUsing
 
 /**
  * Input for performing an action
  */
-@Validateable
-class ScmAction {
+class ScmAction implements Validateable {
     /**
      * Input field key/value
      */

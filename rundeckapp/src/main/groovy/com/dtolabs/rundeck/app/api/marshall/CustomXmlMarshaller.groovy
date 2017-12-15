@@ -18,10 +18,9 @@ package com.dtolabs.rundeck.app.api.marshall
 
 import grails.converters.XML
 import grails.util.GrailsNameUtils
-import groovy.inspect.Inspector
-import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
-import org.codehaus.groovy.grails.web.converters.marshaller.NameAwareMarshaller
-import org.codehaus.groovy.grails.web.converters.marshaller.ObjectMarshaller
+import org.grails.web.converters.exceptions.ConverterException
+import org.grails.web.converters.marshaller.NameAwareMarshaller
+import org.grails.web.converters.marshaller.ObjectMarshaller
 
 /**
  * Custom XMl marshaller, uses annotations on fields/class to convert to XML.
