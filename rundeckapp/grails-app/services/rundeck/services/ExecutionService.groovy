@@ -3226,7 +3226,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         ScheduledExecution.withTransaction { status ->
             Execution exec = Execution.get(execid as Long)
             notificationService.triggerJobNotification('start', id,
-                    [execution: exec, context: newContext,isjobref: true])
+                    [execution: exec, context: newContext,jobref: jitem.jobIdentifier])
         }
         long startTime = System.currentTimeMillis()
         def wresult = metricService.withTimer(this.class.name,'runJobReference'){
@@ -3241,7 +3241,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 avgDurationExceeded(id, [
                         execution: exec,
                         context  : newContext,
-                        isjobref: true
+                        jobref: jitem.jobIdentifier
                 ])
             }
         }
@@ -3276,7 +3276,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             execution: execution,
                             nodestatus: [succeeded: sucCount,failed:failedCount,total: newContext.getNodes().getNodeNames().size()],
                             context: newContext,
-                            isjobref: true
+                            jobref: jitem.jobIdentifier
                     ]
             )
         }

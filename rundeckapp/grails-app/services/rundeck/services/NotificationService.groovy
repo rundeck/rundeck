@@ -283,7 +283,7 @@ public class NotificationService implements ApplicationContextAware{
                                 }else{
                                     body(view: "/execution/mailNotification/status", model: [execution: exec,
                                             scheduledExecution: source, msgtitle: subjectmsg, execstate: state,
-                                            nodestatus: content.nodestatus])
+                                            nodestatus: content.nodestatus, jobref: content.jobref])
                                 }
                                 if(attachlog && outputfile != null){
                                     attachBytes "${source.jobName}-${exec.id}.txt", "text/plain", outputfile.getText("UTF-8").bytes
