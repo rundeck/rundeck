@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionContext
 import grails.plugin.mail.MailMessageBuilder
@@ -105,6 +106,13 @@ class NotificationServiceSpec extends Specification {
         service.grailsLinkGenerator = Mock(LinkGenerator) {
             _ * link(*_) >> 'alink'
         }
+        service.frameworkService = Mock(FrameworkService) {
+            _ * getRundeckFramework() >> Mock(Framework) {
+                _ * getWorkflowStrategyService()
+            }
+        }
+        service.orchestratorPluginService = Mock(OrchestratorPluginService)
+        service.pluginService = Mock(PluginService)
         def mailbuilder = Mock(MailMessageBuilder)
 
         when:
