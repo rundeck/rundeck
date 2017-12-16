@@ -27,8 +27,8 @@ class PluginResourceReq {
     String name
     String path
     static constraints = {
-        service(nullable: false, blank: false, matches: /^[-a-zA-Z0-9\.]+$/)
-        name(nullable: false, blank: false, matches: /^[-a-zA-Z0-9\.]+$/)
+        service(nullable: false, blank: false, matches: /^[-a-zA-Z0-9\_]+$/)
+        name(nullable: false, blank: false, matches: /^[-a-zA-Z0-9\._:]+$/)
         path(nullable: true, blank: true, matches: /^[-a-zA-Z0-9+_][-a-zA-Z0-9+_\.]*(\/([-a-zA-Z0-9+_][-a-zA-Z0-9+_\.]*))*$/)
     }
 }
