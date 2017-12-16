@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 
 class OrchestratorPluginService {
 	def FrameworkService frameworkService
@@ -27,4 +28,14 @@ class OrchestratorPluginService {
 	def OrchestratorService listOrchestratorPlugins() {
 		return frameworkService.getRundeckFramework().getOrchestratorService()
 	}
+
+    /**
+     *
+     * @return Map of plugin provider name to Description
+     */
+    def Map<String, Description> getOrchestratorPlugins() {
+        listDescriptions().collectEntries {
+            [it.name, it]
+        }
+    }
 }

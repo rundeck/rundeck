@@ -17,10 +17,12 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
@@ -61,6 +63,7 @@ public class NotificationService implements ApplicationContextAware{
     def NotificationPluginProviderService notificationPluginProviderService
     def FrameworkService frameworkService
     def LoggingService loggingService
+    OrchestratorPluginService orchestratorPluginService
 
     def ValidatedPlugin validatePluginConfig(String project, String name, Map config) {
         return pluginService.validatePlugin(name, notificationPluginProviderService,
@@ -70,6 +73,31 @@ public class NotificationService implements ApplicationContextAware{
         return pluginService.validatePlugin(name, notificationPluginProviderService,
                 frameworkService.getFrameworkPropertyResolverWithProps(projectProps, config), PropertyScope.Instance, PropertyScope.Project)
     }
+
+    private Map loadExecutionViewPlugins() {
+        def pluginDescs = [node: [:], workflow: [:]]
+
+        frameworkService.getNodeStepPluginDescriptions().each { desc ->
+            pluginDescs['node'][desc.name] = desc
+        }
+        frameworkService.getStepPluginDescriptions().each { desc ->
+            pluginDescs['workflow'][desc.name] = desc
+        }
+        def wfstrat = pluginService.listPlugins(
+                WorkflowStrategy,
+                frameworkService.rundeckFramework.workflowStrategyService
+        ).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        [
+
+                stepPluginDescriptions: pluginDescs,
+                orchestratorPlugins   : orchestratorPluginService.getOrchestratorPlugins(),
+                strategyPlugins       : wfstrat,
+                logFilterPlugins      : pluginService.listPlugins(LogFilterPlugin),
+        ]
+    }
+
     /**
      *
      * @param name
@@ -281,9 +309,16 @@ public class NotificationService implements ApplicationContextAware{
                                 if(htmlemail){
                                     html(htmlemail)
                                 }else{
-                                    body(view: "/execution/mailNotification/status", model: [execution: exec,
-                                            scheduledExecution: source, msgtitle: subjectmsg, execstate: state,
-                                            nodestatus: content.nodestatus])
+                                    body(
+                                            view: "/execution/mailNotification/status",
+                                            model: loadExecutionViewPlugins() + [
+                                                    execution         : exec,
+                                                    scheduledExecution: source,
+                                                    msgtitle          : subjectmsg,
+                                                    execstate         : state,
+                                                    nodestatus        : content.nodestatus
+                                            ]
+                                    )
                                 }
                                 if(attachlog && outputfile != null){
                                     attachBytes "${source.jobName}-${exec.id}.txt", "text/plain", outputfile.getText("UTF-8").bytes
