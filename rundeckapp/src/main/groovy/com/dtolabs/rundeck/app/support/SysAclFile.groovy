@@ -23,8 +23,9 @@ import grails.validation.Validateable
  * @since 9/13/17
  */
 
-@Validateable
-class SysAclFile extends AclFile {
+class SysAclFile
+        extends AclFile
+        implements Validateable {
     String fileType
     static constraints = {
         fileType(nullable: false, inList: ['fs', 'storage'])

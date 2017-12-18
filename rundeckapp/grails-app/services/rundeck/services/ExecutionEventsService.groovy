@@ -16,10 +16,7 @@
 
 package rundeck.services
 
-import grails.events.annotation.gorm.Listener
 import grails.gorm.transactions.Transactional
-
-//import grails.events.Listener
 import rundeck.services.events.ExecutionCompleteEvent
 
 @Transactional
@@ -30,7 +27,7 @@ class ExecutionEventsService {
      * Prepares and submits logfile storage requests
      * @param event
      */
-    @Listener
+//    @Listener
     def executionComplete(ExecutionCompleteEvent e) {
 
         logFileStorageService.submitForStorage(e.execution)
@@ -39,7 +36,7 @@ class ExecutionEventsService {
      * Checkpoint during job execution to allow partiallog storage
      * @param event
      */
-    @Listener
+//    @Listener
     def executionCheckpoint(ExecutionCompleteEvent e) {
         logFileStorageService.submitForPartialStorage(e.execution, e.context.fileSizeChange, e.context.timediff)
     }

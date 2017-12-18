@@ -21,8 +21,7 @@ import grails.validation.Validateable
 /**
  * Created by greg on 8/27/16.
  */
-@Validateable
-class PluginResourceReq {
+class PluginResourceReq implements Validateable {
     String service
     String name
     String path

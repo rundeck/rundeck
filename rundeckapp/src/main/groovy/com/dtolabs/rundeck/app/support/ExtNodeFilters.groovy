@@ -30,25 +30,26 @@ import grails.validation.Validateable
 /**
  * Extends BaseNodeFilters to add filter params used in GUI filtering
  */
-@Validateable
-public class ExtNodeFilters extends BaseNodeFilters{
+public class ExtNodeFilters
+        extends BaseNodeFilters
+        implements Validateable {
 
     String project
     String filterName
 
-    static constraints={
-        project(nullable:true, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
-        filterName(nullable:true,matches: /^[^<>&'"\/]+$/)
+    static constraints = {
+        project(nullable: true, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
+        filterName(nullable: true, matches: /^[^<>&'"\/]+$/)
     }
 
-    public boolean nodeFilterIsEmpty(){
-        return super.nodeFilterIsEmpty() 
+    public boolean nodeFilterIsEmpty() {
+        return super.nodeFilterIsEmpty()
     }
 
-    public static from(BaseNodeFilters filters, String project){
+    public static from(BaseNodeFilters filters, String project) {
         def filters1 = new ExtNodeFilters()
-        filters1.project=project
-        filters1.filter=filters.asFilter()
+        filters1.project = project
+        filters1.filter = filters.asFilter()
         return filters1
     }
 }

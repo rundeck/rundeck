@@ -24,7 +24,7 @@ import grails.plugin.mail.MailMessageBuilder
 import grails.plugin.mail.MailService
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import org.codehaus.groovy.grails.web.mapping.LinkGenerator
+import grails.web.mapping.LinkGenerator
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.Notification

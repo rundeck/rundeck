@@ -23,8 +23,7 @@ import grails.validation.Validateable
  * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-08-05
  */
-@Validateable
-class ExecutionViewParams {
+class ExecutionViewParams implements Validateable{
     long id
     int maxlines
     int lastlines

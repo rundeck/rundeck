@@ -1,3 +1,4 @@
+package metricsweb
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -17,7 +18,7 @@
 import com.codahale.metrics.JmxReporter
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.health.HealthCheckRegistry
-import org.codehaus.groovy.grails.commons.GrailsClass
+import grails.core.GrailsClass
 
 class MetricswebGrailsPlugin {
     // the plugin version

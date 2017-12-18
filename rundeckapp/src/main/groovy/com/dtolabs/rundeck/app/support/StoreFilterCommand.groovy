@@ -23,12 +23,11 @@ import grails.validation.Validateable
  * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-08-18
  */
-@Validateable
-class StoreFilterCommand {
+class StoreFilterCommand implements Validateable {
     String newFilterName
     String existsFilterName
-    static constraints={
+    static constraints = {
         newFilterName(matches: /^[^<>&'"\/]+$/)
-        existsFilterName(nullable: true,matches: /^[^<>&'"\/]+$/)
+        existsFilterName(nullable: true, matches: /^[^<>&'"\/]+$/)
     }
 }

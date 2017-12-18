@@ -23,8 +23,9 @@ import org.springframework.web.multipart.commons.CommonsMultipartFile
  * @author greg
  * @since 9/15/17
  */
-@Validateable
-class SaveProjAclFile extends ProjAclFile {
+class SaveProjAclFile
+        extends ProjAclFile
+        implements Validateable {
     Boolean create
     Boolean upload
     Boolean overwrite

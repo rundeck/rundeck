@@ -20,8 +20,8 @@ import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.test.mixin.TestFor
-import org.codehaus.groovy.grails.plugins.testing.GrailsMockMultipartFile
-import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.grails.plugins.testing.GrailsMockMultipartFile
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import rundeck.services.AuthorizationService

@@ -15,7 +15,7 @@
  */
 
 import com.dtolabs.rundeck.app.internal.logging.LegacyLogOutFormatter
-
+import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
 
 import java.text.SimpleDateFormat

@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
+import grails.core.GrailsApplication
 import org.quartz.JobExecutionContext
 import com.dtolabs.rundeck.core.common.Framework
 import org.quartz.InterruptableJob
@@ -69,7 +70,7 @@ class ExecutionJob implements InterruptableJob {
     def boolean wasInterrupted
     def boolean wasThreshold
     def boolean wasTimeout
-    def grailsApplication
+    GrailsApplication grailsApplication
     Long executionId
     static triggers = {
         /** define no triggers here */

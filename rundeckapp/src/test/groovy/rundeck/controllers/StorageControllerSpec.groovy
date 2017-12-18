@@ -22,7 +22,7 @@ import grails.converters.JSON
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
-import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.storage.api.Path
 import org.rundeck.storage.api.Resource
 import rundeck.UtilityTagLib

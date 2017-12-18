@@ -21,9 +21,9 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.FiltersUnitTestMixin
-import org.codehaus.groovy.grails.web.pages.GroovyPagesTemplateEngine
-import org.codehaus.groovy.grails.web.pages.discovery.CachingGrailsConventionGroovyPageLocator
-import org.codehaus.groovy.grails.web.servlet.view.GroovyPageViewResolver
+import org.grails.web.pages.GroovyPagesTemplateEngine
+import org.grails.web.pages.discovery.CachingGrailsConventionGroovyPageLocator
+import org.grails.web.servlet.view.GroovyPageViewResolver
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean
 import rundeck.controllers.ProjectController
 import rundeck.services.ConfigurationService

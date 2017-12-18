@@ -23,8 +23,7 @@ import grails.validation.Validateable
  * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-08-14
  */
-@Validateable
-class PluginConfigParams {
+class PluginConfigParams implements Validateable {
     String type
     static constraints={
         type(nullable: true, matches: /^[-_a-zA-Z0-9+][-\._a-zA-Z0-9+]*\u0024/)

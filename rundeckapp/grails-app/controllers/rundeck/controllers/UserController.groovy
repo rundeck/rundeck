@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
+import grails.core.GrailsApplication
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.User
@@ -33,7 +34,7 @@ class UserController extends ControllerBase{
 
     UserService userService
     FrameworkService frameworkService
-    def grailsApplication
+    GrailsApplication grailsApplication
     def apiService
     def configurationService
 

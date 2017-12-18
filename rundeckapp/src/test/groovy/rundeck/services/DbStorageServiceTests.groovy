@@ -18,7 +18,6 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import grails.test.mixin.*
-import org.codehaus.groovy.grails.plugins.codecs.SHA1Codec
 import org.rundeck.storage.api.StorageException
 import rundeck.Storage
 
@@ -26,7 +25,7 @@ import rundeck.Storage
 @Mock(Storage)
 class DbStorageServiceTests {
     void setUp() {
-        mockCodec(SHA1Codec)
+//        mockCodec(SHA1Codec)
     }
 
     void testHasResource() {

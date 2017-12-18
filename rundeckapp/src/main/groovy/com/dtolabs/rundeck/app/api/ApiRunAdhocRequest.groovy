@@ -23,8 +23,7 @@ import grails.validation.Validateable
  * Created by greg on 5/20/15.
  */
 
-@Validateable
-class ApiRunAdhocRequest {
+class ApiRunAdhocRequest implements Validateable{
     String project
     String exec
     String script
