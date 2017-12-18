@@ -190,6 +190,33 @@ class ProjectControllerSpec extends Specification{
         true | false | false | false   | false   | false
     }
 
+    def "api project delete error"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+
+        when:
+        request.method = 'DELETE'
+        def result = controller.apiProjectDelete()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, _) >> true
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['delete', 'admin']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.deleteProject(_, _, _, _) >> [success: false, error: 'message']
+        1 * controller.apiService.renderErrorFormat(_, [
+                status : 500,
+                code   : 'api.error.unknown',
+                message: 'message'
+        ]
+        )
+
+
+    }
+
     def "export prepare"() {
         given:
         controller.projectService = Mock(ProjectService)
