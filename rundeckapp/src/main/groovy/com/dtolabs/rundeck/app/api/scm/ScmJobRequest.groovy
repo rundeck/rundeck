@@ -22,8 +22,7 @@ import grails.validation.Validateable
 /**
  * Job SCM request
  */
-@Validateable
-class ScmJobRequest {
+class ScmJobRequest implements Validateable{
     String id
     String integration
 

@@ -22,11 +22,12 @@ import grails.validation.Validateable
 /**
  * Created by greg on 10/27/15.
  */
-@Validateable
-class ScmPluginTypeRequest extends ScmIntegrationRequest {
+class ScmPluginTypeRequest
+        extends ScmIntegrationRequest
+        implements Validateable {
     String type
 
-    static constraints={
-        type(nullable:false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
+    static constraints = {
+        type(nullable: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
     }
 }

@@ -28,8 +28,8 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 
-import org.codehaus.groovy.grails.plugins.codecs.JSONCodec;
-import org.codehaus.groovy.grails.plugins.testing.GrailsMockHttpServletResponse
+import org.grails.plugins.codecs.JSONCodec;
+import org.grails.plugins.testing.GrailsMockHttpServletResponse
 import org.junit.Before
 import org.junit.Test
 import org.springframework.context.MessageSource

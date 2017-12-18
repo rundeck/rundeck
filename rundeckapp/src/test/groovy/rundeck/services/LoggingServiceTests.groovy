@@ -30,7 +30,7 @@ import grails.test.*
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
-import org.codehaus.groovy.grails.web.mapping.LinkGenerator
+import org.grails.web.mapping.LinkGenerator
 import rundeck.Execution
 import rundeck.services.logging.DisablingLogWriter
 import rundeck.services.logging.ExecutionLogReader

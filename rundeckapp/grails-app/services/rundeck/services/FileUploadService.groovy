@@ -518,7 +518,7 @@ class FileUploadService {
      * @param evt
      * @return
      */
-    @Listener
+//    @Listener
     def executionBeforeStart(ExecutionPrepareEvent evt) {
         if (evt.job) {
             //handle uploaded files
@@ -552,7 +552,7 @@ class FileUploadService {
      * Remove temp files
      * @param event
      */
-    @Listener
+//    @Listener
     def executionComplete(ExecutionCompleteEvent e) {
         findRecords(e.execution, RECORD_TYPE_OPTION_INPUT)?.each {
             changeFileState(it, FileUploadPlugin.ExternalState.Used)

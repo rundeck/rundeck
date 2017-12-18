@@ -26,8 +26,7 @@ import grails.validation.Validateable
  * Created: 9/25/12 5:57 PM
  * 
  */
-@Validateable
-class ApiBulkJobDeleteRequest {
+class ApiBulkJobDeleteRequest implements Validateable {
     public static final String IDLIST_REGEX = '^' + FrameworkResource.VALID_RESOURCE_NAME_CHARSET_REGEX + '(,' +
             '' + FrameworkResource.VALID_RESOURCE_NAME_CHARSET_REGEX + ')*$'
     List<String> ids

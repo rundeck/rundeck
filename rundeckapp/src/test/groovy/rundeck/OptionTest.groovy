@@ -20,7 +20,7 @@ package rundeck
 
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin;
-import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin;
+import org.grails.plugins.databinding.DataBindingGrailsPlugin;
 
 import grails.test.mixin.support.GrailsUnitTestMixin;
 import grails.test.mixin.web.ControllerUnitTestMixin

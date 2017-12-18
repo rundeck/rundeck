@@ -23,8 +23,7 @@ import grails.validation.Validateable
  * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-09-30
  */
-@Validateable
-class StorageParams {
+class StorageParams implements Validateable{
     String resourcePath
     String relativePath
     String fileName

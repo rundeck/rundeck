@@ -48,7 +48,7 @@ class JobEventsService {
         listeners.remove(plugin)
     }
 
-    @Listener
+//    @Listener
     def jobChanged(StoredJobChangeEvent e) {
         if (!listeners) {
             return

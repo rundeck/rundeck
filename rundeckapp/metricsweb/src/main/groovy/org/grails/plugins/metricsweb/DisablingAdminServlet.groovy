@@ -17,7 +17,7 @@
 package org.grails.plugins.metricsweb
 
 import com.codahale.metrics.servlets.AdminServlet
-import org.codehaus.groovy.grails.commons.GrailsApplication
+import grails.core.GrailsApplication
 import org.springframework.web.context.WebApplicationContext
 import org.springframework.web.context.support.WebApplicationContextUtils
 

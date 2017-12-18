@@ -23,8 +23,7 @@ import grails.validation.Validateable
  * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-08-15
  */
-@Validateable
-class RunJobCommand {
+class RunJobCommand implements Validateable {
     String id
 
     @Override
@@ -35,14 +34,13 @@ class RunJobCommand {
     }
 }
 
-@Validateable
-class ExtraCommand {
+class ExtraCommand implements Validateable {
     Boolean debug = false
     String loglevel
     String runAtTime
 
-    static constraints={
-        loglevel(nullable: true,inList: ['DEBUG','NORMAL','INFO'])
+    static constraints = {
+        loglevel(nullable: true, inList: ['DEBUG', 'NORMAL', 'INFO'])
         runAtTime(nullable: true)
     }
 

@@ -22,7 +22,6 @@ import grails.validation.Validateable
  * @author greg
  * @since 9/14/17
  */
-@Validateable
-class ProjAclFile extends AclFile {
+class ProjAclFile extends AclFile implements Validateable {
 
 }

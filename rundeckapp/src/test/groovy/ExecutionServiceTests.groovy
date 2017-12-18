@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.INodeSet
@@ -21,17 +22,15 @@ import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
-import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
-import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
 import com.dtolabs.rundeck.core.utils.NodeSet
 import grails.test.GrailsMock
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.test.mixin.TestMixin
 import grails.test.mixin.web.ControllerUnitTestMixin
-import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin
+import grails.web.mapping.LinkGenerator
+import org.grails.plugins.databinding.DataBindingGrailsPlugin
 import org.grails.plugins.metricsweb.MetricService
 import org.junit.Before
 import org.springframework.context.MessageSource
@@ -2107,7 +2106,7 @@ class ExecutionServiceTests  {
                 filter: filterFixture
         )
 
-        def lg = mockFor(org.codehaus.groovy.grails.web.mapping.LinkGenerator)
+        def lg = mockFor(LinkGenerator)
         lg.demand.link(2..2) { return '' }
 
         def jobcontext = ExecutionService.exportContextForExecution(ex, lg.createMock())

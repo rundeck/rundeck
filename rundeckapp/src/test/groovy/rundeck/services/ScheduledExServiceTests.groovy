@@ -23,7 +23,7 @@ import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.test.mixin.TestMixin
 import grails.test.runtime.DirtiesRuntime
-import org.codehaus.groovy.grails.plugins.databinding.DataBindingGrailsPlugin;
+import org.grails.plugins.databinding.DataBindingGrailsPlugin;
 
 
 import grails.test.mixin.Mock

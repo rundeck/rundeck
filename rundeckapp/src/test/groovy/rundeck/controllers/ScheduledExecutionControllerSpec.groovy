@@ -26,9 +26,9 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import org.codehaus.groovy.grails.plugins.codecs.URLCodec
-import org.codehaus.groovy.grails.plugins.testing.GrailsMockMultipartFile
-import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.grails.plugins.codecs.URLCodec
+import org.grails.plugins.testing.GrailsMockMultipartFile
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.*
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.*

@@ -22,8 +22,9 @@ import grails.validation.Validateable
 /**
  * Created by greg on 11/2/15.
  */
-@Validateable
-class ScmJobActionRequest extends ScmJobRequest implements ActionRequest {
+class ScmJobActionRequest
+        extends ScmJobRequest
+        implements ActionRequest, Validateable{
     String actionId
 
     static constraints = {

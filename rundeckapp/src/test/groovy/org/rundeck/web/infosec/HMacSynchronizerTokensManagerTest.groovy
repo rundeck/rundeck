@@ -16,6 +16,7 @@
 
 package org.rundeck.web.infosec
 
+import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
 
 /**

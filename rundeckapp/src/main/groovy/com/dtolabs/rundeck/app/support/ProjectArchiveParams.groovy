@@ -26,9 +26,8 @@ import rundeck.services.ArchiveOptions
  * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-08-14
  */
-@Validateable
 @ToString(includeNames = true, includePackage = false)
-class ProjectArchiveParams implements ProjectArchiveImportRequest{
+class ProjectArchiveParams implements ProjectArchiveImportRequest, Validateable{
     String project
     String jobUuidOption='preserve'
     Boolean importExecutions=true

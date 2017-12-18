@@ -32,7 +32,7 @@ import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
-import org.codehaus.groovy.grails.web.mapping.LinkGenerator
+import org.grails.web.mapping.LinkGenerator
 import org.springframework.context.ApplicationContext
 import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
