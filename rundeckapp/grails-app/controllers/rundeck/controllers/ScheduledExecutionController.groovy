@@ -301,7 +301,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def orchestratorPlugins = null
         if (keys.contains('orchestratorPlugins') || !keys) {
-            orchestratorPlugins = orchestratorPluginService.listOrchestratorPlugins()
+            orchestratorPlugins = orchestratorPluginService.getOrchestratorPlugins()
         }
         def nextExecution = null
         if (keys.contains('nextExecution') || !keys) {
@@ -418,7 +418,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
+				orchestratorPlugins: orchestratorPluginService.getOrchestratorPlugins(),
                 strategyPlugins: scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 logFilterPlugins: pluginService.listPlugins(LogFilterPlugin),
                 max: params.int('max') ?: 10,
@@ -532,7 +532,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
+				orchestratorPlugins: orchestratorPluginService.getOrchestratorPlugins(),
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
 
