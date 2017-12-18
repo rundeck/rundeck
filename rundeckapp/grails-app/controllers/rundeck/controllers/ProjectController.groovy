@@ -780,6 +780,7 @@ class ProjectController extends ControllerBase{
             return apiService.renderErrorFormat(response,
                     [
                             status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+                            code: "api.error.unknown",
                             message: result.error,
                     ])
         }

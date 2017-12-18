@@ -393,7 +393,7 @@ class FrameworkControllerTest {
         fwk.demand.addProjectNodeExecutorPropertiesForType {type, props, config, remove ->
             props.setProperty("foobar", "barbaz")
         }
-        fwk.demand.validateProjectConfigurableInput {data,prefix -> [:] }
+        fwk.demand.validateProjectConfigurableInput {data,prefix,pred -> [:] }
 
         fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
             ["success":props.size() != 0]

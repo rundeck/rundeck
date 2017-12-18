@@ -744,9 +744,7 @@ class ApiService {
                 error: true,
                 apiversion: ApiRequestFilters.API_CURRENT_VERSION,
         ]
-        if (code) {
-            result.errorCode=code
-        }
+        result.errorCode = code ?: 'api.error.unknown'
         if (!messages) {
             result.'message'=messageSource.getMessage("api.error.unknown", null, null)
         }
@@ -769,17 +767,16 @@ class ApiService {
         }
         xml.with {
             result(error: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
-                def errorprops = [:]
-                if (code) {
-                    errorprops = [code: code]
-                }
+                def errorprops = [code: code ?: 'api.error.unknown']
                 delegate.'error'(errorprops) {
                     if (!messages) {
                         delegate.'message'(messageSource.getMessage("api.error.unknown",null,null))
                     }
                     if (messages instanceof List) {
-                        messages.each {
-                            delegate.'message'(it)
+                        delegate.'messages' {
+                            messages.each {
+                                delegate.'message'(it)
+                            }
                         }
                     }else if(messages instanceof Map && messages.code){
                         delegate.'message'(messages.message?:messageSource.getMessage(messages.code, messages.args?messages.args as Object[]:null, null))

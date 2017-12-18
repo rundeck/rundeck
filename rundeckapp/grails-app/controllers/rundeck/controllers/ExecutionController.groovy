@@ -177,6 +177,24 @@ class ExecutionController extends ControllerBase{
         }
     }
 
+    private Map loadExecutionViewPlugins() {
+        def pluginDescs = [node: [:], workflow: [:]]
+
+        frameworkService.getNodeStepPluginDescriptions().each { desc ->
+            pluginDescs['node'][desc.name] = desc
+        }
+        frameworkService.getStepPluginDescriptions().each { desc ->
+            pluginDescs['workflow'][desc.name] = desc
+        }
+        [
+
+                stepPluginDescriptions: pluginDescs,
+                orchestratorPlugins   : orchestratorPluginService.getOrchestratorPlugins(),
+                strategyPlugins       : scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
+                logFilterPlugins      : pluginService.listPlugins(LogFilterPlugin),
+        ]
+    }
+
     public def show (ExecutionViewParams viewparams){
         if (viewparams.hasErrors()) {
             flash.errors=viewparams.errors
@@ -231,15 +249,7 @@ class ExecutionController extends ControllerBase{
             order('dateStarted', 'desc')
         }
         eprev = result ? result[0] : null
-        //load plugins for WF steps
-        def pluginDescs=[node:[:],workflow:[:]]
 
-        frameworkService.getNodeStepPluginDescriptions().each{desc->
-            pluginDescs['node'][desc.name]=desc
-        }
-        frameworkService.getStepPluginDescriptions().each{desc->
-            pluginDescs['workflow'][desc.name]=desc
-        }
         def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, 0)
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
@@ -257,7 +267,7 @@ class ExecutionController extends ControllerBase{
             }
         }
 
-        return [
+        return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
                 execution             : e,
                 workflowTree          : workflowTree,
@@ -265,13 +275,8 @@ class ExecutionController extends ControllerBase{
                 nextExecution         : e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(
                         e.scheduledExecution
                 ) : null,
-                orchestratorPlugins   : orchestratorPluginService.listOrchestratorPlugins(),
-                strategyPlugins       : scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 enext                 : enext,
                 eprev                 : eprev,
-                stepPluginDescriptions: pluginDescs,
-                inputFilesMap         : inputFilesMap,
-                logFilterPlugins      : pluginService.listPlugins(LogFilterPlugin),
                 inputFilesMap         : inputFilesMap,
                 projectNames          : authProjectsToCreate,
                 clusterModeEnabled    : frameworkService.isClusterModeEnabled()
@@ -491,9 +496,16 @@ class ExecutionController extends ControllerBase{
         final state = ExecutionService.getExecutionState(e)
         if(e.scheduledExecution){
             def ScheduledExecution se = e.scheduledExecution //ScheduledExecution.get(e.scheduledExecutionId)
-            return render(view:"mailNotification/status" ,model: [execstate: state, scheduledExecution: se, execution:e, filesize:filesize])
+            return render(
+                    view: "mailNotification/status",
+                    model: loadExecutionViewPlugins() + [execstate: state, scheduledExecution: se, execution: e,
+                                                         filesize: filesize]
+            )
         }else{
-            return render(view:"mailNotification/status" ,model:  [execstate: state, execution:e, filesize:filesize])
+            return render(
+                    view: "mailNotification/status",
+                    model: loadExecutionViewPlugins() + [execstate: state, execution: e, filesize: filesize]
+            )
         }
     }
     def executionMode(){

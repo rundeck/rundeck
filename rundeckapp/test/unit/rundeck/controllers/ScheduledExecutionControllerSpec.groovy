@@ -909,7 +909,7 @@ class ScheduledExecutionControllerSpec extends Specification {
             1 * listNotificationPlugins() >> [:]
         }
         controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
-            1 * listOrchestratorPlugins()
+            1 * getOrchestratorPlugins()
         }
         controller.pluginService = Mock(PluginService)
         when:
@@ -1117,7 +1117,7 @@ class ScheduledExecutionControllerSpec extends Specification {
             1 * listNotificationPlugins() >> [:]
         }
         controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
-            1 * listOrchestratorPlugins()
+            1 * getOrchestratorPlugins()
         }
         controller.pluginService = Mock(PluginService)
         when:

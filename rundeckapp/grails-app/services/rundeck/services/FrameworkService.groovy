@@ -49,6 +49,7 @@ import rundeck.ScheduledExecution
 import rundeck.services.framework.RundeckProjectConfigurable
 
 import javax.security.auth.Subject
+import java.util.function.Predicate
 
 /**
  * Interfaces with the core Framework object
@@ -1182,7 +1183,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param category optional category to limit validation/output
      * @return map [errors:List, config: Map, props: Map, remove: List]
      */
-    Map validateProjectConfigurableInput(Map<String, Map> inputMap, String prefix, String category = null) {
+    Map validateProjectConfigurableInput(Map<String, Map> inputMap, String prefix, Predicate<String> categoryPredicate = null) {
         Map<String, RundeckProjectConfigurable> projectConfigurableBeans = applicationContext.getBeansOfType(
                 RundeckProjectConfigurable
         )
@@ -1198,8 +1199,8 @@ class FrameworkService implements ApplicationContextAware {
             }
             def categoriesMap = v.categories
             def valid = []
-            if (category) {
-                valid = categoriesMap.keySet().findAll { k2 -> categoriesMap[k2] == category }
+            if (categoryPredicate) {
+                valid = categoriesMap.keySet().findAll { k2 -> categoryPredicate.test(categoriesMap[k2])}
                 if (!valid) {
                     return
                 }
@@ -1238,7 +1239,7 @@ class FrameworkService implements ApplicationContextAware {
                 errors << ("Some configuration was invalid: " + report)
             } else {
                 Map<String, String> mapping = v.getPropertiesMapping()
-                if (category) {
+                if (categoryPredicate) {
                     mapping = mapping.subMap(valid)
                 }
                 def projvalues = Validator.performMapping(input, mapping, true)

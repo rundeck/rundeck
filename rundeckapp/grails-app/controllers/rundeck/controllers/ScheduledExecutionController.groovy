@@ -52,6 +52,7 @@ import org.codehaus.groovy.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.rundeck.util.Toposort
+import org.springframework.transaction.TransactionDefinition
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.MultipartRequest
@@ -283,7 +284,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def total = -1
         if (keys.contains('total') || !keys) {
-            total = Execution.countByScheduledExecution(scheduledExecution)
+            total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+                Execution.countByScheduledExecution(scheduledExecution)
+            }
         }
 
         def remoteClusterNodeUUID = null
@@ -298,7 +301,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def orchestratorPlugins = null
         if (keys.contains('orchestratorPlugins') || !keys) {
-            orchestratorPlugins = orchestratorPluginService.listOrchestratorPlugins()
+            orchestratorPlugins = orchestratorPluginService.getOrchestratorPlugins()
         }
         def nextExecution = null
         if (keys.contains('nextExecution') || !keys) {
@@ -396,7 +399,9 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.countByScheduledExecution(scheduledExecution)
+        def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+            Execution.countByScheduledExecution(scheduledExecution)
+        }
 
         def remoteClusterNodeUUID=null
         if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
@@ -413,7 +418,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
+				orchestratorPlugins: orchestratorPluginService.getOrchestratorPlugins(),
                 strategyPlugins: scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 logFilterPlugins: pluginService.listPlugins(LogFilterPlugin),
                 max: params.int('max') ?: 10,
@@ -508,7 +513,9 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.countByScheduledExecution(scheduledExecution)
+        def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+            Execution.countByScheduledExecution(scheduledExecution)
+        }
 
         def remoteClusterNodeUUID=null
         if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
@@ -525,7 +532,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
+				orchestratorPlugins: orchestratorPluginService.getOrchestratorPlugins(),
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
 

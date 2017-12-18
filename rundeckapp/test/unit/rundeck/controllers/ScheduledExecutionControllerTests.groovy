@@ -2169,7 +2169,7 @@ class ScheduledExecutionControllerTests  {
             }
         }
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
-            listOrchestratorPlugins(){->null}
+            getOrchestratorPlugins(){->null}
         }
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
@@ -2270,7 +2270,7 @@ class ScheduledExecutionControllerTests  {
             }
         }
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
-            listOrchestratorPlugins(){->null}
+            getOrchestratorPlugins(){->null}
         }
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
@@ -2372,7 +2372,7 @@ class ScheduledExecutionControllerTests  {
             }
         }
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
-            listOrchestratorPlugins(){->null}
+            getOrchestratorPlugins(){->null}
         }
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
@@ -2474,7 +2474,7 @@ class ScheduledExecutionControllerTests  {
             }
         }
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
-            listOrchestratorPlugins(){->null}
+            getOrchestratorPlugins(){->null}
         }
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
@@ -2575,7 +2575,7 @@ class ScheduledExecutionControllerTests  {
             }
         }
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
-            listOrchestratorPlugins(){->null}
+            getOrchestratorPlugins(){->null}
         }
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
@@ -2702,7 +2702,7 @@ class ScheduledExecutionControllerTests  {
             }
         }
         sec.orchestratorPluginService=mockWith(OrchestratorPluginService){
-            listOrchestratorPlugins(){->null}
+            getOrchestratorPlugins(){->null}
         }
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}

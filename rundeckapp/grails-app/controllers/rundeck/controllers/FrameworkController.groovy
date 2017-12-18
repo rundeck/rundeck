@@ -787,7 +787,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         //load extra configuration for grails services
 
-        def pconfigurable = frameworkService.validateProjectConfigurableInput(params.extraConfig, 'extraConfig.')
+        def pconfigurable = frameworkService.validateProjectConfigurableInput(
+                params.extraConfig,
+                'extraConfig.',
+                { String category -> category != 'resourceModelSource' }
+        )
         if (pconfigurable.errors) {
             errors.addAll(pconfigurable.errors)
         }
@@ -1163,7 +1167,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
             //load extra configuration for grails services
-            def pconfigurable = frameworkService.validateProjectConfigurableInput(params.extraConfig, 'extraConfig.')
+            def pconfigurable = frameworkService.validateProjectConfigurableInput(
+                    params.extraConfig,
+                    'extraConfig.',
+                    { String category -> category != 'resourceModelSource' }
+            )
             if (pconfigurable.errors) {
                 errors.addAll(pconfigurable.errors)
             }
@@ -1452,7 +1460,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def pconfigurable = frameworkService.validateProjectConfigurableInput(
                 params.extraConfig,
                 'extraConfig.',
-                'resourceModelSource'
+                { String category -> category == 'resourceModelSource' }
         )
         if (pconfigurable.errors) {
             errors.addAll(pconfigurable.errors)

@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ExecQuery
+import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
 
 class ReportService  {
@@ -401,10 +402,11 @@ class ReportService  {
             }
         }
 
-
-        def total = ExecReport.createCriteria().count{
-            applyExecutionCriteria(query, delegate,isJobs)
-        };
+        def total = ExecReport.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+            ExecReport.createCriteria().count {
+                applyExecutionCriteria(query, delegate, isJobs)
+            }
+        }
         filters.putAll(specialfilters)
 
         return [
