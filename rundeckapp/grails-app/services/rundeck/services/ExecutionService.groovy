@@ -3258,7 +3258,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(wresult instanceof WorkflowExecutionResult){
                 WorkflowExecutionResult data = ((WorkflowExecutionResult)wresult)
                 for (StepExecutionResult temp : data.getResultSet()) {
-                    println(temp)
                     if(temp.success){
                         sucCount++
                     }else{
