@@ -1,9 +1,9 @@
-Release 2.10.1
+Release 2.10.2
 ===========
 
-Date: 2017-11-20
+Date: 2017-12-18
 
-Name: <span style="color: Tomato"><span class="glyphicon glyphicon-knight"></span> "cafe mocha tomato knight"</span>
+Name: <span style="color: Violet"><span class="glyphicon glyphicon-tent"></span> "cafe mocha violet tent"</span>
 
 ## Upgrading from Earlier versions
 
@@ -11,56 +11,46 @@ Name: <span style="color: Tomato"><span class="glyphicon glyphicon-knight"></spa
 
 ## Notes
 
-Primarily Bug fixes.
-
-Enhancements:
-
-* New: Global Variable step plugin: copy captured data values into a global context in any variable group.  E.g. data from a node step to use it in a non-node-step.
-	* Within a job, copy data to the `export.*` group, to have it available in later steps if the job is included as a Job Reference.
+This is a bug fix release.
 
 ## Contributors
 
+* Adam Brett (adambrett)
 * Greg Schueler (gschueler)
-* Luis Toledo (ltamaster)
-* Michihito Shigemura (shigemk2)
+* OmriShiv
 * jtobard
-* morihaya
+* scollector65
 
 ## Bug Reporters
 
-* JustRiedy
-* Morihaya
+* OmriShiv
+* adambrett
+* bzlowrance
 * gschueler
 * jtobard
-* leonboot
-* ltamaster
-* pchevallereau
-* shigemk2
-* vinillum
+* rasebo
+* scollector65
+* sebastianbello
 
 ## Issues
 
-[Milestone 2.10.1](https://github.com/rundeck/rundeck/milestone/64)
+[Milestone 2.10.2](https://github.com/rundeck/rundeck/milestone/67)
 
-* [Improvement on load jobs page](https://github.com/rundeck/rundeck/pull/2953)
-* [Uplift variables to global (2)](https://github.com/rundeck/rundeck/pull/2952)
-* [Update dependencies: jackson-databind, commons-beanutils](https://github.com/rundeck/rundeck/pull/2949)
-* [Change the JSCH authentication error message](https://github.com/rundeck/rundeck/pull/2934)
-* [Dependency cleanup](https://github.com/rundeck/rundeck/pull/2933)
-* [Bug: cluster mode is not enabled](https://github.com/rundeck/rundeck/issues/2932)
-* [Instance scope step plugin properties not shown in Plugin listing page](https://github.com/rundeck/rundeck/issues/2924)
-* [Key browser dialog is broken for new projects](https://github.com/rundeck/rundeck/issues/2919)
-* [java.lang.IllegalStateException: stack is empty](https://github.com/rundeck/rundeck/issues/2914)
-* [Add ui plugin support for ACL editor pages](https://github.com/rundeck/rundeck/pull/2906)
-* [2.10: Edit System ACL File: cannot save after submitting invalid file](https://github.com/rundeck/rundeck/issues/2904)
-* [fix typo. uploaded ot =\> uploaded to](https://github.com/rundeck/rundeck/pull/2897)
-* [IllegalStateException: output was closed and NullPointerException](https://github.com/rundeck/rundeck/issues/2887)
-* [RXSS vulnerability](https://github.com/rundeck/rundeck/issues/2883)
-* [Fix: model source plugin failure should log project name](https://github.com/rundeck/rundeck/pull/2869)
-* [API request for invalid path returns HTML response](https://github.com/rundeck/rundeck/issues/2867)
-* [Include aws resource model source plugin](https://github.com/rundeck/rundeck/pull/2857)
-* [Fix link in administration/managing-node-sources](https://github.com/rundeck/rundeck/pull/2856)
-* [single valued options with "selected=true" fetched from remote URL no longer works](https://github.com/rundeck/rundeck/issues/2854)
-* [Activity Log - Strange column widths](https://github.com/rundeck/rundeck/issues/2823)
-* [Cannot get AuthContext without subject (Invalid session?)](https://github.com/rundeck/rundeck/issues/2710)
-* [Download job definition yaml format shows inline](https://github.com/rundeck/rundeck/issues/824)
+* [Fix starting rundeck in /var/log/rundeck for debian](https://github.com/rundeck/rundeck/pull/3006)
+* [Missing plugin icon for provider with name containing ':'](https://github.com/rundeck/rundeck/issues/3001)
+* [API: xml error response if project delete fails is missing `code` value](https://github.com/rundeck/rundeck/issues/2999)
+* [Update of project configuration overwrites cache settings.](https://github.com/rundeck/rundeck/issues/2993)
+* [Use HttpOnly for session cookie](https://github.com/rundeck/rundeck/issues/2986)
+* [Improvement to reduce MSSQL deadlocks](https://github.com/rundeck/rundeck/pull/2985)
+* [fix: plugin resource file path validation regex slowness](https://github.com/rundeck/rundeck/pull/2983)
+* [Project does not exist: message is shown when not relevant](https://github.com/rundeck/rundeck/issues/2981)
+* [Email notification:  "Orchestrator: Plugin not found: subset" message in email body](https://github.com/rundeck/rundeck/issues/2980)
+* [Job import: some xml attributes are ignored](https://github.com/rundeck/rundeck/issues/2979)
+* [Documentation: UI Plugin development](https://github.com/rundeck/rundeck/issues/2977)
+* [Add: Job filter as a context variable](https://github.com/rundeck/rundeck/pull/2974)
+* [Documentation: document the rundeck.fileUploadService.tempfile.maxsize](https://github.com/rundeck/rundeck/issues/2971)
+* [Disable jetty session ID url parameter](https://github.com/rundeck/rundeck/issues/2970)
+* [Job import API multipleExecutions error](https://github.com/rundeck/rundeck/issues/2961)
+* [Job import API successOnEmptyNodeFilter error](https://github.com/rundeck/rundeck/issues/2931)
+* [addSupplementalRoles if No user roles found](https://github.com/rundeck/rundeck/pull/2767)
+* [commands and jobs running in /var/log/rundeck instead of /var/lib/rundeck](https://github.com/rundeck/rundeck/issues/1649)
