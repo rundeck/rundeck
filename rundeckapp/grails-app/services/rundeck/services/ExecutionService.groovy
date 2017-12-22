@@ -2655,7 +2655,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param execution
      * @return
      */
-    def updateScheduledExecStatistics(Long schedId, eId, long time){
+    def updateScheduledExecStatistics(Long schedId, eId, long time, boolean jobRef = false){
         def success = false
         try {
             ScheduledExecution.withNewSession {
@@ -2675,6 +2675,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     def popTime = scheduledExecution.totalTime.intdiv(scheduledExecution.execCount)
                     scheduledExecution.totalTime -= popTime
                     scheduledExecution.totalTime += time
+                }
+                if(jobRef){
+                    if(!scheduledExecution.refExecCount){
+                        scheduledExecution.refExecCount=1
+                    }else{
+                        scheduledExecution.refExecCount++
+                    }
+
                 }
                 if (scheduledExecution.save(flush:true)) {
                     log.info("updated scheduled Execution")
@@ -3220,16 +3228,33 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
 
+        long startTime = System.currentTimeMillis()
         def wresult = metricService.withTimer(this.class.name,'runJobReference'){
             newContext.getLoggingManager().createPluginLogging(newContext,null).runWith {
                 service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
             }
         }
+        def duration = System.currentTimeMillis() - startTime
 
         if (!wresult || !wresult.success) {
             result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
+
         } else {
             result = createSuccess()
+        }
+        if(wresult) {
+            def savedJobState = false
+            savedJobState = updateScheduledExecStatistics(id,'jobref', duration, true)
+            if (!savedJobState) {
+                log.error("ExecutionJob: Failed to update job statistics for jobref")
+            }
+            ScheduledExecution.withTransaction { status ->
+                ScheduledExecution se = ScheduledExecution.get(id)
+                Execution exec = Execution.get(execid as Long)
+                ReferencedExecution refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: wresult.success?EXECUTION_SUCCEEDED:EXECUTION_FAILED)
+                exec.addToRefExec(refExec)
+                exec.save()
+            }
         }
         result.sourceResult = wresult
 

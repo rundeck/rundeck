@@ -287,6 +287,9 @@ class ScheduledExecutionController  extends ControllerBase{
             total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
                 Execution.countByScheduledExecution(scheduledExecution)
             }
+            if(scheduledExecution.refExecCount) {
+                total += scheduledExecution.refExecCount
+            }
         }
 
         def remoteClusterNodeUUID = null
@@ -402,6 +405,10 @@ class ScheduledExecutionController  extends ControllerBase{
         def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
             Execution.countByScheduledExecution(scheduledExecution)
         }
+        def reftotal = 0
+        if(scheduledExecution.refExecCount) {
+            reftotal = scheduledExecution.refExecCount
+        }
 
         def remoteClusterNodeUUID=null
         if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
@@ -414,6 +421,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 crontab: crontab,
                 params: params,
                 total: total,
+                reftotal: reftotal,
                 nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
@@ -515,6 +523,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
             Execution.countByScheduledExecution(scheduledExecution)
+        }
+        if(scheduledExecution.refExecCount) {
+            total += scheduledExecution.refExecCount
         }
 
         def remoteClusterNodeUUID=null

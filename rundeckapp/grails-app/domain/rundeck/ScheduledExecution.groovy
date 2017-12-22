@@ -74,6 +74,8 @@ class ScheduledExecution extends ExecutionContext {
     Boolean scheduleEnabled = true
     Boolean executionEnabled = true
 
+    Long refExecCount=0
+
     static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
                          'crontabString','averageDuration','notifyAvgDurationRecipients','notifyAvgDurationUrl']
@@ -108,6 +110,7 @@ class ScheduledExecution extends ExecutionContext {
         loglevel(nullable:true)
         totalTime(nullable:true)
         execCount(nullable:true)
+        refExecCount(nullable:true)
         nodeThreadcount(nullable:true,validator:{val,obj->
             return null==val||val>=1
         })
