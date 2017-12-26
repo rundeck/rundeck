@@ -3219,10 +3219,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (null != result) {
             return result
         }
-
+        ReferencedExecution refExec
+        ScheduledExecution.withTransaction { status ->
+            ScheduledExecution se = ScheduledExecution.get(id)
+            Execution exec = Execution.get(execid as Long)
+            refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING)
+            exec.addToRefExec(refExec)
+            exec.save()
+        }
         if (newContext.getNodes().getNodeNames().size() < 1) {
             String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
             executionContext.getExecutionListener().log(0, msg)
+            ReferencedExecution.withTransaction { status ->
+                refExec.status=EXECUTION_FAILED
+                refExec.save()
+            }
             throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
         }
 
@@ -3248,12 +3259,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (!savedJobState) {
                 log.error("ExecutionJob: Failed to update job statistics for jobref")
             }
-            ScheduledExecution.withTransaction { status ->
-                ScheduledExecution se = ScheduledExecution.get(id)
-                Execution exec = Execution.get(execid as Long)
-                ReferencedExecution refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: wresult.success?EXECUTION_SUCCEEDED:EXECUTION_FAILED)
-                exec.addToRefExec(refExec)
-                exec.save()
+            ReferencedExecution.withTransaction { status ->
+                refExec.status=wresult.success?EXECUTION_SUCCEEDED:EXECUTION_FAILED
+                refExec.save()
             }
         }
         result.sourceResult = wresult

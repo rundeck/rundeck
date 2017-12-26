@@ -62,6 +62,17 @@
         </li>
     </g:if>
 
+    <g:if test="${includeJobRef}">
+        <li>
+            <g:link controller="reports" action="index" class="activity_link"
+                    title="Referenced Executions"
+                    params="${linkParams+[ includeJobRef: includeJobRef]}">
+                <i class="glyphicon glyphicon-circle-arrow-right"></i>
+                referenced
+            </g:link>
+        </li>
+    </g:if>
+
     <g:if test="${execution}">
         <li>
             <g:link controller="reports" action="index" class="activity_link"
