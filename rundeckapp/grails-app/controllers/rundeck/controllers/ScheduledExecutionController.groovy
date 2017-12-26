@@ -287,9 +287,6 @@ class ScheduledExecutionController  extends ControllerBase{
             total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
                 Execution.countByScheduledExecution(scheduledExecution)
             }
-            if(scheduledExecution.refExecCount) {
-                total += scheduledExecution.refExecCount
-            }
         }
 
         def remoteClusterNodeUUID = null
@@ -523,9 +520,6 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
             Execution.countByScheduledExecution(scheduledExecution)
-        }
-        if(scheduledExecution.refExecCount) {
-            total += scheduledExecution.refExecCount
         }
 
         def remoteClusterNodeUUID=null
