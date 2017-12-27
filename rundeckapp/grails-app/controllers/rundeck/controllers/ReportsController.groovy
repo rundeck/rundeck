@@ -130,7 +130,18 @@ class ReportsController extends ControllerBase{
                 def list = ReferencedExecution.findAllByScheduledExecution(sched)
                 def include = []
                 list.each {refex ->
-                    include << String.valueOf(refex.execution.id)
+                    boolean add = true
+                    if(refex.execution.project != params.project){
+                        if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+                                .resourceType('event'), [AuthConstants.ACTION_READ],
+                                params.project), AuthConstants.ACTION_READ,'Events in project',refex.execution.project)){
+                            log.debug('Cant read executions on project '+refex.execution.project)
+                        }else{
+                            include << String.valueOf(refex.execution.id)
+                        }
+                    }else{
+                        include << String.valueOf(refex.execution.id)
+                    }
                 }
                 if(include){
                     query.execIdFilter = include
