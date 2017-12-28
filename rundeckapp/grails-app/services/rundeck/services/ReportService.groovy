@@ -279,8 +279,38 @@ class ReportService  {
                 }
 
                 if (query.execIdFilter) {
-                    'in'('jcExecId', query.execIdFilter)
-                }else {
+                    or {
+                        'in'('jcExecId', query.execIdFilter)
+                        and{
+                                    jobfilters.each { key, val ->
+                                        if (query["${key}Filter"] == 'null') {
+                                            or {
+                                                isNull(val)
+                                                eq(val, '')
+                                            }
+                                        } else if (query["${key}Filter"] == '!null') {
+                                            and {
+                                                isNotNull(val)
+                                                ne(val, '')
+                                            }
+                                        } else if (key == 'stat' && query["${key}Filter"] == 'succeed') {
+                                            or {
+                                                eq(val, 'succeed')
+                                                eq(val, 'succeeded')
+                                                eq(val, 'true')
+                                            }
+                                        } else if (key == 'stat' && query["${key}Filter"] == 'fail') {
+                                            or {
+                                                eq(val, 'fail')
+                                                eq(val, 'failed')
+                                            }
+                                        } else if (query["${key}Filter"]) {
+                                            eq(val, query["${key}Filter"])
+                                        }
+                                    }
+                        }
+                    }
+                }else{
                     jobfilters.each { key, val ->
                         if (query["${key}Filter"] == 'null') {
                             or {

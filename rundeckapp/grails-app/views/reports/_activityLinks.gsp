@@ -20,7 +20,7 @@
 <g:set var="linkParams" value="${filter?filter+projParams:projParams}"/>
 <g:set var="runningParams" value="${filter ? filter + projParams : projParams}"/>
 <g:if test="${scheduledExecution}">
-    <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.id]+projParams}"/>
+    <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.id, includeJobRef: includeJobRef]+projParams}"/>
     <g:set var="runningParams" value="${[jobIdFilter: scheduledExecution.extid]+projParams}"/>
 </g:if>
 <ul class="nav nav-tabs activity_links">
@@ -62,17 +62,6 @@
         </li>
     </g:if>
 
-    <g:if test="${includeJobRef}">
-        <li>
-            <g:link controller="reports" action="index" class="activity_link"
-                    title="Referenced Executions"
-                    params="${linkParams+[ includeJobRef: includeJobRef]}">
-                <i class="glyphicon glyphicon-circle-arrow-right"></i>
-                referenced
-            </g:link>
-        </li>
-    </g:if>
-
     <g:if test="${execution}">
         <li>
             <g:link controller="reports" action="index" class="activity_link"
@@ -106,6 +95,9 @@
             </td>
             <td class="eventtitle autoclickable" data-bind="css: { job: isJob(), adhoc: isAdhoc() }">
                 <a href="#" data-bind="text: '#'+executionId(), attr: { href: executionHref() }" class="_defaultAction"></a>
+                <g:if test="${includeJobRef}">
+                    <span data-bind="text: textJobRef('${scheduledExecution.extid}')"></span>
+                </g:if>
                 <g:if test="${showTitle}">
                     <span data-bind="if: !jobDeleted()">
                         <span data-bind="text: isJob()?jobName():executionString()"></span>
