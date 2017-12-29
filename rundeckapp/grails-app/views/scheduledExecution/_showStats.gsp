@@ -20,11 +20,6 @@
             <th style="width: 20%" class="text-muted text-center  text-header">
                 <g:message code="Execution.plural" />
             </th>
-            <g:if test="${reftotal && reftotal>0}">
-                <th style="width: 20%" class="text-muted text-center  text-header">
-                    <g:message code="Execution.plural.ref" default="Referenced Executions" />
-                </th>
-            </g:if>
         <g:if test="${lastrun || reflastrun}">
             <th style="width: 20%" class="text-muted text-center  text-header">
                 <g:message code="success.rate" />
@@ -42,13 +37,6 @@
                     <g:formatNumber number="${total}" />
                 </span>
             </td>
-<g:if test="${reftotal && reftotal>0}">
-    <td class="text-center">
-                <span class="h3 ">
-                    <g:formatNumber number="${reftotal}" />
-                </span>
-            </td>
-</g:if>
         <g:if test="${lastrun || reflastrun}">
             <g:set var="successrate" value="${params.float('success')?:successrate}"/>
             <g:set var="ratecolors" value="${['text-success','text-muted','text-warning','text-danger']}"/>
