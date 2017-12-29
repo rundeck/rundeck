@@ -58,9 +58,9 @@ dependencies {
         'org.yaml:snakeyaml:1.9',
         'com.google.guava:guava:15.0',
         'com.squareup.retrofit2:retrofit:2.2.0',
-        'com.squareup.retrofit2:converter-jackson:2.2.0'
+        'com.squareup.retrofit2:converter-jackson:2.2.0',
+        'org.json:json:20171018'
 
-    compile group: 'org.json', name: 'json', version: '20171018'
 
     compile ('commons-httpclient:commons-httpclient:3.0.1') {
         exclude group:'junit', module: 'junit'
@@ -106,7 +106,7 @@ task('expandTemplate').doLast {
         expand('version':version,'version_build':buildNum,'version_ident':version+'-'+buildNum,date:datestring)
         from "$projectDir/src/main/meta/com/dtolabs/rundeck/core/application.properties"
         into "$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/"
-    }   
+    }
 }
 
 compileJava.dependsOn expandTemplate
