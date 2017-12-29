@@ -3168,9 +3168,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             executionContext.getExecutionListener().log(0, msg)
             throw new StepException(msg, JobReferenceFailureReason.NotFound)
         }
-
+        def timeout = 0
         ScheduledExecution.withTransaction { status ->
             ScheduledExecution se = ScheduledExecution.get(id)
+            timeout = se.timeout
             Execution exec = Execution.get(execid as Long)
             if(!exec){
                 def msg = "Execution not found: ${execid}"
@@ -3220,13 +3221,61 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
         def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
 
-        def wresult = metricService.withTimer(this.class.name,'runJobReference'){
+        /*def wresult = metricService.withTimer(this.class.name,'runJobReference'){
             newContext.getLoggingManager().createPluginLogging(newContext,null).runWith {
                 service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
             }
-        }
+        }*/
+        WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
 
-        if (!wresult || !wresult.success) {
+
+        def timeoutms = 1000 * timeout
+        def shouldCheckTimeout = timeoutms > 0
+
+        Thread thread = new WorkflowExecutionServiceThread(
+                wservice,
+                newExecItem,
+                newContext,
+                null
+        )
+        long startTime = System.currentTimeMillis()
+        thread.start()
+        boolean never=true
+        def interrupt = false
+        def success = true
+        int killcount = 0
+        def killLimit = 100
+        while (thread.isAlive() || never) {
+            never=false
+            try {
+                thread.join(1000)
+            } catch (InterruptedException e) {
+                //do nada
+            }
+            def duration = System.currentTimeMillis() - startTime
+            println('time...')
+            if (shouldCheckTimeout
+                    && duration > timeoutms
+            ) {
+                interrupt = true
+                success=false
+            }
+
+            if (interrupt) {
+                if (killcount < killLimit) {
+                    //send wave after wave
+                    thread.abort()
+                    Thread.yield();
+                    killcount++;
+                } else {
+                    //reached pre-set kill limit, so shut down
+                    thread.stop()
+                }
+            }
+        }
+        def wresult = thread.result
+
+        if (!success || !wresult || !wresult.success) {
             result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
         } else {
             result = createSuccess()
