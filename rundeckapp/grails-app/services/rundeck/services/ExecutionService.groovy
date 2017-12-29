@@ -57,6 +57,7 @@ import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.hibernate.StaleObjectStateException
 import org.rundeck.storage.api.StorageException
+import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -3171,7 +3172,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def timeout = 0
         ScheduledExecution.withTransaction { status ->
             ScheduledExecution se = ScheduledExecution.get(id)
-            timeout = se.timeout
+            timeout = se.timeout?Sizes.parseTimeDuration(se.timeout):0
             Execution exec = Execution.get(execid as Long)
             if(!exec){
                 def msg = "Execution not found: ${execid}"
@@ -3227,7 +3228,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }*/
         WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
-
 
         def timeoutms = 1000 * timeout
         def shouldCheckTimeout = timeoutms > 0
