@@ -38,7 +38,6 @@
        value="${prop.scope != null && prop.scope != PropertyScope.Unspecified ? prop.scope : defaultScope}"/>
 <g:unless test="${outofscopeOnly && propScope == PropertyScope.InstanceOnly}">
 <div class="form-group ${enc(attr:hasError)}">
-
 <g:if test="${outofscope}">
     <label class="${labelColType} form-control-static ${error?'has-error':''}  ${prop.required ? 'required' : ''}">
         <stepplugin:message
@@ -77,14 +76,18 @@
             default="${prop.title ?: prop.name}"/></label>
 
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
+    <g:set var="inputValues" value="${inputChoices ?: (prop.selectLabels ?: [:])}"/>
     <g:if test="${prop.type.toString()=='FreeSelect'}">
         <div class="${valueColTypeSplitA}">
-        <g:textField name="${fieldname}" value="${values&&null!=values[prop.name]?values[prop.name]:prop.defaultValue}"
+        <g:textField name="${fieldname}" value="${inputValues&&null!=inputValues[prop.name]?inputValues[prop.name]:prop.defaultValue}"
                      id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}"/>
         </div>
         <div class="${valueColTypeSplitB}">
             <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
-            <g:set var="propSelectValues" value="${prop.selectValues.collect {
+            <g:set var="propSelectRemoteValues" value="${inputChoices?.collect {
+                [key: it.key.encodeAsHTML(), value: it.value]
+            }}"/>
+            <g:set var="propSelectValues" value="${propSelectRemoteValues ?: prop.selectValues.collect {
                 [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)]
             }}"/>
         <g:select name="${fieldid+'_sel'}" from="${propSelectValues}" id="${fieldid}"
@@ -98,8 +101,11 @@
     </g:if>
     <g:else>
         <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
+        <g:set var="propSelectRemoteValues" value="${inputChoices?.collect {
+            [key: it.key.encodeAsHTML(), value: it.value]
+        }}"/>
         <g:set var="propSelectValues"
-               value="${prop.selectValues.collect { [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)] }}"/>
+               value="${propSelectRemoteValues ?: prop.selectValues.collect { [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)] }}"/>
         <g:set var="noSelectionValue" value="${prop.required ? null : ['':'-none selected-']}"/>
         <div class="${valueColType}">
         <g:select name="${fieldname}" from="${propSelectValues}" id="${fieldid}"

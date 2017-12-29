@@ -29,7 +29,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 
 /**
@@ -44,6 +43,7 @@ public class DescriptionBuilder {
     private String name;
     private String title;
     private String description;
+    private String remoteInputChoicesURL;
 
     private DescriptionBuilder() {
         properties = new ArrayList<Property>();
@@ -112,6 +112,14 @@ public class DescriptionBuilder {
      */
     public DescriptionBuilder description(final String description) {
         this.description = description;
+        return this;
+    }
+    /**
+     * @param remoteInputChoicesURL a description string
+     * @return this builder
+     */
+    public DescriptionBuilder remoteInputChoicesURL(final String remoteInputChoicesURL) {
+        this.remoteInputChoicesURL = remoteInputChoicesURL;
         return this;
     }
 
@@ -379,6 +387,8 @@ public class DescriptionBuilder {
             public Map<String, String> getFwkPropertiesMapping() {
                 return mapping2;
             }
+
+            public String getRemoteInputChoicesURL() {return remoteInputChoicesURL;}
 
             @Override
             public String toString() {

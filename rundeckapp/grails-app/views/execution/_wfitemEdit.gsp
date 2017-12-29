@@ -569,6 +569,7 @@
                     <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
                             extraInputCss: 'context_var_autocomplete',
                             service            : serviceName,
+                            remote             : newitemDescription.remoteInputChoicesURL,
                             provider           : newitemDescription.name,
                             properties         : newitemDescription.properties,
                             report             : report,

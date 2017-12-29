@@ -60,6 +60,8 @@ dependencies {
         'com.squareup.retrofit2:retrofit:2.2.0',
         'com.squareup.retrofit2:converter-jackson:2.2.0'
 
+    compile group: 'org.json', name: 'json', version: '20171018'
+
     compile ('commons-httpclient:commons-httpclient:3.0.1') {
         exclude group:'junit', module: 'junit'
     }

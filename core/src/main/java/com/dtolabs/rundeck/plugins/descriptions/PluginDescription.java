@@ -38,4 +38,6 @@ public @interface PluginDescription {
     String title() default "";
 
     String description() default "";
+
+    String remoteInputChoicesURL() default "";
 }
