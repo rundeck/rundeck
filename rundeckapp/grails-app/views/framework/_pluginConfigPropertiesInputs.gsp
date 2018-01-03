@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.plugins.step.RemoteInputChoices" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.core.plugins.configuration.RemoteInputChoices" %>
 <g:set var="groupSet" value="${[:]}"/>
 <g:set var="secondary" value="${[]}"/>
 <g:set var="ungrouped" value="${[]}"/>

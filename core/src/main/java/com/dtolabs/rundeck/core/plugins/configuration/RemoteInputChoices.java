@@ -1,4 +1,4 @@
-package com.dtolabs.rundeck.plugins.step;
+package com.dtolabs.rundeck.core.plugins.configuration;
 
 import org.json.JSONException;
 import org.json.JSONObject;
