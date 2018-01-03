@@ -255,7 +255,11 @@ div.progressContainer div.progressContent{
         </div>
         </g:if>
 
-        <span class="prompt">Execution</span>
+        <span class="prompt">
+<g:if test="${jobref}">
+    Referenced Job "${jobref}"
+</g:if>
+            Execution</span>
         <div class="presentation">
             <table>
                 <tr>

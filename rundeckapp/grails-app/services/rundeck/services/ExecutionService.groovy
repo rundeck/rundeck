@@ -38,7 +38,6 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.logging.LoggingManagerImpl
 import com.dtolabs.rundeck.core.logging.OverridableStreamingLogWriter
-import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -57,6 +56,7 @@ import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.hibernate.StaleObjectStateException
 import org.rundeck.storage.api.StorageException
+import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -3162,15 +3162,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         id = schedlist[0].id
         def StepExecutionContext newContext
         def WorkflowExecutionItem newExecItem
+        def averageDuration = 0
         String execid=executionContext.dataContext.job?.execid
         if(!execid){
             def msg = "Execution identifier (job.execid) not found in data context"
             executionContext.getExecutionListener().log(0, msg)
             throw new StepException(msg, JobReferenceFailureReason.NotFound)
         }
-
+        def timeout = 0
         ScheduledExecution.withTransaction { status ->
             ScheduledExecution se = ScheduledExecution.get(id)
+            averageDuration = se.averageDuration
+            timeout = se.timeout?Sizes.parseTimeDuration(se.timeout):0
             Execution exec = Execution.get(execid as Long)
             if(!exec){
                 def msg = "Execution not found: ${execid}"
@@ -3218,22 +3221,109 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
         }
 
-        def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
+        def wresult = metricService.withTimer(this.class.name,'runJobReference') {
+            WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
 
-        def wresult = metricService.withTimer(this.class.name,'runJobReference'){
-            newContext.getLoggingManager().createPluginLogging(newContext,null).runWith {
-                service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+            def timeoutms = 1000 * timeout
+            def shouldCheckTimeout = timeoutms > 0
+
+            Thread thread = new WorkflowExecutionServiceThread(
+                    wservice,
+                    newExecItem,
+                    newContext,
+                    null
+            )
+            long startTime = System.currentTimeMillis()
+            thread.start()
+            boolean never = true
+            def interrupt = false
+
+        ScheduledExecution.withTransaction { status ->
+            Execution exec = Execution.get(execid as Long)
+            notificationService.triggerJobNotification('start', id,
+                    [execution: exec, context: newContext,jobref: jitem.jobIdentifier])
+        }
+            int killcount = 0
+            def killLimit = 100
+            while (thread.isAlive() || never) {
+                never = false
+                try {
+                    thread.join(1000)
+                } catch (InterruptedException e) {
+                    //do nada
+                }
+                def duration = System.currentTimeMillis() - startTime
+                if (shouldCheckTimeout
+                        && duration > timeoutms
+                ) {
+                    interrupt = true
+                }
+                if (interrupt) {
+                    if (killcount < killLimit) {
+                        //send wave after wave
+                        thread.abort()
+                        Thread.yield();
+                        killcount++;
+                    } else {
+                        //reached pre-set kill limit, so shut down
+                        thread.stop()
+                    }
+                }
+            }
+
+            [result:thread.result,interrupt:interrupt]
+        }
+        def duration = System.currentTimeMillis() - startTime
+        if(averageDuration > 0 && duration>averageDuration){
+            ScheduledExecution.withTransaction { status ->
+                Execution exec = Execution.get(execid as Long)
+                avgDurationExceeded(id, [
+                        execution: exec,
+                        context  : newContext,
+                        jobref: jitem.jobIdentifier
+                ])
             }
         }
 
-        if (!wresult || !wresult.success) {
+        if (!wresult.result || !wresult.result.success || wresult.interrupt) {
             result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
         } else {
             result = createSuccess()
         }
-        result.sourceResult = wresult
 
-        Map<String, String> data = ((WorkflowExecutionResult)wresult)?.getSharedContext()?.getData(ContextView.global())?.get("export")
+        ScheduledExecution.withTransaction { status ->
+            Execution execution = Execution.get(execid as Long)
+
+
+            def sucCount = 0
+            def failedCount = 0
+            if(wresult instanceof WorkflowExecutionResult){
+                WorkflowExecutionResult data = ((WorkflowExecutionResult)wresult)
+                for (StepExecutionResult temp : data.getResultSet()) {
+                    if(temp.success){
+                        sucCount++
+                    }else{
+                        failedCount++
+                    }
+                }
+            }
+
+            notificationService.triggerJobNotification(
+                    wresult?.success ? 'success' : 'failure',
+                    id,
+                    [
+                            execution: execution,
+                            nodestatus: [succeeded: sucCount,failed:failedCount,total: newContext.getNodes().getNodeNames().size()],
+                            context: newContext,
+                            jobref: jitem.jobIdentifier
+                    ]
+            )
+        }
+
+        result.sourceResult = wresult.result
+
+
+        Map<String, String> data = ((WorkflowExecutionResult)wresult.result)?.getSharedContext()?.getData(ContextView.global())?.get("export")
         if(data) {
             executionContext.getOutputContext().addOutput(ContextView.global(),"export",data)
         }
