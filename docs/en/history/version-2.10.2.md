@@ -1,3 +1,7 @@
+% Version 2.10.2
+% greg
+% 12/18/2017
+
 Release 2.10.2
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: Violet"><span class="glyphicon glyphicon-tent"></span>
 
 ## Upgrading from Earlier versions
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 
