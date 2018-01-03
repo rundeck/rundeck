@@ -2655,7 +2655,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      * @param execution
      * @return
      */
-    def updateScheduledExecStatistics(Long schedId, eId, long time){
+    def updateScheduledExecStatistics(Long schedId, eId, long time, boolean jobRef = false){
         def success = false
         try {
             ScheduledExecution.withNewSession {
@@ -2675,6 +2675,14 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     def popTime = scheduledExecution.totalTime.intdiv(scheduledExecution.execCount)
                     scheduledExecution.totalTime -= popTime
                     scheduledExecution.totalTime += time
+                }
+                if(jobRef){
+                    if(!scheduledExecution.refExecCount){
+                        scheduledExecution.refExecCount=1
+                    }else{
+                        scheduledExecution.refExecCount++
+                    }
+
                 }
                 if (scheduledExecution.save(flush:true)) {
                     log.info("updated scheduled Execution")
@@ -3214,10 +3222,21 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (null != result) {
             return result
         }
-
+        ReferencedExecution refExec
+        ScheduledExecution.withTransaction { status ->
+            ScheduledExecution se = ScheduledExecution.get(id)
+            Execution exec = Execution.get(execid as Long)
+            refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING)
+            exec.addToRefExec(refExec)
+            exec.save()
+        }
         if (newContext.getNodes().getNodeNames().size() < 1) {
             String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
             executionContext.getExecutionListener().log(0, msg)
+            ReferencedExecution.withTransaction { status ->
+                refExec.status=EXECUTION_FAILED
+                refExec.save()
+            }
             throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
         }
 
@@ -3226,7 +3245,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             def timeoutms = 1000 * timeout
             def shouldCheckTimeout = timeoutms > 0
-
             Thread thread = new WorkflowExecutionServiceThread(
                     wservice,
                     newExecItem,
@@ -3284,11 +3302,25 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 ])
             }
         }
+        def duration = System.currentTimeMillis() - startTime
 
         if (!wresult.result || !wresult.result.success || wresult.interrupt) {
             result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
+
         } else {
             result = createSuccess()
+        }
+
+        if(wresult.result) {
+            def savedJobState = false
+            savedJobState = updateScheduledExecStatistics(id,'jobref', duration, true)
+            if (!savedJobState) {
+                log.error("ExecutionJob: Failed to update job statistics for jobref")
+            }
+            ReferencedExecution.withTransaction { status ->
+                refExec.status=wresult.success?EXECUTION_SUCCEEDED:EXECUTION_FAILED
+                refExec.save()
+            }
         }
 
         ScheduledExecution.withTransaction { status ->
