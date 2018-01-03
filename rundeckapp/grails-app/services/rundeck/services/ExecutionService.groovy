@@ -56,6 +56,7 @@ import org.apache.log4j.MDC
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.hibernate.StaleObjectStateException
 import org.rundeck.storage.api.StorageException
+import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.context.MessageSource
@@ -3168,10 +3169,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             executionContext.getExecutionListener().log(0, msg)
             throw new StepException(msg, JobReferenceFailureReason.NotFound)
         }
-
+        def timeout = 0
         ScheduledExecution.withTransaction { status ->
             ScheduledExecution se = ScheduledExecution.get(id)
             averageDuration = se.averageDuration
+            timeout = se.timeout?Sizes.parseTimeDuration(se.timeout):0
             Execution exec = Execution.get(execid as Long)
             if(!exec){
                 def msg = "Execution not found: ${execid}"
@@ -3219,18 +3221,57 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
         }
 
-        def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
+        def wresult = metricService.withTimer(this.class.name,'runJobReference') {
+            WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
+
+            def timeoutms = 1000 * timeout
+            def shouldCheckTimeout = timeoutms > 0
+
+            Thread thread = new WorkflowExecutionServiceThread(
+                    wservice,
+                    newExecItem,
+                    newContext,
+                    null
+            )
+            long startTime = System.currentTimeMillis()
+            thread.start()
+            boolean never = true
+            def interrupt = false
 
         ScheduledExecution.withTransaction { status ->
             Execution exec = Execution.get(execid as Long)
             notificationService.triggerJobNotification('start', id,
                     [execution: exec, context: newContext,jobref: jitem.jobIdentifier])
         }
-        long startTime = System.currentTimeMillis()
-        def wresult = metricService.withTimer(this.class.name,'runJobReference'){
-            newContext.getLoggingManager().createPluginLogging(newContext,null).runWith {
-                service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
+            int killcount = 0
+            def killLimit = 100
+            while (thread.isAlive() || never) {
+                never = false
+                try {
+                    thread.join(1000)
+                } catch (InterruptedException e) {
+                    //do nada
+                }
+                def duration = System.currentTimeMillis() - startTime
+                if (shouldCheckTimeout
+                        && duration > timeoutms
+                ) {
+                    interrupt = true
+                }
+                if (interrupt) {
+                    if (killcount < killLimit) {
+                        //send wave after wave
+                        thread.abort()
+                        Thread.yield();
+                        killcount++;
+                    } else {
+                        //reached pre-set kill limit, so shut down
+                        thread.stop()
+                    }
+                }
             }
+
+            [result:thread.result,interrupt:interrupt]
         }
         def duration = System.currentTimeMillis() - startTime
         if(averageDuration > 0 && duration>averageDuration){
@@ -3244,11 +3285,12 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
 
-        if (!wresult || !wresult.success) {
+        if (!wresult.result || !wresult.result.success || wresult.interrupt) {
             result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
         } else {
             result = createSuccess()
         }
+
         ScheduledExecution.withTransaction { status ->
             Execution execution = Execution.get(execid as Long)
 
@@ -3277,9 +3319,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ]
             )
         }
-        result.sourceResult = wresult
 
-        Map<String, String> data = ((WorkflowExecutionResult)wresult)?.getSharedContext()?.getData(ContextView.global())?.get("export")
+        result.sourceResult = wresult.result
+
+
+        Map<String, String> data = ((WorkflowExecutionResult)wresult.result)?.getSharedContext()?.getData(ContextView.global())?.get("export")
         if(data) {
             executionContext.getOutputContext().addOutput(ContextView.global(),"export",data)
         }

@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.execution.ExecutionItemFactory
@@ -2506,105 +2507,4 @@ class ExecutionServiceSpec extends Specification {
 
     }
 
-
-    def "notification invotacion on job ref"(){
-        given:
-        def jobname = 'abc'
-        def group = 'path'
-        def project = 'AProject'
-        ScheduledExecution job = new ScheduledExecution(
-                jobName: jobname,
-                project: project,
-                groupPath: group,
-                description: 'a job',
-                argString: '-args b -args2 d',
-                workflow: new Workflow(
-                        keepgoing: true,
-                        commands: [new CommandExec(
-                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
-                        )]
-                ),
-                retry: '1'
-        )
-        job.save()
-        Execution e1 = new Execution(
-                project: project,
-                user: 'bob',
-                dateStarted: new Date(),
-                dateEnded: new Date(),
-                status: 'successful'
-
-        )
-        e1.save() != null
-
-        def datacontext = [job:[execid:e1.id]]
-
-
-        def nodeSet = new NodeSetImpl()
-        def node1 = new NodeEntryImpl('node1')
-        nodeSet.putNode(node1)
-
-        service.executionUtilService = Mock(ExecutionUtilService)
-        service.storageService = Mock(StorageService)
-        service.jobStateService = Mock(JobStateService)
-        service.frameworkService = Mock(FrameworkService) {
-            authorizeProjectJobAll(*_) >> true
-            filterAuthorizedNodes(_, _, _, _) >> { args ->
-                nodeSet
-            }
-        }
-
-
-
-        def origContext = Mock(StepExecutionContext){
-            getDataContext()>>datacontext
-            getStepNumber()>>1
-            getStepContext()>>[]
-            getNodes()>> nodeSet
-            getFramework() >> Mock(Framework)
-
-        }
-        JobRefCommand item = ExecutionItemFactory.createJobRef(
-                group+'/'+jobname,
-                ['args', 'args2'] as String[],
-                false,
-                null,
-                true,
-                '.*',
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                project
-        )
-
-
-        service.notificationService = Mock(NotificationService)
-        def dispatcherResult = Mock(DispatcherResult)
-        def wresult = Mock(WorkflowExecutionResult){
-            isSuccess()>>success
-        }
-
-
-        service.metricService = Mock(MetricService){
-            withTimer(_,_,_)>> wresult
-        }
-        def createFailure = { FailureReason reason, String msg ->
-            return new StepExecutionResultImpl(null, reason, msg)
-        }
-        def createSuccess = {
-            return new StepExecutionResultImpl()
-        }
-        when:
-        service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
-        then:
-        1 * service.notificationService.triggerJobNotification('start', _, _)
-        1 * service.notificationService.triggerJobNotification(trigger, _, _)
-        where:
-        success      | trigger
-        true         | 'success'
-        false        | 'failure'
-    }
 }
