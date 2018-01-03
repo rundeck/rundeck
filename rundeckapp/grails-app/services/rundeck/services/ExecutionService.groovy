@@ -3220,69 +3220,62 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
         }
 
-        def WorkflowExecutionService service = executionContext.getFramework().getWorkflowExecutionService()
+        def wresult = metricService.withTimer(this.class.name,'runJobReference') {
+            WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
 
-        /*def wresult = metricService.withTimer(this.class.name,'runJobReference'){
-            newContext.getLoggingManager().createPluginLogging(newContext,null).runWith {
-                service.getExecutorForItem(newExecItem).executeWorkflow(newContext, newExecItem)
-            }
-        }*/
-        WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
+            def timeoutms = 1000 * timeout
+            def shouldCheckTimeout = timeoutms > 0
 
-        def timeoutms = 1000 * timeout
-        def shouldCheckTimeout = timeoutms > 0
+            Thread thread = new WorkflowExecutionServiceThread(
+                    wservice,
+                    newExecItem,
+                    newContext,
+                    null
+            )
+            long startTime = System.currentTimeMillis()
+            thread.start()
+            boolean never = true
+            def interrupt = false
 
-        Thread thread = new WorkflowExecutionServiceThread(
-                wservice,
-                newExecItem,
-                newContext,
-                null
-        )
-        long startTime = System.currentTimeMillis()
-        thread.start()
-        boolean never=true
-        def interrupt = false
-        def success = true
-        int killcount = 0
-        def killLimit = 100
-        while (thread.isAlive() || never) {
-            never=false
-            try {
-                thread.join(1000)
-            } catch (InterruptedException e) {
-                //do nada
-            }
-            def duration = System.currentTimeMillis() - startTime
-            println('time...')
-            if (shouldCheckTimeout
-                    && duration > timeoutms
-            ) {
-                interrupt = true
-                success=false
-            }
-
-            if (interrupt) {
-                if (killcount < killLimit) {
-                    //send wave after wave
-                    thread.abort()
-                    Thread.yield();
-                    killcount++;
-                } else {
-                    //reached pre-set kill limit, so shut down
-                    thread.stop()
+            int killcount = 0
+            def killLimit = 100
+            while (thread.isAlive() || never) {
+                never = false
+                try {
+                    thread.join(1000)
+                } catch (InterruptedException e) {
+                    //do nada
+                }
+                def duration = System.currentTimeMillis() - startTime
+                if (shouldCheckTimeout
+                        && duration > timeoutms
+                ) {
+                    interrupt = true
+                }
+                if (interrupt) {
+                    if (killcount < killLimit) {
+                        //send wave after wave
+                        thread.abort()
+                        Thread.yield();
+                        killcount++;
+                    } else {
+                        //reached pre-set kill limit, so shut down
+                        thread.stop()
+                    }
                 }
             }
-        }
-        def wresult = thread.result
 
-        if (!success || !wresult || !wresult.success) {
+            [result:thread.result,interrupt:interrupt]
+        }
+
+        if (!wresult.result || !wresult.result.success || wresult.interrupt) {
             result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
         } else {
             result = createSuccess()
         }
-        result.sourceResult = wresult
+        result.sourceResult = wresult.result
 
-        Map<String, String> data = ((WorkflowExecutionResult)wresult)?.getSharedContext()?.getData(ContextView.global())?.get("export")
+        Map<String, String> data = ((WorkflowExecutionResult)wresult.result)?.getSharedContext()?.getData(ContextView.global())?.get("export")
         if(data) {
             executionContext.getOutputContext().addOutput(ContextView.global(),"export",data)
         }
