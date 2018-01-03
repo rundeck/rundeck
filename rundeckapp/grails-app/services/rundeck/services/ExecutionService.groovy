@@ -38,7 +38,6 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.logging.LoggingManagerImpl
 import com.dtolabs.rundeck.core.logging.OverridableStreamingLogWriter
-import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -3163,6 +3162,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         id = schedlist[0].id
         def StepExecutionContext newContext
         def WorkflowExecutionItem newExecItem
+        def averageDuration = 0
         String execid=executionContext.dataContext.job?.execid
         if(!execid){
             def msg = "Execution identifier (job.execid) not found in data context"
@@ -3172,6 +3172,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def timeout = 0
         ScheduledExecution.withTransaction { status ->
             ScheduledExecution se = ScheduledExecution.get(id)
+            averageDuration = se.averageDuration
             timeout = se.timeout?Sizes.parseTimeDuration(se.timeout):0
             Execution exec = Execution.get(execid as Long)
             if(!exec){
@@ -3237,6 +3238,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             boolean never = true
             def interrupt = false
 
+        ScheduledExecution.withTransaction { status ->
+            Execution exec = Execution.get(execid as Long)
+            notificationService.triggerJobNotification('start', id,
+                    [execution: exec, context: newContext,jobref: jitem.jobIdentifier])
+        }
             int killcount = 0
             def killLimit = 100
             while (thread.isAlive() || never) {
@@ -3267,13 +3273,55 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             [result:thread.result,interrupt:interrupt]
         }
+        def duration = System.currentTimeMillis() - startTime
+        if(averageDuration > 0 && duration>averageDuration){
+            ScheduledExecution.withTransaction { status ->
+                Execution exec = Execution.get(execid as Long)
+                avgDurationExceeded(id, [
+                        execution: exec,
+                        context  : newContext,
+                        jobref: jitem.jobIdentifier
+                ])
+            }
+        }
 
         if (!wresult.result || !wresult.result.success || wresult.interrupt) {
             result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
         } else {
             result = createSuccess()
         }
+
+        ScheduledExecution.withTransaction { status ->
+            Execution execution = Execution.get(execid as Long)
+
+
+            def sucCount = 0
+            def failedCount = 0
+            if(wresult instanceof WorkflowExecutionResult){
+                WorkflowExecutionResult data = ((WorkflowExecutionResult)wresult)
+                for (StepExecutionResult temp : data.getResultSet()) {
+                    if(temp.success){
+                        sucCount++
+                    }else{
+                        failedCount++
+                    }
+                }
+            }
+
+            notificationService.triggerJobNotification(
+                    wresult?.success ? 'success' : 'failure',
+                    id,
+                    [
+                            execution: execution,
+                            nodestatus: [succeeded: sucCount,failed:failedCount,total: newContext.getNodes().getNodeNames().size()],
+                            context: newContext,
+                            jobref: jitem.jobIdentifier
+                    ]
+            )
+        }
+
         result.sourceResult = wresult.result
+
 
         Map<String, String> data = ((WorkflowExecutionResult)wresult.result)?.getSharedContext()?.getData(ContextView.global())?.get("export")
         if(data) {
