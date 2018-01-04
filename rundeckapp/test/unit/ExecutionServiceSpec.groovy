@@ -2580,7 +2580,8 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 null,
                 null,
-                project
+                project,
+                false
         )
 
         def wresult = Mock(WorkflowExecutionResult){
@@ -2676,7 +2677,8 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 null,
                 null,
-                project
+                project,
+                false
         )
 
 

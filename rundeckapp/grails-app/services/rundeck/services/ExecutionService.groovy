@@ -3186,7 +3186,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             enableSe = se.executionEnabled
             if(!enableSe){
                 if (failOnDisable) {
-                    result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
+                    result = createFailure(JobReferenceFailureReason.ExecutionsDisabled, "Job [${jitem.jobIdentifier}] execution disabled")
                 } else {
                     result = createSuccess()
                 }
