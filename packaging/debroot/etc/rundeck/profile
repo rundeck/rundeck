@@ -1,3 +1,24 @@
+#########
+# Rundeck Profile sourced from /etc/init.d/rundeckd
+#########
+#
+# NOTE: DO NOT MODIFY THIS FILE
+# It will be replaced when the package is upgraded and your changes will not be saved.
+#
+# ##################
+#
+# To override variables in this file, you can instead create a file at:
+#
+#     /etc/default/rundeckd
+#
+# which contains exports for any of the variables listed below. E.g.:
+#
+#    export RUNDECK_TEMPDIR=/path/to/tmpdir
+#
+# That file will be sourced before this one, allowing your exports to take precedence.
+#
+###############
+
 RDECK_INSTALL="${RDECK_INSTALL:-/var/lib/rundeck}"
 RDECK_BASE="${RDECK_BASE:-/var/lib/rundeck}"
 RDECK_CONFIG="${RDECK_CONFIG:-/etc/rundeck}"
