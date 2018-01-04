@@ -3147,8 +3147,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def id
         def result
         def project = null
+        def failOnDisable = false
         if(jitem instanceof JobRefCommand){
             project = jitem.project
+            failOnDisable = jitem.failOnDisable
         }
 
         def group = null
@@ -3178,45 +3180,55 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throw new StepException(msg, JobReferenceFailureReason.NotFound)
         }
         def timeout = 0
+        def enableSe = true
         ScheduledExecution.withTransaction { status ->
             ScheduledExecution se = ScheduledExecution.get(id)
-            averageDuration = se.averageDuration
-            timeout = se.timeout?Sizes.parseTimeDuration(se.timeout):0
-            Execution exec = Execution.get(execid as Long)
-            if(!exec){
-                def msg = "Execution not found: ${execid}"
-                executionContext.getExecutionListener().log(0, msg);
-                result = createFailure(JobReferenceFailureReason.NotFound, msg)
-                return
-            }
+            enableSe = se.executionEnabled
+            if(!enableSe){
+                if (failOnDisable) {
+                    result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
+                } else {
+                    result = createSuccess()
+                }
+            }else {
+                averageDuration = se.averageDuration
+                timeout = se.timeout ? Sizes.parseTimeDuration(se.timeout) : 0
+                Execution exec = Execution.get(execid as Long)
+                if (!exec) {
+                    def msg = "Execution not found: ${execid}"
+                    executionContext.getExecutionListener().log(0, msg);
+                    result = createFailure(JobReferenceFailureReason.NotFound, msg)
+                    return
+                }
 
-            if (!frameworkService.authorizeProjectJobAll(executionContext.getAuthContext(), se, [AuthConstants.ACTION_RUN], se.project)) {
-                def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
-                executionContext.getExecutionListener().log(0, msg);
-                result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
-                return
-            }
-            newExecItem = executionUtilService.createExecutionItemForWorkflow(se.workflow, se.project)
+                if (!frameworkService.authorizeProjectJobAll(executionContext.getAuthContext(), se, [AuthConstants.ACTION_RUN], se.project)) {
+                    def msg = "Unauthorized to execute job [${jitem.jobIdentifier}}: ${se.extid}"
+                    executionContext.getExecutionListener().log(0, msg);
+                    result = createFailure(JobReferenceFailureReason.Unauthorized, msg)
+                    return
+                }
+                newExecItem = executionUtilService.createExecutionItemForWorkflow(se.workflow, se.project)
 
-            try {
-                newContext = createJobReferenceContext(
-                        se,
-                        exec,
-                        executionContext,
-                        jitem.args,
-                        jitem.nodeFilter,
-                        jitem.nodeKeepgoing,
-                        jitem.nodeThreadcount,
-                        jitem.nodeRankAttribute,
-                        jitem.nodeRankOrderAscending,
-                        node,
-                        jitem.nodeIntersect,
-                        true
-                )
-            } catch (ExecutionServiceValidationException e) {
-                executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
-                def msg = "Invalid options: ${e.errors.keySet()}"
-                result = createFailure(JobReferenceFailureReason.InvalidOptions, msg.toString())
+                try {
+                    newContext = createJobReferenceContext(
+                            se,
+                            exec,
+                            executionContext,
+                            jitem.args,
+                            jitem.nodeFilter,
+                            jitem.nodeKeepgoing,
+                            jitem.nodeThreadcount,
+                            jitem.nodeRankAttribute,
+                            jitem.nodeRankOrderAscending,
+                            node,
+                            jitem.nodeIntersect,
+                            true
+                    )
+                } catch (ExecutionServiceValidationException e) {
+                    executionContext.getExecutionListener().log(0, "Option input was not valid for [${jitem.jobIdentifier}]: ${e.message}");
+                    def msg = "Invalid options: ${e.errors.keySet()}"
+                    result = createFailure(JobReferenceFailureReason.InvalidOptions, msg.toString())
+                }
             }
         }
         if (null != result) {
