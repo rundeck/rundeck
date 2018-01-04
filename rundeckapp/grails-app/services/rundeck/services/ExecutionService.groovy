@@ -3240,6 +3240,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             throw new StepException(msg, JobReferenceFailureReason.NoMatchedNodes)
         }
 
+        long startTime = System.currentTimeMillis()
+
         def wresult = metricService.withTimer(this.class.name,'runJobReference') {
             WorkflowExecutionService wservice = executionContext.getFramework().getWorkflowExecutionService()
 
@@ -3251,7 +3253,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     newContext,
                     null
             )
-            long startTime = System.currentTimeMillis()
+
             thread.start()
             boolean never = true
             def interrupt = false
@@ -3302,7 +3304,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 ])
             }
         }
-        def duration = System.currentTimeMillis() - startTime
 
         if (!wresult.result || !wresult.result.success || wresult.interrupt) {
             result = createFailure(JobReferenceFailureReason.JobFailed, "Job [${jitem.jobIdentifier}] failed")
@@ -3318,7 +3319,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 log.error("ExecutionJob: Failed to update job statistics for jobref")
             }
             ReferencedExecution.withTransaction { status ->
-                refExec.status=wresult.success?EXECUTION_SUCCEEDED:EXECUTION_FAILED
+                refExec.status=wresult.result.success?EXECUTION_SUCCEEDED:EXECUTION_FAILED
                 refExec.save()
             }
         }
@@ -3329,8 +3330,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
             def sucCount = 0
             def failedCount = 0
-            if(wresult instanceof WorkflowExecutionResult){
-                WorkflowExecutionResult data = ((WorkflowExecutionResult)wresult)
+            if(wresult.result instanceof WorkflowExecutionResult){
+                WorkflowExecutionResult data = ((WorkflowExecutionResult)wresult.result)
                 for (StepExecutionResult temp : data.getResultSet()) {
                     if(temp.success){
                         sucCount++
@@ -3341,7 +3342,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
 
             notificationService.triggerJobNotification(
-                    wresult?.success ? 'success' : 'failure',
+                    wresult?.result.success ? 'success' : 'failure',
                     id,
                     [
                             execution: execution,
