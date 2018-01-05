@@ -637,4 +637,29 @@ class ExecutionItemFactoryTest {
         HasFailureHandler handlered2 = (HasFailureHandler) test
         Assert.assertEquals(handler, handlered2.failureHandler)
     }
+
+    @Test
+    public void createJobRef_with_disabled_Execution(){
+        StepExecutionItem test = ExecutionItemFactory.createJobRef(
+                "monkey/piece",
+                ['args', 'args2'] as String[],
+                true,
+                null,
+                true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                true
+        )
+        Assert.assertTrue(test instanceof JobRefCommand)
+        JobRefCommand testcommand=(JobRefCommand) test
+        Assert.assertEquals( 'monkey/piece',testcommand.jobIdentifier)
+        Assert.assertEquals( ['args','args2'],testcommand.args as List)
+        Assert.assertEquals(true,testcommand.failOnDisable)
+    }
 }
