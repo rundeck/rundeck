@@ -93,9 +93,9 @@
                                             checked="${item?.failOnDisable}"
                                             id="failOnDisableCheck" value="true"
                                             />
-                                Fail on disabled execution?
+                                <g:message code="Workflow.Step.jobreference.fail.on.disabled.label" />
                             </label>
-                            <span class="text-muted">If the referenced job has disabled execution, it will be considered a failure.</span>
+                            <span class="text-muted"><g:message code="Workflow.Step.jobreference.fail.on.disabled.help" /></span>
                         </div>
                     </div>
 
