@@ -39,7 +39,7 @@ public class PropertyBuilder {
     private PropertyValidator validator;
     private PropertyScope scope;
     private Map<String, Object> renderingOptions = new HashMap<String, Object>();
-    private boolean remoteValues;
+    private boolean dynamicValues;
 
     private PropertyBuilder() {
 
@@ -290,8 +290,8 @@ public class PropertyBuilder {
         return this;
     }
 
-    public PropertyBuilder remoteValues(final boolean remoteValues) {
-        this.remoteValues = remoteValues;
+    public PropertyBuilder dynamicValues(final boolean dynamicValues) {
+        this.dynamicValues = dynamicValues;
         return this;
     }
     
@@ -356,7 +356,7 @@ public class PropertyBuilder {
                 validator,
                 scope,
                 renderingOptions,
-                remoteValues
+                dynamicValues
         );
     }
 

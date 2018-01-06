@@ -14,16 +14,11 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.core.plugins.configuration.RemoteInputChoices" %>
+<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" %>
 <g:set var="groupSet" value="${[:]}"/>
 <g:set var="secondary" value="${[]}"/>
 <g:set var="ungrouped" value="${[]}"/>
-<g:set var="inputChoices" value="${[:]}"/>
-<g:if test="${remote}">
-    %{
-        inputChoices = RemoteInputChoices.getOptions(remote);
-    }%
-</g:if>
+<g:set var="dynamicProperties" value="${dynamicProperties}"/>
 <g:each in="${properties}" var="prop">
     <g:set var="scopeUnset" value="${!prop.scope || prop.scope.isUnspecified()}"/>
     <g:set var="scopeProject" value="${prop.scope && prop.scope.isProjectLevel()}"/>
@@ -75,7 +70,7 @@
     <g:render
             template="/framework/pluginConfigPropertyFormField"
             model="${[prop         : prop,
-                      inputChoices : inputChoices ? inputChoices[prop.name] : null,
+                      dynamicProperties : dynamicProperties ? dynamicProperties[prop.name] : null,
                       prefix       : prefix,
                       error        : report?.errors ? report.errors[prop.name] : null,
                       values       : values,
@@ -120,7 +115,7 @@
             <g:render
                     template="/framework/pluginConfigPropertyFormField"
                     model="${[prop         : prop,
-                              inputChoices : inputChoices ? inputChoices[prop.name] : null,
+                              dynamicProperties : dynamicProperties ? dynamicProperties[prop.name] : null,
                               prefix       : prefix,
                               error        : report?.errors ? report.errors[prop.name] : null,
                               values       : values,

@@ -90,9 +90,6 @@ public class PluginAdapterUtility {
             if (!"".equals(descAnnotation.description())) {
                 builder.description(descAnnotation.description());
             }
-            if (!"".equals(descAnnotation.remoteInputChoicesURL())) {
-                builder.remoteInputChoicesURL(descAnnotation.remoteInputChoicesURL());
-            }
         }
 
         if (includeAnnotatedFieldProperties) {
@@ -222,7 +219,7 @@ public class PluginAdapterUtility {
                 );
                 String[] values = selectAnnotation.values();
                 pbuild.values(values);
-                pbuild.remoteValues(selectAnnotation.remoteValues());
+                pbuild.dynamicValues(selectAnnotation.dynamicValues());
                 extractSelectLabels(pbuild, values, field.getAnnotation(SelectLabels.class));
             }
 
@@ -584,7 +581,7 @@ public class PluginAdapterUtility {
         } else if (type == Property.Type.Select) {
             if (value instanceof String) {
                 resolvedValue = value;
-                if (!field.getAnnotation(SelectValues.class).remoteValues() && !property.getSelectValues().contains((String) resolvedValue)) {
+                if (!field.getAnnotation(SelectValues.class).dynamicValues() && !property.getSelectValues().contains((String) resolvedValue)) {
                     throw new RuntimeException(
                             "value not allowed for property " + property.getName() + ": " + resolvedValue);
                 }

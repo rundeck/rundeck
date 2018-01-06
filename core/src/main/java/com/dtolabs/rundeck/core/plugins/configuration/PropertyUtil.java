@@ -166,7 +166,7 @@ public class PropertyUtil {
                                    final PropertyValidator validator,
                                    final PropertyScope scope,
                                    final Map<String, Object> renderingOptions,
-                                   final boolean remoteValues
+                                   final boolean dynamicValues
     ) {
         switch (type) {
             case Integer:
@@ -186,7 +186,7 @@ public class PropertyUtil {
                         labels,
                         scope,
                         renderingOptions,
-                        remoteValues
+                        dynamicValues
                 );
             case FreeSelect:
                 return PropertyUtil.freeSelect(name,
@@ -571,7 +571,7 @@ public class PropertyUtil {
             final String name, final String title, final String description,
             final boolean required, final String defaultValue, final List<String> selectValues,
             final Map<String, String> selectLabels,
-            final PropertyScope scope, final Map<String, Object> renderingOptions, final boolean remoteValues
+            final PropertyScope scope, final Map<String, Object> renderingOptions, final boolean dynamicValues
     )
     {
 
@@ -585,7 +585,7 @@ public class PropertyUtil {
                 selectLabels,
                 scope,
                 renderingOptions,
-                remoteValues
+                dynamicValues
         );
     }
     /**
@@ -871,7 +871,7 @@ public class PropertyUtil {
                 final Map<String, String> selectLabels,
                 final PropertyScope scope,
                 final Map<String, Object> renderingOptions,
-                final boolean remoteValues
+                final boolean dynamicValues
         )
         {
             super(
@@ -882,7 +882,7 @@ public class PropertyUtil {
                     defaultValue,
                     selectValues,
                     selectLabels,
-                    new SelectValidator(selectValues, remoteValues),
+                    new SelectValidator(selectValues, dynamicValues),
                     scope,
                     renderingOptions
             );
@@ -929,15 +929,16 @@ public class PropertyUtil {
     static final class SelectValidator implements PropertyValidator {
 
         final List<String> selectValues;
-        final boolean remoteValues;
+        final boolean dynamicValues;
 
-        SelectValidator(final List<String> selectValues, final boolean remoteValues) {
+        SelectValidator(final List<String> selectValues, final boolean dynamicValues) {
             this.selectValues = selectValues;
-            this.remoteValues = remoteValues;
+            this.dynamicValues = dynamicValues;
         }
 
         public boolean isValid(final String value) throws ValidationException {
-            return remoteValues || selectValues.contains(value);
+            //TODO: How validate this if is remote values?
+            return dynamicValues || selectValues.contains(value);
         }
     }
 

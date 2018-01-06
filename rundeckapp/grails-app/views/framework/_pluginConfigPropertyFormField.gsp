@@ -15,7 +15,7 @@
   --}%
  <%--
     _pluginConfigProperty.gsp
-    
+
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: 7/28/11 12:01 PM
  --%>
@@ -76,7 +76,7 @@
             default="${prop.title ?: prop.name}"/></label>
 
     <g:hiddenField name="${origfieldname}" value="${values&&values[prop.name]?values[prop.name]:''}"/>
-    <g:set var="inputValues" value="${inputChoices ?: (prop.selectLabels ?: [:])}"/>
+    <g:set var="inputValues" value="${(prop.selectLabels ?: [:])}"/>
     <g:if test="${prop.type.toString()=='FreeSelect'}">
         <div class="${valueColTypeSplitA}">
         <g:textField name="${fieldname}" value="${inputValues&&null!=inputValues[prop.name]?inputValues[prop.name]:prop.defaultValue}"
@@ -84,10 +84,8 @@
         </div>
         <div class="${valueColTypeSplitB}">
             <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
-            <g:set var="propSelectRemoteValues" value="${inputChoices?.collect {
-                [key: it.key.encodeAsHTML(), value: it.value]
-            }}"/>
-            <g:set var="propSelectValues" value="${propSelectRemoteValues ?: prop.selectValues.collect {
+            <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
+            <g:set var="propSelectValues" value="${selectValues.collect {
                 [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)]
             }}"/>
         <g:select name="${fieldid+'_sel'}" from="${propSelectValues}" id="${fieldid}"
@@ -101,11 +99,9 @@
     </g:if>
     <g:else>
         <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
-        <g:set var="propSelectRemoteValues" value="${inputChoices?.collect {
-            [key: it.key.encodeAsHTML(), value: it.value]
-        }}"/>
+        <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
         <g:set var="propSelectValues"
-               value="${propSelectRemoteValues ?: prop.selectValues.collect { [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)] }}"/>
+               value="${selectValues.collect { [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)] }}"/>
         <g:set var="noSelectionValue" value="${prop.required ? null : ['':'-none selected-']}"/>
         <div class="${valueColType}">
         <g:select name="${fieldname}" from="${propSelectValues}" id="${fieldid}"

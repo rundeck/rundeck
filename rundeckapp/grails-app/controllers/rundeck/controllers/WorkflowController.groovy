@@ -18,16 +18,11 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import rundeck.WorkflowStep
-import rundeck.Workflow
-import rundeck.JobExec
-import rundeck.CommandExec
-import rundeck.ScheduledExecution
-import rundeck.PluginStep
-import com.dtolabs.rundeck.core.plugins.configuration.Description
+import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
@@ -101,8 +96,12 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         }
         AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
         def fprojects = frameworkService.projectNames(auth).findAll{it != params.project}
+        Map<String, Object> projectAndFrameworkValues = frameworkService.getProjectProperties(params.project)
+        def dynamicProperties = frameworkService.getDynamicProperties(params['newitemtype'], projectAndFrameworkValues)
+
         [
                 item                : item,
+                dynamicProperties   : dynamicProperties,
                 key                 : params.key,
                 num                 : numi,
                 scheduledExecutionId: params.scheduledExecutionId,
