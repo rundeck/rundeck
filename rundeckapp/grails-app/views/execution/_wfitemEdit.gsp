@@ -84,6 +84,22 @@
                                class="form-control context_var_autocomplete"/>
                     </div>
                 </div>
+                <div class="form-group" >
+                    <label class="col-sm-2 control-label"></label>
+                    <div class="col-sm-10">
+                        <div class="checkbox">
+                            <label>
+                                <g:checkBox name="failOnDisable"
+                                            checked="${item?.failOnDisable}"
+                                            id="failOnDisableCheck" value="true"
+                                            />
+                                <g:message code="Workflow.Step.jobreference.fail.on.disabled.label" />
+                            </label>
+                            <span class="text-muted"><g:message code="Workflow.Step.jobreference.fail.on.disabled.help" /></span>
+                        </div>
+                    </div>
+
+                </div>
 
     <g:set var="nodeFilterOverrideExpanded" value="${item?.nodeFilter || item?.nodeIntersect}"/>
     <div class="row">
