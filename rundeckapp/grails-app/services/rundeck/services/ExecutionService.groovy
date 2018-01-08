@@ -2607,7 +2607,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
 
                 def context = execmap?.thread?.context
                 notificationService.triggerJobNotification(
-                        execution.statusSucceeded() ? 'success' : 'failure',
+                        execution.statusSucceeded() ? 'success' : execution.willRetry ? 'retryablefailure' : 'failure',
                         schedId,
                         [
                                 execution: execution,

@@ -828,10 +828,10 @@ Deprecated Example:
 
 ### Notification
 
-Defines a notification for the job.  You can include any of `onsuccess`, `onfailure`, `onstart` or `onavgduration` notifications. Each type of notification can define any of the built in notifications, or define plugin notifications.
+Defines a notification for the job.  You can include any of `onsuccess`, `onfailure`, `onstart`, `onavgduration`, or `onretryablefailure` notifications. Each type of notification can define any of the built in notifications, or define plugin notifications.
 
 
-`onsuccess`/`onfailure`/`onstart`/`onavgduration`
+`onsuccess`/`onfailure`/`onstart`/`onavgduration`/`onretryablefailure`
 
 :    A Map containing either or both of:
 
@@ -872,6 +872,10 @@ Example:
       email:
         recipients: test@example.com
         subject: Job Exceeded average duration
+      plugin:
+        configuration: {}
+        type: MinimalNotificationPlugin
+    onretryablefailure:
       plugin:
         configuration: {}
         type: MinimalNotificationPlugin

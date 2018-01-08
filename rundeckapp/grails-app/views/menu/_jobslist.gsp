@@ -119,6 +119,16 @@
                                                       importCommit  : importStatus?.commit,
                                               ]"/>
                                 </g:if>
+
+                                <!-- ko if: displayBadge('${scheduledExecution.extid}') -->
+                                <span data-bind="attr: {'title': jobText('${scheduledExecution.extid}') }" class="has_tooltip">
+                                    <span data-bind="css: jobClass('${scheduledExecution.extid}')">
+                                        <i data-bind="css: jobIcon('${scheduledExecution.extid}')" class="glyphicon "></i>
+                                    </span>
+                                </span>
+                                <!-- /ko -->
+
+
                                     <g:link action="show"
                                             controller="scheduledExecution"
                                             id="${scheduledExecution.extid}"

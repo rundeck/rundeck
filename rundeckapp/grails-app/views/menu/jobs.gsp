@@ -32,6 +32,7 @@
         <asset:javascript src="menu/job-remote-optionsTest.js"/>
     </g:if>
     <g:embedJSON data="${projectNames ?: []}" id="projectNamesData"/>
+    <g:embedJSON data="${nextScheduled ?: []}" id="nextScheduled"/>
     <g:embedJSON id="pageParams" data="${[project: params.project?:request.project,]}"/>
     <g:jsMessages code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
@@ -524,8 +525,267 @@
                 self.beginEdit();
                 self.action(action);
                 self.toggleModal();
-            }
+            };
+
+            self.scmExportEnabled = ko.observable(false);
+            self.scmImportEnabled = ko.observable(false);
+            self.scmStatus = ko.observable(null);
+            self.scmImportJobStatus = ko.observable(null);
+            self.scmExportStatus = ko.observable(null);
+            self.scmImportStatus = ko.observable(null);
+            self.scmExportActions = ko.observable(null);
+            self.scmImportActions = ko.observable(null);
+            self.scmExportRenamed = ko.observable(null);
+            self.isExportEnabled=ko.pureComputed(function(){
+                return self.scmExportEnabled();
+            });
+
+            self.jobSynchState = function(jobid){
+                var exportStatus = null;
+                var importStatus = null;
+                if(self.scmStatus() && self.scmStatus()[jobid]){
+                    exportStatus = self.scmStatus()[jobid].synchState.name;
+                }
+                if(self.scmImportJobStatus() && self.scmImportJobStatus()[jobid]){
+                    importStatus = self.scmImportJobStatus()[jobid].synchState.name;
+                }
+                if(!exportStatus || exportStatus == "CLEAN"){
+                    return importStatus;
+                }else{
+                    return exportStatus
+                }
+            };
+
+            self.displayBadge = function(jobid){
+                var displayExport = false;
+                var displayImport = false;
+                if(self.scmExportEnabled() || self.scmImportEnabled()){
+                    if(self.scmStatus() && self.scmStatus()[jobid]){
+                        displayExport = self.scmStatus()[jobid].synchState.name != "CLEAN";
+                    }
+                    if(self.scmImportJobStatus() && self.scmImportJobStatus()[jobid]){
+                        displayImport = self.scmImportJobStatus()[jobid].synchState.name != "CLEAN";
+                    }
+                }
+                return (displayExport || displayImport);
+            };
+
+            self.jobText = function(jobid){
+                var exportStatus = null;
+                var importStatus = null;
+                var text = null;
+                if(self.scmStatus() && self.scmStatus()[jobid]){
+                    exportStatus = self.scmStatus()[jobid].synchState.name;
+                    switch(exportStatus) {
+                        case "EXPORT_NEEDED":
+                            text = "${message(code: "scm.export.status.EXPORT_NEEDED.description")}";
+                            break;
+                        case "CREATE_NEEDED":
+                            text = "${message(code: "scm.export.status.CREATE_NEEDED.description")}";
+                            break;
+                        case "CLEAN":
+                            text = "${message(code: "scm.export.status.CLEAN.description")}";
+                            break;
+                        default:
+                            text = exportStatus;
+                    }
+                }
+                if(self.scmImportJobStatus() && self.scmImportJobStatus()[jobid]){
+                    if(text){
+                        text +=', ';
+                    }else{
+                        text = '';
+                    }
+                    importStatus = self.scmImportJobStatus()[jobid].synchState.name;
+                    switch(importStatus) {
+                        case "IMPORT_NEEDED":
+                            text += "${message(code: "scm.import.status.IMPORT_NEEDED.description")}";
+                            break;
+                        case "DELETE_NEEDED":
+                            text += "${message(code: "scm.import.status.DELETE_NEEDED.description")}";
+                            break;
+                        case "CLEAN":
+                            text += "${message(code: "scm.import.status.CLEAN.description")}";
+                            break;
+                        case "REFRESH_NEEDED":
+                            text += "${message(code: "scm.import.status.REFRESH_NEEDED.description")}";
+                            break;
+                        case "UNKNOWN":
+                            text += "${message(code: "scm.import.status.UNKNOWN.description")}";
+                            break;
+                        default:
+                            text += importStatus;
+                    }
+
+                }
+                return text;
+            };
+
+            self.jobClass = function(jobid){
+                switch(self.jobSynchState(jobid)) {
+                    case "EXPORT_NEEDED":
+                        return "text-info";
+                        break;
+                    case "CREATE_NEEDED":
+                        return "text-success";
+                        break;
+                    case "UNKNOWN":
+                        return "text-muted";
+                        break;
+                    case "IMPORT_NEEDED":
+                        return "text-warning";
+                        break;
+                    case "REFRESH_NEEDED":
+                        return "text-warning";
+                        break;
+                    case "DELETED":
+                        return "text-danger";
+                        break;
+                    case "CLEAN":
+                        return "text-muted";
+                        break;
+                }
+                return 'text-muted';
+            };
+
+            self.jobIcon = function(jobid){
+                switch(self.jobSynchState(jobid)) {
+                    case "EXPORT_NEEDED":
+                        return "glyphicon-exclamation-sign";
+                        break;
+                    case "CREATE_NEEDED":
+                        return "glyphicon-exclamation-sign";
+                        break;
+                    case "UNKNOWN":
+                        return "glyphicon-question-sign";
+                        break;
+                    case "IMPORT_NEEDED":
+                        return "glyphicon-exclamation-sign";
+                        break;
+                    case "REFRESH_NEEDED":
+                        return "glyphicon-exclamation-sign";
+                        break;
+                    case "DELETED":
+                        return "glyphicon-minus-sign";
+                        break;
+                    case "CLEAN":
+                        return "glyphicon-ok";
+                        break;
+                }
+                return 'glyphicon-plus';
+            };
+
+            self.exportMessage = function(){
+                if(self.scmExportStatus()){
+                    return self.scmExportStatus().message;
+                }
+                return null;
+            };
+            self.importMessage = function(){
+                if(self.scmImportStatus()){
+                    return self.scmImportStatus().message;
+                }
+                return null;
+            };
+
+            self.exportState = function(){
+                if(self.scmExportStatus()){
+                    return self.scmExportStatus().state.name;
+                }
+                return null;
+            };
+            self.importState = function(){
+                if(self.scmImportStatus()){
+                    return self.scmImportStatus().state.name;
+                }
+                return null;
+            };
+
+            self.jobCommit = function(jobid){
+                return self.scmExportEnabled();
+            };
+
+            self.defaultExportText = function(){
+                if(self.exportState()) {
+                    var text = null;
+                    switch(self.exportState()) {
+                        case "EXPORT_NEEDED":
+                            text = "${message(code: "scm.export.status.EXPORT_NEEDED.display.text")}";
+                            break;
+                        case "CREATE_NEEDED":
+                            text = "${message(code: "scm.export.status.CREATE_NEEDED.display.text")}";
+                            break;
+                        case "REFRESH_NEEDED":
+                            text = "${message(code: "scm.export.status.REFRESH_NEEDED.display.text")}";
+                            break;
+                        case "DELETED":
+                            text = "${message(code: "scm.export.status.DELETED.display.text")}";
+                            break;
+                        case "CLEAN":
+                            text = "${message(code: "scm.export.status.CLEAN.display.text")}";
+                            break;
+                    }
+                    if(!text){
+                        text = self.exportState();
+                    }
+                    return text;
+                }
+                return null;
+            };
+
+            self.defaultImportText = function(){
+                if(self.importState()) {
+                    var text = null;
+                    switch(self.importState()) {
+                        case "IMPORT_NEEDED":
+                            text = "${message(code: "scm.import.status.IMPORT_NEEDED.display.text")}";
+                            break;
+                        case "REFRESH_NEEDED":
+                            text = "${message(code: "scm.import.status.REFRESH_NEEDED.display.text")}";
+                            break;
+                        case "UNKNOWN":
+                            text = "${message(code: "scm.import.status.UNKNOWN.display.text")}";
+                            break;
+                        case "CLEAN":
+                            text = "${message(code: "scm.import.status.CLEAN.display.text")}";
+                            break;
+                    }
+                    if(!text){
+                        text = self.importState();
+                    }
+                    return text;
+                }
+                return null;
+            };
+
+            self.defaultDisplayText = function(){
+                if(self.exportState() != 'CLEAN'){
+                    return self.defaultExportText();
+                }else{
+                    return self.defaultImportText();
+                }
+            };
+
+
+            self.displayExport = function(){
+                return (self.exportState() && self.exportState() != 'CLEAN');
+            };
+
+            self.displayImport = function(){
+                return (self.importState() && self.importState() != 'CLEAN');
+            };
+
+            self.displaySCMMEssage = function(){
+                return (self.displayExport() || self.displayImport());
+            };
+
         }
+
+
+
+
+
+
         var bulkeditor;
         jQuery(document).ready(function () {
             init();
@@ -549,7 +809,53 @@
             ko.applyBindings(bulkeditor,document.getElementById('job_action_menu'));
             ko.applyBindings(bulkeditor,document.getElementById('job_group_tree'));
             ko.applyBindings(bulkeditor,document.getElementById('group_controls'));
+            ko.applyBindings(bulkeditor,document.getElementById('scm_message'));
+            ko.applyBindings(bulkeditor,document.getElementById('scmStatusPopoverOK'));
+
+
+
+
+            jQuery(document).on('click','#togglescm',function(evt){
+                evt.preventDefault();
+                jQuery.ajax({
+                    dataType:'json',
+                    method: "POST",
+                    url:_genUrl(appLinks.togglescm),
+                    params:nextScheduled,
+                    success:function(data,status,xhr){
+                        console.log(data);
+                    }
+                });
+            });
+
+            var pageParams = loadJsonData('pageParams');
+            var nextScheduled = loadJsonData('nextScheduled');
+            var nextSchedList="";
+            for(var i=0; i< nextScheduled.length; i++){
+                nextSchedList = nextSchedList+nextScheduled[i].id+",";
+            }
+
+            jQuery.ajax({
+                dataType:'json',
+                method: "POST",
+                url:_genUrl(appLinks.scmjobs, {nextScheduled:nextSchedList}),
+                params:nextScheduled,
+                success:function(data,status,xhr){
+                    bulkeditor.scmExportEnabled(data.scmExportEnabled);
+                    bulkeditor.scmStatus(data.scmStatus);
+                    bulkeditor.scmExportStatus(data.scmExportStatus);
+                    bulkeditor.scmExportActions(data.scmExportActions);
+                    bulkeditor.scmExportRenamed(data.scmExportRenamed);
+
+                    bulkeditor.scmImportEnabled(data.scmImportEnabled);
+                    bulkeditor.scmImportJobStatus(data.scmImportJobStatus);
+                    bulkeditor.scmImportStatus(data.scmImportStatus);
+                    bulkeditor.scmImportActions(data.scmImportActions);
+                }
+            });
         });
+
+
     </script>
 
     <asset:javascript src="util/yellowfade.js"/>
