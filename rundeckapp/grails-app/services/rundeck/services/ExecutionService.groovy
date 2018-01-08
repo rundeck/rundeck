@@ -898,6 +898,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             jobcontext.id = execution.scheduledExecution.extid
             jobcontext.successOnEmptyNodeFilter=execution.scheduledExecution.successOnEmptyNodeFilter?"true":"false"
         }
+        if (execution.filter) {
+            jobcontext.filter = execution.filter
+        }
         jobcontext.execid = execution.id.toString()
         jobcontext.executionType = execution.executionType
         jobcontext.serverUrl = generateServerURL(grailsLinkGenerator)
@@ -1657,7 +1660,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Execution.findAllByRetryExecution(e).each{e2->
                 e2.retryExecution=null
             }
-            e.delete(flush: true)
+            e.delete()
             //delete all files
             def deletedfiles = 0
             files.each { file ->
@@ -3230,6 +3233,10 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
         result.sourceResult = wresult
 
+        Map<String, String> data = ((WorkflowExecutionResult)wresult)?.getSharedContext()?.getData(ContextView.global())?.get("export")
+        if(data) {
+            executionContext.getOutputContext().addOutput(ContextView.global(),"export",data)
+        }
         return result
     }
 

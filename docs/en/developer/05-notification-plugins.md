@@ -2,7 +2,7 @@
 % Greg Schueler
 % April 18, 2013
 
-## About 
+## About
 
 Notifications are actions that are performed when a Job starts or finishes.
 
@@ -34,8 +34,8 @@ The Configuration data is fully custom depending on your plugin, and is describe
 
 #### Property References
 
-The specific data values of the Configuration section are allowed to have 
-embedded Property References as described in the 
+The specific data values of the Configuration section are allowed to have
+embedded Property References as described in the
 [Jobs - Context Variables](../manual/jobs.html#context-variables) section.
 
 For example, when a user configures your plugin, they could embed an option value using: `${option.myoption}`.  This value will be replaced with the runtime option value before being passed to your plugin.
@@ -49,7 +49,7 @@ the value.
 
 ### Execution data
 
-The execution data is included as a Map called `execution` 
+The execution data is included as a Map called `execution`
 containing the following keys and values:
 
 `execution.id`: ID of the execution
@@ -97,27 +97,27 @@ The following values may be available after the job is finished (not available f
 `job` information is in a `job` entry and contains another Map:
 
 `job.id`: Job ID
- 
+
 `job.href`: URL to Job view page
- 
+
 `job.name`: Job name
- 
+
 `job.group`: Job group
- 
+
 `job.project`: Project name
- 
+
 `job.description`: Job Description
- 
+
 `job.averageDuration`: Average job duration in Milliseconds, if available
 
 `execution.context` - this is a map containing all of the context variables available to the execution when it ran or will run, such as [Jobs - Context Variables](../manual/jobs.html#context-variables). The contents of this Map are the specific context namespaces and variables.
-    
+
 `execution.context.option`: a Map containing the Job Option keys/values.
 
 `job`: a Map containing the Job context data, as provided to executions.  This map will contain some duplicate information as the `execution.job` map previously described.
 
-In Groovy, you can simply reference any values in the Execution data maps using 
-[Groovy Gpath](http://groovy.codehaus.org/GPath), e.g.:
+In Groovy, you can simply reference any values in the Execution data maps using
+[Groovy Gpath](http://groovy-lang.org/processing-xml.html#_gpath), e.g.:
 
 ~~~~ {.java}
 println execution.context.option.myoption
@@ -144,12 +144,12 @@ Currently "script-based" plugins (shell scripts, that is) are not supported.
 See the source directory `examples/example-groovy-notification-plugins` for
 examples of Notification plugins written in Groovy.
 
-* On github: [example-groovy-notification-plugins](https://github.com/rundeck/rundeck/tree/development/examples/example-groovy-notification-plugins) 
+* On github: [example-groovy-notification-plugins](https://github.com/rundeck/rundeck/tree/development/examples/example-groovy-notification-plugins)
 
 See the source directory `examples/example-java-notification-plugin` for
 Java examples.
 
-* On github: [example-java-notification-plugin](https://github.com/rundeck/rundeck/tree/development/examples/example-java-notification-plugin) 
+* On github: [example-java-notification-plugin](https://github.com/rundeck/rundeck/tree/development/examples/example-java-notification-plugin)
 
 ## Java Plugin Type
 
@@ -169,7 +169,7 @@ public interface NotificationPlugin {
     public boolean postNotification(String trigger,Map executionData,Map config);
 }
 ~~~~~~~~~~~
-    
+
 To define configuration properties for your plugin, you use the same mechanisms as for Workflow Steps, described under the chapter [Plugin Development - Plugin Descriptions](plugin-development.html#plugin-descriptions).
 
 The simplest way to do this is to use [Plugin Annotations](plugin-annotations.html). Here is an example class annotated to describe it to the Rundeck GUI:
@@ -178,10 +178,10 @@ The simplest way to do this is to use [Plugin Annotations](plugin-annotations.ht
 @Plugin(service="Notification", name="example")
 @PluginDescription(title="Example Plugin", description="An example Plugin for Rundeck Notifications.")
 public class ExampleNotificationPlugin implements NotificationPlugin{
- 
+
     @PluginProperty(name = "test" ,title = "Test String", description = "a description")
     private String test;
- 
+
     public boolean postNotification(String trigger, Map executionData, Map config) {
         System.err.printf("Trigger %s fired for %s, configuration: %s\n",trigger,executionData,config);
         System.err.printf("Local field test is: %s\n",test);
@@ -251,7 +251,7 @@ myproperty (title: "My Property", description: "Something", type: 'Integer')
 myproperty2="default value"
 //the above is equivalent to:
 myproperty2(defaultValue:"default value", type: 'String')
- 
+
 myproperty3=["value","another","text"]
 //the above is equivalent to:
 myproperty3(type:'FreeSelect',values:["value","another","text"])
@@ -326,18 +326,18 @@ Here is a minimal example:
 
 ~~~~~ {.java}
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
- 
+
 rundeckPlugin(NotificationPlugin){
-    onstart { 
+    onstart {
         println("job start: data ${execution}")
         true
     }
- 
+
     onfailure {
         println("failure: data ${execution}")
         true
     }
- 
+
     onsuccess {
         println("success: data ${execution}")
         true
@@ -356,56 +356,56 @@ alternate closure parameter lists:
 
 ~~~~~~ {.java}
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin;
- 
+
 rundeckPlugin(NotificationPlugin) {
     title="Example Plugin"
     description="An example"
- 
+
     configuration{
- 
+
         test1 title:"Test1", description:"Simple string"
-        
+
         //Validation can be added with a closure
         test2(title:'Test2',description:"Matches a regex"){
             it=~/^\d+$/
         }
-        
+
         //required select value, becomes a Select type
         test3 values: ["a","b","c"], required:true
-        
+
         //if not required, becomes a FreeSelect
         test4 values: ["a","b","c"]
-        
+
         //If type is not specified, the defaultValue will be used to guess
         test5 defaultValue: 3 //becomes Integer type
         test6 defaultValue:true //becomes Boolean type
- 
+
         //these properties are assigned default values and automatically typed
         test7=123
         test8="abc"
         test9=true
         test10=false
         test11=["x","y","z"] //becomes a FreeSelect
- 
+
         //redefining the same property will modify it
         test11 title:"My Select Field", description:"Free Select field", defaultValue:"y", required:true
- 
+
         //the scope indicates the property will not show up in the GUI when configuring the Notification, but must be defined in the project.properties or framework.properties at runtime
         test11 required:true, scope: 'Project'
-        
+
     }
- 
+
     onstart { Map executionData,Map config ->
         println("script, start: data ${executionData}, config: ${config}")
         true
     }
- 
+
     onfailure { Map executionData ->
         //Single argument, the configuration properties are available automatically
         println("script, failure: data ${executionData}, test1: ${test1}, test2: ${test2} test3: ${test3}")
         true
     }
- 
+
     onsuccess {
         //with no args, there is a "configuration" and an "execution" variable in the context
         println("script, success: data ${execution}, test1: ${configuration.test1}, test2: ${configuration.test2} test3: ${configuration.test3}")

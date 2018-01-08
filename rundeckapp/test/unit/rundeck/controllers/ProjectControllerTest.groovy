@@ -641,7 +641,8 @@ class ProjectControllerTest {
 
         //test project element
         assertEquals 'true', result.'@error'.text()
-        assertEquals 0,result.error.'@code'.size()
+        assertEquals 1,result.error.'@code'.size()
+        assertEquals 'api.error.unknown',result.error.'@code'.text()
         assertEquals 'error1; error2', result.error.message.text()
     }
     /**
@@ -669,7 +670,7 @@ class ProjectControllerTest {
 
         //test project element
         assertEquals true, result.error
-        assertEquals null, result.errorCode
+        assertEquals 'api.error.unknown', result.errorCode
         assertEquals 'error1; error2', result.message
     }
     /**

@@ -36,7 +36,7 @@
 <g:set var="required" value="${prop.required ? 'required' : ''}"/>
 <g:set var="propScope"
        value="${prop.scope != null && prop.scope != PropertyScope.Unspecified ? prop.scope : defaultScope}"/>
-<g:unless test="${outofscopeOnly && propScope?.isInstanceLevel()}">
+<g:unless test="${outofscopeOnly && propScope == PropertyScope.InstanceOnly}">
 <div class="form-group ${enc(attr:hasError)}">
 
 <g:if test="${outofscope}">

@@ -2,7 +2,7 @@
 % Greg Schueler
 % March 29, 2014
 
-## About 
+## About
 
 Storage converters can modify file contents and metadata uploaded to the [Key Storage](../administration/key-storage.html) via the [Key Storage API](../api/index.html#key-storage).
 
@@ -39,18 +39,18 @@ public class MyProvider implements StorageConverterPlugin {
   }
 
     /** encrypt data to be stored if necessary */
-    HasInputStream createResource(Path path, ResourceMetaBuilder 
+    HasInputStream createResource(Path path, ResourceMetaBuilder
       resourceMetaBuilder, HasInputStream hasInputStream){
       return null;
   }
 
     /** encrypt data to be stored if necessary */
-    HasInputStream updateResource(Path path, ResourceMetaBuilder 
+    HasInputStream updateResource(Path path, ResourceMetaBuilder
       resourceMetaBuilder, HasInputStream hasInputStream){
       return null;
   }
 }
-~~~~~ 
+~~~~~
 
 The three methods are called when a resource is read, created, or updated, respectively.
 

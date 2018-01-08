@@ -2093,4 +2093,28 @@ class ExecutionServiceTests  {
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
     }
+
+    void testExportContextForExectuion(){
+        def filterFixture = "foo bar"
+
+        def ex = new Execution(
+                project: "test",
+                user: "test",
+                workflow: new Workflow(
+                        commands: [
+                                new CommandExec(adhocRemoteString: "exec")
+                        ]
+                ),
+                filter: filterFixture
+        )
+
+        def lg = mockFor(org.codehaus.groovy.grails.web.mapping.LinkGenerator)
+        lg.demand.link(2..2) { return '' }
+
+        def jobcontext = ExecutionService.exportContextForExecution(ex, lg.createMock())
+
+        assertEquals(filterFixture, jobcontext.filter)
+
+        lg.verify()
+    }
 }

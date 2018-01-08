@@ -75,11 +75,6 @@ class UserController extends ControllerBase{
         }
     }
 
-    def handleLogin = {
-        // Simple pass threw for now!
-        session.user = params.login
-        redirect(controller:'menu', action:'index')
-    }
     def denied={
         response.setStatus(403)
         renderErrorView('Access denied')
@@ -165,9 +160,7 @@ class UserController extends ControllerBase{
         u = new User(user.properties.subMap(['login','firstName','lastName','email']))
 
         if(!u.save(flush:true)){
-            def errmsg= u.errors.allErrors.collect { g.message(error:it) }.join("\n")
-            flash.error="Error updating user: ${errmsg}"
-            flash.message = "Error updating user: ${errmsg}"
+            flash.error = "Error updating user"
             flash.errors = user.errors
             return render(view:'edit',model:[user:u])
         }
@@ -366,8 +359,8 @@ class UserController extends ControllerBase{
         bindData(u,params.subMap(['firstName','lastName','email']))
 
         if(!u.save(flush:true)){
-            def errmsg= u.errors.allErrors.collect { g.message(error:it) }.join("\n")
-            request.error="Error updating user: ${errmsg}"
+            request.error = "Error updating user"
+            request.errors = u.errors
             return render(view:'edit',model:[user:u])
         }
         flash.message="User profile updated: ${params.login}"
@@ -434,7 +427,7 @@ class UserController extends ControllerBase{
             )
             result = [result: true, /*apitoken: token.token, */ tokenid: token.uuid]
         } catch (Exception e) {
-            result = [result: false, error: e.getCause().message]
+            result = [result: false, error: e.getCause()?.message ?: e.message]
         }
         return renderTokenGenerateResult(result, params.login)
     }

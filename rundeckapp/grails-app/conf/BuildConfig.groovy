@@ -90,7 +90,6 @@ grails.project.dependency.resolution = {
     println "Application Version: ${rundeckVersion}"
 
     plugins {
-        test    ':code-coverage:2.0.3-3'
         compile (':less-asset-pipeline:2.7.2')
         compile ':twitter-bootstrap:3.3.2.1'
         compile (':asset-pipeline:2.7.2')
@@ -115,8 +114,8 @@ grails.project.dependency.resolution = {
                 'log4j:log4j:1.2.17',
                 'commons-collections:commons-collections:3.2.2',
                 'commons-codec:commons-codec:1.5',
-                'com.fasterxml.jackson.core:jackson-databind:2.8.8.1',
-                'com.fasterxml.jackson.core:jackson-annotations:2.8.8',
+                'com.fasterxml.jackson.core:jackson-databind:2.8.10',
+                'com.fasterxml.jackson.core:jackson-annotations:2.8.10',
                 'com.codahale.metrics:metrics-core:3.0.1',
                 'com.google.guava:guava:15.0',
                 'org.owasp.encoder:encoder:1.2',

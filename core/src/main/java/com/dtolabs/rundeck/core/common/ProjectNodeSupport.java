@@ -246,6 +246,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         if (projectConfig.hasProperty(PROJECT_RESOURCES_URL_PROPERTY)) {
             logger.error("Project config: " + PROJECT_RESOURCES_URL_PROPERTY + " is no longer supported.");
         }
+        String name = projectConfig.getName();
 
         final List<Map<String, Object>> list = listResourceModelConfigurations();
         int i = 1;
@@ -264,7 +265,12 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
                 );
                 validSources.add(i + ".source" );
             } catch (ExecutionServiceException e) {
-                logger.error("Failed loading resource model source #" + i + ", skipping: " + e.getMessage(), e);
+                logger.error(String.format(
+                        "Failed loading resource model source #%d in project %s, skipping: %s",
+                        i,
+                        name,
+                        e.getMessage()
+                ), e);
                 exceptions.put(i + ".source" ,e);
             }
             i++;

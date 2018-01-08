@@ -28,7 +28,6 @@ import com.dtolabs.rundeck.core.common.NodesFileGenerator;
 import static com.dtolabs.shared.resources.ResourceXMLConstants.*;
 
 import org.apache.log4j.Logger;
-import org.apache.xerces.util.XMLChar;
 import org.dom4j.Document;
 import org.dom4j.DocumentFactory;
 import org.dom4j.Element;
@@ -205,7 +204,7 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
         for (final String key:entity.getProperties().stringPropertyNames()){
             if (!ResourceXMLConstants.allPropSet.contains(key)) {
                 //test attribute name is a valid XML attribute name
-                if (XMLChar.isValidName(key) && !key.contains(":") && !key.contains(".")) {
+                if (isValidName(key)) {
                     ent.addAttribute(key, entity.getProperties().getProperty(key));
                 } else {
                     //add sub element
@@ -216,6 +215,33 @@ public class ResourceXMLGenerator implements NodesFileGenerator {
             }
         }
 
+    }
+
+    private static final String ALLOWED_CHARS = "_-";
+
+
+    private boolean isValidName(final String attrName) {
+        if (attrName.matches("^(?i)xml.*")) {
+            return false;
+        }
+        for (int i = 0; i < attrName.length(); i++) {
+            char ch = attrName.charAt(i);
+            if (i == 0) {
+                if (!Character.isLetter(ch)) {
+                    return false;
+                }
+            }
+
+            if (isValidNameChar(ch)) {
+                continue;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isValidNameChar(final char ch) {
+        return Character.isLetterOrDigit(ch) || ALLOWED_CHARS.indexOf(ch) >= 0;
     }
 
     /**

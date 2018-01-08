@@ -2,7 +2,7 @@
 % Alex Honor; Greg Schueler
 % November 20, 2010
 
-Rundeck provides a Web API for use with your application.  
+Rundeck provides a Web API for use with your application.
 
 ## API Version Number
 
@@ -95,8 +95,8 @@ Changes introduced by API Version number:
 
 * New Endpoints.
     - [`GET /api/18/job/[ID]/info`][/api/V/job/[ID]/info] - Get metadata about a Job: Project name and scheduling info.
-* Updated Endpoints:       
-    - [`/api/18/job/[ID]/run`][/api/V/job/[ID]/run]       
+* Updated Endpoints:
+    - [`/api/18/job/[ID]/run`][/api/V/job/[ID]/run]
         - new `runAtTime` parameter to run once at a certain time.
         - Job options can now be specified separately outside of the `argString`. Use `option.NAME=value` parameters,
        or specify `options` entry in JSON body.
@@ -113,7 +113,7 @@ Changes introduced by API Version number:
     - [`/api/17/system/logstorage`][/api/V/system/logstorage] - Get stats about the Log File storage system.
     - [`/api/17/system/logstorage/incomplete`][/api/V/system/logstorage/incomplete] - List all executions with incomplete logstorage.
     - [`/api/17/system/logstorage/incomplete/resume`][/api/V/system/logstorage/incomplete/resume] - Resume incomplete log storage processing.
-    
+
 * Updated Endpoints.
     - [`/api/17/project/[PROJECT]/jobs`][/api/V/project/[PROJECT]/jobs] 
         - Response now includes whether a job is enabled, scheduled, schedule is enabled, and in Cluster mode includes the cluster mode server UUID of the schedule owner, and whether that is the current server or not.
@@ -144,11 +144,11 @@ Changes introduced by API Version number:
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/config`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/config] - Get SCM config for a project.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input] - Get Project SCM Action Input Fields.
     - [`/api/15/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]] - Perform SCM action for a project.
-    
+
     - [`/api/15/job/[ID]/scm/[INTEGRATION]/status`][/api/V/job/[ID]/scm/[INTEGRATION]/status] - Get SCM status for a Job.
     - [`/api/15/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]`][/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]] - Perform SCM action for a Job.
     - [`/api/15/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]/input`][/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]/input] - Get Job SCM Action Input Fields
-    
+
 
 **Version 14**:
 
@@ -1103,7 +1103,7 @@ startup time:
 
 `cpu/loadAverage`
 
-:   JVM load average percentage for the system for the previous minute (see [getSystemLoadAverage](http://download.oracle.com/javase/6/docs/api/java/lang/management/OperatingSystemMXBean.html#getSystemLoadAverage()))
+:   JVM load average percentage for the system for the previous minute (see [getSystemLoadAverage](https://docs.oracle.com/javase/6/docs/api/java/lang/management/OperatingSystemMXBean.html#getSystemLoadAverage())
 
 `cpu/processors`
 
@@ -1222,7 +1222,7 @@ Success response, with profile data:
 
 ### Get another user profile
 
-Get another user profile data. Requieres system `admin` permission.
+Get another user profile data. Requires system `admin` permission.
 
 **Request:**
 
@@ -1310,7 +1310,7 @@ Success response, with profile updated data:
 
 ### Modify another user profile
 
-Modify another user profile data. Requieres system `admin` permission.
+Modify another user profile data. Requires system `admin` permission.
 
 **Request:**
 
@@ -4768,7 +4768,7 @@ Response, based on `Accept` header:
 }
 ~~~~~
 
-`Content-Type: text/plain` ([Java Properties](http://en.wikipedia.org/wiki/.properties)-formatted text.)
+`Content-Type: text/plain` ([Java Properties](https://en.wikipedia.org/wiki/.properties)-formatted text.)
 
 ~~~~~ {.text}
 key=value
@@ -4803,7 +4803,7 @@ Content:
 }
 ~~~~~
 
-`Content-Type: text/plain` ([Java Properties](http://en.wikipedia.org/wiki/.properties)-formatted text.)
+`Content-Type: text/plain` ([Java Properties](https://en.wikipedia.org/wiki/.properties)-formatted text.)
 
 ~~~~~ {.text}
 key=value

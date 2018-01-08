@@ -44,6 +44,7 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
+import grails.util.Environment
 import groovy.io.FileType
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
 import org.rundeck.web.infosec.ContainerRoleSource
@@ -57,10 +58,12 @@ import rundeck.services.scm.ScmJobImporter
 
 beans={
     xmlns context: "http://www.springframework.org/schema/context"
-    log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
-        targetClass = "org.springframework.util.Log4jConfigurer"
-        targetMethod = "initLogging"
-        arguments = ["classpath:log4j.properties"]
+    if (Environment.PRODUCTION == Environment.current) {
+        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
+            targetClass = "org.springframework.util.Log4jConfigurer"
+            targetMethod = "initLogging"
+            arguments = ["classpath:log4j.properties"]
+        }
     }
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'

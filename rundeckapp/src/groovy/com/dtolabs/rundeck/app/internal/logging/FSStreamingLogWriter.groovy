@@ -64,12 +64,12 @@ class FSStreamingLogWriter implements StreamingLogWriter {
             }
         }
     }
-
+    private Exception closer;
     @Override
     void addEvent(LogEvent event) {
         synchronized (this) {
             if (null == output) {
-                throw new IllegalStateException("output was closed")
+                throw new IllegalStateException("output was closed", closer)
             }
             def event1 = formatter.outputEvent(new DefaultLogEvent(event, defaultMeta))
             write(event1)
@@ -85,6 +85,8 @@ class FSStreamingLogWriter implements StreamingLogWriter {
                 output.flush()
                 output.close()
                 output = null
+                //generate stacktrace to record source of close()
+                closer = new Exception()
             }
         }
     }
