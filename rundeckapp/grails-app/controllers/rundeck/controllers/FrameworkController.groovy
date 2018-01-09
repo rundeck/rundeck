@@ -36,6 +36,7 @@ import grails.converters.XML
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
+import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
@@ -1721,6 +1722,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }
 
         final def fwkProject = frameworkService.getFrameworkProject(project)
+        final def projectDescription = Project.withNewSession {
+            Project.findByName(project)?.description
+        }
+
         final def (resourceDescs, execDesc, filecopyDesc) = frameworkService.listDescriptions()
 
         //get list of node executor, and file copier services
@@ -1750,7 +1755,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         [
             project: project,
-            projectDescription:fwkProject.getProjectProperties().get("project.description"),
+            projectDescription:projectDescription,
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
             defaultNodeExec: defaultNodeExec,

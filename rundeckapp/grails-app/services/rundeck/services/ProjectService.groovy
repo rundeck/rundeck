@@ -41,6 +41,7 @@ import rundeck.BaseReport
 import rundeck.ExecReport
 import rundeck.Execution
 import rundeck.JobFileRecord
+import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.codecs.JobsXMLCodec
 import rundeck.controllers.JobXMLException
@@ -1144,6 +1145,12 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
         def newprops = new Properties()
         newprops.putAll(map)
         project.setProjectProperties(newprops)
+        def description = map['project.description']
+        Project.withNewSession{
+            def dbproj = Project.findByName(project.name)
+            dbproj.description = description?description:null
+            dbproj.save(flush: true)
+        }
     }
 
     /**

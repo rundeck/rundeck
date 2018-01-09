@@ -481,8 +481,9 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     @Override
     IRundeckProject createFrameworkProject(final String projectName, final Properties properties) {
         Project found = Project.findByName(projectName)
+        def description = properties.get('project.description')
         if (!found) {
-            def project = new Project(name: projectName)
+            def project = new Project(name: projectName, description: description)
             project.save()
         }
         def res = storeProjectConfig(projectName, properties)
@@ -496,9 +497,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         newproj.info = new ProjectInfo(
                 projectName: projectName,
                 projectService: this,
-                description: rdprojectconfig.hasProperty('project.description') ? rdprojectconfig.getProperty(
-                        'project.description'
-                ) : null
+                description: description? description: null
         )
         newproj.nodesFactory = nodeService
         return newproj
@@ -530,6 +529,13 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             final Set<String> removePrefixes
     )
     {
+        def description = properties['project.description']
+        Project.withNewSession{
+            def dbproj = Project.findByName(project.name)
+            dbproj.description = description?description:null
+            dbproj.save(flush: true)
+
+        }
         def resource=mergeProjectProperties(project.name,properties,removePrefixes)
         def rdprojectconfig = new RundeckProjectConfig(project.name,
                                                        createProjectPropertyLookup(project.name, resource.config ?: new Properties()),
@@ -681,16 +687,16 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         long start=System.currentTimeMillis()
         log.info("Loading project definition for ${project}...")
         def rdproject = new RundeckProject(loadProjectConfig(project), this)
+        def description = Project.withNewSession{
+            Project.findByName(project)?.description
+        }
         //preload cached readme/motd
         String readme = readCachedProjectFileAsAstring(project,"readme.md")
         String motd = readCachedProjectFileAsAstring(project,"motd.md")
         rdproject.info = new ProjectInfo(
                 projectName: project,
                 projectService: this,
-                description:
-                        rdproject.hasProperty('project.description')
-                                ? rdproject.getProperty('project.description')
-                                : null
+                description: description? description : null
         )
         rdproject.nodesFactory = nodeService
         log.info("Loaded project ${project} in ${System.currentTimeMillis()-start}ms")

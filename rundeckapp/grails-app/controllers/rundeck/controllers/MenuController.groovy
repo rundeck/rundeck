@@ -48,6 +48,7 @@ import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
+import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.ScheduledExecutionFilter
 import rundeck.User
@@ -2288,8 +2289,21 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         fprojects.each { IRundeckProject project->
             long sumstart=System.currentTimeMillis()
             summary[project.name]=allsummary[project.name]?:[:]
+            def description = Project.withNewSession{
+                Project.findByName(project.name)?.description
+            }
+            if(!description){
+                description = project.hasProperty("project.description")?project.getProperty("project.description"):''
+                if(description){
+                    Project.withNewSession{
+                        def proj = Project.findByName(project.name)
+                        proj?.description = description
+                        proj.save(flush: true)
+                    }
+                }
+            }
 
-            summary[project.name].description= project.hasProperty("project.description")?project.getProperty("project.description"):''
+            summary[project.name].description= description
             if(!params.refresh) {
                 summary[project.name].readmeDisplay = menuService.getReadmeDisplay(project)
                 summary[project.name].motdDisplay = menuService.getMotdDisplay(project)
