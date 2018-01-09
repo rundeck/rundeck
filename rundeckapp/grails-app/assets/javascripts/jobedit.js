@@ -248,6 +248,16 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
                     desc: 'For option: ' + _jobOptionData[x].name
                 }
             });
+            if(_jobOptionData[x].multivalued == true){
+                expvars.push({
+                    value: mkvar('option.' + _jobOptionData[x].name + '.delimiter' ),
+                    data: {
+                        category: 'Options',
+                        title: 'Option Delimeter value',
+                        desc: 'For option: ' + _jobOptionData[x].name
+                    }
+                });
+            }
             if (mode) {
                 expvars.push({
                     value: mkmodevar('option.' + _jobOptionData[x].name),
@@ -257,6 +267,17 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
                         desc: 'For option: ' + _jobOptionData[x].name
                     }
                 });
+
+                if(_jobOptionData[x].multivalued == true){
+                    expvars.push({
+                        value: mkmodevar('option.' + _jobOptionData[x].name + '.delimiter' ),
+                        data: {
+                            category: 'Options',
+                            title: 'Option value',
+                            desc: 'For option: ' + _jobOptionData[x].name
+                        }
+                    });
+                }
             }
             if (_jobOptionData[x].type == 'file') {
                 expvars.push({
