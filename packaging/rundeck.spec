@@ -133,7 +133,6 @@ fi
 /var/lib/rundeck/cli/okhttp-3.6.0.jar
 /var/lib/rundeck/cli/okio-1.11.0.jar
 /var/lib/rundeck/cli/retrofit-2.2.0.jar
-/var/lib/rundeck/cli/json-20171018.jar
 
 
 

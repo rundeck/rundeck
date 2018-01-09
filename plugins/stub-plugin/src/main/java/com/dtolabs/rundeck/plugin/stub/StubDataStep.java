@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
+import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.step.PluginStepContext;
@@ -31,6 +32,7 @@ import org.yaml.snakeyaml.constructor.SafeConstructor;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
@@ -45,7 +47,7 @@ import static com.dtolabs.rundeck.core.plugins.configuration.StringRenderingCons
 
 @Plugin(service = ServiceNameConstants.WorkflowStep, name = StubDataStep.PROVIDER_NAME)
 @PluginDescription(title = "Data Step", description = "Produce data values")
-public class StubDataStep implements StepPlugin {
+public class StubDataStep implements StepPlugin, DynamicProperties {
     public static final String PROVIDER_NAME = "stub-data-step";
 
     @PluginProperty(title = "Data",
@@ -63,8 +65,17 @@ public class StubDataStep implements StepPlugin {
                     description = "Format for the data",
                     required = true,
                     defaultValue = "properties")
-    @SelectValues(values = {"properties", "json", "yaml"})
+    @SelectValues(values = {}, dynamicValues = true, freeSelect = true)
     private String format;
+
+    @Override
+    public Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues) {
+        System.out.println(projectAndFrameworkValues.toString());
+        Map<String, Object> a = new LinkedHashMap<String, Object>();
+        String[] valor = new String[]{"a", "b", "c"};
+        a.put("format", valor);
+        return a;
+    }
 
     public enum StubReason implements FailureReason {
         InvalidData

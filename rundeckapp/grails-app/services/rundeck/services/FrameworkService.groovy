@@ -782,7 +782,12 @@ class FrameworkService implements ApplicationContextAware {
      */
     def Map<String, Object> getDynamicProperties(String type, Map<String, Object> projectAndFrameworkValues){
         def plugin = getStepPlugin(type)
-        plugin.getDynamicProperties(projectAndFrameworkValues)
+
+        if(plugin instanceof DynamicProperties){
+            return plugin.dynamicProperties(projectAndFrameworkValues)
+        }
+
+        return null
     }
     /**
      * Return the list of NodeStepPlugin descriptions
