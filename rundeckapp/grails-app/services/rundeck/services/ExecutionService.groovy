@@ -1310,6 +1310,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         def Map<String,Map<String,String>> datacontext = new HashMap<String,Map<String,String>>()
+
+        //add delimiter to option variables
+        if(null !=optsmap){
+            if(execMap  instanceof Execution && null!=execMap.scheduledExecution){
+                execMap.scheduledExecution.options.sort().each{option->
+                    if(option.multivalued){
+                        optsmap["${option.name}.delimiter"]=option.delimiter
+                    }
+                }
+            }
+        }
+
         datacontext.put("option",optsmap)
         if(extraParamsExposed){
             datacontext.put("secureOption",extraParamsExposed.clone())
