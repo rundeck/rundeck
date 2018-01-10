@@ -25,7 +25,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-
+import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 
 import org.codehaus.groovy.grails.plugins.codecs.JSONCodec;
@@ -33,7 +33,7 @@ import org.codehaus.groovy.grails.plugins.testing.GrailsMockHttpServletResponse
 import org.junit.Before
 import org.junit.Test
 import org.springframework.context.MessageSource
-
+import rundeck.Project
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
@@ -48,6 +48,7 @@ import javax.servlet.http.HttpServletResponse
  * @since 2014-03-04
  */
 @TestFor(ProjectController)
+@Mock([Project])
 class ProjectControllerTest {
 
     @Before

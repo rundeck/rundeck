@@ -31,6 +31,7 @@ import org.codehaus.groovy.grails.web.json.JSONObject
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
@@ -47,7 +48,7 @@ import rundeck.services.UserService
  * Time: 5:19 PM
  */
 @TestFor(FrameworkController)
-@Mock([ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution])
+@Mock([ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution, Project])
 class FrameworkControllerTest {
     /**
      * utility method to mock a class
