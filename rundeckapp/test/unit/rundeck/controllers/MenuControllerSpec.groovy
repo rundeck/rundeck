@@ -34,6 +34,8 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.CommandExec
+import rundeck.Execution
+import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.ApiService
@@ -51,7 +53,7 @@ import javax.servlet.http.HttpServletResponse
  * Created by greg on 3/15/16.
  */
 @TestFor(MenuController)
-@Mock([ScheduledExecution, CommandExec, Workflow])
+@Mock([ScheduledExecution, CommandExec, Workflow, Project, Execution])
 class MenuControllerSpec extends Specification {
     def "api job detail xml"() {
         given:
@@ -710,5 +712,58 @@ class MenuControllerSpec extends Specification {
         result.acllist[0].meta.policies
         result.acllist[0].meta.policies.size == 1
         result.acllist[0].meta.policies[0].description == description
+    }
+
+
+    def "homeAjax get description field on project table"() {
+        given:
+
+        controller.frameworkService = Mock(FrameworkService)
+        def description = 'desc'
+        new Project(name: 'proj', description: description).save(flush: true)
+        def iproj = Mock(IRundeckProject) {
+            getName() >> 'proj'
+        }
+        def projects = [iproj]
+        controller.configurationService = Mock(ConfigurationService)
+        controller.menuService = Mock(MenuService)
+
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        controller.homeAjax()
+
+        then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.projectNames(_) >> []
+        1 * controller.frameworkService.projects(_) >> projects
+        0 * iproj.hasProperty('project.description')
+        description == response.json.projects[0].description
+    }
+
+    def "homeAjax get description field on properties when is null on table"() {
+        given:
+        def description = 'desc'
+        controller.frameworkService = Mock(FrameworkService)
+        new Project(name: 'proj').save(flush: true)
+        def iproj = Mock(IRundeckProject) {
+            getName() >> 'proj'
+        }
+        def projects = [iproj]
+        controller.configurationService = Mock(ConfigurationService)
+        controller.menuService = Mock(MenuService)
+
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        controller.homeAjax()
+
+        then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.projectNames(_) >> []
+        1 * controller.frameworkService.projects(_) >> projects
+        1 * iproj.hasProperty('project.description') >> true
+        1 * iproj.getProperty('project.description') >> description
+        description == response.json.projects[0].description
     }
 }
