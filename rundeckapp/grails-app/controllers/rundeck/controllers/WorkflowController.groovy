@@ -81,9 +81,11 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         def newitemtype = params['newitemtype']
         def origitemtype
         def newitemDescription
+        def dynamicProperties
         if(item && item.instanceOf(PluginStep)){
             newitemDescription = getPluginStepDescription(item.nodeStep, item.type)
             origitemtype=item.type
+            dynamicProperties = getDynamicProperties(params.project, params['newitemtype'], item.nodeStep)
         } else{
             newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', params['newitemtype'])
         }
@@ -93,11 +95,14 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             }else if(item.instanceOf(CommandExec)){
                 origitemtype=item.adhocLocalString?'script':item.adhocRemoteString?'command':'scriptfile'
             }
+        } else {
+            dynamicProperties = getDynamicProperties(
+                    params.project,
+                    params['newitemtype'],
+                    params.newitemnodestep == 'true')
         }
         AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
         def fprojects = frameworkService.projectNames(auth).findAll{it != params.project}
-        Map<String, Object> projectAndFrameworkValues = frameworkService.getProjectProperties(params.project)
-        def dynamicProperties = frameworkService.getDynamicProperties(params['newitemtype'], projectAndFrameworkValues)
 
         [
                 item                : item,
@@ -1189,6 +1194,19 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             PluginStep step = item as PluginStep
             //set configuration based on parsed props
             step.configuration=validation.props
+        }
+    }
+
+    /**
+     * Get the dynamics properties of a plugin.
+     * @param project name of project
+     * @param newItemType new item type
+     */
+    private Map<String, Object> getDynamicProperties(String project, String newItemType, boolean isNodeStep){
+        if(isNodeStep){
+            frameworkService.getDynamicPropertiesNodeStepPlugin(newItemType, frameworkService.getProjectProperties(project));
+        } else {
+            frameworkService.getDynamicPropertiesStepPlugin(newItemType, frameworkService.getProjectProperties(project))
         }
     }
 

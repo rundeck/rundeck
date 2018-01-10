@@ -776,13 +776,36 @@ class FrameworkService implements ApplicationContextAware {
     }
 
     /**
-     * Return dynamic properties values
+     * Return node step plugin of a certain type
+     * @param type
+     * @return
+     */
+    def getNodeStepPlugin(String type){
+        rundeckFramework.getNodeStepExecutorService().providerOfType(type)
+    }
+
+
+    /**
+     * Return dynamic properties values from step plugin
      * @param type, projectAndFrameworkValues
      * @return
      */
-    def Map<String, Object> getDynamicProperties(String type, Map<String, Object> projectAndFrameworkValues){
+    def Map<String, Object> getDynamicPropertiesStepPlugin(String type, Map<String, Object> projectAndFrameworkValues){
         def plugin = getStepPlugin(type)
+        getDynamicProperties(plugin, projectAndFrameworkValues)
+    }
 
+    /**
+     * Return dynamic properties values from node step plugin
+     * @param type, projectAndFrameworkValues
+     * @return
+     */
+    def Map<String, Object> getDynamicPropertiesNodeStepPlugin(String type, Map<String, Object> projectAndFrameworkValues){
+        def plugin = getNodeStepPlugin(type)
+        getDynamicProperties(plugin, projectAndFrameworkValues)
+    }
+
+    def Map<String, Object> getDynamicProperties(plugin, Map<String, Object> projectAndFrameworkValues){
         if(plugin instanceof DynamicProperties){
             return plugin.dynamicProperties(projectAndFrameworkValues)
         }
