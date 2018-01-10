@@ -585,6 +585,7 @@
                     <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
                             extraInputCss: 'context_var_autocomplete',
                             service            : serviceName,
+                            dynamicProperties  : dynamicProperties,
                             provider           : newitemDescription.name,
                             properties         : newitemDescription.properties,
                             report             : report,

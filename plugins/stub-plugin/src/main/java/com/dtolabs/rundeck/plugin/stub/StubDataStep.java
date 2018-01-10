@@ -49,8 +49,8 @@ public class StubDataStep implements StepPlugin {
     public static final String PROVIDER_NAME = "stub-data-step";
 
     @PluginProperty(title = "Data",
-                    description = "Properties formatted data to set for the current node",
-                    required = true)
+            description = "Properties formatted data to set for the current node",
+            required = true)
     @RenderingOptions(
             {
                     @RenderingOption(key = DISPLAY_TYPE_KEY, value = "CODE"),
@@ -60,9 +60,9 @@ public class StubDataStep implements StepPlugin {
     private String data;
 
     @PluginProperty(title = "Format",
-                    description = "Format for the data",
-                    required = true,
-                    defaultValue = "properties")
+            description = "Format for the data",
+            required = true,
+            defaultValue = "properties")
     @SelectValues(values = {"properties", "json", "yaml"})
     private String format;
 

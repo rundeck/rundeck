@@ -18,16 +18,11 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
-import rundeck.WorkflowStep
-import rundeck.Workflow
-import rundeck.JobExec
-import rundeck.CommandExec
-import rundeck.ScheduledExecution
-import rundeck.PluginStep
-import com.dtolabs.rundeck.core.plugins.configuration.Description
+import rundeck.*
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
@@ -86,9 +81,11 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         def newitemtype = params['newitemtype']
         def origitemtype
         def newitemDescription
+        def dynamicProperties
         if(item && item.instanceOf(PluginStep)){
             newitemDescription = getPluginStepDescription(item.nodeStep, item.type)
             origitemtype=item.type
+            dynamicProperties = getDynamicProperties(params.project, params['newitemtype'], item.nodeStep)
         } else{
             newitemDescription = getPluginStepDescription(params.newitemnodestep == 'true', params['newitemtype'])
         }
@@ -98,11 +95,18 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             }else if(item.instanceOf(CommandExec)){
                 origitemtype=item.adhocLocalString?'script':item.adhocRemoteString?'command':'scriptfile'
             }
+        } else {
+            dynamicProperties = getDynamicProperties(
+                    params.project,
+                    params['newitemtype'],
+                    params.newitemnodestep == 'true')
         }
         AuthContext auth = frameworkService.getAuthContextForSubject(request.subject)
         def fprojects = frameworkService.projectNames(auth).findAll{it != params.project}
+
         [
                 item                : item,
+                dynamicProperties   : dynamicProperties,
                 key                 : params.key,
                 num                 : numi,
                 scheduledExecutionId: params.scheduledExecutionId,
@@ -1190,6 +1194,19 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             PluginStep step = item as PluginStep
             //set configuration based on parsed props
             step.configuration=validation.props
+        }
+    }
+
+    /**
+     * Get the dynamics properties of a plugin.
+     * @param project name of project
+     * @param newItemType new item type
+     */
+    private Map<String, Object> getDynamicProperties(String project, String newItemType, boolean isNodeStep){
+        if(isNodeStep){
+            frameworkService.getDynamicPropertiesNodeStepPlugin(newItemType, frameworkService.getProjectProperties(project));
+        } else {
+            frameworkService.getDynamicPropertiesStepPlugin(newItemType, frameworkService.getProjectProperties(project))
         }
     }
 
