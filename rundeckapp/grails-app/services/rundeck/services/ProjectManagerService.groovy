@@ -529,12 +529,14 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
             final Set<String> removePrefixes
     )
     {
-        def description = properties['project.description']
-        Project.withNewSession{
-            def dbproj = Project.findByName(project.name)
-            dbproj.description = description?description:null
-            dbproj.save(flush: true)
+        if(properties['project.description'] != null ) {
+            def description = properties['project.description']
+            Project.withNewSession {
+                def dbproj = Project.findByName(project.name)
+                dbproj.description = description ? description : null
+                dbproj.save(flush: true)
 
+            }
         }
         def resource=mergeProjectProperties(project.name,properties,removePrefixes)
         def rdprojectconfig = new RundeckProjectConfig(project.name,
@@ -596,9 +598,15 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         project.nodesFactory = nodeService
     }
     Map setProjectProperties(final String projectName, final Properties properties) {
-        Project found = Project.findByName(projectName)
-        if (!found) {
-            throw new IllegalArgumentException("project does not exist: " + projectName)
+        def description = properties['project.description']
+        Project.withNewSession{
+            def found = Project.findByName(projectName)
+            if (!found) {
+                throw new IllegalArgumentException("project does not exist: " + projectName)
+            }
+            found.description = description?description:null
+            found.save(flush: true)
+
         }
         Map resource=storeProjectConfig(projectName, properties)
         resource
