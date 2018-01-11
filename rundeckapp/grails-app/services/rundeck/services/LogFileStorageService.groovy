@@ -37,6 +37,7 @@ import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.core.task.AsyncTaskExecutor
+import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.services.events.ExecutionCompleteEvent
@@ -77,7 +78,9 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     ExecutionFileStoragePluginProviderService executionFileStoragePluginProviderService
     PluginService pluginService
     def frameworkService
-    def AsyncTaskExecutor logFileTaskExecutor
+    AsyncTaskExecutor logFileTaskExecutor
+    AsyncTaskExecutor logFileStorageTaskExecutor
+    TaskScheduler logFileStorageTaskScheduler
     def executorService
     def grailsApplication
     def grailsLinkGenerator
@@ -86,10 +89,6 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     def configurationService
     def grailsEvents
 
-    /**
-     * Scheduled executor for retries
-     */
-    def ScheduledExecutorService scheduledExecutor = Executors.newScheduledThreadPool(1)
     /**
      * Queue of log storage requests ids, for incomplet requests being resumed
      */
@@ -123,16 +122,21 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             //System.err.println("LogFileStoragePlugin not configured, disabling...")
             return
         }
-        logFileTaskExecutor?.execute( new TaskRunner<Map>(storageRequests,{ Map task ->
+        logFileStorageTaskExecutor?.execute(new TaskRunner<Map>(storageRequests, { Map task ->
             storageQueueCounter?.dec()
-            runStorageRequest(task)
+
+            //run within same executor on another thread, may block until a thread is available
+            logFileStorageTaskExecutor.execute {
+
+                runStorageRequest(task)
+            }
         }))
         logFileTaskExecutor?.execute( new TaskRunner<Map>(retrievalRequests,{ Map task ->
             runRetrievalRequest(task)
         }))
         if (getConfiguredResumeStrategy() == 'periodic') {
-            long delay = getConfiguredStorageRetryDelay()
-            scheduledExecutor.scheduleAtFixedRate(this.&dequeueIncompleteLogStorage, delay, delay, TimeUnit.SECONDS)
+            long delay = getConfiguredStorageRetryDelay() * 1000
+            logFileStorageTaskScheduler.scheduleAtFixedRate(this.&dequeueIncompleteLogStorage, new Date(System.currentTimeMillis() + delay), delay)
         }
     }
 
@@ -143,6 +147,11 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     Counter getStorageQueueCounter(){
         metricService?.counter(this.class.name + ".storageRequests","queued")
     }
+
+    Counter getStorageRunningCounter() {
+        metricService?.counter(this.class.name + ".storageRequests", "running")
+    }
+
     Counter getStorageTotalCounter(){
         metricService?.counter(this.class.name + ".storageRequests","total")
     }
@@ -1464,12 +1473,12 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             storageQueueCounter?.inc()
             storageTotalCounter?.inc()
         }
-        if(delay>0){
-            scheduledExecutor.schedule({
-                queueLogStorageRequest(task,-1)
-            }, delay, TimeUnit.SECONDS)
-        }else{
-            storageRequests<<task
+        if (delay > 0) {
+            logFileStorageTaskScheduler.schedule({
+                queueLogStorageRequest(task, -1)
+            }, new Date(System.currentTimeMillis() + (delay * 1000)))
+        } else {
+            storageRequests << task
         }
     }
     /**

@@ -34,6 +34,7 @@ import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.springframework.context.ApplicationContext
+import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
@@ -745,12 +746,12 @@ class LogFileStorageServiceTests  {
         test.storeLogFileSuccess=false
         LogFileStorageService svc
         boolean queued=false
-        def sched = mockFor(ScheduledExecutorService)
-        sched.demand.schedule() { Closure clos, long delay, TimeUnit unit ->
+        def sched = mockFor(TaskScheduler)
+        sched.demand.schedule() { Closure clos, Date when ->
             queued=true
-            assertEquals(30,delay)
+            assert when > new Date()
         }
-        service.scheduledExecutor = sched.createMock()
+        service.logFileStorageTaskScheduler = sched.createMock()
         Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
             svc = service
             assertFalse(test.storeLogFileCalled)
