@@ -41,6 +41,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     Boolean nodeRankOrderAscending
     Boolean nodeIntersect
     Boolean failOnDisable
+    Boolean importOptions
     static transients = ['jobIdentifier']
 
     static constraints = {
@@ -56,6 +57,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         nodeRankOrderAscending(nullable: true)
         nodeIntersect(nullable: true)
         failOnDisable(nullable: true)
+        importOptions(nullable: true)
     }
 
     static mapping = {
@@ -122,6 +124,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         if(failOnDisable){
             map.failOnDisable = failOnDisable
         }
+        if(importOptions){
+            map.importOptions = importOptions
+        }
         if(nodeFilter){
             map.jobref.nodefilters=[filter:nodeFilter]
             def dispatch=[:]
@@ -167,6 +172,11 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         if(map.jobref.failOnDisable){
             if (map.jobref.failOnDisable in ['true', true]) {
                 exec.failOnDisable = true
+            }
+        }
+        if(map.jobref.importOptions){
+            if (map.jobref.importOptions in ['true', true]) {
+                exec.importOptions = true
             }
         }
         exec.keepgoingOnSuccess = !!map.keepgoingOnSuccess

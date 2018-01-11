@@ -244,6 +244,7 @@ public class ExecutionItemFactory {
                 label,
                 false,
                 null,
+                false,
                 false
         );
     }
@@ -273,7 +274,8 @@ public class ExecutionItemFactory {
             final String label,
             final Boolean nodeIntersect,
             final String project,
-            final Boolean failOnDisable
+            final Boolean failOnDisable,
+            final Boolean importOptions
     )
     {
 
@@ -291,7 +293,8 @@ public class ExecutionItemFactory {
                 nodeRankOrderAscending,
                 nodeIntersect,
                 project,
-                failOnDisable
+                failOnDisable,
+                importOptions
         );
     }
 
@@ -618,6 +621,7 @@ public class ExecutionItemFactory {
         private final Boolean nodeIntersect;
         private final String project;
         private final Boolean failOnDisable;
+        private final Boolean importOptions;
 
         public JobReferenceItem(
                 final String label,
@@ -633,7 +637,8 @@ public class ExecutionItemFactory {
                 final Boolean nodeRankOrderAscending,
                 final Boolean nodeIntersect,
                 final String project,
-                final Boolean failOnDisable
+                final Boolean failOnDisable,
+                final Boolean importOptions
         )
         {
             this.label = label;
@@ -650,6 +655,7 @@ public class ExecutionItemFactory {
             this.nodeIntersect = nodeIntersect;
             this.project=project;
             this.failOnDisable = failOnDisable;
+            this.importOptions = importOptions;
         }
 
         @Override
@@ -717,6 +723,8 @@ public class ExecutionItemFactory {
         }
 
         public Boolean isFailOnDisable(){return failOnDisable;}
+
+        public Boolean isImportOptions(){return importOptions;}
 
         @Override
         public String toString() {

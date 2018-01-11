@@ -48,4 +48,5 @@ public interface JobExecutionItem extends HandlerExecutionItem, NodeStepExecutio
     public Boolean getNodeRankOrderAscending();
     public Boolean getNodeIntersect();
     public Boolean isFailOnDisable();
+    public Boolean isImportOptions();
 }

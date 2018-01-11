@@ -81,5 +81,8 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
     public Boolean isFailOnDisable() {
         return false;
     }
+    public Boolean isImportOptions() {
+        return false;
+    }
 
 }

@@ -3008,6 +3008,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Boolean nodeRankOrderAscending,
             INodeEntry node,
             Boolean nodeIntersect,
+            Boolean importOptions,
             dovalidate
     )
     throws ExecutionServiceValidationException
@@ -3030,6 +3031,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         def jobOptsMap = frameworkService.parseOptsFromArray(newargs)
+        if(importOptions && executionContext.dataContext?.option) {
+            jobOptsMap = executionContext.dataContext.option+jobOptsMap
+        }
         jobOptsMap = addOptionDefaults(se, jobOptsMap)
 
         //select secureAuth and secure options from the args to pass
@@ -3234,6 +3238,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             jitem.nodeRankOrderAscending,
                             node,
                             jitem.nodeIntersect,
+                            jitem.importOptions,
                             true
                     )
                 } catch (ExecutionServiceValidationException e) {

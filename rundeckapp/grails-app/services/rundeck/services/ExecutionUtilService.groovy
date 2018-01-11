@@ -234,7 +234,7 @@ class ExecutionUtilService {
         }else if (step instanceof JobExec || step.instanceOf(JobExec)) {
             final JobExec jobcmditem = step as JobExec;
 
-            final String[] args;
+            final String[] args
             if (null != jobcmditem.getArgString()) {
                 final List<String> strings = OptsUtil.burst(jobcmditem.getArgString());
                 args = strings.toArray(new String[strings.size()]);
@@ -259,7 +259,8 @@ class ExecutionUtilService {
                     step.description,
                     jobcmditem.nodeIntersect,
                     jobcmditem.jobProject,
-                    jobcmditem.failOnDisable
+                    jobcmditem.failOnDisable,
+                    jobcmditem.importOptions
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep
