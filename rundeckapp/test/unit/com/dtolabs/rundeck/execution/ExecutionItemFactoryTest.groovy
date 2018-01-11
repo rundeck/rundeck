@@ -228,6 +228,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -280,6 +281,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -303,6 +305,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -326,6 +329,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -349,6 +353,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -372,6 +377,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -395,6 +401,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -418,6 +425,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -443,6 +451,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -470,6 +479,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -497,6 +507,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobExecutionItem)
@@ -525,6 +536,7 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 'anotherProject',
+                false,
                 false
         )
         Assert.assertTrue(test instanceof JobRefCommand)
@@ -654,12 +666,39 @@ class ExecutionItemFactoryTest {
                 null,
                 null,
                 null,
-                true
+                true,
+                false
         )
         Assert.assertTrue(test instanceof JobRefCommand)
         JobRefCommand testcommand=(JobRefCommand) test
         Assert.assertEquals( 'monkey/piece',testcommand.jobIdentifier)
         Assert.assertEquals( ['args','args2'],testcommand.args as List)
         Assert.assertEquals(true,testcommand.failOnDisable)
+    }
+
+    @Test
+    public void createJobRef_with_import_options(){
+        StepExecutionItem test = ExecutionItemFactory.createJobRef(
+                "monkey/piece",
+                ['args', 'args2'] as String[],
+                true,
+                null,
+                true,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                false,
+                true
+        )
+        Assert.assertTrue(test instanceof JobRefCommand)
+        JobRefCommand testcommand=(JobRefCommand) test
+        Assert.assertEquals( 'monkey/piece',testcommand.jobIdentifier)
+        Assert.assertEquals( ['args','args2'],testcommand.args as List)
+        Assert.assertEquals(true,testcommand.importOptions)
     }
 }
