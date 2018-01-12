@@ -2844,8 +2844,8 @@ class ExecutionServiceSpec extends Specification {
                 ),
         )
         null != se
-        def opt1 = new Option(name: 'test1', enforced: false, required: false)
-        def opt2 = new Option(name: 'test2', enforced: false, required: false)
+        def opt1 = new Option(name: 'monkey', enforced: false, required: false)
+        def opt2 = new Option(name: 'delay', enforced: false, required: false)
         assertTrue(opt1.validate())
         assertTrue(opt2.validate())
         se.addToOptions(opt1)
@@ -2876,6 +2876,7 @@ class ExecutionServiceSpec extends Specification {
 
         then:
         newCtxt.dataContext.option
+        println(newCtxt.dataContext.option)
         expectedSize == newCtxt.dataContext.option.size()
 
         where:
