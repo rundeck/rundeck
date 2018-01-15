@@ -421,8 +421,6 @@ class LogFileStorageServiceSpec extends Specification {
     @Unroll
     def "getLogFileState"() {
         given:
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStorage.remotePendingDelay = pend
         def outFile = new File(tempDir, "rundeck/test/run/logs/1.rdlog")
         def outFilePart = new File(tempDir, "rundeck/test/run/logs/1.rdlog.part")
         if (loData) {
@@ -453,6 +451,7 @@ class LogFileStorageServiceSpec extends Specification {
         }
         service.configurationService = Mock(ConfigurationService) {
             getTimeDuration('execution.logs.fileStorage.checkpoint.time.interval', '30s', _) >> 30
+            getInteger('execution.logs.fileStorage.remotePendingDelay', _) >> pend
         }
         when:
         def result = service.getLogFileState(exec, filetype, plugin, getPart)
