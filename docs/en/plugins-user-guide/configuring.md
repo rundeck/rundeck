@@ -264,6 +264,15 @@ that can be used to tune the behavior of the plugins:
 * `rundeck.execution.logs.fileStorage.remotePendingDelay`
     * Grace time to allow after an execution finishes. Clients will see a "pending" message within this period after an execution finishes, even if the storage plugin is unable to find the log file. After this time period, they will see a "not found" message if the plugin is unable to find the log file.
     * default value: `120` (seconds)
+* `rundeck.execution.logs.fileStorage.retrievalTasks.concurrencyLimit`
+    * concurrency for retrieval tasks
+    * default: 5
+* `rundeck.execution.logs.fileStorage.storageTasks.concurrencyLimit`
+    * concurrency for storage tasks
+    * default: 10
+* `rundeck.execution.logs.fileStorage.scheduledTasks.poolSize`
+    * threadpool size for log storage retry scheduling (retries)
+    * default: 5
 
 #### Logging Plugin Configuration
 
