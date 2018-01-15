@@ -356,10 +356,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @return
      */
     int getConfiguredStorageRetryCount() {
-        def count = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.storageRetryCount ?: 0
-        if(count instanceof String){
-            count = count.toInteger()
-        }
+        def count = configurationService.getInteger("execution.logs.fileStorage.storageRetryCount",0)
         count > 0 ? count : 1
     }
     /**
@@ -367,10 +364,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @return
      */
     int getConfiguredStorageRetryDelay() {
-        def delay = grailsApplication.config?.rundeck?.execution?.logs?.fileStorage?.storageRetryDelay ?: 0
-        if (delay instanceof String) {
-            delay = delay.toInteger()
-        }
+        def delay = configurationService.getInteger("execution.logs.fileStorage.storageRetryDelay",0)
         delay > 0 ? delay : 60
     }
     /**
@@ -384,10 +378,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @return
      */
     int getConfiguredRetrievalRetryCount() {
-        def count = grailsApplication.config.rundeck?.execution?.logs?.fileStorage?.retrievalRetryCount ?: 0
-        if(count instanceof String){
-            count = count.toInteger()
-        }
+        def count = configurationService.getInteger("execution.logs.fileStorage.retrievalRetryCount",0)
         count > 0 ? count : 3
     }
     /**
@@ -395,10 +386,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @return
      */
     int getConfiguredRetrievalRetryDelay() {
-        def delay = grailsApplication.config.rundeck?.execution?.logs?.fileStorage?.retrievalRetryDelay ?: 0
-        if (delay instanceof String) {
-            delay = delay.toInteger()
-        }
+        def delay = configurationService.getInteger("execution.logs.fileStorage.retrievalRetryDelay",0)
         delay > 0 ? delay : 60
     }
     /**
@@ -406,10 +394,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
      * @return
      */
     int getConfiguredRemotePendingDelay() {
-        def delay = grailsApplication.config.rundeck?.execution?.logs?.fileStorage?.remotePendingDelay ?: 0
-        if (delay instanceof String) {
-            delay = delay.toInteger()
-        }
+        def delay = configurationService.getInteger("execution.logs.fileStorage.remotePendingDelay",0)
         delay > 0 ? delay : 120
     }
 
