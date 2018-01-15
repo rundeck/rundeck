@@ -122,6 +122,12 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             //System.err.println("LogFileStoragePlugin not configured, disabling...")
             return
         }
+
+        logFileStorageTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger('execution.logs.fileStorage.storageTasks.concurrencyLimit', 5)
+        logFileTaskExecutor.concurrencyLimit = 1 + configurationService.getInteger('execution.logs.fileStorage.retrievalTasks.concurrencyLimit', 5)
+
+        log.debug("logFileStorageTaskExecutor concurrency: ${logFileStorageTaskExecutor.concurrencyLimit}")
+        log.debug("logFileTaskExecutor concurrency: ${logFileTaskExecutor.concurrencyLimit}")
         logFileStorageTaskExecutor?.execute(new TaskRunner<Map>(storageRequests, { Map task ->
             storageQueueCounter?.dec()
 
