@@ -790,7 +790,9 @@ class FrameworkService implements ApplicationContextAware {
      * @param type, projectAndFrameworkValues
      * @return
      */
-    def Map<String, Object> getDynamicPropertiesStepPlugin(String type, Map<String, Object> projectAndFrameworkValues){
+    def Map<String, Object> getDynamicPropertiesStepPlugin(
+            String type, Map<String, Object> projectAndFrameworkValues) throws MissingProviderException{
+
         def plugin = getStepPlugin(type)
         getDynamicProperties(plugin, projectAndFrameworkValues)
     }
@@ -800,7 +802,9 @@ class FrameworkService implements ApplicationContextAware {
      * @param type, projectAndFrameworkValues
      * @return
      */
-    def Map<String, Object> getDynamicPropertiesNodeStepPlugin(String type, Map<String, Object> projectAndFrameworkValues){
+    def Map<String, Object> getDynamicPropertiesNodeStepPlugin(
+            String type, Map<String, Object> projectAndFrameworkValues) throws MissingProviderException{
+
         def plugin = getNodeStepPlugin(type)
         getDynamicProperties(plugin, projectAndFrameworkValues)
     }

@@ -1203,11 +1203,15 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
      * @param newItemType new item type
      */
     private Map<String, Object> getDynamicProperties(String project, String newItemType, boolean isNodeStep){
-        if(isNodeStep){
-            frameworkService.getDynamicPropertiesNodeStepPlugin(newItemType, frameworkService.getProjectProperties(project));
-        } else {
-            frameworkService.getDynamicPropertiesStepPlugin(newItemType, frameworkService.getProjectProperties(project))
+        if (newItemType && !(newItemType in ['command', 'script', 'scriptfile', 'job'])) {
+            try {
+                return isNodeStep ? frameworkService.getDynamicPropertiesNodeStepPlugin(newItemType, frameworkService.getProjectProperties(project)) :
+                        frameworkService.getDynamicPropertiesStepPlugin(newItemType, frameworkService.getProjectProperties(project))
+            } catch (MissingProviderException e) {
+                log.warn("step provider not found: ${newItemType}: ${e.message}", e)
+            }
         }
+        return null
     }
 
     /**
