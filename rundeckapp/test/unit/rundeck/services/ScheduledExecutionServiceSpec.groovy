@@ -2700,4 +2700,49 @@ class ScheduledExecutionServiceSpec extends Specification {
         false           | false            | true        | false
     }
 
+    @Unroll
+    def "do save job with dynamic threadcount"(){
+        given:
+        setupDoUpdate()
+
+        def job = new ScheduledExecution(createJobParams(doNodedispatch: true,
+                nodeInclude: "hostname",
+                nodeThreadcountDynamic: "\${option.threadcount}",
+                retry: null,
+                timeout: null,
+                options:[new Option(name: 'threadcount', defaultValue: '30', enforced: true)]
+                ))
+
+        when:
+        job.save()
+        then:
+        job.nodeThreadcount == 30
+    }
+
+    @Unroll
+    def "do update job dynamic nodethreadcount"(){
+        given:
+        setupDoUpdate()
+
+        def se = new ScheduledExecution(createJobParams(doNodedispatch: true, nodeInclude: "hostname",
+                nodeThreadcountDynamic: "\${option.threadcount}",
+                options:[new Option(name: 'threadcount', defaultValue: '30', enforced: true)]
+        )).save()
+        def newJob = new ScheduledExecution(createJobParams(
+                doNodedispatch: true, nodeInclude: "hostname",
+                nodeThreadcount: null,
+                nodeThreadcountDynamic: null
+        ))
+
+
+
+        when:
+        def results = service._doupdateJob(se.id,newJob, mockAuth())
+
+        then:
+        results.success
+
+        results.scheduledExecution.nodeThreadcountDynamic=="\${option.threadcount}"
+    }
+
 }

@@ -45,6 +45,8 @@ class Execution extends ExecutionContext {
     Orchestrator orchestrator;
     String userRoleList
 
+    Integer nodeThreadcount=1
+
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
     static transients = ['executionState', 'customStatusString', 'userRoles']
     static constraints = {

@@ -2498,4 +2498,140 @@ class ExecutionServiceSpec extends Specification {
         val.getNodeService() != null
 
     }
+
+    void "create execution dynamic threadcount from option"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                nodeThreadcountDynamic: "\${option.threadCount}",
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        def opt1 = new Option(name: 'threadCount', enforced: false, required: false, defaultValue: "10")
+
+        assertTrue(job.validate())
+
+        job.addToOptions(opt1)
+        null != job.save()
+
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                [executionType: 'user']
+        )
+
+        then:
+        e2 != null
+        e2.nodeThreadcount == 10
+
+    }
+
+    void "create execution dynamic threadcount from value"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                nodeThreadcountDynamic: "15",
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                [ executionType: 'user']
+        )
+
+        then:
+        e2 != null
+        e2.nodeThreadcount == 15
+
+    }
+
+    void "wrong execution dynamic threadcount from option"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                nodeThreadcountDynamic: "\${option.threadCount}",
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        def opt1 = new Option(name: 'threadCount', enforced: false, required: false, defaultValue: "wrongthreadcountvalue")
+
+        assertTrue(job.validate())
+
+        job.addToOptions(opt1)
+        null != job.save()
+
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                [executionType: 'user']
+        )
+
+        then:
+        e2 != null
+        e2.nodeThreadcount == 1
+
+    }
 }
