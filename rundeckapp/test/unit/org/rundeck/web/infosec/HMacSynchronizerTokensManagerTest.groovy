@@ -17,6 +17,7 @@
 package org.rundeck.web.infosec
 
 import grails.test.mixin.support.GrailsUnitTestMixin;
+import grails.test.mixin.TestMixin
 
 /**
  * HMacSynchronizerTokensManagerTest is ...

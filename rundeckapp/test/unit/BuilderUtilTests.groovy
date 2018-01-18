@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 
+import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
 import groovy.xml.MarkupBuilder
 
