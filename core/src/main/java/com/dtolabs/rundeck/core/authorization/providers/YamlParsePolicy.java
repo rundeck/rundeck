@@ -357,6 +357,19 @@ public class YamlParsePolicy implements Policy {
                                        })
                                        .collect(Collectors.toList());
 
+        //resource should not have null entries
+        for (Map.Entry<String, Object> stringObjectEntry : resource.entrySet()) {
+            if(stringObjectEntry.getValue()==null){
+
+                throw new AclPolicySyntaxException("Type rule 'for: { " +
+                        type +
+                        ": [...] }\' entry at index [" +
+                        typeIndex +
+                        "] Section " +
+                        "'" + name + ":' value for key: '" + stringObjectEntry.getKey() + "' cannot be null");
+            }
+        }
+
         if (collect.size() > 0) {
             throw new AclPolicySyntaxException("Type rule 'for: { " +
                                                type +
