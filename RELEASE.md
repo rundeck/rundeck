@@ -1,9 +1,9 @@
-Release 2.10.3
+Release 2.10.4
 ===========
 
-Date: 2018-01-17
+Date: 2018-01-18
 
-Name: <span style="color: BlueViolet"><span class="glyphicon glyphicon-apple"></span> "cafe mocha blueviolet apple"</span>
+Name: <span style="color: CadetBlue"><span class="glyphicon glyphicon-lamp"></span> "cafe mocha cadetblue lamp"</span>
 
 ## Upgrading from Earlier versions
 
@@ -13,31 +13,24 @@ Name: <span style="color: BlueViolet"><span class="glyphicon glyphicon-apple"></
 
 This is a bug fix release.
 
+Note:  If you use MSSQL database, see the comments on this issue [PR3080](https://github.com/rundeck/rundeck/pull/3080).
+
 ## Contributors
 
-* Alberto Hormazabal Cespedes (ahormazabal)
 * Greg Schueler (gschueler)
-* Jocelyn Thode
-* carlos (carlosrfranco)
+* jtobard
 
 ## Bug Reporters
 
-* alonalmog82
-* gschueler
-* houtmanj
-* jocelynthode
-* lusis
-* sebastianbello
+* ikogan
+* jtobard
+* michaelm02
 
 ## Issues
 
-[Milestone 2.10.3](https://github.com/rundeck/rundeck/milestone/66)
+[Milestone 2.10.4](https://github.com/rundeck/rundeck/milestone/68)
 
-* [empty `adhoc:` section: Invalid ACL passes validation and causes NPE](https://github.com/rundeck/rundeck/issues/3063)
-* [api token roles magic string does not work](https://github.com/rundeck/rundeck/issues/3057)
-* [Enhancement Request /  Additional tuning parameters for checkpoint log storage configuration.](https://github.com/rundeck/rundeck/issues/3053)
-* [Documentation: checkpoint log storage tuning configuration](https://github.com/rundeck/rundeck/issues/3052)
-* [Add profile comment on how to override variables](https://github.com/rundeck/rundeck/pull/3035)
-* [null pointer on /user/generateUserToken](https://github.com/rundeck/rundeck/issues/3025)
-* [Not truncating trailing spaces/validating valid charachters in the GIT URL field of the SCM plugin](https://github.com/rundeck/rundeck/issues/2959)
-* [Use debian standard naming convention for .deb files](https://github.com/rundeck/rundeck/pull/2795)
+* [Low isolation level as property](https://github.com/rundeck/rundeck/pull/3080)
+* [Could not rollback with auto-commit set on](https://github.com/rundeck/rundeck/issues/3079)
+* [ERROR READ_COMMITTED and SERIALIZABLE are the only valid transaction levels ](https://github.com/rundeck/rundeck/issues/3078)
+* [v2.10.2 does not work with Oracle due to incompatible transaction isolation](https://github.com/rundeck/rundeck/issues/3074)
