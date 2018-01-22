@@ -294,7 +294,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def total = -1
         if (keys.contains('total') || !keys) {
-            total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+            def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+            def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+            total = Execution.withTransaction([isolationLevel: isolationLevel]) {
                 Execution.countByScheduledExecution(scheduledExecution)
             }
         }
@@ -409,7 +411,9 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def total = Execution.withTransaction([isolationLevel: isolationLevel]) {
             Execution.countByScheduledExecution(scheduledExecution)
         }
         def reftotal = 0
@@ -528,7 +532,9 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def total = Execution.withTransaction([isolationLevel: isolationLevel]) {
             Execution.countByScheduledExecution(scheduledExecution)
         }
 
