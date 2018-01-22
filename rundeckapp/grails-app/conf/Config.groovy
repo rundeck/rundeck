@@ -29,9 +29,6 @@
 grails.config.locations = [ ]
 grails.config.locations = System.properties["${appName}.config.locations"]?.split(",").collect{ "file:$it" }
 
-// Package scan for spring java config.
-grails.spring.bean.packages = ["com.rundeck"]
-
 if(environment=="development"){
    grails.config.locations << "file:${userHome}/.grails/${appName}-config.properties"
 }
