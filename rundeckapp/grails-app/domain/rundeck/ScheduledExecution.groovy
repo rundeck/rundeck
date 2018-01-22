@@ -69,6 +69,8 @@ class ScheduledExecution extends ExecutionContext {
     Boolean multipleExecutions = false
     Orchestrator orchestrator
 
+    String notifyAvgDurationThreshold
+
     String timeZone
 
     Boolean scheduleEnabled = true
@@ -150,6 +152,7 @@ class ScheduledExecution extends ExecutionContext {
         timeZone(maxSize: 256, blank: true, nullable: true)
         retryDelay(nullable:true)
         successOnEmptyNodeFilter(nullable: true)
+        notifyAvgDurationThreshold(nullable: true)
     }
 
     static mapping = {
@@ -179,6 +182,7 @@ class ScheduledExecution extends ExecutionContext {
         timeout(type: 'text')
         retry(type: 'text')
         retryDelay(type: 'text')
+        notifyAvgDurationThreshold(type: 'text')
     }
 
     static namedQueries = {
