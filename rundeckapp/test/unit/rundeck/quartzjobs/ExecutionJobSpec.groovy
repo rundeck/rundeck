@@ -383,4 +383,37 @@ class ExecutionJobSpec extends Specification {
         result == 33000
 
     }
+
+    def "average notification threshold bad value"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                notifyAvgDurationThreshold:'somethingbad',
+                totalTime: 60000,
+                execCount: 2
+        )
+        se.save(flush:true)
+        def dataContext = [:]
+        ExecutionJob executionJob = new ExecutionJob()
+
+
+        when:
+
+        def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
+                se.averageDuration,dataContext)
+
+        then:
+
+        result == 30000
+
+    }
 }

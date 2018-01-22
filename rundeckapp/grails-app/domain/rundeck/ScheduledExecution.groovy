@@ -336,6 +336,8 @@ class ScheduledExecution extends ExecutionContext {
                             map.notification[it.eventTrigger].plugin.sort { a, b -> a.type <=> b.type }
                 }
             }
+
+            map.notifyAvgDurationThreshold = notifyAvgDurationThreshold
         }
         return map
     }
@@ -513,6 +515,11 @@ class ScheduledExecution extends ExecutionContext {
                 }
             }
             se.notifications=nots
+
+            if(null!=data.notifyAvgDurationThreshold){
+                se.notifyAvgDurationThreshold = data.notifyAvgDurationThreshold
+            }
+
         }
         return se
     }

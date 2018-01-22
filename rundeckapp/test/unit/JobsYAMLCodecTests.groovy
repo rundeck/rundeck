@@ -2060,4 +2060,37 @@ public class JobsYAMLCodecTests  {
 
     }
 
+    void testNotificationThreshold() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution(
+                jobName:'test job 1',
+                description:'test descrip',
+                loglevel: 'INFO',
+                project:'test1',
+                timeout:'2h',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                options:[new Option([name:'threadCount',defaultValue:'30'])] as TreeSet,
+                nodeThreadcountDynamic: "15",
+                nodeKeepgoing:true,
+                doNodedispatch:true,
+                notifications: [
+                        new Notification(eventTrigger: 'avgduration', type: 'email', content: 'test2@example.com')
+                ],
+                notifyAvgDurationThreshold: '30s'
+        )
+
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertEquals "wrong name", "test job 1", doc[0].name
+        assertEquals "incorrect notification Threshold","30s",doc[0].notifyAvgDurationThreshold
+
+    }
+
 }
