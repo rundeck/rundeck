@@ -45,6 +45,7 @@ import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.scm.ScmPluginConfig
+import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -722,6 +723,9 @@ class MenuControllerSpec extends Specification {
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
+        def scmConfig = Mock(ScmPluginConfigData){
+            getEnabled() >> true
+        }
 
         when:
         request.method = 'POST'
@@ -738,6 +742,7 @@ class MenuControllerSpec extends Specification {
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
+        1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
 
         response.json
         response.json.scmExportEnabled
