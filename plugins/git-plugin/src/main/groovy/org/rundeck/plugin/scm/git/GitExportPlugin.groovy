@@ -515,25 +515,21 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         println(jobs.size())
         def toPull = false
         jobs.each { job ->
-            def storedCommitId = ((JobScmReference)job).scmImportMetadata.commitId
+            def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
             def commitId = lastCommitForPath(getRelativePathForJob(job))
             def path = getRelativePathForJob(job)
-            println(storedCommitId)
-            println(commitId)
-            println(job.jobName)
             if(storedCommitId != null && commitId == null){
                 //file to delete-pull
                 git.rm().addFilepattern(path).call()
                 toPull = true
-            }
-            if(storedCommitId != null && commitId?.name != storedCommitId){
+            }else if(storedCommitId != null && commitId?.name != storedCommitId){
                 git.checkout().addPath(path).call()
                 toPull = true
             }
         }
         Status status = git.status().call()
         if (status.isClean()) {
-            //behinf branch on deleted job
+            //behind branch on deleted job
             def bstat = BranchTrackingStatus.of(repo, branch)
             if (bstat && bstat.behindCount > 0) {
                 toPull = true
