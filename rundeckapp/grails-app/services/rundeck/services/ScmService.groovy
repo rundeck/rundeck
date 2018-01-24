@@ -1032,7 +1032,15 @@ class ScmService {
      */
     Map<String, JobState> exportStatusForJobs(List<ScheduledExecution> jobs) {
         def status = [:]
-        exportjobRefsForJobs(jobs).each { jobReference ->
+        def clusterMode = frameworkService.isClusterModeEnabled()
+        def joblist = exportjobRefsForJobs(jobs)
+        if(jobs && jobs.size()>0 && clusterMode){
+            //check if are jobs outdated
+            def plugin = getLoadedExportPluginFor jobs.get(0).project
+            plugin.clusterFixJobs(joblist)
+        }
+
+        joblist.each { jobReference ->
             def plugin = getLoadedExportPluginFor jobReference.project
             if (plugin) {
                 def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)

@@ -129,4 +129,7 @@ public interface ScmExportPlugin {
      * @param originalPath original path
      */
     ScmDiffResult getFileDiff(JobExportReference job, String originalPath);
+
+
+    Map clusterFixJobs(List<JobReference> jobs);
 }

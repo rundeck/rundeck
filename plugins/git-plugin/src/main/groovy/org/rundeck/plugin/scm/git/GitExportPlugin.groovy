@@ -25,7 +25,11 @@ import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.lib.BranchTrackingStatus
+import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevCommit
+import org.eclipse.jgit.treewalk.TreeWalk
+import org.eclipse.jgit.treewalk.filter.PathFilterGroup
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
 import org.rundeck.plugin.scm.git.exp.actions.FetchAction
@@ -415,10 +419,28 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (!inited) {
             return null
         }
+        /*if(commitId){
+            def path = getRelativePathForJob(job)
+            def commit = lastCommitForPath(path)
+            println(commit?.name)
+            if(commitId!=commit?.name){
+                //other node pushed the info, refresh the file
+                println('need to be refreshed!')
+                replaceFile(path)
+            }
+        }*/
+
+
         def status = hasJobStatusCached(job, originalPath)
         if (!status) {
             status = refreshJobStatus(job, originalPath)
         }
+        if(status){
+            def path = getRelativePathForJob(job)
+            def commit = lastCommitForPath(path)
+            status['lastCommit']=commit?.name
+        }
+        //println(status)
         return createJobStatus(status, jobActionsForStatus(status))
     }
 
@@ -428,6 +450,32 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         } else {
             []
         }
+    }
+
+    def replaceFile(String path){
+        git.fetch().call()
+        //git.pull().setRebase(true).call()
+        git.checkout().addPath(path).call()
+
+        /*ObjectId head = repo.resolve("HEAD^{tree}")
+        if(!head){
+            return
+        }
+
+        def tree = new TreeWalk(repo)
+        tree.addTree(head)
+        tree.setRecursive(true)
+
+        tree.setFilter(PathFilterGroup.createFromStrings(path))
+
+        while (tree.next()) {
+            println(tree.getPathString())
+            def objectId = tree.getObjectId(0)
+            def bytes = repo.open(objectId, Constants.OBJ_BLOB).getBytes(Integer.MAX_VALUE)
+            println(new String(bytes))
+
+        }
+        tree.release()*/
     }
 
     @Override
@@ -460,6 +508,41 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                                  modified: diffs > 0,
                                  actions: availableActions
         )
+    }
+
+
+    Map clusterFixJobs(final List<JobReference> jobs){
+        println(jobs.size())
+        def toPull = false
+        jobs.each { job ->
+            def storedCommitId = ((JobScmReference)job).scmImportMetadata.commitId
+            def commitId = lastCommitForPath(getRelativePathForJob(job))
+            def path = getRelativePathForJob(job)
+            println(storedCommitId)
+            println(commitId)
+            println(job.jobName)
+            if(storedCommitId != null && commitId == null){
+                //file to delete-pull
+                git.rm().addFilepattern(path).call()
+                toPull = true
+            }
+            if(storedCommitId != null && commitId?.name != storedCommitId){
+                git.checkout().addPath(path).call()
+                toPull = true
+            }
+        }
+        Status status = git.status().call()
+        if (status.isClean()) {
+            //behinf branch on deleted job
+            def bstat = BranchTrackingStatus.of(repo, branch)
+            if (bstat && bstat.behindCount > 0) {
+                toPull = true
+            }
+        }
+        if(toPull){
+            git.pull().call()
+        }
+        [:]
     }
 
 
