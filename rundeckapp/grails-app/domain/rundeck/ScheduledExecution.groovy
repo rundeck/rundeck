@@ -71,6 +71,8 @@ class ScheduledExecution extends ExecutionContext {
     Boolean multipleExecutions = false
     Orchestrator orchestrator
 
+    String notifyAvgDurationThreshold
+
     String timeZone
 
     Boolean scheduleEnabled = true
@@ -156,6 +158,7 @@ class ScheduledExecution extends ExecutionContext {
         timeZone(maxSize: 256, blank: true, nullable: true)
         retryDelay(nullable:true)
         successOnEmptyNodeFilter(nullable: true)
+        notifyAvgDurationThreshold(nullable: true)
     }
 
     static mapping = {
@@ -185,6 +188,7 @@ class ScheduledExecution extends ExecutionContext {
         timeout(type: 'text')
         retry(type: 'text')
         retryDelay(type: 'text')
+        notifyAvgDurationThreshold(type: 'text')
     }
 
     static namedQueries = {
@@ -338,6 +342,8 @@ class ScheduledExecution extends ExecutionContext {
                             map.notification[it.eventTrigger].plugin.sort { a, b -> a.type <=> b.type }
                 }
             }
+
+            map.notifyAvgDurationThreshold = notifyAvgDurationThreshold
         }
         return map
     }
@@ -515,6 +521,11 @@ class ScheduledExecution extends ExecutionContext {
                 }
             }
             se.notifications=nots
+
+            if(null!=data.notifyAvgDurationThreshold){
+                se.notifyAvgDurationThreshold = data.notifyAvgDurationThreshold
+            }
+
         }
         return se
     }
