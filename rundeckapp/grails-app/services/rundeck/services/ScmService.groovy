@@ -1035,9 +1035,8 @@ class ScmService {
         def clusterMode = frameworkService.isClusterModeEnabled()
         def joblist = exportjobRefsForJobs(jobs)
         if(jobs && jobs.size()>0 && clusterMode){
-            //check if are jobs outdated
-            def plugin = getLoadedExportPluginFor jobs.get(0).project
-            plugin.clusterFixJobs(joblist)
+            def project = jobs.get(0).project
+            fixExportStatus(project, jobs)
         }
 
         joblist.each { jobReference ->
@@ -1249,6 +1248,13 @@ class ScmService {
         return pluginConfig.getSettingList('trackedItems')
     }
 
+    private fixExportStatus(String project, List<ScheduledExecution> jobs){
+        if(jobs && jobs.size()>0){
+            def joblist = exportjobRefsForJobs(jobs)
+            def plugin = getLoadedExportPluginFor project
+            plugin.clusterFixJobs(joblist)
+        }
+    }
 
 }
 

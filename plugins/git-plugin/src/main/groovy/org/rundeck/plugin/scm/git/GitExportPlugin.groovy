@@ -419,16 +419,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (!inited) {
             return null
         }
-        /*if(commitId){
-            def path = getRelativePathForJob(job)
-            def commit = lastCommitForPath(path)
-            println(commit?.name)
-            if(commitId!=commit?.name){
-                //other node pushed the info, refresh the file
-                println('need to be refreshed!')
-                replaceFile(path)
-            }
-        }*/
 
 
         def status = hasJobStatusCached(job, originalPath)
@@ -440,7 +430,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             def commit = lastCommitForPath(path)
             status['lastCommit']=commit?.name
         }
-        //println(status)
+
         return createJobStatus(status, jobActionsForStatus(status))
     }
 
@@ -452,31 +442,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         }
     }
 
-    def replaceFile(String path){
-        git.fetch().call()
-        //git.pull().setRebase(true).call()
-        git.checkout().addPath(path).call()
-
-        /*ObjectId head = repo.resolve("HEAD^{tree}")
-        if(!head){
-            return
-        }
-
-        def tree = new TreeWalk(repo)
-        tree.addTree(head)
-        tree.setRecursive(true)
-
-        tree.setFilter(PathFilterGroup.createFromStrings(path))
-
-        while (tree.next()) {
-            println(tree.getPathString())
-            def objectId = tree.getObjectId(0)
-            def bytes = repo.open(objectId, Constants.OBJ_BLOB).getBytes(Integer.MAX_VALUE)
-            println(new String(bytes))
-
-        }
-        tree.release()*/
-    }
 
     @Override
     String getRelativePathForJob(final JobReference job) {
@@ -512,7 +477,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
 
     Map clusterFixJobs(final List<JobReference> jobs){
-        println(jobs.size())
         def toPull = false
         jobs.each { job ->
             def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
