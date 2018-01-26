@@ -1,9 +1,9 @@
-Release 2.10.4
+Release 2.10.5
 ===========
 
-Date: 2018-01-18
+Date: 2018-01-26
 
-Name: <span style="color: CadetBlue"><span class="glyphicon glyphicon-lamp"></span> "cafe mocha cadetblue lamp"</span>
+Name: <span style="color: Chocolate"><span class="glyphicon glyphicon-piggy-bank"></span> "cafe mocha chocolate piggy bank"</span>
 
 ## Upgrading from Earlier versions
 
@@ -11,26 +11,18 @@ Name: <span style="color: CadetBlue"><span class="glyphicon glyphicon-lamp"></sp
 
 ## Notes
 
-This is a bug fix release.
-
-Note:  If you use MSSQL database, see the comments on this issue [PR3080](https://github.com/rundeck/rundeck/pull/3080).
+This is a bugfix release.
 
 ## Contributors
 
 * Greg Schueler (gschueler)
-* jtobard
 
 ## Bug Reporters
 
-* ikogan
-* jtobard
-* michaelm02
+* Hackeruncle
 
 ## Issues
 
-[Milestone 2.10.4](https://github.com/rundeck/rundeck/milestone/68)
+[Milestone 2.10.5](https://github.com/rundeck/rundeck/milestone/69)
 
-* [Low isolation level as property](https://github.com/rundeck/rundeck/pull/3080)
-* [Could not rollback with auto-commit set on](https://github.com/rundeck/rundeck/issues/3079)
-* [ERROR READ_COMMITTED and SERIALIZABLE are the only valid transaction levels ](https://github.com/rundeck/rundeck/issues/3078)
-* [v2.10.2 does not work with Oracle due to incompatible transaction isolation](https://github.com/rundeck/rundeck/issues/3074)
+* [com.dtolabs.rundeck.core.NodesetEmptyException: No matched nodes: NodeSet{includes={name=hadoop39, dominant=false, }}](https://github.com/rundeck/rundeck/issues/2942)
