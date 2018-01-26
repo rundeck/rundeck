@@ -24,12 +24,9 @@ import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Status
+import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.lib.BranchTrackingStatus
-import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.revwalk.RevCommit
-import org.eclipse.jgit.treewalk.TreeWalk
-import org.eclipse.jgit.treewalk.filter.PathFilterGroup
 import org.rundeck.plugin.scm.git.config.Export
 import org.rundeck.plugin.scm.git.exp.actions.CommitJobsAction
 import org.rundeck.plugin.scm.git.exp.actions.FetchAction
@@ -419,16 +416,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (!inited) {
             return null
         }
-
-
         def status = hasJobStatusCached(job, originalPath)
         if (!status) {
             status = refreshJobStatus(job, originalPath)
-        }
-        if(status){
-            def path = getRelativePathForJob(job)
-            def commit = lastCommitForPath(path)
-            status['lastCommit']=commit?.name
         }
 
         return createJobStatus(status, jobActionsForStatus(status))
@@ -441,7 +431,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             []
         }
     }
-
 
     @Override
     String getRelativePathForJob(final JobReference job) {
@@ -477,18 +466,24 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
 
     Map clusterFixJobs(final List<JobReference> jobs){
+        def retSt = [:]
+        retSt.deleted = []
+        retSt.restored = []
         def toPull = false
         jobs.each { job ->
             def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
             def commitId = lastCommitForPath(getRelativePathForJob(job))
+            println(commitId)
             def path = getRelativePathForJob(job)
             if(storedCommitId != null && commitId == null){
                 //file to delete-pull
                 git.rm().addFilepattern(path).call()
                 toPull = true
+                retSt.deleted.add(path)
             }else if(storedCommitId != null && commitId?.name != storedCommitId){
                 git.checkout().addPath(path).call()
                 toPull = true
+                retSt.restored.add(path)
             }
         }
         Status status = git.status().call()
@@ -497,12 +492,18 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             def bstat = BranchTrackingStatus.of(repo, branch)
             if (bstat && bstat.behindCount > 0) {
                 toPull = true
+                retSt.behind = true
             }
         }
         if(toPull){
-            git.pull().call()
+            retSt.pull = true
+            try{
+                git.pull().call()
+            }catch (JGitInternalException e){
+                retSt.error=e
+            }
         }
-        [:]
+        retSt
     }
 
 
