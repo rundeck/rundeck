@@ -440,4 +440,43 @@ class WorkflowControllerSpec extends Specification {
 
     }
 
+
+    def "insert jobexec using uuid"() {
+        given:
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        wf.commands = new ArrayList()
+        def inputparams = [jobName: 'blah', jobGroup: 'test/test']
+        //wf.commands << new JobExec( inputparams)
+        controller.frameworkService = Mock(FrameworkService)
+
+        when:
+        def result = controller._applyWFEditAction(
+                wf, [action: 'insert', num: 0,
+                     params: [jobName: jobName, jobGroup: jobGroup, jobProject: jobProject, uuid:jobUuid,
+                              description:'desc1',newitemtype: 'job']]
+        )
+
+        then:
+        //assertEquals(expectedError,result.error)
+        1 * controller.frameworkService.projectNames(_) >> ['proj','proj2']
+
+        if(!fieldname){
+            assertNull(result.error)
+        }else{
+            assertNotNull(result.error)
+            result.item.errors.hasFieldErrors(fieldname)
+        }
+
+
+
+        where:
+        jobName     |jobUuid    | jobGroup | jobProject | fieldname
+        'blah'      |null       | 'ble/ble'| null       | null
+        null        |null       | 'ble/ble'| null       | 'jobName'
+        null        |'as'       | 'ble/ble'| null       | null
+        'blah'      |null       | null     | null       | null
+        'blah'      |null       | 'ble/ble'| 'proj'     | null
+
+    }
+
 }
