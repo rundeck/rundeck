@@ -33,6 +33,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     String jobProject
     String jobIdentifier
     String argString
+    String uuid
     String nodeFilter
     Boolean nodeKeepgoing
     Integer nodeThreadcount
@@ -44,7 +45,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     static transients = ['jobIdentifier']
 
     static constraints = {
-        jobName(nullable: false, blank: false, maxSize: 1024)
+        jobName(nullable: true, blank: true, maxSize: 1024)
         jobGroup(nullable: true, blank: true, maxSize: 2048)
         jobProject(nullable: true, blank: true, maxSize: 2048)
         argString(nullable: true, blank: true)
@@ -56,6 +57,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         nodeRankOrderAscending(nullable: true)
         nodeIntersect(nullable: true)
         failOnDisable(nullable: true)
+        uuid(nullable: true)
     }
 
     static mapping = {
@@ -65,6 +67,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         jobProject type: 'string'
         nodeFilter type: 'text'
         nodeRankAttribute type: 'text'
+        uuid type: 'text'
     }
 
     public String toString() {
@@ -85,6 +88,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
 
     public String getJobIdentifier() {
+        if(uuid){
+            return uuid
+        }
         return (null==jobGroup?'':jobGroup+"/")+jobName;
     }
     public void setJobIdentifier(){

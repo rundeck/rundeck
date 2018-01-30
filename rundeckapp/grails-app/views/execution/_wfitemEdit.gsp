@@ -76,6 +76,15 @@
                     </div>
                 </div>
                 <div class="form-group" >
+                    <label class="col-sm-2 control-label"><g:message code="Workflow.Step.uuid.label" /></label>
+                    <div class="col-sm-10">
+                        <input type='text' name="uuid" value="${enc(attr:item?.uuid)}" size="100"
+                               placeholder="${message(code:"Workflow.Step.jobreference.uuid.placeholder")}"
+                               id="jobUuidField"
+                               class="form-control context_var_autocomplete"/>
+                    </div>
+                </div>
+                <div class="form-group" >
                     <label class="col-sm-2 control-label"><g:message code="Workflow.Step.argString.label" /></label>
                     <div class="col-sm-10">
                         <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100"

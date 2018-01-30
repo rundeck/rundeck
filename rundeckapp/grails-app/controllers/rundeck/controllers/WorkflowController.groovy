@@ -1125,7 +1125,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
      */
     public static boolean _validateCommandExec(WorkflowStep exec, String type = null, List authProjects = null) {
         if (exec instanceof JobExec) {
-            if (!exec.jobName) {
+            if (!exec.jobName && !exec.uuid) {
                 exec.errors.rejectValue('jobName', 'commandExec.jobName.blank.message')
             }
             if(exec.jobProject){

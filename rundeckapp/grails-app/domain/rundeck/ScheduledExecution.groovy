@@ -939,6 +939,21 @@ class ScheduledExecution extends ExecutionContext {
     }
 
     /**
+     * Find all ScheduledExecutions with the given uuid
+     * @param uuid
+     * @return
+     */
+    static List findAllScheduledExecutions(String uuid){
+        def c = ScheduledExecution.createCriteria()
+        def schedlist = c.list {
+            and {
+                eq('uuid', uuid)
+            }
+        }
+        return schedlist
+    }
+
+    /**
      * Find a ScheduledExecution by UUID or ID.  Checks if the
      * input value is a Long, if so finds the ScheduledExecution with that ID.
      * If it is a String it attempts to parse the String as a Long and if it is
@@ -972,8 +987,13 @@ class ScheduledExecution extends ExecutionContext {
      * @param project
      * @return
      */
-    static ScheduledExecution findScheduledExecution(String group, String name, String project) {
-        def schedlist = ScheduledExecution.findAllScheduledExecutions(group,name,project)
+    static ScheduledExecution findScheduledExecution(String group, String name, String project, String extid=null) {
+        def schedlist
+        if(extid){
+            schedlist = ScheduledExecution.findAllByUuid(extid)
+        }else{
+            schedlist = ScheduledExecution.findAllScheduledExecutions(group,name,project)
+        }
         if(schedlist && 1 == schedlist.size()){
             return schedlist[0]
         }else{
