@@ -44,9 +44,9 @@ class Execution extends ExecutionContext {
     Execution retryExecution
     Orchestrator orchestrator;
     String userRoleList
-
     Integer nodeThreadcount=1
-
+  
+    static hasMany = [refExec:ReferencedExecution]
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
     static transients = ['executionState', 'customStatusString', 'userRoles']
     static constraints = {
@@ -105,6 +105,7 @@ class Execution extends ExecutionContext {
         userRoleList(nullable: true)
         retryDelay(nullable:true)
         successOnEmptyNodeFilter(nullable: true)
+        refExec(nullable: true)
     }
 
     static mapping = {

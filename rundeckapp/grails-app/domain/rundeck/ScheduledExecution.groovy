@@ -67,8 +67,12 @@ class ScheduledExecution extends ExecutionContext {
     String notifyStartUrl
     String notifyAvgDurationRecipients
     String notifyAvgDurationUrl
+    String notifyRetryableFailureRecipients
+    String notifyRetryableFailureUrl
     Boolean multipleExecutions = false
     Orchestrator orchestrator
+
+    String notifyAvgDurationThreshold
 
     String timeZone
 
@@ -77,10 +81,12 @@ class ScheduledExecution extends ExecutionContext {
 
     Integer nodeThreadcount=1
     String nodeThreadcountDynamic
+    Long refExecCount=0
 
     static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
-                         'crontabString','averageDuration','notifyAvgDurationRecipients','notifyAvgDurationUrl']
+                         'crontabString','averageDuration','notifyAvgDurationRecipients','notifyAvgDurationUrl',
+                         'notifyRetryableFailureRecipients','notifyRetryableFailureUrl']
 
     static constraints = {
         project(nullable:false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
@@ -113,6 +119,7 @@ class ScheduledExecution extends ExecutionContext {
         totalTime(nullable:true)
         execCount(nullable:true)
         nodeThreadcount(nullable:true)
+        refExecCount(nullable:true)
         nodeRankOrderAscending(nullable:true)
         nodeRankAttribute(nullable:true)
         argString(nullable:true)
@@ -153,6 +160,7 @@ class ScheduledExecution extends ExecutionContext {
         retryDelay(nullable:true)
         successOnEmptyNodeFilter(nullable: true)
         nodeThreadcountDynamic(nullable: true)
+        notifyAvgDurationThreshold(nullable: true)
     }
 
     static mapping = {
@@ -182,6 +190,7 @@ class ScheduledExecution extends ExecutionContext {
         timeout(type: 'text')
         retry(type: 'text')
         retryDelay(type: 'text')
+        notifyAvgDurationThreshold(type: 'text')
     }
 
     static namedQueries = {
@@ -335,6 +344,8 @@ class ScheduledExecution extends ExecutionContext {
                             map.notification[it.eventTrigger].plugin.sort { a, b -> a.type <=> b.type }
                 }
             }
+
+            map.notifyAvgDurationThreshold = notifyAvgDurationThreshold
         }
         return map
     }
@@ -512,6 +523,11 @@ class ScheduledExecution extends ExecutionContext {
                 }
             }
             se.notifications=nots
+
+            if(null!=data.notifyAvgDurationThreshold){
+                se.notifyAvgDurationThreshold = data.notifyAvgDurationThreshold
+            }
+
         }
         return se
     }

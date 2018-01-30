@@ -62,4 +62,8 @@ public enum JobReferenceFailureReason implements FailureReason {
      * Job node filters match no nodes
      */
     NoMatchedNodes,
+    /**
+     * Disabled executions on referenced job
+     */
+    ExecutionsDisabled,
 }

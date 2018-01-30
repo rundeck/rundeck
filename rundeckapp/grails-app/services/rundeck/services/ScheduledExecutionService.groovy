@@ -1762,13 +1762,34 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                      content: params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL]]
         }
 
+        if ('true' == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL]) {
+            def config = [
+                    recipients: params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS],
+            ]
+            if (params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_SUBJECT]) {
+                config.subject = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_SUBJECT]
+            }
+            if (params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH]!=null) {
+                config.attachLog = params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH] in ['true', true]
+            }
+            nots << [eventTrigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME,
+                     type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                     configuration: config
+            ]
+        }
+        if ('true' == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL]) {
+            nots << [eventTrigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME,
+                     type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                     content: params[ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL]]
+        }
 
 
         //notifyOnsuccessPlugin
         if (params.notifyPlugin) {
             [ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME, ScheduledExecutionController
                     .ONFAILURE_TRIGGER_NAME, ScheduledExecutionController.ONSTART_TRIGGER_NAME,
-             ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME].each { trig ->
+             ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME,
+             ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME].each { trig ->
 //                params.notifyPlugin.each { trig, plug ->
                 def plugs = params.notifyPlugin[trig]
                 if (plugs) {
@@ -2422,6 +2443,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         ScheduledExecutionController.NOTIFY_START_RECIPIENTS,
                 (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME):
                         ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS,
+                (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME):
+                        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS,
         ]
         def conf = notif.configuration
         def arr = (conf?.recipients?: notif.content)?.split(",")
@@ -2471,6 +2494,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_FAILURE_URL,
                 (ScheduledExecutionController.ONSTART_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_START_URL,
                 (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
+                (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL,
         ]
         def arr = notif.content.split(",")
         def validCount=0
@@ -2526,12 +2550,15 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         ScheduledExecutionController.NOTIFY_START_RECIPIENTS,
                 (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME):
                         ScheduledExecutionController.NOTIFY_OVERAVGDURATION_RECIPIENTS,
+                (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME):
+                        ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS,
         ]
         def fieldNamesUrl = [
                 (ScheduledExecutionController.ONSUCCESS_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_SUCCESS_URL,
                 (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_FAILURE_URL,
                 (ScheduledExecutionController.ONSTART_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_START_URL,
                 (ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL,
+                (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME): ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL,
         ]
         
         def addedNotifications=[]

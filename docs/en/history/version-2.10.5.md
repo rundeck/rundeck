@@ -1,3 +1,7 @@
+% Version 2.10.5
+% greg
+% 01/26/2018
+
 Release 2.10.5
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: Chocolate"><span class="glyphicon glyphicon-piggy-bank
 
 ## Upgrading from Earlier versions
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 

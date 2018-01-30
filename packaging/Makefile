@@ -99,4 +99,4 @@ rpmclean:
 	rm -rf rpmdist
 
 debclean:
-	rm -rf debdist rundeck-*.deb
+	rm -rf debdist rundeck*.deb

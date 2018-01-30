@@ -77,4 +77,9 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
     @Override public Boolean getNodeIntersect() {
         return null;
     }
+
+    public Boolean isFailOnDisable() {
+        return false;
+    }
+
 }

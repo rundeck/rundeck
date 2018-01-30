@@ -89,11 +89,19 @@ class ScheduledExecutionController  extends ControllerBase{
     public static final String ONFAILURE_TRIGGER_NAME = 'onfailure'
     public static final String ONSTART_TRIGGER_NAME = 'onstart'
     public static final String OVERAVGDURATION_TRIGGER_NAME = 'onavgduration'
+    public static final String ONRETRYABLEFAILURE_TRIGGER_NAME = 'onretryablefailure'
     public static final String NOTIFY_OVERAVGDURATION_EMAIL = 'notifyAvgDurationEmail'
     public static final String NOTIFY_OVERAVGDURATION_URL = 'notifyAvgDurationUrl'
     public static final String NOTIFY_ONOVERAVGDURATION_URL = 'notifyOnAvgDurationUrl'
     public static final String NOTIFY_OVERAVGDURATION_RECIPIENTS = 'notifyAvgDurationRecipients'
     public static final String NOTIFY_OVERAVGDURATION_SUBJECT = 'notifyAvgDurationSubject'
+    public static final String NOTIFY_ONRETRYABLEFAILURE_URL = 'notifyOnRetryableFailureUrl'
+    public static final String NOTIFY_ONRETRYABLEFAILURE_EMAIL = 'notifyOnRetryableFailureEmail'
+    public static final String NOTIFY_RETRYABLEFAILURE_EMAIL = 'notifyRetryableFailureEmail'
+    public static final String NOTIFY_RETRYABLEFAILURE_URL = 'notifyRetryableFailureUrl'
+    public static final String NOTIFY_RETRYABLEFAILURE_RECIPIENTS = 'notifyRetryableFailureRecipients'
+    public static final String NOTIFY_RETRYABLEFAILURE_SUBJECT = 'notifyRetryableFailureSubject'
+    public static final String NOTIFY_RETRYABLEFAILURE_ATTACH= 'notifyFailureAttach'
 
     public static final String EMAIL_NOTIFICATION_TYPE = 'email'
     public static final String WEBHOOK_NOTIFICATION_TYPE = 'url'
@@ -105,7 +113,9 @@ class ScheduledExecutionController  extends ControllerBase{
             NOTIFY_ONSTART_EMAIL,
             NOTIFY_ONSTART_URL,
             NOTIFY_OVERAVGDURATION_EMAIL,
-            NOTIFY_ONOVERAVGDURATION_URL
+            NOTIFY_ONOVERAVGDURATION_URL,
+            NOTIFY_ONRETRYABLEFAILURE_EMAIL,
+            NOTIFY_ONRETRYABLEFAILURE_URL
     ]
 
     def Scheduler quartzScheduler
@@ -284,7 +294,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def total = -1
         if (keys.contains('total') || !keys) {
-            total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+            def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+            def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+            total = Execution.withTransaction([isolationLevel: isolationLevel]) {
                 Execution.countByScheduledExecution(scheduledExecution)
             }
         }
@@ -399,8 +411,14 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def total = Execution.withTransaction([isolationLevel: isolationLevel]) {
             Execution.countByScheduledExecution(scheduledExecution)
+        }
+        def reftotal = 0
+        if(scheduledExecution.refExecCount) {
+            reftotal = scheduledExecution.refExecCount
         }
 
         def remoteClusterNodeUUID=null
@@ -414,6 +432,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 crontab: crontab,
                 params: params,
                 total: total,
+                reftotal: reftotal,
                 nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
@@ -513,7 +532,9 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def total = Execution.withTransaction([isolationLevel: isolationLevel]) {
             Execution.countByScheduledExecution(scheduledExecution)
         }
 
