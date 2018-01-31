@@ -144,4 +144,7 @@ public interface ScmImportPlugin {
      * @param originalPath original path
      */
     ScmImportDiffResult getFileDiff(JobScmReference job, String originalPath);
+
+
+    Map clusterFixJobs(List<JobReference> jobs);
 }

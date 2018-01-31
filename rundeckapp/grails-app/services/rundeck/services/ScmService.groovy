@@ -1056,7 +1056,13 @@ class ScmService {
      */
     Map<String, JobImportState> importStatusForJobs(List<ScheduledExecution> jobs) {
         def status = [:]
-        scmJobRefsForJobs(jobs).each { JobScmReference jobReference ->
+        def clusterMode = frameworkService.isClusterModeEnabled()
+        def joblist = scmJobRefsForJobs(jobs)
+        if(jobs && jobs.size()>0 && clusterMode){
+            def project = jobs.get(0).project
+            fixImportStatus(project,joblist)
+        }
+        joblist.each { JobScmReference jobReference ->
             def plugin = getLoadedImportPluginFor jobReference.project
             if (plugin) {
                 //TODO: deleted job paths?
@@ -1254,6 +1260,14 @@ class ScmService {
             def plugin = getLoadedExportPluginFor project
             plugin.clusterFixJobs(joblist)
         }
+    }
+
+    private fixImportStatus(String project, List<JobScmReference> jobs){
+        if(jobs && jobs.size()>0){
+            def plugin = getLoadedImportPluginFor project
+            plugin.clusterFixJobs(jobs)
+        }
+
     }
 
 }
