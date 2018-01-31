@@ -473,7 +473,6 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         jobs.each { job ->
             def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
             def commitId = lastCommitForPath(getRelativePathForJob(job))
-            println(commitId)
             def path = getRelativePathForJob(job)
             if(storedCommitId != null && commitId == null){
                 //file to delete-pull

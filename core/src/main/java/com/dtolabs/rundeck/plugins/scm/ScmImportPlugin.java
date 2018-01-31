@@ -146,5 +146,12 @@ public interface ScmImportPlugin {
     ScmImportDiffResult getFileDiff(JobScmReference job, String originalPath);
 
 
+    /**
+     * Function to fix status of the jobs on cluster environment.
+     * To automatically match the job status on every node.
+     *
+     * @param jobs rundeck jobs
+     * @return map with information on the process
+     */
     Map clusterFixJobs(List<JobReference> jobs);
 }
