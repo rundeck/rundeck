@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Status
+import org.eclipse.jgit.api.errors.GitAPIException
 import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.revwalk.RevCommit
@@ -465,7 +466,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
     }
 
 
-    Map clusterFixJobs(final List<JobReference> jobs){
+    Map clusterFixJobs(final List<JobExportReference> jobs){
         def retSt = [:]
         retSt.deleted = []
         retSt.restored = []
@@ -482,7 +483,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             }else if(storedCommitId != null && commitId?.name != storedCommitId){
                 git.checkout().addPath(path).call()
                 toPull = true
-                retSt.restored.add(path)
+                retSt.restored.add(job)
             }
         }
         Status status = git.status().call()
@@ -500,8 +501,20 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                 git.pull().call()
             }catch (JGitInternalException e){
                 retSt.error=e
+            }catch(GitAPIException e){
+                retSt.error = e
+                log.info(e)
             }
         }
+
+        try{
+            jobs.each{job ->
+                refreshJobStatus(job,null)
+            }
+        }catch (ScmPluginException e){
+            retSt.error = e
+        }
+
         retSt
     }
 

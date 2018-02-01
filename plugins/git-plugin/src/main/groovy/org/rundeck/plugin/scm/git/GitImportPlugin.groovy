@@ -142,7 +142,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    GitImportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
+    GitImportSynchState   getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //look for any unimported paths
         if (!trackedItemsSelected) {
             return null
@@ -578,12 +578,16 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    Map clusterFixJobs(List<JobReference> jobs){
+    Map clusterFixJobs(List<JobScmReference> jobs){
         Status st = git.status().call()
         def bstat = BranchTrackingStatus.of(repo, branch)
         if(st.clean && bstat && bstat.behindCount>0){
             PullResult result = git.pull().call()
+            jobs.each{job ->
+                refreshJobStatus(job,null)
+            }
+            return [updated:true]
         }
-
+        [:]
     }
 }

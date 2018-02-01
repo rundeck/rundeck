@@ -429,17 +429,27 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                                  ),
                                                                  [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
             )) {
+                if(frameworkService.isClusterModeEnabled()){
+                    if (!scmService.projectHasConfiguredExportPlugin(params.project)) {
+                        //initialize if in another node
+                        scmService.initProject(params.project, 'export')
+                    }
+                    if(minScm){
+                        scmService.fixExportStatus(params.project, results.nextScheduled)
+                    }
+                }
                 def pluginData = [:]
                 try {
                     if (scmService.projectHasConfiguredExportPlugin(params.project)) {
                         pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export').enabled
                         if(pluginData.scmExportEnabled){
-                            pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
+
                             if(!minScm){
                                 pluginData.scmStatus = scmService.exportStatusForJobs(results.nextScheduled)
                                 pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
                                 pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
                             }
+                            pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
                         }
                         results.putAll(pluginData)
                     }
@@ -453,16 +463,27 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                                  ),
                                                                  [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]
             )) {
+                if(frameworkService.isClusterModeEnabled()){
+                    if (!scmService.projectHasConfiguredImportPlugin(params.project)) {
+                        //initialize if in another node
+                        scmService.initProject(params.project, 'import')
+                    }
+                    if(minScm){
+                        scmService.fixImportStatus(params.project, results.nextScheduled)
+                        scmService.importPluginStatus(authContext, params.project)
+                    }
+                }
                 def pluginData = [:]
                 try {
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
                         pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import').enabled
                         if(pluginData.scmImportEnabled){
-                            pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
+
                             if(!minScm){
                                 pluginData.scmImportJobStatus = scmService.importStatusForJobs(results.nextScheduled)
                                 pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
                             }
+                            pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
                         }
                         results.putAll(pluginData)
                     }
