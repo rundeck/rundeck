@@ -240,6 +240,9 @@ class UrlMappings {
         }
         "/project/$project/job/$id/scm/$integration/$action"(controller: 'scm')
         "/project/$project/job/$action?/$id?"(controller: 'scheduledExecution')
+
+        "/project/$project/triggers"(controller: 'trigger', action: 'list')
+        "/project/$project/trigger/$action?/$id?"(controller: 'trigger')
         "/resources/createProject"(controller: 'framework') {
             action = [GET: 'createProject', POST: 'createProjectPost']
         }

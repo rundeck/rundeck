@@ -58,6 +58,7 @@ class BootStrap {
     HealthCheckRegistry healthCheckRegistry
     def dataSource
     ApiMarshallerRegistrar apiMarshallerRegistrar
+    def triggerService
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -412,10 +413,15 @@ class BootStrap {
                  if ('sync' == rescheduleMode) {
                      timer("scheduledExecutionService.rescheduleJobs") {
                          scheduledExecutionService.rescheduleJobs(clusterMode ? serverNodeUUID : null)
+                         scheduledExecutionService.rescheduleTriggers(clusterMode ? serverNodeUUID : null)
+                         triggerService.init()
                      }
                  } else {
                      log.debug("scheduledExecutionService.rescheduleJobs: starting asynchronously")
                      scheduledExecutionService.rescheduleJobsAsync(clusterMode ? serverNodeUUID : null)
+                     scheduledExecutionService.rescheduleTriggersAsync(clusterMode ? serverNodeUUID : null)
+                     //TODO: async
+                     triggerService.init()
                  }
              }
 

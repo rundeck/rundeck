@@ -1779,7 +1779,7 @@ ansi-bg-default'''))
 
         attrs.fields.each {
             out << "<tr>"
-            out << "<td>${attrs.fieldTitle?.get(it) ?: it}</td>"
+            out << "<td class=\"${attrs.labelClasses}\">${attrs.fieldTitle?.get(it) ?: it}</td>"
             def val = (data.hasProperty(it) || data[it]) ? data[it] : ''
             def title = (attrs.dataTitles?.hasProperty(it) || attrs.dataTitles?.get(it)) ? attrs.dataTitles[it] : ''
             out << "<td title=\"${title}\">${val}</td>"

@@ -36,6 +36,8 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.trigger.action.JobRunTriggerAction
+import com.dtolabs.rundeck.server.plugins.trigger.condition.ScheduleTriggerCondition
 import grails.plugins.quartz.listeners.SessionBinderJobListener
 import grails.transaction.Transactional
 import org.apache.log4j.Logger
@@ -125,6 +127,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     def executionUtilService
     def fileUploadService
     JobSchedulerService jobSchedulerService
+    def triggerService
 
     @Override
     void afterPropertiesSet() throws Exception {
@@ -626,8 +629,27 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             rescheduleJobs(serverUUID)
         }
     }
-
     /**
+     * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
+     * @param serverUUID
+     * @return
+     */
+    def rescheduleTriggersAsync(String serverUUID = null) {
+        executorService.execute {
+            rescheduleTriggers(serverUUID)
+        }
+    }
+    /**
+     * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
+     * @param serverUUID
+     * @return
+     */
+    def rescheduleTriggers(String serverUUID = null, String project = null) {
+        //TODO: find triggers which use scheduler for conditions, set up quartz schedule
+        log.error("TODO: rescheduleTriggers: $serverUUID, $project")
+    }
+
+/**
      * Reschedule all scheduled jobs which match the given serverUUID, or all jobs if it is null.
      * @param serverUUID
      * @return

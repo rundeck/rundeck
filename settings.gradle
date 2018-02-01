@@ -16,7 +16,8 @@
 
 rootProject.name = 'rundeck'
 include 'core',
-    'rundeck-storage',
+	'rundeck-trigger',
+	'rundeck-storage',
     'rundeck-storage:rundeck-storage-api',
     'rundeck-storage:rundeck-storage-data',
     'rundeck-storage:rundeck-storage-conf',

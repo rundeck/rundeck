@@ -153,6 +153,9 @@ log4j={
 //            debug 'org.rundeck.web.infosec'
             debug 'org.apache.commons.httpclient'
             info 'grails.app.services.rundeck.services.ProjectManagerService'
+            debug 'grails.app.services.rundeck.services.ScheduledTriggerConditionService'
+            debug 'grails.app.services.rundeck.services.TriggerService'
+            debug 'grails.app.services.rundeck.services.JobRunTriggerActionService'
             //off 'h2database'
             //info 'grails.app.utils.rundeck.codecs.SanitizedHTMLCodec'
         }

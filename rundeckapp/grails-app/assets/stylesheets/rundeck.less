@@ -1832,8 +1832,20 @@ a {
 //other buttons
 
 // hollow button variant
+.btn-default-hollow {
+  .button-variant(lighten(@brand-primary, 30%); transparent; @btn-default-border);
+}
+.btn-primary-hollow {
+  .button-variant(@brand-primary; transparent; @btn-primary-border);
+}
 .btn-info-hollow {
   .button-variant(@brand-info ; transparent; @btn-info-border);
+}
+.btn-success-hollow {
+  .button-variant(@brand-success ; transparent; @btn-success-border);
+}
+.btn-danger-hollow {
+  .button-variant(@brand-danger; transparent; @btn-danger-border);
 }
 
 @keyframes pulse {

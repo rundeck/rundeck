@@ -1,0 +1,43 @@
+/*
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+//subprojects {
+apply plugin: "java"
+apply plugin: "groovy"
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testCompile "org.codehaus.groovy:groovy-all:2.3.7"
+    testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
+}
+
+//    group = 'org.rundeck.storage'
+jar {
+    manifest.attributes provider: 'gradle'
+}
+//}
+dependencies {
+    
+    compile "com.fasterxml.jackson.core:jackson-core:2.8.10"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.8.10"
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.5'
+}
