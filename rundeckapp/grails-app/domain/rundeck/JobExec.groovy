@@ -111,6 +111,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         if(jobProject){
             map.jobref.project = jobProject
         }
+        if(uuid){
+        	map.jobref.uuid = uuid
+        }
         if(argString){
             map.jobref.args=argString
         }
@@ -161,6 +164,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         exec.jobName=map.jobref.name
         if (map.jobref.project || map.project) {
             exec.jobProject = map.jobref.project ?: map.project
+        }
+        if(map.jobref.uuid){
+        	exec.uuid = map.jobref.uuid
         }
         if(map.jobref.args){
             exec.argString=map.jobref.args
