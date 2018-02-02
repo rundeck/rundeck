@@ -34,6 +34,7 @@ import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.springframework.mock.web.MockMultipartFile
 import org.springframework.mock.web.MockMultipartHttpServletRequest
+import rundeck.JobExec
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.ApiService
 import rundeck.services.FileUploadService
@@ -64,7 +65,7 @@ import javax.servlet.http.HttpServletResponse
 * $Id$
 */
 @TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution,Option,Workflow,CommandExec,Execution])
+@Mock([ScheduledExecution,Option,Workflow,CommandExec,Execution,JobExec])
 class ScheduledExecutionControllerTests  {
     /**
      * utility method to mock a class
