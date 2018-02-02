@@ -21,7 +21,7 @@ public interface TriggerActionHandler<T> {
      * @param condition    condition
      * @param action       action
      */
-    void performTriggerAction(String triggerId, T contextInfo, Map conditionMap, Condition condition, Action action);
+    void performTriggerAction(String triggerId, T contextInfo, Map conditionMap, Condition condition, Action action) throws ActionFailed;
 
     /**
      * @param action

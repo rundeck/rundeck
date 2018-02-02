@@ -10,7 +10,7 @@ class TriggerFiredEvent implements EmbeddedJsonData {
     String conditionData
     String state
 
-    static belongsTo = [TriggerRep]
+    static belongsTo = [triggerRep: TriggerRep]
 
     static constraints = {
         timeZone(maxSize: 256, blank: true, nullable: true)

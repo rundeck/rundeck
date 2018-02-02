@@ -3,24 +3,19 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.trigger.TriggerCreate
 import com.dtolabs.rundeck.app.support.trigger.TriggerUpdate
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.trigger.action.JobRunTriggerAction
 import com.dtolabs.rundeck.server.plugins.trigger.condition.ScheduleTriggerCondition
 import grails.transaction.Transactional
 import groovy.transform.ToString
-import org.rundeck.core.triggers.Action
-import org.rundeck.core.triggers.Condition
-import org.rundeck.core.triggers.Trigger
-import org.rundeck.core.triggers.TriggerActionHandler
-import org.rundeck.core.triggers.TriggerActionInvoker
-import org.rundeck.core.triggers.TriggerConditionHandler
-import org.rundeck.core.triggers.TriggerFired
+import org.rundeck.core.triggers.*
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.TriggerFiredEvent
 import rundeck.TriggerRep
 
 import java.time.ZoneId
-import java.time.ZonedDateTime
 
 @Transactional
 class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RDTriggerContext> {
@@ -34,13 +29,13 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
      * handle defined triggers needing system startup hook
      */
     void init() {
-        log.error("Startup: initializing trigger Service")
+        log.info("Startup: initializing trigger Service")
         Map<String, TriggerConditionHandler<RDTriggerContext>> startupHandlers = triggerConditionHandlerMap?.findAll {
             it.value.onStartup()
         }
-        log.error("Startup: TriggerService: startupHandlers: ${startupHandlers}")
+        log.debug("Startup: TriggerService: startupHandlers: ${startupHandlers}")
         def triggers = listEnabledTriggers()
-        log.error("Startup: TriggerService: triggers: ${triggers}")
+        log.debug("Startup: TriggerService: triggers: ${triggers}")
         triggers.each { TriggerRep trigger ->
             def condition = conditionFor(trigger)
             RDTriggerContext triggerContext = contextForTrigger(trigger)
@@ -74,17 +69,46 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         new RDTriggerContext(clusterContextInfo + [project: trigger.project, authContext: authContext])
     }
 
+    public Map<String, DescribedPlugin<Condition>> getTriggerConditionPluginDescriptions() {
+        pluginService.listPlugins(Condition)
+    }
+
+    public Map<String, DescribedPlugin<Action>> getTriggerActionPluginDescriptions() {
+        pluginService.listPlugins(Action)
+    }
+
+    public DescribedPlugin<Action> getTriggerActionPlugin(String provider) {
+        pluginService.getPluginDescriptor(provider, Action)
+    }
+
+    public ConfiguredPlugin<Action> getConfiguredActionPlugin(String provider, Map config) {
+        //TODO: project scope
+        pluginService.configurePlugin(provider, config, Action)
+    }
+
+    public DescribedPlugin<Condition> getTriggerConditionPlugin(String provider) {
+        pluginService.getPluginDescriptor(provider, Condition)
+    }
+
+    public ConfiguredPlugin<Condition> getConfiguredConditionPlugin(String provider, Map config) {
+        //TODO: project scope
+        pluginService.configurePlugin(provider, config, Condition)
+    }
     /**
      * Map of installed trigger handlers
      * @return
      */
     public Map<String, TriggerConditionHandler<RDTriggerContext>> getTriggerConditionHandlerMap() {
-        //TODO: plugins
-        applicationContext.getBeansOfType(
-                TriggerConditionHandler
-        )?.findAll {
-            !it.key.endsWith('Profiled')
-        }
+        def plugins = pluginService.listPlugins(TriggerConditionHandler).collectEntries { [it.key, it.value.instance] }
+
+
+        plugins
+//        //TODO: plugins
+//        applicationContext.getBeansOfType(
+//                TriggerConditionHandler
+//        )?.findAll {
+//            !it.key.endsWith('Profiled')
+//        }
     }
 
     /**
@@ -92,12 +116,13 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
      * @return
      */
     public Map<String, TriggerActionHandler<RDTriggerContext>> getTriggerActionHandlerMap() {
-        //TODO: plugins
-        applicationContext.getBeansOfType(
-                TriggerActionHandler
-        )?.findAll {
-            !it.key.endsWith('Profiled')
-        }
+        pluginService.listPlugins(TriggerActionHandler).collectEntries { [it.key, it.value.instance] }
+//        //TODO: plugins
+//        applicationContext.getBeansOfType(
+//                TriggerActionHandler
+//        )?.findAll {
+//            !it.key.endsWith('Profiled')
+//        }
     }
 
     public Map getClusterContextInfo() {
@@ -116,20 +141,19 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
     }
 
     Condition conditionFor(TriggerRep rep) {
-        //todo: plugins
-        if (rep.conditionType == ScheduleTriggerCondition.providerName) {
-            return ScheduleTriggerCondition.fromConfig(rep.conditionConfig)
+        def condition = getConfiguredConditionPlugin(rep.conditionType, rep.conditionConfig)
+        if (!condition) {
+            throw new IllegalArgumentException("Unknown condition type: ${rep.conditionType}")
         }
-        throw new IllegalArgumentException("Unknown condition type: ${rep.conditionType}")
+        return condition.instance
     }
 
     Action actionFor(TriggerRep rep) {
-        //todo: plugins
-        if (rep.actionType == JobRunTriggerAction.providerName) {
-            return JobRunTriggerAction.fromConfig(rep.conditionConfig)
+        def action = getConfiguredActionPlugin(rep.actionType, rep.actionConfig)
+        if (!action) {
+            throw new IllegalArgumentException("Unknown action type: ${rep.conditionType}")
         }
-        throw new IllegalArgumentException("Unknown action type: ${rep.conditionType}")
-
+        return action.instance
     }
 
     private def registerTrigger(TriggerRep trigger, boolean enabled) {
@@ -238,12 +262,11 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         def event = new TriggerFiredEvent(
                 conditionMap: conditionMap,
                 timeZone: ZoneId.systemDefault().toString(),
-                state: 'fired'
+                state: 'fired',
+                triggerRep: trigger
         )
         event.save(flush: true)
         //TODO: save event
-
-        TriggerFired fired = createTriggerFired(trigger, event)
 
         def action = actionFor(trigger)
         def condition = conditionFor(trigger)
@@ -251,17 +274,20 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         TriggerActionHandler actHandler = getActionHandlerForTrigger(trigger, action, contextInfo)
         //TODO: on executor
 
-        actHandler.performTriggerAction(triggerId, contextInfo, conditionMap, condition, action)
-//        fired.trigger.action.onTrigger(fired)
+        try {
+            actHandler.performTriggerAction(triggerId, contextInfo, conditionMap, condition, action)
+        } catch (Throwable t) {
+            log.error("Failed to run trigger action for $triggerId: $t.message", t)
+            def event2 = new TriggerFiredEvent(
+                    conditionMap: conditionMap,
+                    timeZone: ZoneId.systemDefault().toString(),
+                    state: 'failed',
+                    triggerRep: trigger
+            )
+            event2.save(flush: true)
+        }
     }
 
-    TriggerFired createTriggerFired(TriggerRep triggerRep, TriggerFiredEvent triggerFiredEvent) {
-        new TriggerFiredImpl(
-                trigger: createTrigger(triggerRep),
-                //TODO: timezone
-                fireDate: ZonedDateTime.ofInstant(triggerFiredEvent.dateCreated.toInstant(), ZoneId.systemDefault())
-        )
-    }
 
     Trigger createTrigger(TriggerRep triggerRep) {
         Condition conditionRep = conditionFor(triggerRep)
@@ -286,10 +312,6 @@ class TriggerImpl implements Trigger {
     Action action
 }
 
-class TriggerFiredImpl implements TriggerFired {
-    Trigger trigger
-    ZonedDateTime fireDate
-}
 
 @ToString(includeFields = true, includeNames = true)
 class RDTriggerContext {

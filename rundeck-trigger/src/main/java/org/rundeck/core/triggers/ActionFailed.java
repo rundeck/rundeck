@@ -16,15 +16,23 @@
 
 package org.rundeck.core.triggers;
 
-import java.time.ZonedDateTime;
-import java.util.Date;
-import java.util.Map;
+public class ActionFailed extends Exception {
+    public ActionFailed() {
+    }
 
-/**
- * Represents a Trigger being fired due to a condition
- */
-public interface TriggerFired {
-    Trigger getTrigger();
+    public ActionFailed(String message) {
+        super(message);
+    }
 
-    ZonedDateTime getFireDate();
+    public ActionFailed(String message, Throwable cause) {
+        super(message, cause);
+    }
+
+    public ActionFailed(Throwable cause) {
+        super(cause);
+    }
+
+    public ActionFailed(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 }

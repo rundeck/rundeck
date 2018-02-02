@@ -63,7 +63,11 @@ public interface Property {
         /**
          * A set of checkbox options
          */
-        Options
+        Options,
+        /**
+         * A set of key/value entries
+         */
+        Map
     }
 
     /**

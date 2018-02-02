@@ -43,6 +43,8 @@ import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
+import com.dtolabs.rundeck.server.plugins.trigger.action.JobRunTriggerAction
+import com.dtolabs.rundeck.server.plugins.trigger.condition.ScheduleTriggerCondition
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
 import grails.util.Environment
 import groovy.io.FileType
@@ -323,9 +325,17 @@ beans={
             RenderDatatypeFilterPlugin,
             QuietFilterPlugin,
             HighlightFilterPlugin,
+            //trigger conditions
+            ScheduleTriggerCondition,
+            //trigger actions
+            JobRunTriggerAction
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }
+
+    //built-in trigger condition/action handlers
+    pluginRegistry['scheduleTriggerConditionHandler'] = 'scheduledTriggerConditionService'
+    pluginRegistry['jobRunTriggerActionHandler'] = 'jobRunTriggerActionService'
 
     //TODO: scan defined plugins:
     //    context.'component-scan'('base-package': "com.dtolabs.rundeck.server.plugins.logging")

@@ -72,6 +72,15 @@
     </div>
 </div>
 
+<div class="row row-space">
+    <div class="col-sm-12">
+        <g:if test="${trigger.events}">
+            <g:basicTable data="${trigger.events}" columns="['state', 'dateCreated', 'conditionMap']"
+                          classes="table-bordered table-condensed"/>
+        </g:if>
+    </div>
+</div>
+
 <div>
     <g:link action="delete" class="btn btn-danger-hollow btn-sm"
             params="[project: project, id: trigger.uuid]">

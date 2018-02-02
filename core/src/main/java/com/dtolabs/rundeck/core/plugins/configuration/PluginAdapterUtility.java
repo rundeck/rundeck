@@ -188,6 +188,8 @@ public class PluginAdapterUtility {
             return Property.Type.String;
         } else if (clazz == String[].class || Set.class.isAssignableFrom(clazz) || List.class.isAssignableFrom(clazz)) {
             return Property.Type.Options;
+        } else if ( Map.class.isAssignableFrom(clazz) ) {
+            return Property.Type.Map;
         }
         return null;
     }

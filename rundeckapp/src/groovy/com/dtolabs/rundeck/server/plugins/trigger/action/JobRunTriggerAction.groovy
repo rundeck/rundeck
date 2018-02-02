@@ -16,35 +16,62 @@
 
 package com.dtolabs.rundeck.server.plugins.trigger.action
 
+import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
+import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
 import org.rundeck.core.triggers.Action
 
+@Plugin(name = JobRunTriggerAction.PROVIDER_NAME, service = 'Action')
+@PluginDescription(title = 'Run a Job', description = 'Runs a job')
 class JobRunTriggerAction implements Action {
-    static final String providerName = 'JobRun'
+    static final String PROVIDER_NAME = 'JobRun'
     String type
     Map data
+    @PluginProperty(required = true, title = 'Job', description = 'Job to run.')
+    @RenderingOptions(
+            [
+                    @RenderingOption(key = StringRenderingConstants.SELECTION_ACCESSOR_KEY, value = 'RUNDECK_JOB'),
+                    @RenderingOption(key = 'data.selector.result', value = 'id')
+            ]
+    )
     String jobId
+
+    @PluginProperty(title = 'Options', description = 'Execution options for the Job')
+    @RenderingOptions(
+            [
+                    @RenderingOption(key = StringRenderingConstants.SELECTION_ACCESSOR_KEY, value = 'RUNDECK_JOB_OPTIONS'),
+                    @RenderingOption(key = StringRenderingConstants.ASSOCIATED_PROPERTY_KEY, value = 'jobId'),
+                    @RenderingOption(key = StringRenderingConstants.REQUIRED_PROPERTY_KEY, value = 'jobId'),
+            ]
+    )
     Map optionData
     Map extraData
 
+    JobRunTriggerAction() {
+
+    }
     JobRunTriggerAction(Map data) {
-        this.type = providerName
+        this.type = PROVIDER_NAME
         this.data = data
         this.jobId = data?.jobId
         this.optionData = data?.options
         this.extraData = data?.extra
     }
-    String getArgString(){
+
+    String getArgString() {
         'TODO'
     }
-    String getFilter(){
+
+    String getFilter() {
         extraData?.filter
     }
-    String asUser(){
+
+    String getAsUser() {
         extraData?.asUser
     }
 
-    static JobRunTriggerAction fromConfig(Map map) {
-        new JobRunTriggerAction(map)
-    }
 
 }

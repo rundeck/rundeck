@@ -210,8 +210,22 @@ public class PropertyUtil {
                         scope,
                         renderingOptions
                 );
-            default:
+            case String:
                 return string(name, title, description, required, defaultValue, validator, scope, renderingOptions);
+            case Map:
+                return PropertyUtil.map(
+                        name,
+                        title,
+                        description,
+                        required,
+                        defaultValue,
+                        validator,
+                        scope,
+                        renderingOptions
+                );
+
+            default:
+                throw new IllegalArgumentException("Unexpected property type: " + type);
         }
     }
 
@@ -796,6 +810,40 @@ public class PropertyUtil {
         );
     }
 
+    /**
+     * @param name             name
+     * @param title            optional title
+     * @param description      optional description
+     * @param required         true if required
+     * @param defaultValue     optional default value
+     * @param validator        validator
+     * @param scope            resolution scope
+     * @param renderingOptions options
+     * @return a Free Select property with a list of values
+     */
+    public static Property map(
+            final String name,
+            final String title,
+            final String description,
+            final boolean required,
+            final String defaultValue,
+            final PropertyValidator validator,
+            final PropertyScope scope,
+            final Map<String, Object> renderingOptions
+    ) {
+
+        return new MapProperty(
+                name,
+                title,
+                description,
+                required,
+                defaultValue,
+                validator,
+                scope,
+                renderingOptions
+        );
+    }
+
     static final class StringProperty extends PropertyBase {
 
         public StringProperty(final String name,
@@ -905,8 +953,7 @@ public class PropertyUtil {
                 final Map<String, String> selectLabels,
                 final PropertyScope scope,
                 final Map<String, Object> renderingOptions
-        )
-        {
+        ) {
             super(
                     name,
                     title,
@@ -923,6 +970,35 @@ public class PropertyUtil {
 
         public Type getType() {
             return Type.Options;
+        }
+    }
+
+    static final class MapProperty extends PropertyBase {
+
+        public MapProperty(
+                final String name,
+                final String title,
+                final String description,
+                final boolean required,
+                final String defaultValue,
+                final PropertyValidator validator,
+                final PropertyScope scope,
+                final Map<String, Object> renderingOptions
+        ) {
+            super(
+                    name,
+                    title,
+                    description,
+                    required,
+                    defaultValue,
+                    validator,
+                    scope,
+                    renderingOptions
+            );
+        }
+
+        public Type getType() {
+            return Type.Map;
         }
     }
 

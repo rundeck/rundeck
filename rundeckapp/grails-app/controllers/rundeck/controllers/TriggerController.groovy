@@ -151,4 +151,16 @@ class TriggerController extends ControllerBase {
         flash.message = "Trigger started"
         redirect(action: 'show', params: params)
     }
+
+
+    def renderConditionCreate(String type) {
+    }
+
+    def renderConditionEdit(String type) {
+
+    }
+
+    def renderConditionView(String type) {
+
+    }
 }

@@ -16,6 +16,9 @@
 
 package com.dtolabs.rundeck.server.plugins.trigger.condition
 
+import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import org.quartz.CronScheduleBuilder
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
@@ -24,30 +27,39 @@ import org.rundeck.core.triggers.Condition
 /**
  *
  */
+
+@Plugin(name = ScheduleTriggerCondition.PROVIDER_NAME, service = 'Condition')
+@PluginDescription(title = 'Schedule',
+        description = '''Triggers actions on a schedule''')
 class ScheduleTriggerCondition implements Condition {
-    static final String providerName = 'schedule'
+    static final String PROVIDER_NAME = 'schedule'
     Map config
 
     @Override
     Map getConditionData() {
         [:]
     }
+    @PluginProperty
     String timeZone
+    @PluginProperty
     String cronExpression
 
 
+    ScheduleTriggerCondition() {
+
+    }
     ScheduleTriggerCondition(Map config) {
         this.config = config
         timeZone = config?.timeZone
         cronExpression = config?.cronExpression
     }
 
-    static ScheduleTriggerCondition fromConfig(Map config) {
-        new ScheduleTriggerCondition(config)
-    }
+//    static ScheduleTriggerCondition fromConfig(Map config) {
+//        new ScheduleTriggerCondition(config)
+//    }
 
     String getConditionType() {
-        return ScheduleTriggerCondition.providerName
+        return ScheduleTriggerCondition.PROVIDER_NAME
     }
 
 

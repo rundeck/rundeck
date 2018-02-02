@@ -87,6 +87,8 @@ class PluginAdapterUtilitySpec extends Specification {
         long testlong1;
         @PluginProperty
         Long testlong2;
+        @PluginProperty
+        Map testMap;
     }
 
     static class mapResolver implements PropertyResolver {
@@ -238,6 +240,20 @@ class PluginAdapterUtilitySpec extends Specification {
         t7.type == Property.Type.FreeSelect
         t7.selectValues == ['a', 'b', 'c']
         t7.selectLabels == [a: 'A', b: 'B', c: 'C']
+    }
+
+
+    def "build Map property "() {
+        given:
+
+        when:
+        def list = PluginAdapterUtility.buildFieldProperties(Configuretest1)
+
+        then:
+        def t7 = list.find { it.name == 'testMap' }
+        t7 != null
+        t7.type == Property.Type.Map
+
     }
 
     def "configure options invalid"() {
