@@ -212,4 +212,22 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         //nb: error handler is created inside Workflow.fromMap
         return exec
     }
+
+    static boolean hasAnyReference(ScheduledExecution se) {
+        if (!se) {
+            return false
+        }
+        def uuid = se.extid
+        def jobName = se.jobName
+        def jobGroup = se.groupPath
+        def jobProject = se.project
+
+        def res = findByUuid(uuid)
+        if (res) {
+            return true
+        }
+
+        res = findByJobNameAndJobGroup(jobName,jobGroup)
+        return res!=null
+    }
 }

@@ -1128,6 +1128,12 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
             if (!exec.jobName && !exec.uuid) {
                 exec.errors.rejectValue('jobName', 'commandExec.jobName.blank.message')
             }
+            if(exec.uuid && !exec.jobName){
+                def refSe = ScheduledExecution.findScheduledExecution(null,null,null,exec.uuid);
+                if(refSe){
+                    exec.jobProject = refSe.project
+                }
+            }
             if(exec.jobProject){
                 if(authProjects && !authProjects.contains(exec.jobProject)){
                     exec.errors.rejectValue('jobProject', 'commandExec.jobProject.unauth.message')

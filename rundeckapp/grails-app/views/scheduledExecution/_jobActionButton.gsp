@@ -252,7 +252,14 @@ jQuery(function(){
                                     </div>
                                 </div>
                             </auth:resourceAllowed>
-
+                            <br/>
+                            <g:if test="${isReferenced}">
+                                <div class="form-group">
+                                    <div class="col-sm-10 warn note">
+                                        <g:message code="delete.referenced.job"/>
+                                    </div>
+                                </div>
+                            </g:if>
                         </div>
 
                         <div class="modal-footer">
