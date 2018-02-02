@@ -1281,7 +1281,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if (input.hasErrors()) {
             request.errors = input.errors
-            return renderErrorView()
+            return renderErrorView([:])
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -1715,7 +1715,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if (input.hasErrors()) {
             request.errors = input.errors
-            return renderErrorView()
+            return renderErrorView([:])
         }
 
         if (input.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
