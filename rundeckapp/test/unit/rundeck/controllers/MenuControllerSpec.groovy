@@ -511,6 +511,31 @@ class MenuControllerSpec extends Specification {
         'test-data' |  true  | 'testproj'
     }
 
+    @Unroll
+    def "delete project policy missing id"() {
+        given:
+        def id = null
+        def input = new ProjAclFile(id: id)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+
+        when:
+        request.method = 'POST'
+        setupFormTokens(params)
+        params.project = project
+        def result = controller.deleteProjectAclFile(input)
+        then:
+
+        0 * controller.frameworkService._(*_)
+        0 * controller.authorizationService._(*_)
+
+        flash.message == null
+        view == '/common/error'
+        where:
+        fileText    | exists | project
+        'test-data' | true   | 'testproj'
+    }
+
     def "save sys fs policy disabled"() {
         given:
         def id = 'test.aclpolicy'
@@ -667,6 +692,31 @@ class MenuControllerSpec extends Specification {
         'deleteProjectAclFile' | new ProjAclFile()                                    | [project: 'aproject']
         'saveSystemAclFile'    | new SaveSysAclFile(fileType: 'fs', fileText: 'asdf') | [:]
         'deleteSystemAclFile'  | new SysAclFile(fileType: 'fs')                       | [:]
+    }
+
+    @Unroll
+    def "delete system policy missing id"() {
+        given:
+        def input = new SysAclFile(id: id, fileType: fileType)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+
+        when:
+        request.method = 'POST'
+        setupFormTokens(params)
+        def result = controller.deleteSystemAclFile(input)
+        then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['delete','admin']) >> true
+        0 * controller.frameworkService._(*_)
+        0 * controller.authorizationService._(*_)
+
+        flash.message == null
+        view == '/common/error'
+        where:
+        id   | fileType
+        null | 'fs'
+        1    | null
     }
 
 
