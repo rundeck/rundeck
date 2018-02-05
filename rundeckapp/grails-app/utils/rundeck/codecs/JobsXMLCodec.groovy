@@ -259,15 +259,6 @@ class JobsXMLCodec {
             if(null!=map.nodefilters.excludeprecedence){
                 map.nodefilters.dispatch['excludePrecedence']=map.nodefilters.remove('excludeprecedence')
             }
-            if(null!=map.nodefilters.dispatch.threadcount && ""!= map.nodefilters.dispatch.threadcount){
-                //convert to integer
-                def value= map.nodefilters.dispatch.threadcount
-                try{
-                    map.nodefilters.dispatch.threadcount= XmlParserUtil.stringToInt(value,1)
-                }catch (NumberFormatException e){
-                    throw new JobXMLException("Not a valid threadcount: "+value)
-                }
-            }
             if(null!=map.nodefilters.dispatch.keepgoing){
                 //convert to boolean
                 def value= map.nodefilters.dispatch.keepgoing

@@ -2089,6 +2089,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 'filter',
                 'nodeExcludePrecedence',
                 'nodeThreadcount',
+                'nodeThreadcountDynamic',
                 'nodeKeepgoing',
                 'nodeRankOrderAscending',
                 'nodeRankAttribute',
@@ -2164,6 +2165,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //replace data references
             if (optparams) {
                 props.retryDelay = DataContextUtils.replaceDataReferences(props.retryDelay, DataContextUtils.addContext("option", optparams, null))
+            }
+        }
+        if (props.nodeThreadcountDynamic?.contains('${')) {
+            //replace data references
+            if (optparams) {
+                props.nodeThreadcount = DataContextUtils.replaceDataReferencesInString(props.nodeThreadcountDynamic, DataContextUtils.addContext("option", optparams, null))
+
+                if(!props.nodeThreadcount.isInteger()){
+                    props.nodeThreadcount = 1
+                }
             }
         }
 
