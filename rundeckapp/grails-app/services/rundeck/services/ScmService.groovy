@@ -275,6 +275,9 @@ class ScmService {
     }
 
     private String pathForConfigFile(String integration) {
+        if(frameworkService.isClusterModeEnabled()){ //universal config for cluster
+            return "etc/scm-${integration}.properties"
+        }
         if (frameworkService.serverUUID) {
             return "${frameworkService.serverUUID}/etc/scm-${integration}.properties"
         }
@@ -1029,6 +1032,12 @@ class ScmService {
      */
     Map<String, JobState> exportStatusForJobs(List<ScheduledExecution> jobs) {
         def status = [:]
+        def clusterMode = frameworkService.isClusterModeEnabled()
+        if(jobs && jobs.size()>0 && clusterMode){
+            def project = jobs.get(0).project
+            fixExportStatus(project, jobs)
+        }
+
         exportjobRefsForJobs(jobs).each { jobReference ->
             def plugin = getLoadedExportPluginFor jobReference.project
             if (plugin) {
@@ -1046,6 +1055,11 @@ class ScmService {
      */
     Map<String, JobImportState> importStatusForJobs(List<ScheduledExecution> jobs) {
         def status = [:]
+        def clusterMode = frameworkService.isClusterModeEnabled()
+        if(jobs && jobs.size()>0 && clusterMode){
+            def project = jobs.get(0).project
+            fixImportStatus(project,jobs)
+        }
         scmJobRefsForJobs(jobs).each { JobScmReference jobReference ->
             def plugin = getLoadedImportPluginFor jobReference.project
             if (plugin) {
@@ -1238,6 +1252,22 @@ class ScmService {
         return pluginConfig.getSettingList('trackedItems')
     }
 
+    public fixExportStatus(String project, List<ScheduledExecution> jobs){
+        if(jobs && jobs.size()>0){
+            def joblist = exportjobRefsForJobs(jobs)
+            def plugin = getLoadedExportPluginFor project
+            plugin?.clusterFixJobs(joblist)
+        }
+    }
+
+    public fixImportStatus(String project, List<ScheduledExecution> jobs){
+        if(jobs && jobs.size()>0){
+            def joblist = scmJobRefsForJobs(jobs)
+            def plugin = getLoadedImportPluginFor project
+            plugin?.clusterFixJobs(joblist)
+        }
+
+    }
 
 }
 
