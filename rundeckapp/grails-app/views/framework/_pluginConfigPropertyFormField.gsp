@@ -230,7 +230,7 @@
                                                name: provider,
                                                code: 'property.' + prop.name + '.description',
                                                default: prop.description
-                                       ), , textCss       : '',
+                                       ), textCss         : '',
                                                mode       : 'collapsed', rkey: g.rkey()]"/></div>
     <g:if test="${error}">
         <div class="text-warning"><g:enc>${error}</g:enc></div>
