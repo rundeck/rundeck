@@ -34,6 +34,10 @@ import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
+import org.rundeck.core.triggers.TriggerAction;
+import org.rundeck.core.triggers.TriggerActionHandler;
+import org.rundeck.core.triggers.TriggerCondition;
+import org.rundeck.core.triggers.TriggerConditionHandler;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -72,6 +76,10 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.UI, UIPlugin.class);
         map.put(ServiceNameConstants.LogFilter, LogFilterPlugin.class);
         map.put(ServiceNameConstants.ContentConverter, ContentConverterPlugin.class);
+        map.put(ServiceNameConstants.TriggerCondition, TriggerCondition.class);
+        map.put(ServiceNameConstants.TriggerConditionHandler, TriggerConditionHandler.class);
+        map.put(ServiceNameConstants.TriggerAction, TriggerAction.class);
+        map.put(ServiceNameConstants.TriggerActionHandler, TriggerActionHandler.class);
 
 
         TYPES = Collections.unmodifiableMap(map);
