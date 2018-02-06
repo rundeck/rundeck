@@ -382,7 +382,7 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
         })
     });
 }
-function _initJobPickerAutocomplete(nameid, groupid, projid) {
+function _initJobPickerAutocomplete(uuid,nameid, groupid, projid) {
     "use strict";
     var currentProject = jQuery('#schedEditFrameworkProject').val();
     jQuery("#" + nameid).devbridgeAutocomplete({
@@ -404,6 +404,8 @@ function _initJobPickerAutocomplete(nameid, groupid, projid) {
         onSelect: function (selected) {
             //set group from selected job
             jQuery('#' + groupid).val(selected.data.group);
+            //set uuid
+            jQuery('#' + uuid).val(selected.data.id);
         }
     });
 }
@@ -1108,13 +1110,16 @@ function _doRevertOptsAction() {
 }
 
 //job chooser
+var uuidField;
 var jobNameFieldId;
 var jobGroupFieldId;
-function jobChosen(name, group, elem) {
+function jobChosen(uuid, name, group, elem) {
     jobWasEdited();
-    if (jobNameFieldId && jobGroupFieldId) {
+    if (uuidField && jobNameFieldId && jobGroupFieldId) {
+        jQuery('#' + uuidField).val(uuid);
         jQuery('#' + jobNameFieldId).val(name);
         jQuery('#' + jobGroupFieldId).val(group);
+        doyftsuccess(uuidField);
         doyftsuccess(jobNameFieldId);
         doyftsuccess(jobGroupFieldId);
     }
@@ -1123,11 +1128,12 @@ function jobChosen(name, group, elem) {
     }
 }
 
-function loadJobChooserModal(elem, nameid, groupid, projectid, modalid, modalcontentid) {
+function loadJobChooserModal(elem, uuid, nameid, groupid, projectid, modalid, modalcontentid) {
     if (jQuery(elem).hasClass('active')) {
         jQuery('#' + modalid).modal('hide');
         return;
     }
+    uuidField = uuid;
     jobNameFieldId = nameid;
     jobGroupFieldId = groupid;
     var project = selFrameworkProject;
