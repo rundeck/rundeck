@@ -14,7 +14,20 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.trigger.action
+package org.rundeck.core.triggers;
 
-class JobSetRunTriggerAction {
+import java.util.Map;
+
+public interface TriggerAction {
+    /**
+     *
+     * @return action type
+     */
+    String getType();
+
+    /**
+     *
+     * @return data for the action
+     */
+    Map getData();
 }

@@ -17,16 +17,18 @@ public interface TriggerActionHandler<T> {
      * The action for a trigger should be performed
      *
      * @param triggerId    ID
-     * @param conditionMap data from the condition
-     * @param condition    condition
+     * @param conditionMap data from the triggerCondition
+     * @param triggerCondition    triggerCondition
      * @param action       action
      */
-    void performTriggerAction(String triggerId, T contextInfo, Map conditionMap, Condition condition, Action action) throws ActionFailed;
+    Map performTriggerAction(String triggerId, T contextInfo, Map conditionMap, TriggerCondition triggerCondition, TriggerAction action)
+            throws ActionFailed;
 
     /**
      * @param action
      * @param contextInfo
-     * @return true if the given action will be handled internally, meaning the registration of the condition check for a trigger will also handle invoking the action
+     * @return true if the given action will be handled internally, meaning the registration of the condition check for
+     *         a trigger will also handle invoking the action
      */
-    boolean handlesAction(Action action, T contextInfo);
+    boolean handlesAction(TriggerAction action, T contextInfo);
 }

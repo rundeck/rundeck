@@ -7,10 +7,9 @@ import org.quartz.JobKey
 import org.quartz.Scheduler
 import org.quartz.TriggerKey
 import org.rundeck.core.triggers.Action
-import org.rundeck.core.triggers.Condition
 import org.rundeck.core.triggers.TriggerActionInvoker
+import org.rundeck.core.triggers.TriggerCondition
 import org.rundeck.core.triggers.TriggerConditionHandler
-import rundeck.quartzjobs.ExecutionJob
 import rundeck.quartzjobs.RDTriggerConditionJob
 
 /**
@@ -30,13 +29,13 @@ class ScheduledTriggerConditionService implements TriggerConditionHandler<RDTrig
     }
 
     @Override
-    boolean handlesConditionChecks(Condition condition, RDTriggerContext contextInfo) {
+    boolean handlesConditionChecks(TriggerCondition condition, RDTriggerContext contextInfo) {
         condition instanceof ScheduleTriggerCondition
     }
 
 
     @Override
-    void registerConditionChecksForAction(String triggerId, RDTriggerContext contextInfo, Condition condition, Action action, TriggerActionInvoker service) {
+    void registerConditionChecksForAction(String triggerId, RDTriggerContext contextInfo, TriggerCondition condition, Action action, TriggerActionInvoker service) {
         ScheduleTriggerCondition scheduled = (ScheduleTriggerCondition) condition
 
         log.error("schedule trigger using quartz for $triggerId, context $contextInfo, condition $condition, action $action, invoker $service")
@@ -45,7 +44,7 @@ class ScheduledTriggerConditionService implements TriggerConditionHandler<RDTrig
     }
 
     @Override
-    void deregisterConditionChecksForAction(String triggerId, RDTriggerContext contextInfo, Condition condition, Action action, TriggerActionInvoker service) {
+    void deregisterConditionChecksForAction(String triggerId, RDTriggerContext contextInfo, TriggerCondition condition, Action action, TriggerActionInvoker service) {
 
         log.error("deregister trigger from quartz for $triggerId, context $contextInfo, condition $condition, action $action, invoker $service")
         unscheduleTrigger(triggerId, contextInfo)

@@ -42,10 +42,10 @@ public interface Trigger {
     /**
      * @return condition
      */
-    Condition getCondition();
+    TriggerCondition getCondition();
 
     /**
      * @return action
      */
-    Action getAction();
+    TriggerAction getAction();
 }

@@ -18,8 +18,7 @@ package org.rundeck.core.triggers;
 
 import java.util.Map;
 
-public interface Condition {
-    String getConditionType();
+public interface TriggerCondition {
 
     Map getConfig();
 

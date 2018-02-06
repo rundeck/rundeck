@@ -22,11 +22,11 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
-import org.rundeck.core.triggers.Action
+import org.rundeck.core.triggers.TriggerAction
 
-@Plugin(name = JobRunTriggerAction.PROVIDER_NAME, service = 'Action')
+@Plugin(name = JobRunTriggerAction.PROVIDER_NAME, service = 'TriggerAction')
 @PluginDescription(title = 'Run a Job', description = 'Runs a job')
-class JobRunTriggerAction implements Action {
+class JobRunTriggerAction implements TriggerAction {
     static final String PROVIDER_NAME = 'JobRun'
     String type
     Map data
@@ -53,6 +53,7 @@ class JobRunTriggerAction implements Action {
     JobRunTriggerAction() {
 
     }
+
     JobRunTriggerAction(Map data) {
         this.type = PROVIDER_NAME
         this.data = data

@@ -69,30 +69,30 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         new RDTriggerContext(clusterContextInfo + [project: trigger.project, authContext: authContext])
     }
 
-    public Map<String, DescribedPlugin<Condition>> getTriggerConditionPluginDescriptions() {
-        pluginService.listPlugins(Condition)
+    public Map<String, DescribedPlugin<TriggerCondition>> getTriggerConditionPluginDescriptions() {
+        pluginService.listPlugins(TriggerCondition)
     }
 
-    public Map<String, DescribedPlugin<Action>> getTriggerActionPluginDescriptions() {
-        pluginService.listPlugins(Action)
+    public Map<String, DescribedPlugin<TriggerAction>> getTriggerActionPluginDescriptions() {
+        pluginService.listPlugins(TriggerAction)
     }
 
-    public DescribedPlugin<Action> getTriggerActionPlugin(String provider) {
-        pluginService.getPluginDescriptor(provider, Action)
+    public DescribedPlugin<TriggerAction> getTriggerActionPlugin(String provider) {
+        pluginService.getPluginDescriptor(provider, TriggerAction)
     }
 
-    public ConfiguredPlugin<Action> getConfiguredActionPlugin(String provider, Map config) {
+    public ConfiguredPlugin<TriggerAction> getConfiguredActionPlugin(String provider, Map config) {
         //TODO: project scope
-        pluginService.configurePlugin(provider, config, Action)
+        pluginService.configurePlugin(provider, config, TriggerAction)
     }
 
-    public DescribedPlugin<Condition> getTriggerConditionPlugin(String provider) {
-        pluginService.getPluginDescriptor(provider, Condition)
+    public DescribedPlugin<TriggerCondition> getTriggerConditionPlugin(String provider) {
+        pluginService.getPluginDescriptor(provider, TriggerCondition)
     }
 
-    public ConfiguredPlugin<Condition> getConfiguredConditionPlugin(String provider, Map config) {
+    public ConfiguredPlugin<TriggerCondition> getConfiguredConditionPlugin(String provider, Map config) {
         //TODO: project scope
-        pluginService.configurePlugin(provider, config, Condition)
+        pluginService.configurePlugin(provider, config, TriggerCondition)
     }
     /**
      * Map of installed trigger handlers
@@ -140,7 +140,7 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         TriggerRep.findAllByEnabledAndProject(true, project)
     }
 
-    Condition conditionFor(TriggerRep rep) {
+    TriggerCondition conditionFor(TriggerRep rep) {
         def condition = getConfiguredConditionPlugin(rep.conditionType, rep.conditionConfig)
         if (!condition) {
             throw new IllegalArgumentException("Unknown condition type: ${rep.conditionType}")
@@ -148,7 +148,7 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         return condition.instance
     }
 
-    Action actionFor(TriggerRep rep) {
+    TriggerAction actionFor(TriggerRep rep) {
         def action = getConfiguredActionPlugin(rep.actionType, rep.actionConfig)
         if (!action) {
             throw new IllegalArgumentException("Unknown action type: ${rep.conditionType}")
@@ -191,13 +191,13 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         }
     }
 
-    public TriggerConditionHandler<RDTriggerContext> getConditionHandlerForTrigger(TriggerRep trigger, Condition condition, RDTriggerContext triggerContext) {
+    public TriggerConditionHandler<RDTriggerContext> getConditionHandlerForTrigger(TriggerRep trigger, TriggerCondition condition, RDTriggerContext triggerContext) {
         condRegistrationMap[trigger.uuid] ?: triggerConditionHandlerMap.find {
             it.value.handlesConditionChecks(condition, triggerContext)
         }?.value
     }
 
-    public TriggerActionHandler<RDTriggerContext> getActionHandlerForTrigger(TriggerRep trigger, Action action, RDTriggerContext triggerContext) {
+    public TriggerActionHandler<RDTriggerContext> getActionHandlerForTrigger(TriggerRep trigger, TriggerAction action, RDTriggerContext triggerContext) {
         actRegistrationMap[trigger.uuid] ?: triggerActionHandlerMap.find {
             it.value.handlesAction(action, triggerContext)
         }?.value
@@ -290,8 +290,8 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
 
 
     Trigger createTrigger(TriggerRep triggerRep) {
-        Condition conditionRep = conditionFor(triggerRep)
-        Action actionRep = actionFor(triggerRep)
+        TriggerCondition conditionRep = conditionFor(triggerRep)
+        TriggerAction actionRep = actionFor(triggerRep)
         new TriggerImpl(
                 name: triggerRep.name,
                 description: triggerRep.description,
@@ -308,8 +308,8 @@ class TriggerImpl implements Trigger {
     String description
     String id
     Map userData
-    Condition condition
-    Action action
+    TriggerCondition condition
+    TriggerAction action
 }
 
 
