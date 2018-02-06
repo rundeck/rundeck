@@ -243,7 +243,8 @@ public class ExecutionItemFactory {
                 null,
                 label,
                 false,
-                null
+                null,
+                false
         );
     }
 
@@ -271,7 +272,8 @@ public class ExecutionItemFactory {
             final Boolean nodeRankOrderAscending,
             final String label,
             final Boolean nodeIntersect,
-            final String project
+            final String project,
+            final Boolean failOnDisable
     )
     {
 
@@ -288,7 +290,8 @@ public class ExecutionItemFactory {
                 nodeRankAttribute,
                 nodeRankOrderAscending,
                 nodeIntersect,
-                project
+                project,
+                failOnDisable
         );
     }
 
@@ -614,6 +617,7 @@ public class ExecutionItemFactory {
         private final Boolean nodeRankOrderAscending;
         private final Boolean nodeIntersect;
         private final String project;
+        private final Boolean failOnDisable;
 
         public JobReferenceItem(
                 final String label,
@@ -628,7 +632,8 @@ public class ExecutionItemFactory {
                 final String nodeRankAttribute,
                 final Boolean nodeRankOrderAscending,
                 final Boolean nodeIntersect,
-                final String project
+                final String project,
+                final Boolean failOnDisable
         )
         {
             this.label = label;
@@ -644,6 +649,7 @@ public class ExecutionItemFactory {
             this.nodeRankOrderAscending = nodeRankOrderAscending;
             this.nodeIntersect = nodeIntersect;
             this.project=project;
+            this.failOnDisable = failOnDisable;
         }
 
         @Override
@@ -709,6 +715,8 @@ public class ExecutionItemFactory {
         public String getProject() {
             return project;
         }
+
+        public Boolean isFailOnDisable(){return failOnDisable;}
 
         @Override
         public String toString() {

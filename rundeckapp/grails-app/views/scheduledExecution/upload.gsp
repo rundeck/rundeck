@@ -27,7 +27,19 @@
                 var el=jQuery(this).parent().find('.dropdown-menu');
                 el.load(_genUrl(appLinks.scheduledExecutionActionMenuFragment,{id:id,jobDeleteSingle:true}));
             });
+            jQuery('#xmlBatch').on('change', function () {
+                if (this.files.length == 1) {
+                    if (this.files[0].name.match(/\.ya?ml$/i)) {
+                        jQuery('input[name=fileformat][value=yaml]').prop('checked', true);
+                    } else if (this.files[0].name.match(/\.xml$/i)) {
+                        jQuery('input[name=fileformat][value=xml]').prop('checked', true);
+                    }
+                }
+            });
         });
+
+
+
     </script>
 </head>
 <body>

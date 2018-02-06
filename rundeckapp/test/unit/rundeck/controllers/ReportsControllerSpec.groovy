@@ -19,9 +19,14 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ExecQuery
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.grails.plugins.metricsweb.MetricService
+import rundeck.CommandExec
 import rundeck.ExecReport
 import rundeck.Execution
+import rundeck.ReferencedExecution
+import rundeck.ScheduledExecution
 import rundeck.User
+import rundeck.Workflow
 import rundeck.services.FrameworkService
 import rundeck.services.ReportService
 import rundeck.services.UserService
@@ -74,5 +79,71 @@ class ReportsControllerSpec extends Specification {
         '1999-01-01T13:23:45.123-08'    | _
         '1999-01-01T13:23:45.123-0800'  | _
         '1999-01-01T13:23:45.123-08:00' | _
+    }
+
+    @Unroll
+    def "add job ref on index"() {
+        given:
+
+        controller.frameworkService = Mock(FrameworkService) {
+            _ * authorizeProjectResourceAll(*_) >> true
+        }
+        controller.userService = Mock(UserService) {
+            findOrCreateUser(*_) >> new User()
+        }
+        controller.reportService = Mock(ReportService)
+        controller.metricService = Mock(MetricService)
+
+        def jobname = 'abc'
+        def group = 'path'
+        def project = 'AProject'
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: jobname,
+                project: project,
+                groupPath: group,
+                description: 'a job',
+                argString: '-args b -args2 d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+        Execution e1 = new Execution(
+                project: project,
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save()
+
+        ReferencedExecution refexec = new ReferencedExecution(status: 'running',scheduledExecution: job, execution: e1)
+        refexec.save()
+
+
+        when:
+        params.includeJobRef = true
+        params.jobIdFilter = job.id
+        def result = controller.index()
+
+
+        then:
+        response.status == 200
+        result
+        1 * controller.metricService.withTimer(_,_,_)>> [reports: []]
+        1 * controller.reportService.finishquery(_, _, _) >> { ExecQuery query,def params, Map model ->
+            assertEquals(1,query.execIdFilter?.size())
+            model
+        }
+        where:
+        includeJobRef   | expected
+        true            | 1
+        false           | null
+
     }
 }

@@ -23,17 +23,15 @@
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.*;
 
 
 /**
@@ -221,6 +219,7 @@ public class PluginAdapterUtility {
                 );
                 String[] values = selectAnnotation.values();
                 pbuild.values(values);
+                pbuild.dynamicValues(selectAnnotation.dynamicValues());
                 extractSelectLabels(pbuild, values, field.getAnnotation(SelectLabels.class));
             }
 
@@ -582,7 +581,7 @@ public class PluginAdapterUtility {
         } else if (type == Property.Type.Select) {
             if (value instanceof String) {
                 resolvedValue = value;
-                if (!property.getSelectValues().contains((String) resolvedValue)) {
+                if (!field.getAnnotation(SelectValues.class).dynamicValues() && !property.getSelectValues().contains((String) resolvedValue)) {
                     throw new RuntimeException(
                             "value not allowed for property " + property.getName() + ": " + resolvedValue);
                 }
