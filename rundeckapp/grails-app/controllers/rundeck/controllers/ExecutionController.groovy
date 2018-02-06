@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.app.api.jobs.upload.JobFileInfo
 import com.dtolabs.rundeck.app.support.BuilderUtil
 import com.dtolabs.rundeck.app.support.ExecutionViewParams
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.common.PluginDisabledException
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
 import com.dtolabs.rundeck.core.execution.workflow.state.StepIdentifier
 import com.dtolabs.rundeck.core.logging.LogEvent
@@ -755,7 +756,7 @@ class ExecutionController extends ControllerBase{
                 msgbuf.metadata.keySet().findAll { it.startsWith('content-meta:') }.each {
                     meta[it.substring('content-meta:'.length())] = msgbuf.metadata[it]
                 }
-                String result = convertContentDataType(message, msgbuf.metadata['content-data-type'], meta, 'text/html')
+                String result = convertContentDataType(message, msgbuf.metadata['content-data-type'], meta, 'text/html', e.project)
                 if (result != null) {
                     msghtml = result.encodeAsSanitizedHTML()
                     converted = true
@@ -1295,7 +1296,8 @@ class ExecutionController extends ControllerBase{
                             logentry.mesg,
                             logentry['content-data-type'],
                             meta,
-                            'text/html'
+                            'text/html',
+                            e.project
                     )
                     if (result != null) {
                         logentry.loghtml = result.encodeAsSanitizedHTML()
@@ -1391,12 +1393,11 @@ class ExecutionController extends ControllerBase{
     }
 
     //TODO: move to a service
-    private String convertContentDataType(final Object input, final String inputDataType, Map<String,String> meta, final String outputType) {
+    private String convertContentDataType(final Object input, final String inputDataType, Map<String,String> meta, final String outputType, String projectName) {
 //        log.error("find converter : ${input.class}(${inputDataType}) => ?($outputType)")
         def plugins = listViewPlugins()
         List<DescribedPlugin<ContentConverterPlugin>> foundPlugins = findOutputViewPlugins(
-                plugins,
-                inputDataType,
+                plugins,inputDataType,
                 input.class
         )
         def chain = []
@@ -1439,10 +1440,16 @@ class ExecutionController extends ControllerBase{
             def otype = inputDataType
             try {
                 chain.each { plugin ->
+                    executionService.getFrameworkService().getPluginControlService().checkDisabledPlugin(projectName, plugin.name)
                     def nexttype = plugin.instance.getOutputDataTypeForContentDataType(ovalue.getClass(), otype)
                     ovalue = plugin.instance.convert(ovalue, otype, meta)
                     otype = nexttype
                 }
+            } catch (PluginDisabledException disabledException){
+                log.error(
+                        "Failed converting data type ${input.getClass()}($inputDataType)  with plugins: ${chain*.name}",
+                        disabledException
+                )
             } catch (Throwable t) {
                 log.warn(
                         "Failed converting data type ${input.getClass()}($inputDataType)  with plugins: ${chain*.name}",
