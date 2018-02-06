@@ -818,7 +818,8 @@ class MenuControllerSpec extends Specification {
         1 * iproj.hasProperty('project.description') >> true
         1 * iproj.getProperty('project.description') >> description
         description == response.json.projects[0].description
-
+    }
+    
     def "list Export"() {
         given:
         controller.frameworkService = Mock(FrameworkService)
