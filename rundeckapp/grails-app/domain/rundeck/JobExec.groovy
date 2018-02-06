@@ -71,7 +71,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     }
 
     public String toString() {
-        return "jobref(name=\"${jobName}\" group=\"${jobGroup}\" project=\"${jobProject}\" argString=\"${argString}\" " +
+        return "jobref((uuid=\"${uuid}\" name=\"${jobName}\" group=\"${jobGroup}\" project=\"${jobProject}\" argString=\"${argString}\" " +
                 "nodeStep=\"${nodeStep}\"" +
                 "nodeFilter=\"${nodeFilter}\"" +
                 "nodeKeepgoing=\"${nodeKeepgoing}\"" +
@@ -226,7 +226,6 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         def uuid = se.extid
         def jobName = se.jobName
         def jobGroup = se.groupPath
-        def jobProject = se.project
 
         def res = findByUuid(uuid)
         if (res) {
@@ -235,5 +234,48 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
         res = findByJobNameAndJobGroup(jobName,jobGroup)
         return res!=null
+    }
+
+    static List<ScheduledExecution> parentList(ScheduledExecution se, int max = 0){
+        def res = JobExec.withCriteria {
+            or{
+                eq('uuid',se.extid)
+                and{
+                    eq('jobName', se.jobName)
+                    eq('jobGroup',se.groupPath)
+                    or{
+                        eq('jobProject','')
+                        isNull('jobProject')
+                        eq('jobProject',se.project)
+                    }
+                }
+            }
+        }
+
+        if(res){
+            def workflows = Workflow.withCriteria {
+                commands {
+                    or {
+                        res.each {
+                            idEq(it.id)
+                        }
+                    }
+
+                }
+            }
+            if(workflows){
+                def list = ScheduledExecution.withCriteria{
+                    workflow{
+                        or{
+                            workflows.each {
+                                idEq(it.id)
+                            }
+                        }
+                    }
+                    maxResults max
+
+                }
+            }
+        }
     }
 }

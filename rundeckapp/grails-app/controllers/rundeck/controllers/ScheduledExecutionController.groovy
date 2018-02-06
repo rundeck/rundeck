@@ -428,10 +428,12 @@ class ScheduledExecutionController  extends ControllerBase{
 
 
        def isReferenced= JobExec.hasAnyReference(scheduledExecution)
+        def parentList = JobExec.parentList(scheduledExecution,10)
 
         def dataMap= [
                 scheduledExecution: scheduledExecution,
                 isReferenced: isReferenced,
+                parentList: parentList,
                 crontab: crontab,
                 params: params,
                 total: total,
