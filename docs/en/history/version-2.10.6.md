@@ -1,3 +1,7 @@
+% Version 2.10.6
+% greg
+% 02/02/2018
+
 Release 2.10.6
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: CornflowerBlue"><span class="glyphicon glyphicon-grain
 
 ## Upgrading from Earlier versions
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 

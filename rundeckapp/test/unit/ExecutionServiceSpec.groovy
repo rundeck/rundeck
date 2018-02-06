@@ -2816,110 +2816,140 @@ class ExecutionServiceSpec extends Specification {
         true            | false
         false           | true
     }
+  
+    void "create execution dynamic threadcount from option"() {
 
-
-    def "execut job ref from uuid"(){
         given:
-        def jobname = 'abc'
-        def group = 'path'
-        def project = 'AProject'
         ScheduledExecution job = new ScheduledExecution(
-                jobName: jobname,
-                project: project,
-                groupPath: group,
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
                 description: 'a job',
-                argString: '-args b -args2 d',
+                argString: '-a b -c d',
+                nodeThreadcountDynamic: "\${option.threadCount}",
                 workflow: new Workflow(
                         keepgoing: true,
                         commands: [new CommandExec(
                                 [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
                         )]
                 ),
-                retry: '1',
-                uuid: 'bd80d431-b70a-42ad-8ea8-37ad4885ea0d'
+                retry: '1'
         )
         job.save()
-        Execution e1 = new Execution(
-                project: project,
-                user: 'bob',
-                dateStarted: new Date(),
-                dateEnded: new Date(),
-                status: 'successful'
 
-        )
-        e1.save() != null
+        def opt1 = new Option(name: 'threadCount', enforced: false, required: false, defaultValue: "10")
 
-        def datacontext = [job:[execid:e1.id]]
+        assertTrue(job.validate())
+
+        job.addToOptions(opt1)
+        null != job.save()
 
 
-        def nodeSet = new NodeSetImpl()
-        def node1 = new NodeEntryImpl('node1')
-        nodeSet.putNode(node1)
-
-        service.executionUtilService = Mock(ExecutionUtilService)
-        service.storageService = Mock(StorageService)
-        service.jobStateService = Mock(JobStateService)
-        service.frameworkService = Mock(FrameworkService) {
-            authorizeProjectJobAll(*_) >> true
-            filterAuthorizedNodes(_, _, _, _) >> { args ->
-                nodeSet
-            }
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
         }
-
-
-        def executionListener = Mock(ExecutionListener)
-
-        def origContext = Mock(StepExecutionContext){
-            getDataContext()>>datacontext
-            getStepNumber()>>1
-            getStepContext()>>[]
-            getNodes()>> nodeSet
-            getFramework() >> Mock(Framework)
-            getExecutionListener() >> executionListener
-
-        }
-        JobRefCommand item = ExecutionItemFactory.createJobRef(
-                null,
-                ['args', 'args2'] as String[],
-                false,
-                null,
-                true,
-                '.*',
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                false,
-                'bd80d431-b70a-42ad-8ea8-37ad4885ea0d'
-        )
-
-
-        service.notificationService = Mock(NotificationService)
-        def dispatcherResult = Mock(DispatcherResult)
-        def wresult = Mock(WorkflowExecutionResult){
-            isSuccess()>>true
-        }
-
-
-        service.metricService = Mock(MetricService){
-            withTimer(_,_,_)>>{classname, name,  closure ->
-                [result:wresult]
-            }
-        }
-
-        def createFailure = { FailureReason reason, String msg ->
-            return new StepExecutionResultImpl(null, reason, msg)
-        }
-        def createSuccess = {
-            return new StepExecutionResultImpl()
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
         }
         when:
-        def ret = service.runJobRefExecutionItem(origContext,item,createFailure,createSuccess)
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                [executionType: 'user']
+        )
+
         then:
-        0 * executionListener.log(_)
-        ret.success
+        e2 != null
+        e2.nodeThreadcount == 10
+
+    }
+
+    void "create execution dynamic threadcount from value"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                nodeThreadcountDynamic: "15",
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                [ executionType: 'user']
+        )
+
+        then:
+        e2 != null
+        e2.nodeThreadcount == 15
+
+    }
+
+    void "wrong execution dynamic threadcount from option"() {
+
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                nodeThreadcountDynamic: "\${option.threadCount}",
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                retry: '1'
+        )
+        job.save()
+
+        def opt1 = new Option(name: 'threadCount', enforced: false, required: false, defaultValue: "wrongthreadcountvalue")
+
+        assertTrue(job.validate())
+
+        job.addToOptions(opt1)
+        null != job.save()
+
+
+        service.frameworkService = Stub(FrameworkService) {
+            getServerUUID() >> null
+        }
+        def authContext = Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'user1'
+        }
+        when:
+        Execution e2 = service.createExecution(
+                job,
+                authContext,
+                'testuser',
+                [executionType: 'user']
+        )
+
+        then:
+        e2 != null
+        e2.nodeThreadcount == 1
+
     }
 }

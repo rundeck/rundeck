@@ -45,6 +45,7 @@ import rundeck.services.ScheduledExecutionService
 import rundeck.services.ScmService
 import rundeck.services.authorization.PoliciesValidation
 import rundeck.services.scm.ScmPluginConfig
+import rundeck.services.scm.ScmPluginConfigData
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -511,6 +512,31 @@ class MenuControllerSpec extends Specification {
         'test-data' |  true  | 'testproj'
     }
 
+    @Unroll
+    def "delete project policy missing id"() {
+        given:
+        def id = null
+        def input = new ProjAclFile(id: id)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+
+        when:
+        request.method = 'POST'
+        setupFormTokens(params)
+        params.project = project
+        def result = controller.deleteProjectAclFile(input)
+        then:
+
+        0 * controller.frameworkService._(*_)
+        0 * controller.authorizationService._(*_)
+
+        flash.message == null
+        view == '/common/error'
+        where:
+        fileText    | exists | project
+        'test-data' | true   | 'testproj'
+    }
+
     def "save sys fs policy disabled"() {
         given:
         def id = 'test.aclpolicy'
@@ -669,6 +695,31 @@ class MenuControllerSpec extends Specification {
         'deleteSystemAclFile'  | new SysAclFile(fileType: 'fs')                       | [:]
     }
 
+    @Unroll
+    def "delete system policy missing id"() {
+        given:
+        def input = new SysAclFile(id: id, fileType: fileType)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.authorizationService = Mock(AuthorizationService)
+
+        when:
+        request.method = 'POST'
+        setupFormTokens(params)
+        def result = controller.deleteSystemAclFile(input)
+        then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['delete','admin']) >> true
+        0 * controller.frameworkService._(*_)
+        0 * controller.authorizationService._(*_)
+
+        flash.message == null
+        view == '/common/error'
+        where:
+        id   | fileType
+        null | 'fs'
+        1    | null
+    }
+
 
     def "meta on policy"() {
         given:
@@ -722,6 +773,9 @@ class MenuControllerSpec extends Specification {
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
         controller.scmService = Mock(ScmService)
         def project = 'test'
+        def scmConfig = Mock(ScmPluginConfigData){
+            getEnabled() >> true
+        }
 
         when:
         request.method = 'POST'
@@ -738,6 +792,44 @@ class MenuControllerSpec extends Specification {
         1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]) >> true
         1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
         1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
+        1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
+
+        response.json
+        response.json.scmExportEnabled
+        !response.json.scmImportEnabled
+    }
+
+    def "initialize scm on ajax call if its cluster"() {
+        given:
+        controller.frameworkService = Mock(FrameworkService){
+            isClusterModeEnabled() >> true
+        }
+        controller.authorizationService = Mock(AuthorizationService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.scmService = Mock(ScmService)
+        def project = 'test'
+        def scmConfig = Mock(ScmPluginConfigData){
+            getEnabled() >> true
+        }
+
+        when:
+        request.method = 'POST'
+        params.project = project
+        controller.listExport()
+        then:
+
+        1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist : []]
+        1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
+                                                                        offset:0,
+                                                                        paginateParams:[:],
+                                                                        displayParams:[:]]
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]) >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]) >> true
+        1 * controller.scmService.projectHasConfiguredExportPlugin(project) >> true
+        1 * controller.scmService.projectHasConfiguredImportPlugin(project) >> false
+        1 * controller.scmService.loadScmConfig(project,'export') >> scmConfig
+        1 * controller.scmService.initProject(project,'export')
+        1 * controller.scmService.initProject(project,'import')
 
         response.json
         response.json.scmExportEnabled
