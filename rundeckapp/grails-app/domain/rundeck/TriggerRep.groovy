@@ -22,7 +22,7 @@ class TriggerRep implements EmbeddedJsonData {
     String authUser
     String authRoleList
 
-    static hasMany = [events: TriggerFiredEvent]
+    static hasMany = [events: TriggerEvent]
     static constraints = {
         project(nullable: false, blank: false, matches: FrameworkResource.VALID_RESOURCE_NAME_REGEX)
         name(nullable: true)

@@ -6,8 +6,8 @@ import spock.lang.Specification
 /**
  * See the API for {@link grails.test.mixin.domain.DomainClassUnitTestMixin} for usage instructions
  */
-@TestFor(TriggerFiredEvent)
-class TriggerFiredEventSpec extends Specification {
+@TestFor(TriggerEvent)
+class TriggerEventSpec extends Specification {
 
     def setup() {
     }

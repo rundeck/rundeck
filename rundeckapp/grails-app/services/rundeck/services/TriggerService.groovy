@@ -12,7 +12,7 @@ import groovy.transform.ToString
 import org.rundeck.core.triggers.*
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
-import rundeck.TriggerFiredEvent
+import rundeck.TriggerEvent
 import rundeck.TriggerRep
 
 import java.time.ZoneId
@@ -259,14 +259,13 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
     void triggerConditionMet(String triggerId, RDTriggerContext contextInfo, Map conditionMap) {
         def trigger = TriggerRep.findByUuid(triggerId)
 
-        def event = new TriggerFiredEvent(
-                conditionMap: conditionMap,
+        def event = new TriggerEvent(
+                eventDataMap: conditionMap,
                 timeZone: ZoneId.systemDefault().toString(),
-                state: 'fired',
+                eventType: 'fired',
                 triggerRep: trigger
         )
         event.save(flush: true)
-        //TODO: save event
 
         def action = actionFor(trigger)
         def condition = conditionFor(trigger)
@@ -278,11 +277,12 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
             actHandler.performTriggerAction(triggerId, contextInfo, conditionMap, condition, action)
         } catch (Throwable t) {
             log.error("Failed to run trigger action for $triggerId: $t.message", t)
-            def event2 = new TriggerFiredEvent(
-                    conditionMap: conditionMap,
+            def event2 = new TriggerEvent(
+                    eventDataMap: [error: t.message],
                     timeZone: ZoneId.systemDefault().toString(),
-                    state: 'failed',
-                    triggerRep: trigger
+                    eventType: 'error',
+                    triggerRep: trigger,
+                    associatedEvent: event
             )
             event2.save(flush: true)
         }

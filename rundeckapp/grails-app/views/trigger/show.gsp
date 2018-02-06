@@ -75,7 +75,8 @@
 <div class="row row-space">
     <div class="col-sm-12">
         <g:if test="${trigger.events}">
-            <g:basicTable data="${trigger.events}" columns="['state', 'dateCreated', 'conditionMap']"
+            <g:basicTable data="${trigger.events.sort { a, b -> b.dateCreated <=> a.dateCreated }}"
+                          columns="['dateCreated', 'eventType', 'eventDataMap']"
                           classes="table-bordered table-condensed"/>
         </g:if>
     </div>
