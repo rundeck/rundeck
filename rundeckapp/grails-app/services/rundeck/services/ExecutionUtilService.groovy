@@ -259,7 +259,8 @@ class ExecutionUtilService {
                     step.description,
                     jobcmditem.nodeIntersect,
                     jobcmditem.jobProject,
-                    jobcmditem.failOnDisable
+                    jobcmditem.failOnDisable,
+                    jobcmditem.uuid
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep

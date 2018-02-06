@@ -44,7 +44,8 @@ class Execution extends ExecutionContext {
     Execution retryExecution
     Orchestrator orchestrator;
     String userRoleList
-
+    Integer nodeThreadcount=1
+  
     static hasMany = [refExec:ReferencedExecution]
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
     static transients = ['executionState', 'customStatusString', 'userRoles']

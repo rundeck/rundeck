@@ -2089,6 +2089,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 'filter',
                 'nodeExcludePrecedence',
                 'nodeThreadcount',
+                'nodeThreadcountDynamic',
                 'nodeKeepgoing',
                 'nodeRankOrderAscending',
                 'nodeRankAttribute',
@@ -2164,6 +2165,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //replace data references
             if (optparams) {
                 props.retryDelay = DataContextUtils.replaceDataReferences(props.retryDelay, DataContextUtils.addContext("option", optparams, null))
+            }
+        }
+        if (props.nodeThreadcountDynamic?.contains('${')) {
+            //replace data references
+            if (optparams) {
+                props.nodeThreadcount = DataContextUtils.replaceDataReferencesInString(props.nodeThreadcountDynamic, DataContextUtils.addContext("option", optparams, null))
+
+                if(!props.nodeThreadcount.isInteger()){
+                    props.nodeThreadcount = 1
+                }
             }
         }
 
@@ -3160,22 +3171,31 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def result
         def project = null
         def failOnDisable = false
+        def uuid
         if(jitem instanceof JobRefCommand){
             project = jitem.project
             failOnDisable = jitem.failOnDisable
+            uuid = jitem.uuid
         }
 
-        def group = null
-        def name = null
-        def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
-        if (m.matches()) {
-            group = m.group(1)
-            name = m.group(2)
-        } else {
-            name = jitem.jobIdentifier
+        def schedlist
+        if(uuid){
+            schedlist = ScheduledExecution.findAllScheduledExecutions(uuid)
+        }else{
+            def group = null
+            def name = null
+            def m = jitem.jobIdentifier =~ '^/?(.+)/([^/]+)$'
+            if (m.matches()) {
+                group = m.group(1)
+                name = m.group(2)
+            } else {
+                name = jitem.jobIdentifier
+            }
+            project = project?project:executionContext.getFrameworkProject()
+            schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, project)
         }
-        project = project?project:executionContext.getFrameworkProject()
-        def schedlist = ScheduledExecution.findAllScheduledExecutions(group, name, project)
+
+
         if (!schedlist || 1 != schedlist.size()) {
             def msg = "Job [${jitem.jobIdentifier}] not found, project: ${project}"
             executionContext.getExecutionListener().log(0, msg)

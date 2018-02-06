@@ -1125,8 +1125,14 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
      */
     public static boolean _validateCommandExec(WorkflowStep exec, String type = null, List authProjects = null) {
         if (exec instanceof JobExec) {
-            if (!exec.jobName) {
+            if (!exec.jobName && !exec.uuid) {
                 exec.errors.rejectValue('jobName', 'commandExec.jobName.blank.message')
+            }
+            if(exec.uuid && !exec.jobName){
+                def refSe = ScheduledExecution.findScheduledExecution(null,null,null,exec.uuid);
+                if(refSe){
+                    exec.jobProject = refSe.project
+                }
             }
             if(exec.jobProject){
                 if(authProjects && !authProjects.contains(exec.jobProject)){
