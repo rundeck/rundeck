@@ -17,6 +17,7 @@
 package com.dtolabs.rundeck.core.plugins.configuration
 
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.plugins.descriptions.DynamicSelectValues
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
@@ -274,5 +275,75 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,z'   | _
         'a,z,c' | _
         'qasdf'   | _
+    }
+
+    static class TestValidator1 implements PropertyValidator {
+        @Override
+        boolean isValid(final String value) throws ValidationException {
+            return false
+        }
+    }
+
+    static class TestGen1 implements ValuesGenerator {
+
+    }
+    /**
+     * test property types
+     */
+    @Plugin(name = "typeTest1", service = "x")
+    static class Configuretest2 {
+        @PluginProperty(validatorClass = TestValidator1)
+        String testValidator1;
+
+        @PluginProperty(validatorClassName = 'com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtilitySpec$TestValidator1')
+        String testValidator2;
+
+        @PluginProperty
+        @SelectValues(values = ['a', 'b'])
+        @DynamicSelectValues(generatorClass = TestGen1)
+        String testString2;
+        @PluginProperty
+        @SelectValues(values = ['a', 'b'])
+        @DynamicSelectValues(generatorClassName = 'com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtilitySpec$TestGen1')
+        String testString3;
+    }
+
+    def "values generator class annotation "() {
+        given:
+
+        when:
+        def list = PluginAdapterUtility.buildFieldProperties(Configuretest2)
+
+        then:
+        def field1 = list.find { it.name == 'testString2' }
+        field1 != null
+        field1.type == Property.Type.Select
+        field1.valuesGenerator != null
+        field1.valuesGenerator instanceof TestGen1
+        def field2 = list.find { it.name == 'testString3' }
+        field2 != null
+        field2.type == Property.Type.Select
+        field2.valuesGenerator != null
+        field2.valuesGenerator instanceof TestGen1
+
+    }
+    def "validator class annotation "() {
+        given:
+
+        when:
+        def list = PluginAdapterUtility.buildFieldProperties(Configuretest2)
+
+        then:
+        def field1 = list.find { it.name == 'testValidator1' }
+        field1 != null
+        field1.type == Property.Type.String
+        field1.validator != null
+        field1.validator instanceof TestValidator1
+        def field2 = list.find { it.name == 'testValidator2' }
+        field2 != null
+        field2.type == Property.Type.String
+        field2.validator != null
+        field2.validator instanceof TestValidator1
+
     }
 }

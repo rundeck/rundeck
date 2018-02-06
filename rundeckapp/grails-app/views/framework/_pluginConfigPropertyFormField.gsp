@@ -83,7 +83,7 @@
                      id="${fieldid}" size="100" class="${formControlType} ${extraInputCss}"/>
         </div>
         <div class="${valueColTypeSplitB}">
-            <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
+            <g:set var="propSelectLabels" value="${dynamicPropertiesLabels ?: (prop.selectLabels ?: [:])}"/>
             <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
             <g:set var="propSelectValues" value="${selectValues.collect {
                 [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)]
@@ -98,7 +98,7 @@
         </div>
     </g:if>
     <g:else>
-        <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
+        <g:set var="propSelectLabels" value="${dynamicPropertiesLabels ?: (prop.selectLabels ?: [:])}"/>
         <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
         <g:set var="propSelectValues"
                value="${selectValues.collect { [key: it.encodeAsHTML(), value: (propSelectLabels[it] ?: it)] }}"/>
@@ -123,9 +123,10 @@
 
         <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
 
-        <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
+        <g:set var="propSelectLabels" value="${dynamicPropertiesLabels ?: (prop.selectLabels ?: [:])}"/>
+        <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
         <g:set var="propSelectValues"
-               value="${prop.selectValues.collect { [value: it, label: (propSelectLabels[it] ?: it)] }}"/>
+               value="${selectValues.collect { [value: it, label: (propSelectLabels[it] ?: it)] }}"/>
         <g:set var="noSelectionValue" value="${prop.required ? null : ['': '-none selected-']}"/>
 
 <g:set var="defval" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>

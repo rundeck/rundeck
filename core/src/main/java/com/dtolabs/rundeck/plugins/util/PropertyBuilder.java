@@ -37,6 +37,7 @@ public class PropertyBuilder {
     private List<String> values;
     private Map<String, String> labels;
     private PropertyValidator validator;
+    private ValuesGenerator valuesGenerator;
     private PropertyScope scope;
     private Map<String, Object> renderingOptions = new HashMap<String, Object>();
     private boolean dynamicValues;
@@ -66,6 +67,7 @@ public class PropertyBuilder {
             .values(orig.getSelectValues())
             .labels(orig.getSelectLabels())
             .validator(orig.getValidator())
+                .valuesGenerator(orig.getValuesGenerator())
             .scope(orig.getScope())
             .renderingOptions(orig.getRenderingOptions())
             ;
@@ -354,6 +356,7 @@ public class PropertyBuilder {
                 values,
                 labels,
                 validator,
+                valuesGenerator,
                 scope,
                 renderingOptions,
                 dynamicValues
@@ -365,5 +368,18 @@ public class PropertyBuilder {
      */
     public Property.Type getType() {
         return type;
+    }
+
+    /**
+     * Define the values generator for the property
+     *
+     * @param valuesGenerator values generator
+     * @return this
+     */
+    public PropertyBuilder valuesGenerator(ValuesGenerator valuesGenerator) {
+        this.valuesGenerator = valuesGenerator;
+        dynamicValues(true);
+        return this;
+
     }
 }

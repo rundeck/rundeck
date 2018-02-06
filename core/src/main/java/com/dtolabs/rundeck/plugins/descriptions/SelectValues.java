@@ -50,7 +50,8 @@ public @interface SelectValues {
 
     /**
      *
-     * @return True if multiple values can be selected as checkboxes, cannot be used with {@link #freeSelect()}
+     * @return True if values will be generated via the {@link com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties} feature, will
+     * prevent validation
      */
     boolean dynamicValues() default false;
 

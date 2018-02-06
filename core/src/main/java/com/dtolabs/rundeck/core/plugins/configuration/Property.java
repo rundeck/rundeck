@@ -125,4 +125,12 @@ public interface Property {
      * @return a map of optional rendering options for the UI
      */
     public Map<String, Object> getRenderingOptions();
+
+    /**
+     *
+     * @return generator of values
+     */
+    default ValuesGenerator getValuesGenerator() {
+        return null;
+    }
 }

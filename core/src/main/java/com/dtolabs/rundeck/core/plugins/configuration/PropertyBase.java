@@ -33,37 +33,62 @@ import java.util.Map;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-abstract class PropertyBase implements Property {
-    private final String title;
-    private final String name;
-    private final String description;
-    private final boolean required;
-    private final String defaultValue;
-    private final PropertyValidator validator;
-    private final PropertyScope scope;
+class PropertyBase implements Property {
+    private final String              title;
+    private final String              name;
+    private final String              description;
+    private final boolean             required;
+    private final String              defaultValue;
+    private final PropertyValidator   validator;
+    private final PropertyScope       scope;
     private final Map<String, Object> renderingOptions;
+    private final Type                type;
+    private final ValuesGenerator     valuesGenerator;
+    private final List<String>        selectValues;
+    private final Map<String, String> selectLabels;
 
-    public PropertyBase(final String name, final String title, final String description, final boolean required,
-                        final String defaultValue, final PropertyValidator validator) {
-
-        this(name, title, description, required, defaultValue, validator, null);
+    public PropertyBase(Property base) {
+        this(
+                base.getType(),
+                base.getName(),
+                base.getTitle(),
+                base.getDescription(),
+                base.isRequired(),
+                base.getDefaultValue(),
+                base.getSelectValues(),
+                base.getSelectLabels(),
+                base.getValidator(),
+                base.getValuesGenerator(),
+                base.getScope(),
+                base.getRenderingOptions()
+        );
     }
 
-    public PropertyBase(final String name, final String title, final String description, final boolean required,
-                        final String defaultValue, final PropertyValidator validator, final PropertyScope scope) {
-        this(name, title, description, required, defaultValue, validator, scope, null);
-    }
-
-    public PropertyBase(final String name, final String title, final String description, final boolean required,
-                        final String defaultValue, final PropertyValidator validator, final PropertyScope scope,
-                        final Map<String, Object> renderingOptions) {
+    public PropertyBase(
+            final Type type,
+            final String name,
+            final String title,
+            final String description,
+            final boolean required,
+            final String defaultValue,
+            final List<String> selectValues,
+            final Map<String, String> selectLabels,
+            final PropertyValidator validator,
+            final ValuesGenerator valuesGenerator,
+            final PropertyScope scope,
+            final Map<String, Object> renderingOptions
+    ) {
+        this.type = type;
         this.title = title;
         this.name = name;
         this.description = description;
         this.required = required;
         this.defaultValue = defaultValue;
         this.validator = validator;
+        this.valuesGenerator = valuesGenerator;
         this.scope = scope;
+        this.selectValues = selectValues;
+        this.selectLabels = selectLabels;
         this.renderingOptions = renderingOptions == null ? Collections.<String, Object> emptyMap() : Collections
                 .unmodifiableMap(renderingOptions);
     }
@@ -85,12 +110,12 @@ abstract class PropertyBase implements Property {
     }
 
     public List<String> getSelectValues() {
-        return null;
+        return selectValues;
     }
 
     @Override
     public Map<String, String> getSelectLabels() {
-        return null;
+        return selectLabels;
     }
 
     public PropertyValidator getValidator() {
@@ -109,6 +134,16 @@ abstract class PropertyBase implements Property {
     @Override
     public Map<String, Object> getRenderingOptions() {
         return renderingOptions;
+    }
+
+    @Override
+    public Type getType() {
+        return type;
+    }
+
+    @Override
+    public ValuesGenerator getValuesGenerator() {
+        return valuesGenerator;
     }
 
     @Override

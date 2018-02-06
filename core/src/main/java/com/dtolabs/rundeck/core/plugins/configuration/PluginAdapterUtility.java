@@ -224,6 +224,33 @@ public class PluginAdapterUtility {
                 pbuild.dynamicValues(selectAnnotation.dynamicValues());
                 extractSelectLabels(pbuild, values, field.getAnnotation(SelectLabels.class));
             }
+            final DynamicSelectValues dynamicValuesAnnotation = field.getAnnotation(DynamicSelectValues.class);
+            if (null != dynamicValuesAnnotation &&
+                (
+                        notBlank(dynamicValuesAnnotation.generatorClassName()) ||
+                        !Object.class.equals(dynamicValuesAnnotation.generatorClass())
+                )) {
+                //attempt to create a ValuesGenerator
+                Class<?> genClass = dynamicValuesAnnotation.generatorClass();
+                String genClassName = dynamicValuesAnnotation.generatorClassName();
+                if (notBlank(genClassName)) {
+                    try {
+                        genClass = Class.forName(genClassName);
+                    } catch (ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
+                }
+                try {
+                    if (ValuesGenerator.class.isAssignableFrom(genClass)) {
+                        ValuesGenerator valuesGenerator = (ValuesGenerator) genClass.getDeclaredConstructor()
+                                                                                    .newInstance();
+                        pbuild.valuesGenerator(valuesGenerator);
+                    }
+                } catch (NoSuchMethodException | InvocationTargetException |
+                        IllegalAccessException | InstantiationException e) {
+                    e.printStackTrace();
+                }
+            }
 
             if (field.getAnnotation(TextArea.class) != null) {
                 renderBehaviour = StringRenderingConstants.DisplayType.MULTI_LINE;
@@ -247,6 +274,7 @@ public class PluginAdapterUtility {
                 }
             }
         }
+
 
         String name = annotation.name();
         if (null == name || "".equals(name)) {

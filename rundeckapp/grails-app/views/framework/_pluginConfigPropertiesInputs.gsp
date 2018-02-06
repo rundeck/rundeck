@@ -19,6 +19,7 @@
 <g:set var="secondary" value="${[]}"/>
 <g:set var="ungrouped" value="${[]}"/>
 <g:set var="dynamicProperties" value="${dynamicProperties}"/>
+<g:set var="dynamicPropertiesLabels" value="${dynamicPropertiesLabels}"/>
 <g:each in="${properties}" var="prop">
     <g:set var="scopeUnset" value="${!prop.scope || prop.scope.isUnspecified()}"/>
     <g:set var="scopeProject" value="${prop.scope && prop.scope.isProjectLevel()}"/>
@@ -69,17 +70,18 @@
 <g:each in="${ungrouped}" var="prop">
     <g:render
             template="/framework/pluginConfigPropertyFormField"
-            model="${[prop         : prop,
-                      dynamicProperties : dynamicProperties ? dynamicProperties[prop.name] : null,
-                      prefix       : prefix,
-                      error        : report?.errors ? report.errors[prop.name] : null,
-                      values       : values,
-                      fieldname    : (fieldnamePrefix ?: '') + prop.name,
-                      origfieldname: (origfieldnamePrefix ?: '') + prop.name,
-                      service      : service,
-                      provider     : provider,
-                      messagePrefix:messagePrefix,
-                      extraInputCss:extraInputCss
+            model="${[prop                   : prop,
+                      dynamicProperties      : dynamicProperties ? dynamicProperties[prop.name] : null,
+                      dynamicPropertiesLabels: dynamicPropertiesLabels ? dynamicPropertiesLabels[prop.name] : null,
+                      prefix                 : prefix,
+                      error                  : report?.errors ? report.errors[prop.name] : null,
+                      values                 : values,
+                      fieldname              : (fieldnamePrefix ?: '') + prop.name,
+                      origfieldname          : (origfieldnamePrefix ?: '') + prop.name,
+                      service                : service,
+                      provider               : provider,
+                      messagePrefix          : messagePrefix,
+                      extraInputCss          : extraInputCss
             ]}"/>
 </g:each>
 <g:set var="defaultGroupName" value="${g.message(code:'plugin.property.secondary.groupName',default:'More')}"/>
@@ -114,15 +116,17 @@
         <g:each in="${groupProps}" var="prop">
             <g:render
                     template="/framework/pluginConfigPropertyFormField"
-                    model="${[prop         : prop,
-                              dynamicProperties : dynamicProperties ? dynamicProperties[prop.name] : null,
-                              prefix       : prefix,
-                              error        : report?.errors ? report.errors[prop.name] : null,
-                              values       : values,
-                              fieldname    : (fieldnamePrefix ?: '') + prop.name,
-                              origfieldname: (origfieldnamePrefix ?: '') + prop.name,
-                              service      : service,
-                              provider     : provider,
+                    model="${[prop                   : prop,
+                              dynamicProperties      : dynamicProperties ? dynamicProperties[prop.name] : null,
+                              dynamicPropertiesLabels: dynamicPropertiesLabels ? dynamicPropertiesLabels[prop.name] :
+                                                       null,
+                              prefix                 : prefix,
+                              error                  : report?.errors ? report.errors[prop.name] : null,
+                              values                 : values,
+                              fieldname              : (fieldnamePrefix ?: '') + prop.name,
+                              origfieldname          : (origfieldnamePrefix ?: '') + prop.name,
+                              service                : service,
+                              provider               : provider,
                               messagePrefix:messagePrefix,
                               extraInputCss:extraInputCss
                     ]}"/>
