@@ -30,6 +30,7 @@ import com.dtolabs.rundeck.core.common.INodeSet;
 import com.dtolabs.rundeck.core.common.NodeSetImpl;
 import com.dtolabs.rundeck.core.common.NodesSelector;
 import com.dtolabs.rundeck.core.common.OrchestratorConfig;
+import com.dtolabs.rundeck.core.common.PluginControlService;
 import com.dtolabs.rundeck.core.common.SelectorUtils;
 import com.dtolabs.rundeck.core.data.*;
 import com.dtolabs.rundeck.core.dispatcher.*;
@@ -81,6 +82,8 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     private LoggingManager loggingManager;
 
     private OrchestratorConfig orchestrator;
+    private PluginControlService pluginControlService;
+
     private ExecutionContextImpl() {
         stepContext = new ArrayList<>();
         nodes = new NodeSetImpl();
@@ -186,6 +189,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
                     ctx.singleNodeContext = original1.getSingleNodeContext();
                 }
+                ctx.pluginControlService = new PluginControlService(original.getFramework());
             }
         }
 
@@ -416,6 +420,11 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
             ctx.orchestrator = orchestrator;
             return this;
         }
+
+        public Builder pluginControlService(PluginControlService pluginControlService) {
+            ctx.pluginControlService = pluginControlService;
+            return this;
+        }
         
         public Builder pushContextStep(final int step) {
             ctx.stepContext.add(ctx.stepNumber);
@@ -554,4 +563,7 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
     public OrchestratorConfig getOrchestrator() {
     	return orchestrator;
     }
+
+    @Override
+    public PluginControlService getPluginControlService(){ return pluginControlService; }
 }

@@ -76,12 +76,13 @@ public class LoggingManagerImpl implements LoggingManager {
                         directLogger
                 )
         );
-        installPlugins(myPluginLoggingManager, globalPluginConfigs);
+
+        installPlugins(myPluginLoggingManager, globalPluginConfigs, context);
 
         if(step!=null) {
             HasLoggingFilterConfiguration.of(step).ifPresent(filtered -> {
                 if (null != filtered.getFilterConfigurations()) {
-                    installPlugins(myPluginLoggingManager, filtered.getFilterConfigurations());
+                    installPlugins(myPluginLoggingManager, filtered.getFilterConfigurations(), context);
                 }
             });
         }
@@ -91,10 +92,13 @@ public class LoggingManagerImpl implements LoggingManager {
 
     private void installPlugins(
             final MyPluginLoggingManager myPluginLoggingManager,
-            final List<PluginConfiguration> filterConfigurations
+            final List<PluginConfiguration> filterConfigurations,
+            ExecutionContext context
     )
     {
         for (PluginConfiguration pluginConfiguration : filterConfigurations) {
+
+            context.getPluginControlService().checkDisabledPlugin(context.getFrameworkProject(), pluginConfiguration.getProvider());
             LogFilterPlugin load = pluginLoader.load(
                     pluginConfiguration.getProvider(),
                     pluginConfiguration.getConfiguration()

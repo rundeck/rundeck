@@ -174,6 +174,9 @@ public class NotificationService implements ApplicationContextAware{
             def notes = source.notifications.findAll{it.eventTrigger=='on'+trigger}
             notes.each{ Notification n ->
                 try{
+
+                    frameworkService.getPluginControlService().checkDisabledPlugin(source.project, n.type)
+
                 if(n.type=='email'){
                     //sending notification of a status trigger for the Job
                     def Execution exec = content.execution
@@ -384,6 +387,7 @@ public class NotificationService implements ApplicationContextAware{
                     if (context && config) {
                         config = DataContextUtils.replaceDataReferences(config, context)
                     }
+
                     didsend=triggerPlugin(trigger,execMap,n.type, frameworkService.getFrameworkPropertyResolver(source.project, config))
                 }else{
                     log.error("Unsupported notification type: " + n.type);

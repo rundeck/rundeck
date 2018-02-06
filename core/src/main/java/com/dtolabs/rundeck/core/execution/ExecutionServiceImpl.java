@@ -54,6 +54,7 @@ class ExecutionServiceImpl implements ExecutionService {
     private final Framework framework;
 
     public ExecutionServiceImpl(Framework framework) {
+
         this.framework = framework;
     }
 
@@ -94,6 +95,7 @@ class ExecutionServiceImpl implements ExecutionService {
                 pluginLogging.begin();
             }
             try {
+                context.getPluginControlService().checkDisabledPlugin(context.getFrameworkProject(), item.getType());
                 result = executor.executeWorkflowStep(context, item);
             } finally {
                 if (null != pluginLogging) {
@@ -142,6 +144,7 @@ class ExecutionServiceImpl implements ExecutionService {
                 pluginLogging.begin();
             }
             try {
+                context.getPluginControlService().checkDisabledPlugin(context.getFrameworkProject(), item.getNodeStepType());
                 result = interpreter.executeNodeStep(nodeContext, item, node);
             } finally {
                 if (null != pluginLogging) {
