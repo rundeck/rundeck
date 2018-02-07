@@ -45,6 +45,23 @@
             <g:icon name="send"/>
             ${trigger.name}
         </g:link>
+        <div>
+            <g:link action="delete" class="btn btn-danger-hollow btn-xs"
+                    params="[project: project, id: trigger.uuid]">
+                <i class="glyphicon glyphicon-remove"></i>
+                Delete
+            </g:link>
+            <g:link action="test" class="btn btn-default-hollow btn-xs"
+                    params="[project: project, id: trigger.uuid]">
+                <i class="glyphicon glyphicon-question-sign"></i>
+                Test
+            </g:link>
+            <g:link action="edit" class="btn btn-info-hollow btn-xs"
+                    params="[project: project, id: trigger.uuid]">
+                <i class="glyphicon glyphicon-pencil"></i>
+                Edit
+            </g:link>
+        </div>
     </div>
 
     <div class="col-sm-9">
@@ -83,21 +100,7 @@
 </div>
 
 <div>
-    <g:link action="delete" class="btn btn-danger-hollow btn-sm"
-            params="[project: project, id: trigger.uuid]">
-        <i class="glyphicon glyphicon-remove"></i>
-        Delete
-    </g:link>
-    <g:link action="test" class="btn btn-default-hollow btn-sm"
-            params="[project: project, id: trigger.uuid]">
-        <i class="glyphicon glyphicon-question-sign"></i>
-        Test
-    </g:link>
-    <g:link action="edit" class="btn btn-info-hollow btn-sm"
-            params="[project: project, id: trigger.uuid]">
-        <i class="glyphicon glyphicon-pencil"></i>
-        Edit
-    </g:link>
+
 </div>
 </body>
 </html>
