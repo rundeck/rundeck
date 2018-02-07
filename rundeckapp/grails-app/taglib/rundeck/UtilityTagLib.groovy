@@ -588,7 +588,7 @@ class UtilityTagLib{
                         linkParams:[action:'show',controller:'scheduledExecution'] + xparams,
                         textValue:{
                             def job= ScheduledExecution.getByIdOrUUID(it)
-                            return job?job.generateFullName():it
+                            return job?job.toDisplayName():it
                         }
                 ],
                 profile:[

@@ -636,6 +636,9 @@ class ScheduledExecution extends ExecutionContext {
         return generateFullName(groupPath,jobName)
     }
 
+    def String toDisplayName() {
+        return (groupPath ? groupPath + '/' : '') + jobName
+    }
 
     /**
      * Return full name for group and path
