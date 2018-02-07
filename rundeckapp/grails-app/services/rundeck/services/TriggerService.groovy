@@ -135,7 +135,7 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
     TriggerAction actionFor(TriggerRep rep) {
         def action = getConfiguredActionPlugin(rep.actionType, rep.actionConfig)
         if (!action) {
-            throw new IllegalArgumentException("Unknown action type: ${rep.conditionType}")
+            throw new IllegalArgumentException("Unknown action type: ${rep.actionType}")
         }
         return action.instance
     }
