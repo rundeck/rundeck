@@ -69,9 +69,9 @@
                               title="${message(code:"select.an.existing.job.to.use")}"
                               data-loading-text="Loading...">
                             <g:message code="choose.a.job..." />
-                            %{--<i class="caret"></i>--}%
+
                         </span>
-                        <span id="jobChooseSpinner"></span>
+
                         <g:render template="/common/modal" model="${[modalid:'jobrefpicker'+rkey,modalsize:'modal-lg',title:message(code:"choose.a.job..."),buttons:[]]}"/>
                     </div>
                 </div>

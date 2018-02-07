@@ -248,7 +248,7 @@
                 </g:else>
             </g:elseif>
             <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in ['RUNDECK_JOB']}">
-            
+
 
                 <span data-bind="visible: !toggle.value()">
                     <span data-bind="if: value">
