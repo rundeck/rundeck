@@ -28,6 +28,13 @@ class TriggerController extends ControllerBase implements PluginListRequired {
         redirect(action: 'list', params: [project: project])
     }
 
+    def cancel(String id, String project) {
+        if (id && project) {
+            return redirect(action: 'show', params: [id: id, project: project])
+        }
+        redirect(action: 'list', params: [project: project])
+    }
+
     def list(String project) {
 //        def framework = frameworkService.getRundeckFramework()
 
@@ -154,7 +161,7 @@ class TriggerController extends ControllerBase implements PluginListRequired {
             return
         }
 
-        triggerService.triggerConditionMet(input.id,triggerService.contextForTrigger(trigger), params.data ?: [:])
+        triggerService.triggerConditionMet(input.id, triggerService.contextForTrigger(trigger), params.data ?: [:])
         flash.message = "Trigger started"
         redirect(action: 'show', params: params)
     }
