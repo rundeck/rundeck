@@ -5,8 +5,6 @@ import com.dtolabs.rundeck.app.support.trigger.TriggerUpdate
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
-import com.dtolabs.rundeck.server.plugins.trigger.action.JobRunTriggerAction
-import com.dtolabs.rundeck.server.plugins.trigger.condition.ScheduleTriggerCondition
 import grails.transaction.Transactional
 import groovy.transform.ToString
 import org.rundeck.core.triggers.*
@@ -99,16 +97,7 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
      * @return
      */
     public Map<String, TriggerConditionHandler<RDTriggerContext>> getTriggerConditionHandlerMap() {
-        def plugins = pluginService.listPlugins(TriggerConditionHandler).collectEntries { [it.key, it.value.instance] }
-
-
-        plugins
-//        //TODO: plugins
-//        applicationContext.getBeansOfType(
-//                TriggerConditionHandler
-//        )?.findAll {
-//            !it.key.endsWith('Profiled')
-//        }
+        return pluginService.listPlugins(TriggerConditionHandler).collectEntries { [it.key, it.value.instance] }
     }
 
     /**
@@ -117,12 +106,7 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
      */
     public Map<String, TriggerActionHandler<RDTriggerContext>> getTriggerActionHandlerMap() {
         pluginService.listPlugins(TriggerActionHandler).collectEntries { [it.key, it.value.instance] }
-//        //TODO: plugins
-//        applicationContext.getBeansOfType(
-//                TriggerActionHandler
-//        )?.findAll {
-//            !it.key.endsWith('Profiled')
-//        }
+
     }
 
     public Map getClusterContextInfo() {
@@ -274,7 +258,17 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         //TODO: on executor
 
         try {
-            actHandler.performTriggerAction(triggerId, contextInfo, conditionMap, condition, action)
+            def result = actHandler.performTriggerAction(triggerId, contextInfo, conditionMap, condition, action)
+            def event2 = new TriggerEvent(
+                    eventDataMap: result,
+                    timeZone: ZoneId.systemDefault().toString(),
+                    eventType: 'result',
+                    triggerRep: trigger,
+                    associatedId: result?.associatedId,
+                    associatedType: result?.associatedType,
+                    associatedEvent: event
+            )
+            event2.save(flush: true)
         } catch (Throwable t) {
             log.error("Failed to run trigger action for $triggerId: $t.message", t)
             def event2 = new TriggerEvent(

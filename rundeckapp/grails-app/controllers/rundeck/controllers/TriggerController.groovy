@@ -5,16 +5,23 @@ import com.dtolabs.rundeck.app.support.trigger.TriggerRequest
 import com.dtolabs.rundeck.app.support.trigger.TriggerUpdate
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.fasterxml.jackson.databind.ObjectMapper
+import org.rundeck.core.triggers.TriggerAction
+import org.rundeck.core.triggers.TriggerCondition
 import rundeck.TriggerRep
+import rundeck.services.PluginService
 
-class TriggerController extends ControllerBase {
+class TriggerController extends ControllerBase implements PluginListRequired {
     def frameworkService
     def triggerService
+    PluginService pluginService
     static allowedMethods = [
             'createPost': 'POST',
             'deletePost': 'POST',
             'updatePost': 'POST',
     ]
+    Map<String, Class> requiredPluginTypes = [actionPlugins: TriggerAction, conditionPlugins: TriggerCondition]
+    Collection<String> requiredPluginActionNames = ['create', 'edit', 'show', 'createPost', 'updatePost']
+
 
     def index(String project) {
         //TODO project
@@ -52,11 +59,11 @@ class TriggerController extends ControllerBase {
         //TODO: auth
         ObjectMapper mapper = new ObjectMapper()
         //TODO: condition map data
-        Map conditionMap = params.conditionData ? mapper.readValue(params.conditionData, Map) : null
+        Map conditionMap = params.conditionData ? mapper.readValue(params.conditionData, Map) : params.conditionConfig
         //TODO: action map data
-        Map actionMap = params.actionData ? mapper.readValue(params.actionData, Map) : null
+        Map actionMap = params.actionData ? mapper.readValue(params.actionData, Map) : params.actionConfig
         //TODO: trigger user data
-        Map userData = params.triggerData ? mapper.readValue(params.triggerData, Map) : null
+        Map userData = params.triggerData ? mapper.readValue(params.triggerData, Map) : params.userDataConfig
 
 
 
@@ -112,11 +119,11 @@ class TriggerController extends ControllerBase {
         ObjectMapper mapper = new ObjectMapper()
 
         //TODO: condition map data
-        Map conditionMap = params.conditionData ? mapper.readValue(params.conditionData, Map) : null
+        Map conditionMap = params.conditionData ? mapper.readValue(params.conditionData, Map) : params.conditionConfig
         //TODO: action map data
-        Map actionMap = params.actionData ? mapper.readValue(params.actionData, Map) : null
+        Map actionMap = params.actionData ? mapper.readValue(params.actionData, Map) : params.actionConfig
         //TODO: trigger user data
-        Map userData = params.triggerData ? mapper.readValue(params.triggerData, Map) : null
+        Map userData = params.triggerData ? mapper.readValue(params.triggerData, Map) : params.userDataConfig
         //TODO...
 
         //TODO; auth
@@ -147,7 +154,7 @@ class TriggerController extends ControllerBase {
             return
         }
 
-        triggerService.triggerConditionMet(input.id, params.data ?: [:])
+        triggerService.triggerConditionMet(input.id,triggerService.contextForTrigger(trigger), params.data ?: [:])
         flash.message = "Trigger started"
         redirect(action: 'show', params: params)
     }

@@ -1,6 +1,5 @@
-"use strict";
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,18 +15,13 @@
  */
 
 //= require knockout.min
-/*
- */
-ko.bindingHandlers.executeOnEnter = {
-    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
-        var handler = allBindings.get('executeOnEnter');
-        jQuery(element).keypress(function (event) {
-            var keyCode = (event.which ? event.which : event.keyCode);
-            if (keyCode === 13) {
-                handler.call(bindingContext.$data,event);
-                return false;
-            }
-            return true;
-        });
-    }
-};
+
+"use strict";
+
+function UIToggle(data) {
+    var self = this;
+    self.value = ko.observable(data && data.value ? true : false);
+    self.toggle = function () {
+        self.value(!self.value());
+    };
+}

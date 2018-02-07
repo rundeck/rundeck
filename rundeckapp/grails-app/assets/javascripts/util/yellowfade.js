@@ -34,6 +34,9 @@ function tohex(x){
    return hex[Math.round((x & 0xF0)/16.0)]+hex[Math.round(x)%16.0];
 }
 function yellowfade(id,perc,time,rate,ramp,test,rgb1,rgb2){
+    if (!$(id)) {
+        return;
+    }
     /**
      * id: id of element on the page to perform the fade on
      * perc: current percentage for the fade (from 0.0 to 1.0)

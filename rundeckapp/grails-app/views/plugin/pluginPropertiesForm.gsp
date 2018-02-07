@@ -1,3 +1,19 @@
+%{--
+  - Copyright 2018 Rundeck, Inc. (http://rundeck.com)
+  -
+  - Licensed under the Apache License, Version 2.0 (the "License");
+  - you may not use this file except in compliance with the License.
+  - You may obtain a copy of the License at
+  -
+  -     http://www.apache.org/licenses/LICENSE-2.0
+  -
+  - Unless required by applicable law or agreed to in writing, software
+  - distributed under the License is distributed on an "AS IS" BASIS,
+  - WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  - See the License for the specific language governing permissions and
+  - limitations under the License.
+  --}%
+
 <%--
   Created by IntelliJ IDEA.
   User: greg
@@ -6,11 +22,42 @@
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<html>
-<head>
-  <title></title>
-</head>
-<body>
+<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants; com.dtolabs.rundeck.core.plugins.configuration.PropertyScope; com.dtolabs.rundeck.core.plugins.configuration.Description" %>
 
-</body>
-</html>
+<g:set var="pluginName" value="${pluginDescription.name}"/>
+<g:set var="prefix" value="${(inputFieldPrefix)}"/>
+
+<g:set var="definedConfig" value="${config}"/>
+<div data-plugin-name="${pluginName}" data-plugin-service="${service}" class="plugin-config">
+    <span class="text-info">
+        <g:render template="/scheduledExecution/description"
+                  model="[description: stepplugin.messageText(
+                          service: service,
+                          name: pluginName,
+                          code: 'plugin.description',
+                          default: pluginDescription.description
+                  ),
+                          textCss    : '',
+                          mode       : 'collapsed',
+                          moreText   : message(code: 'more.information'),
+                          rkey       : g.rkey()]"/>
+    </span>
+
+    <div>
+
+        <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
+                service                : service,
+                provider               : pluginDescription.name,
+                properties             : pluginDescription?.properties,
+                dynamicProperties      : dynamicProperties,
+                dynamicPropertiesLabels: dynamicPropertiesLabels,
+                report                 : null,
+                prefix                 : prefix,
+                values                 : definedConfig,
+                fieldnamePrefix        : prefix,
+                origfieldnamePrefix    : 'orig.' + prefix,
+                allowedScope           : PropertyScope.Instance
+        ]}"/>
+
+    </div>
+</div>

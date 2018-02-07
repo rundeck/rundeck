@@ -560,6 +560,34 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         results.showemptymessage=true
         return results + [runAuthRequired:params.runAuthRequired]
     }
+    /**
+     * Presents the jobs tree and can pass the jobsjscallback parameter
+     * to the be a javascript callback for clicked jobs, instead of normal behavior.
+     */
+    def jobsLinkTemplate(String id, String project) {
+
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+
+        def ScheduledExecution scheduledExecution = scheduledExecutionService.getByIDorUUID(id)
+        if (scheduledExecution?.project != project) {
+            scheduledExecution = null
+        }
+
+        if (notFoundResponse(scheduledExecution, 'Job', id)) {
+            return
+        }
+        def reqAuth = [AuthConstants.ACTION_READ] + params.runAuthRequired ? ([AuthConstants.ACTION_RUN]) : []
+        if (unauthorizedResponse(
+                frameworkService.authorizeProjectJobAll(
+                        authContext, scheduledExecution,
+                        reqAuth, scheduledExecution.project
+                ), AuthConstants.ACTION_READ, 'Job', id
+        )) {
+            return
+        }
+
+        return [scheduledExecution: scheduledExecution, runAuthRequired: params.runAuthRequired]
+    }
 
     public def jobsSearchJson(ScheduledExecutionQuery query) {
         AuthContext authContext

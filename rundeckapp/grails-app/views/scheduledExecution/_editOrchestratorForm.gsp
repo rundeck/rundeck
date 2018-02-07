@@ -44,7 +44,7 @@
                 <g:set var="definedNotif" value="${setOrchestrator == pluginName ? scheduledExecution?.orchestrator : null}"/>
                 <g:set var="definedConfig"
                     value="${params.orchestratorPlugin?.get(pluginName)?.config ?: definedNotif?.configuration}"/>
-                <span data-orchestrator="${pluginName}"  style="${wdgt.styleVisible(if: setOrchestrator == pluginName ? true : false)}"
+                <div data-orchestrator="${pluginName}"  style="${wdgt.styleVisible(if: setOrchestrator == pluginName ? true : false)}"
                       class="orchestratorPlugin">
                     <span class="text-info">
                         <g:render template="/scheduledExecution/description"
@@ -74,7 +74,7 @@
                         ]}"/>
 
                 </div>
-                </span>
+                </div>
 
         </g:each>
             <g:javascript>jQuery(function () {

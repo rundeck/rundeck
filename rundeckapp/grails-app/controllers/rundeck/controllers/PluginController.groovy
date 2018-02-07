@@ -7,6 +7,7 @@ import rundeck.services.UiPluginService
 
 class PluginController {
     def UiPluginService uiPluginService
+    def pluginService
 
     def pluginIcon(PluginResourceReq resourceReq) {
         if (resourceReq.hasErrors()) {
@@ -121,5 +122,39 @@ class PluginController {
         }finally{
             istream.close()
         }
+    }
+
+    def pluginPropertiesForm(String service, String name) {
+        def describedPlugin = pluginService.getPluginDescriptor(name, service)
+        def config = [:]
+        if (request.method == 'POST' && request.format == 'json') {
+            config = request.JSON.config
+        }
+        def dynamicProperties = [:]
+        def dynamicPropertiesLabels = [:]
+        describedPlugin.description.properties.each {
+            if (it.valuesGenerator != null) {
+                def strings = it.valuesGenerator.generateValuesStrings()
+                if (strings != null) {
+                    dynamicProperties[it.name] = strings;
+                } else {
+                    def values = it.valuesGenerator.generateValues()
+                    if (values != null) {
+                        dynamicProperties[it.name] = values*.key;
+                        dynamicPropertiesLabels[it.name] = values.collectEntries { [it.key, it.label] }
+                    }
+                }
+            }
+        }
+        [
+                inputFieldPrefix       : params.inputFieldPrefix ?: '',
+                config                 : config,
+                service                : service,
+                name                   : name,
+                dynamicPropertiesLabels: dynamicPropertiesLabels,
+                dynamicProperties      : dynamicProperties,
+                pluginDescription      : describedPlugin.description,
+                project                : params.project
+        ]
     }
 }

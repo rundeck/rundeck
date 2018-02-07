@@ -34,7 +34,8 @@ class JobRunTriggerAction implements TriggerAction {
     @RenderingOptions(
             [
                     @RenderingOption(key = StringRenderingConstants.SELECTION_ACCESSOR_KEY, value = 'RUNDECK_JOB'),
-                    @RenderingOption(key = 'data.selector.result', value = 'id')
+                    @RenderingOption(key = StringRenderingConstants.SELECTION_COMPONENT_KEY, value = 'uuid'),
+                    @RenderingOption(key = StringRenderingConstants.DISPLAY_TYPE_KEY, value = 'RUNDECK_JOB')
             ]
     )
     String jobId

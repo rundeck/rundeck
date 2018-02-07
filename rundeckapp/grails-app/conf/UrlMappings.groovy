@@ -285,6 +285,7 @@ class UrlMappings {
         "/plugin/icon/$service/$name"(controller: 'plugin', action: 'pluginIcon')
         "/plugin/file/$service/$name/$path**"(controller: 'plugin', action: 'pluginFile')
         "/plugin/i18n/$service/$name/$path**"(controller: 'plugin', action: 'pluginMessages')
+        "/plugins/$action/$service/$name"(controller: 'plugin')
 
         "404"(view: '/404')
         "500"(view: '/error')

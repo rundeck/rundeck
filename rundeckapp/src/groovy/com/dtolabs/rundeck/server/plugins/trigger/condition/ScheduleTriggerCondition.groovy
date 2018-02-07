@@ -17,12 +17,23 @@
 package com.dtolabs.rundeck.server.plugins.trigger.condition
 
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
+import com.dtolabs.rundeck.core.plugins.configuration.ValuesGenerator
+import com.dtolabs.rundeck.plugins.descriptions.DynamicSelectValues
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.SelectValues
+import org.quartz.CronExpression
 import org.quartz.CronScheduleBuilder
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
 import org.rundeck.core.triggers.TriggerCondition
+
+import java.text.ParseException
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
 
 /**
  *
@@ -39,11 +50,44 @@ class ScheduleTriggerCondition implements TriggerCondition {
     Map getConditionData() {
         [:]
     }
-    @PluginProperty
+    @PluginProperty(title = "Time Zone", description = "Time Zone to use for schedule")
+    @DynamicSelectValues(generatorClass = ScheduleTriggerCondition.TimeZoneGenerator)
+    @SelectValues(freeSelect = true, values = [])
     String timeZone
-    @PluginProperty
+
+    @PluginProperty(title = "Cron Expression", description = "A Cron expression.", validatorClass = ScheduleTriggerCondition.CronValidator)
     String cronExpression
 
+    static class CronValidator implements PropertyValidator {
+        @Override
+        boolean isValid(final String value) throws ValidationException {
+            try {
+                CronExpression.validateExpression(value)
+            } catch (ParseException e) {
+                throw new ValidationException(e.message, e)
+            }
+            true
+        }
+    }
+
+    static class TimeZoneGenerator implements ValuesGenerator {
+
+
+        @Override
+        List<ValuesGenerator.Entry> generateValues() {
+            return TimeZone.getAvailableIDs().collect {
+                entry(it, describe(TimeZone.getTimeZone(it)))
+            }
+        }
+
+        private static String describe(TimeZone zone) {
+            LocalDateTime dt = LocalDateTime.now();
+            ZonedDateTime zdt = dt.atZone(zone.toZoneId());
+            ZoneOffset offset = zdt.getOffset();
+            return "$zone.ID (GMT $offset)"
+        }
+
+    }
 
     ScheduleTriggerCondition() {
 

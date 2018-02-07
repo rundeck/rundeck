@@ -49,6 +49,7 @@
         menuProjectNamesAjax: "${g.createLink(controller: 'menu', action: 'projectNamesAjax',params:projParams)}",
         menuJobsAjax: "${g.createLink(controller: 'menu', action: 'jobsAjax',params:[format:'json'])}",
         menuJobSearchJson: '${createLink(controller:'menu',action:'jobsSearchJson')}',
+        pluginPropertiesForm:'${createLink(controller:'plugin',action:'pluginPropertiesForm',params:params.project?[project:params.project]:[:])}',
         scheduledExecutionRunAdhocInline: "${createLink(controller:'scheduledExecution',action:'runAdhocInline',params:projParams)}",
         scheduledExecutionCreate: "${createLink(controller:'scheduledExecution',action:'create',params:projParams)}",
         scheduledExecutionExecuteFragment: '${createLink(controller:"scheduledExecution",action:"executeFragment",params:projParams)}',

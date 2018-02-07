@@ -17,7 +17,6 @@
 package rundeck.quartzjobs
 
 import org.quartz.Job
-import org.quartz.JobDataMap
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
 import org.rundeck.core.triggers.Action

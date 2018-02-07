@@ -32,19 +32,43 @@
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="util/markdeep.js"/>
     <asset:javascript src="util/yellowfade.js"/>
+    <asset:javascript src="jobedit.js"/>
+    <asset:javascript src="trigger/edit.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <g:javascript>"use strict";
         var confirm = new PageConfirm(message('page.unsaved.changes'));
         jQuery(function (z) {
-
             jQuery('.apply_ace').each(function () {
                 _setupAceTextareaEditor(this, confirm.setNeetsConfirm);
             });
+            window.triggerEditor=new TriggerEdit({
+                conditionConfig:loadJsonData('conditionConfigJson'),
+                conditionFormId:'condeditor',
+                conditionFormPrefixes:['conditionConfig.', 'orig.conditionConfig.'],
+                conditionInputPrefix:'conditionConfig.',
+                actionConfig:loadJsonData('actionConfigJson'),
+                actionFormId:'actionEditor',
+                actionFormPrefixes:['actionConfig.', 'orig.actionConfig.'],
+                actionInputPrefix:'actionConfig.'
+            });
+            ko.applyBindings(triggerEditor);
+            triggerEditor.init();
         });
+        function getFrameworkProject() {
+            return "${project}";
+        }
+
     </g:javascript>
     <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
     <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
+
+    <g:embedJSON
+            data="${trigger?.conditionConfig ? [data: true, config: trigger?.conditionConfig] : [data: false]}"
+            id="conditionConfigJson"/>
+    <g:embedJSON
+            data="${trigger?.actionConfig ? [data: true, config: trigger?.actionConfig] : [data: false]}"
+            id="actionConfigJson"/>
 
 </head>
 

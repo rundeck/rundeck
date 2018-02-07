@@ -1,3 +1,4 @@
+"use strict";
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -459,7 +460,7 @@ function _wfisave(key,num, formelem,iseh) {
     }).success(_ajaxReceiveTokens.curry('job_edit_tokens'));
 }
 var newitemElem;
-function _wfiaddnew(type,nodestep) {
+function _wfiaddnew(type, nodestep) {
     jobWasEdited();
     var params = {newitemtype:type,newitemnodestep:nodestep?true:false};
     if (getCurSEID()) {
@@ -473,11 +474,11 @@ function _wfiaddnew(type,nodestep) {
     var num = wfcontent.find('ol > li').length;
     params['key']=num;
     var parentli = jQuery('<li>' +
-            '<span></span>' +
-            '<div></div>' +
-            '<ul class="wfhandleritem" style="display:none">' +
-                '<li></li>' +
-            '</ul>' +
+        '<span></span>' +
+        '<div></div>' +
+        '<ul class="wfhandleritem" style="display:none">' +
+        '<li></li>' +
+        '</ul>' +
         '</li>');
     if (num % 2 == 1) {
         parentli.addClass('alternate');
@@ -1110,35 +1111,59 @@ function _doRevertOptsAction() {
 }
 
 //job chooser
-var uuidField;
-var jobNameFieldId;
-var jobGroupFieldId;
+var jobChosenCallback;
 function jobChosen(uuid, name, group, elem) {
     jobWasEdited();
-    if (uuidField && jobNameFieldId && jobGroupFieldId) {
-        jQuery('#' + uuidField).val(uuid);
-        jQuery('#' + jobNameFieldId).val(name);
-        jQuery('#' + jobGroupFieldId).val(group);
-        doyftsuccess(uuidField);
-        doyftsuccess(jobNameFieldId);
-        doyftsuccess(jobGroupFieldId);
+    if (typeof(jobChosenCallback) === 'function') {
+        jobChosenCallback(uuid, name, group);
     }
     if (jQuery(elem).closest('.modal').length === 1) {
         jQuery(elem).closest('.modal').modal('hide');
     }
 }
 
-function loadJobChooserModal(elem, uuid, nameid, groupid, projectid, modalid, modalcontentid) {
+function loadJobChooserModalObserve(elem, uuidObs, nameObs, groupObs, projectid, modalid, modalcontentid) {
     if (jQuery(elem).hasClass('active')) {
         jQuery('#' + modalid).modal('hide');
         return;
     }
-    uuidField = uuid;
-    jobNameFieldId = nameid;
-    jobGroupFieldId = groupid;
-    var project = selFrameworkProject;
+    jobChosenCallback = function (uuid, name, group) {
+        if (typeof(uuidObs) === 'function') {
+            uuidObs(uuid);
+        }
+        if (typeof(nameObs) === 'function') {
+            nameObs(name);
+        }
+        if (typeof(groupObs) === 'function') {
+            groupObs(group);
+        }
+    };
+    loadJobChooserModalShow(elem, modalid, modalcontentid)
+}
 
-    if (projectid) {
+function loadJobChooserModal(elem, uuidField, jobNameFieldId, jobGroupFieldId, projectid, modalid, modalcontentid) {
+    if (jQuery(elem).hasClass('active')) {
+        jQuery('#' + modalid).modal('hide');
+        return;
+    }
+
+    jobChosenCallback = function (uuid, name, group) {
+        if (uuidField || jobNameFieldId || jobGroupFieldId) {
+            jQuery('#' + uuidField).val(uuid);
+            jQuery('#' + jobNameFieldId).val(name);
+            jQuery('#' + jobGroupFieldId).val(group);
+            doyftsuccess(uuidField);
+            doyftsuccess(jobNameFieldId);
+            doyftsuccess(jobGroupFieldId);
+        }
+    };
+    loadJobChooserModalShow(elem, modalid, modalcontentid)
+}
+
+function loadJobChooserModalShow(elem, modalid, modalcontentid) {
+    var project = typeof(selFrameworkProject) === 'string' ? selFrameworkProject : typeof(getFrameworkProject) === 'function' ? getFrameworkProject() : null;
+
+    if (typeof(projectid) !== 'undefined' && projectid && jQuery('#' + projectid).length == 1) {
         project = jQuery('#' + projectid).val();
     }
     jQuery(elem).button('loading').addClass('active');

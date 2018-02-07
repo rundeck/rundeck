@@ -18,6 +18,9 @@ package com.dtolabs.rundeck.app.support
 
 import com.fasterxml.jackson.databind.ObjectMapper
 
+/**
+ * Utility methods for serializing/deserializing Maps to json
+ */
 trait EmbeddedJsonData {
 
     Map asJsonMap(String data) {

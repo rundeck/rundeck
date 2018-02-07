@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.PluginRegistry
@@ -81,6 +82,26 @@ class PluginService {
         }
         log.error("${service.name} not found: ${name}")
         return null
+    }
+    /**
+     *
+     * @param name
+     * @return map containing [instance:(plugin instance), description: (map or Description), ]
+     */
+    def DescribedPlugin getPluginDescriptor(String name, String service) {
+        getPluginDescriptor(name, getPluginTypeByService(service))
+    }
+
+    /**
+     * Return the java class associated with the given service name, or throw exception if not available
+     * @param service
+     * @throws IllegalArgumentException
+     */
+    public Class<?> getPluginTypeByService(String service) throws IllegalArgumentException {
+        if (!ServiceTypes.TYPES[service]) {
+            throw new IllegalArgumentException("Unknown service: " + service)
+        }
+        ServiceTypes.TYPES[service]
     }
     /**
      *

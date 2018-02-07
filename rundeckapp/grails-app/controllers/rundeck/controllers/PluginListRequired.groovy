@@ -27,7 +27,20 @@ trait PluginListRequired {
     abstract Map<String, Class> getRequiredPluginTypes()
     abstract PluginService getPluginService()
 
+    Collection<String> getRequiredPluginActionNames() {
+        null
+    }
+
+    Collection<String> getRequiredPluginExcludedActionNames() {
+        null
+    }
+
+
     def afterInterceptor = { model ->
+
+        if ((requiredPluginActionNames != null && !(actionName in requiredPluginActionNames)) || (requiredPluginExcludedActionNames != null && actionName in requiredPluginExcludedActionNames)) {
+            return
+        }
         for (Map.Entry<String, Class> entry : getRequiredPluginTypes()?.entrySet()) {
             model[entry.key] = pluginService.listPlugins(entry.value)
         }

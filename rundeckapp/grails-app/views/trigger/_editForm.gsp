@@ -93,25 +93,26 @@
             </label>
 
             <div class="${fieldColSize}">
-                <g:set var="conditionList" value="${[[name: 'schedule', label: 'Schedule']]}"/>
-                <g:select name="conditionType"
-                          value="${trigger?.conditionType}"
-                          from="${conditionList}"
-                          optionValue="label"
-                          optionKey="name"
-                          class="form-control"/>
 
+                <select name="conditionType" value="${trigger?.conditionType}" class="form-control"
+                        id="conditionTypeSelect" data-bind="value: triggerEditor.condition.provider">
+                    <g:if test="${!trigger?.conditionType}">
+                        <option value="" selected>-Choose-</option>
+                    </g:if>
+                    <g:each in="${conditionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
+                            var="plugin">
+                        <option value="${plugin.name}" ${trigger?.conditionType == plugin.name ? 'selected' :
+                                ''}><stepplugin:message
+                                service="TriggerCondition"
+                                name="${plugin.name}"
+                                code="plugin.title"
+                                default="${plugin.title ?: plugin.name}"/></option>
+                    </g:each>
+                </select>
             </div>
 
             <div class="${offsetColSize}">
                 <div id="condeditor">
-                    <textarea
-                            name="conditionData"
-                            class="form-control code apply_ace"
-                            data-ace-autofocus='true'
-                            data-ace-session-mode="json"
-                            data-ace-height="150px"
-                            data-ace-control-soft-wrap="true">${trigger?.conditionData}</textarea>
                 </div>
                 <g:hasErrors bean="${trigger}" field="conditionData">
                     <i alt="Error" class="glyphicon glyphicon-warning-sign"></i>
@@ -128,24 +129,26 @@
             </label>
 
             <div class="${fieldColSize}">
-                <g:set var="actionList" value="${[[name: 'JobRun', label: 'Run a Job']]}"/>
-                <g:select name="actionType"
-                          value="${trigger?.actionType}"
-                          from="${actionList}"
-                          optionValue="label"
-                          optionKey="name"
-                          class="form-control"/>
+
+                <select name="actionType" value="${trigger?.actionType}" class="form-control" id="actionTypeSelect"
+                        data-bind="value: triggerEditor.action.provider">
+                    <g:if test="${!trigger?.actionType}">
+                        <option value="" selected>-Choose-</option>
+                    </g:if>
+                    <g:each in="${actionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
+                            var="plugin">
+                        <option value="${plugin.name}" ${trigger?.actionType == plugin.name ? 'selected' :
+                                ''}><stepplugin:message
+                                service="TriggerAction"
+                                name="${plugin.name}"
+                                code="plugin.title"
+                                default="${plugin.title ?: plugin.name}"/></option>
+                    </g:each>
+                </select>
             </div>
 
             <div class="${offsetColSize}">
                 <div id="actionEditor">
-                    <textarea
-                            name="actionData"
-                            class="form-control code apply_ace"
-                            data-ace-autofocus='true'
-                            data-ace-session-mode="json"
-                            data-ace-height="150px"
-                            data-ace-control-soft-wrap="true">${trigger?.actionData}</textarea>
                 </div>
                 <g:hasErrors bean="${trigger}" field="actionData">
                     <i alt="Error" class="glyphicon glyphicon-warning-sign"></i>

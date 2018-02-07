@@ -28,14 +28,15 @@ class JobRunTriggerActionService implements TriggerActionHandler<RDTriggerContex
         AuthContext auth = contextInfo.authContext
 
         try {
-
             JobReference jobReference = jobStateService.jobForID(auth, runAction.jobId, contextInfo.project)
             String execId = jobStateService.startJob(auth, jobReference, runAction.argString, runAction.filter, runAction.asUser)
             log.debug("JobRunTriggerActionService: startedJob result: $execId")
+            return [execId: execId]
         } catch (JobNotFound nf) {
             throw new ActionFailed("Job ${runAction.jobId} was not found", nf)
         }
 
+        null
     }
 
     @Override
