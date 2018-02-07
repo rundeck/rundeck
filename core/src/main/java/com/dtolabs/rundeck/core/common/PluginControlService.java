@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class PluginControlService {
 
-    private final Framework framework;
+    private Framework framework;
 
     public PluginControlService(Framework framework){
         this.framework = framework;
