@@ -19,7 +19,7 @@ package rundeck.quartzjobs
 import org.quartz.Job
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
-import org.rundeck.core.triggers.Action
+import org.rundeck.core.triggers.TriggerAction
 import org.rundeck.core.triggers.TriggerCondition
 import org.rundeck.core.triggers.TriggerActionInvoker
 import rundeck.services.RDTriggerContext
@@ -33,7 +33,7 @@ class RDTriggerConditionJob implements Job {
         String triggerId = data['triggerId']
         RDTriggerContext context = data['context']
         TriggerCondition condition = data['condition']
-        Action action = data['action']
+        TriggerAction action = data['action']
         TriggerActionInvoker invoker = data['invoker']
 
         def invocationData =  condition.conditionData + [fireTime: jobExecutionContext.fireTime]
