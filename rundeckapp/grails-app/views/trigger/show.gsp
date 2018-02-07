@@ -26,7 +26,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
-    <meta name="tabpage" content="jobs"/>
+    <meta name="tabpage" content="triggers"/>
     <title><g:appTitle/> - Trigger - ${trigger.name ?: trigger.uuid}</title>
 
 </head>

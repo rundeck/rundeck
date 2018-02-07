@@ -121,6 +121,12 @@
                         <g:set var="wfselected" value="${selectedclass}"/>
                     </g:ifPageProperty>
                 </g:ifPageProperty>
+                <g:set var="trselected" value=""/>
+                <g:ifPageProperty name='meta.tabpage'>
+                    <g:ifPageProperty name='meta.tabpage' equals='triggers'>
+                        <g:set var="trselected" value="${selectedclass}"/>
+                    </g:ifPageProperty>
+                </g:ifPageProperty>
                 <g:set var="resselected" value=""/>
                 <g:ifPageProperty name='meta.tabpage'>
                     <g:ifPageProperty name='meta.tabpage' equals='nodes'>
@@ -145,6 +151,11 @@
                                                              class=" toptab ${enc(attr: wfselected)}"
                                                              params="[project: params.project ?: request.project]">
                     <g:message code="gui.menu.Workflows"/>
+                </g:link></li><!--
+        --><li class="${enc(attr: trselected)}"><g:link controller="trigger" action="index"
+                                                             class=" toptab ${enc(attr: trselected)}"
+                                                             params="[project: params.project ?: request.project]">
+                    <g:message code="gui.menu.Triggers"/>
                 </g:link></li><!--
         --><li class="${enc(attr:resselected)}"><g:link controller="framework" action="nodes" class=" toptab ${enc(attr: resselected)}"
                                                         params="[project: params.project ?: request.project]">

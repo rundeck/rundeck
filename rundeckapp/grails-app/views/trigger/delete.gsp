@@ -25,7 +25,7 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <meta name="tabpage" content="jobs"/>
+    <meta name="tabpage" content="triggers"/>
     <meta name="layout" content="base"/>
     <title><g:appTitle/> -
     Delete Trigger - ${trigger.name ?: trigger.uuid}</title>
