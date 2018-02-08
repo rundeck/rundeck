@@ -29,7 +29,7 @@ class TriggerRep implements EmbeddedJsonData {
         description(nullable: true)
         conditionType nullable: false, blank: false
         conditionData(nullable: true, blank: true)
-        actionType(nullable: true, blank: true)
+        actionType(nullable: false, blank: false)
         actionData(nullable: true, blank: true)
         triggerData(nullable: true, blank: true)
         userCreated(nullable: false, blank: false)

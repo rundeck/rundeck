@@ -62,12 +62,6 @@
     </g:javascript>
     <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
     <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
-    <g:embedJSON
-            data="${trigger?.conditionConfig ? [data: true, config: trigger?.conditionConfig] : [data: false]}"
-            id="conditionConfigJson"/>
-    <g:embedJSON
-            data="${trigger?.actionConfig ? [data: true, config: trigger?.actionConfig] : [data: false]}"
-            id="actionConfigJson"/>
 
 </head>
 
@@ -116,7 +110,7 @@
 
             <div id="schedCreateSpinner" class="spinner block" style="display:none;">
                 <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>
-                <g:message code="creating.job.loading.text"/>
+                Creating Trigger...
             </div>
         </div>
 

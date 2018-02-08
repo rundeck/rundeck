@@ -3,8 +3,10 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.trigger.TriggerCreate
 import com.dtolabs.rundeck.app.support.trigger.TriggerUpdate
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
+import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
 import grails.transaction.Transactional
 import groovy.transform.ToString
 import org.rundeck.core.triggers.*
@@ -84,6 +86,11 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         pluginService.configurePlugin(provider, config, TriggerAction)
     }
 
+    public ValidatedPlugin getValidatedActionPlugin(String provider, Map config) {
+        //TODO: project scope
+        pluginService.validatePluginConfig(provider, TriggerAction, config)
+    }
+
     public DescribedPlugin<TriggerCondition> getTriggerConditionPlugin(String provider) {
         pluginService.getPluginDescriptor(provider, TriggerCondition)
     }
@@ -91,6 +98,11 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
     public ConfiguredPlugin<TriggerCondition> getConfiguredConditionPlugin(String provider, Map config) {
         //TODO: project scope
         pluginService.configurePlugin(provider, config, TriggerCondition)
+    }
+
+    public ValidatedPlugin getValidatedConditionPlugin(String provider, Map config) {
+        //TODO: project scope
+        pluginService.validatePluginConfig(provider, TriggerCondition, config)
     }
     /**
      * Map of installed trigger handlers
@@ -140,6 +152,14 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         return action.instance
     }
 
+    ValidatedPlugin validateActionFor(TriggerRep rep) {
+        rep.actionType ? getValidatedActionPlugin(rep.actionType, rep.actionConfig) : null
+    }
+
+    ValidatedPlugin validateConditionFor(TriggerRep rep) {
+        rep.conditionType ? getValidatedConditionPlugin(rep.conditionType, rep.conditionConfig) : null
+    }
+
     private def registerTrigger(TriggerRep trigger, boolean enabled) {
 
         def condition = conditionFor(trigger)
@@ -187,7 +207,13 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         }?.value
     }
 
-    TriggerRep createTrigger(UserAndRolesAuthContext authContext, TriggerCreate input, Map conditionMap, Map actionMap, Map userData) {
+    def createTrigger(
+            UserAndRolesAuthContext authContext,
+            TriggerCreate input,
+            Map conditionMap,
+            Map actionMap,
+            Map userData
+    ) {
         def rep = new TriggerRep(
                 uuid: UUID.randomUUID().toString(),
                 name: input.name,
@@ -204,13 +230,59 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
                 authUser: authContext.username,
                 authRoleList: authContext.roles.join(','),
         )
-
+        def result = validateTrigger(rep)
+        if (result.error) {
+            return result
+        }
         rep.save(flush: true)
         registerTrigger rep, rep.enabled
-        return rep
+        return [error: false, trigger: rep]
     }
 
-    TriggerRep updateTrigger(UserAndRolesAuthContext authContext, TriggerRep trigger, TriggerUpdate input, Map conditionDataMap, Map actionDataMap, Map userDataMap) {
+    Map validateTrigger(TriggerRep rep) {
+        rep.validate()
+        def validation = [:]
+        //validate plugin config
+
+        ValidatedPlugin actionValidate = validateActionFor(rep)
+        if (!actionValidate && rep.actionType) {
+            //plugin provider not found
+            rep.errors.rejectValue(
+                    'actionType',
+                    'plugin.not.found.0',
+                    [rep.actionType].toArray(),
+                    'Plugin not found: {0}'
+            )
+        } else if (actionValidate && !actionValidate.valid) {
+            validation[ServiceNameConstants.TriggerAction] = actionValidate.report.errors
+        }
+
+        ValidatedPlugin condValidate = validateConditionFor(rep)
+        if (!condValidate && rep.conditionType) {
+            //plugin provider not found
+            rep.errors.rejectValue(
+                    'conditionType',
+                    'plugin.not.found.0',
+                    [rep.conditionType].toArray(),
+                    'Plugin not found: {0}'
+            )
+        } else if (condValidate && !condValidate.valid) {
+            validation[ServiceNameConstants.TriggerCondition] = condValidate.report.errors
+        }
+        if (rep.hasErrors() || validation) {
+            return [error: true, trigger: rep, validation: validation]
+        }
+        return [error: false, trigger: rep]
+    }
+
+    Map updateTrigger(
+            UserAndRolesAuthContext authContext,
+            TriggerRep trigger,
+            TriggerUpdate input,
+            Map conditionDataMap,
+            Map actionDataMap,
+            Map userDataMap
+    ) {
         trigger.with {
             name = input.name
             description = input.description
@@ -224,9 +296,14 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
             authUser = authContext.username
             authRoleList = authContext.roles.join(',')
         }
+        def result = validateTrigger(trigger)
+        if (result.error) {
+            return result
+        }
         trigger.save(flush: true)
         registerTrigger trigger, trigger.enabled
-        return trigger
+
+        return [error: false, trigger: trigger]
     }
 
     boolean deleteTrigger(TriggerRep trigger) {

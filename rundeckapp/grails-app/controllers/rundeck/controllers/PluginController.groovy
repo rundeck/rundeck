@@ -127,8 +127,10 @@ class PluginController {
     def pluginPropertiesForm(String service, String name) {
         def describedPlugin = pluginService.getPluginDescriptor(name, service)
         def config = [:]
+        def report = [:]
         if (request.method == 'POST' && request.format == 'json') {
             config = request.JSON.config
+            report = request.JSON.report ?: [:]
         }
         def dynamicProperties = [:]
         def dynamicPropertiesLabels = [:]
@@ -149,6 +151,7 @@ class PluginController {
         [
                 inputFieldPrefix       : params.inputFieldPrefix ?: '',
                 config                 : config,
+                report                 : report,
                 service                : service,
                 name                   : name,
                 dynamicPropertiesLabels: dynamicPropertiesLabels,

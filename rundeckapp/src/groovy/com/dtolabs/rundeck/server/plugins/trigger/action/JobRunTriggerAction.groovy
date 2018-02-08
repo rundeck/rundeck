@@ -17,7 +17,9 @@
 package com.dtolabs.rundeck.server.plugins.trigger.action
 
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
@@ -30,7 +32,7 @@ class JobRunTriggerAction implements TriggerAction {
     static final String PROVIDER_NAME = 'JobRun'
     String type
     Map data
-    @PluginProperty(required = true, title = 'Job', description = 'Job to run.')
+    @PluginProperty(required = true, title = 'Job', description = 'Job to run.', validatorClass = UUIDValidator)
     @RenderingOptions(
             [
                     @RenderingOption(key = StringRenderingConstants.SELECTION_ACCESSOR_KEY, value = 'RUNDECK_JOB'),
@@ -50,6 +52,18 @@ class JobRunTriggerAction implements TriggerAction {
     )
     Map optionData
     Map extraData
+
+    static class UUIDValidator implements PropertyValidator {
+        @Override
+        boolean isValid(final String value) throws ValidationException {
+            try {
+                UUID.fromString(value)
+            } catch (IllegalArgumentException e) {
+                throw new ValidationException(e.message, e)
+            }
+            true
+        }
+    }
 
     JobRunTriggerAction() {
 

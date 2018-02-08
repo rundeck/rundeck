@@ -42,7 +42,7 @@ function PluginEditor(data) {
         });
         return data
     };
-    self.loadPluginEditView = function (service, name, params, data) {
+    self.loadPluginEditView = function (service, name, params, data, report) {
         return jQuery.ajax(
             {
                 url: _genUrl(
@@ -55,7 +55,7 @@ function PluginEditor(data) {
                     )),
                 method: 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify({config: data}),
+                data: JSON.stringify({config: data, report: report}),
                 succes: function () {
                     self.config(null);
                 }
@@ -70,11 +70,16 @@ function PluginEditor(data) {
             return jQueryFormData(jQuery('#' + self.formId), self.formPrefixes);
         }
     };
+    self.getConfigReport = function () {
+        if (self.config() !== null) {
+            return self.config().data ? self.config().report : {};
+        }
+    };
     self.loadActionSelect = function (val) {
         if (!val) {
             return;
         }
-        self.loadPluginEditView(self.service(), val, {inputFieldPrefix: self.inputFieldPrefix}, self.getConfigData()).success(function (data) {
+        self.loadPluginEditView(self.service(), val, {inputFieldPrefix: self.inputFieldPrefix}, self.getConfigData(), self.getConfigReport()).success(function (data) {
             jQuery('#' + self.formId).html(data).show();
             //TODO: ko binding?
         });

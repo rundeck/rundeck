@@ -51,7 +51,7 @@
                 properties             : pluginDescription?.properties,
                 dynamicProperties      : dynamicProperties,
                 dynamicPropertiesLabels: dynamicPropertiesLabels,
-                report                 : null,
+                report                 : report,
                 prefix                 : prefix,
                 values                 : definedConfig,
                 fieldnamePrefix        : prefix,

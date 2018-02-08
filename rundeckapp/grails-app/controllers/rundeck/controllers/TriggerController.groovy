@@ -49,34 +49,41 @@ class TriggerController extends ControllerBase implements PluginListRequired {
 
     }
 
+    /**
+     * Remove map entries where the value is null or a blank string
+     * @param map
+     * @return
+     */
+    private static Map cleanMap(Map map) {
+        map ? map.entrySet().findAll { it.value }.collectEntries { [it.key, it.value] } : [:]
+    }
     def createPost(TriggerCreate input) {
         if (!requestHasValidToken()) {
             return
-        }
-        input.validate()
-        if (input.hasErrors()) {
-            request.errors = input.errors
-            //TODO: create form
-            return renderErrorView([:])
         }
         //TODO: project exists?
 
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, input.project)
 
         //TODO: auth
-        ObjectMapper mapper = new ObjectMapper()
-        //TODO: condition map data
-        Map conditionMap = params.conditionData ? mapper.readValue(params.conditionData, Map) : params.conditionConfig
-        //TODO: action map data
-        Map actionMap = params.actionData ? mapper.readValue(params.actionData, Map) : params.actionConfig
+
+        Map conditionMap = cleanMap(params.conditionConfig)
+        Map actionMap = cleanMap(params.actionConfig)
         //TODO: trigger user data
-        Map userData = params.triggerData ? mapper.readValue(params.triggerData, Map) : params.userDataConfig
+        Map userData = cleanMap(params.userDataConfig)
 
 
 
-        def rep = triggerService.createTrigger(authContext, input, conditionMap, actionMap, userData)
+        def result = triggerService.createTrigger(authContext, input, conditionMap, actionMap, userData)
 
-        return redirect(action: 'show', params: [id: rep.uuid, project: input.project])
+        if (result.error) {
+            //edit form
+            request.error = 'Validation error'
+            return render(view: '/trigger/create', model: [trigger: result.trigger, validation: result.validation])
+        }
+        def trigger = result.trigger
+
+        return redirect(action: 'show', params: [id: trigger.uuid, project: input.project])
     }
 
     def delete(TriggerRequest input) {
@@ -126,18 +133,28 @@ class TriggerController extends ControllerBase implements PluginListRequired {
         ObjectMapper mapper = new ObjectMapper()
 
         //TODO: condition map data
-        Map conditionMap = params.conditionData ? mapper.readValue(params.conditionData, Map) : params.conditionConfig
-        //TODO: action map data
-        Map actionMap = params.actionData ? mapper.readValue(params.actionData, Map) : params.actionConfig
+
+        Map conditionMap = cleanMap(params.conditionConfig)
+        Map actionMap = cleanMap(params.actionConfig)
         //TODO: trigger user data
-        Map userData = params.triggerData ? mapper.readValue(params.triggerData, Map) : params.userDataConfig
+        Map userData = cleanMap(params.userDataConfig)
         //TODO...
 
         //TODO; auth
 
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, input.project)
 
-        triggerService.updateTrigger(authContext, trigger, input, conditionMap, actionMap, userData)
+        def result = triggerService.updateTrigger(authContext, trigger, input, conditionMap, actionMap, userData)
+
+        if (result.error) {
+            //edit form
+            request.error = 'Validation error'
+            return render(
+                    view: '/trigger/edit',
+                    model: [trigger: trigger, validation: result.validation, project: input.project]
+            )
+        }
+        
         flash.message = "Trigger updated"
         redirect(action: 'show', params: [project: input.project, id: input.id])
     }

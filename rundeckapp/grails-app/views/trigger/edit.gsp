@@ -63,12 +63,6 @@
     <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
     <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
 
-    <g:embedJSON
-            data="${trigger?.conditionConfig ? [data: true, config: trigger?.conditionConfig] : [data: false]}"
-            id="conditionConfigJson"/>
-    <g:embedJSON
-            data="${trigger?.actionConfig ? [data: true, config: trigger?.actionConfig] : [data: false]}"
-            id="actionConfigJson"/>
 
 </head>
 

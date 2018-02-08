@@ -22,6 +22,13 @@
 <g:set var="fieldColShortSize" value="col-sm-4"/>
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
+<g:embedJSON
+        data="${trigger?.conditionConfig ? [data: true, config: trigger?.conditionConfig, report: [errors:validation?.get('TriggerCondition')]] : [data: false]}"
+        id="conditionConfigJson"/>
+<g:embedJSON
+        data="${trigger?.actionConfig ? [data: true, config: trigger?.actionConfig,report: [errors:validation?.get('TriggerAction')]] : [data: false]}"
+        id="actionConfigJson"/>
+
 <div class="list-group">
 
     <div class="list-group-item">
@@ -38,8 +45,9 @@
                              id="triggerName"
                              class="form-control"/>
                 <g:hasErrors bean="${trigger}" field="name">
-                    <i alt="Error" class="glyphicon glyphicon-warning-sign"></i>
-
+                    <span class="text-warning">
+                        <g:renderErrors bean="${trigger}" as="list" field="name"/>
+                    </span>
                 </g:hasErrors>
             </div>
 
@@ -59,7 +67,10 @@
                              id="description"
                              class="form-control"/>
                 <g:hasErrors bean="${trigger}" field="description">
-                    <i alt="Error" class="glyphicon glyphicon-warning-sign"></i>
+
+                    <span class="text-warning">
+                        <g:renderErrors bean="${trigger}" as="list" field="description"/>
+                    </span>
 
                 </g:hasErrors>
             </div>
@@ -79,14 +90,17 @@
                             id="enabled"
                             class="form-control"/>
                 <g:hasErrors bean="${trigger}" field="enabled">
-                    <i alt="Error" class="glyphicon glyphicon-warning-sign"></i>
+
+                    <span class="text-warning">
+                        <g:renderErrors bean="${trigger}" as="list" field="enabled"/>
+                    </span>
 
                 </g:hasErrors>
             </div>
 
         </div>
 
-        <div class="form-group ${g.hasErrors(bean: trigger, field: 'conditionData', 'has-error')}">
+        <div class="form-group ${g.hasErrors(bean: trigger, field: 'conditionType', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
                 Condition
@@ -114,15 +128,18 @@
             <div class="${offsetColSize}">
                 <div id="condeditor">
                 </div>
-                <g:hasErrors bean="${trigger}" field="conditionData">
-                    <i alt="Error" class="glyphicon glyphicon-warning-sign"></i>
+                <g:hasErrors bean="${trigger}" field="conditionType">
+
+                    <span class="text-warning">
+                        <g:renderErrors bean="${trigger}" as="list" field="conditionType"/>
+                    </span>
 
                 </g:hasErrors>
             </div>
 
         </div>
 
-        <div class="form-group ${g.hasErrors(bean: trigger, field: 'actionData', 'has-error')}">
+        <div class="form-group ${g.hasErrors(bean: trigger, field: 'actionType', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
                 Action
@@ -150,8 +167,11 @@
             <div class="${offsetColSize}">
                 <div id="actionEditor">
                 </div>
-                <g:hasErrors bean="${trigger}" field="actionData">
-                    <i alt="Error" class="glyphicon glyphicon-warning-sign"></i>
+                <g:hasErrors bean="${trigger}" field="actionType">
+
+                    <span class="text-warning">
+                        <g:renderErrors bean="${trigger}" as="list" field="actionType"/>
+                    </span>
 
                 </g:hasErrors>
             </div>
@@ -176,7 +196,10 @@
                             data-ace-control-soft-wrap="true">${trigger?.triggerData}</textarea>
                 </div>
                 <g:hasErrors bean="${trigger}" field="triggerData">
-                    <i alt="Error" class="glyphicon glyphicon-warning-sign"></i>
+
+                    <span class="text-warning">
+                        <g:renderErrors bean="${trigger}" as="list" field="name"/>
+                    </span>
 
                 </g:hasErrors>
             </div>
