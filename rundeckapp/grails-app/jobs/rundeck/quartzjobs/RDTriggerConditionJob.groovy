@@ -36,7 +36,7 @@ class RDTriggerConditionJob implements Job {
         TriggerAction action = data['action']
         TriggerActionInvoker invoker = data['invoker']
 
-        def invocationData =  condition.conditionData + [fireTime: jobExecutionContext.fireTime]
+        def invocationData =  (condition.conditionData?:[:]) + [fireTime: jobExecutionContext.fireTime]
         log.error("RDTriggerConditionJob: invoking with: $invocationData")
         invoker.triggerConditionMet(triggerId, context,invocationData)
     }

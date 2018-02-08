@@ -25,5 +25,7 @@ public interface TriggerCondition {
     /**
      * @return data generated for the Trigger when this condition occurs
      */
-    Map getConditionData();
+    default Map getConditionData() {
+        return null;
+    }
 }
