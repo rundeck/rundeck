@@ -30,11 +30,13 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
      */
     void init() {
         log.info("Startup: initializing trigger Service")
+        def serverNodeUuid = frameworkService.serverUUID
         Map<String, TriggerConditionHandler<RDTriggerContext>> startupHandlers = triggerConditionHandlerMap?.findAll {
             it.value.onStartup()
         }
         log.debug("Startup: TriggerService: startupHandlers: ${startupHandlers}")
-        def triggers = listEnabledTriggers()
+        def triggers = listEnabledTriggersForMember(serverNodeUuid)
+        //TODO: passive mode behavior
         log.debug("Startup: TriggerService: triggers: ${triggers}")
         triggers.each { TriggerRep trigger ->
             def validation=validateTrigger(trigger)
@@ -137,6 +139,14 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         TriggerRep.findAllByEnabled(true)
     }
 
+    public List<TriggerRep> listEnabledTriggersForMember(String serverNodeUuid) {
+        if (serverNodeUuid) {
+            TriggerRep.findAllByEnabledAndServerNodeUuid(true, serverNodeUuid)
+        } else {
+            listEnabledTriggers()
+        }
+    }
+
     public List<TriggerRep> listEnabledTriggersByProject(String project) {
         TriggerRep.findAllByEnabledAndProject(true, project)
     }
@@ -234,6 +244,7 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
                 userModified: authContext.username,
                 authUser: authContext.username,
                 authRoleList: authContext.roles.join(','),
+                serverNodeUuid: frameworkService.serverUUID
         )
         def result = validateTrigger(rep)
         if (result.error) {
@@ -300,6 +311,7 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
             userModified = authContext.username
             authUser = authContext.username
             authRoleList = authContext.roles.join(',')
+            serverNodeUuid = frameworkService.serverUUID
         }
         def result = validateTrigger(trigger)
         if (result.error) {

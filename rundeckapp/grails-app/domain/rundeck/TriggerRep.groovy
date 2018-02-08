@@ -9,6 +9,7 @@ class TriggerRep implements EmbeddedJsonData {
     String name
     String description
     String uuid
+    String serverNodeUuid
     String conditionType
     String conditionData
     String actionType
@@ -37,6 +38,13 @@ class TriggerRep implements EmbeddedJsonData {
         authUser(nullable: false, blank: false)
         authRoleList(nullable: false, blank: false)
         uuid(size: 36..36, blank: false, nullable: false, validator: { val, obj ->
+            try {
+                return null != UUID.fromString(val)
+            } catch (IllegalArgumentException e) {
+                return false
+            }
+        })
+        serverNodeUuid(size: 36..36, blank: true, nullable: true, validator: { val, obj ->
             try {
                 return null != UUID.fromString(val)
             } catch (IllegalArgumentException e) {
