@@ -44,7 +44,10 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.trigger.action.JobRunTriggerAction
-import com.dtolabs.rundeck.server.plugins.trigger.condition.ScheduleTriggerCondition
+import com.dtolabs.rundeck.server.plugins.trigger.condition.CalendarIntervalTriggerCondition
+import com.dtolabs.rundeck.server.plugins.trigger.condition.CronScheduleTriggerCondition
+import com.dtolabs.rundeck.server.plugins.trigger.condition.DailyIntervalTriggerCondition
+import com.dtolabs.rundeck.server.plugins.trigger.condition.SimpleScheduleTriggerCondition
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
 import grails.util.Environment
 import groovy.io.FileType
@@ -326,7 +329,10 @@ beans={
             QuietFilterPlugin,
             HighlightFilterPlugin,
             //trigger conditions
-            ScheduleTriggerCondition,
+            CronScheduleTriggerCondition,
+            CalendarIntervalTriggerCondition,
+            DailyIntervalTriggerCondition,
+            SimpleScheduleTriggerCondition,
             //trigger actions
             JobRunTriggerAction
     ].each {

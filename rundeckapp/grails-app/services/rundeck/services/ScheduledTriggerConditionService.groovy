@@ -1,6 +1,7 @@
 package rundeck.services
 
-import com.dtolabs.rundeck.server.plugins.trigger.condition.ScheduleTriggerCondition
+import com.dtolabs.rundeck.server.plugins.trigger.condition.CronScheduleTriggerCondition
+import com.dtolabs.rundeck.server.plugins.trigger.condition.QuartzSchedulerCondition
 import org.quartz.JobBuilder
 import org.quartz.JobDataMap
 import org.quartz.JobKey
@@ -30,13 +31,13 @@ class ScheduledTriggerConditionService implements TriggerConditionHandler<RDTrig
 
     @Override
     boolean handlesConditionChecks(TriggerCondition condition, RDTriggerContext contextInfo) {
-        condition instanceof ScheduleTriggerCondition
+        condition instanceof QuartzSchedulerCondition
     }
 
 
     @Override
     void registerConditionChecksForAction(String triggerId, RDTriggerContext contextInfo, TriggerCondition condition, TriggerAction action, TriggerActionInvoker service) {
-        ScheduleTriggerCondition scheduled = (ScheduleTriggerCondition) condition
+        QuartzSchedulerCondition scheduled = (QuartzSchedulerCondition) condition
 
         log.error("schedule trigger using quartz for $triggerId, context $contextInfo, condition $condition, action $action, invoker $service")
         scheduleTrigger(triggerId, contextInfo, scheduled, action, service)
@@ -62,7 +63,7 @@ class ScheduledTriggerConditionService implements TriggerConditionHandler<RDTrig
         false
     }
 
-    Date scheduleTrigger(String triggerId, RDTriggerContext contextInfo, ScheduleTriggerCondition scheduled, TriggerAction action, TriggerActionInvoker invoker) {
+    Date scheduleTrigger(String triggerId, RDTriggerContext contextInfo, QuartzSchedulerCondition scheduled, TriggerAction action, TriggerActionInvoker invoker) {
 
         def quartzJobName = triggerId
         def quartzJobGroup = 'ScheduledTriggerConditionService'
@@ -102,7 +103,7 @@ class ScheduledTriggerConditionService implements TriggerConditionHandler<RDTrig
         return nextTime
     }
 
-    Map createJobDetailMap(String triggerId, RDTriggerContext contextInfo, ScheduleTriggerCondition scheduled, TriggerAction action, TriggerActionInvoker invoker) {
+    Map createJobDetailMap(String triggerId, RDTriggerContext contextInfo, QuartzSchedulerCondition scheduled, TriggerAction action, TriggerActionInvoker invoker) {
         [
                 triggerId: triggerId,
                 context  : contextInfo,

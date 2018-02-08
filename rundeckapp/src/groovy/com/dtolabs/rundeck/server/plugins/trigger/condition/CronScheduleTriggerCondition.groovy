@@ -39,23 +39,19 @@ import java.time.ZonedDateTime
  *
  */
 
-@Plugin(name = ScheduleTriggerCondition.PROVIDER_NAME, service = 'TriggerCondition')
-@PluginDescription(title = 'Schedule',
-        description = '''Triggers actions on a schedule''')
-class ScheduleTriggerCondition implements TriggerCondition {
-    static final String PROVIDER_NAME = 'schedule'
-    Map config
+@Plugin(name = CronScheduleTriggerCondition.PROVIDER_NAME, service = 'TriggerCondition')
+@PluginDescription(title = 'Cron Schedule',
+        description = '''Use a Cron expression for a schedule''')
+class CronScheduleTriggerCondition implements TriggerCondition, QuartzSchedulerCondition {
+    static final String PROVIDER_NAME = 'cron'
+    String type = PROVIDER_NAME
 
-    @Override
-    Map getConditionData() {
-        [:]
-    }
     @PluginProperty(title = "Time Zone", description = "Time Zone to use for schedule")
-    @DynamicSelectValues(generatorClass = ScheduleTriggerCondition.TimeZoneGenerator)
+    @DynamicSelectValues(generatorClass = CronScheduleTriggerCondition.TimeZoneGenerator)
     @SelectValues(freeSelect = true, values = [])
     String timeZone
 
-    @PluginProperty(title = "Cron Expression", description = "A Cron expression.", validatorClass = ScheduleTriggerCondition.CronValidator)
+    @PluginProperty(title = "Cron Expression", description = "A Cron expression.", validatorClass = CronScheduleTriggerCondition.CronValidator, required = true)
     String cronExpression
 
     static class CronValidator implements PropertyValidator {
@@ -89,15 +85,6 @@ class ScheduleTriggerCondition implements TriggerCondition {
 
     }
 
-    ScheduleTriggerCondition() {
-
-    }
-    ScheduleTriggerCondition(Map config) {
-        this.config = config
-        timeZone = config?.timeZone
-        cronExpression = config?.cronExpression
-    }
-
 
     def Trigger createTrigger(String qJobName, String qGroupName) {
         def Trigger trigger
@@ -108,9 +95,10 @@ class ScheduleTriggerCondition implements TriggerCondition {
                 schedule.inTimeZone(TimeZone.getTimeZone(timeZone))
             }
             trigger = TriggerBuilder.newTrigger()
-                    .withIdentity(qJobName, qGroupName)
-                    .withSchedule(schedule)
-                    .build()
+                                    .withIdentity(qJobName, qGroupName)
+                                    .withSchedule(schedule)
+            //.startAt() //TODO: set a start time
+                                    .build()
 
         } catch (java.text.ParseException ex) {
             throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression)
