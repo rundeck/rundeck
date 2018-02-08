@@ -162,7 +162,9 @@
         <g:set var="noSelectionValue" value="${prop.required ? null : ['': '-none selected-']}"/>
 
         <g:set var="defval" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>
-        <g:set var="defvalset" value="${defval ? defval.split(', *') : []}"/>
+        <g:set var="defvalset" value="${defval && defval instanceof String ? defval.split(', *') :
+                                        defval && defval instanceof Collection ? defval :
+                                        []}"/>
 
         <div class="${valueColType} ">
             <div class=" grid">
