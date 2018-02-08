@@ -79,7 +79,10 @@ class TriggerController extends ControllerBase implements PluginListRequired {
         if (result.error) {
             //edit form
             request.error = 'Validation error'
-            return render(view: '/trigger/create', model: [trigger: result.trigger, validation: result.validation])
+            return render(
+                    view: '/trigger/create',
+                    model: [trigger: result.trigger, validation: result.validation, project: input.project]
+            )
         }
         def trigger = result.trigger
 
@@ -120,17 +123,10 @@ class TriggerController extends ControllerBase implements PluginListRequired {
         if (!requestHasValidToken()) {
             return
         }
-        input.validate()
-        if (input.hasErrors()) {
-            request.errors = input.errors
-            //TODO: edit form
-            return renderErrorView([:])
-        }
         def trigger = TriggerRep.findByProjectAndUuid(input.project, input.id)
         if (notFoundResponse(trigger, 'Trigger', input.id)) {
             return
         }
-        ObjectMapper mapper = new ObjectMapper()
 
         //TODO: condition map data
 
@@ -154,7 +150,7 @@ class TriggerController extends ControllerBase implements PluginListRequired {
                     model: [trigger: trigger, validation: result.validation, project: input.project]
             )
         }
-        
+
         flash.message = "Trigger updated"
         redirect(action: 'show', params: [project: input.project, id: input.id])
     }

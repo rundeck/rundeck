@@ -23,10 +23,12 @@
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
 <g:embedJSON
-        data="${trigger?.conditionConfig ? [data: true, config: trigger?.conditionConfig, report: [errors:validation?.get('TriggerCondition')]] : [data: false]}"
+        data="${trigger?.conditionConfig != null ? [data: true, config: trigger?.conditionConfig, report: [errors: validation?.
+                get('TriggerCondition')]] : [data: false]}"
         id="conditionConfigJson"/>
 <g:embedJSON
-        data="${trigger?.actionConfig ? [data: true, config: trigger?.actionConfig,report: [errors:validation?.get('TriggerAction')]] : [data: false]}"
+        data="${trigger?.actionConfig != null ? [data: true, config: trigger?.actionConfig, report: [errors: validation?.
+                get('TriggerAction')]] : [data: false]}"
         id="actionConfigJson"/>
 
 <div class="list-group">

@@ -37,6 +37,11 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         def triggers = listEnabledTriggers()
         log.debug("Startup: TriggerService: triggers: ${triggers}")
         triggers.each { TriggerRep trigger ->
+            def validation=validateTrigger(trigger)
+            if(validation.error) {
+                log.warn("Validation failed for Trigger ${trigger.uuid} at startup: " + validation.validation)
+                return
+            }
             def condition = conditionFor(trigger)
             RDTriggerContext triggerContext = contextForTrigger(trigger)
             TriggerConditionHandler<RDTriggerContext> bean = startupHandlers.find {
@@ -298,6 +303,8 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
         }
         def result = validateTrigger(trigger)
         if (result.error) {
+            trigger.discard()
+
             return result
         }
         trigger.save(flush: true)
