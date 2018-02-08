@@ -36,7 +36,7 @@ import org.rundeck.core.triggers.TriggerCondition
 @PluginDescription(title = 'Calendar Interval Schedule',
         description = '''Calendar based interval schedules''')
 
-class CalendarIntervalTriggerCondition implements TriggerCondition, QuartzSchedulerCondition {
+class CalendarIntervalTriggerCondition implements TriggerCondition, QuartzSchedulerCondition, TimeZonePropertyTrait {
     static final String PROVIDER_NAME = 'interval'
     String type = PROVIDER_NAME
 
@@ -48,10 +48,6 @@ class CalendarIntervalTriggerCondition implements TriggerCondition, QuartzSchedu
     @DynamicSelectValues(generatorClass = IntervalUnitGenerator)
     String unit
 
-    @PluginProperty(title = "Time Zone", description = "Time Zone to use for schedule")
-    @DynamicSelectValues(generatorClass = CronScheduleTriggerCondition.TimeZoneGenerator)
-    @SelectValues(freeSelect = true, values = [])
-    String timeZone
 
     static class IntervalUnitGenerator implements ValuesGenerator {
         @Override

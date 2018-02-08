@@ -42,14 +42,9 @@ import java.time.ZonedDateTime
 @Plugin(name = CronScheduleTriggerCondition.PROVIDER_NAME, service = 'TriggerCondition')
 @PluginDescription(title = 'Cron Schedule',
         description = '''Use a Cron expression for a schedule''')
-class CronScheduleTriggerCondition implements TriggerCondition, QuartzSchedulerCondition {
+class CronScheduleTriggerCondition implements TriggerCondition, QuartzSchedulerCondition, TimeZonePropertyTrait {
     static final String PROVIDER_NAME = 'cron'
     String type = PROVIDER_NAME
-
-    @PluginProperty(title = "Time Zone", description = "Time Zone to use for schedule")
-    @DynamicSelectValues(generatorClass = CronScheduleTriggerCondition.TimeZoneGenerator)
-    @SelectValues(freeSelect = true, values = [])
-    String timeZone
 
     @PluginProperty(title = "Cron Expression", description = "A Cron expression.", validatorClass = CronScheduleTriggerCondition.CronValidator, required = true)
     String cronExpression
@@ -66,24 +61,6 @@ class CronScheduleTriggerCondition implements TriggerCondition, QuartzSchedulerC
         }
     }
 
-    static class TimeZoneGenerator implements ValuesGenerator {
-
-
-        @Override
-        List<ValuesGenerator.Entry> generateValues() {
-            return TimeZone.getAvailableIDs().collect {
-                entry(it, describe(TimeZone.getTimeZone(it)))
-            }
-        }
-
-        private static String describe(TimeZone zone) {
-            LocalDateTime dt = LocalDateTime.now();
-            ZonedDateTime zdt = dt.atZone(zone.toZoneId());
-            ZoneOffset offset = zdt.getOffset();
-            return "$zone.ID (GMT $offset)"
-        }
-
-    }
 
 
     def Trigger createTrigger(String qJobName, String qGroupName) {
@@ -92,7 +69,7 @@ class CronScheduleTriggerCondition implements TriggerCondition, QuartzSchedulerC
 
             def schedule = CronScheduleBuilder.cronSchedule(cronExpression)
             if (timeZone) {
-                schedule.inTimeZone(TimeZone.getTimeZone(timeZone))
+                schedule.inTimeZone(createTimeZone())
             }
             trigger = TriggerBuilder.newTrigger()
                                     .withIdentity(qJobName, qGroupName)

@@ -47,6 +47,7 @@ import com.dtolabs.rundeck.server.plugins.trigger.action.JobRunTriggerAction
 import com.dtolabs.rundeck.server.plugins.trigger.condition.CalendarIntervalTriggerCondition
 import com.dtolabs.rundeck.server.plugins.trigger.condition.CronScheduleTriggerCondition
 import com.dtolabs.rundeck.server.plugins.trigger.condition.DailyIntervalTriggerCondition
+import com.dtolabs.rundeck.server.plugins.trigger.condition.OneTimeTriggerCondition
 import com.dtolabs.rundeck.server.plugins.trigger.condition.SimpleScheduleTriggerCondition
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
 import grails.util.Environment
@@ -333,6 +334,7 @@ beans={
             CalendarIntervalTriggerCondition,
             DailyIntervalTriggerCondition,
             SimpleScheduleTriggerCondition,
+            OneTimeTriggerCondition,
             //trigger actions
             JobRunTriggerAction
     ].each {
