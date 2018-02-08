@@ -26,8 +26,17 @@ public interface TriggerAction {
     String getType();
 
     /**
-     *
-     * @return data for the action
+     * @return true if the configuration is valid
      */
-    Map getData();
+    default boolean isValid() {
+        return true;
+    }
+
+    /**
+     * @return any custom validation errors, where the map key is the config property name, and the value is the error
+     *         string
+     */
+    default Map<String, String> getValidationErrors() {
+        return null;
+    }
 }

@@ -19,13 +19,30 @@ package org.rundeck.core.triggers;
 import java.util.Map;
 
 public interface TriggerCondition {
-
-    Map getConfig();
+    /**
+     * @return condition type
+     */
+    String getType();
 
     /**
      * @return data generated for the Trigger when this condition occurs
      */
     default Map getConditionData() {
+        return null;
+    }
+
+    /**
+     * @return true if the configuration is valid
+     */
+    default boolean isValid() {
+        return true;
+    }
+
+    /**
+     * @return any custom validation errors, where the map key is the config property name, and the value is the error
+     *         string
+     */
+    default Map<String, String> getValidationErrors() {
         return null;
     }
 }
