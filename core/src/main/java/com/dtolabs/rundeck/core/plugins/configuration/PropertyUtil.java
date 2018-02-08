@@ -256,7 +256,7 @@ public class PropertyUtil {
             case Long:
                 return andValidator(longValidator, validator);
             case Select:
-                return new SelectValidator(values, dynamicValues);
+                return new SelectValidator(values, dynamicValues, validator);
             case Options:
                 return new OptionsValidator(values);
             default:
@@ -998,17 +998,31 @@ public class PropertyUtil {
 
     static final class SelectValidator implements PropertyValidator {
 
-        final List<String> selectValues;
-        final boolean dynamicValues;
+        final List<String>      selectValues;
+        final boolean           dynamicValues;
+        final PropertyValidator otherValidator;
 
-        SelectValidator(final List<String> selectValues, final boolean dynamicValues) {
+        SelectValidator(
+                final List<String> selectValues,
+                final boolean dynamicValues,
+                PropertyValidator otherValidator
+        ) {
             this.selectValues = selectValues;
             this.dynamicValues = dynamicValues;
+            this.otherValidator = otherValidator;
         }
 
         public boolean isValid(final String value) throws ValidationException {
             //TODO: How validate this if is remote values?
-            return dynamicValues || selectValues.contains(value);
+            if (dynamicValues) {
+                if (null != otherValidator) {
+                    return otherValidator.isValid(value);
+                }
+                return true;
+            }
+            else {
+                return selectValues.contains(value);
+            }
         }
     }
 
