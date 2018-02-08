@@ -47,7 +47,7 @@
         <table cellpadding="0" cellspacing="0" width="100%" class="table table-bordered table-condensed">
             <tr>
                 <th class="table-header">Name</th>
-                <th class="table-header">Descrition</th>
+                <th class="table-header">Description</th>
                 <th class="table-header">Action</th>
             </tr>
             <g:each in="${triggers}" var="trigger" status="index">
@@ -61,7 +61,7 @@
                         </g:else>
                         <g:link action="show"
                                 params="[project: project, id: trigger.uuid]">
-                            ${trigger.name}
+                            ${trigger.name ?: trigger.uuid}
                         </g:link>
                     </td>
                     <td>${trigger.description}</td>
