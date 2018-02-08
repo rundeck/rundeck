@@ -15,6 +15,7 @@
  */
 
 //= require knockout.min
+"use strict";
 jQuery(function () {
     ko.bindingHandlers.datetimepicker = {
         init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
@@ -23,18 +24,26 @@ jQuery(function () {
             if (ko.isObservable(val)) {
                 val = ko.unwrap(val);
             }
-            if (typeof(val) == 'string') {
+            if (typeof(val) === 'string') {
                 opts.defaultDate = val;
             }
             var dateFormat = allBindings.get('dateFormat');
-            if (typeof(dateFormat) == 'string') {
-                opts.format = dateFormat;
-            }
             if (ko.isObservable(dateFormat)) {
                 dateFormat = ko.unwrap(dateFormat);
             }
-            if (typeof(dateFormat) == 'string') {
+            if (typeof(dateFormat) === 'string') {
                 opts.format = dateFormat;
+            }
+            var minDate = allBindings.get('minDate');
+            if (ko.isObservable(minDate)) {
+                minDate = ko.unwrap(minDate);
+            }
+            if (typeof(minDate) === 'string') {
+                if (minDate === 'now') {
+                    opts.minDate = moment();
+                } else {
+                    opts.minDate = minDate;
+                }
             }
             if (opts.defaultDate) {
                 try {
@@ -71,7 +80,6 @@ jQuery(function () {
             });
         },
         update: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
-            "use strict";
             var widget = jQuery(element).data("datepicker");
             //when the view model is updated, update the widget
             if (widget) {

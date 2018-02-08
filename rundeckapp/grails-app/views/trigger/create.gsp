@@ -28,6 +28,7 @@
     <meta name="tabpage" content="triggers"/>
     <meta name="layout" content="base"/>
     <title><g:appTitle/> - Create Trigger</title>
+    <asset:stylesheet src="bootstrap-datetimepicker.min.css"/>
     <asset:javascript src="jquery.autocomplete.min.js"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="util/markdeep.js"/>

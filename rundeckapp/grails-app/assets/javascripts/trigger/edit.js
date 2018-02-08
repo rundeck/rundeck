@@ -17,6 +17,8 @@
 //= require ui/toggle
 //= require pluginPropKO
 //= require ko/binding-job-link
+//= require bootstrap-datetimepicker.min
+//= require ko/binding-datetimepicker
 
 "use strict";
 

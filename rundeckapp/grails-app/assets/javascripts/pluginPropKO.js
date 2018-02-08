@@ -100,6 +100,7 @@ function PluginProperty(data) {
     self.fieldid = ko.observable(data.fieldid);
     self.fieldtype = ko.observable(data.fieldtype);
     self.util = ko.observable({});
+    self.renderingOptions = ko.observable(data.renderingOptions||{});
 
     self.getField = function () {
         return jQuery('#' + self.fieldid());

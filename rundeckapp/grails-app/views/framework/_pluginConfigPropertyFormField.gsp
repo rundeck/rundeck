@@ -41,14 +41,15 @@
     <g:set var="propkey" value="${g.rkey()}"/>
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:embedJSON id="${propkey}_json" data="${[
-            service      : service,
-            provider     : provider,
-            name         : prop.name,
-            origfieldname: origfieldname,
-            fieldname    : fieldname,
-            fieldid      : fieldid,
-            value        : valueText,
-            project      : project ?: params.project ?: request.project
+            service         : service,
+            provider        : provider,
+            name            : prop.name,
+            origfieldname   : origfieldname,
+            fieldname       : fieldname,
+            fieldid         : fieldid,
+            value           : valueText,
+            project         : project ?: params.project ?: request.project,
+            renderingOptions: prop.renderingOptions
 
     ]}"/>
     <g:javascript>"use strict";
@@ -272,6 +273,22 @@
                            type="text" class="form-control"/>
 
                 </span>
+
+            </g:elseif>
+            <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in ['datetime']}">
+
+                <div class='input-group date'
+                     data-bind="datetimepicker: value, dateFormat: renderingOptions()['dateFormat'], minDate: 'now'">
+                    <span class='input-group-addon'>
+                        <span class='glyphicon glyphicon-calendar'></span>
+                    </span>
+                    <input name="${fieldname}"
+                           id="${fieldid}"
+                           value="${valueText}"
+                           data-bind="value: value, attr: { placeholder: renderingOptions()['dateFormat']}"
+                           placeholder="Date/time"
+                           type="datetime" class="form-control"/>
+                </div>
 
             </g:elseif>
             <g:else>
