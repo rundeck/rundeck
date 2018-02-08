@@ -1035,7 +1035,7 @@ class UtilityTagLib{
         def id = attrs.id ?: 'i18nmessages'
         def msgs = [:]
         if (attrs.code) {
-            attrs.code.split(',').each {
+            attrs.code.split(/,\s*/).each {
                 msgs[it] = g.message(code: it, default: it)
             }
         }
