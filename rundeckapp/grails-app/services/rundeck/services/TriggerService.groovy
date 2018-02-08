@@ -377,31 +377,7 @@ class TriggerService implements ApplicationContextAware, TriggerActionInvoker<RD
             event2.save(flush: true)
         }
     }
-
-
-    Trigger createTrigger(TriggerRep triggerRep) {
-        TriggerCondition conditionRep = conditionFor(triggerRep)
-        TriggerAction actionRep = actionFor(triggerRep)
-        new TriggerImpl(
-                name: triggerRep.name,
-                description: triggerRep.description,
-                id: triggerRep.uuid,
-                userData: triggerRep.userData,
-                condition: conditionRep,
-                action: actionRep
-        )
-    }
 }
-
-class TriggerImpl implements Trigger {
-    String name
-    String description
-    String id
-    Map userData
-    TriggerCondition condition
-    TriggerAction action
-}
-
 
 @ToString(includeFields = true, includeNames = true)
 class RDTriggerContext {
