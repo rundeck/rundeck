@@ -22,6 +22,7 @@
 //= require nodeFiltersKO
 //= require executionOptions
 //= require menu/jobsBulkEditor
+//= require jobs/execOptions
 
 /*
  Manifest for "menu/jobs.gsp" page

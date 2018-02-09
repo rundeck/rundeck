@@ -59,6 +59,7 @@
         scheduledExecutionDetailFragment: '${createLink(controller:'scheduledExecution',action:'detailFragment',params: projParams)}',
         scheduledExecutionDetailFragmentAjax: '${createLink(controller:'scheduledExecution',action:'detailFragmentAjax',params: projParams)}',
         scheduledExecutionJobExecutionsAjax: '${createLink(controller:'scheduledExecution',action:'jobExecutionsAjax',params: projParams)}',
+        scheduledExecutionLoadRemoteOptionValues: '${createLink(controller:'scheduledExecution',action:'loadRemoteOptionValues',params:[format:'json'])}',
         scheduledExecutionSanitizeHtml: '${createLink(controller:'scheduledExecution',action:'sanitizeHtml',params: projParams)}',
         scheduledExecutionWorkflowJson: '${createLink(controller:'scheduledExecution',action:'workflowJson',params: projParams)}',
         executionFollowFragment: "${createLink(controller:'execution',action:'followFragment',params:projParams)}",

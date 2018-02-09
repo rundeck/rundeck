@@ -51,145 +51,7 @@
              appendText($('error'),message);
              $("error").show();
         }
-        var _jobExecUnloadHandlers=new Array();
-        function _registerJobExecUnloadHandler(handler){
-            _jobExecUnloadHandlers.push(handler);
-        }
-        function unloadExec(){
-            if(_jobExecUnloadHandlers.length>0){
-                for(var i =0;i<_jobExecUnloadHandlers.length;i++){
-                    _jobExecUnloadHandlers[i].call();
-                }
-                _jobExecUnloadHandlers.clear();
-            }
-
-            jQuery('#execDiv').modal('hide');
-            clearHtml('execDivContent');
-
-            $('busy').hide();
-        }
-        function requestError(item,message){
-            unloadExec();
-            showError("Failed request: "+item+". Result: "+message);
-        }
-        function loadExec(id,eparams) {
-            $("error").hide();
-            var params=eparams;
-            if(!params){
-                params={id:id};
-            }
-            jQuery('#execDivContent').load(_genUrl(appLinks.scheduledExecutionExecuteFragment, params),
-                function(response,status,xhr){
-                if (status == "success") {
-                    loadedFormSuccess(!!id,id);
-                } else {
-                    requestError("executeFragment for [" + id + "]",xhr.statusText);
-                }
-            });
-        }
-        function execSubmit(elem, target) {
-            var data = new FormData(jQuery('#' + elem + ' form')[0]);
-            jQuery.ajax({
-                url: target,
-                type: 'POST',
-                data: data,
-                contentType: false,
-                dataType: 'json',
-                processData: false,
-                success: function (result) {
-                    if (result.id) {
-                        if (result.follow && result.href) {
-                            document.location = result.href;
-                        } else {
-                            if (!pageActivity.selected()) {
-                                pageActivity.activateNowRunningTab();
-                            }
-                            unloadExec();
-                        }
-                    } else if (result.error === 'invalid') {
-                        // reload form for validation
-                        loadExec(null, Form.serialize(elem) + "&dovalidate=true");
-                    } else {
-                        unloadExec();
-                        showError(result.message ? result.message : result.error ? result.error : "Failed request");
-                    }
-                },
-                error: function (data, jqxhr, err) {
-                    requestError("runJobInline", err);
-                }
-            });
-        }
-        function loadedFormSuccess(doShow,id){
-            if ($('execFormCancelButton')) {
-                Event.observe($('execFormCancelButton'),'click',function(evt) {
-                    Event.stop(evt);
-                    unloadExec();
-                    return false;
-                },false);
-                $('execFormCancelButton').name = "_x";
-            }
-            if ($('execFormRunButton')) {
-                Event.observe($('execFormRunButton'),'click', function(evt) {
-                    Event.stop(evt);
-                    execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
-                    $('formbuttons').loading(message('job.starting.execution'));
-                    return false;
-                },false);
-            }
-            jQuery('#showScheduler').on('shown.bs.popover', function() {
-                if ($('scheduleAjaxButton')) {
-                    Event.observe($('scheduleAjaxButton'), 'click', function(evt) {
-                        Event.stop(evt);
-                        if (isValidDate()) {
-                            toggleAlert(true);
-		                    execSubmit('execDivContent',
-                                appLinks.scheduledExecutionScheduleJobInline);
-		                    $('formbuttons').loading(message('job.scheduling.execution'));
-                        } else {
-                            toggleAlert(false);
-                        }
-                        return false;
-                    }, false);
-                }
-            });
-
-            //setup option handling
-            //setup option edit
-            var joboptiondata = loadJsonData('jobOptionData');
-            var joboptions = new JobOptions(joboptiondata);
-
-            if (document.getElementById('optionSelect')) {
-                ko.applyBindings(joboptions, document.getElementById('optionSelect'));
-            }
-
-            var remoteoptionloader = new RemoteOptionLoader({
-                url: "${createLink(controller:'scheduledExecution',action:'loadRemoteOptionValues',params:[format:'json'])}",
-                id:id,
-                fieldPrefix: "extra.option."
-            });
-            var remotecontroller = new RemoteOptionController({
-                loader: remoteoptionloader,
-            });
-            remotecontroller.setupOptions(joboptions);
-
-            remotecontroller.loadData(loadJsonData('remoteOptionData'));
-            if (typeof(_registerJobExecUnloadHandler) == 'function') {
-                _registerJobExecUnloadHandler(remotecontroller.unsubscribeAll);
-            }
-            joboptions.remoteoptions = remotecontroller;
-            remotecontroller.begin();
-
-            jQuery('input').on('keydown', function (evt) {
-                return noenter(evt);
-            });
-            if(doShow){
-                jQuery('#execDiv').modal('show');
-            }
-            $('busy').hide();
-        }
-
-       
-
+        
 
         //set box filterselections
 
@@ -441,6 +303,7 @@
         var bulkeditor;
         jQuery(document).ready(function () {
             init();
+            var pageParams = loadJsonData('pageParams');
             if (jQuery('#activity_section')) {
                 pageActivity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
                 ko.applyBindings(pageActivity, document.getElementById('activity_section'));
@@ -448,7 +311,13 @@
             }
             jQuery(document).on('click','.act_execute_job',function(evt){
                 evt.preventDefault();
-               loadExec(jQuery(this).data('jobId'));
+                var joboptsinput = new JobOptionsInput({
+                    id: jQuery(this).data('jobId'),
+                    project: pageParams.project,
+                    contentId:'execDivContent',
+                    displayId:'execDiv'
+                })
+                joboptsinput.loadExec();
             });
             $$('#wffilterform input').each(function(elem){
                 if(elem.type=='text'){
@@ -480,7 +349,6 @@
                 });
             });
 
-            var pageParams = loadJsonData('pageParams');
             var nextScheduled = loadJsonData('nextScheduled');
             var nextSchedList="";
             for(var i=0; i< nextScheduled.length; i++){
