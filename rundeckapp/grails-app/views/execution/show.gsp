@@ -47,6 +47,7 @@
       <asset:javascript src="executionControl.js"/>
       <g:javascript src="executionState.js"/>
       <asset:javascript src="executionState_HistoryKO.js"/>
+      <asset:javascript src="pluginPropKO.js"/>
 
       <g:javascript library="prototype/effects"/>
       <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
