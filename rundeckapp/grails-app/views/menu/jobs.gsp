@@ -44,14 +44,11 @@
     <g:jsMessages id="scmi18nmsgs4"
                   code="scm.import.status.IMPORT_NEEDED.display.text,scm.import.status.REFRESH_NEEDED.display.text,scm.import.status.UNKNOWN.display.text,scm.import.status.CLEAN.display.text"/>
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
-    <script type="text/javascript">
+    <script type="text/javascript">"use strict";
+
         /** knockout binding for activity */
         var pageActivity;
-        function showError(message){
-             appendText($('error'),message);
-             $("error").show();
-        }
-        
+
 
         //set box filterselections
 
@@ -316,11 +313,11 @@
                     project: pageParams.project,
                     contentId:'execDivContent',
                     displayId:'execDiv'
-                })
+                });
                 joboptsinput.loadExec();
             });
             $$('#wffilterform input').each(function(elem){
-                if(elem.type=='text'){
+                if (elem.type === 'text') {
                     elem.observe('keypress',noenter);
                 }
             });
@@ -413,12 +410,13 @@
     <div id="error" class="alert alert-danger" style="display:none;"></div>
     <g:render template="workflowsFull" model="${[jobExpandLevel:jobExpandLevel,jobgroups:jobgroups,wasfiltered:wasfiltered?true:false, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,rkey:rkey, clusterModeEnabled:clusterModeEnabled]}"/>
 </div>
-<div class="modal fade" id="execDiv" role="dialog" aria-labelledby="deleteFilterModalLabel" aria-hidden="true">
+
+<div class="modal fade" id="execDiv" role="dialog" aria-labelledby="execOptionsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="deleteFilterModalLabel"><g:message code="job.execute.action.button" /></h4>
+                <h4 class="modal-title" id="execOptionsModalLabel"><g:message code="job.execute.action.button"/></h4>
             </div>
 
             <div class="" id="execDivContent">
