@@ -50,8 +50,21 @@
                                    data-job-name="${scheduledExecution.jobName}"
                                    data-job-group="${scheduledExecution.groupPath}"
                                    style="overflow:hidden; text-overflow: ellipsis; white-space: nowrap; overflow-x: hidden">
+                                   <g:if test="${jobsjscallback == 'observe'}">
+                                       <g:set var="jstext" value=""/>
+                                       <g:set var="jsobserve" value="jobChosen"/>
+                                   </g:if>
+                                   <g:else>
                                        <g:set var="jstext" value="jobChosen('${enc(js: scheduledExecution.extid)}','${enc(js: scheduledExecution.jobName)}','${enc(js: scheduledExecution.groupPath)}',this)"/>
-                                       <span class="textbtn textbtn-success" title="Choose this job" onclick="${enc(attr:jstext)}">
+                                       <g:set var="jsobserve" value=""/>
+                                   </g:else>
+
+                                   <span class="textbtn textbtn-success" title="Choose this job"
+                                         onclick="${enc(attr: jstext)}"
+                                         data-observe="${enc(attr: jsobserve)}"
+                                         data-job-id="${scheduledExecution.extid}"
+                                         data-job-name="${scheduledExecution.jobName}"
+                                         data-job-group="${scheduledExecution.groupPath}">
                                            <i class="glyphicon glyphicon-book"></i>
                                            <g:enc>${scheduledExecution.jobName}</g:enc>
                                        </span>

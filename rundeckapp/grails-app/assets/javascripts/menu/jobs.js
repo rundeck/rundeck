@@ -23,6 +23,7 @@
 //= require nodeFiltersKO
 //= require executionOptions
 //= require menu/jobsBulkEditor
+//= require jobs/jobPicker
 //= require jobs/jobOptions
 //= require menu/job-remote-options
 //= require ko/binding-popover

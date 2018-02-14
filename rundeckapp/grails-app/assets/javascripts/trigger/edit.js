@@ -21,6 +21,7 @@
 //= require ko/binding-datetimepicker
 //= require nodeFiltersKO
 //= require executionOptions
+//= require jobs/jobPicker
 //= require jobs/jobOptions
 //= require menu/job-remote-options
 //= require ko/binding-popover
@@ -49,5 +50,4 @@ function TriggerEdit(data) {
         self.condition.init();
         self.action.init();
     };
-
 }

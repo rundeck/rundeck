@@ -340,8 +340,13 @@
                        value="${prop.renderingOptions.get(StringRenderingConstants.SELECTION_COMPONENT_KEY) ?:
                                 'uuid'}"/>
 
-                <span class="btn  btn-default act_choose_job"
-                      onclick="loadJobChooserModalObserve(this, selectionComponent=='uuid'?PluginProperties['${propkey}'].value:null, selectionComponent=='name'?PluginProperties['${propkey}'].value:null, selectionComponent=='group'?PluginProperties['${propkey}'].value:null, selectionComponent=='project'?PluginProperties['${propkey}'].value:null, 'jobrefpicker${pjkey}', 'jobrefpicker${pjkey}_content');"
+                <span class="btn  btn-default "
+                      data-ko-controller="JobRefPropertySelector"
+                      data-propkey="${propkey}"
+                      data-modalid="jobrefpicker${pjkey}"
+                      data-modal-contentid="jobrefpicker${pjkey}_content"
+                      data-idkey="${idkey}"
+                      data-bind="click: actionClick"
                       id="jobChooseBtn${pjkey}"
                       title="${message(code: "select.an.existing.job.to.use")}"
                       data-loading-text="Loading...">
