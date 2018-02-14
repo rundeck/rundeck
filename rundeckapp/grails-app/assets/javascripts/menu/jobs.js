@@ -1,3 +1,4 @@
+"use strict";
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -23,6 +24,7 @@
 //= require executionOptions
 //= require menu/jobsBulkEditor
 //= require jobs/execOptions
+//= require koBind
 
 /*
  Manifest for "menu/jobs.gsp" page

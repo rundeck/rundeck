@@ -19,6 +19,7 @@
 //= require ko/binding-job-link
 //= require bootstrap-datetimepicker.min
 //= require ko/binding-datetimepicker
+//= require koBind
 
 "use strict";
 

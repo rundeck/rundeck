@@ -54,8 +54,8 @@
                 actionFormPrefixes:['actionConfig.', 'orig.actionConfig.'],
                 actionInputPrefix:'actionConfig.'
             });
-            ko.applyBindings(triggerEditor);
             triggerEditor.init();
+            initKoBind(null,{triggerEditor:triggerEditor});
     });
         function getFrameworkProject() {
             return "${project}";
@@ -75,7 +75,7 @@
         action="createPost"
         params="[project: params.project]"
         class="form-horizontal">
-    <div class="panel panel-primary">
+    <div class="panel panel-primary"  data-ko-controller="triggerEditor">
         <div class="panel-heading">
             <div class="row">
                 <div class="col-sm-10">

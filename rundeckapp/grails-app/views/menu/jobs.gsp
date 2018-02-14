@@ -325,15 +325,7 @@
                 }
             });
             bulkeditor=new BulkEditor();
-            ko.applyBindings(bulkeditor,document.getElementById('bulk_del_confirm'));
-            ko.applyBindings(bulkeditor,document.getElementById('bulk_edit_panel'));
-            ko.applyBindings(bulkeditor,document.getElementById('job_action_menu'));
-            ko.applyBindings(bulkeditor,document.getElementById('job_group_tree'));
-            ko.applyBindings(bulkeditor,document.getElementById('group_controls'));
-            ko.applyBindings(bulkeditor,document.getElementById('scm_message'));
-            ko.applyBindings(bulkeditor,document.getElementById('scmStatusPopoverOK'));
-
-
+            initKoBind(null, {bulkeditor: bulkeditor});
 
 
             jQuery(document).on('click','#togglescm',function(evt){

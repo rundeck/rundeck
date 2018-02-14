@@ -171,14 +171,21 @@
     <g:if test="${!params.compact}">
         <div class=" pull-right" id="jobpageactionbuttons">
 
-
-            <span style="display: none;" data-bind="visible: displaySCMMEssage()" id="scm_message" class="" data-placement="left" data-toggle="popover" data-popover-content-ref="#scmStatusPopoverOK" data-trigger="hover" title="" data-original-title="Project Import/Export Status">
+            <span style="display: none;" data-bind="visible: displaySCMMEssage()" id="scm_message"
+                  class=""
+                  data-ko-controller="bulkeditor"
+                  data-placement="left"
+                  data-toggle="popover"
+                  data-popover-content-ref="#scmStatusPopoverOK"
+                  data-trigger="hover"
+                  title=""
+                  data-original-title="Project Import/Export Status">
                 <span class="text-info">
                     <i class="glyphicon glyphicon-exclamation-sign "></i>
                     <!--ko text: defaultDisplayText()--><!--/ko-->
                 </span>
             </span>
-            <div id="scmStatusPopoverOK" style="display: none;">
+            <div id="scmStatusPopoverOK" style="display: none;" data-ko-controller="bulkeditor">
                 <!-- ko if: displayExport() -->
                 <dl>
                     <dt><g:message code="scm.export.title"/></dt>
@@ -217,7 +224,7 @@
                 <g:message code="job.actions" />
                 <span class="caret"></span>
             </button>
-            <ul class="dropdown-menu pull-right" role="menu" id="job_action_menu">
+                <ul class="dropdown-menu pull-right" role="menu" id="job_action_menu" data-ko-controller="bulkeditor">
 
         <auth:resourceAllowed kind="job" action="${AuthConstants.ACTION_CREATE}" project="${params.project ?: request.project}">
                 <li><g:link controller="scheduledExecution" action="create"
@@ -361,7 +368,7 @@
                         </span>
                     </g:if>
                 </g:else>
-                    <span id="group_controls">
+                    <span id="group_controls" data-ko-controller="bulkeditor">
                     <span class="textbtn textbtn-default" data-bind="click: expandAllComponents">
                         <g:message code="expand.all" />
                     </span>
@@ -427,7 +434,8 @@
             </g:form>
         </g:if>
                     <g:form controller="scheduledExecution"  useToken="true" params="[project: params.project ?: request.project]">
-                        <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true">
+                        <div class="modal fade" id="bulk_del_confirm" tabindex="-1" role="dialog" aria-hidden="true"
+                             data-ko-controller="bulkeditor">
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header">
@@ -485,7 +493,8 @@
                             </div><!-- /.modal-dialog -->
                         </div><!-- /.modal -->
 
-                    <div class="floatr" style="margin-top: 10px; display: none;" id="bulk_edit_panel" data-bind="visible: enabled" >
+                        <div class="floatr" style="margin-top: 10px; display: none;" id="bulk_edit_panel"
+                             data-bind="visible: enabled" data-ko-controller="bulkeditor">
                         <div class="bulk_edit_controls panel panel-warning"  >
                             <div class="panel-heading">
                                 <button type="button" class="close "
@@ -573,7 +582,8 @@
 
                         </div>
                     </div>
-                        <div id="job_group_tree">
+
+                        <div id="job_group_tree" data-ko-controller="bulkeditor">
                         <g:if test="${jobgroups}">
 
                             <g:timerStart key="groupTree"/>
