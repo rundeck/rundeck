@@ -263,15 +263,16 @@ public class PluginAdapterUtility {
             pbuild.renderingOption(StringRenderingConstants.DISPLAY_TYPE_KEY, renderBehaviour);
 
 
-            RenderingOption option = field.getAnnotation(RenderingOption.class);
-            if(option!=null) {
-                pbuild.renderingOption(option.key(), option.value());
-            }
-            RenderingOptions options = field.getAnnotation(RenderingOptions.class);
-            if(options!=null) {
-                for (RenderingOption renderingOption : options.value()) {
-                    pbuild.renderingOption(renderingOption.key(), renderingOption.value());
-                }
+        }
+
+        RenderingOption option = field.getAnnotation(RenderingOption.class);
+        if(option!=null) {
+            pbuild.renderingOption(option.key(), option.value());
+        }
+        RenderingOptions options = field.getAnnotation(RenderingOptions.class);
+        if(options!=null) {
+            for (RenderingOption renderingOption : options.value()) {
+                pbuild.renderingOption(renderingOption.key(), renderingOption.value());
             }
         }
 

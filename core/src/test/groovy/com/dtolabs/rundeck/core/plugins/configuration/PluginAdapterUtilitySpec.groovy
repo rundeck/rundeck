@@ -19,6 +19,8 @@ package com.dtolabs.rundeck.core.plugins.configuration
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.DynamicSelectValues
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
+import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
 import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
@@ -36,6 +38,10 @@ class PluginAdapterUtilitySpec extends Specification {
     @Plugin(name = "typeTest1", service = "x")
     static class Configuretest1 {
         @PluginProperty
+        @RenderingOption(key = "a", value = "b")
+        @RenderingOptions([
+                @RenderingOption(key = "x", value = "y")
+        ])
         String testString;
         @PluginProperty
         @SelectValues(values = ["a", "b", "c"])
@@ -48,12 +54,24 @@ class PluginAdapterUtilitySpec extends Specification {
         String testSelect3;
         @PluginProperty
         @SelectValues(values = ["a", "b", "c"], multiOption = true)
+        @RenderingOption(key = "c", value = "d")
+        @RenderingOptions([
+                @RenderingOption(key = "z", value = "w")
+        ])
         Set<String> testSelect4;
         @PluginProperty
         @SelectValues(values = ["a", "b", "c"], multiOption = true)
+        @RenderingOption(key = "e", value = "f")
+        @RenderingOptions([
+                @RenderingOption(key = "t", value = "u")
+        ])
         String[] testSelect5;
         @PluginProperty
         @SelectValues(values = ["a", "b", "c"], multiOption = true)
+        @RenderingOption(key = "g", value = "h")
+        @RenderingOptions([
+                @RenderingOption(key = "r", value = "s")
+        ])
         List<String> testSelect6;
 
         @PluginProperty(description = 'String select with labels')
@@ -89,6 +107,10 @@ class PluginAdapterUtilitySpec extends Specification {
         @PluginProperty
         Long testlong2;
         @PluginProperty
+        @RenderingOption(key = "i", value = "j")
+        @RenderingOptions([
+                @RenderingOption(key = "p", value = "q")
+        ])
         Map testMap;
     }
 
@@ -254,6 +276,23 @@ class PluginAdapterUtilitySpec extends Specification {
         def t7 = list.find { it.name == 'testMap' }
         t7 != null
         t7.type == Property.Type.Map
+
+    }
+
+    def "rendering options allowed for all types"() {
+
+        given:
+        when:
+        def list = PluginAdapterUtility.buildFieldProperties(Configuretest1)
+        then:
+
+        list.find { it.name == 'testString' }?.renderingOptions.a == 'b'
+        list.find { it.name == 'testString' }?.renderingOptions.x == 'y'
+        list.find { it.name == 'testString' }?.renderingOptions.displayType?.toString() == 'SINGLE_LINE'
+        list.find { it.name == 'testSelect4' }?.renderingOptions == [c: 'd', z: 'w']
+        list.find { it.name == 'testSelect5' }?.renderingOptions == [e: 'f', t: 'u']
+        list.find { it.name == 'testSelect6' }?.renderingOptions == [g: 'h', r: 's']
+        list.find { it.name == 'testMap' }?.renderingOptions == [i: 'j', p: 'q']
 
     }
 
