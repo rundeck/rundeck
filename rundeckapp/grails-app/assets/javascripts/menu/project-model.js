@@ -1,3 +1,4 @@
+"use strict";
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -16,7 +17,7 @@
 
 
 function ProjectAuth(data) {
-    "use strict";
+
     var self = this;
     self.jobCreate = ko.observable(false);
     self.admin = ko.observable(false);
@@ -26,7 +27,7 @@ function ProjectAuth(data) {
     }
 }
 function ProjectReadme(data) {
-    "use strict";
+
     var self = this;
     self.readmeHTML = ko.observable(null);
     self.motdHTML = ko.observable(null);
@@ -70,13 +71,13 @@ function Project(data) {
     self.mapping = {
         auth: {
             create: function (options) {
-                "use strict";
+
                 return new ProjectAuth(options.data);
             }
         },
         readme: {
             create: function (options) {
-                "use strict";
+
                 return new ProjectReadme(options.data);
             }
         }
