@@ -24,6 +24,7 @@ package com.dtolabs.rundeck.core.plugins.configuration;
 public class StringRenderingConstants {
     
     public static final String SELECTION_ACCESSOR_KEY = "selectionAccessor";
+    public static final String SELECTION_COMPONENT_KEY = "selectionComponent";
     public static final String ASSOCIATED_PROPERTY_KEY = "associatedProperty";
     public static final String REQUIRED_PROPERTY_KEY = "requiredProperty";
     public static final String VALUE_CONVERSION_KEY = "valueConversion";

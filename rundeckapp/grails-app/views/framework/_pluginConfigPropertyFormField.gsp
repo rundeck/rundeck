@@ -322,7 +322,7 @@
                                 'uuid'}"/>
 
                 <span class="btn  btn-default act_choose_job"
-                      onclick="loadJobChooserModalObserve(this, PluginProperties['${propkey}'].value, null, null, null, 'jobrefpicker${pjkey}', 'jobrefpicker${pjkey}_content');"
+                      onclick="loadJobChooserModalObserve(this, selectionComponent=='uuid'?PluginProperties['${propkey}'].value:null, selectionComponent=='name'?PluginProperties['${propkey}'].value:null, selectionComponent=='group'?PluginProperties['${propkey}'].value:null, selectionComponent=='project'?PluginProperties['${propkey}'].value:null, 'jobrefpicker${pjkey}', 'jobrefpicker${pjkey}_content');"
                       id="jobChooseBtn${pjkey}"
                       title="${message(code: "select.an.existing.job.to.use")}"
                       data-loading-text="Loading...">
