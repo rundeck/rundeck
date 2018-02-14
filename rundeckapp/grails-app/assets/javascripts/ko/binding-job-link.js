@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-//= require knockout.min
 "use strict";
 
 
