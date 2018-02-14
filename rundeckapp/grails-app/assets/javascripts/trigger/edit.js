@@ -19,6 +19,12 @@
 //= require ko/binding-job-link
 //= require bootstrap-datetimepicker.min
 //= require ko/binding-datetimepicker
+//= require nodeFiltersKO
+//= require executionOptions
+//= require jobs/jobOptions
+//= require menu/job-remote-options
+//= require ko/binding-popover
+//= require menu/joboptions
 //= require koBind
 
 "use strict";

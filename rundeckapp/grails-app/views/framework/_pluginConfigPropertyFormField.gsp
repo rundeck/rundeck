@@ -49,7 +49,8 @@
             fieldid         : fieldid,
             value           : valueText,
             project         : project ?: params.project ?: request.project,
-            renderingOptions: prop.renderingOptions
+            renderingOptions: prop.renderingOptions,
+            idkey           : idkey
 
     ]}"/>
     <g:javascript>"use strict";
@@ -60,8 +61,21 @@
         }
         var json=loadJsonData('${propkey}_json');
         var prop = new PluginProperty(json);
-        ko.applyBindings(prop,jQuery('#${propkey}')[0]);
         PluginProperties['${propkey}']=prop;
+        if(json.idkey){
+
+            if(typeof(window.PluginSet)!=='object'){
+                window.PluginSet={};
+            }
+            if(typeof(PluginSet[json.idkey])!=='object'){
+
+              PluginSet[json.idkey]={};
+            }
+              PluginSet[json.idkey][json.name]=prop;
+
+        }
+            //ko.applyBindings(prop,jQuery('#${propkey}')[0]);
+        initKoBind('#${propkey}',{pluginProperty:prop});
     })
     </g:javascript>
     <div class="form-group ${enc(attr: hasError)}" id="${propkey}">
@@ -189,13 +203,16 @@
 %{-- todo: Map type --}%
     <g:else>
 
-        <g:set var="hasStorageSelector"
-               value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.STORAGE_PATH, 'STORAGE_PATH']}"/>
-        <g:set var="hasJobSelector"
-               value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.RUNDECK_JOB, 'RUNDECK_JOB']}"/>
-        <g:set var="hasJobOptionsSelector"
-               value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.RUNDECK_JOB_OPTIONS, 'RUNDECK_JOB_OPTIONS']}"/>
-        <g:set var="hasSelector" value="${hasStorageSelector || hasJobSelector || hasJobOptionsSelector}"/>
+        <g:set var="hasSelector"
+               value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [
+                       StringRenderingConstants.SelectionAccessor.STORAGE_PATH,
+                       'STORAGE_PATH',
+                       StringRenderingConstants.SelectionAccessor.RUNDECK_JOB,
+                       'RUNDECK_JOB',
+                       StringRenderingConstants.SelectionAccessor.RUNDECK_JOB_OPTIONS,
+                       'RUNDECK_JOB_OPTIONS'
+               ]}"/>
+
         <label class="${labelColType}  ${prop.required ? 'required' : ''}"
                for="${enc(attr: fieldid)}"><stepplugin:message
                 service="${service}"
@@ -203,7 +220,8 @@
                 code="${messagePrefix}property.${prop.name}.title"
                 default="${prop.title ?: prop.name}"/></label>
 
-        <div class="${hasSelector ? valueColTypeSplit80 : valueColType}">
+        <div class="${hasSelector ? valueColTypeSplit80 : valueColType}"
+             data-ko-controller="pluginProperty">
             <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
             <g:if test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in [StringRenderingConstants.DisplayType.MULTI_LINE, 'MULTI_LINE']}">
                 <g:textArea name="${fieldname}" value="${valueText}"
@@ -293,10 +311,11 @@
             </g:elseif>
             <g:else>
                 <g:textField name="${fieldname}" value="${valueText}"
+                             data-bind="value: value"
                              id="${fieldid}" size="100" class="${formControlType}${extraInputCss}"/>
             </g:else>
         </div>
-        <g:if test="${hasStorageSelector}">
+        <g:if test="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.STORAGE_PATH, 'STORAGE_PATH']}">
             <div class="${valueColTypeSplit20}">
                 %{-- selector for accessible storage --}%
                 <g:set var="storageRoot"
@@ -312,7 +331,7 @@
                         class="glyphicon glyphicon-folder-open"></i></a>
             </div>
         </g:if>
-        <g:if test="${hasJobSelector}">
+        <g:if test="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.RUNDECK_JOB, 'RUNDECK_JOB']}">
             <div class="${valueColTypeSplit20}">
                 %{-- selector for a job --}%
 
@@ -338,31 +357,41 @@
                           }"/>
             </div>
         </g:if>
-        <g:if test="${hasJobOptionsSelector}">
+        <g:if test="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.RUNDECK_JOB_OPTIONS, 'RUNDECK_JOB_OPTIONS']}">
             <div class="${valueColTypeSplit20}">
                 %{-- selector for job options --}%
 
                 %{-- TODO: select options for a job --}%
                 <g:set var="pjkey" value="${g.rkey()}"/>
 
-                <span class="btn  btn-default act_choose_job"
-                      onclick="loadJobChooserModalObserve(this, PluginProperties['${propkey}'].value, null, null, null, 'jobrefpicker${pjkey}', 'jobrefpicker${pjkey}_content');"
-                      id="jobChooseBtn${pjkey}"
-                      title="${message(code: "select.an.existing.job.to.use")}"
+                <span class="btn  btn-default "
+                      data-ko-controller="JobOptionPropertySelector"
+                      data-ko-controller-id="jobOptionSel_${pjkey}"
+                      data-propkey="${propkey}"
+                      data-modalid="joboptions${pjkey}"
+                      data-modal-contentid="joboptions${pjkey}_content"
+                      data-idkey="${idkey}"
+                      data-bind="click: actionClick"
+                      id="jobOptionsBtn${pjkey}"
+                      title="${message(code: "select.job.options")}"
                       data-loading-text="Loading...">
-                    <g:message code="choose.a.job..."/>
+                    <g:message code="select.job.options"/>
 
                 </span>
 
                 <g:render template="/common/modal"
-                          model="${[modalid  : 'jobrefpicker' + pjkey,
+                          model="${[modalid  : 'joboptions' + pjkey,
                                     modalsize: 'modal-lg',
-                                    title    : message(code: "choose.a.job..."),
-                                    buttons  : []]
+                                    title    : message(code: "select.job.options"),
+                                    bodyCss  : '_custom',
+                                    buttons  : [[
+                                                        css    : 'btn-success _btn_actionSave',
+                                                        message: 'Save',
+                                                        bind   : 'actionSave',
+                                                ]]]
                           }"/>
             </div>
         </g:if>
-        </div>
     </g:else>
 <div class="${outofscope?valueColType:offsetColType}">
     <div class="help-block"> <g:render template="/scheduledExecution/description"

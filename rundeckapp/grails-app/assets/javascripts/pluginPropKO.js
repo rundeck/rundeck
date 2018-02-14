@@ -29,19 +29,6 @@ function PluginEditor(data) {
     self.formPrefixes = data.formPrefixes;
     self.inputFieldPrefix = data.inputFieldPrefix;
 
-    self.jQueryFormData = function (selected, rmprefixes) {
-        var data = {};
-        selected.find('input, textarea, select').each(function (n, el) {
-            var name = jQuery(el).attr('name');
-            rmprefixes.forEach(function (val) {
-                if (name.startsWith(val)) {
-                    name = name.substring(val.length);
-                }
-            });
-            data[name] = jQuery(el).val();
-        });
-        return data
-    };
     self.loadPluginEditView = function (service, name, params, data, report) {
         return jQuery.ajax(
             {
@@ -99,6 +86,7 @@ function PluginProperty(data) {
     self.fieldname = ko.observable(data.fieldname);
     self.fieldid = ko.observable(data.fieldid);
     self.fieldtype = ko.observable(data.fieldtype);
+    self.idkey = ko.observable(data.idkey);
     self.util = ko.observable({});
     self.renderingOptions = ko.observable(data.renderingOptions||{});
 
@@ -107,4 +95,13 @@ function PluginProperty(data) {
     };
     self.value = ko.observable(data.value);
     self.toggle = new UIToggle({value: false});
+    self.getAssociatedProperty = function () {
+        var associated = self.renderingOptions()['associatedProperty'];
+        var idkey = self.idkey();
+        if (associated && idkey && typeof(PluginSet) === 'object' && typeof(PluginSet[idkey]) === 'object') {
+            return PluginSet[idkey][associated];
+
+        }
+        return null;
+    };
 }

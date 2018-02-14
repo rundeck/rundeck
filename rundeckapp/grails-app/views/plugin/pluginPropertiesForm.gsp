@@ -26,6 +26,7 @@
 
 <g:set var="pluginName" value="${pluginDescription.name}"/>
 <g:set var="prefix" value="${(inputFieldPrefix)}"/>
+<g:set var="pluginkey" value="${g.rkey()}"/>
 
 <g:set var="definedConfig" value="${config}"/>
 <div data-plugin-name="${pluginName}" data-plugin-service="${service}" class="plugin-config">
@@ -56,7 +57,8 @@
                 values                 : definedConfig,
                 fieldnamePrefix        : prefix,
                 origfieldnamePrefix    : 'orig.' + prefix,
-                allowedScope           : PropertyScope.Instance
+                allowedScope           : PropertyScope.Instance,
+                idkey                  : pluginkey
         ]}"/>
 
     </div>

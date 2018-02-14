@@ -1,3 +1,4 @@
+"use strict";
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -28,7 +29,6 @@
  * @constructor
  */
 function OptionVal(data) {
-    "use strict";
 
     var self = this;
     self.label = ko.observable(data.label || null);
@@ -47,7 +47,6 @@ function OptionVal(data) {
 }
 var _option_uid=0;
 function Option(data) {
-    "use strict";
 
     var self = this;
     self.remoteLoadCallback = null;
@@ -471,7 +470,6 @@ function Option(data) {
     };
 }
 function JobOptions(data) {
-    "use strict";
     var self = this;
     self.options = ko.observableArray();
     self.remoteoptions = null;

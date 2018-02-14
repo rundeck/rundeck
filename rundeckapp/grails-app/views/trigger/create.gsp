@@ -36,6 +36,9 @@
     <asset:javascript src="jobedit.js"/>
     <asset:javascript src="trigger/edit.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
+    <g:jsMessages id="jobi18n1"
+                  code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
+
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ext-language_tools"/><!--<![endif]-->
     <g:javascript>"use strict";

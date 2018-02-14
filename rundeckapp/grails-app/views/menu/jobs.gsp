@@ -371,7 +371,6 @@
     </script>
 
     <asset:javascript src="util/yellowfade.js"/>
-    <asset:javascript src="menu/joboptions.js"/>
     <style type="text/css">
     .error{
         color:red;

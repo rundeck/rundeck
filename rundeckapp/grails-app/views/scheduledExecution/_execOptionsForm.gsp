@@ -535,7 +535,7 @@
 </div>
 </div>
 </div>
-<g:if test="${!hideHead}">
+<g:if test="${!hideHead && !hideActionButtons}">
 <div class="panel-footer">
     <div class="row" >
         <div class="col-sm-12 form-inline" id="formbuttons">

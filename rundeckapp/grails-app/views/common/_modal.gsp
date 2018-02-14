@@ -26,7 +26,7 @@
                 <h4 class="modal-title" id="${modalid}_title">${title}</h4>
             </div>
 
-            <div class="modal-body" id="${modalid}_content">
+            <div class="${bodyCss ?: 'modal-body'}" id="${modalid}_content">
                 ${content}${raw(body())}
             </div>
 
@@ -40,12 +40,14 @@
                 <span id="${modalid}_buttons">
                     <g:each in="${buttons}" var="button">
                         <button class="btn ${button.css ?: 'btn-default'} " data-bind="${button.bind ?: ''}"
+                                id="${button.id ?: ''}"
                                 onclick="${button.js ?: ''}">
                             ${button.message}
                         </button>
                     </g:each>
                 </span>
             </div>
+
         </div>
     </div>
 </div>

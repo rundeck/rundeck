@@ -21,10 +21,11 @@ function JobOptionsInput(data) {
     self.id = ko.observable(data.id);
     self.project = ko.observable(data.project);
     self.error = ko.observable();
-    self.busy = ko.observable(false);
+    self.loading = ko.observable(false);
     self.hasContent = ko.observable(false);
     self.contentId = ko.observable(data.contentId);
     self.displayId = ko.observable(data.displayId);
+    self.loadOptions = data.loadOptions || {};
 
 
     self._jobExecUnloadHandlers = [];
@@ -40,6 +41,9 @@ function JobOptionsInput(data) {
     self.showDisplay = function () {
         self.displayElem().modal('show');
     };
+    self.hideDisplay = function () {
+        self.displayElem().modal('hide');
+    };
     self.unloadExec = function () {
         if (self._jobExecUnloadHandlers.length > 0) {
             for (var i = 0; i < self._jobExecUnloadHandlers.length; i++) {
@@ -53,7 +57,7 @@ function JobOptionsInput(data) {
         // jQuery('#execDiv').modal('hide');
         // clearHtml('execDivContent');
 
-        self.busy(false);
+        self.loading(false);
     };
 
     self.requestError = function (item, message) {
@@ -63,8 +67,9 @@ function JobOptionsInput(data) {
 
     self.loadExec = function () {
         self.error(null);
-        var params = {id: self.id()};
+        var params = jQuery.extend({id: self.id()}, self.loadOptions);
 
+        self.loading(true);
         self.contentElem().load(_genUrl(appLinks.scheduledExecutionExecuteFragment, params),
             function (response, status, xhr) {
                 if (status === "success") {
@@ -78,6 +83,7 @@ function JobOptionsInput(data) {
     self.loadExecValidate = function (eparams) {
         self.error(null);
         var params = eparams;
+        self.loading(true);
         self.contentElem().load(_genUrl(appLinks.scheduledExecutionExecuteFragment, params),
             function (response, status, xhr) {
                 if (status === "success") {
@@ -88,8 +94,14 @@ function JobOptionsInput(data) {
             });
     };
 
-    self.execSubmit = function (elem, target) {
-        var data = new FormData(jQuery('#' + elem + ' form')[0]);
+    self.getFormData = function () {
+        return new FormData(self.contentElem().find('form')[0]);
+    };
+    self.getFormDataObj = function (rmprefixes, reqprefixes) {
+        return jQueryFormData(self.contentElem(), rmprefixes || [], reqprefixes);
+    };
+    self.execSubmit = function (target) {
+        var data = self.getFormData();
         jQuery.ajax({
             url: target,
             type: 'POST',
@@ -109,7 +121,7 @@ function JobOptionsInput(data) {
                     }
                 } else if (result.error === 'invalid') {
                     // reload form for validation
-                    self.loadExecValidate(Form.serialize(elem) + "&dovalidate=true");
+                    self.loadExecValidate(Form.serialize(self.contentId()) + "&dovalidate=true");
                 } else {
                     self.unloadExec();
                     self.error(result.message ? result.message : result.error ? result.error : "Failed request");
@@ -133,7 +145,7 @@ function JobOptionsInput(data) {
         if ($('execFormRunButton')) {
             Event.observe($('execFormRunButton'), 'click', function (evt) {
                 Event.stop(evt);
-                self.execSubmit('execDivContent', appLinks.scheduledExecutionRunJobInline);
+                self.execSubmit(appLinks.scheduledExecutionRunJobInline);
                 $('formbuttons').loading(message('job.starting.execution'));
                 return false;
             }, false);
@@ -144,8 +156,7 @@ function JobOptionsInput(data) {
                     Event.stop(evt);
                     if (isValidDate()) {
                         toggleAlert(true);
-                        self.execSubmit('execDivContent',
-                            appLinks.scheduledExecutionScheduleJobInline);
+                        self.execSubmit(appLinks.scheduledExecutionScheduleJobInline);
                         $('formbuttons').loading(message('job.scheduling.execution'));
                     } else {
                         toggleAlert(false);
@@ -182,6 +193,56 @@ function JobOptionsInput(data) {
         jQuery('input').on('keydown', function (evt) {
             return noenter(evt);
         });
-        self.busy(false);
+        self.loading(false);
     }
+}
+
+function JobOptionPropertySelector(data) {
+    var self = this;
+    self.propkey = data.propkey;
+    self.modalid = data.modalid;
+    self.modalContentid = data.modalContentid;
+    self.idkey = data.idkey;
+    self.jobOptionsInput = null;
+
+    self.getProperty = function () {
+        if (self.propkey) {
+            return PluginProperties[self.propkey];
+        }
+        return null;
+    };
+    self.actionClick = function (data, evt) {var elem = jQuery(evt.target);
+
+        var associated = self.getProperty().getAssociatedProperty();
+
+
+        self.jobOptionsInput = new JobOptionsInput({
+            id: associated.value(),
+            project: self.getProperty().project(),
+            contentId: self.modalContentid,
+            displayId: self.modalid,
+            loadOptions: {hideActionButtons: true, hideExtraInput: true}
+        });
+        self.jobOptionsInput.loading.subscribe(function (val) {
+            if (val) {
+                elem.button('loading').addClass('active');
+            } else {
+                elem.button('reset').removeClass('active');
+            }
+        });
+        self.jobOptionsInput.displayElem().find('._btn_actionSave').on('click', self.actionSave);
+        self.jobOptionsInput.loadExec();
+    };
+
+    self.actionSave = function (evt) {
+
+        evt.preventDefault();
+        self.jobOptionsInput.hideDisplay();
+        var formDataObj = self.jobOptionsInput.getFormDataObj(['extra.option.'], ['extra.option.']);
+        console.log("save,.,.", formDataObj);
+        self.getProperty().value(JSON.stringify(formDataObj));
+        return false;
+    }
+
+
 }

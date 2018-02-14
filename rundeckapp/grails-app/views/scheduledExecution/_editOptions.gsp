@@ -51,7 +51,7 @@
               ]"/>
 </div>
 
-
+<g:if test="${!hideExtraInput}">
 <div class="form-group">
     <label class="col-sm-2 control-label" for="extra.loglevel">Log level</label>
 
@@ -70,6 +70,7 @@
         </div>
     </div>
 </div>
+</g:if>
 
 <g:javascript>
     fireWhenReady('optionSelect', function() {

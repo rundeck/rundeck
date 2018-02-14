@@ -48,6 +48,38 @@ function appendText(elem,text){
 function html_unescape(text){
     return jQuery('<div/>').html(text.split('<').join('&lt;').split('>').join('&gt;')).text();
 }
+
+/**
+ * Extract form data
+ * @param selected
+ * @param rmprefixes
+ * @returns {{}}
+ */
+function jQueryFormData(selected, rmprefixes,reqprefixes) {
+    var data = {};
+    selected.find('input, textarea, select').each(function (n, el) {
+        var name = jQuery(el).attr('name');
+        if(name) {
+            if(reqprefixes){
+                var found=ko.utils.arrayFirst(reqprefixes,function (el) {
+                    return name.startsWith(el);
+                });
+                if(!found){
+                    return;
+                }
+            }
+            rmprefixes.forEach(function (val) {
+                if (name.startsWith(val)) {
+                    name = name.substring(val.length);
+                }
+            });
+            data[name] = jQuery(el).val();
+        }
+
+    });
+    return data
+}
+
 /**
  * Load json data which is html encoded in a script element
  * @param id

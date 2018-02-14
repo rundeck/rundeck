@@ -2826,6 +2826,9 @@ class ScheduledExecutionController  extends ControllerBase{
             session.selectedoptsmap=null
             model.options=null
         }
+        model.hideHead = params.hideHead ? true : false
+        model.hideActionButtons = params.hideActionButtons ? true : false
+        model.hideExtraInput = params.hideExtraInput ? true : false
         render(template:'execOptionsForm',model:model)
     }
 

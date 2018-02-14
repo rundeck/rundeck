@@ -58,7 +58,8 @@ public class StringRenderingConstants {
     }
     public enum SelectionAccessor{
         STORAGE_PATH,
-        RUNDECK_JOB;
+        RUNDECK_JOB,
+        RUNDECK_JOB_OPTIONS;
 
         public boolean equalsOrString(Object o) {
             return this == o || toString().equals(o);
