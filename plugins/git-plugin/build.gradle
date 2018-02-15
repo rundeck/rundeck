@@ -43,6 +43,7 @@ dependencies {
         exclude module: 'commons-logging'
     }
     compile 'org.codehaus.groovy:groovy-all:2.3.7'
+    compile 'org.yaml:snakeyaml:1.17'
     compile 'log4j:log4j:1.2.17'
 
     testCompile 'junit:junit:4.8.1',
