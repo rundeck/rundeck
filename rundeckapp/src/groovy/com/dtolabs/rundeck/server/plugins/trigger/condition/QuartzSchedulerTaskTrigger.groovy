@@ -17,7 +17,8 @@
 package com.dtolabs.rundeck.server.plugins.trigger.condition
 
 import org.quartz.Trigger
+import org.quartz.TriggerBuilder
 
 interface QuartzSchedulerTaskTrigger {
-    Trigger createQuartzTrigger(String qJobName, String qGroupName)
+    Trigger buildQuartzTrigger(TriggerBuilder builder)
 }

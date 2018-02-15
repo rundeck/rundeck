@@ -120,7 +120,7 @@ class DailyIntervalTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigge
     }
 
     @Override
-    Trigger createQuartzTrigger(final String qJobName, final String qGroupName) {
+    Trigger buildQuartzTrigger(TriggerBuilder builder) {
         def schedule = DailyTimeIntervalScheduleBuilder.dailyTimeIntervalSchedule()
 
 
@@ -145,11 +145,9 @@ class DailyIntervalTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigge
         //TODO: what if configured interval too short, e.g. milliseconds?
 
 
-        return TriggerBuilder.newTrigger()
-                             .withIdentity(qJobName, qGroupName)
-                             .withSchedule(schedule)
+        return builder.withSchedule(schedule)
         //.startAt() //TODO: set a start time
-                             .build()
+                      .build()
 
 
     }

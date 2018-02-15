@@ -72,7 +72,7 @@ class CalendarIntervalTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTri
     }
 
     @Override
-    Trigger createQuartzTrigger(final String qJobName, final String qGroupName) {
+    Trigger buildQuartzTrigger(TriggerBuilder builder) {
         def Trigger trigger
 
         def schedule = CalendarIntervalScheduleBuilder.calendarIntervalSchedule()
@@ -84,11 +84,9 @@ class CalendarIntervalTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTri
         //TODO: set a start time
         schedule.withInterval(interval, intervalUnit)
 
-        trigger = TriggerBuilder.newTrigger()
-                                .withIdentity(qJobName, qGroupName)
-                                .withSchedule(schedule)
+        trigger = builder.withSchedule(schedule)
         //.startAt() //TODO: set a start time
-                                .build()
+                         .build()
 
 
         return trigger

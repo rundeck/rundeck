@@ -49,12 +49,9 @@ class OneTimeTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigger, Tim
     String time
 
     @Override
-    Trigger createQuartzTrigger(final String qJobName, final String qGroupName) {
+    Trigger buildQuartzTrigger(TriggerBuilder builder) {
         Date date = createDate(time, createTimeZone())
-        return TriggerBuilder.newTrigger()
-                             .withIdentity(qJobName, qGroupName)
-                             .startAt(date)
-                             .build()
+        return builder.startAt(date).build()
 
     }
 

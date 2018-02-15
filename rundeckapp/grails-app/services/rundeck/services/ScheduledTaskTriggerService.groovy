@@ -5,6 +5,8 @@ import org.quartz.JobBuilder
 import org.quartz.JobDataMap
 import org.quartz.JobKey
 import org.quartz.Scheduler
+import org.quartz.Trigger
+import org.quartz.TriggerBuilder
 import org.quartz.TriggerKey
 import org.rundeck.core.tasks.TaskAction
 import org.rundeck.core.tasks.TaskActionInvoker
@@ -85,7 +87,8 @@ class ScheduledTaskTriggerService implements TaskTriggerHandler<RDTaskContext> {
 
 
         def jobDetail = jobDetailBuilder.build()
-        def trigger = scheduled.createQuartzTrigger(quartzJobName, quartzJobGroup)
+        def triggerbuilder = TriggerBuilder.newTrigger().withIdentity(quartzJobName, quartzJobGroup)
+        def trigger = scheduled.buildQuartzTrigger(triggerbuilder)
 
         def Date nextTime
 

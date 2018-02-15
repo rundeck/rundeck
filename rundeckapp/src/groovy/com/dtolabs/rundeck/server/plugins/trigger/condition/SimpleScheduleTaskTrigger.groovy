@@ -46,7 +46,7 @@ class SimpleScheduleTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigg
 
 
     @Override
-    Trigger createQuartzTrigger(final String qJobName, final String qGroupName) {
+    Trigger buildQuartzTrigger(TriggerBuilder builder) {
         def Trigger trigger
 
         def schedule = SimpleScheduleBuilder.simpleSchedule()
@@ -68,11 +68,9 @@ class SimpleScheduleTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigg
             schedule.withIntervalInHours(interval)
         }
 
-        trigger = TriggerBuilder.newTrigger()
-                                .withIdentity(qJobName, qGroupName)
-                                .withSchedule(schedule)
+        trigger = builder.withSchedule(schedule)
         //.startAt() //TODO: set a start time
-                                .build()
+                         .build()
 
 
         return trigger
