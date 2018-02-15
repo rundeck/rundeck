@@ -188,7 +188,7 @@ task extractGrails(dependsOn: downloadGrails) {
 
 def projDeps = [
         ":core",
-        ":rundeck-trigger",
+        ":rundeck-tasks",
         ":rundeck-storage:rundeck-storage-api",
         ":rundeck-storage:rundeck-storage-data",
         ":rundeck-storage:rundeck-storage-filesys",

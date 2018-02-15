@@ -14,30 +14,17 @@
  * limitations under the License.
  */
 
-//subprojects {
-apply plugin: "java"
-apply plugin: "groovy"
+package org.rundeck.core.plugins;
 
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testCompile "org.codehaus.groovy:groovy-all:2.3.7"
-    testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
-}
-
-//    group = 'org.rundeck.storage'
-jar {
-    manifest.attributes provider: 'gradle'
-}
-//}
-dependencies {
-    
-    compile "com.fasterxml.jackson.core:jackson-core:2.8.10"
-    compile "com.fasterxml.jackson.core:jackson-databind:2.8.10"
-}
-
-task wrapper(type: Wrapper) {
-    gradleVersion = '3.5'
+/**
+ * Defines plugin types by name
+ */
+public interface PluginType {
+    /**
+     * Get the plugin class for the given plugin service type
+     *
+     * @param name service name
+     * @return plugin class
+     */
+    Class<?> getPluginType(String name);
 }

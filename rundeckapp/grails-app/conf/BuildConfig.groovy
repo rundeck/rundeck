@@ -125,7 +125,7 @@ grails.project.dependency.resolution = {
                 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20160614.1'
 
         compile("org.rundeck:rundeck-core:${rundeckVersion}")
-        compile("org.rundeck:rundeck-trigger:${rundeckVersion}")
+        compile("org.rundeck:rundeck-tasks:${rundeckVersion}")
         compile("org.rundeck:rundeck-storage-filesys:${rundeckVersion}")
 
         runtime 'org.postgresql:postgresql:42.0.0'

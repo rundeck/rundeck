@@ -26,8 +26,9 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
 import org.rundeck.core.tasks.TaskAction
+import org.rundeck.core.tasks.TaskPluginTypes
 
-@Plugin(name = JobRunTaskAction.PROVIDER_NAME, service = ServiceNameConstants.TaskAction)
+@Plugin(name = JobRunTaskAction.PROVIDER_NAME, service = TaskPluginTypes.TaskAction)
 @PluginDescription(title = 'Run a Job', description = 'Runs a job')
 class JobRunTaskAction implements TaskAction {
     static final String PROVIDER_NAME = 'JobRun'

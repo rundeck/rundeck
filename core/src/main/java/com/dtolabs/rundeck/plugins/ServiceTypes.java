@@ -34,14 +34,12 @@ import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
-import org.rundeck.core.tasks.TaskAction;
-import org.rundeck.core.tasks.TaskActionHandler;
-import org.rundeck.core.tasks.TaskTrigger;
-import org.rundeck.core.tasks.TaskTriggerHandler;
+import org.rundeck.core.plugins.PluginType;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.ServiceLoader;
 
 /**
  * Static list of java interfaces associated with plugin service names, see {@link ServiceNameConstants}
@@ -76,13 +74,21 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.UI, UIPlugin.class);
         map.put(ServiceNameConstants.LogFilter, LogFilterPlugin.class);
         map.put(ServiceNameConstants.ContentConverter, ContentConverterPlugin.class);
-        map.put(ServiceNameConstants.TaskTrigger, TaskTrigger.class);
-        map.put(ServiceNameConstants.TaskTriggerHandler, TaskTriggerHandler.class);
-        map.put(ServiceNameConstants.TaskAction, TaskAction.class);
-        map.put(ServiceNameConstants.TaskActionHandler, TaskActionHandler.class);
-
-
         TYPES = Collections.unmodifiableMap(map);
     }
 
+    private static ServiceLoader<PluginType> pluginTypeServiceLoader = ServiceLoader.load(PluginType.class);
+
+    public static Class<?> getPluginType(String name) {
+        if (TYPES.containsKey(name)) {
+            return TYPES.get(name);
+        }
+        for (PluginType pluginType : pluginTypeServiceLoader) {
+            Class<?> pluginType1 = pluginType.getPluginType(name);
+            if (null != pluginType1) {
+                return pluginType1;
+            }
+        }
+        return null;
+    }
 }

@@ -63,8 +63,4 @@ public class ServiceNameConstants {
     public static final String UI                 = "UI";
     public static final String LogFilter          = "LogFilter";
     public static final String ContentConverter   = "ContentConverter";
-    public static final String TaskTrigger        = "TaskTrigger";
-    public static final String TaskTriggerHandler = "TaskTriggerHandler";
-    public static final String TaskAction         = "TaskAction";
-    public static final String TaskActionHandler  = "TaskActionHandler";
 }

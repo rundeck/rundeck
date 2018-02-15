@@ -24,9 +24,10 @@ import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import org.quartz.SimpleScheduleBuilder
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
+import org.rundeck.core.tasks.TaskPluginTypes
 import org.rundeck.core.tasks.TaskTrigger
 
-@Plugin(name = SimpleScheduleTaskTrigger.PROVIDER_NAME, service = ServiceNameConstants.TaskTrigger)
+@Plugin(name = SimpleScheduleTaskTrigger.PROVIDER_NAME, service = TaskPluginTypes.TaskTrigger)
 @PluginDescription(title = 'Simple Schedule',
         description = '''Set a simple interval schedule''')
 

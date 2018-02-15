@@ -29,9 +29,12 @@ import org.quartz.CalendarIntervalScheduleBuilder
 import org.quartz.DateBuilder.IntervalUnit
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
+import org.rundeck.core.tasks.TaskPluginTypes
 import org.rundeck.core.tasks.TaskTrigger
 
-@Plugin(name = CalendarIntervalTaskTrigger.PROVIDER_NAME, service = ServiceNameConstants.TaskTrigger)
+import static org.rundeck.core.tasks.TaskPluginTypes.TaskTrigger
+
+@Plugin(name = CalendarIntervalTaskTrigger.PROVIDER_NAME, service = TaskPluginTypes.TaskTrigger)
 @PluginDescription(title = 'Calendar Interval Schedule',
         description = '''Calendar based interval schedules''')
 

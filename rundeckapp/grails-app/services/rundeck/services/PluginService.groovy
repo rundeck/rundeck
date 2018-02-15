@@ -98,10 +98,10 @@ class PluginService {
      * @throws IllegalArgumentException
      */
     public Class<?> getPluginTypeByService(String service) throws IllegalArgumentException {
-        if (!ServiceTypes.TYPES[service]) {
+        if (!ServiceTypes.getPluginType(service)) {
             throw new IllegalArgumentException("Unknown service: " + service)
         }
-        ServiceTypes.TYPES[service]
+        ServiceTypes.getPluginType(service)
     }
     /**
      *

@@ -27,12 +27,13 @@ import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
+import org.rundeck.core.tasks.TaskPluginTypes
 import org.rundeck.core.tasks.TaskTrigger
 
 import java.text.ParseException
 import java.text.SimpleDateFormat
 
-@Plugin(name = OneTimeTaskTrigger.PROVIDER_NAME, service = ServiceNameConstants.TaskTrigger)
+@Plugin(name = OneTimeTaskTrigger.PROVIDER_NAME, service = TaskPluginTypes.TaskTrigger)
 @PluginDescription(title = 'One Time',
         description = '''Triggers once at a certain time and date''')
 

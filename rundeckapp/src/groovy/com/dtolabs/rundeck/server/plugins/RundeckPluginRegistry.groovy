@@ -506,7 +506,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
     @Override
     PluginMetadata getPluginMetadata(final String service, final String provider) throws ProviderLoaderException {
         if (pluginRegistryMap[provider]) {
-            Class groovyPluginType = ServiceTypes.TYPES[service]
+            Class groovyPluginType = ServiceTypes.getPluginType(service)
             String beanName=pluginRegistryMap[provider]
             try {
                 def bean = findBean(beanName)

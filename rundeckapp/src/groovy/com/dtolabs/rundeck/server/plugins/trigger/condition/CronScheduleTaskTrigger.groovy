@@ -26,6 +26,7 @@ import org.quartz.CronExpression
 import org.quartz.CronScheduleBuilder
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
+import org.rundeck.core.tasks.TaskPluginTypes
 import org.rundeck.core.tasks.TaskTrigger
 
 import java.text.ParseException
@@ -34,7 +35,7 @@ import java.text.ParseException
  *
  */
 
-@Plugin(name = CronScheduleTaskTrigger.PROVIDER_NAME, service = ServiceNameConstants.TaskTrigger)
+@Plugin(name = CronScheduleTaskTrigger.PROVIDER_NAME, service = TaskPluginTypes.TaskTrigger)
 @PluginDescription(title = 'Cron Schedule',
         description = '''Use a Cron expression for a schedule''')
 class CronScheduleTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigger, TimeZonePropertyTrait {

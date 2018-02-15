@@ -66,14 +66,14 @@ class TaskController extends ControllerBase implements PluginListRequired {
 
         //TODO: auth
 
-        Map conditionMap = cleanMap(params.conditionConfig)
+        Map triggerMap = cleanMap(params.triggerConfig)
         Map actionMap = cleanMap(params.actionConfig)
         //TODO: trigger user data
         Map userData = cleanMap(params.userDataConfig)
 
 
 
-        def result = taskService.createTask(authContext, input, conditionMap, actionMap, userData)
+        def result = taskService.createTask(authContext, input, triggerMap, actionMap, userData)
 
         if (result.error) {
             //edit form
@@ -129,7 +129,7 @@ class TaskController extends ControllerBase implements PluginListRequired {
 
         //TODO: condition map data
 
-        Map conditionMap = cleanMap(params.conditionConfig)
+        Map triggerMap = cleanMap(params.triggerConfig)
         Map actionMap = cleanMap(params.actionConfig)
         //TODO: trigger user data
         Map userData = cleanMap(params.userDataConfig)
@@ -139,7 +139,7 @@ class TaskController extends ControllerBase implements PluginListRequired {
 
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, input.project)
 
-        def result = taskService.updateTask(authContext, trigger, input, conditionMap, actionMap, userData)
+        def result = taskService.updateTask(authContext, trigger, input, triggerMap, actionMap, userData)
 
         if (result.error) {
             //edit form

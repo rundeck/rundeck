@@ -35,7 +35,6 @@ sourceSets {
 dependencies {
     compile project(":rundeck-storage:rundeck-storage-api")
     compile project(":rundeck-storage:rundeck-storage-conf")
-    compile project(":rundeck-trigger")
     compile 'org.apache.ant:ant:1.8.3',
         'log4j:log4j:1.2.17',
         'commons-codec:commons-codec:1.5',

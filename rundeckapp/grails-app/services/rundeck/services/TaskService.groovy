@@ -12,6 +12,7 @@ import groovy.transform.ToString
 import org.rundeck.core.tasks.TaskAction
 import org.rundeck.core.tasks.TaskActionHandler
 import org.rundeck.core.tasks.TaskActionInvoker
+import org.rundeck.core.tasks.TaskPluginTypes
 import org.rundeck.core.tasks.TaskTrigger
 import org.rundeck.core.tasks.TaskTriggerHandler
 import org.springframework.context.ApplicationContext
@@ -274,7 +275,7 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
                     'Plugin not found: {0}'
             )
         } else if (actionValidate && !actionValidate.valid) {
-            validation[ServiceNameConstants.TaskAction] = actionValidate.report.errors
+            validation[TaskPluginTypes.TaskAction] = actionValidate.report.errors
         }
 
         ValidatedPlugin triggerValidate = validateTriggerFor(rep)
@@ -287,7 +288,7 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
                     'Plugin not found: {0}'
             )
         } else if (triggerValidate && !triggerValidate.valid) {
-            validation[ServiceNameConstants.TaskTrigger] = triggerValidate.report.errors
+            validation[TaskPluginTypes.TaskTrigger] = triggerValidate.report.errors
         }
         if (rep.hasErrors() || validation) {
             return [error: true, task: rep, validation: validation]

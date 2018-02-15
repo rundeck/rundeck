@@ -25,12 +25,13 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import org.quartz.*
+import org.rundeck.core.tasks.TaskPluginTypes
 import org.rundeck.core.tasks.TaskTrigger
 
 import java.util.Calendar
 import java.util.regex.Pattern
 
-@Plugin(name = DailyIntervalTaskTrigger.PROVIDER_NAME, service = ServiceNameConstants.TaskTrigger)
+@Plugin(name = DailyIntervalTaskTrigger.PROVIDER_NAME, service = TaskPluginTypes.TaskTrigger)
 @PluginDescription(title = 'Daily Interval Schedule',
         description = '''Daily interval scheduler with start and end times of day, and days of week''')
 
