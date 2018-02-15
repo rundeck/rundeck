@@ -22,7 +22,7 @@ import rundeck.TaskRep
 import java.time.ZoneId
 
 @Transactional
-class TaskRunService implements ApplicationContextAware, TaskActionInvoker<RDTaskContext> {
+class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskContext> {
 
     def pluginService
     def frameworkService
@@ -33,7 +33,7 @@ class TaskRunService implements ApplicationContextAware, TaskActionInvoker<RDTas
      * handle defined triggers needing system startup hook
      */
     void init() {
-        log.info("Startup: initializing trigger Service")
+        log.info("Startup: initializing Task Service")
         def serverNodeUuid = frameworkService.serverUUID
         Map<String, TaskTriggerHandler<RDTaskContext>> startupHandlers = taskTriggerHandlerMap?.findAll {
             it.value.onStartup()

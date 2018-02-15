@@ -11,7 +11,7 @@ import rundeck.services.PluginService
 
 class TaskController extends ControllerBase implements PluginListRequired {
     def frameworkService
-    def taskRunService
+    def taskService
     PluginService pluginService
     static allowedMethods = [
             'createPost': 'POST',
@@ -73,7 +73,7 @@ class TaskController extends ControllerBase implements PluginListRequired {
 
 
 
-        def result = taskRunService.createTask(authContext, input, conditionMap, actionMap, userData)
+        def result = taskService.createTask(authContext, input, conditionMap, actionMap, userData)
 
         if (result.error) {
             //edit form
@@ -104,7 +104,7 @@ class TaskController extends ControllerBase implements PluginListRequired {
             return
         }
 
-        boolean result = taskRunService.deleteTask(task)
+        boolean result = taskService.deleteTask(task)
 
         if (result) {
             flash.message = "Task $input.id was deleted"
@@ -139,7 +139,7 @@ class TaskController extends ControllerBase implements PluginListRequired {
 
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, input.project)
 
-        def result = taskRunService.updateTask(authContext, trigger, input, conditionMap, actionMap, userData)
+        def result = taskService.updateTask(authContext, trigger, input, conditionMap, actionMap, userData)
 
         if (result.error) {
             //edit form
@@ -173,7 +173,7 @@ class TaskController extends ControllerBase implements PluginListRequired {
             return
         }
 
-        taskRunService.taskTriggerFired(input.id, taskRunService.contextForTask(trigger), params.data ?: [:])
+        taskService.taskTriggerFired(input.id, taskService.contextForTask(trigger), params.data ?: [:])
         flash.message = "Trigger started"
         redirect(action: 'show', params: params)
     }
