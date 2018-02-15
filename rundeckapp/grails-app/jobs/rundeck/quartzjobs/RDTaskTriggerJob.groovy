@@ -19,25 +19,25 @@ package rundeck.quartzjobs
 import org.quartz.Job
 import org.quartz.JobExecutionContext
 import org.quartz.JobExecutionException
-import org.rundeck.core.triggers.TriggerAction
-import org.rundeck.core.triggers.TriggerCondition
-import org.rundeck.core.triggers.TriggerActionInvoker
-import rundeck.services.RDTriggerContext
+import org.rundeck.core.tasks.TaskAction
+import org.rundeck.core.tasks.TaskActionInvoker
+import org.rundeck.core.tasks.TaskTrigger
+import rundeck.services.RDTaskContext
 
-class RDTriggerConditionJob implements Job {
+class RDTaskTriggerJob implements Job {
     @Override
     void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
         log.error("RDTriggerConditionJob fired")
         def data = jobExecutionContext.getMergedJobDataMap()
 
         String triggerId = data['triggerId']
-        RDTriggerContext context = data['context']
-        TriggerCondition condition = data['condition']
-        TriggerAction action = data['action']
-        TriggerActionInvoker invoker = data['invoker']
+        RDTaskContext context = data['context']
+        TaskTrigger condition = data['condition']
+        TaskAction action = data['action']
+        TaskActionInvoker invoker = data['invoker']
 
-        def invocationData =  (condition.conditionData?:[:]) + [fireTime: jobExecutionContext.fireTime]
+        def invocationData = (condition.triggerData?: [:]) + [fireTime: jobExecutionContext.fireTime]
         log.error("RDTriggerConditionJob: invoking with: $invocationData")
-        invoker.triggerConditionMet(triggerId, context,invocationData)
+        invoker.taskTriggerFired(triggerId, context, invocationData)
     }
 }

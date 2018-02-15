@@ -10,7 +10,7 @@ import org.rundeck.core.tasks.TaskAction
 import org.rundeck.core.tasks.TaskActionInvoker
 import org.rundeck.core.tasks.TaskTrigger
 import org.rundeck.core.tasks.TaskTriggerHandler
-import rundeck.quartzjobs.RDTriggerConditionJob
+import rundeck.quartzjobs.RDTaskTriggerJob
 
 /**
  * Handles trigger based schedules
@@ -78,7 +78,7 @@ class ScheduledTaskTriggerService implements TaskTriggerHandler<RDTaskContext> {
         }
 
 
-        def jobDetailBuilder = JobBuilder.newJob(RDTriggerConditionJob)
+        def jobDetailBuilder = JobBuilder.newJob(RDTaskTriggerJob)
                 .withIdentity(quartzJobName, quartzJobGroup)
 //                .withDescription(scheduled.)
                 .usingJobData(new JobDataMap(createJobDetailMap(triggerId, contextInfo, scheduled, action, invoker)))
