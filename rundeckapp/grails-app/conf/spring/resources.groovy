@@ -43,12 +43,12 @@ import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
-import com.dtolabs.rundeck.server.plugins.trigger.action.JobRunTriggerAction
-import com.dtolabs.rundeck.server.plugins.trigger.condition.CalendarIntervalTriggerCondition
-import com.dtolabs.rundeck.server.plugins.trigger.condition.CronScheduleTriggerCondition
-import com.dtolabs.rundeck.server.plugins.trigger.condition.DailyIntervalTriggerCondition
-import com.dtolabs.rundeck.server.plugins.trigger.condition.OneTimeTriggerCondition
-import com.dtolabs.rundeck.server.plugins.trigger.condition.SimpleScheduleTriggerCondition
+import com.dtolabs.rundeck.server.plugins.trigger.action.JobRunTaskAction
+import com.dtolabs.rundeck.server.plugins.trigger.condition.CalendarIntervalTaskTrigger
+import com.dtolabs.rundeck.server.plugins.trigger.condition.CronScheduleTaskTrigger
+import com.dtolabs.rundeck.server.plugins.trigger.condition.DailyIntervalTaskTrigger
+import com.dtolabs.rundeck.server.plugins.trigger.condition.OneTimeTaskTrigger
+import com.dtolabs.rundeck.server.plugins.trigger.condition.SimpleScheduleTaskTrigger
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
 import grails.util.Environment
 import groovy.io.FileType
@@ -329,20 +329,20 @@ beans={
             RenderDatatypeFilterPlugin,
             QuietFilterPlugin,
             HighlightFilterPlugin,
-            //trigger conditions
-            CronScheduleTriggerCondition,
-            CalendarIntervalTriggerCondition,
-            DailyIntervalTriggerCondition,
-            SimpleScheduleTriggerCondition,
-            OneTimeTriggerCondition,
-            //trigger actions
-            JobRunTriggerAction
+            //task triggers
+            CronScheduleTaskTrigger,
+            CalendarIntervalTaskTrigger,
+            DailyIntervalTaskTrigger,
+            SimpleScheduleTaskTrigger,
+            OneTimeTaskTrigger,
+            //task actions
+            JobRunTaskAction
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }
 
     //built-in trigger condition/action handlers
-    pluginRegistry['scheduleTriggerConditionHandler'] = 'scheduledTriggerConditionService'
+    pluginRegistry['scheduledTaskTriggerHandler'] = 'scheduledTaskTriggerService'
     pluginRegistry['jobRunTriggerActionHandler'] = 'jobRunTriggerActionService'
 
     //TODO: scan defined plugins:

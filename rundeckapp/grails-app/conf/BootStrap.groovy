@@ -23,14 +23,9 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.util.quartz.MetricsSchedulerListener
-import com.dtolabs.utils.Streams
 import grails.util.Environment
-import org.codehaus.groovy.grails.plugins.web.filters.FilterConfig
-import org.codehaus.groovy.grails.plugins.web.filters.FilterToHandlerAdapter
 import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
-import org.springframework.web.context.WebApplicationContext
-import org.springframework.web.context.support.WebApplicationContextUtils
 
 import javax.servlet.ServletContext
 import java.nio.charset.Charset
@@ -58,7 +53,7 @@ class BootStrap {
     HealthCheckRegistry healthCheckRegistry
     def dataSource
     ApiMarshallerRegistrar apiMarshallerRegistrar
-    def triggerService
+    def taskRunService
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -414,14 +409,14 @@ class BootStrap {
                      timer("scheduledExecutionService.rescheduleJobs") {
                          scheduledExecutionService.rescheduleJobs(clusterMode ? serverNodeUUID : null)
                          scheduledExecutionService.rescheduleTriggers(clusterMode ? serverNodeUUID : null)
-                         triggerService.init()
+                         taskRunService.init()
                      }
                  } else {
                      log.debug("scheduledExecutionService.rescheduleJobs: starting asynchronously")
                      scheduledExecutionService.rescheduleJobsAsync(clusterMode ? serverNodeUUID : null)
                      scheduledExecutionService.rescheduleTriggersAsync(clusterMode ? serverNodeUUID : null)
                      //TODO: async
-                     triggerService.init()
+                     taskRunService.init()
                  }
              }
 

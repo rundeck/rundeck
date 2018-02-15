@@ -34,10 +34,10 @@ import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin;
 import com.dtolabs.rundeck.plugins.step.StepPlugin;
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin;
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin;
-import org.rundeck.core.triggers.TriggerAction;
-import org.rundeck.core.triggers.TriggerActionHandler;
-import org.rundeck.core.triggers.TriggerCondition;
-import org.rundeck.core.triggers.TriggerConditionHandler;
+import org.rundeck.core.tasks.TaskAction;
+import org.rundeck.core.tasks.TaskActionHandler;
+import org.rundeck.core.tasks.TaskTrigger;
+import org.rundeck.core.tasks.TaskTriggerHandler;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -76,10 +76,10 @@ public class ServiceTypes {
         map.put(ServiceNameConstants.UI, UIPlugin.class);
         map.put(ServiceNameConstants.LogFilter, LogFilterPlugin.class);
         map.put(ServiceNameConstants.ContentConverter, ContentConverterPlugin.class);
-        map.put(ServiceNameConstants.TriggerCondition, TriggerCondition.class);
-        map.put(ServiceNameConstants.TriggerConditionHandler, TriggerConditionHandler.class);
-        map.put(ServiceNameConstants.TriggerAction, TriggerAction.class);
-        map.put(ServiceNameConstants.TriggerActionHandler, TriggerActionHandler.class);
+        map.put(ServiceNameConstants.TaskTrigger, TaskTrigger.class);
+        map.put(ServiceNameConstants.TaskTriggerHandler, TaskTriggerHandler.class);
+        map.put(ServiceNameConstants.TaskAction, TaskAction.class);
+        map.put(ServiceNameConstants.TaskActionHandler, TaskActionHandler.class);
 
 
         TYPES = Collections.unmodifiableMap(map);
