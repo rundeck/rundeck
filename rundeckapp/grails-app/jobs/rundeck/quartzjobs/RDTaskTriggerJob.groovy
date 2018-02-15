@@ -32,11 +32,11 @@ class RDTaskTriggerJob implements Job {
 
         String triggerId = data['triggerId']
         RDTaskContext context = data['context']
-        TaskTrigger condition = data['condition']
+        TaskTrigger trigger = data['trigger']
         TaskAction action = data['action']
         TaskActionInvoker invoker = data['invoker']
 
-        def invocationData = (condition.triggerData?: [:]) + [fireTime: jobExecutionContext.fireTime]
+        def invocationData = (trigger.triggerData?: [:]) + [fireTime: jobExecutionContext.fireTime]
         log.error("RDTriggerConditionJob: invoking with: $invocationData")
         invoker.taskTriggerFired(triggerId, context, invocationData)
     }

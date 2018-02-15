@@ -102,11 +102,17 @@ class ScheduledTaskTriggerService implements TaskTriggerHandler<RDTaskContext> {
         return nextTime
     }
 
-    Map createJobDetailMap(String triggerId, RDTaskContext contextInfo, QuartzSchedulerTaskTrigger scheduled, TaskAction action, TaskActionInvoker invoker) {
+    Map createJobDetailMap(
+            String triggerId,
+            RDTaskContext contextInfo,
+            QuartzSchedulerTaskTrigger trigger,
+            TaskAction action,
+            TaskActionInvoker invoker
+    ) {
         [
                 triggerId: triggerId,
                 context  : contextInfo,
-                condition: scheduled,
+                trigger  : trigger,
                 action   : action,
                 invoker  : invoker
         ]
