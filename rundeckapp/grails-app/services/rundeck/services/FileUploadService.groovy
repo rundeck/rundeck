@@ -29,7 +29,7 @@ class FileUploadService {
     public static final String DEFAULT_MAX_SIZE = '200MB'
     PluginService pluginService
     ConfigurationService configurationService
-    TaskService taskService
+    SchedulingTaskExecutorService schedulingTaskExecutorService
     FrameworkService frameworkService
 
     long getTempfileExpirationDelay() {
@@ -159,7 +159,7 @@ class FileUploadService {
         log.debug("record: $record")
         if (expiryStart) {
             Long id = record.id
-            taskService.runAt(record.expirationDate, "expire:$uuidstring") {
+            schedulingTaskExecutorService.runAt(record.expirationDate, "expire:$uuidstring") {
                 JobFileRecord.withNewSession {
                     expireRecordIfNeeded(id)
                 }
@@ -347,7 +347,7 @@ class FileUploadService {
         }
         jfr.execution = execution
         jfr.save()
-        taskService.cancel("expire:$jfr.uuid")
+        schedulingTaskExecutorService.cancel("expire:$jfr.uuid")
         jfr
     }
 

@@ -8,7 +8,7 @@ import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 
 
-class TaskService {
+class SchedulingTaskExecutorService {
     static transactional = false
     private Map<String, ListenableScheduledFuture> timers = [:]
     /**

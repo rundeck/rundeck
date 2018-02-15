@@ -95,7 +95,7 @@ class FileUploadServiceSpec extends Specification {
 
         }
         service.pluginService = Mock(PluginService)
-        service.taskService = Mock(TaskService)
+        service.schedulingTaskExecutorService = Mock(SchedulingTaskExecutorService)
 
         String origName = 'afile'
         String optionName = 'myopt'
@@ -148,7 +148,7 @@ class FileUploadServiceSpec extends Specification {
 
         }
         service.pluginService = Mock(PluginService)
-        service.taskService = Mock(TaskService)
+        service.schedulingTaskExecutorService = Mock(SchedulingTaskExecutorService)
 
         String origName = 'afile'
         String optionName = 'myopt'
