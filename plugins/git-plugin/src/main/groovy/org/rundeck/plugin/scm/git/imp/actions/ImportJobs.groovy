@@ -28,6 +28,7 @@ import org.rundeck.plugin.scm.git.BuilderUtil
 import org.rundeck.plugin.scm.git.GitImportAction
 import org.rundeck.plugin.scm.git.GitImportPlugin
 import org.rundeck.plugin.scm.git.GitUtil
+import org.yaml.snakeyaml.Yaml
 
 
 /**
@@ -61,6 +62,8 @@ class ImportJobs extends BaseAction implements GitImportAction {
         StringBuilder sb = new StringBuilder()
         boolean success = true
 
+        Yaml parser = new Yaml()
+
         //walk the repo files and look for possible candidates
         plugin.walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
             def path = walk.getPathString()
@@ -77,19 +80,23 @@ class ImportJobs extends BaseAction implements GitImportAction {
             def meta = GitUtil.metaForCommit(commit)
             meta.url = plugin.config.url
 
-            def importResult = importer.importFromStream(
-                    plugin.config.format,
-                    new ByteArrayInputStream(bytes),
-                    meta,
-                    plugin.config.importPreserve
-            )
-            if (!importResult.successful) {
-                success = false
-                sb << ("Failed importing: ${walk.getPathString()}: " + importResult.errorMessage)
-            } else {
-                plugin.importTracker.trackJobAtPath(importResult.job,walk.getPathString())
-                sb << ("Succeeded importing ${walk.getPathString()}: ${importResult}")
+            List<Map> jobs = (List<Map>)parser.load(new String(bytes, 'UTF-8'))
+            for (job in jobs) {
+                def importResult = importer.importFromMap(
+                        job,
+                        meta,
+                        plugin.config.importPreserve
+                )
+                if (!importResult.successful) {
+                    success = false
+                    sb << ("Failed importing: ${walk.getPathString()}: " + importResult.errorMessage)
+                } else {
+                    plugin.importTracker.trackJobAtPath(importResult.job,walk.getPathString())
+                    sb << ("Succeeded importing ${walk.getPathString()}: ${importResult}")
+                }
             }
+
+
         }
         def result = new ScmExportResultImpl()
         result.success = success
