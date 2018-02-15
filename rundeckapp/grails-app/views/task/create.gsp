@@ -48,10 +48,10 @@
             _setupAceTextareaEditor(this, confirm.setNeetsConfirm);
         });
          window.taskEditor=new TaskEditor({
-                conditionConfig:loadJsonData('conditionConfigJson'),
-                conditionFormId:'condeditor',
-                conditionFormPrefixes:['conditionConfig.', 'orig.conditionConfig.'],
-                conditionInputPrefix:'conditionConfig.',
+                triggerConfig:loadJsonData('conditionConfigJson'),
+                triggerFormId:'condeditor',
+                triggerFormPrefixes:['triggerConfig.', 'orig.triggerConfig.'],
+                triggerInputPrefix:'triggerConfig.',
                 actionConfig:loadJsonData('actionConfigJson'),
                 actionFormId:'actionEditor',
                 actionFormPrefixes:['actionConfig.', 'orig.actionConfig.'],

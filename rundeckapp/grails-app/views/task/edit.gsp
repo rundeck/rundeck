@@ -48,10 +48,10 @@
                 _setupAceTextareaEditor(this, confirm.setNeetsConfirm);
             });
             window.taskEditor=new TaskEditor({
-                conditionConfig:loadJsonData('conditionConfigJson'),
-                conditionFormId:'condeditor',
-                conditionFormPrefixes:['conditionConfig.', 'orig.conditionConfig.'],
-                conditionInputPrefix:'conditionConfig.',
+                triggerConfig:loadJsonData('conditionConfigJson'),
+                triggerFormId:'condeditor',
+                triggerFormPrefixes:['triggerConfig.', 'orig.triggerConfig.'],
+                triggerInputPrefix:'triggerConfig.',
                 actionConfig:loadJsonData('actionConfigJson'),
                 actionFormId:'actionEditor',
                 actionFormPrefixes:['actionConfig.', 'orig.actionConfig.'],
@@ -85,10 +85,10 @@
             <span class="h4">
                 Edit Task
             </span>
-            <g:hiddenField name="id" value="${trigger.uuid}"/>
+            <g:hiddenField name="id" value="${task.uuid}"/>
         </div>
 
-        <tmpl:editForm model="[trigger: trigger]"/>
+        <tmpl:editForm model="[task: task]"/>
 
         <div class="panel-footer">
             <div id="formButtons">

@@ -1,3 +1,4 @@
+<%@ page import="org.rundeck.core.tasks.TaskPluginTypes" %>
 %{--
   - Copyright 2018 Rundeck, Inc. (http://rundeck.com)
   -
@@ -23,11 +24,11 @@
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
 <g:embedJSON
-        data="${trigger?.conditionConfig != null ? [data: true, config: trigger?.conditionConfig, report: [errors: validation?.
+        data="${task?.triggerConfig != null ? [data: true, config: task?.triggerConfig, report: [errors: validation?.
                 get('TaskTrigger')]] : [data: false]}"
         id="conditionConfigJson"/>
 <g:embedJSON
-        data="${trigger?.actionConfig != null ? [data: true, config: trigger?.actionConfig, report: [errors: validation?.
+        data="${task?.actionConfig != null ? [data: true, config: task?.actionConfig, report: [errors: validation?.
                 get('TaskAction')]] : [data: false]}"
         id="actionConfigJson"/>
 
@@ -35,7 +36,7 @@
 
     <div class="list-group-item">
         %{--name--}%
-        <div class="form-group ${g.hasErrors(bean: trigger, field: 'name', 'has-error')}">
+        <div class="form-group ${g.hasErrors(bean: task, field: 'name', 'has-error')}">
             <label for="triggerName"
                    class="required ${enc(attr: labelColClass)}">
                 Name
@@ -43,12 +44,12 @@
 
             <div class="${fieldColSize}">
                 <g:textField name="name"
-                             value="${trigger?.name}"
+                             value="${task?.name}"
                              id="triggerName"
                              class="form-control"/>
-                <g:hasErrors bean="${trigger}" field="name">
+                <g:hasErrors bean="${task}" field="name">
                     <span class="text-warning">
-                        <g:renderErrors bean="${trigger}" as="list" field="name"/>
+                        <g:renderErrors bean="${task}" as="list" field="name"/>
                     </span>
                 </g:hasErrors>
             </div>
@@ -57,7 +58,7 @@
 
         <!-- description-->
 
-        <div class="form-group ${g.hasErrors(bean: trigger, field: 'description', 'has-error')}">
+        <div class="form-group ${g.hasErrors(bean: task, field: 'description', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
                 Description
@@ -65,13 +66,13 @@
 
             <div class="${fieldColSize}">
                 <g:textField name="description"
-                             value="${trigger?.description}"
+                             value="${task?.description}"
                              id="description"
                              class="form-control"/>
-                <g:hasErrors bean="${trigger}" field="description">
+                <g:hasErrors bean="${task}" field="description">
 
                     <span class="text-warning">
-                        <g:renderErrors bean="${trigger}" as="list" field="description"/>
+                        <g:renderErrors bean="${task}" as="list" field="description"/>
                     </span>
 
                 </g:hasErrors>
@@ -80,7 +81,7 @@
         </div>
         <!-- enabled-->
 
-        <div class="form-group ${g.hasErrors(bean: trigger, field: 'enabled', 'has-error')}">
+        <div class="form-group ${g.hasErrors(bean: task, field: 'enabled', 'has-error')}">
             <label for="enabled"
                    class="required ${enc(attr: labelColClass)}">
                 Enabled
@@ -88,13 +89,13 @@
 
             <div class="${fieldColSize}">
                 <g:checkBox name="enabled"
-                            value="${trigger ? trigger.enabled : true}"
+                            value="${task ? task.enabled : true}"
                             id="enabled"
                             class="form-control"/>
-                <g:hasErrors bean="${trigger}" field="enabled">
+                <g:hasErrors bean="${task}" field="enabled">
 
                     <span class="text-warning">
-                        <g:renderErrors bean="${trigger}" as="list" field="enabled"/>
+                        <g:renderErrors bean="${task}" as="list" field="enabled"/>
                     </span>
 
                 </g:hasErrors>
@@ -102,7 +103,7 @@
 
         </div>
 
-        <div class="form-group ${g.hasErrors(bean: trigger, field: 'conditionType', 'has-error')}">
+        <div class="form-group ${g.hasErrors(bean: task, field: 'triggerType', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
                 Condition
@@ -110,16 +111,16 @@
 
             <div class="${fieldColSize}">
 
-                <select name="conditionType" value="${trigger?.conditionType}" class="form-control"
-                        id="conditionTypeSelect" data-bind="value: triggerEditor.condition.provider">
-                    <g:if test="${!trigger?.conditionType}">
+                <select name="triggerType" value="${task?.triggerType}" class="form-control"
+                        id="conditionTypeSelect" data-bind="value: taskEditor.trigger.provider">
+                    <g:if test="${!task?.triggerType}">
                         <option value="" selected>-Choose-</option>
                     </g:if>
                     <g:each in="${triggerPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
                             var="plugin">
-                        <option value="${plugin.name}" ${trigger?.conditionType == plugin.name ? 'selected' :
+                        <option value="${plugin.name}" ${task?.triggerType == plugin.name ? 'selected' :
                                 ''}><stepplugin:message
-                                service="${com.dtolabs.rundeck.plugins.ServiceNameConstants.TaskTrigger}"
+                                service="${org.rundeck.core.tasks.TaskPluginTypes.TaskTrigger}"
                                 name="${plugin.name}"
                                 code="plugin.title"
                                 default="${plugin.title ?: plugin.name}"/></option>
@@ -130,10 +131,10 @@
             <div class="${offsetColSize}">
                 <div id="condeditor">
                 </div>
-                <g:hasErrors bean="${trigger}" field="conditionType">
+                <g:hasErrors bean="${task}" field="triggerType">
 
                     <span class="text-warning">
-                        <g:renderErrors bean="${trigger}" as="list" field="conditionType"/>
+                        <g:renderErrors bean="${task}" as="list" field="triggerType"/>
                     </span>
 
                 </g:hasErrors>
@@ -141,7 +142,7 @@
 
         </div>
 
-        <div class="form-group ${g.hasErrors(bean: trigger, field: 'actionType', 'has-error')}">
+        <div class="form-group ${g.hasErrors(bean: task, field: 'actionType', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
                 Action
@@ -149,16 +150,16 @@
 
             <div class="${fieldColSize}">
 
-                <select name="actionType" value="${trigger?.actionType}" class="form-control" id="actionTypeSelect"
-                        data-bind="value: triggerEditor.action.provider">
-                    <g:if test="${!trigger?.actionType}">
+                <select name="actionType" value="${task?.actionType}" class="form-control" id="actionTypeSelect"
+                        data-bind="value: taskEditor.action.provider">
+                    <g:if test="${!task?.actionType}">
                         <option value="" selected>-Choose-</option>
                     </g:if>
                     <g:each in="${actionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
                             var="plugin">
-                        <option value="${plugin.name}" ${trigger?.actionType == plugin.name ? 'selected' :
+                        <option value="${plugin.name}" ${task?.actionType == plugin.name ? 'selected' :
                                 ''}><stepplugin:message
-                                service="${com.dtolabs.rundeck.plugins.ServiceNameConstants.TaskAction}"
+                                service="${org.rundeck.core.tasks.TaskPluginTypes.TaskAction}"
                                 name="${plugin.name}"
                                 code="plugin.title"
                                 default="${plugin.title ?: plugin.name}"/></option>
@@ -169,10 +170,10 @@
             <div class="${offsetColSize}">
                 <div id="actionEditor">
                 </div>
-                <g:hasErrors bean="${trigger}" field="actionType">
+                <g:hasErrors bean="${task}" field="actionType">
 
                     <span class="text-warning">
-                        <g:renderErrors bean="${trigger}" as="list" field="actionType"/>
+                        <g:renderErrors bean="${task}" as="list" field="actionType"/>
                     </span>
 
                 </g:hasErrors>
@@ -180,7 +181,7 @@
 
         </div>
 
-        <div class="form-group ${g.hasErrors(bean: trigger, field: 'triggerData', 'has-error')}">
+        <div class="form-group ${g.hasErrors(bean: task, field: 'triggerData', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
                 Data
@@ -195,12 +196,12 @@
                             data-ace-autofocus='true'
                             data-ace-session-mode="json"
                             data-ace-height="150px"
-                            data-ace-control-soft-wrap="true">${trigger?.triggerData}</textarea>
+                            data-ace-control-soft-wrap="true">${task?.triggerData}</textarea>
                 </div>
-                <g:hasErrors bean="${trigger}" field="triggerData">
+                <g:hasErrors bean="${task}" field="triggerData">
 
                     <span class="text-warning">
-                        <g:renderErrors bean="${trigger}" as="list" field="name"/>
+                        <g:renderErrors bean="${task}" as="list" field="name"/>
                     </span>
 
                 </g:hasErrors>

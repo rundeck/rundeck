@@ -50,29 +50,29 @@
                 <th class="table-header">Description</th>
                 <th class="table-header">Action</th>
             </tr>
-            <g:each in="${tasks}" var="trigger" status="index">
+            <g:each in="${tasks}" var="task" status="index">
                 <tr>
                     <td>
-                        <g:if test="${trigger.enabled}">
+                        <g:if test="${task.enabled}">
                             <g:icon name="check" css="text-success"/>
                         </g:if>
                         <g:else>
                             <g:icon name="unchecked" css="text-muted"/>
                         </g:else>
                         <g:link action="show"
-                                params="[project: project, id: trigger.uuid]">
-                            ${trigger.name ?: trigger.uuid}
+                                params="[project: project, id: task.uuid]">
+                            ${task.name ?: task.uuid}
                         </g:link>
                     </td>
-                    <td>${trigger.description}</td>
+                    <td>${task.description}</td>
                     <td>
                         <g:link action="delete" class="btn btn-danger-hollow btn-sm"
-                                params="[project: project, id: trigger.uuid]">
+                                params="[project: project, id: task.uuid]">
                             <i class="glyphicon glyphicon-remove"></i>
                             Delete
                         </g:link>
                         <g:link action="edit" class="btn btn-info-hollow btn-sm"
-                                params="[project: project, id: trigger.uuid]">
+                                params="[project: project, id: task.uuid]">
                             <i class="glyphicon glyphicon-pencil"></i>
                             Edit
                         </g:link>

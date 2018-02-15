@@ -21,7 +21,7 @@
   Time: 12:16 PM
 --%>
 
-<%@ page import="com.dtolabs.rundeck.plugins.ServiceNameConstants" contentType="text/html;charset=UTF-8" %>
+<%@ page import="org.rundeck.core.tasks.TaskPluginTypes; com.dtolabs.rundeck.plugins.ServiceNameConstants" contentType="text/html;charset=UTF-8" %>
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
@@ -102,20 +102,22 @@
                 </h4>
 
                 <g:render template="/framework/renderPluginConfig"
-                          model="${[serviceName: com.dtolabs.rundeck.plugins.ServiceNameConstants.TaskTrigger,
-                                    values     : task.triggerConfig,
-                                    description: triggerPlugins[task.triggerType].description,
-                                    hideTitle  : false]}"/>
+                          model="${[serviceName   : org.rundeck.core.tasks.TaskPluginTypes.TaskTrigger,
+                                    showPluginIcon: true,
+                                    values        : task.triggerConfig,
+                                    description   : triggerPlugins[task.triggerType].description,
+                                    hideTitle     : false]}"/>
 
             </div>
 
             <div class="list-group-item">
                 <h4 class="list-group-item-heading">Action</h4>
                 <g:render template="/framework/renderPluginConfig"
-                          model="${[serviceName: com.dtolabs.rundeck.plugins.ServiceNameConstants.TaskAction,
-                                    values     : task.actionConfig,
-                                    description: actionPlugins[task.actionType].description,
-                                    hideTitle  : false]}"/>
+                          model="${[serviceName   : org.rundeck.core.tasks.TaskPluginTypes.TaskAction,
+                                    showPluginIcon: true,
+                                    values        : task.actionConfig,
+                                    description   : actionPlugins[task.actionType].description,
+                                    hideTitle     : false]}"/>
             </div>
         </div>
     </div>

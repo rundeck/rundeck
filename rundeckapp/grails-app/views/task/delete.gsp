@@ -28,13 +28,13 @@
     <meta name="tabpage" content="triggers"/>
     <meta name="layout" content="base"/>
     <title><g:appTitle/> -
-    Delete Task - ${trigger.name ?: trigger.uuid}</title>
+    Delete Task - ${task.name ?: task.uuid}</title>
 
 </head>
 
 <body>
 <g:form controller="task" useToken="true" action="deletePost" method="post" class="form form-horizontal"
-        params="[project: trigger.project]">
+        params="[project: task.project]">
     <div class="panel panel-primary">
         <div class="panel-heading">
             <span class="h3">
@@ -49,14 +49,14 @@
                 </label>
 
                 <div class="col-sm-10">
-                    <p class="form-control-static text-info"><g:enc>${trigger.name}</g:enc></p>
+                    <p class="form-control-static text-info"><g:enc>${task.name}</g:enc></p>
                 </div>
             </div>
 
         </div>
 
         <div class="panel-footer">
-            <g:hiddenField name="id" value="${trigger.uuid}"/>
+            <g:hiddenField name="id" value="${task.uuid}"/>
             <g:actionSubmit value="Cancel" action="cancel" class="btn btn-default btn-sm "/>
             <input type="submit" value="${g.message(code: 'Delete')}"
                    class="btn btn-danger btn-sm"/>

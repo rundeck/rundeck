@@ -343,7 +343,7 @@ beans={
 
     //built-in trigger condition/action handlers
     pluginRegistry['scheduledTaskTriggerHandler'] = 'scheduledTaskTriggerService'
-    pluginRegistry['jobRunTriggerActionHandler'] = 'jobRunTriggerActionService'
+    pluginRegistry['jobRunTaskActionHandler'] = 'jobRunTaskActionService'
 
     //TODO: scan defined plugins:
     //    context.'component-scan'('base-package': "com.dtolabs.rundeck.server.plugins.logging")

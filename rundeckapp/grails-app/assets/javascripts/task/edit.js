@@ -32,22 +32,22 @@
 
 function TaskEditor(data) {
     var self = this;
-    self.condition = new PluginEditor({
-        service: 'TriggerCondition',
-        config: data.conditionConfig,
-        formId: data.conditionFormId,
-        formPrefixes: data.conditionFormPrefixes,
-        inputFieldPrefix: data.conditionInputPrefix
+    self.trigger = new PluginEditor({
+        service: 'TaskTrigger',
+        config: data.triggerConfig,
+        formId: data.triggerFormId,
+        formPrefixes: data.triggerFormPrefixes,
+        inputFieldPrefix: data.triggerInputPrefix
     });
     self.action = new PluginEditor({
-        service: 'TriggerAction',
+        service: 'TaskAction',
         config: data.actionConfig,
         formId: data.actionFormId,
         formPrefixes: data.actionFormPrefixes,
         inputFieldPrefix: data.actionInputPrefix
     });
     self.init = function () {
-        self.condition.init();
+        self.trigger.init();
         self.action.init();
     };
 }
