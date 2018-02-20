@@ -61,14 +61,14 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
     def scm = [ url: "http://github.com/dtolabs/rundeck" ]
 
     def doWithWebDescriptor = { xml ->
-        if(!(application.config.rundeck.metrics.enabled in [true,'true'])){
+        if(!(grailsApplication.config.rundeck.metrics.enabled in [true,'true'])){
             return
         }
-        if(application.config.rundeck.metrics.servletUrlPattern){
-            addServlets(application.config,xml)
+        if(grailsApplication.config.rundeck.metrics.servletUrlPattern){
+            addServlets(grailsApplication.config,xml)
         }
-        if (application.config.rundeck.metrics.requestFilterEnabled in [true,'true']) {
-            addFilters(application.config,xml)
+        if (grailsApplication.config.rundeck.metrics.requestFilterEnabled in [true,'true']) {
+            addFilters(grailsApplication.config,xml)
         }
     }
     def addFilters(ConfigObject config,def xml) {
@@ -131,15 +131,15 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
 
     def doWithDynamicMethods = { applicationContext ->
         def metricRegistry = applicationContext.getBean(MetricRegistry)
-        def metricsEnabled = application.config.rundeck.metrics.enabled in [true, 'true']
-        def disabledClasses = application.config.rundeck.metrics.disabledClasses?:[]
+        def metricsEnabled = grailsApplication.config.rundeck.metrics.enabled in [true, 'true']
+        def disabledClasses = grailsApplication.config.rundeck.metrics.disabledClasses?:[]
         if(disabledClasses instanceof String){
             disabledClasses= disabledClasses.split(/,\s*/) as List
         }
-        for (domainClass in application.domainClasses) {
+        for (domainClass in grailsApplication.domainClasses) {
             addDynamicMetricMethods(domainClass, metricRegistry, metricsEnabled && !disabledClasses.contains(domainClass.clazz.name))
         }
-        for (serviceClass in application.serviceClasses) {
+        for (serviceClass in grailsApplication.serviceClasses) {
             addDynamicMetricMethods(serviceClass, metricRegistry, metricsEnabled && !disabledClasses.contains(serviceClass.clazz.name))
         }
     }
@@ -205,10 +205,10 @@ each HTTP reqest, and provides some utility methods to Controllers and Services 
         applicationContext.servletContext.setAttribute('com.codahale.metrics.servlets.HealthCheckServlet.registry',
                 applicationContext.getBean(HealthCheckRegistry))
 
-        if (!(application.config.rundeck.metrics.enabled in [true, 'true'])) {
+        if (!(grailsApplication.config.rundeck.metrics.enabled in [true, 'true'])) {
             return
         }
-        def metricsJmx = application.config.rundeck.metrics.jmxEnabled in ['true', true]
+        def metricsJmx = grailsApplication.config.rundeck.metrics.jmxEnabled in ['true', true]
         if (metricsJmx && applicationContext.getBean(MetricRegistry)) {
             final JmxReporter reporter = JmxReporter.forRegistry(applicationContext.getBean(MetricRegistry)).build();
             reporter.start();

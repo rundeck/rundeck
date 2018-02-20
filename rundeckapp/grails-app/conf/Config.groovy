@@ -82,6 +82,7 @@ environments {
 }
 grails.json.legacy.builder = false
 grails.mail.default.from="rundeck-server@localhost"
+grails.converters.json.default.deep = true
 
 grails.databinding.dateFormats = [
         //default grails patterns
@@ -95,6 +96,9 @@ grails.databinding.dateFormats = [
         "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
         "yyyy-MM-dd'T'HH:mm:ssXXX",
         "yyyy-MM-dd'T'HH:mm:ss.SSSXXX",
+        "yyyy-MM-dd'T'HH:mm:ss.XXX",
+        "yyyy-MM-dd'T'HH:mm:ssZ",
+        "yyyy-MM-dd'T'HH:mm:ss'Z'",
 ]
 
 // log4j configuration
@@ -215,6 +219,8 @@ rundeck.gui.job.description.disableHTML=false
 rundeck.pagination.default.max=20
 rundeck.gui.clusterIdentityInHeader=false
 rundeck.gui.clusterIdentityInFooter=true
+
+rdeck.base='/home/carlos/Documents/arquivos/pessoal/rundeck/localdev'
 
 rundeck.projectService.projectExportCache.spec= "expireAfterAccess=30m"
 rundeck.projectManagerService.projectCache.spec='expireAfterAccess=10m,refreshAfterWrite=1m'
