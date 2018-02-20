@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-import grails.test.GrailsUnitTestCase
+//import grails.test.GrailsUnitTestCase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
 import rundeck.CommandExec
 import rundeck.Workflow
+import static org.junit.Assert.*
 /*
  * WorkflowTests.java
  * 

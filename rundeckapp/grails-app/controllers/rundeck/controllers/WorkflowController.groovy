@@ -288,11 +288,11 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
                     config: validation.props
             ]
         }
-        return respond((Object) results, [formats: ['json']])
+        return respond([formats: ['json']], results)
     }
 
     def removeStepFilter() {
-        def results
+        Map results
         def valid = false
         withForm {
             g.refreshFormTokensHeader()
@@ -339,7 +339,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         }
 
         if (valid) {
-            return respond((Object) results, [formats: ['json']])
+            return respond([formats: ['json']], results)
         }
     }
     /**

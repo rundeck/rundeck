@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.app.internal.logging
 
+import static org.junit.Assert.*
+
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
 

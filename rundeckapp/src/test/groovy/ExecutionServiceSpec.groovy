@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.execution.ExecutionItemFactory
 import com.dtolabs.rundeck.execution.JobRefCommand
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageTree
+import geb.spock.GebSpec
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.grails.plugins.metricsweb.MetricService
@@ -54,7 +55,7 @@ import java.time.ZoneId
  */
 @TestFor(ExecutionService)
 @Mock([Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest])
-class ExecutionServiceSpec extends Specification {
+class ExecutionServiceSpec {
     private Map createJobParams(Map overrides = [:]) {
         [
                 jobName       : 'blue',

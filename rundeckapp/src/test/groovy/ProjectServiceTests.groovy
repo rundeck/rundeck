@@ -17,6 +17,7 @@
 import com.dtolabs.rundeck.util.ZipBuilder
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import groovy.mock.interceptor.MockFor
 import rundeck.Execution
 import rundeck.Option
 import rundeck.Orchestrator
@@ -30,6 +31,7 @@ import rundeck.services.LoggingService
 import rundeck.services.ProjectService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.WorkflowService
+import static org.junit.Assert.*
 
 /*
  * ProjectServiceTests.java
@@ -170,15 +172,15 @@ class ProjectServiceTests  {
 
         def outfilename = "blahfile.xml"
 
-        def zipmock=mockFor(ZipBuilder)
+        def zipmock=new MockFor(ZipBuilder)
         def outwriter = new StringWriter()
         zipmock.demand.file(1..1){name,Closure withwriter->
-            assertEquals(outfilename,name)
+            assertEquals(outfilename,name.toString())
             withwriter.call(outwriter)
             outwriter.flush()
         }
 //        zipmock.demand.file(1..1){name,File outfile-> }
-        def zip = zipmock.createMock()
+        def zip = zipmock.proxyInstance()
         Execution exec = new Execution(
                 argString: "-test args",
                 user: "testuser",
@@ -193,18 +195,18 @@ class ProjectServiceTests  {
                 workflow: new Workflow(commands: [new CommandExec(adhocRemoteString: 'exec command')])
         )
         assertNotNull exec.save()
-        def logmock = mockFor(LoggingService)
+        def logmock = new MockFor(LoggingService)
         logmock.demand.getLogFileForExecution(1..1){Execution e->
             assert exec==e
             new File(outfilename)
         }
-        svc.loggingService=logmock.createMock()
-        def workflowmock = mockFor(WorkflowService)
+        svc.loggingService=logmock.proxyInstance()
+        def workflowmock = new MockFor(WorkflowService)
         workflowmock.demand.getStateFileForExecution(1..1){Execution e->
             assert exec==e
             null
         }
-        svc.workflowService= workflowmock.createMock()
+        svc.workflowService= workflowmock.proxyInstance()
 
         svc.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
@@ -218,10 +220,10 @@ class ProjectServiceTests  {
         File tempoutfile = File.createTempFile("tempout",".txt")
         tempoutfile.deleteOnExit()
 
-        def zipmock=mockFor(ZipBuilder)
+        def zipmock=new MockFor(ZipBuilder)
         def outwriter = new StringWriter()
         zipmock.demand.file(1..1){name,Closure withwriter->
-            assertEquals(outfilename,name)
+            assertEquals(outfilename,name.toString())
             withwriter.call(outwriter)
             outwriter.flush()
         }
@@ -247,21 +249,21 @@ class ProjectServiceTests  {
             assertEquals('output-'+exec.id+'.rdlog', name)
             assertEquals(tempoutfile,out)
         }
-        def zip = zipmock.createMock()
+        def zip = zipmock.proxyInstance()
 
-        def logmock = mockFor(LoggingService)
+        def logmock = new MockFor(LoggingService)
         logmock.demand.getLogFileForExecution(1..1) { Execution e ->
             assert exec == e
             tempoutfile
         }
-        svc.loggingService = logmock.createMock()
-        def workflowmock = mockFor(WorkflowService)
+        svc.loggingService = logmock.proxyInstance()
+        def workflowmock = new MockFor(WorkflowService)
         workflowmock.demand.getStateFileForExecution(1..1) { Execution e ->
             assert exec == e
             null
         }
 
-        svc.workflowService = workflowmock.createMock()
+        svc.workflowService = workflowmock.proxyInstance()
         svc.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
 //        println str
@@ -276,10 +278,10 @@ class ProjectServiceTests  {
         File tempoutfile2 = File.createTempFile("tempout",".state.json")
         tempoutfile2.deleteOnExit()
 
-        def zipmock=mockFor(ZipBuilder)
+        def zipmock=new MockFor(ZipBuilder)
         def outwriter = new StringWriter()
         zipmock.demand.file(1..1){name,Closure withwriter->
-            assertEquals(outfilename,name)
+            assertEquals(outfilename,name.toString())
             withwriter.call(outwriter)
             outwriter.flush()
         }
@@ -304,27 +306,27 @@ class ProjectServiceTests  {
         zipmock.demand.file(2..2) {name, File out ->
             filecalled++
             if(filecalled==1){
-                assertEquals('output-'+exec.id+'.rdlog', name)
+                assertEquals('output-'+exec.id+'.rdlog', name.toString())
                 assertEquals(tempoutfile,out)
             }else{
-                assertEquals('state-' + exec.id + '.state.json', name)
+                assertEquals('state-' + exec.id + '.state.json', name.toString())
                 assertEquals(tempoutfile2, out)
             }
         }
-        def zip = zipmock.createMock()
+        def zip = zipmock.proxyInstance()
 
-        def logmock = mockFor(LoggingService)
+        def logmock = new MockFor(LoggingService)
         logmock.demand.getLogFileForExecution(1..1) { Execution e ->
             assert exec == e
             tempoutfile
         }
-        svc.loggingService = logmock.createMock()
-        def workflowmock = mockFor(WorkflowService)
+        svc.loggingService = logmock.proxyInstance()
+        def workflowmock = new MockFor(WorkflowService)
         workflowmock.demand.getStateFileForExecution(1..1) { Execution e ->
             assert exec == e
             tempoutfile2
         }
-        svc.workflowService = workflowmock.createMock()
+        svc.workflowService = workflowmock.proxyInstance()
 
         svc.exportExecution(zip,exec,outfilename)
         def str=outwriter.toString()
@@ -420,14 +422,14 @@ class ProjectServiceTests  {
         def idMap=[(testJobId):newJobId]
 
 
-        def semock = mockFor(ScheduledExecutionService)
+        def semock = new MockFor(ScheduledExecutionService)
         semock.demand.getByIDorUUID(1..1){id->
             assertEquals(newJobId,id)
             se
         }
 
         ProjectService svc = new ProjectService()
-        svc.scheduledExecutionService=semock.createMock()
+        svc.scheduledExecutionService=semock.proxyInstance()
 
         def result = svc.loadExecutions(EXEC_XML_TEST1_START+"<outputfilepath/><jobId>${testJobId}</jobId>"+EXEC_XML_TEST1_REST,'AProject',idMap)
         assertNotNull result
@@ -483,14 +485,14 @@ class ProjectServiceTests  {
         def idMap = [:]
 
 
-        def semock = mockFor(ScheduledExecutionService)
+        def semock = new MockFor(ScheduledExecutionService)
         semock.demand.getByIDorUUID(1..1){id->
             assertEquals(newJobId,id)
             se
         }
 
         ProjectService svc = new ProjectService()
-        svc.scheduledExecutionService=semock.createMock()
+        svc.scheduledExecutionService=semock.proxyInstance()
 
         def result = svc.loadExecutions(EXEC_XML_TEST1_START+"<outputfilepath/><jobId>${newJobId}</jobId>"+EXEC_XML_TEST1_REST,'AProject',idMap)
         assertNotNull result
@@ -525,14 +527,14 @@ class ProjectServiceTests  {
         def idMap=[:]
 
 
-        def semock = mockFor(ScheduledExecutionService)
+        def semock = new MockFor(ScheduledExecutionService)
         semock.demand.getByIDorUUID(1..1){id->
             assertEquals(newJobId,id)
             se
         }
 
         ProjectService svc = new ProjectService()
-        svc.scheduledExecutionService=semock.createMock()
+        svc.scheduledExecutionService=semock.proxyInstance()
 
         def result = svc.loadExecutions(
                 EXECS_START
@@ -606,14 +608,14 @@ class ProjectServiceTests  {
 
         def outfilename = "reportout.xml"
 
-        def zipmock = mockFor(ZipBuilder)
+        def zipmock = new MockFor(ZipBuilder)
         def outwriter = new StringWriter()
         zipmock.demand.file(1..1) {name, Closure withwriter ->
-            assertEquals(outfilename, name)
+            assertEquals(outfilename, name.toString())
             withwriter.call(outwriter)
             outwriter.flush()
         }
-        def zip = zipmock.createMock()
+        def zip = zipmock.proxyInstance()
         ExecReport exec = new ExecReport(
                  jcExecId:'123',
                  jcJobId: oldJobId.toString(),
@@ -688,14 +690,14 @@ class ProjectServiceTests  {
 
         def outfilename = "reportout.xml"
 
-        def zipmock = mockFor(ZipBuilder)
+        def zipmock = new MockFor(ZipBuilder)
         def outwriter = new StringWriter()
         zipmock.demand.file(1..1) {name, Closure withwriter ->
-            assertEquals(outfilename, name)
+            assertEquals(outfilename, name.toString())
             withwriter.call(outwriter)
             outwriter.flush()
         }
-        def zip = zipmock.createMock()
+        def zip = zipmock.proxyInstance()
         ExecReport exec = new ExecReport(
                 ctxController: 'ct',
                 jcExecId: '123',

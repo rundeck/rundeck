@@ -14,6 +14,8 @@
  * limitations under the License.
  */
 
+import static org.junit.Assert.*
+
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.ControllerUnitTestMixin
@@ -38,7 +40,7 @@ class JobsXMLCodecTests {
     @Before
     public void setup(){
         // hack for 2.3.9:  https://jira.grails.org/browse/GRAILS-11136
-        defineBeans(new DataBindingGrailsPlugin().doWithSpring)
+//        defineBeans(new DataBindingGrailsPlugin().doWithSpring)
     }
 
     /** no joblist */
@@ -722,7 +724,7 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect size", 1, jobs.size()
         assertEquals "incorrect steps",4, jobs[0].workflow.commands.size()
         jobs[0].workflow.commands.eachWithIndex{v,i->
-            assertEquals ("a test${i+1}",v.description)
+            assertEquals ("a test${i+1}".toString(),v.description)
         }
     }
     public void testDecodeBasicScriptInterpreter(){
@@ -4873,7 +4875,7 @@ void testDecodeBasic__no_group(){
             assertEquals "missing sequence", 1, doc.job.sequence.size()
             assertEquals "wrong command count", 3, doc.job[0].sequence[0].command.size()
             doc.job[0].sequence[0].command.eachWithIndex{cmd,i->
-                assertEquals "wrong description", "test${i+1}", cmd.description.text()
+                assertEquals "wrong description", "test${i+1}".toString(), cmd.description.text()
             }
     }
     void testEncodeWorkflowBasic_onecommand(){

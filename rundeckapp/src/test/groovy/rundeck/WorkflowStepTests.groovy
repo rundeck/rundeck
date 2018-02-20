@@ -17,14 +17,15 @@
 package rundeck
 
 import grails.test.*
+import spock.lang.Specification
 
-class WorkflowStepTests extends GrailsUnitTestCase {
-    protected void setUp() {
-        super.setUp()
+class WorkflowStepTests extends Specification {
+    void setup() {
+//        super.setUp()
     }
 
-    protected void tearDown() {
-        super.tearDown()
+    void tearDown() {
+//        super.tearDown()
     }
 
     void testSomething() {

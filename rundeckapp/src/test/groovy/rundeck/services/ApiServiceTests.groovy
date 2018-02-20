@@ -16,7 +16,9 @@
 
 package rundeck.services
 
+import groovy.mock.interceptor.MockFor
 
+import static org.junit.Assert.*
 
 import grails.test.mixin.*
 import groovy.util.slurpersupport.GPathResult
@@ -33,12 +35,12 @@ import javax.servlet.http.HttpServletResponse
 @TestFor(ApiService)
 class ApiServiceTests {
     void testRequireVersion() {
-        def mock = mockFor(HttpServletResponse)
+        def mock = new MockFor(HttpServletResponse)
         def apiService = new ApiService()
-        assertTrue(apiService.requireVersion([api_version:1],mock.createMock(),1))
+        assertTrue(apiService.requireVersion([api_version:1],mock.proxyInstance(),1))
     }
     void testRequireVersionInvalid() {
-        def mock = mockFor(GrailsMockHttpServletResponse)
+        def mock = new MockFor(GrailsMockHttpServletResponse)
         mock.demand.getFormat {->
             'xml'
         }
@@ -55,21 +57,21 @@ class ApiServiceTests {
             assertEquals("X-Rundeck-API-Version", name)
             assertEquals(ApiRequestFilters.API_CURRENT_VERSION.toString(), value)
         }
-        def mockOut = mockFor(OutputStream)
+        def mockOut = new MockFor(OutputStream)
         def output = []
         mockOut.demand.leftShift { String s ->
             output << s
         }
         mockOut.demand.flush {->
         }
-        def outs = mockOut.createMock()
+        def outs = mockOut.proxyInstance()
         mock.demand.getOutputStream {->
             outs
         }
         def apiService = new ApiService()
         apiService.messageSource=messageSource
         messageSource.addMessage('api.error.api-version.unsupported',Locale.default,'api.error.api-version.unsupported:{0}:{1}:{2}')
-        assertFalse(apiService.requireVersion([api_version:1,forwardURI: '/test/uri'],mock.createMock(),2))
+        assertFalse(apiService.requireVersion([api_version:1,forwardURI: '/test/uri'],mock.proxyInstance(),2))
         assertTrue(output.size()==1)
         def gpath = assertXmlErrorText(output[0])
         assertEquals('api.error.api-version.unsupported:1:/test/uri:Minimum supported version: 2',gpath.error.message.text())
@@ -85,7 +87,7 @@ class ApiServiceTests {
         assertEquals(['message1', 'message2'], gpath.error.messages[0].message*.text())
     }
     void testRenderSuccessXmlCode(){
-        def mock = mockFor(GrailsMockHttpServletResponse)
+        def mock = new MockFor(GrailsMockHttpServletResponse)
         mock.demand.setHeader { String name, String value ->
             assertEquals("X-Rundeck-API-XML-Response-Wrapper", name)
             assertEquals("true", value)
@@ -102,14 +104,14 @@ class ApiServiceTests {
                     ["X-Rundeck-API-XML-Response-Wrapper": 'true'],
             ])
         }
-        def mockOut = mockFor(OutputStream)
+        def mockOut = new MockFor(OutputStream)
         def output = []
         mockOut.demand.leftShift{String s->
             output<<s
         }
         mockOut.demand.flush{->
         }
-        def outs=mockOut.createMock()
+        def outs=mockOut.proxyInstance()
         mock.demand.getOutputStream {  ->
             outs
         }
@@ -118,7 +120,7 @@ class ApiServiceTests {
         messageSource.addMessage('test.code',Locale.default,'test.code.{0}.{1}')
         apiService.messageSource=messageSource
 
-        def result = apiService.renderSuccessXml(mock.createMock(),'test.code',['arg1','arg2'])
+        def result = apiService.renderSuccessXml(mock.proxyInstance(),'test.code',['arg1','arg2'])
         assertNull(result)
         assertEquals(1,output.size())
         GPathResult gpath = assertXmlSuccessText(output[0])
@@ -126,7 +128,7 @@ class ApiServiceTests {
     }
 
     void testRenderSuccessXmlResponse() {
-        def mock = mockFor(GrailsMockHttpServletResponse)
+        def mock = new MockFor(GrailsMockHttpServletResponse)
         mock.demand.setHeader { String name, String value ->
         }
         mock.demand.setContentType { String contentype ->
@@ -141,20 +143,20 @@ class ApiServiceTests {
                     ["X-Rundeck-API-XML-Response-Wrapper": 'true'],
             ])
         }
-        def mockOut = mockFor(OutputStream)
+        def mockOut = new MockFor(OutputStream)
         def output = []
         mockOut.demand.leftShift { String s ->
             output << s
         }
         mockOut.demand.flush {->
         }
-        def outs = mockOut.createMock()
+        def outs = mockOut.proxyInstance()
         mock.demand.getOutputStream {->
             outs
         }
         def apiService = new ApiService()
         def closureCalled=false
-        def result=apiService.renderSuccessXml(mock.createMock()){
+        def result=apiService.renderSuccessXml(mock.proxyInstance()){
             closureCalled=true
         }
         assertTrue(closureCalled)

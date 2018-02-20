@@ -130,7 +130,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         0 * controller.scheduledExecutionService._(*_)
 
         response.status == 302
-        response.redirectedUrl=='/menu/jobs?project='
+        response.redirectedUrl=='/project'
 
         where:
         isEnabled | _
@@ -172,7 +172,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         0 * controller.scheduledExecutionService._(*_)
 
         response.status == 302
-        response.redirectedUrl=='/menu/jobs?project='
+        response.redirectedUrl=='/project'
 
         where:
         isEnabled | _

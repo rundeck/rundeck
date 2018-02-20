@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-import grails.test.GrailsUnitTestCase
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
+import static org.junit.Assert.*
 /*
  * CommandExecTests.java
  * 

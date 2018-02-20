@@ -16,6 +16,10 @@
 
 package rundeck.controllers
 
+import groovy.mock.interceptor.MockFor
+
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
 import com.dtolabs.rundeck.app.support.ExtraCommand
@@ -70,9 +74,9 @@ class ScheduledExecutionControllerTests  {
      * utility method to mock a class
      */
     private <T> T mockWith(Class<T> clazz, Closure clos) {
-        def mock = mockFor(clazz,false)
+        def mock = new MockFor(clazz,false)
         mock.demand.with(clos)
-        return mock.createMock()
+        return mock.proxyInstance()
     }
     public void setUp(){
 
@@ -223,27 +227,27 @@ class ScheduledExecutionControllerTests  {
             assertNotNull se.id
 
             //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getRundeckFramework {-> return null }
+            def fwkControl = new MockFor(FrameworkService, true)
             fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.getRundeckFramework {-> return null }
-            sec.frameworkService = fwkControl.createMock()
-            def seServiceControl = mockFor(ScheduledExecutionService, true)
+            sec.frameworkService = fwkControl.proxyInstance()
+            def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-            seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand._dosave {params, authctx, changeinfo ->
-                [success: true, scheduledExecution: se]
-            }
-            seServiceControl.demand.logJobChange {changeinfo, properties ->}
-            seServiceControl.demand.issueJobChangeEvent {event->}
-            sec.scheduledExecutionService = seServiceControl.createMock()
+        seServiceControl.demand._dosave {params, authctx, changeinfo ->
+            [success: true, scheduledExecution: se]
+        }
+        seServiceControl.demand.issueJobChangeEvent {event->}
+        seServiceControl.demand.logJobChange {changeinfo, properties ->}
+        seServiceControl.demand.getByIDorUUID {id -> return se }
+            sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-			def oServiceControl = mockFor(OrchestratorPluginService, true)
-			sec.orchestratorPluginService = oServiceControl.createMock()
+			def oServiceControl = new MockFor(OrchestratorPluginService, true)
+			sec.orchestratorPluginService = oServiceControl.proxyInstance()
 
             sec.metaClass.message={params -> params?.code?:'messageCodeMissing'}
 
@@ -267,7 +271,7 @@ class ScheduledExecutionControllerTests  {
             assertNotNull sec.flash.savedJob
             assertNotNull sec.flash.savedJobMessage
             assertNull view, view
-            assertEquals("/scheduledExecution/show/1", response.redirectedUrl)
+            assertEquals("/job/show/1", response.redirectedUrl)
     }
     public void testSave_invalidToken() {
         def sec = controller
@@ -280,7 +284,7 @@ class ScheduledExecutionControllerTests  {
             assertNotNull se.id
 
             //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
+            def fwkControl = new MockFor(FrameworkService, true)
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
@@ -288,15 +292,15 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.getRundeckFramework {-> return null }
-            sec.frameworkService = fwkControl.createMock()
-            def seServiceControl = mockFor(ScheduledExecutionService, true)
+            sec.frameworkService = fwkControl.proxyInstance()
+            def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
             seServiceControl.demand._dosave {params, authctx, changeinfo ->
                 [success: true, scheduledExecution: se]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
-            sec.scheduledExecutionService = seServiceControl.createMock()
+            sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
 
             sec.metaClass.message={params -> params?.code?:'messageCodeMissing'}
@@ -385,7 +389,7 @@ class ScheduledExecutionControllerTests  {
             assertNotNull se.id
 
             //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
+            def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
@@ -393,8 +397,8 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
-            sec.frameworkService = fwkControl.createMock()
-            def seServiceControl = mockFor(ScheduledExecutionService, true)
+            sec.frameworkService = fwkControl.proxyInstance()
+            def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
             seServiceControl.demand._doupdate {params, authctx, changeinfo = [:] ->
@@ -402,9 +406,9 @@ class ScheduledExecutionControllerTests  {
                 assertEquals([],params['_sessionEditOPTSObject'])
                 [success: true, scheduledExecution: se]
             }
-            seServiceControl.demand.logJobChange {changeinfo, properties ->}
-            seServiceControl.demand.issueJobChangeEvent {evt->}
-            sec.scheduledExecutionService = seServiceControl.createMock()
+        seServiceControl.demand.issueJobChangeEvent {evt->}
+        seServiceControl.demand.logJobChange {changeinfo, properties ->}
+            sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
 
             sec.metaClass.message={params -> params?.code?:'messageCodeMissing'}
@@ -434,7 +438,7 @@ class ScheduledExecutionControllerTests  {
             assertNotNull sec.flash.savedJob
             assertNotNull sec.flash.savedJobMessage
             assertNull view
-            assertEquals("/scheduledExecution/show/1", response.redirectedUrl)
+            assertEquals("/job/show/1", response.redirectedUrl)
     }
     public void testUpdate_invalidToken() {
         def sec = new ScheduledExecutionController()
@@ -451,7 +455,7 @@ class ScheduledExecutionControllerTests  {
             assertNotNull se.id
 
             //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
+            def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
@@ -459,8 +463,8 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
-            sec.frameworkService = fwkControl.createMock()
-            def seServiceControl = mockFor(ScheduledExecutionService, true)
+            sec.frameworkService = fwkControl.proxyInstance()
+            def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
             seServiceControl.demand._doupdate {params, authctx, changeinfo = [:] ->
@@ -469,7 +473,7 @@ class ScheduledExecutionControllerTests  {
                 [success: true, scheduledExecution: se]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
-            sec.scheduledExecutionService = seServiceControl.createMock()
+            sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
 
             sec.metaClass.message={params -> params?.code?:'messageCodeMissing'}
@@ -516,7 +520,7 @@ class ScheduledExecutionControllerTests  {
             assertNotNull se.id
 
             //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
+            def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
             fwkControl.demand.projects {return []}
@@ -524,8 +528,8 @@ class ScheduledExecutionControllerTests  {
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
-            sec.frameworkService = fwkControl.createMock()
-            def seServiceControl = mockFor(ScheduledExecutionService, true)
+            sec.frameworkService = fwkControl.proxyInstance()
+            def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
             seServiceControl.demand.getByIDorUUID {id -> return se }
         seServiceControl.demand._doupdate { params, authctx, changeinfo = [:] ->
@@ -533,9 +537,9 @@ class ScheduledExecutionControllerTests  {
                 assertEquals([],params['_sessionEditWFObject'])
                 [success: true, scheduledExecution: se]
             }
-            seServiceControl.demand.logJobChange {changeinfo, properties ->}
         seServiceControl.demand.issueJobChangeEvent {evt->}
-            sec.scheduledExecutionService = seServiceControl.createMock()
+        seServiceControl.demand.logJobChange {changeinfo, properties ->}
+            sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
 
             sec.metaClass.message={params -> params?.code?:'messageCodeMissing'}
@@ -566,7 +570,7 @@ class ScheduledExecutionControllerTests  {
             assertNotNull sec.flash.savedJob
             assertNotNull sec.flash.savedJobMessage
             assertNull view
-        assertEquals("/scheduledExecution/show/1", response.redirectedUrl)
+        assertEquals("/job/show/1", response.redirectedUrl)
     }
 
     public void testSaveFail() {
@@ -581,17 +585,17 @@ class ScheduledExecutionControllerTests  {
             assertNotNull se.id
 
             //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+            def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-            fwkControl.demand.projects {return []}
-            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getNodeStepPluginDescriptions { [] }
+        fwkControl.demand.getStepPluginDescriptions { [] }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.projects {return []}
+        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getNodeStepPluginDescriptions { [] }
-            fwkControl.demand.getStepPluginDescriptions { [] }
-            sec.frameworkService = fwkControl.createMock()
+            sec.frameworkService = fwkControl.proxyInstance()
 
             sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
 
@@ -603,13 +607,13 @@ class ScheduledExecutionControllerTests  {
                 issueJobChangeEvent {event->}
                 getWorkflowStrategyPluginDescriptions{->[]}
             }
-            def nServiceControl = mockFor(NotificationService, true)
+            def nServiceControl = new MockFor(NotificationService, true)
             nServiceControl.demand.listNotificationPlugins { []}
-            sec.notificationService = nServiceControl.createMock()
+            sec.notificationService = nServiceControl.proxyInstance()
 
-			def oServiceControl = mockFor(OrchestratorPluginService, true)
+			def oServiceControl = new MockFor(OrchestratorPluginService, true)
 			oServiceControl.demand.listDescriptions{[]}
-			sec.orchestratorPluginService = oServiceControl.createMock()
+			sec.orchestratorPluginService = oServiceControl.proxyInstance()
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
         }
@@ -648,18 +652,18 @@ class ScheduledExecutionControllerTests  {
             assertNotNull se.id
 
             //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getRundeckFramework {-> return null }
+            def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-            fwkControl.demand.projects {return []}
-            fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
-            fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getNodeStepPluginDescriptions { [] }
-            fwkControl.demand.getStepPluginDescriptions { [] }
-            sec.frameworkService = fwkControl.createMock()
-            def seServiceControl = mockFor(ScheduledExecutionService, true)
+        fwkControl.demand.getNodeStepPluginDescriptions { [] }
+        fwkControl.demand.getStepPluginDescriptions { [] }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.projects {return []}
+        fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.getRundeckFramework {-> return null }
+            sec.frameworkService = fwkControl.proxyInstance()
+            def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
             sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
                 _dosave { params, authctx, changeinfo ->
@@ -669,13 +673,13 @@ class ScheduledExecutionControllerTests  {
                 getWorkflowStrategyPluginDescriptions{->[]}
             }
 
-            def nServiceControl = mockFor(NotificationService, true)
+            def nServiceControl = new MockFor(NotificationService, true)
             nServiceControl.demand.listNotificationPlugins { [] }
-            sec.notificationService = nServiceControl.createMock()
+            sec.notificationService = nServiceControl.proxyInstance()
 
-			def oServiceControl = mockFor(OrchestratorPluginService, true)
+			def oServiceControl = new MockFor(OrchestratorPluginService, true)
 			oServiceControl.demand.listDescriptions{[]}
-			sec.orchestratorPluginService = oServiceControl.createMock()
+			sec.orchestratorPluginService = oServiceControl.proxyInstance()
         sec.pluginService = mockWith(PluginService) {
             listPlugins(){[]}
         }
@@ -732,43 +736,43 @@ class ScheduledExecutionControllerTests  {
             assertNotNull se.id
 
             //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getRundeckFramework {-> return null }
+            def fwkControl = new MockFor(FrameworkService, true)
             fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.getRundeckFramework {-> return null }
-            controller.frameworkService = fwkControl.createMock()
-            def seServiceControl = mockFor(ScheduledExecutionService, true)
+            controller.frameworkService = fwkControl.proxyInstance()
+            def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-            seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
-            seServiceControl.demand._dovalidate {params, auth ->
-                assertEquals('Temporary_Job',params.jobName)
-                assertEquals('adhoc',params.groupPath)
-                [failed: false, scheduledExecution: se]
-            }
-            seServiceControl.demand.scheduleTempJob { auth, exec ->
-                [id:exec.id,execution:exec,success:true]
-            }
-            seServiceControl.demand.logJobChange {changeinfo, properties ->}
-            seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-            }
-        controller.scheduledExecutionService = seServiceControl.createMock()
+        seServiceControl.demand._dovalidate {params, auth ->
+            assertEquals('Temporary_Job',params.jobName)
+            assertEquals('adhoc',params.groupPath)
+            [failed: false, scheduledExecution: se]
+        }
+        seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
+        seServiceControl.demand.scheduleTempJob { auth, exec ->
+            [id:exec.id,execution:exec,success:true]
+        }
+        seServiceControl.demand.getByIDorUUID {id -> return se }
+        seServiceControl.demand.logJobChange {changeinfo, properties ->}
+        controller.scheduledExecutionService = seServiceControl.proxyInstance()
 
-            def eServiceControl = mockFor(ExecutionService, true)
+            def eServiceControl = new MockFor(ExecutionService, true)
             def exec = new Execution(
                     user: "testuser", project: "testproj", loglevel: 'WARN',
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
                     )
             assertNotNull exec.save()
-            eServiceControl.demand.createExecutionAndPrep {params, user ->
+        eServiceControl.demand.getExecutionsAreActive{->true}
+        eServiceControl.demand.createExecutionAndPrep {params, user ->
                 return exec
             }
-        eServiceControl.demand.getExecutionsAreActive{->true}
-        controller.executionService = eServiceControl.createMock()
+        controller.executionService = eServiceControl.proxyInstance()
 
 
         controller.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
@@ -803,31 +807,31 @@ class ScheduledExecutionControllerTests  {
         assertNotNull se.id
 
         //try to do update of the ScheduledExecution
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework { -> return null }
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+        fwkControl.demand.getRundeckFramework { -> return null }
         fwkControl.demand.projects { return [] }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getRundeckFramework { -> return null }
         fwkControl.demand.getRundeckFramework { -> return null }
-        controller.frameworkService = fwkControl.createMock()
-        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        controller.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand.getByIDorUUID { id -> return se }
-        seServiceControl.demand.userAuthorizedForAdhoc { request, scheduledExecution, framework -> return true }
         seServiceControl.demand._dovalidate { params, auth ->
             assertEquals('Temporary_Job', params.jobName)
             assertEquals('adhoc', params.groupPath)
             [failed: false, scheduledExecution: se]
         }
+        seServiceControl.demand.userAuthorizedForAdhoc { request, scheduledExecution, framework -> return true }
+        seServiceControl.demand.getByIDorUUID { id -> return se }
         seServiceControl.demand.scheduleTempJob { auth, exec ->
             [id: exec.id, execution: exec, success: true]
         }
         seServiceControl.demand.logJobChange { changeinfo, properties -> }
-        controller.scheduledExecutionService = seServiceControl.createMock()
+        controller.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = mockFor(ExecutionService, true)
+        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(
@@ -835,11 +839,11 @@ class ScheduledExecutionControllerTests  {
                 ).save()
         )
         assertNotNull exec.save()
+        eServiceControl.demand.getExecutionsAreActive { -> executionModeActive }
         eServiceControl.demand.createExecutionAndPrep { params, user ->
             return exec
         }
-        eServiceControl.demand.getExecutionsAreActive { -> executionModeActive }
-        controller.executionService = eServiceControl.createMock()
+        controller.executionService = eServiceControl.proxyInstance()
 
 
         controller.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
@@ -883,43 +887,43 @@ class ScheduledExecutionControllerTests  {
         assertNotNull se.id
 
         //try to do update of the ScheduledExecution
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+        fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.projects {return []}
         fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
         fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
-        controller.frameworkService = fwkControl.createMock()
-        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        controller.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-        seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
         seServiceControl.demand._dovalidate {params, auth ->
             assertEquals('Temporary_Job',params.jobName)
             assertEquals('adhoc',params.groupPath)
             [failed: false, scheduledExecution: se]
         }
+        seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
         seServiceControl.demand.scheduleTempJob { auth, exec ->
             [id:exec.id,execution:exec,success:true]
         }
         seServiceControl.demand.logJobChange {changeinfo, properties ->}
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
 
-        controller.scheduledExecutionService = seServiceControl.createMock()
+        controller.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = mockFor(ExecutionService, true)
+        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
                 )
         assertNotNull exec.save()
+        eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep {params, user ->
             return exec
         }
-        eServiceControl.demand.getExecutionsAreActive{->true}
-        controller.executionService = eServiceControl.createMock()
+        controller.executionService = eServiceControl.proxyInstance()
 
 
         controller.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
@@ -959,31 +963,31 @@ class ScheduledExecutionControllerTests  {
             assertNotNull se.id
 
             //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getRundeckFramework {-> return null }
+            def fwkControl = new MockFor(FrameworkService, true)
             fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+            fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.projects {return []}
             fwkControl.demand.authorizeProjectResourceAll {framework, resource, actions, project -> return true}
             fwkControl.demand.authorizeProjectJobAll {framework, resource, actions, project -> return true}
             fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.getRundeckFramework {-> return null }
-            sec.frameworkService = fwkControl.createMock()
-            def seServiceControl = mockFor(ScheduledExecutionService, true)
+            sec.frameworkService = fwkControl.proxyInstance()
+            def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
-            seServiceControl.demand.getByIDorUUID {id -> return se }
-            seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
             seServiceControl.demand._dovalidate {params, auth ->
                 assertEquals('Temporary_Job',params.jobName)
                 assertEquals('adhoc',params.groupPath)
                 [failed: true, scheduledExecution: se]
             }
+            seServiceControl.demand.getByIDorUUID {id -> return se }
+            seServiceControl.demand.userAuthorizedForAdhoc {request, scheduledExecution, framework -> return true }
             seServiceControl.demand.scheduleTempJob { auth, exec ->
                 [id:exec.id,execution:exec,success:true]
             }
             seServiceControl.demand.logJobChange {changeinfo, properties ->}
-            sec.scheduledExecutionService = seServiceControl.createMock()
+            sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-            def eServiceControl = mockFor(ExecutionService, true)
+            def eServiceControl = new MockFor(ExecutionService, true)
             def exec = new Execution(
                     user: "testuser", project: "testproj", loglevel: 'WARN',
                     workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
@@ -992,7 +996,7 @@ class ScheduledExecutionControllerTests  {
             eServiceControl.demand.createExecutionAndPrep { params, user ->
                 return exec
             }
-            sec.executionService = eServiceControl.createMock()
+            sec.executionService = eServiceControl.proxyInstance()
 
 
             sec.metaClass.message = {params -> params?.code ?: 'messageCodeMissing'}
@@ -1149,7 +1153,7 @@ class ScheduledExecutionControllerTests  {
                 assert max == testMax
                 [total: 0, result: testResultList]
             }
-            respondExecutionsXml(1) { HttpServletRequest request,HttpServletResponse response, List<Execution> executions ->
+            respondExecutionsXml(1) { HttpServletRequest request,HttpServletResponse response, List<Execution> executions, Map params ->
                 assertEquals(executions.size() ,testResultSize)
                 [result:true]
             }
@@ -1169,20 +1173,20 @@ class ScheduledExecutionControllerTests  {
         assertNotNull se.id
 
         //try to do api job run
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework { -> return null }
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.authorizeProjectJobAll { framework, resource, List actions, project ->
             assert 'run' in actions
             return true
         }
-        sec.frameworkService = fwkControl.createMock()
-        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        fwkControl.demand.getRundeckFramework { -> return null }
+        sec.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand.getByIDorUUID { id -> return se }
-        sec.scheduledExecutionService = seServiceControl.createMock()
+        sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = mockFor(ExecutionService, true)
+        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
@@ -1192,12 +1196,12 @@ class ScheduledExecutionControllerTests  {
             
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
         }
-        eServiceControl.demand.respondExecutionsXml { response, List<Execution> execs ->
+        eServiceControl.demand.respondExecutionsXml { request, response, List<Execution> execs ->
             return true
         }
-        sec.executionService = eServiceControl.createMock()
+        sec.executionService = eServiceControl.proxyInstance()
 
-        def svcMock = mockFor(ApiService, true)
+        def svcMock = new MockFor(ApiService, true)
         svcMock.demand.requireApi { req,resp ->
             true
         }
@@ -1208,7 +1212,7 @@ class ScheduledExecutionControllerTests  {
             println(error)
             fail("Should not have error")
         }
-        sec.apiService = svcMock.createMock()
+        sec.apiService = svcMock.proxyInstance()
 
         sec.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
 
@@ -1243,12 +1247,10 @@ class ScheduledExecutionControllerTests  {
         assertNotNull se.id
         assertEquals(expectJobUser,se.user)
 
-        //try to do api job run
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-
         def x = 0
+        //try to do api job run
+        def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.authorizeProjectJobAll(2) { framework, resource, List actions, project ->
             if (0 == x) {
                 assert 'run' in actions
@@ -1258,13 +1260,16 @@ class ScheduledExecutionControllerTests  {
             }
             return true
         }
-        sec.frameworkService = fwkControl.createMock()
-        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        fwkControl.demand.getRundeckFramework {-> return null }
+
+
+        sec.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand.getByIDorUUID { id -> return se }
-        sec.scheduledExecutionService = seServiceControl.createMock()
+        sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = mockFor(ExecutionService, true)
+        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
@@ -1277,12 +1282,12 @@ class ScheduledExecutionControllerTests  {
             return [executionId: exec.id, name: scheduledExecution.jobName, execution: exec,success:true]
 
         }
-        eServiceControl.demand.respondExecutionsXml { response, List<Execution> execs ->
+        eServiceControl.demand.respondExecutionsXml { request, response, List<Execution> execs ->
             return true
         }
-        sec.executionService = eServiceControl.createMock()
+        sec.executionService = eServiceControl.proxyInstance()
 
-        def svcMock = mockFor(ApiService, true)
+        def svcMock = new MockFor(ApiService, true)
         svcMock.demand.requireApi { req, resp ->
             true
         }
@@ -1301,7 +1306,7 @@ class ScheduledExecutionControllerTests  {
             println(error)
             fail("Should not have error")
         }
-        sec.apiService = svcMock.createMock()
+        sec.apiService = svcMock.proxyInstance()
 
         sec.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
 
@@ -1325,7 +1330,7 @@ class ScheduledExecutionControllerTests  {
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
             true
@@ -1335,8 +1340,8 @@ class ScheduledExecutionControllerTests  {
             assert 'runAs' in actions
             return true
         }
-        sec.frameworkService = fwkControl.createMock()
-        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        sec.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1) { params, auth ->
             assert 'testuser' == user
@@ -1350,9 +1355,9 @@ class ScheduledExecutionControllerTests  {
             [id:'fakeid',execution:exec,success:true]
         }
 
-        sec.scheduledExecutionService = seServiceControl.createMock()
+        sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = mockFor(ExecutionService, true)
+        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
@@ -1362,7 +1367,7 @@ class ScheduledExecutionControllerTests  {
             assert 'testuser' == user
             exec
         }
-        sec.executionService = eServiceControl.createMock()
+        sec.executionService = eServiceControl.proxyInstance()
 
 
         final subject = new Subject()
@@ -1377,14 +1382,14 @@ class ScheduledExecutionControllerTests  {
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded = false
-        def svcMock = mockFor(ApiService, true)
+        def svcMock = new MockFor(ApiService, true)
 
         svcMock.demand.renderErrorFormat { response, Map error ->
             assert error.status == 400
             assert error.code == 'api.error.invalid.request'
         }
 
-        sec.apiService = svcMock.createMock()
+        sec.apiService = svcMock.proxyInstance()
         def result = sec.apiRunCommand(new ApiRunAdhocRequest(exec: 'blah'))
         assert !succeeded
         assert null == view
@@ -1466,19 +1471,19 @@ class ScheduledExecutionControllerTests  {
 
 
         //try to do api job run
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
+        def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
         fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
             assert 'runAs' in actions
             return true
         }
-        sec.frameworkService = fwkControl.createMock()
-        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        sec.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1){params, auth->
             
@@ -1488,26 +1493,26 @@ class ScheduledExecutionControllerTests  {
             true
         }
 
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
         seServiceControl.demand.scheduleTempJob { auth, exec ->
             [id:'fakeid',execution:exec,success:true]
         }
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
 
-        sec.scheduledExecutionService = seServiceControl.createMock()
+        sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = mockFor(ExecutionService, true)
+        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
+        eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
-            
+
             exec
         }
-        eServiceControl.demand.getExecutionsAreActive{->true}
-        sec.executionService = eServiceControl.createMock()
+        sec.executionService = eServiceControl.proxyInstance()
 
 
         final subject = new Subject()
@@ -1562,19 +1567,19 @@ class ScheduledExecutionControllerTests  {
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
+        def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
         fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
             assert 'runAs' in actions
             return true
         }
-        sec.frameworkService = fwkControl.createMock()
-        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        sec.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1){params, auth->
             
@@ -1584,27 +1589,27 @@ class ScheduledExecutionControllerTests  {
             true
         }
 
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
         seServiceControl.demand.scheduleTempJob { auth, exec ->
             [id:'fakeid',execution:exec,success:true]
         }
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
 
 
-        sec.scheduledExecutionService = seServiceControl.createMock()
+        sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = mockFor(ExecutionService, true)
+        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
+        eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
-            
+
             exec
         }
-        eServiceControl.demand.getExecutionsAreActive{->true}
-        sec.executionService = eServiceControl.createMock()
+        sec.executionService = eServiceControl.proxyInstance()
 
 
         final subject = new Subject()
@@ -1647,19 +1652,19 @@ class ScheduledExecutionControllerTests  {
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
+        def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
         fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
             assert 'runAs' in actions
             return true
         }
-        sec.frameworkService = fwkControl.createMock()
-        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        sec.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1){params, auth->
             
@@ -1669,26 +1674,26 @@ class ScheduledExecutionControllerTests  {
             true
         }
 
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
         seServiceControl.demand.scheduleTempJob { auth, exec ->
             [id:'fakeid',execution:exec,success:true]
         }
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
 
-        sec.scheduledExecutionService = seServiceControl.createMock()
+        sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = mockFor(ExecutionService, true)
+        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
+        eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
-            
+
             exec
         }
-        eServiceControl.demand.getExecutionsAreActive{->true}
-        sec.executionService = eServiceControl.createMock()
+        sec.executionService = eServiceControl.proxyInstance()
 
 
         final subject = new Subject()
@@ -1703,7 +1708,7 @@ class ScheduledExecutionControllerTests  {
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
-        def svcMock = mockFor(ApiService, true)
+        def svcMock = new MockFor(ApiService, true)
         svcMock.demand.requireApi { req, resp ->
             true
         }
@@ -1715,7 +1720,7 @@ class ScheduledExecutionControllerTests  {
             succeeded=true
             return true
         }
-        sec.apiService = svcMock.createMock()
+        sec.apiService = svcMock.proxyInstance()
         def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
         assert succeeded
         assert null==view
@@ -1726,19 +1731,19 @@ class ScheduledExecutionControllerTests  {
         def sec = new ScheduledExecutionController()
         def executionModeActive=false
         //try to do api job run
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
+        def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
         fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
             assert 'runAs' in actions
             return true
         }
-        sec.frameworkService = fwkControl.createMock()
-        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        sec.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1){params, auth->
             
@@ -1752,20 +1757,20 @@ class ScheduledExecutionControllerTests  {
             [id:'fakeid',execution:exec,success:true]
         }
 
-        sec.scheduledExecutionService = seServiceControl.createMock()
+        sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = mockFor(ExecutionService, true)
+        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
+        eServiceControl.demand.getExecutionsAreActive{->executionModeActive}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
-            
+
             exec
         }
-        eServiceControl.demand.getExecutionsAreActive{->executionModeActive}
-        sec.executionService = eServiceControl.createMock()
+        sec.executionService = eServiceControl.proxyInstance()
 
 
         final subject = new Subject()
@@ -1780,7 +1785,7 @@ class ScheduledExecutionControllerTests  {
         }
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
-        def svcMock = mockFor(ApiService, true)
+        def svcMock = new MockFor(ApiService, true)
         svcMock.demand.requireApi { req, resp ->
             true
         }
@@ -1792,7 +1797,7 @@ class ScheduledExecutionControllerTests  {
             assertEquals(500,data.status)
             assertEquals(['disabled.execution.run'],data.args)
         }
-        sec.apiService = svcMock.createMock()
+        sec.apiService = svcMock.proxyInstance()
         def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
         assert !succeeded
         assert null==view
@@ -1803,19 +1808,19 @@ class ScheduledExecutionControllerTests  {
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
+        def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
         fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
             assert 'runAs' in actions
             return true
         }
-        sec.frameworkService = fwkControl.createMock()
-        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        sec.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1){params, auth->
             
@@ -1825,27 +1830,27 @@ class ScheduledExecutionControllerTests  {
             true
         }
 
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
         seServiceControl.demand.scheduleTempJob { auth, exec ->
             [id:'fakeid',execution:exec,success:true]
         }
 
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
 
-        sec.scheduledExecutionService = seServiceControl.createMock()
+        sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = mockFor(ExecutionService, true)
+        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
+        eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
-            
+
             exec
         }
-        eServiceControl.demand.getExecutionsAreActive{->true}
-        sec.executionService = eServiceControl.createMock()
+        sec.executionService = eServiceControl.proxyInstance()
 
 
         final subject = new Subject()
@@ -1856,16 +1861,12 @@ class ScheduledExecutionControllerTests  {
 //        sec.request.api_version = 5
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
-        def svcMock = mockFor(ApiService, true)
+        def svcMock = new MockFor(ApiService, true)
         svcMock.demand.requireApi { req, resp ->
             true
         }
         svcMock.demand.requireExists { response, exists, args ->
             assertEquals(['project','test'],args)
-            return true
-        }
-        svcMock.demand.renderSuccessJson { response, closure ->
-            succeeded=true
             return true
         }
         svcMock.demand.renderErrorFormat{response,data->
@@ -1875,7 +1876,11 @@ class ScheduledExecutionControllerTests  {
                     args: ['json']
             ],data)
         }
-        sec.apiService = svcMock.createMock()
+        svcMock.demand.renderSuccessJson { response, closure ->
+            succeeded=true
+            return true
+        }
+        sec.apiService = svcMock.proxyInstance()
         sec.response.format='json'
         def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
         assert !succeeded
@@ -1887,19 +1892,19 @@ class ScheduledExecutionControllerTests  {
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
+        def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
+        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
 
         fwkControl.demand.authorizeProjectResource(1..1){framework, res, action, project ->
             assert 'runAs' in actions
             return true
         }
-        sec.frameworkService = fwkControl.createMock()
-        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        sec.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1){params, auth->
             
@@ -1909,27 +1914,27 @@ class ScheduledExecutionControllerTests  {
             true
         }
 
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
         seServiceControl.demand.scheduleTempJob { auth, exec ->
             [id:'fakeid',execution:exec,success:true]
         }
 
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
 
-        sec.scheduledExecutionService = seServiceControl.createMock()
+        sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = mockFor(ExecutionService, true)
+        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
+        eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
-            
+
             exec
         }
-        eServiceControl.demand.getExecutionsAreActive{->true}
-        sec.executionService = eServiceControl.createMock()
+        sec.executionService = eServiceControl.proxyInstance()
 
 
         final subject = new Subject()
@@ -1939,7 +1944,7 @@ class ScheduledExecutionControllerTests  {
         sec.request.setAttribute("api_version", 14)
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded=false
-        def svcMock = mockFor(ApiService, true)
+        def svcMock = new MockFor(ApiService, true)
         svcMock.demand.requireApi { req, resp ->
             true
         }
@@ -1951,7 +1956,7 @@ class ScheduledExecutionControllerTests  {
             succeeded=true
             return true
         }
-        sec.apiService = svcMock.createMock()
+        sec.apiService = svcMock.proxyInstance()
         sec.response.format='json'
         def result=sec.apiRunCommand(new ApiRunAdhocRequest(exec:'blah',project: 'test'))
         assert succeeded
@@ -1964,19 +1969,19 @@ class ScheduledExecutionControllerTests  {
         def sec = new ScheduledExecutionController()
 
         //try to do api job run
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
-        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject(1..1) { project, fwk ->
+        def fwkControl = new MockFor(FrameworkService, true)
+        fwkControl.demand.existsFrameworkProject(1..1) { project ->
             true
         }
-
+        fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
         fwkControl.demand.authorizeProjectResource(1..1) { framework, res, action, project ->
             assert 'runAs' == action
             return true
         }
-        sec.frameworkService = fwkControl.createMock()
-        def seServiceControl = mockFor(ScheduledExecutionService, true)
+        fwkControl.demand.getRundeckFramework(1..2) {-> return null }
+
+        sec.frameworkService = fwkControl.proxyInstance()
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
         seServiceControl.demand._dovalidate(1..1) { params, auth ->
 
@@ -1986,26 +1991,26 @@ class ScheduledExecutionControllerTests  {
             true
         }
 
+        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
+        }
         seServiceControl.demand.scheduleTempJob { auth, exec ->
             [id:'fakeid',execution:exec,success:true]
         }
-        seServiceControl.demand.isProjectExecutionEnabled{ project -> true
-        }
 
-        sec.scheduledExecutionService = seServiceControl.createMock()
+        sec.scheduledExecutionService = seServiceControl.proxyInstance()
 
-        def eServiceControl = mockFor(ExecutionService, true)
+        def eServiceControl = new MockFor(ExecutionService, true)
         def exec = new Execution(
                 user: "testuser", project: "testproj", loglevel: 'WARN',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save()
         )
         assertNotNull exec.save()
+        eServiceControl.demand.getExecutionsAreActive{->true}
         eServiceControl.demand.createExecutionAndPrep { params, user ->
             assert 'anotheruser' == user
             exec
         }
-        eServiceControl.demand.getExecutionsAreActive{->true}
-        sec.executionService = eServiceControl.createMock()
+        sec.executionService = eServiceControl.proxyInstance()
 
 
         def params = [exec: 'blah', project: 'test', asUser: 'anotheruser']
@@ -2024,18 +2029,10 @@ class ScheduledExecutionControllerTests  {
         sec.metaClass.message = { params2 -> params2?.code ?: 'messageCodeMissing' }
         def succeeded = false
 
-        def svcMock = mockFor(ApiService, true)
+        def svcMock = new MockFor(ApiService, true)
         def requireFailed = true
         svcMock.demand.requireApi { req, resp ->
             true
-        }
-        svcMock.demand.requireParameters { reqparams, response, List needparams ->
-            assertTrue('project' in needparams)
-            assertTrue('exec' in needparams)
-            assertNotNull(reqparams.exec)
-            assertNotNull(reqparams.project)
-            requireFailed = false
-            return true
         }
         svcMock.demand.requireExists { response, exists, args ->
             assertEquals(['project', 'test'], args)
@@ -2049,7 +2046,15 @@ class ScheduledExecutionControllerTests  {
             succeeded = true
             return true
         }
-        sec.apiService = svcMock.createMock()
+        svcMock.demand.requireParameters { reqparams, response, List needparams ->
+            assertTrue('project' in needparams)
+            assertTrue('exec' in needparams)
+            assertNotNull(reqparams.exec)
+            assertNotNull(reqparams.project)
+            requireFailed = false
+            return true
+        }
+        sec.apiService = svcMock.proxyInstance()
         def result = sec.apiRunCommand()
         assert succeeded
         assert null == view
@@ -2067,20 +2072,20 @@ class ScheduledExecutionControllerTests  {
             assertNotNull se.id
 
             //try to do update of the ScheduledExecution
-            def fwkControl = mockFor(FrameworkService, true)
-            fwkControl.demand.getRundeckFramework {-> return null }
+            def fwkControl = new MockFor(FrameworkService, true)
             fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-            fwkControl.demand.projects { return [] }
             fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
             fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
-            fwkControl.demand.getRundeckFramework {-> return null }
-            fwkControl.demand.getRundeckFramework {-> return null }
             fwkControl.demand.getNodeStepPluginDescriptions { [] }
             fwkControl.demand.getStepPluginDescriptions { [] }
             fwkControl.demand.getProjectGlobals { [:] }
             fwkControl.demand.projectNames { [] }
-            sec.frameworkService = fwkControl.createMock()
-            def seServiceControl = mockFor(ScheduledExecutionService, true)
+            fwkControl.demand.getRundeckFramework {-> return null }
+            fwkControl.demand.projects { return [] }
+            fwkControl.demand.getRundeckFramework {-> return null }
+            fwkControl.demand.getRundeckFramework {-> return null }
+            sec.frameworkService = fwkControl.proxyInstance()
+            def seServiceControl = new MockFor(ScheduledExecutionService, true)
 
             sec.scheduledExecutionService = mockWith(ScheduledExecutionService){
                 getByIDorUUID{id->se}
@@ -2088,15 +2093,15 @@ class ScheduledExecutionControllerTests  {
                 userAuthorizedForJob { user, schedexec, framework -> return true }
             }
 
-			def oServiceControl = mockFor(OrchestratorPluginService, true)
+			def oServiceControl = new MockFor(OrchestratorPluginService, true)
 			oServiceControl.demand.listDescriptions{[]}
-			sec.orchestratorPluginService = oServiceControl.createMock()
+			sec.orchestratorPluginService = oServiceControl.proxyInstance()
 			
-            def pControl = mockFor(NotificationService)
+            def pControl = new MockFor(NotificationService)
             pControl.demand.listNotificationPlugins() {->
                 []
             }
-            sec.notificationService = pControl.createMock()
+            sec.notificationService = pControl.proxyInstance()
             sec.pluginService = mockWith(PluginService){
                 listPlugins(){[]}
             }
@@ -2750,17 +2755,16 @@ class ScheduledExecutionControllerTests  {
         )
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
+        fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
-        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
-        def mock2 = mockFor(ScheduledExecutionService, true)
-        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input,format ->
             [jobset:[expectedJob]]
         }
@@ -2774,7 +2778,8 @@ class ScheduledExecutionControllerTests  {
             ]
         }
         mock2.demand.issueJobChangeEvents {event->}
-        sec.scheduledExecutionService = mock2.createMock()
+        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        sec.scheduledExecutionService = mock2.proxyInstance()
 
         def xml = '''
 <joblist>
@@ -2839,16 +2844,16 @@ class ScheduledExecutionControllerTests  {
         )
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
+        fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
-        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
-        def mock2 = mockFor(ScheduledExecutionService, true)
+        def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.nextExecutionTimes { joblist -> return [] }
         mock2.demand.parseUploadedFile { input,format ->
             [jobset:[expectedJob]]
@@ -2862,7 +2867,7 @@ class ScheduledExecutionControllerTests  {
                     skipjobs: []
             ]
         }
-        sec.scheduledExecutionService = mock2.createMock()
+        sec.scheduledExecutionService = mock2.proxyInstance()
 
         def xml = '''
 <joblist>
@@ -2915,17 +2920,16 @@ class ScheduledExecutionControllerTests  {
         )
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
+        fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
-        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
-        def mock2 = mockFor(ScheduledExecutionService, true)
-        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input,format ->
             [jobset: [expectedJob]]
         }
@@ -2939,7 +2943,8 @@ class ScheduledExecutionControllerTests  {
             ]
         }
         mock2.demand.issueJobChangeEvents {event->}
-        sec.scheduledExecutionService = mock2.createMock()
+        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        sec.scheduledExecutionService = mock2.proxyInstance()
 
         def xml = '''
 <joblist>
@@ -3000,17 +3005,16 @@ class ScheduledExecutionControllerTests  {
         )
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
+        fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
-        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
-        def mock2 = mockFor(ScheduledExecutionService, true)
-        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
@@ -3023,7 +3027,8 @@ class ScheduledExecutionControllerTests  {
             ]
         }
         mock2.demand.issueJobChangeEvents {event->}
-        sec.scheduledExecutionService = mock2.createMock()
+        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        sec.scheduledExecutionService = mock2.proxyInstance()
 
         def xml = '''
 <joblist>
@@ -3095,17 +3100,16 @@ class ScheduledExecutionControllerTests  {
         )
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
+        fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
-        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
-        def mock2 = mockFor(ScheduledExecutionService, true)
-        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
@@ -3118,7 +3122,8 @@ class ScheduledExecutionControllerTests  {
             ]
         }
         mock2.demand.issueJobChangeEvents {event->}
-        sec.scheduledExecutionService = mock2.createMock()
+        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        sec.scheduledExecutionService = mock2.proxyInstance()
         def xml = '''
 -
   project: project1
@@ -3191,17 +3196,16 @@ class ScheduledExecutionControllerTests  {
         )
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
+        fwkControl.demand.existsFrameworkProject { project -> return true }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
-        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
-        def mock2 = mockFor(ScheduledExecutionService, true)
-        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.parseUploadedFile { input, format ->
             [jobset: [expectedJob]]
         }
@@ -3214,7 +3218,8 @@ class ScheduledExecutionControllerTests  {
             ]
         }
         mock2.demand.issueJobChangeEvents {event->}
-        sec.scheduledExecutionService = mock2.createMock()
+        mock2.demand.nextExecutionTimes { joblist -> return [] }
+        sec.scheduledExecutionService = mock2.proxyInstance()
 
         def xml = '''
 <joblist>
@@ -3269,15 +3274,15 @@ class ScheduledExecutionControllerTests  {
         def sec = new ScheduledExecutionController()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        sec.frameworkService = fwkControl.createMock()
+        fwkControl.demand.existsFrameworkProject { project -> return true }
+        sec.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
-        def mock2 = mockFor(ScheduledExecutionService, true)
+        def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.nextExecutionTimes { joblist -> return [] }
-        sec.scheduledExecutionService = mock2.createMock()
+        sec.scheduledExecutionService = mock2.proxyInstance()
 
         request.method="GET"
         def result = sec.upload()
@@ -3292,15 +3297,15 @@ class ScheduledExecutionControllerTests  {
         def sec = new ScheduledExecutionController()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        sec.frameworkService = fwkControl.createMock()
+        fwkControl.demand.existsFrameworkProject { project -> return true }
+        sec.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
-        def mock2 = mockFor(ScheduledExecutionService, true)
+        def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.nextExecutionTimes { joblist -> return [] }
-        sec.scheduledExecutionService = mock2.createMock()
+        sec.scheduledExecutionService = mock2.proxyInstance()
 
         request.method="POST"
 
@@ -3320,15 +3325,15 @@ class ScheduledExecutionControllerTests  {
         sec.metaClass.request = new MockMultipartHttpServletRequest()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> testUserAndRolesContext() }
-        fwkControl.demand.existsFrameworkProject { project, framework -> return true }
-        sec.frameworkService = fwkControl.createMock()
+        fwkControl.demand.existsFrameworkProject { project -> return true }
+        sec.frameworkService = fwkControl.proxyInstance()
         //mock the scheduledExecutionService
-        def mock2 = mockFor(ScheduledExecutionService, true)
+        def mock2 = new MockFor(ScheduledExecutionService, true)
         mock2.demand.nextExecutionTimes { joblist -> return [] }
-        sec.scheduledExecutionService = mock2.createMock()
+        sec.scheduledExecutionService = mock2.proxyInstance()
 
 
         setupFormTokens(sec)

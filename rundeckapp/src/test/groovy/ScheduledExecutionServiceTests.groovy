@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-import grails.test.GrailsUnitTestCase
+//import grails.test.GrailsUnitTestCase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import groovy.mock.interceptor.MockFor
 import rundeck.Execution
 import rundeck.Notification
 import rundeck.Option
@@ -29,6 +30,7 @@ import rundeck.WorkflowStep
 import rundeck.controllers.ScheduledExecutionController
 import rundeck.services.FrameworkService
 import rundeck.services.ScheduledExecutionService
+import static org.junit.Assert.*
 
 /*
 * ScheduledExecutionServiceTests.java
@@ -311,7 +313,7 @@ public class ScheduledExecutionServiceTests {
         ScheduledExecution.metaClass.static.findAllByProject={proj-> return schedlist}
 
         ScheduledExecutionService test = new ScheduledExecutionService()
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
 
         fwkControl.demand.authResourceForJob{job->
             [type:'job',name:job.jobName,group:job.groupPath?:'']
@@ -332,7 +334,7 @@ public class ScheduledExecutionServiceTests {
 
             return [[authorized:true,resource:list[0]],[authorized:false,resource:list[1]]]
         }
-        test.frameworkService = fwkControl.createMock()
+        test.frameworkService = fwkControl.proxyInstance()
         def result=test.getGroups("proj1",null)
         assertEquals 1,result.size()
         assertEquals 1,result['group1']

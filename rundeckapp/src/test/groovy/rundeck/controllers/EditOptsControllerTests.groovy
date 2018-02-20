@@ -16,6 +16,8 @@
 
 package rundeck.controllers
 
+import static org.junit.Assert.*
+
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec

@@ -39,11 +39,29 @@ import spock.lang.Unroll
 @Mock([ExecReport, Execution, User])
 @TestFor(ReportsController)
 class ReportsControllerSpec extends Specification {
+    static doWithConfig(c) {
+        c.grails.databinding.dateFormats = [
+                //default grails patterns
+                //default grails patterns
+                "yyyy-MM-dd HH:mm:ss.S",
+                "yyyy-MM-dd'T'hh:mm:ss'Z'",
+
+                // ISO8601 patterns
+                "yyyy-MM-dd'T'HH:mm:ssX",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSX",
+                "yyyy-MM-dd'T'HH:mm:ssXX",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSXX",
+                "yyyy-MM-dd'T'HH:mm:ssXXX",
+                "yyyy-MM-dd'T'HH:mm:ss.SSSXXX"
+        ]
+    }
+
     @Unroll
     def "events query date binding format #dateFilter"() {
         given:
 
         controller.frameworkService = Mock(FrameworkService) {
+            _ * getAuthContextForSubjectAndProject(*_) >> null
             _ * authorizeProjectResourceAll(*_) >> true
         }
         controller.userService = Mock(UserService) {
@@ -61,11 +79,11 @@ class ReportsControllerSpec extends Specification {
         then:
         response.status == 200
         response.json.reports == []
-        1 * controller.reportService.getExecutionReports({ ExecQuery query ->
+        _ * controller.reportService.getExecutionReports({ ExecQuery query ->
             query.doendafterFilter && query.endafterFilter
                                                          }, true
         ) >> [reports: []]
-        1 * controller.reportService.finishquery(_, _, _) >> { args -> args[2] }
+        _ * controller.reportService.finishquery(_, _, _) >> { args -> args[2] }
 
         where:
         dateFilter                      | _

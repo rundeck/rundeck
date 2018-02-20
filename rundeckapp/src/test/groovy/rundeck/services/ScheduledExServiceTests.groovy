@@ -18,6 +18,11 @@
 
 package rundeck.services
 
+import groovy.mock.interceptor.MockFor
+import groovy.mock.interceptor.StubFor
+
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IRundeckProject
@@ -59,9 +64,9 @@ class ScheduledExServiceTests {
      * utility method to mock a class
      */
     private <T> T mockWith(Class<T> clazz, loose=false,Closure clos) {
-        def mock = mockFor(clazz,loose)
+        def mock = new MockFor(clazz,loose)
         mock.demand.with(clos)
-        return mock.createMock()
+        return mock.proxyInstance()
     }
 
     static void assertLength(int length, Object[] array){
@@ -180,7 +185,7 @@ class ScheduledExServiceTests {
             authorizeProjectJobAll { framework, resource, actions, project -> return true }
             isClusterModeEnabled{->false}
 //            getFrameworkFromUserSession { session, request -> return null }
-            existsFrameworkProject { project, framework ->
+            existsFrameworkProject { project ->
                 assertEquals 'testProject', project
                 return true
             }
@@ -382,7 +387,7 @@ class ScheduledExServiceTests {
         assertFalse se.scheduled
 
         //try to do update of the ScheduledExecution
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
         fwkControl.demand.existsFrameworkProject { project, framework ->
             assertEquals 'testProject', project
@@ -392,7 +397,7 @@ class ScheduledExServiceTests {
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
         fwkControl.demand.getRundeckBase {-> 'test-base' }
-        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService = fwkControl.proxyInstance()
         sec.frameworkService.metaClass.isClusterModeEnabled = {
             return false
         }
@@ -400,11 +405,11 @@ class ScheduledExServiceTests {
             getExecutionsAreActive{-> true}
         }
 
-        def qtzControl = mockFor(FakeScheduler, true)
+        def qtzControl = new MockFor(FakeScheduler, true)
         qtzControl.demand.checkExists { key -> false }
         qtzControl.demand.getListenerManager { -> [addJobListener:{a,b->}] }
         qtzControl.demand.scheduleJob { jobDetail, trigger -> new Date() }
-        sec.quartzScheduler = qtzControl.createMock()
+        sec.quartzScheduler = qtzControl.proxyInstance()
         def params = [id: se.id.toString(), jobName: 'monkey1', project: 'testProject', description: 'blah',
                 workflow: [threadcount: 1, keepgoing: true, strategy:'node-first', "commands[0]": [adhocExecution: true, adhocRemoteString: 'a remote string']],
                 _workflow_data: true,
@@ -431,6 +436,14 @@ class ScheduledExServiceTests {
 
     private LinkedHashMap<String, Object> assertUpdateCrontabFailure(String crontabString, Closure jobConfigure = null) {
         def sec = new ScheduledExecutionService()
+
+        def ms = new StubFor(MessageSource)
+//        ms.demand.getMessage { key, data, locale -> key + ":" + data.toString() + ":" + locale.toString() }
+        ms.demand.asBoolean(0..99) { -> true  }
+        ms.demand.asBoolean(0..99) { obj -> true  }
+        ms.demand.getMessage(0..99) { error, locale -> error.toString()  }
+        sec.messageSource = ms.proxyInstance()
+
         def jobMap = [jobName: 'monkey1', project: 'testProject', description: 'blah',]
         def se = new ScheduledExecution(jobMap)
         def extraParams = [:]
@@ -447,25 +460,30 @@ class ScheduledExServiceTests {
             }
         }
 
-        sec.frameworkService = mockWith(FrameworkService){
-            authorizeProjectJobAll { framework, resource, actions, project -> return true }
-//            authorizeProjectJobAll { framework, resource, actions, project -> return true }
-//            getFrameworkFromUserSession { session, request -> return null }
-            existsFrameworkProject { project, framework ->
-                assertEquals 'testProject', project
-                return true
-            }
-//            getFrameworkFromUserSession { session, request -> return null }
-//            getFrameworkFromUserSession { session, request -> return null }
-            getFrameworkProject { project ->
-                assertEquals 'testProject', project
-                return projectMock
-            }
-            projectNames{authContext -> []}
-        }
-        sec.frameworkService.metaClass.isClusterModeEnabled = {
+        def fs = new StubFor(FrameworkService)
+        fs.demand.isClusterModeEnabled(0..99){
             return false
         }
+        fs.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
+//            authorizeProjectJobAll { framework, resource, actions, project -> return true }
+//            getFrameworkFromUserSession { session, request -> return null }
+        fs.demand.existsFrameworkProject { project ->
+            assertEquals 'testProject', project
+            return true
+        }
+//            getFrameworkFromUserSession { session, request -> return null }
+//            getFrameworkFromUserSession { session, request -> return null }
+        fs.demand.getFrameworkProject { project ->
+            assertEquals 'testProject', project
+            return projectMock
+        }
+        fs.demand.projectNames{authContext -> []}
+
+
+        sec.frameworkService = fs.proxyInstance()
+//        sec.frameworkService.metaClass.isClusterModeEnabled = {
+//            return false
+//        }
 
         def params = [id: se.id.toString(), scheduled: true, crontabString: crontabString, useCrontabString: 'true', jobName: 'monkey1', project: 'testProject', description: 'blah', adhocExecution: false,]
         def results = sec._doupdate(params + (extraParams ?: [:]), testUserAndRolesContext('test', 'test'))
@@ -580,8 +598,9 @@ class ScheduledExServiceTests {
         }
         //try to do update of the ScheduledExecution
         sec.frameworkService = mockWith(FrameworkService,true){
-            getFrameworkFromUserSession { session, request -> return null }
-            existsFrameworkProject { project, framework ->
+            authorizeProjectJobAll { framework, resource, actions, project -> return true }
+            isClusterModeEnabled{->false}
+            existsFrameworkProject { project ->
                 assertEquals 'testProject', project
                 return true
             }
@@ -589,17 +608,16 @@ class ScheduledExServiceTests {
                 assertEquals 'testProject', project
                 return projectMock
             }
+            projectNames{authContext -> []}
+            getFrameworkFromUserSession { session, request -> return null }
             getCommand { project, type, command, framework ->
                 assertEquals 'testProject', project
                 assertEquals 'aType', type
                 assertEquals 'aCommand', command
                 return null
             }
-            authorizeProjectJobAll { framework, resource, actions, project -> return true }
             getFrameworkFromUserSession { session, request -> return null }
             getFrameworkFromUserSession { session, request -> return null }
-            isClusterModeEnabled{->false}
-            projectNames{authContext -> []}
         }
 
 
@@ -654,9 +672,9 @@ class ScheduledExServiceTests {
             authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         }
         //mock the scheduledExecutionService
-//        def mock2 = mockFor(ScheduledExecutionService, true)
+//        def mock2 = new MockFor(ScheduledExecutionService, true)
 //        mock2.demand.nextExecutionTimes {joblist -> return [] }
-//        sec.scheduledExecutionService = mock2.createMock()
+//        sec.scheduledExecutionService = mock2.proxyInstance()
 
         //create original job
         final CommandExec exec = new CommandExec(adhocExecution: true, adhocRemoteString: "echo original test")
@@ -721,7 +739,7 @@ class ScheduledExServiceTests {
         def sec = new ScheduledExecutionService()
 
         //create mock of FrameworkService
-        def fwkControl = mockFor(FrameworkService, true)
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
         fwkControl.demand.existsFrameworkProject { project, framework -> return true }
@@ -729,7 +747,7 @@ class ScheduledExServiceTests {
         fwkControl.demand.authorizeProjectJobAll { framework, scheduledExecution, actions, project -> return true }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
         fwkControl.demand.getFrameworkFromUserSession { session, request -> return null }
-        sec.frameworkService = fwkControl.createMock()
+        sec.frameworkService = fwkControl.proxyInstance()
 
         //null project
 
@@ -992,6 +1010,11 @@ class FakeScheduler implements Scheduler{
     @Override
     Trigger.TriggerState getTriggerState(TriggerKey triggerKey) throws SchedulerException {
         return null
+    }
+
+    @Override
+    void resetTriggerFromErrorState(TriggerKey triggerKey) throws SchedulerException {
+
     }
 
     @Override

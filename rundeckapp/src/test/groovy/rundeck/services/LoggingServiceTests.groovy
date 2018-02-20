@@ -16,6 +16,10 @@
 
 package rundeck.services
 
+import groovy.mock.interceptor.MockFor
+
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.app.internal.logging.ThreadBoundLogOutputStream
 import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogLevel
@@ -30,7 +34,7 @@ import grails.test.*
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
-import org.grails.web.mapping.LinkGenerator
+import grails.web.mapping.LinkGenerator
 import rundeck.Execution
 import rundeck.services.logging.DisablingLogWriter
 import rundeck.services.logging.ExecutionLogReader
@@ -125,7 +129,7 @@ class LoggingServiceTests  {
         writer.name = "filewritertest1"
 
 
-        def lfmock = mockFor(LogFileStorageService)
+        def lfmock = new MockFor(LogFileStorageService)
         lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
             assertEquals(1, e2.id)
             assertEquals([test: "blah"], defaultMeta)
@@ -145,14 +149,14 @@ class LoggingServiceTests  {
         plugin2.name = "plugin2"
         def plugins = [plugin1: plugin1, plugin2: plugin2]
 
-        def pmock = mockFor(PluginService)
+        def pmock = new MockFor(PluginService)
         pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService svc, PropertyResolver resolv, PropertyScope scope ->
             assertTrue (pname in ["plugin1","plugin2"])
             assert scope==PropertyScope.Instance
             [instance:plugins[pname],configuration:[:]]
         }
 
-        def fmock = mockFor(FrameworkService)
+        def fmock = new MockFor(FrameworkService)
         fmock.demand.getFrameworkPropertyResolver(2..2) { project ->
             assert project=="testproj"
         }
@@ -168,9 +172,9 @@ class LoggingServiceTests  {
         }
 //        pluginService.configurePlugin(name, streamingLogWriterPluginProviderService,
 //                frameworkService.getFrameworkPropertyResolver(execution.project), PropertyScope.Instance)
-        service.logFileStorageService = lfmock.createMock()
-        service.pluginService=pmock.createMock()
-        service.frameworkService=fmock.createMock()
+        service.logFileStorageService = lfmock.proxyInstance()
+        service.pluginService=pmock.proxyInstance()
+        service.frameworkService=fmock.proxyInstance()
 
         def execwriter = service.openLogWriter(e, LogLevel.NORMAL, [test:"blah"])
         assertNotNull(execwriter)
@@ -199,7 +203,7 @@ class LoggingServiceTests  {
         grailsApplication.config.clear()
         def writer = new testWriter()
         writer.name = "filewritertest1"
-        def lfmock = mockFor(LogFileStorageService)
+        def lfmock = new MockFor(LogFileStorageService)
         lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
             assertEquals(1, e2.id)
             assertEquals([test: "blah"], defaultMeta)
@@ -213,7 +217,7 @@ class LoggingServiceTests  {
             assertEquals(false, stored)
             new File("/test/file/path")
         }
-        service.logFileStorageService=lfmock.createMock()
+        service.logFileStorageService=lfmock.proxyInstance()
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -240,7 +244,7 @@ class LoggingServiceTests  {
         grailsApplication.config.clear()
         def writer = new testWriter()
         writer.name = "filewritertest1"
-        def lfmock = mockFor(LogFileStorageService)
+        def lfmock = new MockFor(LogFileStorageService)
         lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
             assertEquals(1, e2.id)
             assertEquals([test: "blah"], defaultMeta)
@@ -254,7 +258,7 @@ class LoggingServiceTests  {
             assertEquals(false, stored)
             new File("/test/file/path")
         }
-        service.logFileStorageService=lfmock.createMock()
+        service.logFileStorageService=lfmock.proxyInstance()
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -277,7 +281,7 @@ class LoggingServiceTests  {
         grailsApplication.config.clear()
         def writer = new testWriter()
         writer.name = "filewritertest1"
-        def lfmock = mockFor(LogFileStorageService)
+        def lfmock = new MockFor(LogFileStorageService)
         lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
             assertEquals(1, e2.id)
             assertEquals([test: "blah"], defaultMeta)
@@ -291,7 +295,7 @@ class LoggingServiceTests  {
             assertEquals(false, stored)
             new File("/test/file/path")
         }
-        service.logFileStorageService=lfmock.createMock()
+        service.logFileStorageService=lfmock.proxyInstance()
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -320,7 +324,7 @@ class LoggingServiceTests  {
         grailsApplication.config.clear()
         def writer = new testWriter()
         writer.name = "filewritertest1"
-        def lfmock = mockFor(LogFileStorageService)
+        def lfmock = new MockFor(LogFileStorageService)
         lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
             assertEquals(1, e2.id)
             assertEquals([test: "blah"], defaultMeta)
@@ -334,7 +338,7 @@ class LoggingServiceTests  {
             assertEquals(false, stored)
             new File("/test/file/path")
         }
-        service.logFileStorageService=lfmock.createMock()
+        service.logFileStorageService=lfmock.proxyInstance()
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -416,13 +420,13 @@ class LoggingServiceTests  {
         assertNotNull(e.save())
         def test=new ExecutionLogReader()
 
-        def lfsvcmock = mockFor(LogFileStorageService)
+        def lfsvcmock = new MockFor(LogFileStorageService)
         lfsvcmock.demand.requestLogFileReader(1..1){Execution e2, String key->
             assert e==e2
             assert key=='rdlog'
             test
         }
-        service.logFileStorageService=lfsvcmock.createMock()
+        service.logFileStorageService=lfsvcmock.proxyInstance()
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -441,19 +445,19 @@ class LoggingServiceTests  {
 
         assertEquals("plugin1", service.getConfiguredStreamingReaderPluginName())
 
-        def lfsvcmock = mockFor(LogFileStorageService)
+        def lfsvcmock = new MockFor(LogFileStorageService)
         lfsvcmock.demand.requestLogFileReader(1..1) { Execution e2, String key ->
             assert e == e2
             assert key == 'rdlog'
             fail("should not be called")
         }
-        def pmock = mockFor(PluginService)
+        def pmock = new MockFor(PluginService)
         pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
             assertEquals("plugin1",pname)
             assert scope == PropertyScope.Instance
             [instance:test,configuration:[:]]
         }
-        def fmock = mockFor(FrameworkService)
+        def fmock = new MockFor(FrameworkService)
         fmock.demand.getFrameworkPropertyResolver(2..2) { project ->
             assert project == "testproj"
         }
@@ -467,9 +471,9 @@ class LoggingServiceTests  {
             ''
         }
 
-        service.logFileStorageService=lfsvcmock.createMock()
-        service.pluginService=pmock.createMock()
-        service.frameworkService=fmock.createMock()
+        service.logFileStorageService=lfsvcmock.proxyInstance()
+        service.pluginService=pmock.proxyInstance()
+        service.frameworkService=fmock.proxyInstance()
 
         def reader = service.getLogReader(e)
         assertNotNull(reader)
@@ -487,19 +491,19 @@ class LoggingServiceTests  {
 
         assertEquals("plugin1", service.getConfiguredStreamingReaderPluginName())
 
-        def lfsvcmock = mockFor(LogFileStorageService)
+        def lfsvcmock = new MockFor(LogFileStorageService)
         lfsvcmock.demand.requestLogFileReader(1..1) { Execution e2, String key ->
             assert e == e2
             assert key == 'rdlog'
             fail("should not be called")
         }
-        def pmock = mockFor(PluginService)
+        def pmock = new MockFor(PluginService)
         pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService psvc, PropertyResolver resolv, PropertyScope scope ->
             assertEquals("plugin1",pname)
             assert scope == PropertyScope.Instance
             [instance: test, configuration: [:]]
         }
-        def fmock = mockFor(FrameworkService)
+        def fmock = new MockFor(FrameworkService)
         fmock.demand.getFrameworkPropertyResolver(2..2) { project ->
             assert project == "testproj"
         }
@@ -513,9 +517,9 @@ class LoggingServiceTests  {
             ''
         }
 
-        service.logFileStorageService=lfsvcmock.createMock()
-        service.pluginService=pmock.createMock()
-        service.frameworkService=fmock.createMock()
+        service.logFileStorageService=lfsvcmock.proxyInstance()
+        service.pluginService=pmock.proxyInstance()
+        service.frameworkService=fmock.proxyInstance()
 
         def reader = service.getLogReader(e)
         assertNotNull(reader)

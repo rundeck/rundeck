@@ -16,6 +16,10 @@
 
 package rundeck.controllers
 
+import groovy.mock.interceptor.MockFor
+
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.app.support.PluginConfigParams
 import com.dtolabs.rundeck.core.common.Framework
@@ -53,9 +57,9 @@ class FrameworkControllerTest {
      * utility method to mock a class
      */
     private <T> T mockWith(Class<T> clazz, Closure clos) {
-        def mock = mockFor(clazz)
+        def mock = new MockFor(clazz)
         mock.demand.with(clos)
-        return mock.createMock()
+        return mock.proxyInstance()
     }
 
     public void testextractApiNodeFilterParamsEmpty(){
@@ -157,25 +161,25 @@ class FrameworkControllerTest {
         assertNotNull exec.save()
         params.retryFailedExecId=exec.id
 
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
-        fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
-            assertEquals(exec,e)
-            assertEquals([AuthConstants.ACTION_READ],actions)
-            true
-        }
-        fwkControl.demand.projects { return [] }
         fwkControl.demand.authorizeProjectResource { framework, resource, actions, project ->
             assertEquals([type:'adhoc'],resource)
             assertEquals('run',actions)
             return true
         }
+        fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
+            assertEquals(exec,e)
+            assertEquals([AuthConstants.ACTION_READ],actions)
+            true
+        }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.projects { return [] }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
-        controller.frameworkService = fwkControl.createMock()
+        controller.frameworkService = fwkControl.proxyInstance()
 
         def result=controller.adhoc(new ExtNodeFilters())
         assertNotNull(result.query)
@@ -195,25 +199,25 @@ class FrameworkControllerTest {
         assertNotNull exec.save()
         params.fromExecId=exec.id
 
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
-        fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
-            assertEquals(exec,e)
-            assertEquals([AuthConstants.ACTION_READ],actions)
-            true
-        }
-        fwkControl.demand.projects { return [] }
         fwkControl.demand.authorizeProjectResource { framework, resource, actions, project ->
             assertEquals([type: 'adhoc'], resource)
             assertEquals('run', actions)
             return true
         }
+        fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
+            assertEquals(exec,e)
+            assertEquals([AuthConstants.ACTION_READ],actions)
+            true
+        }
+        fwkControl.demand.getRundeckFramework {-> return null }
+        fwkControl.demand.projects { return [] }
         fwkControl.demand.authorizeProjectResourceAll { framework, resource, actions, project -> return true }
         fwkControl.demand.authorizeProjectJobAll { framework, resource, actions, project -> return true }
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getRundeckFramework {-> return null }
-        controller.frameworkService = fwkControl.createMock()
+        controller.frameworkService = fwkControl.proxyInstance()
 
         def result=controller.adhoc(new ExtNodeFilters())
         assertNotNull(result.query)
@@ -231,8 +235,7 @@ class FrameworkControllerTest {
         assertNotNull exec.save()
         params.fromExecId=exec.id
 
-        def fwkControl = mockFor(FrameworkService, true)
-        fwkControl.demand.getRundeckFramework {-> return null }
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
         fwkControl.demand.authorizeProjectResource {ctx,resource,action,proj->
             assertEquals([type: 'adhoc'], resource)
@@ -245,7 +248,8 @@ class FrameworkControllerTest {
             true
         }
         fwkControl.demand.getFrameworkNodeName { -> return "monkey1" }
-        controller.frameworkService = fwkControl.createMock()
+        fwkControl.demand.getRundeckFramework {-> return null }
+        controller.frameworkService = fwkControl.proxyInstance()
 
         def result=controller.adhoc(new ExtNodeFilters())
         assertNotNull(result.query)
@@ -256,13 +260,21 @@ class FrameworkControllerTest {
 
     public void testEditProjectObscurePassword() {
         given:
-        def fwk = mockFor(FrameworkService, true)
+        def fwk = new MockFor(FrameworkService)
+        def proj = new MockFor(IRundeckProject)
 
         fwk.demand.getAuthContextForSubject { subject -> return null}
-        fwk.demand.getAuthContextForSubjectAndProject { subject,proj -> return null}
         fwk.demand.authResourceForProject {project -> return null}
         fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
 
+        fwk.demand.getFrameworkProject { name-> proj.proxyInstance() }
+
+        fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
+        fwk.demand.getDefaultNodeExecutorService { project -> null }
+        fwk.demand.getDefaultFileCopyService { project -> null }
+        fwk.demand.getNodeExecConfigurationForType { defaultNodeExec, project -> null }
+        fwk.demand.getFileCopyConfigurationForType { defaultFileCopy, project -> null }
+        fwk.demand.loadProjectConfigurableInput {prefix,props -> [:] }
         fwk.demand.listResourceModelConfigurations { project ->
             [
                     [
@@ -272,22 +284,15 @@ class FrameworkControllerTest {
             ]
         }
         fwk.demand.listWriteableResourceModelSources { project -> [] }
-        fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
-        fwk.demand.getDefaultNodeExecutorService { -> null }
-        fwk.demand.getDefaultFileCopyService { -> null }
-        fwk.demand.getNodeExecConfigurationForType { -> null }
-        fwk.demand.getFileCopyConfigurationForType { -> null }
-        fwk.demand.loadProjectConfigurableInput {prefix,props -> [:] }
 
-        def proj = mockFor(IRundeckProject,true)
         proj.demand.getProjectProperties(1..3){-> [:]}
 
-        fwk.demand.getFrameworkProject { name-> proj.createMock() }
+        fwk.demand.getAuthContextForSubjectAndProject { subject,pr -> return null}
 
-        controller.frameworkService = fwk.createMock()
+        controller.frameworkService = fwk.proxyInstance()
 
-        def execPFmck = mockFor(PasswordFieldsService)
-        def fcopyPFmck = mockFor(PasswordFieldsService)
+        def execPFmck = new MockFor(PasswordFieldsService)
+        def fcopyPFmck = new MockFor(PasswordFieldsService)
 
         execPFmck.demand.reset{ -> return null}
         execPFmck.demand.track{a, b -> return null}
@@ -295,8 +300,8 @@ class FrameworkControllerTest {
         fcopyPFmck.demand.track{a, b -> return null}
 
 
-        controller.execPasswordFieldsService = execPFmck.createMock()
-        controller.fcopyPasswordFieldsService = fcopyPFmck.createMock()
+        controller.execPasswordFieldsService = execPFmck.proxyInstance()
+        controller.fcopyPasswordFieldsService = fcopyPFmck.proxyInstance()
 
 
         def passwordFieldsService = new PasswordFieldsService()
@@ -378,31 +383,37 @@ class FrameworkControllerTest {
     }
 
     public void testSaveProjectNominal() {
-        def fwk = mockFor(FrameworkService, true)
+        def fwk = new MockFor(FrameworkService, true)
 
         fwk.demand.getAuthContextForSubject {subject -> return null}
         fwk.demand.authResourceForProject {project -> return null}
-        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
+        fwk.demand.authorizeApplicationResourceAll {ctx, e, actions -> true }
+//        REVIEW: Disabled at merging
+//        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
         fwk.demand.listDescriptions { -> [null, null, null] }
         fwk.demand.getRundeckFramework { -> null }
+        fwk.demand.listDescriptions { -> [null, null, null] }
 
-        fwk.demand.getFrameworkProject { project -> [name:project] }
         fwk.demand.getNodeExecutorService { -> null }
         fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
-        fwk.demand.getNodeExecutorService { -> null }
         fwk.demand.addProjectNodeExecutorPropertiesForType {type, props, config, remove ->
             props.setProperty("foobar", "barbaz")
         }
-        fwk.demand.validateProjectConfigurableInput {data,prefix,pred -> [:] }
+        fwk.demand.validateProjectConfigurableInput {data,prefix -> [:] }
+//        REVIEW: Disabled at merging
+//        fwk.demand.validateProjectConfigurableInput {data,prefix,pred -> [:] }
 
         fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
             ["success":props.size() != 0]
         }
+        fwk.demand.getFrameworkProject { project -> [name:project] }
+        fwk.demand.getNodeExecutorService { -> null }
 
-        controller.frameworkService = fwk.createMock()
 
-        def execPFmck = mockFor(PasswordFieldsService)
-        def fcopyPFmck = mockFor(PasswordFieldsService)
+        controller.frameworkService = fwk.proxyInstance()
+
+        def execPFmck = new MockFor(PasswordFieldsService)
+        def fcopyPFmck = new MockFor(PasswordFieldsService)
 
 
         controller.execPasswordFieldsService = mockWith(PasswordFieldsService){
@@ -417,11 +428,11 @@ class FrameworkControllerTest {
             storeFilterPref { -> true }
         }
 
-        def seServiceControl = mockFor(ScheduledExecutionService)
+        def seServiceControl = new MockFor(ScheduledExecutionService)
         seServiceControl.demand.isProjectExecutionEnabled{ project -> true
         }
         seServiceControl.demand.isProjectScheduledEnabled{ project -> true}
-        controller.scheduledExecutionService = seServiceControl.createMock()
+        controller.scheduledExecutionService = seServiceControl.proxyInstance()
 
         request.method = "POST"
 
@@ -443,12 +454,12 @@ class FrameworkControllerTest {
 
         assertNull(view)
         assertNull(request.error)
-        assertEquals("Project TestSaveProject saved", flash.message)
+        assertEquals("Project TestSaveProject saved", flash.message.toString())
 
     }
 
     public void skip_testSaveProjectPrefixKeyWrong() {
-        def fwk = mockFor(FrameworkService, true)
+        def fwk = new MockFor(FrameworkService, true)
 
         fwk.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
         fwk.demand.authResourceForProject { project -> return null }
@@ -460,11 +471,11 @@ class FrameworkControllerTest {
         fwk.demand.getNodeExecutorService { -> null }
         fwk.demand.validateServiceConfig { a, b, c, d -> [valid: true] }
 
-        controller.frameworkService = fwk.createMock()
+        controller.frameworkService = fwk.proxyInstance()
 
-        def us = mockFor(UserService)
+        def us = new MockFor(UserService)
         us.demand.storeFilterPref { -> true }
-        controller.userService = us.createMock()
+        controller.userService = us.proxyInstance()
 
         params.project = "TestSaveProject"
         request.method = "POST"
@@ -499,7 +510,7 @@ class FrameworkControllerTest {
         controller.params.type='abc'
         controller.checkResourceModelConfig(config)
         assertEquals(true,response.json.valid)
-        assertTrue(response.json.error in [null, JSONObject.NULL])
+        assertNull(response.json.error)
     }
     void testCheckResourceModelConfig_revertUsesOrigPrefix(){
         controller.frameworkService = mockWith(FrameworkService){
@@ -516,7 +527,7 @@ class FrameworkControllerTest {
         controller.params.revert='true'
         controller.checkResourceModelConfig(config)
         assertEquals(true,response.json.valid)
-        assertTrue(response.json.error in [null, JSONObject.NULL])
+        assertNull(response.json.error)
     }
 
     void testViewResourceModelConfig_noType() {

@@ -15,14 +15,15 @@
  */
 
 import grails.test.*
+import spock.lang.Specification
 
-class UserServiceTests extends GrailsUnitTestCase {
-    protected void setUp() {
-        super.setUp()
+class UserServiceTests extends Specification {
+    void setup() {
+//        super.setup()
     }
 
-    protected void tearDown() {
-        super.tearDown()
+    void tearDown() {
+//        super.tearDown()
     }
 
     void testSomething() {

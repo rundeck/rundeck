@@ -22,7 +22,7 @@ import spock.lang.Specification
 /**
  * Created by greg on 9/27/16.
  */
-@Mock([ScheduledExecution, Workflow])
+@Mock([ScheduledExecution, Workflow, Execution])
 class ExecutionSpec extends Specification {
     def "with server uuid"() {
         given:

@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants

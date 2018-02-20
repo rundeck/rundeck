@@ -16,11 +16,14 @@
 
 package rundeck.controllers
 
+import groovy.mock.interceptor.MockFor
+
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.app.internal.logging.FSStreamingLogReader
 import com.dtolabs.rundeck.app.internal.logging.RundeckLogFormat
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import grails.test.ControllerUnitTestCase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.quartz.JobExecutionContext
@@ -45,9 +48,9 @@ class ExecutionControllerTests  {
      * utility method to mock a class
      */
     private mockWith(Class clazz, Closure clos) {
-        def mock = mockFor(clazz)
+        def mock = new MockFor(clazz)
         mock.demand.with(clos)
-        return mock.createMock()
+        return mock.proxyInstance()
     }
     void testDownloadOutputNotFound() {
 
@@ -65,12 +68,12 @@ class ExecutionControllerTests  {
         Execution e1 = new Execution(outputfilepath: tf1.absolutePath, project: 'test1', user: 'bob', dateStarted: new Date())
         assert e1.validate(), e1.errors.allErrors.collect { it.toString() }.join(",")
         assert e1.save()
-        def logControl = mockFor(LoggingService, true)
+        def logControl = new MockFor(LoggingService, true)
         logControl.demand.getLogReader { Execution e->
             [state: ExecutionLogState.NOT_FOUND]
         }
-        ec.loggingService = logControl.createMock()
-        def fwkControl = mockFor(FrameworkService, true)
+        ec.loggingService = logControl.proxyInstance()
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getFrameworkFromUserSession(1..1) {a,b->
             null
         }
@@ -78,7 +81,7 @@ class ExecutionControllerTests  {
             assert project=='test1'
             null
         }
-        ec.frameworkService = fwkControl.createMock()
+        ec.frameworkService = fwkControl.proxyInstance()
 
         ec.params.id = e1.id.toString()
         ExecutionService.metaClass.static.exportContextForExecution={ Execution data->
@@ -105,12 +108,12 @@ class ExecutionControllerTests  {
         Execution e1 = new Execution(outputfilepath: tf1.absolutePath, project: 'test1', user: 'bob', dateStarted: new Date())
         assert e1.validate(), e1.errors.allErrors.collect { it.toString() }.join(",")
         assert e1.save()
-        def logControl = mockFor(LoggingService, true)
+        def logControl = new MockFor(LoggingService, true)
         logControl.demand.getLogReader { Execution e ->
             [state: ExecutionLogState.NOT_FOUND]
         }
-        ec.loggingService = logControl.createMock()
-        def fwkControl = mockFor(FrameworkService, true)
+        ec.loggingService = logControl.proxyInstance()
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
             null
         }
@@ -118,7 +121,7 @@ class ExecutionControllerTests  {
             assert project == 'test1'
             null
         }
-        ec.frameworkService = fwkControl.createMock()
+        ec.frameworkService = fwkControl.proxyInstance()
 
         ec.params.id = e1.id.toString()
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
@@ -151,7 +154,7 @@ class ExecutionControllerTests  {
         }
         controller.ajaxExecState()
         assertEquals(403,response.status)
-        assertEquals("Unauthorized: Read Execution ${e1.id}",response.json.error)
+        assertEquals("Unauthorized: Read Execution ${e1.id}".toString(),response.json.error)
     }
     void testDownloadOutput(){
 
@@ -170,12 +173,12 @@ class ExecutionControllerTests  {
         assert e1.validate(), e1.errors.allErrors.collect {it.toString()}.join(",")
         assert e1.save()
 
-        def logControl = mockFor(LoggingService, true)
+        def logControl = new MockFor(LoggingService, true)
         logControl.demand.getLogReader { Execution e ->
             [state: ExecutionLogState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat())]
         }
-        ec.loggingService = logControl.createMock()
-        def fwkControl = mockFor(FrameworkService, true)
+        ec.loggingService = logControl.proxyInstance()
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
             null
         }
@@ -183,7 +186,7 @@ class ExecutionControllerTests  {
             assert project == 'test1'
             null
         }
-        ec.frameworkService = fwkControl.createMock()
+        ec.frameworkService = fwkControl.proxyInstance()
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -212,12 +215,12 @@ class ExecutionControllerTests  {
         Execution e1 = new Execution(outputfilepath: tf1.absolutePath,project:'test1',user:'bob',dateStarted: new Date())
         assert e1.validate(), e1.errors.allErrors.collect {it.toString()}.join(",")
         assert e1.save()
-        def logControl = mockFor(LoggingService, true)
+        def logControl = new MockFor(LoggingService, true)
         logControl.demand.getLogReader { Execution e ->
             [state: ExecutionLogState.AVAILABLE, reader: new FSStreamingLogReader(tf1, "UTF-8", new RundeckLogFormat())]
         }
-        ec.loggingService = logControl.createMock()
-        def fwkControl = mockFor(FrameworkService, true)
+        ec.loggingService = logControl.proxyInstance()
+        def fwkControl = new MockFor(FrameworkService, true)
         fwkControl.demand.getFrameworkFromUserSession(1..1) { a, b ->
             null
         }
@@ -225,7 +228,7 @@ class ExecutionControllerTests  {
             assert project == 'test1'
             null
         }
-        ec.frameworkService = fwkControl.createMock()
+        ec.frameworkService = fwkControl.proxyInstance()
         ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
             [:]
         }
@@ -244,12 +247,12 @@ class ExecutionControllerTests  {
     public void testApiExecutionsQueryRequireVersion() {
         def controller = new ExecutionController()
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
-        def svcMock = mockFor(ApiService, false)
+        def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireVersion { request, response, min ->
             response.status=400
             false
         }
-        controller.apiService = svcMock.createMock()
+        controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionsQuery(null)
         assert 400 == controller.response.status
     }
@@ -258,13 +261,13 @@ class ExecutionControllerTests  {
         def controller = new ExecutionController()
         controller.request.api_version = 4
 
-        def svcMock = mockFor(ApiService, false)
+        def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireVersion { request,response, int min ->
             assertEquals(5,min)
             response.status=400
             return false
         }
-        controller.apiService = svcMock.createMock()
+        controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionsQuery(null)
         assert 400 == controller.response.status
     }
@@ -272,28 +275,28 @@ class ExecutionControllerTests  {
     public void testApiExecutionsQueryRequireV5_ok() {
         def controller = new ExecutionController()
         ApiController.metaClass.message = { params -> params?.code ?: 'messageCodeMissing' }
-        def fwkControl = mockFor(FrameworkService, false)
+        def fwkControl = new MockFor(FrameworkService, false)
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         fwkControl.demand.filterAuthorizedProjectExecutionsAll {fwk,results,actions->
             return []
         }
-        controller.frameworkService=fwkControl.createMock()
-        def execControl = mockFor(ExecutionService, false)
+        controller.frameworkService=fwkControl.proxyInstance()
+        def execControl = new MockFor(ExecutionService, false)
         execControl.demand.queryExecutions { ExecutionQuery query, int offset, int max ->
             return [results:[],total:0]
         }
-        execControl.demand.respondExecutionsXml { response, List<Execution> execs ->
+        execControl.demand.respondExecutionsXml { request, response, List<Execution> execs, paging ->
             return true
         }
-        controller.executionService = execControl.createMock()
+        controller.executionService = execControl.proxyInstance()
         controller.request.api_version = 5
         controller.params.project = "Test"
-        def svcMock = mockFor(ApiService, false)
+        def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireVersion { request, response, int min ->
             assertEquals(5, min)
             return true
         }
-        controller.apiService = svcMock.createMock()
+        controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionsQuery(new ExecutionQuery())
 
         assert 200 == controller.response.status
@@ -377,35 +380,35 @@ class ExecutionControllerTests  {
 
         def execs = createTestExecs()
 
-        def fwkControl = mockFor(FrameworkService, false)
+        def fwkControl = new MockFor(FrameworkService, false)
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         fwkControl.demand.filterAuthorizedProjectExecutionsAll { framework, List<Execution> results, Collection actions ->
             assert results == []
             []
         }
-        controller.frameworkService = fwkControl.createMock()
+        controller.frameworkService = fwkControl.proxyInstance()
         controller.request.api_version = 5
         controller.params.project = "WRONG"
-        def execControl = mockFor(ExecutionService, false)
+        def execControl = new MockFor(ExecutionService, false)
         execControl.demand.queryExecutions { ExecutionQuery query, int offset, int max ->
             assert null!=query
             assert "WRONG"==query.projFilter
             return [result: [], total: 0]
         }
-        execControl.demand.respondExecutionsXml { response, List<Execution> execsx ->
+        execControl.demand.respondExecutionsXml { request, response, List<Execution> execsx, paging ->
             return true
         }
-        controller.executionService = execControl.createMock()
+        controller.executionService = execControl.proxyInstance()
 
-        def svcMock = mockFor(ApiService, false)
+        def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireVersion { request, response, int min ->
             assertEquals(5, min)
             return true
         }
-        svcMock.demand.renderSuccessXml { response, Closure clos ->
+        svcMock.demand.renderSuccessXml { request, response ->
             return true
         }
-        controller.apiService = svcMock.createMock()
+        controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionsQuery(new ExecutionQuery())
 
         assert 200 == controller.response.status
@@ -417,29 +420,29 @@ class ExecutionControllerTests  {
     public void testApiExecutionAbortAuthorized() {
         def controller = new ExecutionController()
         def execs = createTestExecs()
-        def fwkControl = mockFor(FrameworkService, false)
+        def fwkControl = new MockFor(FrameworkService, false)
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
-        def execControl = mockFor(ExecutionService, false)
+        def execControl = new MockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas, force ->
             assert null == killas
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
         fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return true }
 
-        controller.frameworkService = fwkControl.createMock()
-        controller.executionService = execControl.createMock()
+        controller.frameworkService = fwkControl.proxyInstance()
+        controller.executionService = execControl.proxyInstance()
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
 
-        def svcMock = mockFor(ApiService, false)
+        def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
         svcMock.demand.requireExists { resp,e,args -> true }
         svcMock.demand.requireAuthorized { test,resp,args -> true }
-        svcMock.demand.renderSuccessXml { response, Closure clos ->
+        svcMock.demand.renderSuccessXml { request, response, Closure clos ->
             return true
         }
-        controller.apiService = svcMock.createMock()
+        controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionAbort()
 
         assert 200 == controller.response.status
@@ -452,26 +455,26 @@ class ExecutionControllerTests  {
     public void testApiExecutionAbortUnauthorized() {
         def controller = new ExecutionController()
         def execs = createTestExecs()
-        def fwkControl = mockFor(FrameworkService, false)
+        def fwkControl = new MockFor(FrameworkService, false)
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
-        def execControl = mockFor(ExecutionService, false)
+        def execControl = new MockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert null == killas
             [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', reason: null]
         }
         fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return false }
 
-        controller.frameworkService = fwkControl.createMock()
-        controller.executionService = execControl.createMock()
+        controller.frameworkService = fwkControl.proxyInstance()
+        controller.executionService = execControl.proxyInstance()
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
 
-        def svcMock = mockFor(ApiService, false)
+        def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
         svcMock.demand.requireExists { resp,e,args -> true }
         svcMock.demand.requireAuthorized { test,resp,args -> resp.status=403;false }
-        controller.apiService = svcMock.createMock()
+        controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionAbort()
 
         assert 403 == controller.response.status
@@ -484,9 +487,9 @@ class ExecutionControllerTests  {
     public void testApiExecutionAbortAsUserUnauthorized() {
         def controller = new ExecutionController()
         def execs = createTestExecs()
-        def fwkControl = mockFor(FrameworkService, false)
+        def fwkControl = new MockFor(FrameworkService, false)
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
-        def execControl = mockFor(ExecutionService, false)
+        def execControl = new MockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas ->
             assert killas == 'testuser'
             [abortstate: 'aborted', jobstate: 'running', statusStr: 'blah', reason: null]
@@ -494,18 +497,18 @@ class ExecutionControllerTests  {
 
         fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return false }
 
-        controller.frameworkService = fwkControl.createMock()
-        controller.executionService = execControl.createMock()
+        controller.frameworkService = fwkControl.proxyInstance()
+        controller.executionService = execControl.proxyInstance()
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
-        def svcMock = mockFor(ApiService, false)
+        def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
         svcMock.demand.requireExists { resp,e,args -> true }
         svcMock.demand.requireAuthorized { test,resp,args -> resp.status=403;false }
-        controller.apiService = svcMock.createMock()
+        controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionAbort()
 
         assert 403 == controller.response.status
@@ -518,9 +521,9 @@ class ExecutionControllerTests  {
     public void testApiExecutionAbortAsUserAuthorized() {
         def controller = new ExecutionController()
         def execs = createTestExecs()
-        def fwkControl = mockFor(FrameworkService, false)
+        def fwkControl = new MockFor(FrameworkService, false)
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
-        def execControl = mockFor(ExecutionService, false)
+        def execControl = new MockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas,force ->
             assert killas == 'testuser'
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
@@ -528,14 +531,14 @@ class ExecutionControllerTests  {
 
         fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return true }
 
-        controller.frameworkService = fwkControl.createMock()
-        controller.executionService = execControl.createMock()
+        controller.frameworkService = fwkControl.proxyInstance()
+        controller.executionService = execControl.proxyInstance()
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
-        def svcMock = mockFor(ApiService, false)
+        def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
         svcMock.demand.requireExists { resp,e,args -> true }
         svcMock.demand.requireAuthorized { test,resp,args -> true }
@@ -543,10 +546,10 @@ class ExecutionControllerTests  {
             assertEquals(5,min)
             return true
         }
-        svcMock.demand.renderSuccessXml { response, Closure clos ->
+        svcMock.demand.renderSuccessXml { request, response, Closure clos ->
             return true
         }
-        controller.apiService = svcMock.createMock()
+        controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionAbort()
 
         assert 200 == controller.response.status
@@ -558,9 +561,9 @@ class ExecutionControllerTests  {
     public void testApiExecutionAbortAsUserNotAuthorized() {
         def controller = new ExecutionController()
         def execs = createTestExecs()
-        def fwkControl = mockFor(FrameworkService, false)
+        def fwkControl = new MockFor(FrameworkService, false)
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
-        def execControl = mockFor(ExecutionService, false)
+        def execControl = new MockFor(ExecutionService, false)
         execControl.demand.abortExecution { se, e, user, framework, killas, force ->
             assert killas == 'testuser'
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
@@ -568,14 +571,14 @@ class ExecutionControllerTests  {
 
         fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return !('killAs' in privs) }
 
-        controller.frameworkService = fwkControl.createMock()
-        controller.executionService = execControl.createMock()
+        controller.frameworkService = fwkControl.proxyInstance()
+        controller.executionService = execControl.proxyInstance()
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
-        def svcMock = mockFor(ApiService, false)
+        def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
         svcMock.demand.requireExists { resp,e,args -> true }
         svcMock.demand.requireAuthorized { test,resp,args -> true }
@@ -584,10 +587,10 @@ class ExecutionControllerTests  {
             assertEquals(5, min)
             return true
         }
-        svcMock.demand.renderSuccessXml { response, Closure clos ->
+        svcMock.demand.renderSuccessXml { request, response, Closure clos ->
             return true
         }
-        controller.apiService = svcMock.createMock()
+        controller.apiService = svcMock.proxyInstance()
         controller.apiExecutionAbort()
 
         assert 200 == controller.response.status
@@ -600,23 +603,23 @@ class ExecutionControllerTests  {
     public void testApiExecutionUnauthorized() {
         def controller = new ExecutionController()
         def execs = createTestExecs()
-        def fwkControl = mockFor(FrameworkService, false)
-        def execControl = mockFor(ExecutionService, false)
+        def fwkControl = new MockFor(FrameworkService, false)
+        def execControl = new MockFor(ExecutionService, false)
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return false }
 
-        controller.frameworkService = fwkControl.createMock()
-        controller.executionService = execControl.createMock()
+        controller.frameworkService = fwkControl.proxyInstance()
+        controller.executionService = execControl.proxyInstance()
         controller.request.api_version = 5
         controller.params.project = "Test"
         controller.params.id = execs[2].id.toString()
         controller.params.asUser = "testuser"
 
-        def svcMock = mockFor(ApiService, false)
+        def svcMock = new MockFor(ApiService, false)
         svcMock.demand.requireApi { req, resp -> true }
         svcMock.demand.requireExists { resp,e,args -> true }
         svcMock.demand.requireAuthorized { test,resp,args -> resp.status=403;false }
-        controller.apiService = svcMock.createMock()
+        controller.apiService = svcMock.proxyInstance()
         controller.apiExecution()
 
         assert 403 == controller.response.status
