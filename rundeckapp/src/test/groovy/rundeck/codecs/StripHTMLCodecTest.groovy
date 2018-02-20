@@ -16,6 +16,7 @@
 
 package rundeck.codecs
 
+import rundeck.codecs.StripHTMLCodec
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin

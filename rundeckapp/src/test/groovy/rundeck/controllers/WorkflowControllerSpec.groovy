@@ -16,6 +16,8 @@
 
 package rundeck.controllers
 
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
@@ -324,6 +326,7 @@ class WorkflowControllerSpec extends Specification {
         params.newfiltertype = type
         params.pluginConfig = config
         when:
+        response.format='json'
         def result = controller.validateStepFilter()
         then:
         response.json == [

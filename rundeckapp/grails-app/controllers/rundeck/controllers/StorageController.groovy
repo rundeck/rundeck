@@ -70,39 +70,42 @@ class StorageController extends ControllerBase{
         }
         return createLink(absolute: true, uri: uriString)
     }
-    private def jsonRenderResource(builder, Resource res, dirlist=[]){
-        builder.with{
-            path = res.path.toString()
-            type = res.directory ? 'directory' : 'file'
-            if(!res.directory){
-                name = res.path.name
-            }
-            url = pathUrl(res.path)
-            if (!res.directory) {
-                def meta1 = res.contents.meta
-                if (meta1) {
-                    def masked = resourceContentsMasked(res)
-                    def bd = delegate
-                    def meta = [:]
-                    RES_META_RUNDECK_OUTPUT.each { k ->
-                        if ((!masked || !(k in StorageController.RES_META_MASKED)) && meta1[k]) {
-                            meta[k] = meta1[k]
-                        }
-                    }
-                    if (meta) {
-                        bd.meta = meta
-                    }
 
+    private Map getMeta(Resource res){
+        def meta_ = [:]
+        if (!res.directory) {
+            def meta1 = res.contents.meta
+            if (meta1) {
+                def masked = resourceContentsMasked(res)
+                RES_META_RUNDECK_OUTPUT.each { k ->
+                    if ((!masked || !(k in StorageController.RES_META_MASKED)) && meta1[k]) {
+                        meta_[k] = meta1[k]
+                    }
                 }
             }
+        }
+
+        return meta_
+    }
+
+    private def jsonRenderResource(builder, Resource res, dirlist=[]){
+        builder {
+            path res.path.toString()
+            type (res.directory ? 'directory' : 'file')
+            name !res.directory ? res.path.name : null
+            url pathUrl(res.path)
+            meta this.getMeta(res)
+
             if(dirlist){
-                delegate.'resources' = array {
-                    def builder2 = delegate
-                    dirlist.each { diritem ->
-                        builder2.element {
-                            jsonRenderResource(delegate, diritem,[])
-                        }
-                    }
+                resources dirlist.collect { diritem ->
+
+                    [
+                            path: diritem.path.toString(),
+                            type: (diritem.directory ? 'directory' : 'file'),
+                            name: !diritem.directory ? diritem.path.name : null,
+                            url: pathUrl(diritem.path),
+                            meta: this.getMeta(diritem)
+                    ]
                 }
             }
         }
@@ -142,12 +145,12 @@ class StorageController extends ControllerBase{
         withFormat {
             json {
                 render(contentType: 'application/json') {
-                    jsonRenderResource(delegate, resource,dirlist)
+                    this.jsonRenderResource(delegate, resource,dirlist)
                 }
             }
             xml {
                 render {
-                    xmlRenderResource(delegate, resource, dirlist)
+                    this.xmlRenderResource(delegate, resource, dirlist)
                 }
             }
         }
@@ -214,7 +217,7 @@ class StorageController extends ControllerBase{
     private Object renderError(String message) {
         def jsonResponseclosure= {
             render(contentType: "application/json") {
-                delegate.'error' = message
+                delegate error: message
             }
         }
         if(!(response.format in ['json','xml'])){

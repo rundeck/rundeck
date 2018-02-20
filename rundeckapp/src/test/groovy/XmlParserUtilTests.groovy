@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 
+
+import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
+import static org.junit.Assert.*
 
 import com.dtolabs.rundeck.util.XmlParserUtil
 

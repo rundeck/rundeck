@@ -16,12 +16,14 @@
 
 package rundeck
 
+import grails.test.mixin.Mock
 import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
  * Created by greg on 11/4/15.
  */
+@Mock(Option)
 class OptionSpec extends Specification {
     @Unroll("path #path valid #value")
     def "validate default storage path"() {

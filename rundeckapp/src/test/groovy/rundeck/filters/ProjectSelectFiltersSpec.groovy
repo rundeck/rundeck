@@ -20,9 +20,11 @@ import com.codahale.metrics.MetricRegistry
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
-import grails.test.mixin.web.FiltersUnitTestMixin
-import org.grails.web.pages.GroovyPagesTemplateEngine
-import org.grails.web.pages.discovery.CachingGrailsConventionGroovyPageLocator
+import org.grails.gsp.GroovyPagesTemplateEngine
+import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
+
+//import org.grails.web.pages.GroovyPagesTemplateEngine
+//import org.grails.web.pages.discovery.CachingGrailsConventionGroovyPageLocator
 import org.grails.web.servlet.view.GroovyPageViewResolver
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean
 import rundeck.controllers.ProjectController
@@ -38,8 +40,8 @@ import java.security.Principal
  * @since 12/7/17
  */
 @TestFor(ProjectController)
-@Mock([AA_TimerFilters, ApiRequestFilters, AuthorizationFilters, ProjectSelectFilters, FrameworkService])
-@TestMixin(FiltersUnitTestMixin)
+@Mock([FrameworkService])
+//@TestMixin(FiltersUnitTestMixin)
 class ProjectSelectFiltersSpec extends Specification {
     static doWithSpring = {
         metricRegistry(MetricRegistry)

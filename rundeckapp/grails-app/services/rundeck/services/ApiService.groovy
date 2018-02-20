@@ -768,7 +768,7 @@ class ApiService {
         }else if (messages instanceof Map && messages.message) {
             result.message=messages.message
         }
-        return result.encodeAsJSON().toString()
+        return (result as JSON).toString()
     }
     def renderErrorXml(messages, String code=null, builder=null){
         def writer = new StringWriter()
@@ -830,7 +830,7 @@ class ApiService {
     )
     {
         if (respFormat=='json') {
-            delegate.contents = contentString
+            delegate contents: contentString
         }else{
             delegate.'contents' {
                 mkp.yieldUnescaped("<![CDATA[" + contentString.replaceAll(']]>', ']]]]><![CDATA[>') + "]]>")

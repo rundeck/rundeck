@@ -18,6 +18,8 @@
 
 package rundeck
 
+import static org.junit.Assert.*
+
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin;
 import org.grails.plugins.databinding.DataBindingGrailsPlugin;
@@ -36,7 +38,7 @@ public class OptionTest {
     @Before
     public void setup(){
         // hack for 2.3.9:  https://jira.grails.org/browse/GRAILS-11136
-        defineBeans(new DataBindingGrailsPlugin().doWithSpring)
+//        defineBeans(new DataBindingGrailsPlugin().doWithSpring)
     }
     void testSortIndexShouldDetermineOrder() {
         
@@ -103,7 +105,7 @@ public class OptionTest {
         def opt1=new Option(name:'abc',multivalued:true,delimiter:',')
         assertEquals(',',opt1.delimiter)
         def opt2=new Option(name:'abc',multivalued:true,delimiter:" ")
-        assertEquals(' ',opt2.delimiter)
+        assertEquals(" ",opt2.delimiter)
     }
 
     private void assertInvalidName(Option option) {

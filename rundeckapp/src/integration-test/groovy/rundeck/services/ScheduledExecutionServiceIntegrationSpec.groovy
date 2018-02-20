@@ -2,6 +2,7 @@ package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.test.spock.IntegrationSpec
+import grails.testing.mixin.integration.Integration
 import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.JobDetail
 import org.quartz.Scheduler
@@ -19,7 +20,8 @@ import spock.lang.Shared
 /**
  * Integration tests for the ScheduledExecutionService.
  */
-class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
+@Integration
+class ScheduledExecutionServiceIntegrationSpec extends GroovyTestCase {
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
     public static final String TEST_UUID2 = '490966E0-2E2F-4505-823F-E2665ADC66FB'
 

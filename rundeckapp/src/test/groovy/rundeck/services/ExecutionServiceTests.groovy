@@ -17,7 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ExecutionQuery
-import grails.test.GrailsUnitTestCase
+//import grails.test.GrailsUnitTestCase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec

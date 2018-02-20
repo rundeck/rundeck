@@ -62,6 +62,7 @@ class JsonUtil {
      * @return null if the data is null or Json NULL, the input value otherwise
      */
     static def jsonNull(data) {
-        JSONObject.NULL == data ? null : data
+        //JSONObject.NULL has been deprecated, should no longer be referenced and has been removed from Grails 3.1. Ref.: http://docs.grails.org/3.0.6/api/org/grails/web/json/JSONObject.Null.html
+        null == data ? null : data
     }
 }

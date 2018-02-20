@@ -16,10 +16,13 @@
 
 package rundeck.controllers
 
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.app.support.StorageParams
 import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import grails.test.mixin.*
+import groovy.mock.interceptor.MockFor
 import org.junit.*
 import org.rundeck.storage.api.ContentMeta
 import org.rundeck.storage.api.Path
@@ -39,9 +42,9 @@ class StorageControllerTests {
  * utility method to mock a class
  */
     private <T> T mockWith(Class<T> clazz, Closure clos) {
-        def mock = mockFor(clazz)
+        def mock = new MockFor(clazz)
         mock.demand.with(clos)
-        return mock.createMock()
+        return mock.proxyInstance()
     }
     @Test
     void apiGetResource_notfound() {
@@ -78,7 +81,7 @@ class StorageControllerTests {
             }
         }
         def mRes = mockWith(Resource) {
-            isDirectory{-> false }
+            getDirectory{-> false }
             getContents(2..2){-> mContent }
         }
         controller.storageService=mockWith(StorageService){
@@ -124,16 +127,18 @@ class StorageControllerTests {
             requireApi(1..1) { req, resp -> true }
         }
 
+        response.format = 'json'
+
         def result=controller.apiGetResource()
         assertEquals(200,response.status)
         assertEquals('application/json;charset=UTF-8',response.contentType)
-        assertEquals('abc', response.json.path)
-        assertEquals('directory', response.json.type)
-        assertNotNull(response.json.url)
-        assertEquals(2, response.json.resources.size())
-        assertEquals('abc/test1', response.json.resources[0].path)
-        assertEquals('file', response.json.resources[0].type)
-        assertEquals('test1', response.json.resources[0].name)
+        assertEquals('abc', response.json.call.path)
+        assertEquals('directory', response.json.call.type)
+        assertNotNull(response.json.call.url)
+        assertEquals(2, response.json.call.resources.size())
+        assertEquals('abc/test1', response.json.call.resources[0].path)
+        assertEquals('file', response.json.call.resources[0].type)
+        assertEquals('test1', response.json.call.resources[0].name)
 
     }
     @Test
@@ -189,10 +194,10 @@ class StorageControllerTests {
         def result=controller.apiPostResource()
         assertEquals(201,response.status)
         assertEquals('application/json;charset=UTF-8',response.contentType)
-        assertEquals('file',response.json.type)
-        assertEquals('abc/test2',response.json.path)
-        assertEquals('test2',response.json.name)
-        assertEquals('test/data',response.json.meta['Rundeck-content-type'])
+        assertEquals('file',response.json.call.type)
+        assertEquals('abc/test2',response.json.call.path)
+        assertEquals('test2',response.json.call.name)
+        assertEquals('test/data',response.json.call.meta['Rundeck-content-type'])
     }
     @Test
     void apiPostResource_exception(){
@@ -255,10 +260,10 @@ class StorageControllerTests {
         def result=controller.apiPutResource()
         assertEquals(200,response.status)
         assertEquals('application/json;charset=UTF-8',response.contentType)
-        assertEquals('file',response.json.type)
-        assertEquals('abc/test2',response.json.path)
-        assertEquals('test2',response.json.name)
-        assertEquals('test/data',response.json.meta['Rundeck-content-type'])
+        assertEquals('file',response.json.call.type)
+        assertEquals('abc/test2',response.json.call.path)
+        assertEquals('test2',response.json.call.name)
+        assertEquals('test/data',response.json.call.meta['Rundeck-content-type'])
     }
     @Test
     void apiPutResource_exception(){
@@ -332,7 +337,7 @@ class StorageControllerTests {
             requireApi(1..1) { req, resp -> true }
             renderErrorFormat { resp, map ->
                 assertEquals(500, map.status)
-                assertEquals("Resource was not deleted: /keys/abc/test1", map.message)
+                assertEquals("Resource was not deleted: /keys/abc/test1", map.message?.toString())
             }
         }
         params.resourcePath = '/keys/abc/test1'

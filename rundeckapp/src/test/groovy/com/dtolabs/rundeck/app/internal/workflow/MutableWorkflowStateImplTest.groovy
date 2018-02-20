@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.app.internal.workflow
 
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.core.execution.workflow.state.ExecutionState
 import com.dtolabs.rundeck.core.execution.workflow.state.MutableExecutionState
 import com.dtolabs.rundeck.core.execution.workflow.state.StateUtils
@@ -26,6 +28,7 @@ import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowState
 import com.dtolabs.rundeck.core.execution.workflow.state.WorkflowStepState
 
 import grails.converters.JSON
+import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
 
 import java.text.SimpleDateFormat

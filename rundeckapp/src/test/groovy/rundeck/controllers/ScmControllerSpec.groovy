@@ -56,7 +56,7 @@ class ScmControllerSpec extends Specification {
         1 * controller.scmService.projectHasConfiguredPlugin(*_) >> true
 
         response.status == 302
-        response.redirectedUrl == '/scheduledExecution/index?project=test1'
+        response.redirectedUrl == '/project/test1/job/index'
     }
 
     def 'api export action project perform'() {

@@ -19,6 +19,7 @@ import grails.test.mixin.support.GrailsUnitTestMixin
 import org.yaml.snakeyaml.Yaml
 import rundeck.*
 import rundeck.codecs.JobsYAMLCodec
+import static org.junit.Assert.*
 
 /*
 * JobsYAMLCodecTests.java
@@ -82,7 +83,7 @@ public class JobsYAMLCodecTests  {
             assertNotNull "missing commands", doc[0].sequence.commands
             assertEquals "missing commands", 5, doc[0].sequence.commands.size()
             doc[0].sequence.commands.eachWithIndex{cmd,i->
-                assertEquals "wrong desc at ${i}", "test${i+1}", cmd.description
+                assertEquals "wrong desc at ${i}", "test${i+1}".toString(), cmd.description
             }
             assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
             assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'", doc[0].sequence.commands[1].script
@@ -176,7 +177,7 @@ public class JobsYAMLCodecTests  {
             assertNotNull "missing commands", doc[0].sequence.commands
             assertEquals "missing commands", 5, doc[0].sequence.commands.size()
             doc[0].sequence.commands.eachWithIndex{cmd,i->
-                assertEquals "wrong desc at ${i}", "test${i+1}", cmd.description
+                assertEquals "wrong desc at ${i}", "test${i+1}".toString(), cmd.description
             }
             assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
             assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'", doc[0].sequence.commands[1].script
@@ -853,7 +854,7 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong workflow.strategy", "node-first", se.workflow.strategy
             assertEquals "wrong workflow size", 4, se.workflow.commands.size()
             se.workflow.commands.eachWithIndex { def entry, int i ->
-                assertEquals "Wrong description i ${i}","test${i+1}",entry.description
+                assertEquals "Wrong description i ${i}","test${i+1}".toString(),entry.description
             }
             assertEquals "wrong workflow item", "test script", se.workflow.commands[0].adhocRemoteString
             assertTrue "wrong workflow item", se.workflow.commands[0].adhocExecution
@@ -1067,7 +1068,7 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong workflow.strategy", "node-first", se.workflow.strategy
             assertEquals "wrong workflow size", 4, se.workflow.commands.size()
             se.workflow.commands.eachWithIndex { def entry, int i ->
-                assertEquals "Wrong description i ${i}", "test${i + 1}", entry.description
+                assertEquals "Wrong description i ${i}", "test${i + 1}".toString(), entry.description
             }
             assertEquals "wrong workflow item", "test script", se.workflow.commands[0].adhocRemoteString
             assertTrue "wrong workflow item", se.workflow.commands[0].adhocExecution

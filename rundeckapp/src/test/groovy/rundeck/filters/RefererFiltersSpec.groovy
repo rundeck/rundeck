@@ -19,8 +19,6 @@ package rundeck.filters
 import com.codahale.metrics.MetricRegistry
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
-import grails.test.mixin.web.FiltersUnitTestMixin
 import org.grails.gsp.GroovyPagesTemplateEngine
 import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
 import org.grails.web.servlet.view.GroovyPageViewResolver
@@ -37,7 +35,7 @@ import spock.lang.Unroll
  */
 @TestFor(ApiController)
 @Mock([AA_TimerFilters, ApiRequestFilters, RefererFilters])
-@TestMixin(FiltersUnitTestMixin)
+//@TestMixin(FiltersUnitTestMixin)
 class RefererFiltersSpec extends Specification {
     static doWithSpring = {
         configurationService(ConfigurationService)

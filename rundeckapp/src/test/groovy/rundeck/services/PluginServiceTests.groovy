@@ -33,14 +33,15 @@ import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.PluginRegistry
 import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
 import grails.test.*
+import spock.lang.Specification
 
-class PluginServiceTests extends GrailsUnitTestCase {
-    protected void setUp() {
-        super.setUp()
+class PluginServiceTests extends Specification {
+    void setup() {
+//        super.setUp()
     }
 
-    protected void tearDown() {
-        super.tearDown()
+    void tearDown() {
+//        super.tearDown()
     }
     class testPlugin{
 

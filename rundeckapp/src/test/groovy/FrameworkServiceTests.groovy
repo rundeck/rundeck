@@ -19,9 +19,11 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.Decision
 import com.dtolabs.rundeck.core.authorization.Explanation
 import grails.test.mixin.TestFor
+import groovy.mock.interceptor.MockFor
 import org.grails.plugins.metricsweb.MetricService
 import rundeck.ScheduledExecution
 import rundeck.services.FrameworkService
+import static org.junit.Assert.*
 
 import javax.security.auth.Subject
 
@@ -144,12 +146,12 @@ class FrameworkServiceTests  {
     }
     def assertTestAuthorizeSet(FrameworkService test, Map expected, Set results, Collection<String> expectActions,
                                String projectName, Closure call){
-        def mcontrol = mockFor(MetricService, false)
+        def mcontrol = new MockFor(MetricService, false)
         mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
-        test.metricService = mcontrol.createMock()
-        def ctrl = mockFor(AuthContext)
+        test.metricService = mcontrol.proxyInstance()
+        def ctrl = new MockFor(AuthContext)
         ctrl.demand.evaluate { Set resources, Set actions, Collection env ->
             assertEquals 1, resources.size()
             def res1 = resources.iterator().next()
@@ -168,17 +170,17 @@ class FrameworkServiceTests  {
             }
             return results
         }
-        def tfwk = ctrl.createMock()
+        def tfwk = ctrl.proxyInstance()
         call.call(tfwk)
     }
     def assertTestAuthorizeAll(FrameworkService test, Map expected, List results, List<String> expectActions,
                                String projectName, Closure call){
-        def mcontrol = mockFor(MetricService, false)
+        def mcontrol = new MockFor(MetricService, false)
         mcontrol.demand.withTimer(results.size()..results.size()) { String clsName, String argString, Closure clos ->
             clos.call()
         }
-        test.metricService = mcontrol.createMock()
-        def ctrl = mockFor(AuthContext)
+        test.metricService = mcontrol.proxyInstance()
+        def ctrl = new MockFor(AuthContext)
         def ndx=0
         ctrl.demand.evaluate(results.size()..results.size()) { Set resources, Set actions, Collection env ->
             assertEquals 1, resources.size()
@@ -197,16 +199,16 @@ class FrameworkServiceTests  {
             ndx++
             return [results[ndx-1]] as Set
         }
-        def tfwk = ctrl.createMock()
+        def tfwk = ctrl.proxyInstance()
         call.call(tfwk)
     }
     def assertTestAuthorizeSingle(FrameworkService test, Map expected, Map result, String projectName, Closure call){
-        def mcontrol = mockFor(MetricService, false)
+        def mcontrol = new MockFor(MetricService, false)
         mcontrol.demand.withTimer() { String clsName, String argString, Closure clos ->
             clos.call()
         }
-        test.metricService = mcontrol.createMock()
-        def ctrl = mockFor(AuthContext)
+        test.metricService = mcontrol.proxyInstance()
+        def ctrl = new MockFor(AuthContext)
         ctrl.demand.evaluate { Map resource, String action, Collection env ->
             assertEquals expected, resource
             assertEquals 'test', action
@@ -220,7 +222,7 @@ class FrameworkServiceTests  {
             }
             return makeDecision(result,resource,action,env)
         }
-        def tfwk = ctrl.createMock()
+        def tfwk = ctrl.proxyInstance()
         call.call(tfwk)
     }
 

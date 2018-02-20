@@ -16,6 +16,9 @@
 
 package rundeck.codecs
 
+import static org.junit.Assert.*
+
+import rundeck.codecs.SanitizedHTMLCodec
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
@@ -28,15 +31,15 @@ import grails.test.mixin.support.GrailsUnitTestMixin
 @TestMixin(GrailsUnitTestMixin)
 class SanitizedHTMLCodecTest {
     void testAHref(){
-        Assert.assertEquals('<a href="http://test.com" rel="nofollow">a</a>', SanitizedHTMLCodec.encode('<a href="http://test.com">a</a>'))
+        assertEquals('<a href="http://test.com" rel="nofollow">a</a>', SanitizedHTMLCodec.encode('<a href="http://test.com">a</a>'))
     }
     void testAHrefJavascript(){
-        Assert.assertEquals('a', SanitizedHTMLCodec.encode('<a href="javascript://alert(1)">a</a>'))
+        assertEquals('a', SanitizedHTMLCodec.encode('<a href="javascript://alert(1)">a</a>'))
     }
     void testAOnclick(){
-        Assert.assertEquals('<a href="http://test.com" rel="nofollow">a</a>', SanitizedHTMLCodec.encode('<a href="http://test.com" onclick="alert(1)">a</a>'))
+        assertEquals('<a href="http://test.com" rel="nofollow">a</a>', SanitizedHTMLCodec.encode('<a href="http://test.com" onclick="alert(1)">a</a>'))
     }
     void testScript(){
-        Assert.assertEquals('', SanitizedHTMLCodec.encode('<script>alert(1)</script>'))
+        assertEquals('', SanitizedHTMLCodec.encode('<script>alert(1)</script>'))
     }
 }

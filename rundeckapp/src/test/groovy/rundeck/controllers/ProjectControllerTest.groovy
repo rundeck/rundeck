@@ -17,6 +17,8 @@
 
 package rundeck.controllers
 
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
 import com.dtolabs.rundeck.app.support.ProjectArchiveParams
 import com.dtolabs.rundeck.core.authentication.Group
@@ -27,7 +29,7 @@ import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-
+import groovy.mock.interceptor.MockFor
 import org.grails.plugins.codecs.JSONCodec;
 import org.grails.plugins.testing.GrailsMockHttpServletResponse
 import org.junit.Before
@@ -60,9 +62,9 @@ class ProjectControllerTest {
      * utility method to mock a class
      */
     private mockWith(Class clazz,Closure clos){
-        def mock = mockFor(clazz)
+        def mock = new MockFor(clazz)
         mock.demand.with(clos)
-        return mock.createMock()
+        return mock.proxyInstance()
     }
 
     @Test
@@ -114,13 +116,13 @@ class ProjectControllerTest {
         controller.apiProjectList()
         def base='http://localhost:8080/api/'+ApiRequestFilters.API_CURRENT_VERSION
         assert response.status == HttpServletResponse.SC_OK
-        assert response.json.size()==2
-        assert response.json[0].name=='testproject'
-        assert response.json[0].description==''
-        assert response.json[0].url==base+'/project/testproject'
-        assert response.json[1].name=='testproject2'
-        assert response.json[1].description==''
-        assert response.json[1].url==base+'/project/testproject2'
+        assert response.json.call.size()==2
+        assert response.json.call[0].name=='testproject'
+        assert response.json.call[0].description==''
+        assert response.json.call[0].url==base+'/project/testproject'
+        assert response.json.call[1].name=='testproject2'
+        assert response.json.call[1].description==''
+        assert response.json.call[1].url==base+'/project/testproject2'
     }
     @Test
     void apiProjectList_unacceptableReceivesXml(){
@@ -424,8 +426,8 @@ class ProjectControllerTest {
         def project = response.json
 
         //test project element
-        assertEquals 'test1', project.name
-        assertEquals '', project.description
+        assertEquals 'test1', project.call.name
+        assertEquals '', project.call.description
         assertEquals null, project.config
     }
     @Test
@@ -445,8 +447,8 @@ class ProjectControllerTest {
         def project = response.json
 
         //test project element
-        assertEquals 'test1', project.name
-        assertEquals '', project.description
+        assertEquals 'test1', project.call.name
+        assertEquals '', project.call.description
         assertEquals(['test.property': 'value1', 'test.property2': 'value2'], project.config)
     }
     @Test
@@ -735,7 +737,7 @@ class ProjectControllerTest {
         //test project element
         assertEquals null,result.error
         def project =result
-        assertEquals "test1",project.name
+        assertEquals "test1",project.call.name
         assertEquals 2, project.config.size()
         assertEquals 'value1', project.config['prop1']
         assertEquals 'value2', project.config['prop2']
@@ -798,7 +800,7 @@ class ProjectControllerTest {
         //test project element
         assertEquals null, result.error
         def project = result
-        assertEquals "test1", project.name
+        assertEquals "test1", project.call.name
         assertEquals 2, project.config.size()
         assertEquals 'value1', project.config['prop1']
         assertEquals 'value2', project.config['prop2']
@@ -1213,7 +1215,7 @@ class ProjectControllerTest {
             getRundeckFramework{->
                 null
             }
-            getAuthContextForSubject{->null}
+            getAuthContextForSubject{subj->null}
 
 
             if(isacl) {
@@ -1267,7 +1269,7 @@ class ProjectControllerTest {
             getRundeckFramework{->
                 null
             }
-            getAuthContextForSubject{->null}
+            getAuthContextForSubject{subj->null}
 
 
             if(isacl) {
@@ -1413,8 +1415,8 @@ class ProjectControllerTest {
         response.format='json'
         controller.apiProjectConfigGet()
         assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals "value1",response.json['prop1']
-        assertEquals "value2",response.json['prop2']
+        assertEquals "value1",response.json.call.prop1
+        assertEquals "value2",response.json.call.prop2
     }
     @Test
     void apiProjectConfigGet_text_success(){
@@ -1463,8 +1465,8 @@ class ProjectControllerTest {
         request.method='PUT'
         controller.apiProjectConfigPut()
         assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'value1', response.json['prop1']
-        assertEquals 'value2', response.json['prop2']
+        assertEquals 'value1', response.json.call.prop1
+        assertEquals 'value2', response.json.call.prop2
     }
 
 

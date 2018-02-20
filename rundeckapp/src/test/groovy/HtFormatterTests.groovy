@@ -17,6 +17,7 @@
 import com.dtolabs.rundeck.app.internal.logging.LegacyLogOutFormatter
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
+import static org.junit.Assert.*
 
 import java.text.SimpleDateFormat
 /*
@@ -40,13 +41,13 @@ public class HtFormatterTests {
         String dformat = fmt.format(new Date())
 
         String format1 = format.reformat([level:'INFO',time:dformat],"test1")
-        assertEquals "wrong format: ${format1}","^^^${dformat}|INFO||||||test1^^^",format1
+        assertEquals "wrong format: ${format1}","^^^${dformat}|INFO||||||test1^^^".toString(),format1
 
         //dataset format
         def data = [user:'user1',module:'coax',command:'barge',node:'pilf',context:'a.b.c']
         //'user','module','command','node','context']
         String format2 = format.reformat(data+ [level: 'INFO', time: dformat],"test1")
-        assertEquals "wrong format: ${format2}","^^^${dformat}|INFO|user1|coax|barge|pilf|a.b.c|test1^^^",format2
+        assertEquals "wrong format: ${format2}","^^^${dformat}|INFO|user1|coax|barge|pilf|a.b.c|test1^^^".toString(),format2
     }
 
     /**
@@ -59,14 +60,14 @@ public class HtFormatterTests {
 
         String format1 = format.reformat([level: 'INFO', time: dformat],testMessage)
         String pref1="^^^${dformat}|INFO||||||"
-        assertEquals "wrong format: ${format1}","${pref1}this is a multiline${lSep}record, for no reason${lSep} please^^^",format1
+        assertEquals "wrong format: ${format1}","${pref1}this is a multiline${lSep}record, for no reason${lSep} please^^^".toString(),format1
 
         //dataset format
         def data = [user:'user1',module:'coax',command:'barge',node:'pilf',context:'a.b.c']
         //'user','module','command','node','context']
         String format2 = format.reformat(data + [level: 'INFO', time: dformat],testMessage)
         String pref2 = "^^^${dformat}|INFO|user1|coax|barge|pilf|a.b.c|"
-        assertEquals "wrong format: ${format2}","${pref2}this is a multiline${lSep}record, for no reason${lSep} please^^^",format2
+        assertEquals "wrong format: ${format2}","${pref2}this is a multiline${lSep}record, for no reason${lSep} please^^^".toString(),format2
     }
 
 
@@ -79,31 +80,31 @@ public class HtFormatterTests {
         def tstring = fmt.format(date)
         def String s = hf.reformat([time:tstring,level:'SEVERE'], "This is a test")
 
-        assertEquals "formatting was incorrect: ${s}", "^^^${tstring}|SEVERE||||||This is a test^^^", s
+        assertEquals "formatting was incorrect: ${s}", "^^^${tstring}|SEVERE||||||This is a test^^^".toString(), s
 
         //add extra \r char
         s = hf.reformat([time: tstring, level: 'SEVERE'], "This is a test\r")
-        assertEquals "formatting was incorrect: ${s}", "^^^${tstring}|SEVERE||||||This is a test^^^", s
+        assertEquals "formatting was incorrect: ${s}", "^^^${tstring}|SEVERE||||||This is a test^^^".toString(), s
 
         //add metadata
         def map = [user: 'user1', module: 'AModule', command: 'aCmd', node: 'someNode', context: 'Proj.AModule.something']
         s = hf.reformat(map+[time: tstring, level: 'SEVERE'], "This is a test\r")
-        assertEquals "formatting was incorrect: ${s}", "^^^${tstring}|SEVERE|user1|AModule|aCmd|someNode|Proj.AModule.something|This is a test^^^", s
+        assertEquals "formatting was incorrect: ${s}", "^^^${tstring}|SEVERE|user1|AModule|aCmd|someNode|Proj.AModule.something|This is a test^^^".toString(), s
 
         //define some blank metadata
         map = [user: '', module: 'AModule', command: 'aCmd', node: '', context: 'Proj.AModule.something']
         s = hf.reformat(map + [time: tstring, level: 'SEVERE'], "This is a test\r")
-        assertEquals "formatting was incorrect: ${s}", "^^^${tstring}|SEVERE||AModule|aCmd||Proj.AModule.something|This is a test^^^", s
+        assertEquals "formatting was incorrect: ${s}", "^^^${tstring}|SEVERE||AModule|aCmd||Proj.AModule.something|This is a test^^^".toString(), s
 
         //define some null metadata
         map = [/* user:'',*/ module: 'AModule', command: 'aCmd',/* node:'', */ context: 'Proj.AModule.something']
         s = hf.reformat(map + [time: tstring, level: 'SEVERE'], "This is a test\r")
-        assertEquals "formatting was incorrect: ${s}", "^^^${tstring}|SEVERE||AModule|aCmd||Proj.AModule.something|This is a test^^^", s
+        assertEquals "formatting was incorrect: ${s}", "^^^${tstring}|SEVERE||AModule|aCmd||Proj.AModule.something|This is a test^^^".toString(), s
 
         //define all null metadata
         map = [:]
         s = hf.reformat(map + [time: tstring, level: 'SEVERE'], "This is a test\r")
-        assertEquals "formatting was incorrect: ${s}", "^^^${tstring}|SEVERE||||||This is a test^^^", s
+        assertEquals "formatting was incorrect: ${s}", "^^^${tstring}|SEVERE||||||This is a test^^^".toString(), s
 
 
     }

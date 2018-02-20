@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.SubjectAuthContext

@@ -21,7 +21,9 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
-import grails.test.GrailsMock
+//import grails.test.GrailsMock
+import grails.testing.mixin.integration.Integration
+import groovy.mock.interceptor.MockFor
 import org.junit.Assert
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -42,9 +44,9 @@ import rundeck.services.FrameworkService
  * Time: 1:10 PM
  */
 
+@Integration
 @RunWith(JUnit4.class)
 class ExecutionJobTest extends GroovyTestCase{
-
     void testInitializeEmpty(){
         ExecutionJob job = new ExecutionJob()
         def contextMock = setupJobDataMap([:])
@@ -69,10 +71,10 @@ class ExecutionJobTest extends GroovyTestCase{
     void testInitializeWithoutExecutionUtilService(){
         ScheduledExecution se = setupJob()
         ExecutionJob job = new ExecutionJob()
-        def mockes=new GrailsMock(ExecutionService)
+        def mockes=new MockFor(ExecutionService)
 
-        ExecutionService es=mockes.createMock()
-        def contextMock = setupJobDataMap([scheduledExecutionId:se.id,executionService:es])
+        ExecutionService es=mockes.proxyInstance()
+        def contextMock = setupJobDataMap([scheduledExecutionId:se.id,executionService:executionService])
         try {
             job.initialize(null, contextMock)
             Assert.fail("expected exception")
@@ -90,9 +92,9 @@ class ExecutionJobTest extends GroovyTestCase{
             se.userRoleList='a,b'
         }
         ExecutionJob job = new ExecutionJob()
-        def mockes=new GrailsMock(ExecutionService)
-        def mockeus=new GrailsMock(ExecutionUtilService)
-        def mockfs=new GrailsMock(FrameworkService)
+        def mockes=new MockFor(ExecutionService)
+        def mockeus=new MockFor(ExecutionUtilService)
+        def mockfs=new MockFor(FrameworkService)
         mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
             [test:'input']
         }
@@ -102,25 +104,25 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.assertEquals(input.executionType, 'scheduled')
             'fakeExecution'
         }
-        def proj = new GrailsMock(IRundeckProject)
+        def proj = new MockFor(IRundeckProject)
         proj.demand.getProjectProperties(2..2){-> [:]}
         mockfs.demand.getFrameworkProject(1..1){project->
-            proj.createMock()
+            proj.proxyInstance()
         }
         mockfs.demand.getRundeckFramework(1..1){->
             'fakeFramework'
         }
-        def mockAuth =new GrailsMock(UserAndRolesAuthContext)
+        def mockAuth =new MockFor(UserAndRolesAuthContext)
         mockAuth.demand.getUsername(1..1){
             'test'
         }
-        def authcontext=mockAuth.createMock()
+        def authcontext=mockAuth.proxyInstance()
         mockfs.demand.getAuthContextForUserAndRolesAndProject(1..1) { user, rolelist, project ->
             authcontext
         }
-        ExecutionService es = mockes.createMock()
-        ExecutionUtilService eus = mockeus.createMock()
-        FrameworkService fs = mockfs.createMock()
+        ExecutionService es = mockes.proxyInstance()
+        ExecutionUtilService eus = mockeus.proxyInstance()
+        FrameworkService fs = mockfs.proxyInstance()
 
         def contextMock = setupJobDataMap([scheduledExecutionId:se.id,frameworkService:fs,executionService:es,executionUtilService:eus,authContext:[dummy:true]])
         def result=job.initialize(null, contextMock)
@@ -146,9 +148,9 @@ class ExecutionJobTest extends GroovyTestCase{
             se.timeout='60m'
         }
         ExecutionJob job = new ExecutionJob()
-        def mockes=new GrailsMock(ExecutionService)
-        def mockeus=new GrailsMock(ExecutionUtilService)
-        def mockfs=new GrailsMock(FrameworkService)
+        def mockes=new MockFor(ExecutionService)
+        def mockeus=new MockFor(ExecutionUtilService)
+        def mockfs=new MockFor(FrameworkService)
         mockes.demand.selectSecureOptionInput(1..1){ ScheduledExecution scheduledExecution, Map params, Boolean exposed = false->
             [test:'input']
         }
@@ -158,26 +160,26 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.assertEquals(input.executionType, 'scheduled')
             'fakeExecution'
         }
-        def proj = new GrailsMock(IRundeckProject)
+        def proj = new MockFor(IRundeckProject)
         proj.demand.getProjectProperties(2..2){-> [:]}
         mockfs.demand.getFrameworkProject(1..1){project->
-            proj.createMock()
+            proj.proxyInstance()
         }
         mockfs.demand.getRundeckFramework(1..1){->
             'fakeFramework'
         }
-        def mockAuth =new GrailsMock(UserAndRolesAuthContext)
+        def mockAuth =new MockFor(UserAndRolesAuthContext)
         mockAuth.demand.getUsername(1..1){
             'test'
         }
-        def authcontext=mockAuth.createMock()
+        def authcontext=mockAuth.proxyInstance()
         mockfs.demand.getAuthContextForUserAndRolesAndProject(1..1) { user, rolelist, project ->
             authcontext
         }
 
-        ExecutionService es = mockes.createMock()
-        ExecutionUtilService eus = mockeus.createMock()
-        FrameworkService fs = mockfs.createMock()
+        ExecutionService es = mockes.proxyInstance()
+        ExecutionUtilService eus = mockeus.proxyInstance()
+        FrameworkService fs = mockfs.proxyInstance()
 
         def contextMock = setupJobDataMap([timeout:123L,scheduledExecutionId:se.id,frameworkService:fs,executionService:es,executionUtilService:eus,authContext:[dummy:true]])
         def result=job.initialize(null, contextMock)
@@ -194,13 +196,13 @@ class ExecutionJobTest extends GroovyTestCase{
         ScheduledExecution se = setupJob()
         Execution execution = setupExecution(se, new Date(), new Date())
         ExecutionJob job = new ExecutionJob()
-        def mockes = new GrailsMock(ExecutionService)
-        def mockeus = new GrailsMock(ExecutionUtilService)
+        def mockes = new MockFor(ExecutionService)
+        def mockeus = new MockFor(ExecutionUtilService)
         mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution e, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
             null //fail to start
         }
-        ExecutionService es = mockes.createMock()
-        ExecutionUtilService eus = mockeus.createMock()
+        ExecutionService es = mockes.proxyInstance()
+        ExecutionUtilService eus = mockeus.proxyInstance()
 
         def result = job.executeCommand(es, eus, execution, null, null,null,0,[:],[:])
         Assert.assertEquals(false,result.success)
@@ -215,8 +217,8 @@ class ExecutionJobTest extends GroovyTestCase{
         Execution execution = setupExecution(se, new Date(), new Date())
         Assert.assertNotNull(execution)
         ExecutionJob job = new ExecutionJob()
-        def mockes = new GrailsMock(ExecutionService)
-        def mockeus = new GrailsMock(ExecutionUtilService)
+        def mockes = new MockFor(ExecutionService)
+        def mockeus = new MockFor(ExecutionUtilService)
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
@@ -231,8 +233,8 @@ class ExecutionJobTest extends GroovyTestCase{
         mockeus.demand.finishExecution(1..1){ Map datamap->
             Assert.assertTrue(datamap.testExecuteAsyncBegin)
         }
-        ExecutionService es = mockes.createMock()
-        ExecutionUtilService eus = mockeus.createMock()
+        ExecutionService es = mockes.proxyInstance()
+        ExecutionUtilService eus = mockeus.proxyInstance()
         job.finalizeRetryMax=1
         job.finalizeRetryDelay=0
 
@@ -249,8 +251,8 @@ class ExecutionJobTest extends GroovyTestCase{
         Execution execution = setupExecution(se, new Date(), new Date())
         Assert.assertNotNull(execution)
         ExecutionJob job = new ExecutionJob()
-        def mockes = new GrailsMock(ExecutionService)
-        def mockeus = new GrailsMock(ExecutionUtilService)
+        def mockes = new MockFor(ExecutionService)
+        def mockeus = new MockFor(ExecutionUtilService)
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
@@ -265,8 +267,8 @@ class ExecutionJobTest extends GroovyTestCase{
         mockeus.demand.finishExecution(1..1){ Map datamap->
             Assert.assertTrue(datamap.testExecuteAsyncBegin)
         }
-        ExecutionService es = mockes.createMock()
-        ExecutionUtilService eus = mockeus.createMock()
+        ExecutionService es = mockes.proxyInstance()
+        ExecutionUtilService eus = mockeus.proxyInstance()
 
         def result=job.executeCommand(es,eus,execution,null, null, null, 0, [:], [:])
         Assert.assertEquals(true,result.success)
@@ -282,8 +284,8 @@ class ExecutionJobTest extends GroovyTestCase{
         Execution execution = setupExecution(se, new Date(), new Date())
         Assert.assertNotNull(execution)
         ExecutionJob job = new ExecutionJob()
-        def mockes = new GrailsMock(ExecutionService)
-        def mockeus = new GrailsMock(ExecutionUtilService)
+        def mockes = new MockFor(ExecutionService)
+        def mockeus = new MockFor(ExecutionUtilService)
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
@@ -301,8 +303,8 @@ class ExecutionJobTest extends GroovyTestCase{
         mockeus.demand.finishExecution(1..1){ Map datamap->
             Assert.assertTrue(datamap.testExecuteAsyncBegin)
         }
-        ExecutionService es = mockes.createMock()
-        ExecutionUtilService eus = mockeus.createMock()
+        ExecutionService es = mockes.proxyInstance()
+        ExecutionUtilService eus = mockeus.proxyInstance()
 
         def result=job.executeCommand(es,eus,execution,null, null, null, 0, [:], [:])
         Assert.assertEquals(false,result.success)
@@ -332,8 +334,8 @@ class ExecutionJobTest extends GroovyTestCase{
         ScheduledExecution se = setupJob()
         Execution execution = setupExecution(se, new Date(), new Date())
         ExecutionJob job = new ExecutionJob()
-        def mockes = new GrailsMock(ExecutionService)
-        def mockeus = new GrailsMock(ExecutionUtilService)
+        def mockes = new MockFor(ExecutionService)
+        def mockeus = new MockFor(ExecutionUtilService)
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
@@ -348,8 +350,8 @@ class ExecutionJobTest extends GroovyTestCase{
         mockeus.demand.finishExecution(1..1) { Map datamap ->
             Assert.assertTrue(datamap.testExecuteAsyncBegin)
         }
-        ExecutionService es = mockes.createMock()
-        ExecutionUtilService eus = mockeus.createMock()
+        ExecutionService es = mockes.proxyInstance()
+        ExecutionUtilService eus = mockeus.proxyInstance()
         job.finalizeRetryMax=1
         job.finalizeRetryDelay=0
 
@@ -366,8 +368,8 @@ class ExecutionJobTest extends GroovyTestCase{
         ScheduledExecution se = setupJob()
         Execution execution = setupExecution(se, new Date(), new Date())
         ExecutionJob job = new ExecutionJob()
-        def mockes = new GrailsMock(ExecutionService)
-        def mockeus = new GrailsMock(ExecutionUtilService)
+        def mockes = new MockFor(ExecutionService)
+        def mockeus = new MockFor(ExecutionUtilService)
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
@@ -381,8 +383,8 @@ class ExecutionJobTest extends GroovyTestCase{
         mockeus.demand.finishExecution(3..3) { Map datamap ->
             throw new Exception("expected failure")
         }
-        ExecutionService es = mockes.createMock()
-        ExecutionUtilService eus = mockeus.createMock()
+        ExecutionService es = mockes.proxyInstance()
+        ExecutionUtilService eus = mockeus.proxyInstance()
         job.finalizeRetryDelay=10
         job.finalizeRetryMax=3
         try {
@@ -402,8 +404,8 @@ class ExecutionJobTest extends GroovyTestCase{
         ScheduledExecution se = setupJob()
         Execution execution = setupExecution(se, new Date(), new Date())
         ExecutionJob job = new ExecutionJob()
-        def mockes = new GrailsMock(ExecutionService)
-        def mockeus = new GrailsMock(ExecutionUtilService)
+        def mockes = new MockFor(ExecutionService)
+        def mockeus = new MockFor(ExecutionUtilService)
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
@@ -421,8 +423,8 @@ class ExecutionJobTest extends GroovyTestCase{
                 throw new Exception("expected failure")
             }
         }
-        ExecutionService es = mockes.createMock()
-        ExecutionUtilService eus = mockeus.createMock()
+        ExecutionService es = mockes.proxyInstance()
+        ExecutionUtilService eus = mockeus.proxyInstance()
         job.finalizeRetryDelay=10
         job.finalizeRetryMax=4
         def result = job.executeCommand(es, eus, execution, null, null, null, 0, [:], [:])
@@ -540,7 +542,7 @@ class ExecutionJobTest extends GroovyTestCase{
         job.finalizeRetryMax=1
         job.finalizeRetryDelay=0
         def execution = setupExecution(null, new Date(), new Date())
-        def mockes = new GrailsMock(ExecutionService)
+        def mockes = new MockFor(ExecutionService)
 
         def expectresult= [
                 status: 'succeeded',
@@ -564,7 +566,7 @@ class ExecutionJobTest extends GroovyTestCase{
             testPass=true
         }
 
-        def es = mockes.createMock()
+        def es = mockes.proxyInstance()
         job.saveState(null,es,execution,true,false,false,true,null,-1,null,execMap)
         Assert.assertEquals(true,saveStateCalled)
         Assert.assertEquals(true,testPass)
@@ -576,7 +578,7 @@ class ExecutionJobTest extends GroovyTestCase{
         job.finalizeRetryMax=1
         job.finalizeRetryDelay=0
         def execution = setupExecution(null, new Date(), new Date())
-        def mockes = new GrailsMock(ExecutionService)
+        def mockes = new MockFor(ExecutionService)
 
         def expectresult= [
                 status: 'custom',
@@ -601,7 +603,7 @@ class ExecutionJobTest extends GroovyTestCase{
             testPass=true
         }
 
-        def es = mockes.createMock()
+        def es = mockes.proxyInstance()
 
         job.wasThreshold=true
         def initMap = [scheduledExecution: [logOutputThresholdStatus:'custom']]
@@ -618,7 +620,7 @@ class ExecutionJobTest extends GroovyTestCase{
         job.finalizeRetryDelay=0
         def scheduledExecution = setupJob()
         def execution = setupExecution(scheduledExecution, new Date(), null)
-        def mockes = new GrailsMock(ExecutionService)
+        def mockes = new MockFor(ExecutionService)
 
         def expectresult= [
                 status: 'succeeded',
@@ -647,7 +649,7 @@ class ExecutionJobTest extends GroovyTestCase{
             x=true
         }
 
-        def es = mockes.createMock()
+        def es = mockes.proxyInstance()
         def result=job.saveState(null,es,execution,true,false, false, false,null, scheduledExecution.id,null,execMap)
         Assert.assertTrue(x)
         Assert.assertEquals(true, saveStateCalled)
@@ -660,7 +662,7 @@ class ExecutionJobTest extends GroovyTestCase{
         job.finalizeRetryDelay=0
         def scheduledExecution = setupJob()
         def execution = setupExecution(scheduledExecution, new Date(), null)
-        def mockes = new GrailsMock(ExecutionService)
+        def mockes = new MockFor(ExecutionService)
 
         def expectresult= [
                 status: 'succeeded',
@@ -691,7 +693,7 @@ class ExecutionJobTest extends GroovyTestCase{
             saveStatsComplete=true
         }
 
-        def es = mockes.createMock()
+        def es = mockes.proxyInstance()
         job.statsRetryMax=2
         def result=job.saveState(null,es,execution,true,false, false,false,null, scheduledExecution.id,null,execMap)
         Assert.assertFalse(saveStatsComplete)
@@ -704,7 +706,7 @@ class ExecutionJobTest extends GroovyTestCase{
         job.finalizeRetryDelay=0
         def scheduledExecution = setupJob()
         def execution = setupExecution(scheduledExecution, new Date(), null)
-        def mockes = new GrailsMock(ExecutionService)
+        def mockes = new MockFor(ExecutionService)
 
         def expectresult= [
                 status: 'succeeded',
@@ -735,7 +737,7 @@ class ExecutionJobTest extends GroovyTestCase{
             saveStatsComplete=true
         }
 
-        def es = mockes.createMock()
+        def es = mockes.proxyInstance()
         job.statsRetryMax=4
         def result=job.saveState(null,es,execution,true,false, false,false,null, scheduledExecution.id,null,execMap)
         Assert.assertTrue(saveStatsComplete)
@@ -746,7 +748,7 @@ class ExecutionJobTest extends GroovyTestCase{
     void testSaveStateWithFailureNoJob(){
         def job = new ExecutionJob()
         def execution = setupExecution(null, new Date(), new Date())
-        def mockes = new GrailsMock(ExecutionService)
+        def mockes = new MockFor(ExecutionService)
 
         def expectresult= [
                 status: 'succeeded',
@@ -770,7 +772,7 @@ class ExecutionJobTest extends GroovyTestCase{
             fail3times.call()
         }
 
-        def es = mockes.createMock()
+        def es = mockes.proxyInstance()
 
         job.finalizeRetryMax=2
         def result=job.saveState(null,es,execution,true,false, false,true,null,-1,null,execMap)
@@ -797,8 +799,8 @@ class ExecutionJobTest extends GroovyTestCase{
         Execution execution = setupExecution(se, new Date(), new Date())
         Assert.assertNotNull(execution)
         ExecutionJob job = new ExecutionJob()
-        def mockes = new GrailsMock(ExecutionService)
-        def mockeus = new GrailsMock(ExecutionUtilService)
+        def mockes = new MockFor(ExecutionService)
+        def mockeus = new MockFor(ExecutionUtilService)
         FrameworkService.metaClass.static.getFrameworkForUserAndRoles = { String user, List rolelist, String rundeckbase ->
             'fakeFramework'
         }
@@ -818,8 +820,8 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.assertTrue(datamap.testExecuteAsyncBegin)
         }
 
-        ExecutionService es = mockes.createMock()
-        ExecutionUtilService eus = mockeus.createMock()
+        ExecutionService es = mockes.proxyInstance()
+        ExecutionUtilService eus = mockeus.proxyInstance()
         job.finalizeRetryMax=1
         job.finalizeRetryDelay=0
 

@@ -1,5 +1,6 @@
 package rundeck.codecs
 
+import rundeck.codecs.JobsXMLCodec
 import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin
 import rundeck.CommandExec

@@ -509,14 +509,10 @@ class ProjectController extends ControllerBase{
      */
     private def renderApiProjectJson (def pject, delegate, hasConfigAuth=false, vers=1){
         Map data=basicProjectDetails(pject)
-        delegate.url = data.url
-        delegate.name = data.name
-        delegate.description = data.description
+        delegate url: data.url, name: data.name, description: data.description
         def ctrl=this
         if(hasConfigAuth){
-            delegate.config {
-                ctrl.renderApiProjectConfigJson(pject,delegate)
-            }
+            delegate.config (frameworkService.loadProjectProperties(pject))
         }
     }
 
@@ -537,9 +533,7 @@ class ProjectController extends ControllerBase{
      * @param delegate builder delegate for response
      */
     private def renderApiProjectConfigJson (def pject, delegate){
-        frameworkService.loadProjectProperties(pject).each { k, v ->
-            delegate."${k}" = v
-        }
+        delegate frameworkService.loadProjectProperties(pject)
     }
 
 
@@ -576,10 +570,13 @@ class ProjectController extends ControllerBase{
             json{
                 return render(contentType: 'application/json'){
                         def builder = delegate
+                        List details = []
                         projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
                             //don't include config data
-                            builder.'element'(basicProjectDetails(pject))
+                            details.add(basicProjectDetails(pject))
                         }
+
+                        builder(details)
                 }
             }
         }
@@ -1247,7 +1244,7 @@ class ProjectController extends ControllerBase{
     {
         if (respFormat=='json') {
             render(contentType: 'application/json') {
-                contents = contentString
+                contents: contentString
             }
         }else{
             apiService.renderSuccessXml(request, response) {
@@ -1399,31 +1396,31 @@ class ProjectController extends ControllerBase{
         if (!project) {
             return
         }
-        def key = apiService.restoreUriPath(request, params.keypath)
+        def key_ = apiService.restoreUriPath(request, params.keypath)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json','text'],'text')
         def properties = frameworkService.loadProjectProperties(project)
-        if(null==properties.get(key)){
+        if(null==properties.get(key_)){
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_NOT_FOUND,
                     code: 'api.error.item.doesnotexist',
-                    args:['property',key],
+                    args:['property',key_],
                     format:respFormat
             ])
         }
-        def value = properties.get(key)
+        def value_ = properties.get(key_)
         switch (respFormat) {
             case 'text':
-                render (contentType: 'text/plain', text: value)
+                render (contentType: 'text/plain', text: value_)
                 break
             case 'xml':
                 apiService.renderSuccessXml(request, response) {
-                    property(key:key,value:value)
+                    property(key:key_,value:value_)
                 }
                 break
             case 'json':
                 render(contentType: 'application/json') {
-                    delegate.'key'=key
-                    delegate.'value'= value
+                    key key_
+                    value value_
                 }
                 break
         }
@@ -1433,25 +1430,25 @@ class ProjectController extends ControllerBase{
         if (!project) {
             return
         }
-        def key = apiService.restoreUriPath(request, params.keypath)
+        def key_ = apiService.restoreUriPath(request, params.keypath)
         def respFormat = apiService.extractResponseFormat(request, response, ['xml', 'json', 'text'])
-        def value=null
+        def value_=null
         if(request.format in ['text']){
-           value = request.inputStream.text
+           value_ = request.inputStream.text
         }else{
             def succeeded = apiService.parseJsonXmlWith(request,response,[
                     xml:{xml->
-                        value = xml?.'@value'?.text()
+                        value_ = xml?.'@value'?.text()
                     },
                     json:{json->
-                        value = json?.value
+                        value_ = json?.value
                     }
             ])
             if(!succeeded){
                 return
             }
         }
-        if(!value){
+        if(!value_){
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_BAD_REQUEST,
                     code:'api.error.invalid.request',
@@ -1460,7 +1457,7 @@ class ProjectController extends ControllerBase{
             ])
         }
 
-        def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key): value]),null)
+        def result=frameworkService.updateFrameworkProjectConfig(project.name,new Properties([(key_): value_]),null)
         if(!result.success){
             return apiService.renderErrorFormat(response, [
                     status: HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
@@ -1469,7 +1466,7 @@ class ProjectController extends ControllerBase{
             ])
         }
         def properties = frameworkService.loadProjectProperties(project)
-        def resultValue= properties.get(key)
+        def resultValue= properties.get(key_)
 
         switch (respFormat) {
             case 'text':
@@ -1477,13 +1474,13 @@ class ProjectController extends ControllerBase{
                 break
             case 'xml':
                 apiService.renderSuccessXml(request, response) {
-                    property(key: key, value: resultValue)
+                    property(key: key_, value: resultValue)
                 }
                 break
             case 'json':
                 render(contentType: 'application/json') {
-                    delegate.'key' = key
-                    delegate.'value' = resultValue
+                    key key_
+                    value value_
                 }
                 break
         }
@@ -1716,19 +1713,19 @@ class ProjectController extends ControllerBase{
         switch (respFormat) {
             case 'json':
                 render(contentType: 'application/json'){
-                    import_status=result.success?'successful':'failed'
-                    successful=result.success
+                    import_status result.success?'successful':'failed'
+                    successful result.success
                     if (!result.success) {
                         //list errors
-                        delegate.'errors'=result.joberrors
+                        errors result.joberrors
                     }
 
                     if(result.execerrors){
-                        delegate.'execution_errors'=result.execerrors
+                        execution_errors result.execerrors
                     }
 
                     if(result.aclerrors){
-                        delegate.'acl_errors'=result.aclerrors
+                        acl_errors result.aclerrors
                     }
                 }
                 break;

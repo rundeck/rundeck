@@ -16,6 +16,8 @@
 
 package rundeck.services
 
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import grails.test.mixin.*
 import org.rundeck.storage.api.StorageException
@@ -306,7 +308,7 @@ class DbStorageServiceTests {
         assertEquals('abc', store0.name)
         assertEquals('abc', store0.path)
         assertEquals([abc: 'xyz1'], store0.storageMeta)
-        assertEquals('abc1'.bytes, store0.data)
+        assertEquals(new String('abc1'.bytes), new String(store0.data))
         def store1 = Storage.findByNamespaceAndDirAndName('other', '', 'abc')
         assertNotNull(store1)
         assertEquals('other', store1.namespace)
@@ -314,7 +316,7 @@ class DbStorageServiceTests {
         assertEquals('abc', store1.name)
         assertEquals('abc', store1.path)
         assertEquals([abc: 'xyz3'], store1.storageMeta)
-        assertEquals('abc2'.bytes, store1.data)
+        assertEquals(new String('abc2'.bytes), new String(store1.data))
         }
     }
 
@@ -336,7 +338,7 @@ class DbStorageServiceTests {
             assertEquals('abc3', store1.name)
             assertEquals('abc3', store1.path)
             assertEquals([abc: 'xyz3'], store1.storageMeta)
-            assertEquals('abc'.bytes, store1.data)
+            assertEquals(new String('abc'.bytes), new String(store1.data))
         }
     }
 
@@ -391,7 +393,7 @@ class DbStorageServiceTests {
             assertEquals('', store1.dir)
             assertEquals('abc', store1.name)
             assertEquals([abc: 'xyz3'], store1.storageMeta)
-            assertEquals('abc'.bytes, store1.data)
+            assertEquals(new String('abc'.bytes), new String(store1.data))
         }
     }
     void testUpdateResource_ok_ns() {
@@ -418,7 +420,7 @@ class DbStorageServiceTests {
             assertEquals('', store1.dir)
             assertEquals('abc', store1.name)
             assertEquals([abc: 'xyz1'], store1.storageMeta)
-            assertEquals('abc1'.bytes, store1.data)
+            assertEquals(new String('abc1'.bytes), new String(store1.data))
             def store2 = Storage.findByNamespaceAndDirAndName('other','', 'abc')
             assertEquals(store2.id, storage2.id)
             assertNotNull(store2)
@@ -427,7 +429,7 @@ class DbStorageServiceTests {
             assertEquals('', store2.dir)
             assertEquals('abc', store2.name)
             assertEquals([abc: 'xyz3'], store2.storageMeta)
-            assertEquals('abc3'.bytes, store2.data)
+            assertEquals(new String('abc3'.bytes), new String(store2.data))
         }
     }
 

@@ -16,9 +16,10 @@
 
 package rundeck
 
-import grails.test.GrailsUnitTestCase
+import static org.junit.Assert.*
+
+//import grails.test.GrailsUnitTestCase
 import grails.test.mixin.TestFor
-import junit.framework.Assert
 import rundeck.services.ExecutionService
 
 /**

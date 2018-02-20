@@ -16,6 +16,14 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.internal.logging.ThreadBoundLogOutputStream
+import groovy.mock.interceptor.MockFor
+import groovy.mock.interceptor.StubFor
+
+import java.lang.invoke.MethodHandleImpl
+
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior
@@ -47,12 +55,12 @@ class ExecutionUtilServiceTests {
 
     void testfinishExecutionMetricsSuccess() {
         def executionUtilService = new ExecutionUtilService()
-        def control=mockFor(MetricService)
+        def control=new MockFor(MetricService)
         control.demand.markMeter(1..1){String clazz, String key->
             assertEquals('rundeck.services.ExecutionService',clazz)
             assertEquals('executionSuccessMeter',key)
         }
-        executionUtilService.metricService=control.createMock()
+        executionUtilService.metricService=control.proxyInstance()
         def thread=new ServiceThreadBase()
         thread.success=true
         executionUtilService.finishExecutionMetrics([thread:thread])
@@ -60,12 +68,12 @@ class ExecutionUtilServiceTests {
 
     void testfinishExecutionMetricsFailure() {
         def executionUtilService = new ExecutionUtilService()
-        def control=mockFor(MetricService)
+        def control=new MockFor(MetricService)
         control.demand.markMeter(1..1){String clazz, String key->
             assertEquals('rundeck.services.ExecutionService',clazz)
             assertEquals('executionFailureMeter',key)
         }
-        executionUtilService.metricService=control.createMock()
+        executionUtilService.metricService=control.proxyInstance()
         def thread=new ServiceThreadBase()
         thread.success=false
         executionUtilService.finishExecutionMetrics([thread:thread])
@@ -79,22 +87,22 @@ class ExecutionUtilServiceTests {
         def executionUtilService = new ExecutionUtilService()
         def thread = new ServiceThreadBase<WorkflowExecutionResult>()
         thread.success = false
-        def logcontrol = mockFor(ExecutionLogWriter)
+        def logcontrol = new MockFor(ExecutionLogWriter)
         logcontrol.demand.logError(1..1){String value->
             assertEquals("Execution failed: 1 in project p1: null",value)
         }
         logcontrol.demand.close(1..1){->
         }
-        def loghandler=logcontrol.createMock()
+        def loghandler=logcontrol.proxyInstance()
 
-        def stbocontrol=mockFor(ThreadBoundOutputStream)
-        def stbecontrol=mockFor(ThreadBoundOutputStream)
+        def stbocontrol=new MockFor(ThreadBoundOutputStream)
+        def stbecontrol=new MockFor(ThreadBoundOutputStream)
         stbocontrol.demand.close(1..1){->}
         stbocontrol.demand.removeThreadStream(1..1){->}
         stbecontrol.demand.close(1..1){->}
         stbecontrol.demand.removeThreadStream(1..1){->}
-        executionUtilService.sysThreadBoundOut=stbocontrol.createMock()
-        executionUtilService.sysThreadBoundErr=stbecontrol.createMock()
+        executionUtilService.sysThreadBoundOut= stbocontrol.proxyInstance()
+        executionUtilService.sysThreadBoundErr=stbecontrol.proxyInstance()
 
         executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:[id:1, project:'p1']])
     }
@@ -152,7 +160,7 @@ class ExecutionUtilServiceTests {
                 return null
             }
         }
-        def logcontrol = mockFor(ExecutionLogWriter)
+        def logcontrol = new MockFor(ExecutionLogWriter)
         logcontrol.demand.logVerbose(1..1){String value->
             assertEquals("abcd",value)
         }
@@ -161,16 +169,16 @@ class ExecutionUtilServiceTests {
         }
         logcontrol.demand.close(1..1){->
         }
-        def loghandler=logcontrol.createMock()
+        def loghandler=logcontrol.proxyInstance()
 
-        def stbocontrol=mockFor(ThreadBoundOutputStream)
-        def stbecontrol=mockFor(ThreadBoundOutputStream)
+        def stbocontrol=new MockFor(ThreadBoundOutputStream)
+        def stbecontrol=new MockFor(ThreadBoundOutputStream)
         stbocontrol.demand.close(1..1){->}
         stbocontrol.demand.removeThreadStream(1..1){->}
         stbecontrol.demand.close(1..1){->}
         stbecontrol.demand.removeThreadStream(1..1){->}
-        executionUtilService.sysThreadBoundOut=stbocontrol.createMock()
-        executionUtilService.sysThreadBoundErr=stbecontrol.createMock()
+        executionUtilService.sysThreadBoundOut=stbocontrol.proxyInstance()
+        executionUtilService.sysThreadBoundErr=stbecontrol.proxyInstance()
 
         executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:[id:1, project:"x1"]])
     }
@@ -184,7 +192,7 @@ class ExecutionUtilServiceTests {
         thread.success = false
         thread.resultObject=null
         thread.thrown=new Exception("exceptionTest1")
-        def logcontrol = mockFor(ExecutionLogWriter)
+        def logcontrol = new MockFor(ExecutionLogWriter)
         logcontrol.demand.logError(1..1){String value->
             assertEquals("exceptionTest1",value)
         }
@@ -194,16 +202,16 @@ class ExecutionUtilServiceTests {
         }
         logcontrol.demand.close(1..1){->
         }
-        def loghandler=logcontrol.createMock()
+        def loghandler=logcontrol.proxyInstance()
 
-        def stbocontrol=mockFor(ThreadBoundOutputStream)
-        def stbecontrol=mockFor(ThreadBoundOutputStream)
+        def stbocontrol=new MockFor(ThreadBoundOutputStream)
+        def stbecontrol=new MockFor(ThreadBoundOutputStream)
         stbocontrol.demand.close(1..1){->}
         stbocontrol.demand.removeThreadStream(1..1){->}
         stbecontrol.demand.close(1..1){->}
         stbecontrol.demand.removeThreadStream(1..1){->}
-        executionUtilService.sysThreadBoundOut=stbocontrol.createMock()
-        executionUtilService.sysThreadBoundErr=stbecontrol.createMock()
+        executionUtilService.sysThreadBoundOut=stbocontrol.proxyInstance()
+        executionUtilService.sysThreadBoundErr=stbecontrol.proxyInstance()
 
         executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:[id:1]])
     }
@@ -218,7 +226,7 @@ class ExecutionUtilServiceTests {
         thread.resultObject=null
         def cause=new Exception("exceptionCause1")
         thread.thrown=new Exception("exceptionTest1",cause)
-        def logcontrol = mockFor(ExecutionLogWriter)
+        def logcontrol = new MockFor(ExecutionLogWriter)
         logcontrol.demand.logError(1..1){String value->
             assertEquals("exceptionTest1,Caused by: exceptionCause1",value)
         }
@@ -227,16 +235,16 @@ class ExecutionUtilServiceTests {
             assertTrue(value.contains("exceptionTest1"))
         }
         logcontrol.demand.close(1..1){-> }
-        def loghandler=logcontrol.createMock()
+        def loghandler=logcontrol.proxyInstance()
 
-        def stbocontrol=mockFor(ThreadBoundOutputStream)
-        def stbecontrol=mockFor(ThreadBoundOutputStream)
+        def stbocontrol=new MockFor(ThreadBoundOutputStream)
+        def stbecontrol=new MockFor(ThreadBoundOutputStream)
         stbocontrol.demand.close(1..1){->}
         stbocontrol.demand.removeThreadStream(1..1){->}
         stbecontrol.demand.close(1..1){->}
         stbecontrol.demand.removeThreadStream(1..1){->}
-        executionUtilService.sysThreadBoundOut=stbocontrol.createMock()
-        executionUtilService.sysThreadBoundErr=stbecontrol.createMock()
+        executionUtilService.sysThreadBoundOut=stbocontrol.proxyInstance()
+        executionUtilService.sysThreadBoundErr=stbecontrol.proxyInstance()
 
         executionUtilService.finishExecutionLogging([thread: thread,loghandler: loghandler,execution:[id:1]])
     }

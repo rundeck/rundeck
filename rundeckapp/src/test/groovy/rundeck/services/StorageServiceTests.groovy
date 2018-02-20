@@ -16,6 +16,10 @@
 
 package rundeck.services
 
+import groovy.mock.interceptor.MockFor
+
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.core.storage.AuthStorageTree
 import grails.test.mixin.*
 
@@ -28,9 +32,9 @@ class StorageServiceTests {
  * utility method to mock a class
  */
     private <T> T mockWith(Class<T> clazz, Closure clos) {
-        def mock = mockFor(clazz)
+        def mock = new MockFor(clazz)
         mock.demand.with(clos)
-        return mock.createMock()
+        return mock.proxyInstance()
     }
     void testHasResource() {
         service.authRundeckStorageTree=mockWith(AuthStorageTree){

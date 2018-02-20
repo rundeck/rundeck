@@ -16,12 +16,15 @@
  * limitations under the License.
  */
 
+import grails.test.mixin.TestMixin
 import grails.test.mixin.support.GrailsUnitTestMixin;
 import groovy.xml.MarkupBuilder
 
 import com.dtolabs.rundeck.app.support.BuilderUtil
-
+import org.junit.runner.RunWith
+import org.junit.runners.JUnit4
 import rundeck.CommandExec
+import static org.junit.Assert.*
 
 /*
  * BuilderUtilTests.java
@@ -30,9 +33,16 @@ import rundeck.CommandExec
  * Created: Jan 25, 2011 10:43:14 AM
  * 
  */
-
 @TestMixin(GrailsUnitTestMixin)
-public class BuilderUtilTests{
+class BuilderUtilTests{
+
+    void setUp() {
+        // Setup logic here
+    }
+
+    void tearDown() {
+        // Tear down logic here
+    }
 
     void testBasic(){
         def map = [a:'b',c:'d']

@@ -16,7 +16,7 @@
 
 package rundeck
 
-
+import static org.junit.Assert.*
 
 import grails.test.mixin.*
 import org.junit.*

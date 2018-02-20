@@ -16,6 +16,7 @@
 
 package rundeck.codecs
 
+import rundeck.codecs.JobsYAMLCodec
 import org.yaml.snakeyaml.Yaml
 import rundeck.CommandExec
 import rundeck.JobExec

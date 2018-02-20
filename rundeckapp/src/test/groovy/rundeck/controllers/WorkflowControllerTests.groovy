@@ -16,11 +16,14 @@
 
 package rundeck.controllers
 
+import static org.junit.Assert.*
+
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import groovy.mock.interceptor.MockFor
 import rundeck.CommandExec
 import rundeck.JobExec
 import rundeck.PluginStep
@@ -79,9 +82,9 @@ class WorkflowControllerTests {
     }
 
     private FrameworkService createMockFrameworkService(boolean nodestep,Map expectedParams=null) {
-        def fwmock = mockFor(FrameworkService)
-        fwmock.demand.getAuthContextForSubject{ subject -> null }
-        fwmock.demand.projectNames{authContext -> null}
+        def fwmock = new MockFor(FrameworkService)
+        fwmock.demand.getAuthContextForSubject(0..3){ subject -> null }
+        fwmock.demand.projectNames(0..3){authContext -> null}
         if(nodestep){
             fwmock.demand.getNodeStepPluginDescription { type -> DescriptionBuilder.builder().name('blah').build() }
         }else{
@@ -101,25 +104,38 @@ class WorkflowControllerTests {
             [valid: true, props: params]
         }
 
-        fwmock.createMock()
+        fwmock.proxyInstance()
     }
 
     /**
      * utility method to mock a class
      */
     private mockWith(Class clazz,Closure clos){
-        def mock = mockFor(clazz,true)
+        def mock = new MockFor(clazz,true)
         mock.demand.with(clos)
-        return mock.createMock()
+        return mock.proxyInstance()
     }
 
     private FrameworkService minimalFrameworkService(){
         mockWith(FrameworkService){
-            getAuthContextForSubject(0..3){subj->
+            getAuthContextForSubject(0..6){subj->
                 null
             }
-            projectNames(0..3){authContext ->
-                null}
+            projectNames(0..6){authContext ->
+                null
+            }
+            getAuthContextForSubject(0..6){subj->
+                null
+            }
+            projectNames(0..6){authContext ->
+                null
+            }
+            getAuthContextForSubject(0..6){subj->
+                null
+            }
+            projectNames(0..6){authContext ->
+                null
+            }
         }
     }
     /**
