@@ -129,3 +129,26 @@ environments:
                 testOnReturn: false
                 jdbcInterceptors: ConnectionState
                 defaultTransactionIsolation: 2 # TRANSACTION_READ_COMMITTED
+
+
+rdeck:
+    base: /home/carlos/Documents/arquivos/pessoal/rundeck/localdev
+
+java:
+    security:
+        auth:
+            login:
+                config: /home/carlos/Documents/arquivos/pessoal/rundeck/localdev/server/config/jaas-loginmodule.conf
+
+rundeck:
+    config:
+        location: /home/carlos/Documents/arquivos/pessoal/rundeck/localdev/server/config/rundeck-config.properties
+    security:
+        authorization:
+            preauthenticated:
+                delimiter: ','
+                enabled: false
+                attributeName: REMOTE_USER_GROUPS
+
+server:
+    port: 4440
