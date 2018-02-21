@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
+import com.dtolabs.rundeck.server.plugins.trigger.PluginBaseMetaTrait
 import org.quartz.SimpleScheduleBuilder
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
@@ -31,7 +32,7 @@ import org.rundeck.core.tasks.TaskTrigger
 @PluginDescription(title = 'Simple Schedule',
         description = '''Set a simple interval schedule''')
 
-class SimpleScheduleTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigger {
+class SimpleScheduleTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigger, PluginBaseMetaTrait {
     static final String PROVIDER_NAME = 'simple'
     String type = PROVIDER_NAME
 
@@ -76,4 +77,5 @@ class SimpleScheduleTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigg
 
         return trigger
     }
+    Map meta = [glyphicon: 'calendar']
 }

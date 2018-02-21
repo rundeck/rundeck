@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.plugins.descriptions.DynamicSelectValues
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
+import com.dtolabs.rundeck.server.plugins.trigger.PluginBaseMetaTrait
 import org.quartz.CalendarIntervalScheduleBuilder
 import org.quartz.DateBuilder.IntervalUnit
 import org.quartz.Trigger
@@ -38,7 +39,8 @@ import static org.rundeck.core.tasks.TaskPluginTypes.TaskTrigger
 @PluginDescription(title = 'Calendar Interval Schedule',
         description = '''Calendar based interval schedules''')
 
-class CalendarIntervalTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigger, TimeZonePropertyTrait {
+class CalendarIntervalTaskTrigger
+        implements TaskTrigger, QuartzSchedulerTaskTrigger, TimeZonePropertyTrait, PluginBaseMetaTrait {
     static final String PROVIDER_NAME = 'interval'
     String type = PROVIDER_NAME
 
@@ -95,4 +97,6 @@ class CalendarIntervalTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTri
         return trigger
     }
 
+
+    Map meta = [glyphicon: 'calendar']
 }

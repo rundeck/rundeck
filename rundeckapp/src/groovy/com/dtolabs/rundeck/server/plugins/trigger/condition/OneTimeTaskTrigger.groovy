@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
+import com.dtolabs.rundeck.server.plugins.trigger.PluginBaseMetaTrait
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
 import org.rundeck.core.tasks.TaskPluginTypes
@@ -37,7 +38,8 @@ import java.text.SimpleDateFormat
 @PluginDescription(title = 'One Time',
         description = '''Triggers once at a certain time and date''')
 
-class OneTimeTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigger, TimeZonePropertyTrait {
+class OneTimeTaskTrigger
+        implements TaskTrigger, QuartzSchedulerTaskTrigger, TimeZonePropertyTrait, PluginBaseMetaTrait {
     static final String PROVIDER_NAME = 'onetime'
     String type = PROVIDER_NAME
 
@@ -74,4 +76,5 @@ class OneTimeTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigger, Tim
             }
         }
     }
+    Map meta = [glyphicon: 'calendar']
 }

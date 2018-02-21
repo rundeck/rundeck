@@ -22,8 +22,10 @@ import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.server.plugins.trigger.PluginBaseMetaTrait
 import org.quartz.CronExpression
 import org.quartz.CronScheduleBuilder
+import org.quartz.DateBuilder
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
 import org.rundeck.core.tasks.TaskPluginTypes
@@ -38,7 +40,8 @@ import java.text.ParseException
 @Plugin(name = CronScheduleTaskTrigger.PROVIDER_NAME, service = TaskPluginTypes.TaskTrigger)
 @PluginDescription(title = 'Cron Schedule',
         description = '''Use a Cron expression for a schedule''')
-class CronScheduleTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigger, TimeZonePropertyTrait {
+class CronScheduleTaskTrigger
+        implements TaskTrigger, QuartzSchedulerTaskTrigger, TimeZonePropertyTrait, PluginBaseMetaTrait {
     static final String PROVIDER_NAME = 'cron'
     String type = PROVIDER_NAME
 
@@ -76,4 +79,5 @@ class CronScheduleTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigger
         return trigger
     }
 
+    Map meta = [glyphicon: 'calendar']
 }

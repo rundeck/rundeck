@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.plugins.descriptions.DynamicSelectValues
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
+import com.dtolabs.rundeck.server.plugins.trigger.PluginBaseMetaTrait
 import org.quartz.*
 import org.rundeck.core.tasks.TaskPluginTypes
 import org.rundeck.core.tasks.TaskTrigger
@@ -35,7 +36,7 @@ import java.util.regex.Pattern
 @PluginDescription(title = 'Daily Interval Schedule',
         description = '''Daily interval scheduler with start and end times of day, and days of week''')
 
-class DailyIntervalTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigger {
+class DailyIntervalTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigger, PluginBaseMetaTrait {
     static final String PROVIDER_NAME = 'daily'
     String type = PROVIDER_NAME
 
@@ -152,4 +153,6 @@ class DailyIntervalTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigge
 
 
     }
+
+    Map meta = [glyphicon: 'calendar']
 }
