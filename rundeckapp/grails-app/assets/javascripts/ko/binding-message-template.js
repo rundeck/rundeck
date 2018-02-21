@@ -41,3 +41,18 @@ ko.bindingHandlers.messageTemplate = {
         ko.utils.setTextContent(element, text);
     }
 };
+
+ko.bindingHandlers.messageValue = {
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+
+        var text=jQuery(element).text();
+        jQuery(element).data('ko-message-value',text);
+        return { 'controlsDescendantBindings': true };
+    },
+    update:function(element, valueAccessor, allBindings, viewModel, bindingContext){
+        var template=jQuery(element).data('ko-message-value');
+
+        var text = message(template);
+        ko.utils.setTextContent(element, text);
+    }
+};

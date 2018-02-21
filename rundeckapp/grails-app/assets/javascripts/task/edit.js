@@ -25,6 +25,7 @@
 //= require jobs/jobOptions
 //= require menu/job-remote-options
 //= require ko/binding-popover
+//= require ko/binding-message-template
 //= require ko/component/map-editor
 //= require menu/joboptions
 //= require koBind
