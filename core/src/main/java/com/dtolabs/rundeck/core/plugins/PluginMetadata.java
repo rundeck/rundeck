@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.plugins;
 
 import java.io.File;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Provides metadata about plugin files
@@ -26,41 +27,59 @@ public interface PluginMetadata {
     /**
      * @return Name of file on disk
      */
-    String getFilename();
+    default String getFilename() {
+        return null;
+    }
 
     /**
      * @return Source file on disk
      */
-    File getFile();
+    default File getFile() {
+        return null;
+    }
 
     /**
      * @return author metadata
      */
-    String getPluginAuthor();
+    default String getPluginAuthor() {
+        return null;
+    }
 
     /**
      * @return plugin file version
      */
-    String getPluginFileVersion();
+    default String getPluginFileVersion(){
+        return null;
+    }
 
     /**
      * @return rundeck plugin format version
      */
-    String getPluginVersion();
+    default String getPluginVersion(){
+        return null;
+    }
 
     /**
      * @return plugin URL
      */
-    String getPluginUrl();
+    default String getPluginUrl() {
+        return null;
+    }
 
     /**
      * @return build date of plugin
      */
-    Date getPluginDate();
+    default Date getPluginDate() {
+        return null;
+    }
 
     /**
      * @return date loaded
      */
     Date getDateLoaded();
+
+    default Map getMeta() {
+        return null;
+    }
 
 }

@@ -83,7 +83,7 @@ class UiPluginService implements InitializingBean {
         }
         cachedMetadata = metadataCache.get(key)
 
-        [metadata: meta, icon: cachedMetadata.iconResource]
+        [metadata: meta, icon: cachedMetadata.iconResource, glyphicon: cachedMetadata.glyphicon]
     }
 
     /**
@@ -109,7 +109,11 @@ class UiPluginService implements InitializingBean {
         if (!metadata) {
             log.debug("No metadata for ${key}")
         }
-        new CachedPluginMeta(date: metadata?.dateLoaded, iconResource: iconResourcePath)
+        new CachedPluginMeta(
+                date: metadata?.dateLoaded,
+                iconResource: iconResourcePath,
+                glyphicon: metadata?.meta?.glyphicon
+        )
     }
     /**
      * Get ui profile for plugin
@@ -170,6 +174,7 @@ class UiPluginService implements InitializingBean {
 
     static class CachedPluginMeta {
         String iconResource
+        String glyphicon
         Date date
     }
 

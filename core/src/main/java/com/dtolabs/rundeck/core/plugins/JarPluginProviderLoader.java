@@ -909,4 +909,33 @@ class JarPluginProviderLoader implements ProviderLoader,
     public Date getDateLoaded() {
         return loadedDate;
     }
+
+    private Map pluginMeta = null;
+
+    @Override
+    public Map getMeta() {
+        if (null == pluginMeta) {
+            synchronized (this) {
+                if (null == pluginMeta) {
+                    pluginMeta = readPluginMeta(getMainAttributes());
+                }
+            }
+        }
+        return pluginMeta;
+
+
+    }
+
+    private Map readPluginMeta(final Attributes mainAttributes) {
+        HashMap<String, Object> data = new HashMap<>();
+        for (Object o : mainAttributes.keySet()) {
+            if (o.toString().startsWith("Rundeck-Plugin-Meta-")) {
+                data.put(
+                        o.toString().substring("Rundeck-Plugin-Meta-".length()),
+                        mainAttributes.getValue(o.toString())
+                );
+            }
+        }
+        return data;
+    }
 }

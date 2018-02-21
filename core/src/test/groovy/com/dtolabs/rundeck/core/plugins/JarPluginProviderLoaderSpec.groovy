@@ -52,6 +52,40 @@ class JarPluginProviderLoaderSpec extends Specification {
         }
     }
 
+    def "plugin meta data loading"() {
+        given:
+        MyTestService service = new MyTestService()
+        service.name = "TestService";
+        service.isvalid = true;
+        service.createInstance = new TestJarPluginProviderLoader.testProvider2();
+
+        final Class[] classes = [TestJarPluginProviderLoader.testProvider2];
+
+        final Map<String, String> entries = new HashMap<>();
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_ARCHIVE, "true");
+        entries.put(JarPluginProviderLoader.RUNDECK_PLUGIN_VERSION, CURRENT_PLUGIN_VERSION);
+        entries.put("Rundeck-Plugin-Meta-Monkey", "value1");
+        entries.put("Rundeck-Plugin-Meta-disaster", "value2");
+        final File testJar11 = TestJarPluginProviderLoader.createTestJar(entries, null, classes, null);
+
+        FileUtils.deleteDir(testPluginJarCacheDirectory);
+        testPluginJarCacheDirectory.mkdirs();
+
+        final JarPluginProviderLoader jarPluginProviderLoader = new JarPluginProviderLoader(
+                testJar11,
+                testPluginJarCacheDirectory,
+                testCachedir
+        );
+
+        when:
+        def meta = jarPluginProviderLoader.getMeta()
+        then:
+        meta == [
+                Monkey  : 'value1',
+                disaster: 'value2'
+        ]
+    }
+
     def "does not close after expire if retained"() {
         given:
         MyTestService service = new MyTestService()

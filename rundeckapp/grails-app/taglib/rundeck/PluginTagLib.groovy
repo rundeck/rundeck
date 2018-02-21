@@ -25,7 +25,7 @@ class PluginTagLib {
     def static namespace = "stepplugin"
     def FrameworkService frameworkService
     def UiPluginService uiPluginService
-    static returnObjectForTags = ['messageText','pluginIconSrc']
+    static returnObjectForTags = ['messageText', 'pluginIconSrc', 'pluginGlyphiconName']
 
     def display={attrs,body->
         def step=attrs.step
@@ -47,6 +47,7 @@ class PluginTagLib {
 
     def pluginIcon = { attrs, body ->
         def iconSrc = pluginIconSrc(attrs, body)
+        def glyphicon = pluginGlyphiconName(attrs, body)
         if (iconSrc) {
             attrs.src = iconSrc
             out << '<img '
@@ -56,13 +57,15 @@ class PluginTagLib {
                 }
             }
             out << "/>"
+        } else if (glyphicon) {
+            out << g.icon([name: glyphicon])
         } else {
             out << body()
         }
     }
     def pluginIconSrc = { attrs, body ->
-        def service = attrs.remove('service')
-        def name = attrs.remove('name')
+        def service = attrs.get('service')
+        def name = attrs.get('name')
 
         if (!service || !name) {
             return null
@@ -74,6 +77,19 @@ class PluginTagLib {
                     action: 'pluginIcon',
                     params: [service: service, name: name]
             )
+        }
+        return null
+    }
+    def pluginGlyphiconName = { attrs, body ->
+        def service = attrs.get('service')
+        def name = attrs.get('name')
+
+        if (!service || !name) {
+            return null
+        }
+        def profile = uiPluginService.getProfileFor(service, name)
+        if (profile.glyphicon) {
+            return profile.glyphicon
         }
         return null
     }

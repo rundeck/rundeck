@@ -517,6 +517,9 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
                             return metadata
                         }
                     }
+                } else if (bean instanceof PluginMetadata) {
+                    def metadata = bean as PluginMetadata
+                    return metadata
                 }
             } catch (NoSuchBeanDefinitionException e) {
                 log.error("No such bean: ${beanName}")
