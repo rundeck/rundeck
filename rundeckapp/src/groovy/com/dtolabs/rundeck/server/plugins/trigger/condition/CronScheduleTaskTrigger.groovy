@@ -79,5 +79,9 @@ class CronScheduleTaskTrigger
         return trigger
     }
 
+    @Override
+    boolean isValidSchedule() {
+        CronExpression.isValidExpression(cronExpression)
+    }
     Map meta = [glyphicon: 'calendar']
 }

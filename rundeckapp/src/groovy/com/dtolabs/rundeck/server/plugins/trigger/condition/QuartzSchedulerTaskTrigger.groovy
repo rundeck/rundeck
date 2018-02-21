@@ -20,5 +20,6 @@ import org.quartz.Trigger
 import org.quartz.TriggerBuilder
 
 interface QuartzSchedulerTaskTrigger {
+    boolean isValidSchedule()
     Trigger buildQuartzTrigger(TriggerBuilder builder)
 }

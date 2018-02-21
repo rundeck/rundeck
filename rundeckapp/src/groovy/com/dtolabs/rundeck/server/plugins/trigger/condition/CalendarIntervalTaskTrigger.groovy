@@ -97,6 +97,10 @@ class CalendarIntervalTaskTrigger
         return trigger
     }
 
+    @Override
+    boolean isValidSchedule() {
+        interval > 0 && (intervalUnit.ordinal() > IntervalUnit.MILLISECOND.ordinal() || interval > 1000)
+    }
 
     Map meta = [glyphicon: 'calendar']
 }

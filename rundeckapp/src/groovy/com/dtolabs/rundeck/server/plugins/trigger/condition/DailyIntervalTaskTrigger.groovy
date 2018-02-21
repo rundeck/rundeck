@@ -153,6 +153,10 @@ class DailyIntervalTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigge
 
 
     }
+    @Override
+    boolean isValidSchedule() {
+        interval > 0 && (intervalUnit.ordinal() > DateBuilder.IntervalUnit.MILLISECOND.ordinal() || interval > 1000)
+    }
 
     Map meta = [glyphicon: 'calendar']
 }

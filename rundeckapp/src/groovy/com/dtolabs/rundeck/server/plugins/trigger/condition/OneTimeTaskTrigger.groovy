@@ -58,8 +58,14 @@ class OneTimeTaskTrigger
 
     }
 
+    @Override
+    boolean isValidSchedule() {
+        Date date = createDate(time, createTimeZone())
+        date > new Date()
+    }
+
     static Date createDate(String time, TimeZone timeZone) {
-        SimpleDateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+        SimpleDateFormat iso8601 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssX");
         if (timeZone) {
             iso8601.setTimeZone(timeZone)
         }

@@ -77,5 +77,10 @@ class SimpleScheduleTaskTrigger implements TaskTrigger, QuartzSchedulerTaskTrigg
 
         return trigger
     }
+
+    @Override
+    boolean isValidSchedule() {
+        interval > 0
+    }
     Map meta = [glyphicon: 'calendar']
 }
