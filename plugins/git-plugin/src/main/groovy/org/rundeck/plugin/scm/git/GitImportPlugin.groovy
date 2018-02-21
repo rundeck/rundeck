@@ -150,6 +150,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (performFetch) {
             try {
                 fetchFromRemote(context)
+                if(config.shouldPullAutomatically()){
+                    actions[ACTION_PULL].   performAction(context,this,null,null,null)
+                }
             } catch (Exception e) {
                 msgs<<"Fetch from the repository failed: ${e.message}"
                 logger.error("Failed fetch from the repository: ${e.message}")
@@ -195,8 +198,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         //compare to tracked branch
         def bstat = BranchTrackingStatus.of(repo, branch)
         state.branchTrackingStatus = bstat
-        if (bstat && bstat.behindCount > 0) {
-            state.state = ImportSynchState.REFRESH_NEEDED
+        if (bstat && bstat.behindCount > 0 && !config.shouldPullAutomatically()) {
+                state.state = ImportSynchState.REFRESH_NEEDED
         } else if (importNeeded || renamed || notFound) {
             state.state = ImportSynchState.IMPORT_NEEDED
         } else if (deleted) {
@@ -205,7 +208,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             state.state = ImportSynchState.CLEAN
         }
 
-        if (bstat && bstat.behindCount > 0) {
+        if (bstat && bstat.behindCount > 0 && !config.shouldPullAutomatically()) {
             msgs << "${bstat.behindCount} changes from remote need to be pulled"
         }
         if (importNeeded) {

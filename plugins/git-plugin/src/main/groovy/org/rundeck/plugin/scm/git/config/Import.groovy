@@ -42,6 +42,19 @@ class Import extends Common{
     @SelectValues(values = ['preserve', 'archive', 'remove'])
     String importUuidBehavior
 
+    @PluginProperty(
+            title = "Pull Automatically",
+            description = "Automatically pull remote changes on automatic fetch. If false, you can perform it manually",
+            defaultValue = 'true',
+            required = false
+    )
+    @SelectValues(values = ['true', 'false'])
+    @RenderingOption(
+            key = StringRenderingConstants.GROUP_NAME,
+            value = "Git Repository"
+    )
+    String pullAutomatically
+
 
     boolean isImportPreserve() {
         importUuidBehavior == 'preserve' || !importUuidBehavior
@@ -51,5 +64,9 @@ class Import extends Common{
     }
     boolean isImportRemove() {
         importUuidBehavior == 'remove'
+    }
+
+    boolean shouldPullAutomatically(){
+        return pullAutomatically
     }
 }
