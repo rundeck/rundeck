@@ -45,6 +45,11 @@ jQuery(function () {
                     opts.minDate = minDate;
                 }
             }
+            var allowEarlierThanMinDate = allBindings.get('allowEarlierThanMinDate');
+            if (ko.isObservable(allowEarlierThanMinDate)) {
+                allowEarlierThanMinDate = ko.unwrap(allowEarlierThanMinDate);
+            }
+
             if (opts.defaultDate) {
                 try {
                     var m = moment(opts.defaultDate, opts.format, true);
@@ -52,7 +57,15 @@ jQuery(function () {
                         opts.defaultDate = null;
                     } else {
                         //use a moment obj, due to datetimepicker bug https://github.com/Eonasdan/bootstrap-datetimepicker/issues/1704
+
                         opts.defaultDate = m;
+                        if (opts.minDate && m.isBefore(opts.minDate)) {
+                            if (allowEarlierThanMinDate) {
+                                opts.minDate = opts.defaultDate;
+                            } else {
+                                opts.defaultDate = opts.minDate;
+                            }
+                        }
                     }
                 } catch (e) {
                     opts.defaultDate = null;
