@@ -44,6 +44,7 @@
             service         : service,
             provider        : provider,
             name            : prop.name,
+            type            : prop.type.toString(),
             origfieldname   : origfieldname,
             fieldname       : fieldname,
             fieldid         : fieldid,
@@ -78,6 +79,16 @@
         initKoBind('#${propkey}',{pluginProperty:prop});
     })
     </g:javascript>
+
+    <g:set var="hasSelector"
+           value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [
+                   StringRenderingConstants.SelectionAccessor.STORAGE_PATH,
+                   'STORAGE_PATH',
+                   StringRenderingConstants.SelectionAccessor.RUNDECK_JOB,
+                   'RUNDECK_JOB',
+                   StringRenderingConstants.SelectionAccessor.RUNDECK_JOB_OPTIONS,
+                   'RUNDECK_JOB_OPTIONS'
+           ]}"/>
     <div class="form-group ${enc(attr: hasError)}" id="${propkey}">
     <g:if test="${outofscope}">
         <label class="${labelColType} form-control-static ${error ? 'has-error' : ''}  ${prop.required ? 'required' :
@@ -200,18 +211,24 @@
             </div>
         </div>
     </g:elseif>
-%{-- todo: Map type --}%
-    <g:else>
+        <g:elseif test="${prop.type.toString() == 'Map'}">
 
-        <g:set var="hasSelector"
-               value="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [
-                       StringRenderingConstants.SelectionAccessor.STORAGE_PATH,
-                       'STORAGE_PATH',
-                       StringRenderingConstants.SelectionAccessor.RUNDECK_JOB,
-                       'RUNDECK_JOB',
-                       StringRenderingConstants.SelectionAccessor.RUNDECK_JOB_OPTIONS,
-                       'RUNDECK_JOB_OPTIONS'
-               ]}"/>
+            <label class="${labelColType}   ${prop.required ? 'required' : ''}"
+                   for="${enc(attr: fieldid)}"><stepplugin:message
+                    service="${service}"
+                    name="${provider}"
+                    code="${messagePrefix}property.${prop.name}.title"
+                    default="${prop.title ?: prop.name}"/></label>
+
+
+            <div class="${hasSelector ? valueColTypeSplit80 : valueColType} " data-ko-controller="pluginProperty">
+                <g:hiddenField name="${fieldname}._type" value="map"/>
+                <map-editor params="prefix: '${fieldname}.map.', value: value"></map-editor>
+            </div>
+        </g:elseif>
+
+        <g:else>
+
 
         <label class="${labelColType}  ${prop.required ? 'required' : ''}"
                for="${enc(attr: fieldid)}"><stepplugin:message
@@ -315,6 +332,8 @@
                              id="${fieldid}" size="100" class="${formControlType}${extraInputCss}"/>
             </g:else>
         </div>
+
+        </g:else>
         <g:if test="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.STORAGE_PATH, 'STORAGE_PATH']}">
             <div class="${valueColTypeSplit20}">
                 %{-- selector for accessible storage --}%
@@ -366,7 +385,7 @@
             <div class="${valueColTypeSplit20}">
                 %{-- selector for job options --}%
 
-                %{-- TODO: select options for a job --}%
+
                 <g:set var="pjkey" value="${g.rkey()}"/>
 
                 <span class="btn  btn-default "
@@ -397,7 +416,6 @@
                           }"/>
             </div>
         </g:if>
-    </g:else>
 <div class="${outofscope?valueColType:offsetColType}">
     <div class="help-block"> <g:render template="/scheduledExecution/description"
                                        model="[description: stepplugin.messageText(

@@ -88,6 +88,7 @@ function PluginProperty(data) {
     self.fieldtype = ko.observable(data.fieldtype);
     self.idkey = ko.observable(data.idkey);
     self.util = ko.observable({});
+    self.type = ko.observable(data.type);
     self.renderingOptions = ko.observable(data.renderingOptions||{});
 
     self.getField = function () {

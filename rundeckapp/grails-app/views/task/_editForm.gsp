@@ -32,6 +32,8 @@
                 get('TaskAction')]] : [data: false]}"
         id="actionConfigJson"/>
 
+<g:embedJSON data="${task?.userData ?: [:]}" id="taskUserDataJson"/>
+
 <div class="list-group">
 
     <div class="list-group-item">
@@ -181,24 +183,75 @@
 
         </div>
 
-        <div class="form-group ${g.hasErrors(bean: task, field: 'triggerData', 'has-error')}">
+        <div class="form-group ${g.hasErrors(bean: task, field: 'taskUserData', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
-                Data
+                User Data
             </label>
 
             <div class="${fieldColSize}">
 
-                <div id="triggerDataEditor">
-                    <textarea
-                            name="triggerData"
-                            class="form-control code apply_ace"
-                            data-ace-autofocus='true'
-                            data-ace-session-mode="json"
-                            data-ace-height="150px"
-                            data-ace-control-soft-wrap="true">${task?.triggerData}</textarea>
+                <div>
+
+                    <div class=" form-horizontal" data-bind="foreach: {data: userData.entries}">
+                        <div class="form-group">
+                            <div class="col-sm-4">
+                                <div class="input-group ">
+
+                                    <span class="input-group-addon">
+                                        <g:message code="key.value.key.title" />
+                                    </span>
+                                    <input type="text"
+                                           data-bind="value: key, attr: {name: keyFieldName }"
+                                           class="form-control "
+                                           placeholder="key"/>
+                                </div>
+
+                            </div>
+
+
+                            <div class=" col-sm-8">
+                                <div class="input-group ">
+                                    <input type="text"
+                                           data-bind="value: value, attr: {name: valueFieldName }"
+                                           class="form-control "
+                                           placeholder="value"/>
+                                    <span class="input-group-btn">
+                                        <button class="btn btn-danger-hollow" type="button"
+                                                data-bind="click: $root.userData.delete">
+                                            <g:icon name="remove"/>
+                                        </button>
+                                    </span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div>
+                        <span class="btn btn-success-hollow btn-sm " data-bind="click: userData.newEntry">
+                            <g:message code="button.title.add.key.value.pair"/>
+                            <g:icon name="plus"/>
+                        </span>
+                    </div>
+
+                    <div class="help-block">
+                        Add extra Key/Value pairs available within the Task.  They can be
+                        referenced with $<!-- -->{task.key}
+                    </div>
                 </div>
-                <g:hasErrors bean="${task}" field="triggerData">
+
+                %{--<div>--}%
+
+                    %{--<textarea--}%
+                            %{--name="taskUserData"--}%
+                            %{--class="form-control code apply_ace"--}%
+                            %{--data-ace-autofocus='true'--}%
+                            %{--data-ace-session-mode="json"--}%
+                            %{--data-ace-height="150px"--}%
+                            %{--data-ace-control-soft-wrap="true">${task?.taskUserData}</textarea>--}%
+                %{--</div>--}%
+                <g:hasErrors bean="${task}" field="taskUserData">
 
                     <span class="text-warning">
                         <g:renderErrors bean="${task}" as="list" field="name"/>

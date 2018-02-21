@@ -239,8 +239,8 @@ function JobOptionPropertySelector(data) {
         evt.preventDefault();
         self.jobOptionsInput.hideDisplay();
         var formDataObj = self.jobOptionsInput.getFormDataObj(['extra.option.'], ['extra.option.']);
-        console.log("save,.,.", formDataObj);
-        self.getProperty().value(JSON.stringify(formDataObj));
+
+        self.getProperty().value(formDataObj);
         return false;
     }
 

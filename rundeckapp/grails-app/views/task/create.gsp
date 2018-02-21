@@ -35,7 +35,7 @@
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="jobedit.js"/>
     <asset:javascript src="task/edit.js"/>
-    <g:jsMessages code="page.unsaved.changes"/>
+    <g:jsMessages code="page.unsaved.changes,button.title.add.key.value.pair,key.value.key.title"/>
     <g:jsMessages id="jobi18n1"
                   code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
 
@@ -55,7 +55,9 @@
                 actionConfig:loadJsonData('actionConfigJson'),
                 actionFormId:'actionEditor',
                 actionFormPrefixes:['actionConfig.', 'orig.actionConfig.'],
-                actionInputPrefix:'actionConfig.'
+                actionInputPrefix:'actionConfig.',
+                userData:loadJsonData('taskUserDataJson'),
+                userDataInputPrefix:'userData.'
             });
             taskEditor.init();
             initKoBind(null,{taskEditor:taskEditor});

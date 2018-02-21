@@ -25,6 +25,7 @@
 //= require jobs/jobOptions
 //= require menu/job-remote-options
 //= require ko/binding-popover
+//= require ko/component/map-editor
 //= require menu/joboptions
 //= require koBind
 
@@ -46,6 +47,7 @@ function TaskEditor(data) {
         formPrefixes: data.actionFormPrefixes,
         inputFieldPrefix: data.actionInputPrefix
     });
+    self.userData = new MultiMap({data: data.userData, inputPrefix: data.userDataInputPrefix});
     self.init = function () {
         self.trigger.init();
         self.action.init();

@@ -88,7 +88,9 @@
         <g:if test="${task.userData}">
             <section class="section-space">
 
-                <g:basicData data="${task.userData}" fields="${task.userData?.keySet()?.sort()}"/>
+                <g:basicData data="${task.userData}"
+                             fields="${task.userData?.keySet()?.sort()}"
+                             classes="table-bordered table-condensed"/>
             </section>
         </g:if>
     </div>
