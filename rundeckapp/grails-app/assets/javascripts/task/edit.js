@@ -16,7 +16,6 @@
 //= require storageBrowseKO
 //= require ui/toggle
 //= require pluginPropKO
-//= require ko/binding-job-link
 //= require bootstrap-datetimepicker.min
 //= require ko/binding-datetimepicker
 //= require nodeFiltersKO
@@ -26,6 +25,7 @@
 //= require menu/job-remote-options
 //= require ko/binding-popover
 //= require ko/binding-message-template
+//= require ko/component/job-link
 //= require ko/component/map-editor
 //= require ko/component/busy-spinner
 //= require menu/joboptions
