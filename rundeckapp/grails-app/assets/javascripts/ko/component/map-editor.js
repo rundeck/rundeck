@@ -15,6 +15,7 @@
  */
 
 "use strict";
+//= require asset-ko-template-loader.js
 //= require util/ko-multi-map
 
 
@@ -30,46 +31,5 @@ ko.components.register('map-editor', {
         });
 
     },
-    template:
-    '<div class=" form-horizontal" data-bind="foreach: {data: userData.entries}">\n' +
-    '                        <div class="form-group">\n' +
-    '                            <div class="col-sm-4">\n' +
-    '                                <div class="input-group ">\n' +
-    '\n' +
-    '                                    <span class="input-group-addon">\n' +
-    '                                        <span data-bind="messageValue: true">key.value.key.title</span>\n' +
-    '                                    </span>\n' +
-    '                                    <input type="text"\n' +
-    '                                           data-bind="value: key, attr: {name: keyFieldName }"\n' +
-    '                                           class="form-control "\n' +
-    '                                           placeholder="key"/>\n' +
-    '                                </div>\n' +
-    '\n' +
-    '                            </div>\n' +
-    '\n' +
-    '\n' +
-    '                            <div class=" col-sm-8">\n' +
-    '                                <div class="input-group ">\n' +
-    '                                    <input type="text"\n' +
-    '                                           data-bind="value: value, attr: {name: valueFieldName }"\n' +
-    '                                           class="form-control "\n' +
-    '                                           placeholder="value"/>\n' +
-    '                                    <span class="input-group-btn">\n' +
-    '                                        <button class="btn btn-danger-hollow" type="button"\n' +
-    '                                                data-bind="click: $component.userData.delete">\n' +
-    '                                            <i class="glyphicon glyphicon-remove"></i>\n' +
-    '                                        </button>\n' +
-    '                                    </span>\n' +
-    '                                </div>\n' +
-    '                            </div>\n' +
-    '\n' +
-    '                        </div>\n' +
-    '                    </div>\n' +
-    '\n' +
-    '                    <div>\n' +
-    '                        <span class="btn btn-success-hollow btn-sm " data-bind="click: userData.newEntry">\n' +
-    '                            <span data-bind="messageValue: true">button.title.add.key.value.pair</span>\n' +
-    '                            <i class="glyphicon glyphicon-plus"></i>\n' +
-    '                        </span>\n' +
-    '                    </div>'
+    template: {assetTemplate: 'map-editor.html'}
 });

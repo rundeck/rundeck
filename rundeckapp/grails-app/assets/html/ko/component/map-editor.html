@@ -1,0 +1,57 @@
+<!--
+  ~ Copyright 2018 Rundeck, Inc. (http://rundeck.com)
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<div class=" form-horizontal" data-bind="foreach: {data: userData.entries}">
+    <div class="form-group">
+        <div class="col-sm-4">
+            <div class="input-group ">
+
+                <span class="input-group-addon">
+                    %%key.value.key.title%%
+                </span>
+                <input type="text"
+                       data-bind="value: key, attr: {name: keyFieldName }"
+                       class="form-control "
+                       placeholder="key"/>
+            </div>
+
+        </div>
+
+
+        <div class=" col-sm-8">
+            <div class="input-group ">
+                <input type="text"
+                       data-bind="value: value, attr: {name: valueFieldName }"
+                       class="form-control "
+                       placeholder="value"/>
+                <span class="input-group-btn">
+                    <button class="btn btn-danger-hollow" type="button"
+                            data-bind="click: $component.userData.delete">
+                        <i class="glyphicon glyphicon-remove"></i>
+                    </button>
+                </span>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div>
+    <span class="btn btn-success-hollow btn-sm " data-bind="click: userData.newEntry">
+        %%button.title.add.key.value.pair%%
+        <i class="glyphicon glyphicon-plus"></i>
+    </span>
+</div>
