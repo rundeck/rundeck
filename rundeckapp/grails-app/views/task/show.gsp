@@ -29,7 +29,7 @@
     <meta name="tabpage" content="triggers"/>
     <asset:javascript src="task/show.js"/>
     <g:jsMessages code="job.not.found.with.id.0"/>
-    <title><g:appTitle/> - Task - ${task.name ?: task.uuid}</title>
+    <title><g:appTitle/> - <g:message code="Task.domain.title" /> - ${task.name ?: task.uuid}</title>
 
 </head>
 
@@ -60,17 +60,17 @@
 
         <section class="section-space">
             <g:if test="${task.enabled}">
-                <g:icon name="check" css="text-success"/> Enabled
+                <g:icon name="check" css="text-success"/> <g:message code="badge.Enabled.title" />
             </g:if>
             <g:else>
-                <g:icon name="unchecked" css="text-muted"/> Disabled
+                <g:icon name="unchecked" css="text-muted"/> <g:message code="badge.Disabled.title" />
             </g:else>
         </section>
         <section class="section-space">
             <g:link action="delete" class="btn btn-danger-hollow btn-xs"
                     params="[project: project, id: task.uuid]">
                 <i class="glyphicon glyphicon-remove"></i>
-                Delete
+                <g:message code="button.action.Delete" />
             </g:link>
             <g:link action="test" class="btn btn-default-hollow btn-xs"
                     params="[project: project, id: task.uuid]">
@@ -80,7 +80,7 @@
             <g:link action="edit" class="btn btn-info-hollow btn-xs"
                     params="[project: project, id: task.uuid]">
                 <i class="glyphicon glyphicon-pencil"></i>
-                Edit
+                <g:message code="button.Edit.label" />
             </g:link>
         </section>
         <section class="section-space">
@@ -101,7 +101,7 @@
             <div class="list-group-item">
                 <h4 class="list-group-item-heading">
 
-                    Task
+                    <g:message code="task.trigger.display.title" />
                 </h4>
 
                 <g:render template="/framework/renderPluginConfig"
@@ -114,7 +114,7 @@
             </div>
 
             <div class="list-group-item">
-                <h4 class="list-group-item-heading">Action</h4>
+                <h4 class="list-group-item-heading"><g:message code="task.action.display.title" /></h4>
                 <g:render template="/framework/renderPluginConfig"
                           model="${[serviceName   : org.rundeck.core.tasks.TaskPluginTypes.TaskAction,
                                     showPluginIcon: true,
@@ -131,8 +131,8 @@
                      classes="table-bordered table-condensed"
                      labelClasses="text-muted text-right"
                      fieldTitle="${[
-                             'userCreated' : 'Created By',
-                             'userModified': 'Modified By'
+                             'userCreated' : message(code:"Task.created.by.title"),
+                             'userModified': message(code:"Task.modified.by.title")
                      ]}"
                      fields="${[
                              'dateCreated',
@@ -195,7 +195,7 @@
                                     <g:link controller="execution" action="show"
                                             params="${[project: project, id: event.associatedId]}">
                                         <g:icon name="circle-arrow-right"/>
-                                        Execution #${event.associatedId}
+                                        <g:message code="domain.Execution.title" /> #${event.associatedId}
                                     </g:link>
                                 </g:if>
                             </td>
