@@ -153,5 +153,7 @@ public interface ScmImportPlugin {
      * @param jobs rundeck jobs
      * @return map with information on the process
      */
-    Map clusterFixJobs(List<JobScmReference> jobs);
+    default Map clusterFixJobs(List<JobScmReference> jobs){
+        return null;
+    }
 }
