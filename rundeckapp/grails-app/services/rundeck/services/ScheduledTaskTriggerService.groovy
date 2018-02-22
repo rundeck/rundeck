@@ -37,12 +37,23 @@ class ScheduledTaskTriggerService implements TaskTriggerHandler<RDTaskContext> {
 
 
     @Override
-    void registerTriggerForAction(String triggerId, RDTaskContext contextInfo, TaskTrigger condition, TaskAction action, TaskActionInvoker service) {
-        QuartzSchedulerTaskTrigger scheduled = (QuartzSchedulerTaskTrigger) condition
-
-        log.error("schedule trigger using quartz for $triggerId, context $contextInfo, condition $condition, action $action, invoker $service")
-        scheduleTrigger(triggerId, contextInfo, scheduled, action, service)
-
+    boolean registerTriggerForAction(
+            String taskId,
+            RDTaskContext contextInfo,
+            TaskTrigger trigger,
+            TaskAction action,
+            TaskActionInvoker service
+    ) {
+        QuartzSchedulerTaskTrigger scheduled = (QuartzSchedulerTaskTrigger) trigger
+        if (!scheduled.validSchedule) {
+            log.info("scheduled task $taskId: not scheduling the Quartz Trigger of type $scheduled: not valid")
+            return false
+        }
+        log.info(
+                "schedule task using quartz for $taskId, context $contextInfo, trigger $trigger, action $action, invoker $service"
+        )
+        scheduleTrigger(taskId, contextInfo, scheduled, action, service)
+        true
     }
 
     @Override

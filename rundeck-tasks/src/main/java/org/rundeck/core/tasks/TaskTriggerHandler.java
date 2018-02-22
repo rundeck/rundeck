@@ -43,8 +43,9 @@ public interface TaskTriggerHandler<T> {
      * @param taskTrigger
      * @param action
      * @param service
+     * @return true if successful
      */
-    void registerTriggerForAction(
+    boolean registerTriggerForAction(
             String triggerId,
             T contextInfo,
             TaskTrigger taskTrigger,
