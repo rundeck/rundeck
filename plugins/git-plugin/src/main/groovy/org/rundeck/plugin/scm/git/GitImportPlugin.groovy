@@ -130,6 +130,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     void cleanup() {
+        File base = new File(config.dir)
+        base?.deleteDir()
         git.close()
     }
 
@@ -151,7 +153,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             try {
                 fetchFromRemote(context)
                 if(config.shouldPullAutomatically()){
-                    actions[ACTION_PULL].   performAction(context,this,null,null,null)
+                    actions[ACTION_PULL].performAction(context,this,null,null,null)
                 }
             } catch (Exception e) {
                 msgs<<"Fetch from the repository failed: ${e.message}"

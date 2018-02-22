@@ -123,6 +123,8 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     void cleanup() {
+        File base = new File(config.dir)
+        base?.deleteDir()
         git?.close()
     }
 
@@ -203,6 +205,7 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (performFetch) {
             try {
                 fetchFromRemote(context)
+                actions[PROJECT_SYNCH_ACTION_ID].perform(this,null,null,context,[refresh:'rebase',resolution:'ours'])
             } catch (Exception e) {
                 fetchError=true
                 msgs<<"Fetch from the repository failed: ${e.message}"
