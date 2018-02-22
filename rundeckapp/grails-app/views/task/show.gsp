@@ -28,6 +28,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="triggers"/>
     <asset:javascript src="task/show.js"/>
+    <g:jsMessages code="job.not.found.with.id.0"/>
     <title><g:appTitle/> - Task - ${task.name ?: task.uuid}</title>
 
 </head>

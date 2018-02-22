@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+//= require asset-ko-template-loader
 "use strict";
 
 
@@ -77,16 +78,6 @@ ko.components.register('job-link', {
         }
 
     },
-    template:
-        '\
-        <span data-bind="if: loaded">\
-        <a href="" data-bind="attr: {href: linkHref}, visible: !notfound() && !unset(), click: doAction">\
-        <i class="glyphicon glyphicon-book"/>\
-        <span data-bind="text: displayName"></span>\
-        </a>\
-        <span data-bind="visible: notfound" class="text-warning">\
-        Job not found with id: <span data-bind="text: id"></span>\
-        </span>\
-        \
-        </span>'
+    template: {assetTemplate: 'job-link.html'}
+
 });
