@@ -25,6 +25,7 @@ function PluginEditor(data) {
     self.service = ko.observable(data.service);
     self.provider = ko.observable(data.provider);
     self.config = ko.observable(data.config);
+    self.loading = ko.observable(false);
     self.formId = data.formId;
     self.formPrefixes = data.formPrefixes;
     self.inputFieldPrefix = data.inputFieldPrefix;
@@ -66,9 +67,11 @@ function PluginEditor(data) {
         if (!val) {
             return;
         }
+        self.loading(true);
         self.loadPluginEditView(self.service(), val, {inputFieldPrefix: self.inputFieldPrefix}, self.getConfigData(), self.getConfigReport()).success(function (data) {
             jQuery('#' + self.formId).html(data).show();
             //TODO: ko binding?
+            self.loading(false);
         });
     };
     self.provider.subscribe(self.loadActionSelect);

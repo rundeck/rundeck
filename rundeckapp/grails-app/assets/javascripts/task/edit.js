@@ -27,6 +27,7 @@
 //= require ko/binding-popover
 //= require ko/binding-message-template
 //= require ko/component/map-editor
+//= require ko/component/busy-spinner
 //= require menu/joboptions
 //= require koBind
 

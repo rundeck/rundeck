@@ -131,6 +131,8 @@
             </div>
 
             <div class="${offsetColSize}">
+
+                <busy-spinner params="busy: taskEditor.trigger.loading"></busy-spinner>
                 <div id="condeditor">
                 </div>
                 <g:hasErrors bean="${task}" field="triggerType">
@@ -170,6 +172,8 @@
             </div>
 
             <div class="${offsetColSize}">
+                <busy-spinner params="busy: taskEditor.action.loading"></busy-spinner>
+
                 <div id="actionEditor">
                 </div>
                 <g:hasErrors bean="${task}" field="actionType">
