@@ -36,7 +36,7 @@ import org.junit.Before
 import org.junit.Test
 import org.springframework.context.MessageSource
 
-import rundeck.filters.ApiRequestFilters
+import rundeck.interceptors.ApiVersionInterceptor
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.ProjectService
@@ -113,7 +113,7 @@ class ProjectControllerTest {
 
         response.format='json'
         controller.apiProjectList()
-        def base='http://localhost:8080/api/'+ApiRequestFilters.API_CURRENT_VERSION
+        def base='http://localhost:8080/api/'+ApiVersionInterceptor.API_CURRENT_VERSION
         assert response.status == HttpServletResponse.SC_OK
         assert response.json.call.size()==2
         assert response.json.call[0].name=='testproject'
@@ -306,7 +306,7 @@ class ProjectControllerTest {
         //XML result has wrapper
         assertEquals 'result', response.xml.name()
         assertEquals 'true', response.xml.'@success'.text()
-        assertEquals ApiRequestFilters.API_CURRENT_VERSION.toString(), response.xml.'@apiversion'.text()
+        assertEquals ApiVersionInterceptor.API_CURRENT_VERSION.toString(), response.xml.'@apiversion'.text()
 
         assertEquals 1, response.xml.projects.size()
         assertEquals 0, response.xml.project.size()
@@ -362,7 +362,7 @@ class ProjectControllerTest {
         //XML result has wrapper
         assertEquals 'result', response.xml.name()
         assertEquals 'true', response.xml.'@success'.text()
-        assertEquals ApiRequestFilters.API_CURRENT_VERSION.toString(), response.xml.'@apiversion'.text()
+        assertEquals ApiVersionInterceptor.API_CURRENT_VERSION.toString(), response.xml.'@apiversion'.text()
 
         assertEquals 1, response.xml.projects.size()
         assertEquals 0, response.xml.project.size()
@@ -1933,7 +1933,7 @@ class ProjectControllerTest {
                 ["message": "api.error.invalid.request;Property [jobUuidOption] of class [class com.dtolabs.rundeck.app.support.ProjectArchiveParams] with value [blah] is not contained within the list [[preserve, remove]]",
                  "error": true,
                  "errorCode": "api.error.invalid.request",
-                 "apiversion": ApiRequestFilters.API_CURRENT_VERSION],
+                 "apiversion": ApiVersionInterceptor.API_CURRENT_VERSION],
                 response.json
         )
     }
@@ -1993,7 +1993,7 @@ class ProjectControllerTest {
                               message:"api.error.item.unauthorized;[create, ACL for Project, [name:test1]]",
                               error: true,
                               errorCode : "api.error.item.unauthorized",
-                              apiversion: ApiRequestFilters.API_CURRENT_VERSION
+                              apiversion: ApiVersionInterceptor.API_CURRENT_VERSION
                       ],
                       response.json
         )

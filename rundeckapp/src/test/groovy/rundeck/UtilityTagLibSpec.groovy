@@ -17,7 +17,6 @@
 package rundeck
 
 import grails.test.mixin.TestFor
-import org.springframework.context.MessageSource
 import rundeck.codecs.HTMLAttributeCodec
 import rundeck.codecs.URIComponentCodec
 import spock.lang.Specification

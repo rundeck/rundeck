@@ -18,7 +18,6 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtraCommand
 import com.dtolabs.rundeck.app.support.RunJobCommand
-import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.NodeEntryImpl

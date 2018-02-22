@@ -19,12 +19,12 @@ package rundeck.codecs
 import org.owasp.encoder.Encode
 
 /**
- * JavaScript2Codec is ...
+ * XMLContentCodec is ...
  * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
- * @since 2014-08-13
+ * @since 2014-08-07
  */
-class JavaScript2Codec {
-    def encode = { str ->
-        Encode.forJavaScript(str)
+class XMLContentCodec {
+    static def encode={str->
+        Encode.forXml(str)
     }
 }

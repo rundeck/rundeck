@@ -17,14 +17,13 @@
 package rundeck.codecs
 
 import org.owasp.encoder.Encode
-
 /**
- * XMLContentCodec is ...
+ * HTMLAttributeValueCodec encodes all non-alphanumeric characters ASCII value less than 256 using HTML hexadecimal '&#xHH'
  * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
  * @since 2014-08-07
  */
-class XMLContentCodec {
-    def encode={str->
-        Encode.forXml(str)
+class HTMLAttributeCodec {
+    static def encode = { str ->
+        Encode.forHtmlAttribute(str)
     }
 }

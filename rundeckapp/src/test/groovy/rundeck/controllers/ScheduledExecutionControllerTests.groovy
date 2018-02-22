@@ -22,11 +22,8 @@ import static org.junit.Assert.*
 
 import com.dtolabs.rundeck.app.api.ApiBulkJobDeleteRequest
 import com.dtolabs.rundeck.app.api.ApiRunAdhocRequest
-import com.dtolabs.rundeck.app.support.ExtraCommand
-import com.dtolabs.rundeck.app.support.RunJobCommand
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.INodeSet
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -40,7 +37,6 @@ import org.springframework.mock.web.MockMultipartHttpServletRequest
 import rundeck.JobExec
 import rundeck.codecs.URIComponentCodec
 import rundeck.services.ApiService
-import rundeck.services.FileUploadService
 import rundeck.services.NotificationService
 import rundeck.services.OrchestratorPluginService
 import rundeck.services.PluginService

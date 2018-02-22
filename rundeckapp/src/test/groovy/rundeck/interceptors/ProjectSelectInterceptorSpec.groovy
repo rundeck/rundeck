@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package rundeck.filters
+package rundeck.interceptors
 
 import com.codahale.metrics.MetricRegistry
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
-import grails.test.mixin.TestMixin
+import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.gsp.GroovyPagesTemplateEngine
 import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
-
-//import org.grails.web.pages.GroovyPagesTemplateEngine
-//import org.grails.web.pages.discovery.CachingGrailsConventionGroovyPageLocator
 import org.grails.web.servlet.view.GroovyPageViewResolver
 import org.springframework.beans.factory.config.MethodInvokingFactoryBean
 import rundeck.controllers.ProjectController
-import rundeck.services.ConfigurationService
 import rundeck.services.FrameworkService
 import spock.lang.Specification
 
@@ -41,8 +36,7 @@ import java.security.Principal
  */
 @TestFor(ProjectController)
 @Mock([FrameworkService])
-//@TestMixin(FiltersUnitTestMixin)
-class ProjectSelectFiltersSpec extends Specification {
+class ProjectSelectInterceptorSpec extends Specification implements InterceptorUnitTest<ProjectSelectInterceptor> {
     static doWithSpring = {
         metricRegistry(MetricRegistry)
 

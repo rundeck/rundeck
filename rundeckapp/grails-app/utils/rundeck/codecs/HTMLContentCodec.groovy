@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+ * Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,15 @@
 
 package rundeck.codecs
 
+import org.owasp.encoder.Encode
+
 /**
- * AnsiColorStripCodec strips ansi escape codes
+ * HTMLContentCodec is ...
  * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
- * @since 2014-05-15
+ * @since 2014-11-19
  */
-class AnsiColorStripCodec {
-    def decode = { str ->
-        str.replaceAll('\033[\\[%\\(]((\\d{1,2})?(;\\d{1,3})*)[mKGHfABCDRsuhl]','')
+class HTMLContentCodec {
+    static def encode = { str ->
+        Encode.forHtmlContent(str)
     }
 }

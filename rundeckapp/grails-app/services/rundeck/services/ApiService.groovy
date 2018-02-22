@@ -30,7 +30,7 @@ import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.User
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -286,7 +286,7 @@ class ApiService {
     def respondOutput(HttpServletResponse response, String contentType, String output) {
         response.setContentType(contentType)
         response.setCharacterEncoding('UTF-8')
-        response.setHeader("X-Rundeck-API-Version",ApiRequestFilters.API_CURRENT_VERSION.toString())
+        response.setHeader("X-Rundeck-API-Version",ApiVersions.API_CURRENT_VERSION.toString())
         def out = response.outputStream
         out << output
         out.flush()
@@ -333,7 +333,7 @@ class ApiService {
      * @return
      */
     public boolean doWrapXmlResponse(HttpServletRequest request) {
-        if(request.api_version < ApiRequestFilters.V11){
+        if(request.api_version < ApiVersions.V11){
             //require false to disable wrapper
             return !"false".equals(request.getHeader(XML_API_RESPONSE_WRAPPER_HEADER))
         } else{
@@ -401,7 +401,7 @@ class ApiService {
      */
     def renderSuccessXml(Closure recall){
         return renderSuccessXmlUnwrapped {
-            result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+            result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
                 recall.delegate = delegate
                 recall.resolveStrategy=Closure.DELEGATE_FIRST
                 recall()
@@ -747,7 +747,7 @@ class ApiService {
     def renderErrorJson(messages, String code=null){
         def result=[
                 error: true,
-                apiversion: ApiRequestFilters.API_CURRENT_VERSION,
+                apiversion: ApiVersions.API_CURRENT_VERSION,
         ]
         result.errorCode = code ?: 'api.error.unknown'
         if (!messages) {
@@ -779,8 +779,13 @@ class ApiService {
             xml=builder
         }
         xml.with {
-            result(error: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+            result(error: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+// REVIEW: disabled at merge
+//                def errorprops = [:]
                 def errorprops = [code: code ?: 'api.error.unknown']
+                if (code) {
+                    errorprops = [code: code]
+                }
                 delegate.'error'(errorprops) {
                     if (!messages) {
                         delegate.'message'(
@@ -1126,7 +1131,7 @@ class ApiService {
     String apiHrefForJob(def scheduledExecution) {
         return grailsLinkGenerator.link(controller: 'scheduledExecution',
                 id: scheduledExecution.extid,
-                params: [api_version:ApiRequestFilters.API_CURRENT_VERSION],
+                params: [api_version:ApiVersions.API_CURRENT_VERSION],
                 absolute: true)
     }
     String guiHrefForJob(def scheduledExecution) {
@@ -1138,7 +1143,7 @@ class ApiService {
     }
     String apiHrefForExecution(Execution execution) {
         return grailsLinkGenerator.link(controller: 'execution', id: execution.id,
-                params: [api_version: ApiRequestFilters.API_CURRENT_VERSION],
+                params: [api_version: ApiVersions.API_CURRENT_VERSION],
                 absolute: true)
     }
     String guiHrefForExecution(Execution execution) {

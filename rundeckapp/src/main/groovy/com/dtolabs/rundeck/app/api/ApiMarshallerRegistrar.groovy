@@ -21,7 +21,6 @@ import com.dtolabs.rundeck.app.api.marshall.CustomJsonMarshaller
 import com.dtolabs.rundeck.app.api.marshall.CustomXmlMarshaller
 import grails.converters.JSON
 import grails.converters.XML
-import rundeck.filters.ApiRequestFilters
 
 import javax.annotation.PostConstruct
 
@@ -57,7 +56,7 @@ class ApiMarshallerRegistrar {
      * <a href="https://github.com/grails/grails-core/issues/9140#issuecomment-143678429">grails issue ref</a>
      */
     void registerApiMarshallers(){
-        def curVersion = ApiRequestFilters.API_CURRENT_VERSION
+        def curVersion = ApiVersions.API_CURRENT_VERSION
         def api = new ApiMarshaller('com.dtolabs.rundeck.app.api')
 
         //default marshaller configuration implementation
@@ -65,7 +64,7 @@ class ApiMarshallerRegistrar {
         JSON.registerObjectMarshaller(new CustomJsonMarshaller(api, curVersion))
 
         //use custom configuration for specific API versions
-        (1..ApiRequestFilters.API_CURRENT_VERSION).each { apivers ->
+        (1..ApiVersions.API_CURRENT_VERSION).each { apivers ->
             XML.createNamedConfig("v${apivers}") { cfg ->
                 cfg.registerObjectMarshaller(new CustomXmlMarshaller(api, apivers))
             }

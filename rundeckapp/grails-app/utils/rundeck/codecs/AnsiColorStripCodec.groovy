@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package rundeck.filters
+package rundeck.codecs
 
-@Deprecated
-class ZZ_TimerFilters {
-
-    def dependsOn = [AA_TimerFilters]
-
-    def filters = {
-        all(controller:'user', action:'logout',invert:true) {
-            after = {
-                AA_TimerFilters.afterRequest(request,response,session)
-            }
-        }
+/**
+ * AnsiColorStripCodec strips ansi escape codes
+ * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
+ * @since 2014-05-15
+ */
+class AnsiColorStripCodec {
+    static decode = { str ->
+        str.replaceAll('\033[\\[%\\(]((\\d{1,2})?(;\\d{1,3})*)[mKGHfABCDRsuhl]','')
     }
-    
 }

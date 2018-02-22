@@ -44,7 +44,7 @@ import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService

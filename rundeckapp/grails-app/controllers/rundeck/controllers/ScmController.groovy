@@ -60,7 +60,7 @@ import com.dtolabs.rundeck.plugins.scm.SynchState
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import rundeck.ScheduledExecution
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 
 import javax.servlet.http.HttpServletResponse
 
@@ -97,7 +97,7 @@ class ScmController extends ControllerBase {
      */
     def beforeInterceptor = {
         if (actionName.startsWith('api')) {
-            if (!apiService.requireVersion(request, response, ApiRequestFilters.V15)) {
+            if (!apiService.requireVersion(request, response, ApiVersions.V15)) {
                 return false
             }
         }

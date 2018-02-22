@@ -1,24 +1,9 @@
-/*
- * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-package rundeck.filters
+package rundeck.interceptors
 
 import com.codahale.metrics.MetricRegistry
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.gsp.GroovyPagesTemplateEngine
 import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
 import org.grails.web.servlet.view.GroovyPageViewResolver
@@ -29,14 +14,14 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 /**
- * Test the RefererFilters, using ApiController for mocked controller requests
+ * Test the RefererInterceptor, using ApiController for mocked controller requests
  * @author greg
  * @since 4/4/17
  */
 @TestFor(ApiController)
-@Mock([AA_TimerFilters, ApiRequestFilters, RefererFilters])
-//@TestMixin(FiltersUnitTestMixin)
-class RefererFiltersSpec extends Specification {
+@Mock([AA_TimerInterceptor, ApiAccessInterceptor, RefererInterceptor])
+class RefererInterceptorSpec extends Specification implements InterceptorUnitTest<RefererInterceptor> {
+
     static doWithSpring = {
         configurationService(ConfigurationService)
         metricRegistry(MetricRegistry)

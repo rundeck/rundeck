@@ -19,9 +19,7 @@ package rundeck.codecs
 import rundeck.codecs.JobsYAMLCodec
 import org.yaml.snakeyaml.Yaml
 import rundeck.CommandExec
-import rundeck.JobExec
 import rundeck.Notification
-import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import spock.lang.Specification

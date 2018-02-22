@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
+ * Copyright 2017 Rundeck Inc, <http://rundeck.com>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package rundeck.filters
+package rundeck.interceptors
 
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 
@@ -22,20 +22,22 @@ import org.grails.web.servlet.mvc.SynchronizerTokensHolder
  * Allows using HTTP headers to supply synchronizer tokens, they are injected in the parameters map before invoking
  * the controller, which may do withForm{} to validate them as parameters.
  */
-@Deprecated
-class FormTokenFilters {
+class FormTokenInterceptor {
 
     public static final String TOKEN_KEY_HEADER = 'X-RUNDECK-TOKEN-KEY'
     public static final String TOKEN_URI_HEADER = 'X-RUNDECK-TOKEN-URI'
-    def filters = {
-        all(controller: '*', action: '*') {
-            before = {
-                //transfer request token from header to params, for the form verification used in controllers
-                if(request.getHeader(TOKEN_KEY_HEADER) && request.getHeader(TOKEN_URI_HEADER)){
-                    params[SynchronizerTokensHolder.TOKEN_KEY]=request.getHeader(TOKEN_KEY_HEADER)
-                    params[SynchronizerTokensHolder.TOKEN_URI]=request.getHeader(TOKEN_URI_HEADER)
-                }
-            }
+    boolean before() {
+        //transfer request token from header to params, for the form verification used in controllers
+        if(request.getHeader(TOKEN_KEY_HEADER) && request.getHeader(TOKEN_URI_HEADER)){
+            params[SynchronizerTokensHolder.TOKEN_KEY]=request.getHeader(TOKEN_KEY_HEADER)
+            params[SynchronizerTokensHolder.TOKEN_URI]=request.getHeader(TOKEN_URI_HEADER)
         }
+        true
+    }
+
+    boolean after() { true }
+
+    void afterView() {
+        // no-op
     }
 }

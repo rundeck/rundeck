@@ -24,7 +24,7 @@ import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
@@ -470,11 +470,11 @@ class ProjectController extends ControllerBase{
      */
     private def renderApiProjectXml (def pject, delegate, hasConfigAuth=false, vers=1){
         Map data = basicProjectDetails(pject)
-        def pmap = vers < ApiRequestFilters.V11 ? [:] : [url: data.url]
+        def pmap = vers < ApiVersions.V11 ? [:] : [url: data.url]
         delegate.'project'(pmap) {
             name(data.name)
             description(data.description)
-            if (vers < ApiRequestFilters.V11) {
+            if (vers < ApiVersions.V11) {
                 if (pject.hasProperty("project.resources.url")) {
                     resources {
                         providerURL(pject.getProperty("project.resources.url"))
@@ -539,7 +539,7 @@ class ProjectController extends ControllerBase{
      * @return
      */
     private String generateProjectApiUrl(String projectName) {
-        g.createLink(absolute: true, uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/project/${projectName}")
+        g.createLink(absolute: true, uri: "/api/${ApiVersions.API_CURRENT_VERSION}/project/${projectName}")
     }
 
     /**
@@ -611,7 +611,7 @@ class ProjectController extends ControllerBase{
             xml{
 
                 apiService.renderSuccessXml(request, response) {
-                    if(request.api_version<ApiRequestFilters.V11){
+                    if(request.api_version<ApiVersions.V11){
                         delegate.'projects'(count: 1) {
                             renderApiProjectXml(pject, delegate, configAuth, request.api_version)
                         }
@@ -630,7 +630,7 @@ class ProjectController extends ControllerBase{
 
 
     def apiProjectCreate() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V11)) {
             return
         }
         //allow Accept: header, but default to the request format
@@ -736,7 +736,7 @@ class ProjectController extends ControllerBase{
     }
 
     def apiProjectDelete(){
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V11)) {
             return
         }
         String project = params.project
@@ -791,7 +791,7 @@ class ProjectController extends ControllerBase{
      * @return FrameworkProject for the project
      */
     private def validateProjectConfigApiRequest(String action){
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V11)) {
             return
         }
         String project = params.project
@@ -835,7 +835,7 @@ class ProjectController extends ControllerBase{
      * @return FrameworkProject for the project
      */
     private def validateProjectAclApiRequest(String action){
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V11)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V11)) {
             return
         }
         String project = params.project
@@ -903,7 +903,7 @@ class ProjectController extends ControllerBase{
      * /api/14/project/NAME/acl/* endpoint
      */
     def apiProjectAcls() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
             return
         }
 
@@ -1050,7 +1050,7 @@ class ProjectController extends ControllerBase{
 
 
     private def renderProjectAclHref(String project,String path) {
-        createLink(absolute: true, uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/project/$project/acl/$path")
+        createLink(absolute: true, uri: "/api/${ApiVersions.API_CURRENT_VERSION}/project/$project/acl/$path")
     }
 
     /**
@@ -1157,7 +1157,7 @@ class ProjectController extends ControllerBase{
         render(status: HttpServletResponse.SC_NO_CONTENT)
     }
     def apiProjectFilePut() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V13)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V13)) {
             return
         }
         def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
@@ -1251,7 +1251,7 @@ class ProjectController extends ControllerBase{
         }
     }
     def apiProjectFileGet() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V13)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V13)) {
             return
         }
         def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
@@ -1290,7 +1290,7 @@ class ProjectController extends ControllerBase{
         }
     }
     def apiProjectFileDelete() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V13)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V13)) {
             return
         }
         def project = validateProjectConfigApiRequest(AuthConstants.ACTION_CONFIGURE)
@@ -1516,7 +1516,7 @@ class ProjectController extends ControllerBase{
             )
         }
         if (params.async) {
-            if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+            if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
                 return
             }
         }
@@ -1532,7 +1532,7 @@ class ProjectController extends ControllerBase{
         if (params.executionIds) {
             options = new ArchiveOptions(all: false, executionsOnly: true)
             options.parseExecutionsIds(params.executionIds)
-        } else if (request.api_version >= ApiRequestFilters.V19) {
+        } else if (request.api_version >= ApiVersions.V19) {
             options = archiveParams.toArchiveOptions()
         } else {
             options = new ArchiveOptions(all: true)
@@ -1571,7 +1571,7 @@ class ProjectController extends ControllerBase{
 
     def apiProjectExportAsyncStatus() {
         def token = params.token
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
             return
         }
         if (!apiService.requireParameters(params, response, ['token'])) {
