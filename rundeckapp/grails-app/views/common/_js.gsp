@@ -19,6 +19,7 @@
     <g:set var="currentProject" value="${params.project?:request.project}"/>
     <g:set var="projParams" value="${currentProject?[project:currentProject]:[:]}"/>
     var appLinks = {
+        assetBase: '${assetPath(src:'/',absolute:'true')}',
         disclosureIcon: '${resource(dir:"images",file:"icon-tiny-disclosure.png")}',
         disclosureIconOpen: '${resource(dir:"images",file:"icon-tiny-disclosure-open.png")}',
         iconTinyWarn: '${resource(dir:"images",file:"icon-tiny-warn.png")}',

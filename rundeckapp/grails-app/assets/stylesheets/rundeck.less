@@ -1890,3 +1890,20 @@ a {
 .alert-default {
   .alert-variant(@well-bg; @well-bg; @brand-primary);
 }
+
+
+.busy-spinner{
+  .busy-spinner-img {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    background: url("spinner-gray.gif") top left no-repeat;
+    background-size: 32px 32px;
+  }
+  &.busy-spinner-sm .busy-spinner-img{
+
+    width: 16px;
+    height: 16px;
+    background-size: 16px 16px;
+  }
+}
