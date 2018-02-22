@@ -27,7 +27,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="triggers"/>
     <meta name="layout" content="base"/>
-    <title><g:appTitle/> - Create Task</title>
+    <title><g:appTitle/> - <g:message code="Task.page.create.title"/></title>
     <asset:stylesheet src="bootstrap-datetimepicker.min.css"/>
     <asset:javascript src="jquery.autocomplete.min.js"/>
     <asset:javascript src="leavePageConfirm.js"/>
@@ -85,7 +85,7 @@
             <div class="row">
                 <div class="col-sm-10">
                     <span class="h4">
-                        Create Task
+                        <g:message code="Task.page.create.title"/>
                     </span>
                 </div>
 

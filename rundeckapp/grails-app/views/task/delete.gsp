@@ -28,7 +28,7 @@
     <meta name="tabpage" content="triggers"/>
     <meta name="layout" content="base"/>
     <title><g:appTitle/> -
-    Delete Task - ${task.name ?: task.uuid}</title>
+    <g:message code="Task.page.delete.title" /> - ${task.name ?: task.uuid}</title>
 
 </head>
 
