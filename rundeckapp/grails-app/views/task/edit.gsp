@@ -36,11 +36,12 @@
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="jobedit.js"/>
     <asset:javascript src="task/edit.js"/>
-    <g:jsMessages code="page.unsaved.changes,button.title.add.key.value.pair,key.value.key.title,loading.text,job.not.found.with.id.0"/>
+    <g:jsMessages code="page.unsaved.changes,button.title.add.key.value.pair,key.value.key.title,loading.text,job.not.found.with.id.0,loading.saving.message"/>
     <g:jsMessages id="jobi18n1"
                   code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
 
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
+    <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ext-language_tools"/><!--<![endif]-->
     <g:javascript>"use strict";
         var confirm = new PageConfirm(message('page.unsaved.changes'));
         jQuery(function (z) {
@@ -61,6 +62,7 @@
             });
 
             taskEditor.init();
+            taskEditor.formSubmit=new UIToggle();
             initKoBind(null,{taskEditor:taskEditor});
         });
         function getFrameworkProject() {
@@ -93,19 +95,16 @@
         <tmpl:editForm model="[task: task]"/>
 
         <div class="panel-footer">
-            <div id="formButtons">
+            <div id="formButtons" data-bind="visible: !formSubmit.value()">
                 <g:actionSubmit id="createFormCancelButton" value="${g.message(code: 'cancel')}"
 
                                 class="btn btn-default reset_page_confirm"/>
                 <g:submitButton name="Save" value="${g.message(code: 'button.action.Save')}"
-                                onclick="['formButtons','submitSpinner'].each(Element.toggle)"
+                                data-bind="click: formSubmit.toggle"
                                 class="btn btn-primary reset_page_confirm"/>
             </div>
 
-            <div id="submitSpinner" class="spinner block" style="display:none;">
-                <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>
-                Saving...
-            </div>
+            <busy-spinner params="busy: formSubmit.value, messageCode: 'loading.saving.message'"></busy-spinner>
         </div>
 
     </div>

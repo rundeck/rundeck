@@ -23,5 +23,6 @@ function UIToggle(data) {
     self.value = ko.observable(data && data.value ? true : false);
     self.toggle = function () {
         self.value(!self.value());
+        return self.value();
     };
 }

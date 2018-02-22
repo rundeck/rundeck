@@ -35,7 +35,8 @@
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="jobedit.js"/>
     <asset:javascript src="task/edit.js"/>
-    <g:jsMessages code="page.unsaved.changes,button.title.add.key.value.pair,key.value.key.title,loading.text,job.not.found.with.id.0"/>
+    <g:jsMessages
+            code="page.unsaved.changes,button.title.add.key.value.pair,key.value.key.title,loading.text,job.not.found.with.id.0,loading.creating.task.message"/>
     <g:jsMessages id="jobi18n1"
                   code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
 
@@ -60,6 +61,8 @@
                 userDataInputPrefix:'userData.'
             });
             taskEditor.init();
+            //indicates form was submitted
+            taskEditor.formSubmit=new UIToggle();
             initKoBind(null,{taskEditor:taskEditor});
     });
         function getFrameworkProject() {
@@ -103,21 +106,18 @@
         <tmpl:editForm/>
 
         <div class="panel-footer">
-            <div id="panelButtons">
+            <div id="panelButtons" data-bind="visible: !formSubmit.value()">
                 <g:actionSubmit id="createFormCancelButton"
                                 value="${g.message(code: 'cancel')}"
                                 class="btn btn-default reset_page_confirm"/>
                 <g:submitButton name="Create"
                                 value="${g.message(code: 'button.action.Create')}"
-                                onclick="['panelButtons','activitySpinner'].each(Element.toggle)"
+                                data-bind="click: formSubmit.toggle"
+
                                 class="cformAllowSave cformAllowSaveOnly btn btn-primary reset_page_confirm"/>
 
             </div>
-
-            <div id="activitySpinner" class="spinner block" style="display:none;">
-                <img src="${resource(dir: 'images', file: 'icon-tiny-disclosure-waiting.gif')}" alt="Spinner"/>
-                Creating Task...
-            </div>
+            <busy-spinner params="busy: formSubmit.value, messageCode: 'loading.creating.task.message'"></busy-spinner>
         </div>
 
     </div>
