@@ -42,9 +42,13 @@ if (typeof(ko) !== 'undefined') {
                             return "<span data-bind=\"text: " + g1 + "\"></span>";
                         }
                     ).replace(
-                        /%{2}([^<>]+?)%{2}/g,
-                        function (match, g1) {
-                            return "<span data-bind=\"messageTemplate: 'true'\">" + g1 + "</span>";
+                        /%{2}([^<>]+?)(?:\|\|([^<>\s]+?))?%{2}/g,
+                        function (match, g1, g2) {
+                            if (g2) {
+                                return "<span data-bind=\"messageCodeTemplate: " + g2 + "\">" + g1 + "</span>";
+                            } else {
+                                return "<span data-bind=\"messageValue: true\">" + g1 + "</span>";
+                            }
                         }
                     );
                     ko.components.defaultLoader.loadTemplate(name, markupString, callback);

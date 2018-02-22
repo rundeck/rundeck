@@ -1,3 +1,4 @@
+"use strict";
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -38,6 +39,22 @@ ko.bindingHandlers.messageTemplate = {
         var template=jQuery(element).data('ko-message-template');
         
         var text = messageTemplate(template,data,pluralize);
+        ko.utils.setTextContent(element, text);
+    }
+};
+ko.bindingHandlers.messageCodeTemplate = {
+    init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
+
+        var text=jQuery(element).text();
+        jQuery(element).data('ko-message-template-code',text);
+        return { 'controlsDescendantBindings': true };
+    },
+    update:function(element, valueAccessor, allBindings, viewModel, bindingContext){
+        var pluralize=allBindings.get('messageTemplatePluralize');
+        var data=ko.utils.unwrapObservable(valueAccessor());
+        var code=jQuery(element).data('ko-message-template-code');
+
+        var text = messageTemplate(message(code),data,pluralize);
         ko.utils.setTextContent(element, text);
     }
 };
