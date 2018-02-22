@@ -45,7 +45,7 @@ import rundeck.services.FrameworkService
  */
 
 @Integration
-@RunWith(JUnit4.class)
+//@RunWith(JUnit4.class)
 class ExecutionJobTest extends GroovyTestCase{
     void testInitializeEmpty(){
         ExecutionJob job = new ExecutionJob()

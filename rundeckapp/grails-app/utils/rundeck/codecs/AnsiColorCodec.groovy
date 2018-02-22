@@ -64,7 +64,7 @@ class AnsiColorCodec {
             47: 'bg-white',
             49: 'bg-default',
     ]
-    def decode = { string ->
+    static def decode = { string ->
         def ctx = []
         def sb = new StringBuilder()
         def vals = string.split('\033[\\[%\\(]')

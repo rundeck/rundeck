@@ -66,7 +66,7 @@ class BootStrap {
 
      def init = { ServletContext servletContext ->
          //setup profiler logging
-         if(!(grailsApplication.config?.grails?.profiler?.disable)) {
+         if(!(grailsApplication.config?.grails?.profiler?.disable) && grailsApplication.mainContext.profilerLog) {
              //re-enable log output for profiler info, which is disabled by miniprofiler
              grailsApplication.mainContext.profilerLog.appenderNames = ["loggingAppender", 'miniProfilerAppender']
          }

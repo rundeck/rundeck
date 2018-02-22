@@ -16,6 +16,8 @@ info:
         name: '@info.app.name@'
         version: '@info.app.version@'
         grailsVersion: '@info.app.grailsVersion@'
+    build:
+        ident: '@info.app.name@'
 spring:
     main:
         banner-mode: "off"
@@ -25,7 +27,7 @@ spring:
 
 # Spring Actuator Endpoints are Disabled by Default
 endpoints:
-    enabled: false
+    enabled: true
     jmx:
         enabled: true
 
@@ -132,23 +134,25 @@ environments:
 
 
 rdeck:
-    base: /home/carlos/Documents/arquivos/pessoal/rundeck/localdev
+    base: ${user.home}/dev-3-svr/server/config
 
 java:
     security:
         auth:
             login:
-                config: /home/carlos/Documents/arquivos/pessoal/rundeck/localdev/server/config/jaas-loginmodule.conf
+                config: ${user.home}/dev-3-svr/server/config/jaas-loginmodule.conf
 
 rundeck:
     config:
-        location: /home/carlos/Documents/arquivos/pessoal/rundeck/localdev/server/config/rundeck-config.properties
+        location: ${user.home}/dev-3-svr/server/configrundeck-config.properties
+        storage:
     security:
         authorization:
             preauthenticated:
                 delimiter: ','
                 enabled: false
                 attributeName: REMOTE_USER_GROUPS
+    storage:
 
 server:
     port: 4440

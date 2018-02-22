@@ -1,4 +1,7 @@
 package rundeckapp
+
+import com.dtolabs.rundeck.app.api.ApiVersions
+
 /*
  * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
@@ -14,8 +17,6 @@ package rundeckapp
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import rundeck.filters.ApiRequestFilters
 
 class UrlMappings {
     static mappings = {
@@ -218,7 +219,7 @@ class UrlMappings {
 
         //promoted incubator endpoints
         "/api/$api_version/incubator/jobs/takeoverSchedule"(controller: 'api',action:'endpointMoved'){
-            moved_to="/api/${ApiRequestFilters.API_CURRENT_VERSION}/scheduler/takeover"
+            moved_to="/api/${ApiVersions.API_CURRENT_VERSION}/scheduler/takeover"
         }
 
         //catchall

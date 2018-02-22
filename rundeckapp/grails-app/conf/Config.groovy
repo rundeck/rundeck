@@ -220,7 +220,7 @@ rundeck.pagination.default.max=20
 rundeck.gui.clusterIdentityInHeader=false
 rundeck.gui.clusterIdentityInFooter=true
 
-rdeck.base='/home/carlos/Documents/arquivos/pessoal/rundeck/localdev'
+rdeck.base='${userHome}/dev-3-svr/server/config'
 
 rundeck.projectService.projectExportCache.spec= "expireAfterAccess=30m"
 rundeck.projectManagerService.projectCache.spec='expireAfterAccess=10m,refreshAfterWrite=1m'

@@ -40,7 +40,7 @@ import com.dtolabs.rundeck.app.support.ReportQuery
 import rundeck.User
 import rundeck.ReportFilter
 import rundeck.services.FrameworkService
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 
 class ReportsController extends ControllerBase{
     def reportService
@@ -452,7 +452,7 @@ class ReportsController extends ControllerBase{
      * API, /api/14/project/PROJECT/history
      */
     def apiHistoryv14(ExecQuery query){
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
             return
         }
         return apiHistory(query)
@@ -469,7 +469,7 @@ class ReportsController extends ControllerBase{
                     code: 'api.error.parameter.required', args: ['project']])
         }
         if(params.jobListFilter || params.excludeJobListFilter){
-            if (!apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
+            if (!apiService.requireVersion(request,response,ApiVersions.V5)) {
                 return
             }
         }
@@ -534,7 +534,7 @@ class ReportsController extends ControllerBase{
             (ExecutionService.EXECUTION_FAILED_WITH_RETRY): ExecutionService.EXECUTION_FAILED_WITH_RETRY,
             timeout: ExecutionService.EXECUTION_TIMEDOUT,
             (ExecutionService.EXECUTION_TIMEDOUT): ExecutionService.EXECUTION_TIMEDOUT]
-        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',

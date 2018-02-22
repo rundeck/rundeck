@@ -19,6 +19,8 @@ class AA_TimerInterceptor {
     public static final String _REQ_URI = 'AA_TimerFilters._req_uri'
     def MetricRegistry metricRegistry
 
+    int order = HIGHEST_PRECEDENCE
+
     /**
      * Mark recording request for ident
      * @param request

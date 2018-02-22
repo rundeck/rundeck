@@ -19,7 +19,6 @@ import static org.junit.Assert.*
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.ControllerUnitTestMixin
-import org.grails.plugins.databinding.DataBindingGrailsPlugin
 import org.junit.Before
 import rundeck.*
 import rundeck.codecs.JobsXMLCodec

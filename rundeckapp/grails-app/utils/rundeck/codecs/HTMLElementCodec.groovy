@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
+ * Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,13 @@
 
 package rundeck.codecs
 
-import org.owasp.encoder.Encode
 /**
- * HTMLAttributeValueCodec encodes all non-alphanumeric characters ASCII value less than 256 using HTML hexadecimal '&#xHH'
+ * encode all &lt; and &gt; chars with HTML entity equivalents.
  * @author Greg Schueler <a href="mailto:greg@simplifyops.com">greg@simplifyops.com</a>
- * @since 2014-08-07
+ * @since 2014-05-15
  */
-class HTMLAttributeCodec {
-    def encode = { str ->
-        Encode.forHtmlAttribute(str)
+class HTMLElementCodec {
+    static def encode={str->
+        str.replaceAll('<',"&lt;").replaceAll('>',"&gt;")
     }
 }

@@ -31,6 +31,7 @@ if (Environment.isDevelopmentMode() && targetDir != null) {
             pattern = "%level %logger - %msg%n"
         }
     }
+    logger 'grails.artefact.Interceptor', DEBUG, ['STDOUT'], false
     logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
 }
 root(ERROR, ['STDOUT'])

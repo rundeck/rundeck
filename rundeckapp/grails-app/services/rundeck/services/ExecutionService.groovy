@@ -60,7 +60,7 @@ import org.springframework.validation.ObjectError
 import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.servlet.support.RequestContextUtils as RCU
 import rundeck.*
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.logging.ExecutionLogWriter
@@ -111,6 +111,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def executionUtilService
     def fileUploadService
     def pluginService
+    def executorService
 
     static final ThreadLocal<DateFormat> ISO_8601_DATE_FORMAT_WITH_MS_XXX =
         new ThreadLocal<DateFormat>() {
@@ -165,7 +166,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
 
     public def respondExecutionsXml(HttpServletRequest request,HttpServletResponse response, List<Execution> executions, paging = [:]) {
-        def apiv14=request.api_version>=ApiRequestFilters.V14
+        def apiv14=request.api_version>=ApiVersions.V14
         return apiService.respondExecutionsXml(request,response,executions.collect { Execution e ->
                 def data=[
                         execution: e,
@@ -697,7 +698,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 property('id')
             }
         }
-        callAsync {
+        executorService.submit {
             def found = executionIds.collect { Execution.get(it) }
             cleanupRunningJobs(found, status)
         }

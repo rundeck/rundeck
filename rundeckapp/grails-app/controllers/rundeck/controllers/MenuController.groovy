@@ -55,7 +55,7 @@ import rundeck.ScheduledExecutionFilter
 import rundeck.User
 import rundeck.codecs.JobsXMLCodec
 import rundeck.codecs.JobsYAMLCodec
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.ExecutionService
@@ -2112,7 +2112,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         if(configurationService.getBoolean("startup.detectFirstRun",true) &&
                 frameworkService.rundeckFramework.hasProperty('framework.var.dir')) {
             def vardir = frameworkService.rundeckFramework.getProperty('framework.var.dir')
-            def vers = grailsApplication.metadata['build.ident'].replaceAll('\\s+\\(.+\\)$','')
+            String buildIdent = grailsApplication.metadata.getProperty('build.ident', String) ?: grailsApplication.metadata.getProperty("info.build.ident")
+            def vers = buildIdent.replaceAll('\\s+\\(.+\\)$','')
             def file = new File(vardir, ".first-run-${vers}")
             if(!file.exists()){
                 isFirstRun=true
@@ -2453,7 +2454,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      */
 
     def apiLogstorageInfo() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -2503,7 +2504,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def apiLogstorageListIncompleteExecutions(BaseQuery query) {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
             return
         }
         query.validate()
@@ -2609,7 +2610,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
     }
 
     def apiResumeIncompleteLogstorage() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -2668,22 +2669,22 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if(query.groupPathExact || query.jobExactFilter){
             //these query inputs require API version 2
-            if (!apiService.requireVersion(request,response,ApiRequestFilters.V2)) {
+            if (!apiService.requireVersion(request,response,ApiVersions.V2)) {
                 return
             }
         }
         if(null!=query.scheduledFilter || null!=query.serverNodeUUIDFilter){
-            if (!apiService.requireVersion(request,response,ApiRequestFilters.V17)) {
+            if (!apiService.requireVersion(request,response,ApiVersions.V17)) {
                 return
             }
         }
         if(null!=query.scheduleEnabledFilter || null!=query.executionEnabledFilter){
-            if (!apiService.requireVersion(request,response,ApiRequestFilters.V18)) {
+            if (!apiService.requireVersion(request,response,ApiVersions.V18)) {
                 return
             }
         }
 
-        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',
@@ -2707,7 +2708,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: get job info: /api/18/job/{id}/info
      */
     def apiJobDetail() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V18)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V18)) {
             return
         }
 
@@ -2780,7 +2781,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def clusterModeEnabled = frameworkService.isClusterModeEnabled()
         def serverNodeUUID = frameworkService.serverUUID
 
-        if (request.api_version >= ApiRequestFilters.V18) {
+        if (request.api_version >= ApiVersions.V18) {
             //new response format mechanism
             //no <result> tag
             def data = new JobInfoList(
@@ -2813,7 +2814,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         results.each { ScheduledExecution se ->
                             def jobparams = [id: se.extid, href: apiService.apiHrefForJob(se),
                                              permalink: apiService.guiHrefForJob(se)]
-                            if (request.api_version >= ApiRequestFilters.V17) {
+                            if (request.api_version >= ApiVersions.V17) {
                                 jobparams.scheduled = se.scheduled
                                 jobparams.scheduleEnabled = se.scheduleEnabled
                                 jobparams.enabled = se.executionEnabled
@@ -2843,7 +2844,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                          description: (se.description),
                                          href       : apiService.apiHrefForJob(se),
                                          permalink  : apiService.guiHrefForJob(se)]
-                        if (request.api_version >= ApiRequestFilters.V17) {
+                        if (request.api_version >= ApiVersions.V17) {
                             jobparams.scheduled = se.scheduled
                             jobparams.scheduleEnabled = se.scheduleEnabled
                             jobparams.enabled = se.executionEnabled
@@ -2866,7 +2867,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * @return
      */
     def apiSchedulerListJobs(String uuid, boolean currentServer) {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V17)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V17)) {
             return
         }
         if(currentServer) {
@@ -2911,7 +2912,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /api/2/project/NAME/jobs, version 2
      */
     def apiJobsListv2 (ScheduledExecutionQuery query) {
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V2)){
+        if(!apiService.requireVersion(request,response,ApiVersions.V2)){
             return
         }
         return apiJobsList(query)
@@ -2921,7 +2922,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /api/14/project/NAME/jobs/export
      */
     def apiJobsExportv14 (ScheduledExecutionQuery query){
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
             return
         }
         return apiJobsExport(query)
@@ -2972,7 +2973,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
      * API: /project/PROJECT/executions/running, version 14
      */
     def apiExecutionsRunningv14 (){
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
             return
         }
         return apiExecutionsRunning()
@@ -2993,13 +2994,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         Framework framework = frameworkService.getRundeckFramework()
 
         //allow project='*' to indicate all projects
-        def allProjects = request.api_version >= ApiRequestFilters.V9 && params.project == '*'
+        def allProjects = request.api_version >= ApiVersions.V9 && params.project == '*'
         if(!allProjects){
             if(!apiService.requireExists(response,frameworkService.existsFrameworkProject(params.project),['project',params.project])){
                 return
             }
         }
-        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorXml(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',

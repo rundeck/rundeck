@@ -31,6 +31,7 @@ class FileUploadService {
     ConfigurationService configurationService
     TaskService taskService
     FrameworkService frameworkService
+    def executorService
 
     long getTempfileExpirationDelay() {
         configurationService.getLong "fileUploadService.tempfile.expiration", DEFAULT_TEMP_EXPIRATION
@@ -178,7 +179,7 @@ class FileUploadService {
 
     @Transactional
     def onBootstrap() {
-        callAsync {
+        executorService.submit {
             checkAndExpireAllRecords()
         }
     }

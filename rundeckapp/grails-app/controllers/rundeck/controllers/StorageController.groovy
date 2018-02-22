@@ -27,7 +27,7 @@ import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import org.springframework.web.multipart.MultipartHttpServletRequest
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
@@ -64,9 +64,9 @@ class StorageController extends ControllerBase{
     ]
 
     private def pathUrl(path){
-        def uriString = "/api/${ApiRequestFilters.API_CURRENT_VERSION}/incubator/storage/$path"
+        def uriString = "/api/${ApiVersions.API_CURRENT_VERSION}/incubator/storage/$path"
         if ("${path}".startsWith('keys/') || path.toString() == 'keys') {
-            uriString = "/api/${ApiRequestFilters.API_CURRENT_VERSION}/storage/$path"
+            uriString = "/api/${ApiVersions.API_CURRENT_VERSION}/storage/$path"
         }
         return createLink(absolute: true, uri: uriString)
     }
@@ -455,7 +455,7 @@ class StorageController extends ControllerBase{
      * @return
      */
     def apiKeys(StorageParams storageParams) {
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V11)){
+        if(!apiService.requireVersion(request,response,ApiVersions.V11)){
             return
         }
         storageParams.resourcePath = "/keys/${storageParams.resourcePath?:''}"

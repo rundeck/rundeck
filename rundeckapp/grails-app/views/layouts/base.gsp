@@ -127,7 +127,8 @@
 <g:render template="/common/footer"/>
 </div>
 <!--
-<g:profilerOutput />
+disable for now because profiler plugin is not compatible with grails 3.x
+ < g:profilerOutput />
 -->
 <miniprofiler:javascript/>
 
