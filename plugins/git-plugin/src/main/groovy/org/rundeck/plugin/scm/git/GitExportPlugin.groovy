@@ -205,7 +205,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (performFetch) {
             try {
                 fetchFromRemote(context)
-                actions[PROJECT_SYNCH_ACTION_ID].perform(this,null,null,context,[refresh:'rebase',resolution:'ours'])
+                if(config.shouldPullAutomatically()){
+                    actions[PROJECT_SYNCH_ACTION_ID].perform(this,null,null,context,[refresh:'rebase',resolution:'ours'])
+                }
             } catch (Exception e) {
                 fetchError=true
                 msgs<<"Fetch from the repository failed: ${e.message}"

@@ -67,6 +67,6 @@ class Import extends Common{
     }
 
     boolean shouldPullAutomatically(){
-        return pullAutomatically
+        return pullAutomatically in [null,'true']
     }
 }
