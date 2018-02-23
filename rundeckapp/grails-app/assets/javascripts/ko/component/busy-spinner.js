@@ -17,14 +17,30 @@
 //= require asset-ko-template-loader
 "use strict";
 
+function BusySpinner(params) {
+    var self = this;
+    self.busy = params.busy;
+    self.message = params.message;
+    self.css = params.css;
+}
 
 ko.components.register('busy-spinner', {
-    viewModel: function (params) {
-        // Data: value is either null, 'like', or 'dislike'
-        var self = this;
-        self.busy = params.busy;
-        var messageCode = ko.unwrap(params.messageCode) || 'loading.text';
-        self.message = ko.unwrap(params.message) || message(messageCode) || 'Loading...';
+    viewModel: {
+        createViewModel: function (params, componentInfo) {
+
+            var msgText = '';
+            if (!componentInfo || !componentInfo.templateNodes || componentInfo.templateNodes.length < 1) {
+
+                var messageCode = ko.unwrap(params.messageCode) || 'loading.text';
+                msgText = ko.unwrap(params.message) || message(messageCode) || 'Loading...';
+            }
+            return new BusySpinner({
+                busy: params.busy,
+                message: msgText,
+                css: params.css
+            });
+
+        }
     },
     template: {assetTemplate: 'busy-spinner.html'}
 });

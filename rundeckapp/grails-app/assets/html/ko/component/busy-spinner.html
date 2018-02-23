@@ -14,7 +14,8 @@
   ~ limitations under the License.
   -->
 
-<div data-bind="visible: busy" class="busy-spinner busy-spinner-sm">
+<div data-bind="visible: busy, css: css" class="busy-spinner busy-spinner-sm">
     <span class="busy-spinner-img"></span>
     $$message
+    <!-- ko template: { nodes: $componentTemplateNodes } --><!-- /ko -->
 </div>
