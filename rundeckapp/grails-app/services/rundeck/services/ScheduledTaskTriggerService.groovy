@@ -31,8 +31,8 @@ class ScheduledTaskTriggerService implements TaskTriggerHandler<RDTaskContext> {
     }
 
     @Override
-    boolean handlesTrigger(TaskTrigger condition, RDTaskContext contextInfo) {
-        condition instanceof QuartzSchedulerTaskTrigger
+    boolean handlesTrigger(TaskTrigger trigger, RDTaskContext contextInfo) {
+        trigger instanceof QuartzSchedulerTaskTrigger
     }
 
 
@@ -57,27 +57,41 @@ class ScheduledTaskTriggerService implements TaskTriggerHandler<RDTaskContext> {
     }
 
     @Override
-    void deregisterTriggerForAction(String triggerId, RDTaskContext contextInfo, TaskTrigger condition, TaskAction action, TaskActionInvoker service) {
+    void deregisterTriggerForAction(
+            String taskId,
+            RDTaskContext contextInfo,
+            TaskTrigger condition,
+            TaskAction action,
+            TaskActionInvoker service
+    ) {
 
-        log.error("deregister trigger from quartz for $triggerId, context $contextInfo, condition $condition, action $action, invoker $service")
-        unscheduleTrigger(triggerId, contextInfo)
+        log.error(
+                "deregister task from quartz for $taskId, context $contextInfo, condition $condition, action $action, invoker $service"
+        )
+        unscheduleTrigger(taskId, contextInfo)
     }
 
-    boolean unscheduleTrigger(String triggerId, RDTaskContext contextInfo) {
+    boolean unscheduleTrigger(String taskId, RDTaskContext contextInfo) {
 
-        def quartzJobName = triggerId
+        def quartzJobName = taskId
         def quartzJobGroup = 'ScheduledTaskTriggerService'
         if (quartzScheduler.checkExists(JobKey.jobKey(quartzJobName, quartzJobGroup))) {
-            log.info("Removing existing trigger $triggerId with context $contextInfo: " + quartzJobName)
+            log.info("Removing existing task $taskId with context $contextInfo: " + quartzJobName)
 
             return quartzScheduler.unscheduleJob(TriggerKey.triggerKey(quartzJobName, quartzJobGroup))
         }
         false
     }
 
-    Date scheduleTrigger(String triggerId, RDTaskContext contextInfo, QuartzSchedulerTaskTrigger scheduled, TaskAction action, TaskActionInvoker invoker) {
+    Date scheduleTrigger(
+            String taskId,
+            RDTaskContext contextInfo,
+            QuartzSchedulerTaskTrigger scheduled,
+            TaskAction action,
+            TaskActionInvoker invoker
+    ) {
 
-        def quartzJobName = triggerId
+        def quartzJobName = taskId
         def quartzJobGroup = 'ScheduledTaskTriggerService'
         def jobDesc = "Attempt to schedule job $quartzJobName with context $contextInfo"
         if (!executionService.executionsAreActive) {
@@ -92,9 +106,10 @@ class ScheduledTaskTriggerService implements TaskTriggerHandler<RDTaskContext> {
 
 
         def jobDetailBuilder = JobBuilder.newJob(RDTaskTriggerJob)
-                .withIdentity(quartzJobName, quartzJobGroup)
+                                         .withIdentity(quartzJobName, quartzJobGroup)
 //                .withDescription(scheduled.)
-                .usingJobData(new JobDataMap(createJobDetailMap(triggerId, contextInfo, scheduled, action, invoker)))
+                                         .
+                usingJobData(new JobDataMap(createJobDetailMap(taskId, contextInfo, scheduled, action, invoker)))
 
 
         def jobDetail = jobDetailBuilder.build()
@@ -104,15 +119,15 @@ class ScheduledTaskTriggerService implements TaskTriggerHandler<RDTaskContext> {
         def Date nextTime
 
         if (quartzScheduler.checkExists(JobKey.jobKey(quartzJobName, quartzJobGroup))) {
-            log.info("rescheduling existing trigger $triggerId with context $contextInfo: " + quartzJobName)
+            log.info("rescheduling existing task $taskId with context $contextInfo: " + quartzJobName)
 
             nextTime = quartzScheduler.rescheduleJob(TriggerKey.triggerKey(quartzJobName, quartzJobGroup), trigger)
         } else {
-            log.info("scheduling new trigger $triggerId with context $contextInfo: " + quartzJobName)
+            log.info("scheduling new task $taskId with context $contextInfo: " + quartzJobName)
             nextTime = quartzScheduler.scheduleJob(jobDetail, trigger)
         }
 
-        log.info("scheduled trigger $triggerId. next run: " + nextTime.toString())
+        log.info("scheduled task $taskId. next run: " + nextTime.toString())
         return nextTime
     }
 
