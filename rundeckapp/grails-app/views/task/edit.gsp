@@ -34,7 +34,7 @@
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="task/edit.js"/>
-    <g:jsMessages code="page.unsaved.changes,button.title.add.key.value.pair,key.value.key.title,loading.text,job.not.found.with.id.0,loading.saving.message"/>
+    <g:jsMessages code="page.unsaved.changes,button.title.add.key.value.pair,key.value.key.title,loading.text,job.not.found.with.id.0"/>
     <g:jsMessages id="jobi18n1"
                   code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
 
@@ -102,7 +102,9 @@
                                 class="btn btn-primary reset_page_confirm"/>
             </div>
 
-            <busy-spinner params="busy: formSubmit.value, messageCode: 'loading.saving.message'"></busy-spinner>
+            <busy-spinner params="busy: formSubmit.value, css: 'busy-spinner-info'">
+                <span class="text-info"><g:message code="loading.saving.message"/></span>
+            </busy-spinner>
         </div>
 
     </div>
