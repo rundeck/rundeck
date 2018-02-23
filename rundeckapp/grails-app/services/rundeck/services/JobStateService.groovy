@@ -265,8 +265,7 @@ class JobStateService implements AuthorizingJobService {
             throw new JobNotFound("Not found", jobReference.id, jobReference.project)
         }
         if(auth instanceof UserAndRolesAuthContext) {
-            def result = frameworkService.kickJob(se,
-                    auth, asUser, inputOpts)
+            def result = frameworkService.kickJob(se, auth, asUser, inputOpts)
             if(result && result.executionId){
                 resultExecution += result.executionId
             }
