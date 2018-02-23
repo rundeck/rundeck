@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+//= require jobedit
 //= require storageBrowseKO
 //= require ui/toggle
 //= require pluginPropKO

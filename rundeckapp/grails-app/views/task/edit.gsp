@@ -32,9 +32,7 @@
     <asset:stylesheet src="bootstrap-datetimepicker.min.css"/>
     <asset:javascript src="jquery.autocomplete.min.js"/>
     <asset:javascript src="leavePageConfirm.js"/>
-    <asset:javascript src="util/markdeep.js"/>
     <asset:javascript src="util/yellowfade.js"/>
-    <asset:javascript src="jobedit.js"/>
     <asset:javascript src="task/edit.js"/>
     <g:jsMessages code="page.unsaved.changes,button.title.add.key.value.pair,key.value.key.title,loading.text,job.not.found.with.id.0,loading.saving.message"/>
     <g:jsMessages id="jobi18n1"
