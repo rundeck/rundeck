@@ -604,7 +604,11 @@ public class PluginAdapterUtility {
                 }
                 if (!property.getSelectValues().containsAll(resolvedValueSet)) {
                     throw new RuntimeException(
-                            "Some options values were not allowed for property " + property.getName() + ": " + resolvedValue);
+                        String.format(
+                            "Some options values were not allowed for property %s: %s",
+                            property.getName(),
+                            resolvedValue
+                        ));
                 }
             } else if (value instanceof Collection) {
                 Collection valCollection = (Collection) value;
@@ -644,9 +648,10 @@ public class PluginAdapterUtility {
         } else if (type == Property.Type.Select) {
             if (value instanceof String) {
                 resolvedValue = value;
-                if (!field.getAnnotation(SelectValues.class).dynamicValues() && !property.getSelectValues().contains((String) resolvedValue)) {
+                if (!field.getAnnotation(SelectValues.class).dynamicValues() &&
+                    !property.getSelectValues().contains(resolvedValue)) {
                     throw new RuntimeException(
-                            "value not allowed for property " + property.getName() + ": " + resolvedValue);
+                        String.format("value not allowed for property %s: %s", property.getName(), resolvedValue));
                 }
             } else {
                 //XXX
