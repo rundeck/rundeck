@@ -29,7 +29,15 @@
     <meta name="layout" content="base"/>
     <title><g:appTitle/> -
     <g:message code="Task.page.delete.title" /> - ${task.name ?: task.uuid}</title>
+    <asset:javascript src="koBind.js"/>
+    <asset:javascript src="ui/toggle.js"/>
+    <asset:javascript src="ko/component/busy-spinner.js"/>
+    <g:javascript>"use strict";
 
+    jQuery(function () {
+        initKoBind();
+    })
+    </g:javascript>
 </head>
 
 <body>
@@ -55,11 +63,20 @@
 
         </div>
 
-        <div class="panel-footer">
+        <div class="panel-footer" data-ko-controller="UIToggle">
             <g:hiddenField name="id" value="${task.uuid}"/>
-            <g:actionSubmit value="Cancel" action="cancel" class="btn btn-default btn-sm "/>
-            <input type="submit" value="${g.message(code: 'Delete')}"
+            <span data-bind="visible: !value()">
+                <g:actionSubmit value="Cancel"
+                                action="cancel"
+                                class="btn btn-default btn-sm "/>
+                <input type="submit"
+                       value="${g.message(code: 'Delete')}"
+                       data-bind="click: toggle"
                    class="btn btn-danger btn-sm"/>
+            </span>
+            <busy-spinner params="busy: value, css: 'busy-spinner-danger'">
+                <span class="text-danger"><g:message code="loading.deleting.message"/></span>
+            </busy-spinner>
         </div>
     </div>
 </g:form>
