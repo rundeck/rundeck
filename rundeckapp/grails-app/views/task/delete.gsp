@@ -38,14 +38,14 @@
     <div class="panel panel-primary">
         <div class="panel-heading">
             <span class="h3">
-                Really delete this Task?
+                <g:message code="Task.page.delete.confirm.message"/>
             </span>
         </div>
 
         <div class="panel-body">
             <div class="form-group">
                 <label class="col-sm-2 control-label">
-                    Name
+                    <g:message code="Task.domain.name.title"/>
                 </label>
 
                 <div class="col-sm-10">

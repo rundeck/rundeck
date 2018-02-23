@@ -33,6 +33,7 @@
     <asset:javascript src="jquery.autocomplete.min.js"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="util/yellowfade.js"/>
+
     <asset:javascript src="task/edit.js"/>
     <g:jsMessages code="page.unsaved.changes,button.title.add.key.value.pair,key.value.key.title,loading.text,job.not.found.with.id.0"/>
     <g:jsMessages id="jobi18n1"
@@ -85,7 +86,7 @@
     <div class="panel panel-primary" data-ko-controller="taskEditor">
         <div class="panel-heading">
             <span class="h4">
-                Edit Task
+                <g:message code="Task.page.edit.title" />
             </span>
             <g:hiddenField name="id" value="${task.uuid}"/>
         </div>
