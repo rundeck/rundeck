@@ -652,6 +652,13 @@ public class PluginAdapterUtility {
                 //XXX
                 return false;
             }
+        } else if (type == Property.Type.Map) {
+            if (value instanceof Map) {
+                resolvedValue = value;
+            } else {
+                //XXX
+                return false;
+            }
         } else {
             //XXX
             return false;

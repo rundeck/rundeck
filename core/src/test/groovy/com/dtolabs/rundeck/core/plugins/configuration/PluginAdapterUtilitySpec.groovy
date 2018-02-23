@@ -220,6 +220,26 @@ class PluginAdapterUtilitySpec extends Specification {
         ['a', 'c'].toArray(new String[2]) | ['a', 'c']
     }
 
+    def "configure map value Map"() {
+        given:
+        Configuretest1 test = new Configuretest1();
+        when:
+
+        HashMap<String, Object> configuration = new HashMap<String, Object>();
+        configuration.put("testMap", value);
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+        test.testMap == expect
+
+        where:
+        value           | expect
+        [a: 'b']        | [a: 'b']
+        [a: 1]          | [a: 1]
+        [a: ['b', 'c']] | [a: ['b', 'c']]
+        [a: [b: 'c']]   | [a: [b: 'c']]
+    }
+
     def "build String select property with value labels"() {
         given:
 
