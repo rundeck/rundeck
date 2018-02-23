@@ -359,7 +359,13 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         //TODO: on executor
 
         try {
-            def result = actHandler.performTaskAction(taskId, contextInfo, triggerMap, trigger, action)
+            def result = actHandler.performTaskAction(
+                    taskId,
+                    contextInfo,
+                    [trigger: triggerMap, task: task.userData],
+                    trigger,
+                    action
+            )
             def event2 = new TaskEvent(
                     eventDataMap: result,
                     timeZone: ZoneId.systemDefault().toString(),
