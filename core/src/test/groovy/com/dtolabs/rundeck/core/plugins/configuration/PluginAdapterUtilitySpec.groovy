@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.plugins.descriptions.SelectLabels
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import spock.lang.Specification
+import spock.lang.Unroll
 
 /**
  * @author greg
@@ -147,6 +148,7 @@ class PluginAdapterUtilitySpec extends Specification {
         'a,b,c' | _
     }
 
+    @Unroll
     def "configure options value set"() {
         given:
         Configuretest1 test = new Configuretest1();
@@ -160,13 +162,17 @@ class PluginAdapterUtilitySpec extends Specification {
         test.testSelect4 == (expect as Set)
 
         where:
-        value   | expect
-        'a'     | ['a']
-        'a,b'   | ['a', 'b']
-        'a,b,c' | ['a', 'b', 'c']
-        'a,c'   | ['a', 'c']
+        value                             | expect
+        'a'                               | ['a']
+        'a,b'                             | ['a', 'b']
+        'a,b,c'                           | ['a', 'b', 'c']
+        'a,c'                             | ['a', 'c']
+        ['a', 'c']                        | ['a', 'c']
+        ['a', 'c'].toSet()                | ['a', 'c']
+        ['a', 'c'].toArray(new String[2]) | ['a', 'c']
     }
 
+    @Unroll
     def "configure options value array"() {
         given:
         Configuretest1 test = new Configuretest1();
@@ -180,12 +186,17 @@ class PluginAdapterUtilitySpec extends Specification {
         test.testSelect5 == expect
 
         where:
-        value   | expect
-        'a'     | ['a']
-        'a,b'   | ['a', 'b']
-        'a,b,c' | ['a', 'b', 'c']
-        'a,c'   | ['a', 'c']
+        value                             | expect
+        'a'                               | ['a']
+        'a,b'                             | ['a', 'b']
+        'a,b,c'                           | ['a', 'b', 'c']
+        'a,c'                             | ['a', 'c']
+        ['a', 'c']                        | ['a', 'c']
+        ['a', 'c'].toSet()                | ['a', 'c']
+        ['a', 'c'].toArray(new String[2]) | ['a', 'c']
     }
+
+    @Unroll
     def "configure options value list"() {
         given:
         Configuretest1 test = new Configuretest1();
@@ -199,11 +210,14 @@ class PluginAdapterUtilitySpec extends Specification {
         test.testSelect6 == expect
 
         where:
-        value   | expect
-        'a'     | ['a']
-        'a,b'   | ['a', 'b']
-        'a,b,c' | ['a', 'b', 'c']
-        'a,c'   | ['a', 'c']
+        value                             | expect
+        'a'                               | ['a']
+        'a,b'                             | ['a', 'b']
+        'a,b,c'                           | ['a', 'b', 'c']
+        'a,c'                             | ['a', 'c']
+        ['a', 'c']                        | ['a', 'c']
+        ['a', 'c'].toSet()                | ['a', 'c']
+        ['a', 'c'].toArray(new String[2]) | ['a', 'c']
     }
 
     def "build String select property with value labels"() {

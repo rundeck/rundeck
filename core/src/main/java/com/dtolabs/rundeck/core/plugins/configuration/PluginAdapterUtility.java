@@ -606,6 +606,30 @@ public class PluginAdapterUtility {
                     throw new RuntimeException(
                             "Some options values were not allowed for property " + property.getName() + ": " + resolvedValue);
                 }
+            } else if (value instanceof Collection) {
+                Collection valCollection = (Collection) value;
+                if (field.getType().isAssignableFrom(Set.class)) {
+                    resolvedValue = new HashSet<>(valCollection);
+                } else if (field.getType().isAssignableFrom(List.class)) {
+                    resolvedValue = new ArrayList<>(valCollection);
+                } else if (field.getType() == String[].class) {
+                    ArrayList<Object> strings = new ArrayList<>(valCollection);
+                    resolvedValue = strings.toArray(new String[strings.size()]);
+                } else {
+                    return false;
+                }
+            } else if (value.getClass() == String[].class) {
+                String[] valCollection = (String[]) value;
+                if (field.getType().isAssignableFrom(Set.class)) {
+                    resolvedValue = new HashSet<>(Arrays.asList(valCollection));
+                } else if (field.getType().isAssignableFrom(List.class)) {
+                    resolvedValue = new ArrayList<>(Arrays.asList(valCollection));
+                } else if (field.getType() == String[].class) {
+
+                    resolvedValue = valCollection;
+                } else {
+                    return false;
+                }
             } else {
                 //XXX
                 return false;
