@@ -31,6 +31,7 @@
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
+    <asset:stylesheet src="bootstrap-less.css"/>
     <asset:stylesheet href="rundeck.css"/>
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="github-markdown.css"/>
@@ -42,7 +43,7 @@
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="jquery-ui.js"/>
     <asset:javascript src="jquery-ui-timepicker-addon.js"/>
-    <asset:javascript src="bootstrap.js"/>
+    <asset:javascript src="bootstrap-all.js"/>
     <asset:javascript src="prototype.min.js"/>
     <asset:javascript src="application.js"/>
     <g:render template="/common/js"/>
