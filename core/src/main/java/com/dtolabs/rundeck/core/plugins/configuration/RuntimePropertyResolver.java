@@ -52,11 +52,11 @@ class RuntimePropertyResolver implements PropertyResolver {
      *
      * @throws IllegalArgumentException if the scope is null or {@link PropertyScope#Unspecified}
      */
-    public String resolvePropertyValue(final String name, final PropertyScope scope) {
+    public Object resolvePropertyValue(final String name, final PropertyScope scope) {
         if (null == scope || scope == PropertyScope.Unspecified) {
             throw new IllegalArgumentException("scope must be specified");
         }
-        String value = null;
+        Object value = null;
         if (scope.isInstanceLevel()) {
             if (null != instanceScopeResolver) {
                 value = instanceScopeResolver.getProperty(name);

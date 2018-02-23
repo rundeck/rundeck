@@ -382,7 +382,7 @@ public class PluginAdapterUtility {
         if (object instanceof Configurable) {
             Configurable configObject = (Configurable) object;
             Properties configuration = new Properties();
-            configuration.putAll(inputConfig);
+            configuration.putAll(convertStringValues(inputConfig));
             try {
                 configObject.configure(configuration);
             } catch (ConfigurationException e) {
@@ -392,6 +392,14 @@ public class PluginAdapterUtility {
             inputConfig = configureObjectFieldsWithProperties(object, description.getProperties(), inputConfig);
         }
         return inputConfig;
+    }
+
+    public static Map<String, String> convertStringValues(final Map<String, Object> inputConfig) {
+        HashMap<String, String> result = new HashMap<>();
+        for (String s : inputConfig.keySet()) {
+            result.put(s, inputConfig.get(s).toString());
+        }
+        return result;
     }
 
     /**

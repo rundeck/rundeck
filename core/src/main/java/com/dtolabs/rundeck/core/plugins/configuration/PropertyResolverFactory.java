@@ -191,26 +191,24 @@ public class PropertyResolverFactory {
     public static PropertyResolver createPrefixedResolver(final PropertyResolver resolver, String providerName, String pluginType) {
         final String projectPrefix = projectPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
         final String frameworkPrefix = frameworkPropertyPrefix(pluginPropertyPrefix(pluginType, providerName));
-        return new PropertyResolver(){
-            public Object resolvePropertyValue(String name, PropertyScope scope) {
-                String value = null;
-                if (scope.isInstanceLevel()) {
-                    value = (String)resolver.resolvePropertyValue(name,scope);
-                }
-                if (null != value || scope == PropertyScope.InstanceOnly) {
-                    return value;
-                }
-
-                if (scope.isProjectLevel()) {
-                    value = (String) resolver.resolvePropertyValue(projectPrefix + name, scope);
-                }
-                if (null != value || scope == PropertyScope.ProjectOnly) {
-                    return value;
-                }
-
-                value = (String) resolver.resolvePropertyValue(frameworkPrefix + name, scope);
+        return (name, scope) -> {
+            Object value = null;
+            if (scope.isInstanceLevel()) {
+                value = resolver.resolvePropertyValue(name, scope);
+            }
+            if (null != value || scope == PropertyScope.InstanceOnly) {
                 return value;
             }
+
+            if (scope.isProjectLevel()) {
+                value = resolver.resolvePropertyValue(projectPrefix + name, scope);
+            }
+            if (null != value || scope == PropertyScope.ProjectOnly) {
+                return value;
+            }
+
+            return resolver.resolvePropertyValue(frameworkPrefix + name, scope);
+
         };
 
     }
@@ -259,9 +257,9 @@ public class PropertyResolverFactory {
             this.map = map;
         }
 
-        public String getProperty(String name) {
+        public Object getProperty(String name) {
             Object o = null != map ? map.get(name) : null;
-            return o != null ? o.toString() : null;
+            return o;
         }
 
     }
@@ -283,7 +281,7 @@ public class PropertyResolverFactory {
             this.resolver = resolver;
         }
 
-        public String getProperty(final String name) {
+        public Object getProperty(final String name) {
             return resolver.getProperty(prefix + name);
         }
     }

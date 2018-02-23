@@ -33,5 +33,10 @@ public interface PropertyRetriever {
      * @return a property value by name, or null if it is not found
      * @param name property name
      */
-    public String getProperty(String name);
+    Object getProperty(String name);
+
+    default String getStringProperty(String name) {
+        Object property = getProperty(name);
+        return null != property ? property.toString() : null;
+    }
 }

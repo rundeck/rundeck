@@ -113,7 +113,7 @@ public class FrameworkFactory {
         String projectsBaseDir = null;
         if (propertyFile.exists()) {
             PropertyRetriever propertyRetriever = FilesystemFramework.createPropertyRetriever(baseDir);
-            projectsBaseDir = propertyRetriever.getProperty("framework.projects.dir");
+            projectsBaseDir = propertyRetriever.getStringProperty("framework.projects.dir");
         }
         if (null == projectsBaseDir) {
             projectsBaseDir = FilesystemFramework.getProjectsBaseDir(baseDir);

@@ -32,7 +32,8 @@ import java.util.Properties;
  */
 public interface Configurable {
     /**
-     * Configure the object with the configuration properties.
+     * Configure the object with the configuration properties. Any non-string values will be converted to String
+     * with {@link #toString()}.
      * @param configuration the properties to use
      * @throws ConfigurationException if there is an invalid configuration
      */

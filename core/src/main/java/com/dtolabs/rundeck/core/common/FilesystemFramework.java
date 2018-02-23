@@ -76,7 +76,7 @@ public class FilesystemFramework implements IFilesystemFramework {
         String projectsDir=null;
         if(propertyFile.exists()){
             PropertyRetriever propertyRetriever = FilesystemFramework.createPropertyRetriever(baseDir);
-            projectsDir = propertyRetriever.getProperty("framework.projects.dir");
+            projectsDir = propertyRetriever.getStringProperty("framework.projects.dir");
         }
         return new FilesystemFramework(new File(rdeck_base_dir), new File(projectsDir));
     }
