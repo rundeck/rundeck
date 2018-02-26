@@ -36,7 +36,7 @@ committerEmail
 exportUuidBehavior
 $commonprops
 "
-expcount=12
+expcount=13
 
 test_git_plugin_input_xml(){
 	local integration=$1
