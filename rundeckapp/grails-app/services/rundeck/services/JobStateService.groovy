@@ -266,7 +266,9 @@ class JobStateService implements AuthorizingJobService {
     )
         throws JobNotFound, JobExecutionError {
         def inputOpts = [:]
-        inputOpts["optmap"] = optionData
+        optionData.each{k,v->
+            inputOpts["option.${k}"] = v
+        }
         return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser)
     }
 

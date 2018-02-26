@@ -505,8 +505,8 @@ class JobStateServiceSpec extends Specification {
                 return exec
             }
             kickJob(
-                !null, !null, null, {
-                it.optmap == optMap
+                !null, !null, null, {input->
+                !optMap || optMap.every{input["option.${it.key}"]==it.value}
             }
             ) >> {
                 [success: true, executionId: '1']
