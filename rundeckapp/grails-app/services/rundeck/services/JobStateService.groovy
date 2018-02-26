@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.execution.ExecutionReference
+import com.dtolabs.rundeck.core.jobs.JobExecutionError
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
@@ -242,35 +243,71 @@ class JobStateService implements AuthorizingJobService {
 
 
     @Override
-    String startJob(AuthContext auth, JobReference jobReference, String jobArgString, String jobFilter, String asUser) throws JobNotFound {
+    ExecutionReference startJob(
+        UserAndRolesAuthContext auth,
+        JobReference jobReference,
+        String jobArgString,
+        String jobFilter,
+        String asUser
+    )
+        throws JobNotFound, JobExecutionError {
         def inputOpts = [:]
         inputOpts["argString"] = jobArgString
+        return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser)
+    }
+
+    @Override
+    ExecutionReference startJob(
+        UserAndRolesAuthContext auth,
+        JobReference jobReference,
+        Map optionData,
+        String jobFilter,
+        String asUser
+    )
+        throws JobNotFound, JobExecutionError {
+        def inputOpts = [:]
+        inputOpts["optmap"] = optionData
+        return doRunJob(jobFilter, inputOpts, jobReference, auth, asUser)
+    }
+
+    ExecutionReference doRunJob(
+        String jobFilter,
+        inputOpts,
+        JobReference jobReference,
+        UserAndRolesAuthContext auth,
+        String asUser
+    ) {
         if (jobFilter) {
-            def filters = [filter:jobFilter]
-            inputOpts['_replaceNodeFilters']='true'
-            inputOpts['doNodedispatch']=true
-            filters.each {k, v ->
-                inputOpts[k] = v
-            }
-            if(null== inputOpts['nodeExcludePrecedence']){
+            inputOpts.filter = jobFilter
+            inputOpts['_replaceNodeFilters'] = 'true'
+            inputOpts['doNodedispatch'] = true
+            if (null == inputOpts['nodeExcludePrecedence']) {
                 inputOpts['nodeExcludePrecedence'] = true
             }
         }
 
-        inputOpts['executionType'] = 'user'
-        String resultExecution = "";
+        inputOpts['executionType'] = 'user'//XXX
 
         def se = ScheduledExecution.findByUuidAndProject(jobReference.id, jobReference.project)
         if (!se || !frameworkService.authorizeProjectJobAll(auth, se, [AuthConstants.ACTION_READ], se.project)) {
             throw new JobNotFound("Not found", jobReference.id, jobReference.project)
         }
-        if(auth instanceof UserAndRolesAuthContext) {
-            def result = frameworkService.kickJob(se, auth, asUser, inputOpts)
-            if(result && result.executionId){
-                resultExecution += result.executionId
-            }
+        def result = frameworkService.kickJob(se, auth, asUser, inputOpts)
+        if (result && result.success && result.executionId) {
+            return new ExecutionReferenceImpl(
+                id: result.executionId,
+                job: jobReference,
+                filter: jobFilter,
+                options: result.execution?.argString,
+                dateStarted: result.execution?.dateStarted
+            )
+        } else {
+            throw new JobExecutionError(
+                result?.message ?: result?.error ?: "Unknown",
+                jobReference.id,
+                jobReference.project
+            )
         }
-        return resultExecution
     }
 
 

@@ -19,6 +19,7 @@ package rundeck.services.jobs
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.execution.ExecutionNotFound
+import com.dtolabs.rundeck.core.jobs.JobExecutionError
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
@@ -65,8 +66,14 @@ class ResolvedAuthJobService implements JobService {
     }
 
 
-    String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser) throws JobNotFound{
+    ExecutionReference startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser)
+        throws JobNotFound, JobExecutionError {
         authJobService.startJob(authContext, jobReference, jobArgString, jobFilter, asUser)
+    }
+
+    ExecutionReference startJob(JobReference jobReference, Map optionData, String jobFilter, String asUser)
+        throws JobNotFound, JobExecutionError {
+        authJobService.startJob(authContext, jobReference, optionData, jobFilter, asUser)
     }
 
     Map deleteBulkExecutionIds(Collection ids, String asUser){

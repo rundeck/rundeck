@@ -48,9 +48,7 @@ class JobStateServiceSpec extends Specification {
                 return exec
             }
             kickJob(!null, !null, null,!null)>>{
-                Map<String, Object> ret = new HashMap<>()
-                ret.executionId = '1'
-                ret
+                [success: true, executionId: '1']
             }
         }
 
@@ -468,13 +466,62 @@ class JobStateServiceSpec extends Specification {
         job.id=jobUuid
         def auth = new SubjectAuthContext(null,null)
         given:
+        service.frameworkService = Stub(FrameworkService) {
+            authorizeProjectJobAll(null, !null, !null, !null) >>> [true, true]
+            filterAuthorizedProjectExecutionsAll(null, !null, !null) >> { aauth, exec, actions ->
+                return exec
+            }
+            kickJob(
+                !null, !null, null, {
+                it.argString == argString
+            }
+            ) >> {
+                [success: true, executionId: '1']
+            }
+        }
         setTestExecutions(projectName,jobUuid)
-
         when:
-        def ref = service.startJob(auth,job, null,null,null)
+        def ref = service.startJob(auth, job, (String) argString, null, null)
         then:
         ref
-        ref == '1'
+        ref.id == '1'
+        where:
+        argString  | _
+        null       | _
+        '-abc 123' | _
+    }
+
+    void "start job optionMap"() {
+        def jobUuid = 'c46e20a9-8555-4f15-acad-e5adba88906d'
+        def projectName = 'testProj'
+        JobReference job = new JobReferenceImpl()
+        job.project = projectName
+        job.id = jobUuid
+        def auth = new SubjectAuthContext(null, null)
+        given:
+        service.frameworkService = Stub(FrameworkService) {
+            authorizeProjectJobAll(null, !null, !null, !null) >>> [true, true]
+            filterAuthorizedProjectExecutionsAll(null, !null, !null) >> { aauth, exec, actions ->
+                return exec
+            }
+            kickJob(
+                !null, !null, null, {
+                it.optmap == optMap
+            }
+            ) >> {
+                [success: true, executionId: '1']
+            }
+        }
+        setTestExecutions(projectName, jobUuid)
+        when:
+        def ref = service.startJob(auth, job, (Map) optMap, null, null)
+        then:
+        ref
+        ref.id == '1'
+        where:
+        optMap       | _
+        null         | _
+        [abc: '123'] | _
     }
 
     void "start job without auth"(){
