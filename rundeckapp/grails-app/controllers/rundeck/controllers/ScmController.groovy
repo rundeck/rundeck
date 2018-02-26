@@ -512,7 +512,6 @@ class ScmController extends ControllerBase {
     }
 
     def clean(String integration, String project, String type) {
-        println('clean')
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
         if (unauthorizedResponse(
                 frameworkService.authorizeApplicationResourceAll(
