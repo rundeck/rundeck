@@ -28,7 +28,7 @@ fetchAutomatically
 props="importUuidBehavior
 $commonprops
 "
-pcount=10
+pcount=11
 
 #/ additional props for export plugin
 exprops="committerName
