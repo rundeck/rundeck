@@ -628,6 +628,43 @@ class ScmService {
     }
 
     /**
+     * Clean a previously configured plugin
+     * @param integration integration name
+     * @param project project name
+     * @param type plugin type
+     * @return
+     */
+    def cleanPlugin(String integration, String project, String type) {
+        ScmPluginConfigData scmPluginConfig = pluginConfigService.loadScmConfig(
+                project,
+                pathForConfigFile(integration),
+                PREFIXES[integration]
+        )
+
+        if (scmPluginConfig) {
+            if (scmPluginConfig.type != type) {
+                throw new IllegalArgumentException("Plugin type ${type} for ${integration} is not configured")
+            }
+            scmPluginConfig.enabled = false
+            storeConfig(scmPluginConfig, project, integration)
+        }
+
+        def loaded
+        if (integration == EXPORT) {
+            loaded = loadedExportPlugins.remove(project)
+            loaded?.close()
+        } else {
+            loaded = loadedImportPlugins.remove(project)
+            loaded?.close()
+        }
+        loaded?.provider?.totalClean()
+
+    }
+
+
+
+
+    /**
      * Disable and remove all plugins for a project
      * @param project project
      * @param type type

@@ -511,6 +511,43 @@ class ScmController extends ControllerBase {
         redirect(action: 'index', params: [project: project])
     }
 
+    def clean(String integration, String project, String type) {
+        println('clean')
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        authContext,
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        boolean valid = false
+        //cancel modification
+        if (params.cancel == 'Cancel') {
+            return redirect(controller: 'scm', action: 'index', params: [project: project])
+        }
+
+        withForm {
+            valid = true
+        }.invalidToken {
+            request.errorCode = 'request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
+        if (!valid) {
+            return
+        }
+
+        //require type param
+        scmService.cleanPlugin(integration, project, type)
+
+        flash.message = message(code: "scmController.action.clean.success.message", args: [integration, type])
+        redirect(action: 'index', params: [project: project])
+    }
+
     def enable(String integration, String project, String type) {
 
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(

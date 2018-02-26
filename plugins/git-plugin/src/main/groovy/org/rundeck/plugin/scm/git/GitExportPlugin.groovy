@@ -123,9 +123,13 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
 
     @Override
     void cleanup() {
+        git?.close()
+    }
+
+    @Override
+    void totalClean(){
         File base = new File(config.dir)
         base?.deleteDir()
-        git?.close()
     }
 
 

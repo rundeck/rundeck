@@ -130,9 +130,13 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     void cleanup() {
+        git.close()
+    }
+
+    @Override
+    void totalClean(){
         File base = new File(config.dir)
         base?.deleteDir()
-        git.close()
     }
 
 
