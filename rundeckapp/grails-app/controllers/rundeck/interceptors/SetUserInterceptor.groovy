@@ -3,6 +3,7 @@ package rundeck.interceptors
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
 import org.rundeck.web.infosec.AuthorizationRoleSource
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import rundeck.AuthToken
 import rundeck.User
@@ -13,33 +14,28 @@ import javax.servlet.http.HttpServletRequest
 
 
 class SetUserInterceptor {
+    @Autowired
     ApplicationContext applicationContext
 
     int order = HIGHEST_PRECEDENCE + 30
+    final String STATIC_ASSETS = "(static|assets|feed)"
 
     SetUserInterceptor() {
         matchAll().excludes(controller: 'user', action: '(logout|login|error|loggedout)')
+                  //.excludes(controller: ~/$STATIC_ASSETS/)
+        //The documentation seems to indicate that adding the above line should exclude
+        // controllers matching that pattern but in practice it appears to
+        //let them through, which is not desirable, so instead we do a manual match exclusion(see line 33)
+
     }
 
     boolean before() {
-        /*
-        Temporary hardcoding of subject and group
-        until security issues get worked out
-         */
-        String hardcodeduser = "admin"
-        session.user = hardcodeduser
-        def hardcoded = new Subject();
-        hardcoded.principals << new Username(hardcodeduser)
-        hardcoded.principals << new Group("admin");
-
-        request.subject = hardcoded
-        session.subject = hardcoded
-        return true
+        if(request.requestURI.matches(/^\\/$STATIC_ASSETS\\/.*/)) return true
 
         if (request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
             //disallow api access via normal login
             request.invalidApiAuthentication=true
-            return
+            return false
         }
         if (request.remoteUser && session.user!=request.remoteUser) {
             session.user = request.remoteUser
@@ -90,7 +86,7 @@ class SetUserInterceptor {
                     log.error("Unauthenticated API request");
                 }
             }
-        } else if (!request.remoteUser && controllerName && !(controllerName in ['assets','feed'])) {
+        } else if (!request.remoteUser) {
             println "controllerName: ${controllerName}"
             //unauthenticated request to an action
             response.status = 403
@@ -98,7 +94,6 @@ class SetUserInterceptor {
             render view: '/common/error.gsp'
             return false
         }
-        println "didn't match anything"
         return true
     }
 
@@ -119,6 +114,7 @@ class SetUserInterceptor {
         type.each {name,AuthorizationRoleSource source->
             if(source.enabled) {
                 def roles = source.getUserRoles(principal.name, request)
+                println roles
                 if(roles){
                     roleset.addAll(roles)
                     log.debug("Accepting user role list from bean ${name} for ${principal.name}: ${roles}")
