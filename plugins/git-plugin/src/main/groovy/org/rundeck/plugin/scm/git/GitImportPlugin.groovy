@@ -44,8 +44,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     public static final String ACTION_FETCH = 'remote-fetch'
     boolean inited
     boolean trackedItemsSelected = false
-    boolean useTrackingRegex = false
-    String trackingRegex
     List<String> trackedItems = null
     Import config
     /**
@@ -433,8 +431,13 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     Action getSetupAction(ScmOperationContext context) {
+        trackedItemsSelected=config.shouldUseFilePattern()
+
         if (!trackedItemsSelected) {
             return actions[ACTION_INITIALIZE_TRACKING]
+        }else{
+            log.debug("SetupTracking: ${input} (true)")
+            trackedItems = null
         }
         null
     }
@@ -567,8 +570,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         tree.addTree(head)
         tree.setRecursive(true)
         if (useFilter) {
-            if (isUseTrackingRegex()) {
-                tree.setFilter(PathRegexFilter.create(trackingRegex))
+            if (config.shouldUseFilePattern()) {
+                tree.setFilter(PathRegexFilter.create(config.filePattern))
             } else {
                 tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
             }
@@ -581,6 +584,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     boolean isTrackedPath(final String path) {
-        return trackedItems?.contains(path) || isUseTrackingRegex() && trackingRegex && path.matches(trackingRegex)
+        return trackedItems?.contains(path) || config.shouldUseFilePattern() && config.filePattern && path.matches(config.filePattern)
     }
 }
