@@ -16,11 +16,16 @@
 
 package org.rundeck.plugin.scm.git.config
 
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants
+import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import groovy.transform.CompileStatic
+
+import java.util.regex.Pattern
+import java.util.regex.PatternSyntaxException
 
 /**
  * Created by greg on 10/13/15.
@@ -56,6 +61,50 @@ class Import extends Common{
     String pullAutomatically
 
 
+
+    @PluginProperty(
+        title = "Match a Regular Expression?",
+        description = "Check to match all paths that match the regular expression. If is not set, a list of files will be asked on next step.",
+        defaultValue = 'true',
+        required = true
+    )
+    @SelectValues(values = ['true', 'false'])
+    @RenderingOption(
+        key = StringRenderingConstants.GROUP_NAME,
+        value = "Setup"
+    )
+    String useFilePattern
+
+    @PluginProperty(
+        title = "Regular Expression",
+        description = "Enter a regular expression. New paths in the repo matching this expression will also be imported.",
+        defaultValue = ".*\\.xml",
+        required = false,
+        validatorClass = PathTemplateValidator
+    )
+    @SelectValues(
+        values = ['.*\\.xml','.*\\.yaml',],
+        freeSelect = true
+    )
+    @RenderingOption(
+        key = StringRenderingConstants.GROUP_NAME,
+        value = "Setup"
+    )
+    String filePattern
+
+    static class PathTemplateValidator implements PropertyValidator {
+        @Override
+        boolean isValid(final String value) throws ValidationException {
+            try {
+                Pattern.compile(value)
+                return true
+            } catch (PatternSyntaxException e) {
+                throw new ValidationException("Invalid regular expression: " + e.message)
+            }
+        }
+    }
+
+
     boolean isImportPreserve() {
         importUuidBehavior == 'preserve' || !importUuidBehavior
     }
@@ -68,5 +117,9 @@ class Import extends Common{
 
     boolean shouldPullAutomatically(){
         return pullAutomatically in [null,'true']
+    }
+
+    boolean shouldUseFilePattern(){
+        return useFilePattern in [null,'true']
     }
 }

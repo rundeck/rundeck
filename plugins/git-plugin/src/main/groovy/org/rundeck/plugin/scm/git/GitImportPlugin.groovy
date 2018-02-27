@@ -433,8 +433,15 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     Action getSetupAction(ScmOperationContext context) {
+        trackedItemsSelected=config.shouldUseFilePattern()
+
         if (!trackedItemsSelected) {
             return actions[ACTION_INITIALIZE_TRACKING]
+        }else{
+            log.debug("SetupTracking: ${input} (true)")
+            trackedItems = null
+            useTrackingRegex = config.shouldUseFilePattern()
+            trackingRegex = config.filePattern
         }
         null
     }
