@@ -18,6 +18,7 @@ package com.dtolabs.rundeck.core.plugins.configuration
 
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.DynamicSelectValues
+import com.dtolabs.rundeck.plugins.descriptions.EmbeddedTypeProperty
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
@@ -467,6 +468,115 @@ class PluginAdapterUtilitySpec extends Specification {
         field2.type == Property.Type.String
         field2.validator != null
         field2.validator instanceof TestValidator1
+
+    }
+
+    static class MyClass {
+        @PluginProperty
+        String aString;
+    }
+    /**
+     * test property types
+     */
+    @Plugin(name = "typeTest3", service = "x")
+    static class Configuretest3 {
+
+        @PluginProperty
+        @EmbeddedTypeProperty
+        MyClass someField;
+
+        @PluginProperty
+        @EmbeddedTypeProperty(type = MyClass)
+        List<MyClass> someList;
+
+        @PluginProperty
+        @EmbeddedTypeProperty(type = MyClass)
+        Set<MyClass> someSet;
+    }
+
+    def "embedded type annotation "() {
+        given:
+
+        when:
+        def list = PluginAdapterUtility.buildFieldProperties(Configuretest3)
+
+        then:
+        def field1 = list.find { it.name == 'someField' }
+        field1 != null
+        field1.type == Property.Type.Embedded
+        field1.embeddedType != null
+        field1.embeddedType == MyClass
+        def field2 = list.find { it.name == 'someList' }
+        field2 != null
+        field2.type == Property.Type.Options
+        field2.embeddedType != null
+        field2.embeddedType == MyClass
+        def field3 = list.find { it.name == 'someSet' }
+        field3 != null
+        field3.type == Property.Type.Options
+        field3.embeddedType != null
+        field3.embeddedType == MyClass
+
+    }
+
+    def "configure single embedded type"() {
+        given:
+        def obj = new Configuretest3()
+
+        when:
+        PluginAdapterUtility.configureObjectFieldsWithProperties(obj, inputConfig)
+
+        then:
+        obj.someField != null
+        obj.someField.aString == 'the string'
+
+        where:
+        inputConfig                          || _
+        [someField: [aString: 'the string']] || _
+
+    }
+
+    def "configure list embedded type"() {
+        given:
+        def obj = new Configuretest3()
+
+        when:
+        PluginAdapterUtility.configureObjectFieldsWithProperties(obj, inputConfig)
+
+        then:
+        obj.someList != null
+        obj.someList.size() == 2
+        obj.someList.every { it instanceof MyClass }
+        obj.someList*.aString == ['a string', 'b string']
+
+        where:
+        inputConfig || _
+        [someList: [
+            [aString: 'a string'],
+            [aString: 'b string'],
+        ]]          || _
+
+    }
+
+    def "configure set embedded type"() {
+        given:
+        def obj = new Configuretest3()
+
+        when:
+        PluginAdapterUtility.configureObjectFieldsWithProperties(obj, inputConfig)
+
+        then:
+        obj.someSet != null
+        obj.someSet.size() == 2
+        obj.someSet.every { it instanceof MyClass }
+        obj.someSet*.aString.sort() == ['a string', 'b string']
+
+        where:
+        inputConfig || _
+        [someSet: [
+            [aString: 'a string'],
+            [aString: 'b string'],
+        ]]          || _
 
     }
 }

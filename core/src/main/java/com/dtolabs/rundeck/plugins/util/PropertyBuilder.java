@@ -40,7 +40,9 @@ public class PropertyBuilder {
     private ValuesGenerator valuesGenerator;
     private PropertyScope scope;
     private Map<String, Object> renderingOptions = new HashMap<String, Object>();
-    private boolean dynamicValues;
+    private boolean  dynamicValues;
+    private Class<?> embeddedType;
+    private Class<?> embeddedPluginType;
 
     private PropertyBuilder() {
 
@@ -67,9 +69,11 @@ public class PropertyBuilder {
             .values(orig.getSelectValues())
             .labels(orig.getSelectLabels())
             .validator(orig.getValidator())
-                .valuesGenerator(orig.getValuesGenerator())
+            .valuesGenerator(orig.getValuesGenerator())
             .scope(orig.getScope())
             .renderingOptions(orig.getRenderingOptions())
+            .embeddedType(orig.getEmbeddedType())
+            .embeddedPluginType(orig.getEmbeddedPluginType())
             ;
     }
 
@@ -296,7 +300,31 @@ public class PropertyBuilder {
         this.dynamicValues = dynamicValues;
         return this;
     }
-    
+
+    /**
+     * Set embedded object type
+     *
+     * @param embeddedType type of embedded object or collection type
+     * @return this
+     */
+    public PropertyBuilder embeddedType(final Class<?> embeddedType) {
+        this.embeddedType = embeddedType;
+        return this;
+    }
+
+
+    /**
+     * Set embedded plugin type
+     *
+     * @param embeddedPluginType type of embedded plugin object or collection
+     * @return this
+     */
+    public PropertyBuilder embeddedPluginType(final Class<?> embeddedPluginType) {
+        this.embeddedPluginType = embeddedPluginType;
+        return this;
+    }
+
+
     /**
      * Adds the given renderingOption
      * @param optionKey key
@@ -347,19 +375,21 @@ public class PropertyBuilder {
             throw new IllegalStateException("name is required");
         }
         return PropertyUtil.forType(
-                type,
-                name,
-                title,
-                description,
-                required,
-                value,
-                values,
-                labels,
-                validator,
-                valuesGenerator,
-                scope,
-                renderingOptions,
-                dynamicValues
+            type,
+            name,
+            title,
+            description,
+            required,
+            value,
+            values,
+            labels,
+            validator,
+            valuesGenerator,
+            scope,
+            renderingOptions,
+            dynamicValues,
+            embeddedType,
+            embeddedPluginType
         );
     }
 

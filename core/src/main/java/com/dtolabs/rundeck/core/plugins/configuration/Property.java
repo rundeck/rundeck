@@ -67,7 +67,11 @@ public interface Property {
         /**
          * A set of key/value entries
          */
-        Map
+        Map,
+        /**
+         * A single or collection of embedded plugin definitions
+         */
+        Embedded
     }
 
     /**
@@ -131,6 +135,19 @@ public interface Property {
      * @return generator of values
      */
     default ValuesGenerator getValuesGenerator() {
+        return null;
+    }
+
+    /**
+     * @return type of embedded plugin
+     */
+    default Class<?> getEmbeddedType() {
+        return null;
+    }
+    /**
+     * @return type of embedded plugin
+     */
+    default Class<?> getEmbeddedPluginType() {
         return null;
     }
 }

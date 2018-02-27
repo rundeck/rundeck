@@ -24,11 +24,13 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
+import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -197,9 +199,21 @@ public class PluginAdapterUtility {
     private static Property propertyFromField(final Field field, final PluginProperty annotation) {
         final PropertyBuilder pbuild = PropertyBuilder.builder();
         //determine type
-        final Property.Type type = propertyTypeFromFieldType(field.getType());
+        Property.Type type = propertyTypeFromFieldType(field.getType());
+        final EmbeddedPluginProperty embedPluginAnnotation = field.getAnnotation(EmbeddedPluginProperty.class);
+        final EmbeddedTypeProperty embedTypeAnnotation = field.getAnnotation(EmbeddedTypeProperty.class);
+
         if (null == type) {
-            return null;
+            if (embedTypeAnnotation != null) {
+                //embed an object of the given type
+                type = Property.Type.Embedded;
+                pbuild.embeddedType(field.getType());
+            } else if (embedPluginAnnotation != null) {
+                type = Property.Type.Embedded;
+                pbuild.embeddedPluginType(field.getType());
+            } else {
+                return null;
+            }
         }
         pbuild.type(type);
         if (type == Property.Type.Options) {
@@ -209,6 +223,15 @@ public class PluginAdapterUtility {
                 pbuild.values(values);
 
                 extractSelectLabels(pbuild, values, field.getAnnotation(SelectLabels.class));
+            }
+            if (Set.class.isAssignableFrom(field.getType()) || List.class.isAssignableFrom(field.getType())) {
+                if (embedTypeAnnotation != null && embedTypeAnnotation.type() != Object.class) {
+                    //embed an object of the given type
+                    pbuild.embeddedType(embedTypeAnnotation.type());
+                } else if (embedPluginAnnotation != null && embedPluginAnnotation.type() != Object.class) {
+                    //embed a Plugin of the given type
+                    pbuild.embeddedPluginType(embedPluginAnnotation.type());
+                }
             }
         }else if (type == Property.Type.String) {
             StringRenderingConstants.DisplayType renderBehaviour = StringRenderingConstants.DisplayType.SINGLE_LINE;
@@ -513,6 +536,71 @@ public class PluginAdapterUtility {
         return PropertyResolverFactory.mapPropertyValues(properties, defaulted);
     }
 
+    protected static Object createInstanceFromType(final Class<?> execClass) {
+
+
+        try {
+            final Constructor<?> method = execClass.getDeclaredConstructor(new Class[0]);
+            return method.newInstance();
+        } catch (NoSuchMethodException | InstantiationException | InvocationTargetException | IllegalAccessException
+            e) {
+            throw new RuntimeException("Unable to create instance of type: " + execClass.getName(), e);
+        }
+
+    }
+
+    private static Object createEmbeddedPlugin(Class<?> type, String provider, Map<String, Object> config) {
+
+        throw new UnsupportedOperationException("createEmbeddedPlugin");
+    }
+
+    private static Object createEmbeddedObject(Class<?> type, Map<String, Object> config) {
+
+        Object inst = createInstanceFromType(type);
+        configureObjectFieldsWithProperties(inst, config);
+        return inst;
+    }
+
+    private static Object createEmbeddedFieldValue(Property property, Map<String, Object> config) {
+        Class<?> embeddedType = property.getEmbeddedType();
+        Class<?> embeddedPluginType = property.getEmbeddedPluginType();
+
+        if (null != embeddedType) {
+            return createEmbeddedObject(embeddedType, config);
+        } else if (null != embeddedPluginType) {
+            Object providerEntry = config.get("type");
+            Object configEntry = config.get("config");
+            if (null != providerEntry
+                && providerEntry instanceof String
+                && null != configEntry
+                && Map.class.isAssignableFrom(configEntry.getClass())) {
+                String provider = (String) providerEntry;
+                Map<String, Object> provConfig = (Map<String, Object>) configEntry;
+                return createEmbeddedPlugin(embeddedPluginType, provider, provConfig);
+            } else {
+                throw new IllegalStateException(
+                    String.format(
+                        "Cannot map property {%s type: %s} to to embedded Plugin type: %s. Expected a Map with " +
+                        "'config' and 'type' entries, saw: %s",
+                        property.getName(),
+                        property.getType(),
+                        embeddedPluginType.getName(),
+                        config
+                    ));
+            }
+        } else {
+            throw new IllegalStateException(
+                String.format(
+                    "Cannot map property {%s type: %s} to to embedded field value, the property has no embeddedType " +
+                    "or embeddedPluginType",
+                    property.getName(),
+                    property.getType(),
+                    config
+                ));
+        }
+
+    }
+
     /**
      * Set instance field value for the given property, returns true if the field value was set, false otherwise
      */
@@ -521,9 +609,12 @@ public class PluginAdapterUtility {
         if (null == field) {
             return false;
         }
+        final Object resolvedValue;
         final Property.Type type = property.getType();
         final Property.Type ftype = propertyTypeFromFieldType(field.getType());
-        if (ftype != property.getType()
+
+
+        if (type != Property.Type.Embedded && ftype != property.getType()
                 && !(ftype == Property.Type.String
                      && (property.getType() == Property.Type.Select ||
                          property.getType() == Property.Type.FreeSelect ||
@@ -538,8 +629,14 @@ public class PluginAdapterUtility {
                             ftype
                     ));
         }
-        final Object resolvedValue;
-        if (type == Property.Type.Integer) {
+        if (type == Property.Type.Embedded
+            || type == Property.Type.Options
+               && (
+                   property.getEmbeddedPluginType() != null
+                   || property.getEmbeddedType() != null
+               )) {
+            resolvedValue = mapValueForEmbeddedType(property, value, field, type, ftype);
+        } else if (type == Property.Type.Integer) {
             final Integer intvalue;
             if (value instanceof String) {
                 intvalue = Integer.parseInt((String) value);
@@ -679,6 +776,85 @@ public class PluginAdapterUtility {
             throw new RuntimeException("Unable to configure plugin: " + e.getMessage(), e);
         }
         return true;
+    }
+
+    private static Object mapValueForEmbeddedType(
+        final Property property,
+        final Object value,
+        final Field field,
+        final Property.Type type,
+        final Property.Type ftype
+    ) {
+        final Object resolvedValue;
+        if (ftype == Property.Type.Options) {
+            //list of embedded objects
+
+            if (!(value instanceof Collection)) {
+                throw new IllegalStateException(
+                    String.format(
+                        "Cannot map property {%s type: %s} to embedded List field, expected a " +
+                        "Collection of" +
+                        " Maps, but saw type: %s",
+                        property.getName(),
+                        property.getType(),
+                        value.getClass().getName()
+                    ));
+            }
+            List values = new ArrayList<>((Collection) value);
+            List objects = new ArrayList();
+            for (Object o : values) {
+                if (Map.class.isAssignableFrom(o.getClass())) {
+                    Map<String, Object> config = (Map<String, Object>) o;
+                    objects.add(createEmbeddedFieldValue(property, config));
+                } else {
+                    throw new IllegalStateException(
+                        String.format(
+                            "Cannot map property {%s type: %s} to embedded List field, expected a " +
+                            "Collection of" +
+                            " Maps, but an entry was of type: %s",
+                            property.getName(),
+                            property.getType(),
+                            o.getClass().getName()
+                        ));
+                }
+            }
+            if (field.getType().isAssignableFrom(Set.class)) {
+                HashSet valueset = new HashSet<>();
+                valueset.addAll(objects);
+                resolvedValue = valueset;
+            } else {
+                resolvedValue = objects;
+            }
+
+        } else if (null == ftype) {
+            //single embedded object
+
+            if (!Map.class.isAssignableFrom(value.getClass())) {
+                throw new IllegalStateException(
+                    String.format(
+                        "Cannot map property {%s type: %s} to embedded type field, expected a " +
+                        "Map, but saw type: %s",
+                        property.getName(),
+                        property.getType(),
+                        value.getClass().getName()
+                    ));
+
+            }
+            Map<String, Object> config = (Map<String, Object>) value;
+            resolvedValue = createEmbeddedFieldValue(property, config);
+
+        } else {
+            //invalid
+            throw new IllegalStateException(
+                String.format(
+                    "Cannot map property {%s type: %s} to embedded type field, expected field to be a Collection, or " +
+                    "Object, but saw type: %s",
+                    property.getName(),
+                    property.getType(),
+                    ftype.getClass().getName()
+                ));
+        }
+        return resolvedValue;
     }
 
     private static void setFieldValue(final Field field, final Object value, final Object object)
