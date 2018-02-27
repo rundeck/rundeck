@@ -61,6 +61,7 @@ dependencies {
     compile project(':rundeck-storage:rundeck-storage-filesys')
     compile project('metricsweb')
     compile project('rundeckjettyauth')
+    compile project('authfilter')
 
 
     // From BuildConfig.groovy.

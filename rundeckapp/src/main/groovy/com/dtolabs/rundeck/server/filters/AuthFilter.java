@@ -18,7 +18,8 @@ package com.dtolabs.rundeck.server.filters;
 
 import grails.config.Config;
 import grails.core.GrailsApplication;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
@@ -27,7 +28,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import java.io.IOException;
 import java.security.Principal;
-import java.util.Map;
 
 /**
  * Filter interrogates headers and modifies the request object to be passed down the filter chain
@@ -37,7 +37,7 @@ import java.util.Map;
 
 public class AuthFilter implements Filter {
 
-    private static final transient Logger LOG = Logger.getLogger(AuthFilter.class);
+    private static final transient Logger LOG = LoggerFactory.getLogger(AuthFilter.class);
 
     boolean enabled;
     String rolesAttribute;
@@ -45,7 +45,7 @@ public class AuthFilter implements Filter {
     String rolesHeader;
 
     public void init(FilterConfig filterConfig) throws ServletException {
-
+LOG.debug("initting AuthFilter");
         WebApplicationContext springContext = WebApplicationContextUtils.getWebApplicationContext(filterConfig
                                                                                                           .getServletContext());
         GrailsApplication grailsApplication = springContext.getBean(GrailsApplication.class);
