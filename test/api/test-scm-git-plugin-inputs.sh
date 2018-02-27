@@ -26,6 +26,7 @@ format
 fetchAutomatically
 "
 props="importUuidBehavior
+pullAutomatically
 $commonprops
 "
 pcount=11
@@ -34,6 +35,7 @@ pcount=11
 exprops="committerName
 committerEmail
 exportUuidBehavior
+pullAutomatically
 $commonprops
 "
 expcount=13
