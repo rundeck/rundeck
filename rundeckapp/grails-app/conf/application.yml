@@ -156,3 +156,26 @@ rundeck:
 
 server:
     port: 4440
+
+#security:
+#    basic:
+#      authorize-mode: role # Security authorize mode to apply.
+#      enabled: true # Enable basic authentication.
+#      path: /** # Comma-separated list of paths to secure.
+#      realm: Spring # HTTP basic realm name.
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

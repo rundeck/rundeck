@@ -269,4 +269,4 @@ plugin.platformCore.navigation.disabled=true
 plugin.platformCore.ui.disabled=true
 plugin.platformCore.events.disabled=false
 plugin.platformCore.events.gorm.disabled=true
-plugin.platformCore.show.startup.info=false
+plugin.platformCore.show.startup.info=true

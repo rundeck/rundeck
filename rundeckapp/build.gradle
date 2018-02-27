@@ -60,6 +60,8 @@ dependencies {
     compile project(':core')
     compile project(':rundeck-storage:rundeck-storage-filesys')
     compile project('metricsweb')
+    compile project('rundeckjettyauth')
+
 
     // From BuildConfig.groovy.
     compile 'org.quartz-scheduler:quartz:2.3.0'
@@ -85,7 +87,7 @@ dependencies {
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
-    compile "org.springframework.boot:spring-boot-starter-tomcat"
+    compile "org.springframework.boot:spring-boot-starter-jetty"
     compile "org.grails:grails-web-boot"
     compile "org.grails:grails-logging"
     compile "org.grails:grails-plugin-rest"
@@ -125,6 +127,7 @@ dependencies {
 
 bootRun {
     jvmArgs('-Dspring.output.ansi.enabled=always')
+    systemProperty "java.security.auth.login.config", "/Users/stephen/dev-svr/server/config/jaas-loginmodule.conf"
     addResources = true
 }
 

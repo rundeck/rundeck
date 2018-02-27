@@ -31,9 +31,6 @@ if (Environment.isDevelopmentMode() && targetDir != null) {
             pattern = "%level %logger - %msg%n"
         }
     }
-    logger 'grails.artefact.Interceptor', DEBUG, ['STDOUT'], false
-    logger 'org.rundeck.web.infosec', DEBUG, ['STDOUT']
-    logger 'rundeck.services.AuthorizationService', DEBUG, ['STDOUT']
     logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
 }
 root(ERROR, ['STDOUT'])
