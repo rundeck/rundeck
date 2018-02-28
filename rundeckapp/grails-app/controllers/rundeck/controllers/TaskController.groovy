@@ -179,7 +179,9 @@ class ParamsUtil {
      * @return
      */
     static Map cleanMap(Map map) {
-        def datamap = map ? map.entrySet().findAll { it.value }.collectEntries { [it.key, it.value] } : [:]
+        def datamap = map ? map.entrySet().
+            findAll { it.value && !it.key.startsWith('_') }.
+            collectEntries { [it.key, it.value] } : [:]
         //parse map type entries
         return parseMapTypeEntries(datamap)
 
@@ -207,6 +209,11 @@ class ParamsUtil {
                 def pmap = parseIndexedMapParams(mapval)
 
                 outmap[keyname] = pmap
+                def entries = datamap.keySet().findAll { it.startsWith(keyname + '.') }
+                entries.each { outmap.remove(it) }
+            } else if (typeval == 'map' && !mapval) {
+                //empty map
+                outmap[keyname] = [:]
                 def entries = datamap.keySet().findAll { it.startsWith(keyname + '.') }
                 entries.each { outmap.remove(it) }
 

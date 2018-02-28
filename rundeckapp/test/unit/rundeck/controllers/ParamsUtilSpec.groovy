@@ -26,10 +26,11 @@ class ParamsUtilSpec extends Specification {
         then:
         result == expect
         where:
-        input             || expect
-        [:]               || [:]
-        [a: 'b', c: '']   || [a: 'b']
-        [a: 'b', c: null] || [a: 'b']
+        input                                                                                                  || expect
+        [:]                                                                                                    || [:]
+        [a: 'b', c: '']                                                                                        || [a: 'b']
+        [a: 'b', c: null]                                                                                      || [a: 'b']
+        [optionData: [_type: "map"], "optionData._type": "map", jobId: "0226f979-9ef3-485d-a916-faa1a8f9791e"] || [optionData: [:], jobId: "0226f979-9ef3-485d-a916-faa1a8f9791e"]
         ["optionData.map.0.key"  : "bwapba",
          optionData              :
                  ["map.0.key"  : "bwapba",
@@ -56,7 +57,20 @@ class ParamsUtilSpec extends Specification {
          jobId                   : "4cd55607-ffd7-4db2-a622-d5446b996c7e",
          "optionData.map.0.value": "fff",
          "optionData.map.1.key"  : "date1"
-        ]                 || [jobId: "4cd55607-ffd7-4db2-a622-d5446b996c7e", optionData: [bwapba: "fff", date1: "2018-02-21T12:36:33-08:00"]]
+        ]                                                                                                      || [jobId: "4cd55607-ffd7-4db2-a622-d5446b996c7e", optionData: [bwapba: "fff", date1: "2018-02-21T12:36:33-08:00"]]
+
+    }
+
+    def "cleanMap removes underscore keys"() {
+        given:
+        when:
+        def result = ParamsUtil.cleanMap(input)
+        then:
+        result == expect
+        where:
+        input                 || expect
+        [_a: 'b']             || [:]
+        ['_somedata': 'blah'] || [:]
 
     }
 
@@ -69,7 +83,7 @@ class ParamsUtilSpec extends Specification {
         where:
         input                                                       || expect
         [:]                                                         || [:]
-        ['a._type': 'map']                                          || ['a._type': 'map']
+        ['a._type': 'map']                                          || [a: [:]]
         ['a._type': 'map', 'a.map': 'x']                            || ['a._type': 'map', 'a.map': 'x']
         ['a._type': 'map', 'a.map': [:]]                            || [a: [:]]
         ['a._type': 'map', 'a.map': [:], 'a.extra': 'asdf']         || [a: [:]]
