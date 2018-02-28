@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.trigger.action
+package com.dtolabs.rundeck.server.plugins.tasks.action
 
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
@@ -24,7 +24,7 @@ import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
-import com.dtolabs.rundeck.server.plugins.trigger.PluginBaseMetaTrait
+import com.dtolabs.rundeck.server.plugins.tasks.PluginBaseMetaTrait
 import groovy.transform.ToString
 import org.rundeck.core.tasks.TaskAction
 import org.rundeck.core.tasks.TaskPluginTypes

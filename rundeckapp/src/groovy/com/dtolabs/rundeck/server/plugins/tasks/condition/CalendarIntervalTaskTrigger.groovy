@@ -14,26 +14,23 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.trigger.condition
+package com.dtolabs.rundeck.server.plugins.tasks.condition
 
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
 import com.dtolabs.rundeck.core.plugins.configuration.ValuesGenerator
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.DynamicSelectValues
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
-import com.dtolabs.rundeck.server.plugins.trigger.PluginBaseMetaTrait
+import com.dtolabs.rundeck.server.plugins.tasks.PluginBaseMetaTrait
 import org.quartz.CalendarIntervalScheduleBuilder
 import org.quartz.DateBuilder.IntervalUnit
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder
 import org.rundeck.core.tasks.TaskPluginTypes
 import org.rundeck.core.tasks.TaskTrigger
-
-import static org.rundeck.core.tasks.TaskPluginTypes.TaskTrigger
 
 @Plugin(name = CalendarIntervalTaskTrigger.PROVIDER_NAME, service = TaskPluginTypes.TaskTrigger)
 @PluginDescription(title = 'Calendar Interval Schedule',

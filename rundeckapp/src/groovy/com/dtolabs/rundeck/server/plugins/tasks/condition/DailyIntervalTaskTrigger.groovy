@@ -14,17 +14,16 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.trigger.condition
+package com.dtolabs.rundeck.server.plugins.tasks.condition
 
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyValidator
 import com.dtolabs.rundeck.core.plugins.configuration.ValidationException
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.descriptions.DynamicSelectValues
 import com.dtolabs.rundeck.plugins.descriptions.PluginDescription
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
-import com.dtolabs.rundeck.server.plugins.trigger.PluginBaseMetaTrait
+import com.dtolabs.rundeck.server.plugins.tasks.PluginBaseMetaTrait
 import org.quartz.*
 import org.rundeck.core.tasks.TaskPluginTypes
 import org.rundeck.core.tasks.TaskTrigger

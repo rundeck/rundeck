@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.trigger.condition
+package com.dtolabs.rundeck.server.plugins.tasks.condition
 
 import org.quartz.Trigger
 import org.quartz.TriggerBuilder

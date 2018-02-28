@@ -3,7 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobReference
-import com.dtolabs.rundeck.server.plugins.trigger.action.JobRunTaskAction
+import com.dtolabs.rundeck.server.plugins.tasks.action.JobRunTaskAction
 import grails.test.mixin.TestFor
 import org.rundeck.core.tasks.TaskTrigger
 import spock.lang.Specification

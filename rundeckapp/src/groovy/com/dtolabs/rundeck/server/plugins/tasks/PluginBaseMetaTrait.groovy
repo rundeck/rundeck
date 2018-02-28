@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.trigger
+package com.dtolabs.rundeck.server.plugins.tasks
 
 import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
