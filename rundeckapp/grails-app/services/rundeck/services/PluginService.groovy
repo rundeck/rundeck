@@ -19,6 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
+import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -90,6 +91,20 @@ class PluginService {
      */
     def DescribedPlugin getPluginDescriptor(String name, String service) {
         getPluginDescriptor(name, getPluginTypeByService(service))
+    }
+    /**
+     *
+     * @param name
+     * @return map containing [instance:(plugin instance), description: (map or Description), ]
+     */
+    def Map<String, Object> getPluginDynamicProperties(String name, String service) {
+        def plugin = getPlugin(name, getPluginTypeByService(service))
+        if (!(plugin instanceof DynamicProperties)) {
+            return [:]
+        }
+        DynamicProperties dynamicProperties = (DynamicProperties) plugin
+        //TODO: load project/fwk
+        dynamicProperties.dynamicProperties(null)
     }
 
     /**

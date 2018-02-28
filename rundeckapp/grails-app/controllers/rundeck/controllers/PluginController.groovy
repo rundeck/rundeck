@@ -148,6 +148,11 @@ class PluginController {
                 }
             }
         }
+        //load any dynamic select values via plugin instance
+        pluginService.getPluginDynamicProperties(name, service)?.each { propName, values ->
+            dynamicProperties[propName] = values
+        }
+
         [
                 inputFieldPrefix       : params.inputFieldPrefix ?: '',
                 config                 : config,
