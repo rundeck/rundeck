@@ -120,48 +120,85 @@ public class Validator {
      * @return the validation report
      */
     public static Report validate(final Properties props, final List<Property> properties) {
-        final Report report = new Report();
-        validate(props, report, properties, null);
-        return report;
+        return validate(asMap(props), new Report(), properties, null);
     }
 
+    private static Map asMap(final Properties props) {
+        HashMap<String, String> map = new HashMap<>();
+        for (String key : props.stringPropertyNames()) {
+            map.put(key, props.getProperty(key));
+        }
+        return map;
+    }
 
     /**
      * Validate, ignoring properties below a scope, if set
-     * @param props input properties
-     * @param report report
-     * @param properties property definitions
+     *
+     * @param inputValues  input properties
+     * @param report       report
+     * @param properties   property definitions
      * @param ignoredScope ignore scope
      */
-    private static void validate(Properties props, Report report, List<Property> properties, PropertyScope ignoredScope) {
-        if(null!=properties){
-            for (final Property property : properties) {
-                if (null != ignoredScope && property.getScope() != null
-                        && property.getScope().compareTo(ignoredScope) <= 0) {
-                    continue;
+    private static Report validate(
+        Map inputValues,
+        Report report,
+        List<Property> properties,
+        PropertyScope ignoredScope
+    ) {
+        if (null == properties) {
+            return report;
+        }
+        for (final Property property : properties) {
+            if (null != ignoredScope && property.getScope() != null
+                && property.getScope().compareTo(ignoredScope) <= 0) {
+                continue;
+            }
+            final String key = property.getName();
+            final Object value = inputValues.get(key);
+            if (null == value || "".equals(value)) {
+                if (property.isRequired()) {
+                    report.errors.put(key, "required");
                 }
-                final String key = property.getName();
-                final String value = props.getProperty(key);
-                if (null == value || "".equals(value)) {
-                    if (property.isRequired()) {
-                        report.errors.put(key, "required");
-                        continue;
+            } else {
+                //try to validate
+                final PropertyValidator validator = property.getValidator();
+                if (!(value instanceof Map) && property.getType() == Property.Type.Map) {
+                    report.errors.put(key, "Invalid data type: expected a Map");
+                } else if ((
+                    value instanceof Collection && property.getType() != Property.Type.Options
+                    || value instanceof Map && property.getType() != Property.Type.Map
+                )) {
+                    report.errors.put(key, "Invalid data type: expected a String");
+                } else if (null != validator) {
+                    List<String> valueSet = null;
+                    if (value instanceof String) {
+                        valueSet = new ArrayList<>();
+                        valueSet.add((String) value);
+                    } else if (value instanceof Collection) {
+                        valueSet = new ArrayList<>();
+                        valueSet.addAll((Collection) value);
                     }
-                } else {
-                    //try to validate
-                    final PropertyValidator validator = property.getValidator();
-                    if (null != validator) {
-                        try {
-                            if (!validator.isValid(value)) {
-                                report.errors.put(key, "Invalid value");
+                    if (null != valueSet) {
+                        ArrayList<String> sb = new ArrayList<>();
+                        for (String val : valueSet) {
+
+                            try {
+                                if (!validator.isValid(val)) {
+                                    sb.add(val);
+                                }
+                            } catch (ValidationException e) {
+                                sb.add(e.getMessage());
                             }
-                        } catch (ValidationException e) {
-                            report.errors.put(key, "Invalid value: " + e.getMessage());
+                        }
+
+                        if (!sb.isEmpty()) {
+                            report.errors.put(key, "Invalid value(s): " + sb);
                         }
                     }
                 }
             }
         }
+        return report;
     }
 
     /**
@@ -187,15 +224,13 @@ public class Validator {
      * @param ignoredScope ignore properties at or below this scope, or null to ignore none
      * @return the validation report
      */
-    public static Report validate(final PropertyResolver resolver, final Description description,
-            PropertyScope defaultScope, PropertyScope ignoredScope) {
-        final Report report = new Report();
-        final List<Property> properties = description.getProperties();
-
-        final Map<String, Object> inputConfig = PluginAdapterUtility.mapDescribedProperties(resolver, description,
-                defaultScope);
-        validate(asProperties(inputConfig), report, properties, ignoredScope);
-        return report;
+    public static Report validate(
+        final PropertyResolver resolver,
+        final Description description,
+        PropertyScope defaultScope,
+        PropertyScope ignoredScope
+    ) {
+        return validateProperties(resolver, description.getProperties(), defaultScope, ignoredScope);
     }
 
     /**
@@ -215,20 +250,14 @@ public class Validator {
             PropertyScope ignoredScope
     )
     {
-        final Report report = new Report();
-
-        final Map<String, Object> inputConfig = PluginAdapterUtility.mapProperties(
-                resolver, properties, defaultScope
+        return validate(
+            PluginAdapterUtility.mapProperties(resolver, properties, defaultScope),
+            new Report(),
+            properties,
+            ignoredScope
         );
-        validate(asProperties(inputConfig), report, properties, ignoredScope);
-        return report;
     }
 
-    private static Properties asProperties(Map<String, Object> inputConfig) {
-        Properties configuration = new Properties();
-        configuration.putAll(inputConfig);
-        return configuration;
-    }
 
     /**
      * Converts a set of input configuration keys using the description's configuration to property mapping, or the same
