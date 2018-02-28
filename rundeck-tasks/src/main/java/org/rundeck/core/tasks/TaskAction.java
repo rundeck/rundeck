@@ -22,11 +22,6 @@ import java.util.Map;
  * Action performed by a Task
  */
 public interface TaskAction {
-    /**
-     *
-     * @return action type
-     */
-    String getType();
 
     /**
      * @return true if the configuration is valid

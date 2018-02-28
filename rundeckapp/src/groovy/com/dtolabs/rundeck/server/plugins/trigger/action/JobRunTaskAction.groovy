@@ -34,7 +34,7 @@ import org.rundeck.core.tasks.TaskPluginTypes
 @ToString(includeNames = true, includeFields = true)
 class JobRunTaskAction implements TaskAction, PluginBaseMetaTrait {
     static final String PROVIDER_NAME = 'JobRun'
-    String type
+
     Map data
     @PluginProperty(required = true, title = 'Job', description = 'Job to run.', validatorClass = UUIDValidator)
     @RenderingOptions(
@@ -79,10 +79,6 @@ class JobRunTaskAction implements TaskAction, PluginBaseMetaTrait {
         this.jobId = data?.jobId
         this.optionData = data?.options
         this.extraData = data?.extra
-    }
-
-    String getArgString() {
-        'TODO'
     }
 
     String getFilter() {
