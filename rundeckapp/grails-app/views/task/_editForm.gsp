@@ -24,9 +24,9 @@
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
 <g:embedJSON
-        data="${task?.triggerConfig != null ? [data: true, config: task?.triggerConfig, report: [errors: validation?.
+    data="${task?.triggerConfig != null ? [data: true, config: task?.triggerConfig, report: [errors: validation?.
                 get('TaskTrigger')]] : [data: false]}"
-        id="conditionConfigJson"/>
+    id="triggerConfigJson"/>
 <g:embedJSON
         data="${task?.actionConfig != null ? [data: true, config: task?.actionConfig, report: [errors: validation?.
                 get('TaskAction')]] : [data: false]}"

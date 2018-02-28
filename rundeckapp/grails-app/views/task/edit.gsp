@@ -48,7 +48,7 @@
                 _setupAceTextareaEditor(this, confirm.setNeetsConfirm);
             });
             window.taskEditor=new TaskEditor({
-                triggerConfig:loadJsonData('conditionConfigJson'),
+                triggerConfig:loadJsonData('triggerConfigJson'),
                 triggerFormId:'condeditor',
                 triggerFormPrefixes:['triggerConfig.', 'orig.triggerConfig.'],
                 triggerInputPrefix:'triggerConfig.',
