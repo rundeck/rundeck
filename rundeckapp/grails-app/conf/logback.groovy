@@ -32,9 +32,7 @@ if (Environment.isDevelopmentMode() && targetDir != null) {
         }
     }
     logger 'grails.artefact.Interceptor', DEBUG, ['STDOUT'], false
-    logger 'org.rundeck.web.infosec', DEBUG, ['STDOUT']
-    logger 'rundeck.services.AuthorizationService', DEBUG, ['STDOUT']
-    logger "com.dtolabs.rundeck.server.filters", DEBUG, ["STDOUT"]
+    logger "rundeckapp.BootStrap", INFO, ["STDOUT"], false
     logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
 }
 root(ERROR, ['STDOUT'])

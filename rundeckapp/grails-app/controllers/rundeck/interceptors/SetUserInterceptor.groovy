@@ -18,7 +18,6 @@ class SetUserInterceptor {
     ApplicationContext applicationContext
 
     int order = HIGHEST_PRECEDENCE + 30
-    final String STATIC_ASSETS = "(static|assets|feed)"
 
     SetUserInterceptor() {
         matchAll().excludes(controller: 'user', action: '(logout|login|error|loggedout)')
@@ -30,7 +29,7 @@ class SetUserInterceptor {
     }
 
     boolean before() {
-        if(request.requestURI.matches(/^\\/$STATIC_ASSETS\\/.*/)) return true
+        if(InterceptorHelper.matchesStaticAssets(request.requestURI)) return true
 
         if (request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
             //disallow api access via normal login
@@ -114,7 +113,6 @@ class SetUserInterceptor {
         type.each {name,AuthorizationRoleSource source->
             if(source.enabled) {
                 def roles = source.getUserRoles(principal.name, request)
-                println roles
                 if(roles){
                     roleset.addAll(roles)
                     log.debug("Accepting user role list from bean ${name} for ${principal.name}: ${roles}")
