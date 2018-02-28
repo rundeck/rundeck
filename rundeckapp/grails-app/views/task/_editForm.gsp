@@ -108,7 +108,7 @@
         <div class="form-group ${g.hasErrors(bean: task, field: 'triggerType', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
-                Condition
+                <g:message code="task.trigger.display.title" />
             </label>
 
             <div class="${fieldColSize}">
