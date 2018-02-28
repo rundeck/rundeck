@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.dtolabs.rundeck.server.plugins.tasks.condition
+package com.dtolabs.rundeck.server.plugins.tasks.trigger
 
 import com.dtolabs.rundeck.core.plugins.configuration.ValuesGenerator
 import com.dtolabs.rundeck.plugins.descriptions.DynamicSelectValues
