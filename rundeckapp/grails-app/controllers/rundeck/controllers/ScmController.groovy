@@ -541,7 +541,7 @@ class ScmController extends ControllerBase {
         }
 
         //require type param
-        scmService.cleanPlugin(integration, project, type)
+        scmService.cleanPlugin(integration, project, type,authContext)
 
         flash.message = message(code: "scmController.action.clean.success.message", args: [integration, type])
         redirect(action: 'index', params: [project: project])

@@ -634,7 +634,7 @@ class ScmService {
      * @param type plugin type
      * @return
      */
-    def cleanPlugin(String integration, String project, String type) {
+    def cleanPlugin(String integration, String project, String type,UserAndRolesAuthContext auth) {
         ScmPluginConfigData scmPluginConfig = pluginConfigService.loadScmConfig(
                 project,
                 pathForConfigFile(integration),
@@ -649,14 +649,8 @@ class ScmService {
             storeConfig(scmPluginConfig, project, integration)
         }
 
-        def loaded
-        if (integration == EXPORT) {
-            loaded = loadedExportPlugins.remove(project)
-            loaded?.close()
-        } else {
-            loaded = loadedImportPlugins.remove(project)
-            loaded?.close()
-        }
+        def context = scmOperationContext(auth, project)
+        def loaded = loadPluginWithConfig(integration, context, type, scmPluginConfig.config)
         loaded?.provider?.totalClean()
 
     }
