@@ -258,7 +258,7 @@ public class PropertyUtil {
             case Select:
                 return new SelectValidator(values, dynamicValues, validator);
             case Options:
-                return new OptionsValidator(values);
+                return new OptionsValidator(values, dynamicValues, validator);
             default:
                 return validator;
         }
@@ -1028,27 +1028,29 @@ public class PropertyUtil {
 
     static final class OptionsValidator implements PropertyValidator {
 
-        final List<String> selectValues;
+        final List<String>      selectValues;
+        final boolean           dynamic;
+        final PropertyValidator otherValidator;
 
-        OptionsValidator(final List<String> selectValues) {
+        OptionsValidator(final List<String> selectValues, boolean dynamic, PropertyValidator otherValidator) {
             this.selectValues = selectValues;
+            this.dynamic = dynamic;
+            this.otherValidator = otherValidator;
         }
 
         public boolean isValid(final String value) throws ValidationException {
+            if (dynamic) {
+                if (null != otherValidator) {
+                    return otherValidator.isValid(value);
+                }
+                return true;
+            }
             Set<String> propvalset = new HashSet<>();
             if (value.indexOf(',') > 0) {
                 Stream<String> stream = Arrays.stream(value.split(", *"));
-                propvalset.addAll(stream.map(new Function<java.lang.String, java.lang.String>() {
-                    @Override
-                    public String apply(final String s1) {
-                        return s1.trim();
-                    }
-                }).filter(new Predicate<java.lang.String>() {
-                    @Override
-                    public boolean test(final String s) {
-                        return !"".equals(s);
-                    }
-                }).collect(Collectors.toSet()));
+                propvalset.addAll(stream.map(String::trim)
+                                        .filter(s -> !"".equals(s))
+                                        .collect(Collectors.toSet()));
             } else {
                 propvalset.add(value);
             }
