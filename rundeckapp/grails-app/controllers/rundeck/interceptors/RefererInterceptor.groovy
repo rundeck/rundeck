@@ -15,6 +15,9 @@
  */
 package rundeck.interceptors
 
+import org.springframework.beans.factory.annotation.Autowired
+import rundeck.services.ConfigurationService
+
 import javax.servlet.http.HttpServletResponse
 import java.util.regex.Pattern
 
@@ -37,10 +40,14 @@ import java.util.regex.Pattern
  */
 class RefererInterceptor {
 
-    def configurationService
+    @Autowired
+    ConfigurationService configurationService
 
     int order = HIGHEST_PRECEDENCE + 30
 
+    RefererInterceptor() {
+        matchAll().excludes(controller: 'static')
+    }
 
     boolean before() {
         // Set HTTP Method to filter based on Referer header.  Can be POST, or "*" for all methods. Default:

@@ -1,5 +1,7 @@
+package rundeck.interceptors
+
 /*
- * Copyright 2014 SimplifyOps Inc, <http://simplifyops.com>
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,20 +16,10 @@
  * limitations under the License.
  */
 
-//= require jobedit
-//= require knockout.min
-//= require knockout-mapping
-//= require knockout-foreachprop
-//= require knockout-onenter
-//= require workflowStepEditorKO
-//= require nodeFiltersKO
-//= require optionEditKO
-//= require storageBrowseKO
-//= require prototype-bundle
-//= require ace-bundle
+class InterceptorHelper {
+    public static final String STATIC_ASSETS = "(static|assets|feed)"
 
-/*
- Manifest: include jobedit.js, workflowStepEditorKO, nodeFiltersKO, optionEditKO
- */
-
-
+    public static matchesStaticAssets(String requestURI) {
+        return requestURI.matches(/^\\/$STATIC_ASSETS\\/.*/)
+    }
+}

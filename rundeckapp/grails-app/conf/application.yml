@@ -11,13 +11,16 @@ grails:
             # Whether to translate GORM events into Reactor events
             # Disabled by default for performance reasons
             events: false
+    databinding:
+        trimStrings: false
 info:
     app:
         name: '@info.app.name@'
         version: '@info.app.version@'
         grailsVersion: '@info.app.grailsVersion@'
-    build:
-        ident: '@info.app.name@'
+build:
+    ident: 'REPLACE-ME'
+
 spring:
     main:
         banner-mode: "off"
@@ -88,82 +91,45 @@ endpoints:
         unique-names: true
 
 ---
-hibernate:
-    cache:
-        queries: false
-        use_second_level_cache: false
-        use_query_cache: false
-dataSource:
-    pooled: true
-    jmxExport: true
-    driverClassName: org.h2.Driver
-    username: sa
-    password: ''
-
-environments:
-    development:
-        dataSource:
-            dbCreate: create-drop
-            url: jdbc:h2:mem:devDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-    test:
-        dataSource:
-            dbCreate: update
-            url: jdbc:h2:mem:testDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-    production:
-        dataSource:
-            dbCreate: none
-            url: jdbc:h2:./prodDb;MVCC=TRUE;LOCK_TIMEOUT=10000;DB_CLOSE_ON_EXIT=FALSE
-            properties:
-                jmxEnabled: true
-                initialSize: 5
-                maxActive: 50
-                minIdle: 5
-                maxIdle: 25
-                maxWait: 10000
-                maxAge: 600000
-                timeBetweenEvictionRunsMillis: 5000
-                minEvictableIdleTimeMillis: 60000
-                validationQuery: SELECT 1
-                validationQueryTimeout: 3
-                validationInterval: 15000
-                testOnBorrow: true
-                testWhileIdle: true
-                testOnReturn: false
-                jdbcInterceptors: ConnectionState
-                defaultTransactionIsolation: 2 # TRANSACTION_READ_COMMITTED
-
 
 rdeck:
     base: ${user.home}/dev-3-svr/server/config
 
-java:
-    security:
-        auth:
-            login:
-                config: ${user.home}/dev-3-svr/server/config/jaas-loginmodule.conf
-
 rundeck:
+    executionMode: active
     config:
-        location: ${user.home}/dev-3-svr/server/configrundeck-config.properties
+        location: ${user.home}/dev-3-svr/server/config/rundeck-config.properties
         storage:
     security:
         authorization:
+            containerPrincipal:
+                enabled: true
+            container:
+                enabled: true
             preauthenticated:
                 delimiter: ','
                 enabled: false
                 attributeName: REMOTE_USER_GROUPS
     storage:
 
+plugin:
+    platformCore:
+        security:
+            disabled: true
+        navigation:
+            disabled: true
+        ui:
+            disabled: true
+        events:
+            disabled: false
+            gorm:
+                disabled: true
+        show:
+            startup:
+                info: true
+
 server:
     port: 4440
-
-#security:
-#    basic:
-#      authorize-mode: role # Security authorize mode to apply.
-#      enabled: true # Enable basic authentication.
-#      path: /** # Comma-separated list of paths to secure.
-#      realm: Spring # HTTP basic realm name.
-    
 
 
 

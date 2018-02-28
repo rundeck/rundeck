@@ -635,7 +635,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      */
     def rescheduleJobs(String serverUUID = null, String project = null) {
         Date now = new Date()
-        def results = ScheduledExecution.isScheduled()
+        def results = ScheduledExecution.scheduledJobs()
         if (serverUUID) {
             results = results.withServerUUID(serverUUID)
         }

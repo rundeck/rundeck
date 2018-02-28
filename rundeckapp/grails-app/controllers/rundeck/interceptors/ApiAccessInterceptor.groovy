@@ -24,10 +24,16 @@ class ApiAccessInterceptor {
             'menu':['index','home'],
     ]
 
+    ApiAccessInterceptor() {
+        matchAll().excludes(uri: '/api/**')
+    }
+
     /**
      * Disallow api access if a request comes for non-api url after login
      */
     boolean before() {
+        if(InterceptorHelper.matchesStaticAssets(request.requestURI)) return true
+
         if(allowed_pre_api_reqs[controllerName] && (actionName in allowed_pre_api_reqs[controllerName])){
             return true
         }

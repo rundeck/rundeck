@@ -196,7 +196,7 @@ class ScheduledExecution extends ExecutionContext {
     }
 
     static namedQueries = {
-		isScheduled {
+		scheduledJobs {
 			eq 'scheduled', true
 		}
 		withServerUUID { uuid ->

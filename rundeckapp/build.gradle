@@ -128,7 +128,7 @@ dependencies {
 
 bootRun {
     jvmArgs('-Dspring.output.ansi.enabled=always')
-    systemProperty "java.security.auth.login.config", "/Users/stephen/dev-svr/server/config/jaas-loginmodule.conf"
+    systemProperties = System.properties
     addResources = true
 }
 

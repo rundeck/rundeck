@@ -8,6 +8,10 @@ class ApiIncubatorInterceptor {
     int order = HIGHEST_PRECEDENCE + 26
     def apiService
 
+    ApiIncubatorInterceptor() {
+        match(uri: '/api/**')
+    }
+
     /**
      * check incubator features via feature toggle
      */
