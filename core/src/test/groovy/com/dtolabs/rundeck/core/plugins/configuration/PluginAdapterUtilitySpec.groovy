@@ -96,6 +96,10 @@ class PluginAdapterUtilitySpec extends Specification {
         String testSelect10;
 
         @PluginProperty
+        @SelectValues(values = [], dynamicValues = true)
+        List<String> testSelect11;
+
+        @PluginProperty
         Boolean testbool1;
         @PluginProperty
         boolean testbool2;
@@ -208,6 +212,52 @@ class PluginAdapterUtilitySpec extends Specification {
 
         then:
         test.testSelect6 == expect
+
+        where:
+        value                             | expect
+        'a'                               | ['a']
+        'a,b'                             | ['a', 'b']
+        'a,b,c'                           | ['a', 'b', 'c']
+        'a,c'                             | ['a', 'c']
+        ['a', 'c']                        | ['a', 'c']
+        ['a', 'c'].toSet()                | ['a', 'c']
+        ['a', 'c'].toArray(new String[2]) | ['a', 'c']
+    }
+    @Unroll
+    def "configure options value invalid"() {
+        given:
+        Configuretest1 test = new Configuretest1();
+        when:
+
+        HashMap<String, Object> configuration = new HashMap<String, Object>();
+        configuration.put("testSelect6", value);
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+        RuntimeException e = thrown()
+        e.message.contains 'Some options values were not allowed for property '
+
+        where:
+        value                             | expect
+        'x'                               | ['a']
+        'a,x'                             | ['a', 'b']
+        ['a', 'x']                        | ['a', 'c']
+        ['a', 'x'].toSet()                | ['a', 'c']
+        ['a', 'x'].toArray(new String[2]) | ['a', 'c']
+    }
+
+    @Unroll
+    def "configure options value dynamic"() {
+        given:
+        Configuretest1 test = new Configuretest1();
+        when:
+
+        HashMap<String, Object> configuration = new HashMap<String, Object>();
+        configuration.put("testSelect11", value);
+        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+
+        then:
+        test.testSelect11 == expect
 
         where:
         value                             | expect

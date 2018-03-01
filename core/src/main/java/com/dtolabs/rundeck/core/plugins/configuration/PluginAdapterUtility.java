@@ -576,9 +576,9 @@ public class PluginAdapterUtility {
             }
             resolvedValue = boolvalue;
         } else if (type == Property.Type.Options) {
+            Collection<String> resolvedValueSet = null;
             if (value instanceof String) {
                 String valstring = (String) value;
-                Set<String> resolvedValueSet=null;
                 //not a String field
                 if (field.getType().isAssignableFrom(Set.class)) {
                     HashSet<String> strings = new HashSet<>();
@@ -602,26 +602,20 @@ public class PluginAdapterUtility {
                 } else {
                     return false;
                 }
-                if (!property.getSelectValues().containsAll(resolvedValueSet)) {
-                    throw new RuntimeException(
-                        String.format(
-                            "Some options values were not allowed for property %s: %s",
-                            property.getName(),
-                            resolvedValue
-                        ));
-                }
+
             } else if (value instanceof Collection) {
-                Collection valCollection = (Collection) value;
+                resolvedValueSet = (Collection<String>) value;
                 if (field.getType().isAssignableFrom(Set.class)) {
-                    resolvedValue = new HashSet<>(valCollection);
+                    resolvedValue = new HashSet<>(resolvedValueSet);
                 } else if (field.getType().isAssignableFrom(List.class)) {
-                    resolvedValue = new ArrayList<>(valCollection);
+                    resolvedValue = new ArrayList<>(resolvedValueSet);
                 } else if (field.getType() == String[].class) {
-                    ArrayList<Object> strings = new ArrayList<>(valCollection);
+                    ArrayList<Object> strings = new ArrayList<>(resolvedValueSet);
                     resolvedValue = strings.toArray(new String[strings.size()]);
                 } else {
                     return false;
                 }
+
             } else if (value.getClass() == String[].class) {
                 String[] valCollection = (String[]) value;
                 if (field.getType().isAssignableFrom(Set.class)) {
@@ -634,9 +628,20 @@ public class PluginAdapterUtility {
                 } else {
                     return false;
                 }
+                resolvedValueSet = Arrays.asList(valCollection);
+
             } else {
                 //XXX
                 return false;
+            }
+            if (!field.getAnnotation(SelectValues.class).dynamicValues() &&
+                !property.getSelectValues().containsAll(resolvedValueSet)) {
+                throw new RuntimeException(
+                    String.format(
+                        "Some options values were not allowed for property %s: %s",
+                        property.getName(),
+                        resolvedValue
+                    ));
             }
         } else if (type == Property.Type.String || type == Property.Type.FreeSelect) {
             if (value instanceof String) {
