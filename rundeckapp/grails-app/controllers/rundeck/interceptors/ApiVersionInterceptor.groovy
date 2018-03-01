@@ -6,6 +6,7 @@ import grails.converters.XML
 import org.apache.log4j.Logger
 import org.apache.log4j.MDC
 import org.grails.web.util.WebUtils
+import org.springframework.beans.factory.annotation.Autowired
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -20,6 +21,7 @@ class ApiVersionInterceptor {
     private static final String METRIC_TIMER = 'ApiRequestFilters._METRIC_TIMER'
     private static final String REQUEST_TIME = 'ApiRequestFilters._TIMER'
 
+    @Autowired
     MetricRegistry metricRegistry
     def messageSource
     def apiService
@@ -104,5 +106,9 @@ class ApiVersionInterceptor {
 
     void afterView() {
         // no-op
+    }
+
+    private com.codahale.metrics.Timer.Context timer() {
+        metricRegistry.timer(MetricRegistry.name('rundeck.api.requests', 'requestTimer')).time()
     }
 }
