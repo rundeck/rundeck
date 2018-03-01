@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.app.api.ApiVersions
+import grails.converters.JSON
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import com.dtolabs.rundeck.util.JsonUtil
@@ -564,16 +565,13 @@ class ProjectController extends ControllerBase{
                 }
             }
             json{
-                return render(contentType: 'application/json'){
-                        def builder = delegate
-                        List details = []
-                        projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
-                            //don't include config data
-                            details.add(basicProjectDetails(pject))
-                        }
-
-                        builder(details)
+                List details = []
+                projlist.sort { a, b -> a.name <=> b.name }.each { pject ->
+                    //don't include config data
+                    details.add(basicProjectDetails(pject))
                 }
+
+                render details as JSON
             }
         }
 
