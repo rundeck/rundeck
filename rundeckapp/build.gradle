@@ -60,8 +60,8 @@ dependencies {
     compile project(':core')
     compile project(':rundeck-storage:rundeck-storage-filesys')
     compile project('metricsweb')
-    compile project('rundeckjettyauth')
-    compile project('authfilter')
+    //compile project('rundeckjettyauth')
+    //compile project('authfilter')
 
 
     // From BuildConfig.groovy.
@@ -105,6 +105,9 @@ dependencies {
     compile "org.grails.plugins:hibernate5"
     compile "org.hibernate:hibernate-core:5.1.5.Final"
     compile "org.grails.plugins:gsp"
+
+    compile 'org.eclipse.jetty:jetty-jaas:9.4.7.v20170914'
+    compile 'org.grails.plugins:spring-security-core:3.2.1'
 //    compile 'org.codehaus.groovy:groovy-all:2.4.13'
     console "org.grails:grails-console"
     profile "org.grails.profiles:web"
@@ -113,6 +116,7 @@ dependencies {
     runtime "com.h2database:h2:1.4.196"
     runtime "org.apache.tomcat:tomcat-jdbc"
     runtime "com.bertramlabs.plugins:asset-pipeline-grails:2.14.7"
+    runtime "org.slf4j:jcl-over-slf4j:1.7.25"
     assets 'com.bertramlabs.plugins:less-asset-pipeline:2.14.5'
     testCompile "org.grails:grails-gorm-testing-support"
     testCompile "org.grails:grails-web-testing-support"

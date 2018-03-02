@@ -34,8 +34,6 @@ include 'core',
 	'plugins:upvar-plugin',
 	'rundeckapp',
 	'rundeckapp:metricsweb',
-	'rundeckapp:rundeckjettyauth',
-	'rundeckapp:authfilter',
 	'rundeck-launcher',
 	'rundeck-launcher:launcher',
 	'rundeck-launcher:rundeck-jetty-server'
