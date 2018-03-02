@@ -9,12 +9,7 @@ import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
 import grails.transaction.Transactional
 import groovy.transform.ToString
-import org.rundeck.core.tasks.TaskAction
-import org.rundeck.core.tasks.TaskActionHandler
-import org.rundeck.core.tasks.TaskActionInvoker
-import org.rundeck.core.tasks.TaskPluginTypes
-import org.rundeck.core.tasks.TaskTrigger
-import org.rundeck.core.tasks.TaskTriggerHandler
+import org.rundeck.core.tasks.*
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.TaskEvent
@@ -29,6 +24,7 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
     def frameworkService
     ApplicationContext applicationContext
     private Map<String, TaskTriggerHandler<RDTaskContext>> triggerRegistrationMap = [:]
+    private Map<String, TaskConditionHandler<RDTaskContext>> conditionRegistrationMap = [:]
     private Map<String, TaskActionHandler<RDTaskContext>> actRegistrationMap = [:]
     /**
      * handle defined triggers needing system startup hook
@@ -98,9 +94,19 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         pluginService.configurePlugin(provider, config, TaskAction)
     }
 
+    public ConfiguredPlugin<TaskCondition> getConfiguredConditionPlugin(String provider, Map config) {
+        //TODO: project scope
+        pluginService.configurePlugin(provider, config, TaskCondition)
+    }
+
     public ValidatedPlugin getValidatedActionPlugin(String provider, Map config) {
         //TODO: project scope
         pluginService.validatePluginConfig(provider, TaskAction, config)
+    }
+
+    public ValidatedPlugin getValidatedConditionPlugin(String provider, Map config) {
+        //TODO: project scope
+        pluginService.validatePluginConfig(provider, TaskCondition, config)
     }
 
     public DescribedPlugin<TaskTrigger> getTaskTriggerPlugin(String provider) {
@@ -121,7 +127,15 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
      * @return
      */
     public Map<String, TaskTriggerHandler<RDTaskContext>> getTaskTriggerHandlerMap() {
-        return pluginService.listPlugins(TaskTriggerHandler).collectEntries { [it.key, it.value.instance] }
+        pluginService.listPlugins(TaskTriggerHandler).collectEntries { [it.key, it.value.instance] }
+    }
+
+    /**
+     * Map of installed trigger handlers
+     * @return
+     */
+    public Map<String, TaskConditionHandler<RDTaskContext>> getTaskConditionHandlerMap() {
+        pluginService.listPlugins(TaskConditionHandler).collectEntries { [it.key, it.value.instance] }
     }
 
     /**
@@ -172,8 +186,29 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         return action.instance
     }
 
+    List<TaskCondition> conditionsFor(TaskRep rep) {
+        def configList = rep.getConditionList()
+        def list = configList?.collect { Map condMap ->
+            getConfiguredConditionPlugin(condMap.type, condMap.config).instance
+        } ?: []
+        def missing = list.findIndexOf { !it }
+        if (missing >= 0) {
+            throw new IllegalArgumentException("Unknown condition type: ${configList[missing].type}")
+        }
+        list
+    }
+
     ValidatedPlugin validateActionFor(TaskRep rep) {
         rep.actionType ? getValidatedActionPlugin(rep.actionType, rep.actionConfig) : null
+    }
+
+    List<ValidatedPlugin> validateConditionsFor(TaskRep rep) {
+        List conditions = rep.getConditionList()
+        conditions.collect { Map condMap ->
+            condMap.type ?
+            getValidatedConditionPlugin(condMap.type, condMap.config) :
+            new ValidatedPlugin(valid: false, report: Validator.errorReport('type', 'missing'))
+        }
     }
 
     ValidatedPlugin validateTriggerFor(TaskRep rep) {
@@ -192,11 +227,13 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
             return
         }
 
+        def conditions = conditionsFor(task)
         if (enabled) {
             condHandler.registerTriggerForAction(
                     task.uuid,
                     taskContext,
                     trigger,
+                    conditions,
                     action,
                     this
             )
@@ -221,35 +258,52 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         }?.value
     }
 
-    public TaskActionHandler<RDTaskContext> getActionHandlerForTask(TaskRep trigger, TaskAction action, RDTaskContext triggerContext) {
+    public TaskConditionHandler<RDTaskContext> getConditionHandlerForCondition(
+        TaskRep trigger,
+        TaskCondition condition,
+        RDTaskContext taskContext
+    ) {
+        conditionRegistrationMap[trigger.uuid] ?: taskConditionHandlerMap.find {
+            it.value.handlesCondition(condition, taskContext)
+        }?.value
+    }
+
+
+    public TaskActionHandler<RDTaskContext> getActionHandlerForTask(
+        TaskRep trigger,
+        TaskAction action,
+        RDTaskContext taskContext
+    ) {
         actRegistrationMap[trigger.uuid] ?: triggerActionHandlerMap.find {
-            it.value.handlesAction(action, triggerContext)
+            it.value.handlesAction(action, taskContext)
         }?.value
     }
 
     def createTask(
-            UserAndRolesAuthContext authContext,
-            TaskCreate input,
-            Map triggerMap,
-            Map actionMap,
-            Map userData
+        UserAndRolesAuthContext authContext,
+        TaskCreate input,
+        Map triggerMap,
+        List conditionList,
+        Map actionMap,
+        Map userData
     ) {
         def rep = new TaskRep(
-                uuid: UUID.randomUUID().toString(),
-                name: input.name,
-                description: input.description,
-                project: input.project,
-                triggerType: input.triggerType,
-                triggerConfig: triggerMap,
-                actionType: input.actionType,
-                actionConfig: actionMap,
-                userData: userData,
-                enabled: input.enabled,
-                userCreated: authContext.username,
-                userModified: authContext.username,
-                authUser: authContext.username,
-                authRoleList: authContext.roles.join(','),
-                serverNodeUuid: frameworkService.serverUUID
+            uuid: UUID.randomUUID().toString(),
+            name: input.name,
+            description: input.description,
+            project: input.project,
+            triggerType: input.triggerType,
+            triggerConfig: triggerMap,
+            conditionList: conditionList,
+            actionType: input.actionType,
+            actionConfig: actionMap,
+            userData: userData,
+            enabled: input.enabled,
+            userCreated: authContext.username,
+            userModified: authContext.username,
+            authUser: authContext.username,
+            authRoleList: authContext.roles.join(','),
+            serverNodeUuid: frameworkService.serverUUID
         )
         def result = validateTask(rep)
         if (result.error) {
@@ -278,6 +332,19 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
             validation[TaskPluginTypes.TaskAction] = actionValidate.report.errors
         }
 
+        List<ValidatedPlugin> conditionValidate = validateConditionsFor(rep)
+        if (!conditionValidate && rep.conditionList) {
+            //plugin provider not found
+            rep.errors.rejectValue(
+                'conditionList',
+                'plugin.not.found.0',
+                [rep.actionType].toArray(),
+                'Plugin not found: {0}'
+            )
+        } else if (conditionValidate && !conditionValidate.every { it && it.valid }) {
+            validation[TaskPluginTypes.TaskCondition] = conditionValidate.report.errors
+        }
+
         ValidatedPlugin triggerValidate = validateTriggerFor(rep)
         if (!triggerValidate && rep.triggerType) {
             //plugin provider not found
@@ -297,18 +364,20 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
     }
 
     Map updateTask(
-            UserAndRolesAuthContext authContext,
-            TaskRep task,
-            TaskUpdate input,
-            Map triggerDataMap,
-            Map actionDataMap,
-            Map userDataMap
+        UserAndRolesAuthContext authContext,
+        TaskRep task,
+        TaskUpdate input,
+        Map triggerDataMap,
+        List condList,
+        Map actionDataMap,
+        Map userDataMap
     ) {
         task.with {
             name = input.name
             description = input.description
             triggerType = input.triggerType
             triggerConfig = triggerDataMap
+            conditionList = condList
             actionType = input.actionType
             actionConfig = actionDataMap
             userData = userDataMap
@@ -354,6 +423,29 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
 
         def action = actionFor(task)
         def trigger = triggerFor(task)
+        def conditions = conditionsFor(task)
+        boolean conditionsMet = true
+        int index = 0
+        for (TaskCondition condition : conditions) {
+            TaskConditionHandler handler = getConditionHandlerForCondition(task, condition, contextInfo)
+            if (!handler.checkCondition(contextInfo, triggerMap, trigger, condition)) {
+                conditionsMet = false
+                break
+            }
+            index++
+        }
+
+        if (!conditionsMet) {
+            createTaskEvent(
+                [message: 'Trigger was fired, but a condition was not met', conditionIndex: index],
+                task,
+                'condition:notmet',
+                null,
+                null,
+                event
+            )
+            return
+        }
 
         TaskActionHandler actHandler = getActionHandlerForTask(task, action, contextInfo)
         //TODO: on executor
@@ -388,6 +480,22 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
             event2.save(flush: true)
         }
     }
+
+    public TaskEvent createTaskEvent(
+        Map triggerMap, TaskRep task, String eventType, associatedId, associatedType, associatedEvent
+    ) {
+        new TaskEvent(
+            eventDataMap: triggerMap,
+            timeZone: ZoneId.systemDefault().toString(),
+            eventType: eventType,
+            taskRep: task,
+
+            associatedId: associatedId,
+            associatedType: associatedType,
+            associatedEvent: associatedEvent
+        ).save(flush: true)
+    }
+
 }
 
 @ToString(includeFields = true, includeNames = true)

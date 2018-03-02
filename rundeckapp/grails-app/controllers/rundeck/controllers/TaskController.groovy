@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.app.support.task.TaskRequest
 import com.dtolabs.rundeck.app.support.task.TaskUpdate
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import org.rundeck.core.tasks.TaskAction
+import org.rundeck.core.tasks.TaskCondition
 import org.rundeck.core.tasks.TaskTrigger
 import rundeck.TaskRep
 import rundeck.services.PluginService
@@ -18,7 +19,7 @@ class TaskController extends ControllerBase implements PluginListRequired {
             'deletePost': 'POST',
             'updatePost': 'POST',
     ]
-    Map<String, Class> requiredPluginTypes = [actionPlugins: TaskAction, triggerPlugins: TaskTrigger]
+    Map<String, Class> requiredPluginTypes = [actionPlugins: TaskAction, triggerPlugins: TaskTrigger, conditionPlugins: TaskCondition]
     Collection<String> requiredPluginActionNames = ['create', 'edit', 'show', 'createPost', 'updatePost']
 
 
@@ -61,12 +62,17 @@ class TaskController extends ControllerBase implements PluginListRequired {
         Map triggerMap = ParamsUtil.cleanMap(params.triggerConfig)
         Map actionMap = ParamsUtil.cleanMap(params.actionConfig)
 
+        List conditionList = ParamsUtil.parseMapList(params.conditionList)
+        conditionList = conditionList?.collect {
+            [config: ParamsUtil.cleanMap(it.config ?: [:]), type: it.type]
+        }
+
         Map userData = params.userData?.containsKey('0.key') ? ParamsUtil.parseIndexedMapParams(params.userData) :
-                       ParamsUtil.cleanMap(params.userDataConfig)
+                       [:]
 
 
 
-        def result = taskService.createTask(authContext, input, triggerMap, actionMap, userData)
+        def result = taskService.createTask(authContext, input, triggerMap, conditionList, actionMap, userData)
 
         if (result.error) {
             //edit form
@@ -122,15 +128,19 @@ class TaskController extends ControllerBase implements PluginListRequired {
         System.err.println("params: ${params.actionConfig}")
         Map triggerMap = ParamsUtil.cleanMap(params.triggerConfig)
         Map actionMap = ParamsUtil.cleanMap(params.actionConfig)
+        List conditionList = ParamsUtil.parseMapList(params.conditionList)
+        conditionList = conditionList?.collect {
+            [config: ParamsUtil.cleanMap(it.config ?: [:]), type: it.type]
+        }
 
         Map userData = params.userData?.containsKey("0.key") ? ParamsUtil.parseIndexedMapParams(params.userData) :
-                       ParamsUtil.cleanMap(params.userDataConfig)
+                       [:]
 
         //TODO; auth
 
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, input.project)
 
-        def result = taskService.updateTask(authContext, task, input, triggerMap, actionMap, userData)
+        def result = taskService.updateTask(authContext, task, input, triggerMap, conditionList, actionMap, userData)
 
         if (result.error) {
             //edit form
@@ -220,6 +230,24 @@ class ParamsUtil {
             }
         }
         outmap
+    }
+
+    /**
+     *
+     * @param data
+     * @return
+     */
+    static List parseMapList(Map data) {
+        def entries = [data.get("_indexes")].flatten()
+        List result = []
+
+        entries.each { index ->
+            def map = data.get("entry[${index}]".toString())
+            if (map) {
+                result << cleanMap(map)
+            }
+        }
+        result
     }
     /**
      * Parse input data with index key/value entries into a map.

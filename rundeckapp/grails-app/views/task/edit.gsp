@@ -56,6 +56,9 @@
                 actionFormId:'actionEditor',
                 actionFormPrefixes:['actionConfig.', 'orig.actionConfig.'],
                 actionInputPrefix:'actionConfig.',
+                conditionData:loadJsonData('conditionListJson'),
+                conditionFormPrefixes:['conditionList.', 'orig.conditionList.'],
+                conditionInputPrefix:'conditionList.',
                 userData:loadJsonData('taskUserDataJson'),
                 userDataInputPrefix:'userData.'
             });

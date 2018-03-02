@@ -114,6 +114,22 @@
             </div>
 
             <div class="list-group-item">
+                <h4 class="list-group-item-heading">
+                    <g:message code="task.condition.display.title" />
+                </h4>
+
+                <g:each in="${task.conditionList}" var="condition">
+                    <g:render template="/framework/renderPluginConfig"
+                              model="${[serviceName   : org.rundeck.core.tasks.TaskPluginTypes.TaskCondition,
+                                        showPluginIcon: true,
+                                        values        : condition.config,
+                                        description   : conditionPlugins[condition.type].description,
+                                        hideTitle     : false]}"/>
+                </g:each>
+
+            </div>
+
+            <div class="list-group-item">
                 <h4 class="list-group-item-heading"><g:message code="task.action.display.title" /></h4>
                 <g:render template="/framework/renderPluginConfig"
                           model="${[serviceName   : org.rundeck.core.tasks.TaskPluginTypes.TaskAction,
@@ -162,14 +178,24 @@
                                         <g:icon name="ok-sign"/>
                                     </span>
                                 </g:if>
-                                <g:if test="${event.eventType == 'error'}">
+                                <g:if test="${event.eventType =~ '^error'}">
                                     <span class="text-danger">
                                         <g:icon name="flag"/>
+                                    </span>
+                                </g:if>
+                                <g:if test="${event.eventType =~ '^warn'}">
+                                    <span class="text-warning">
+                                        <g:icon name="warning-sign"/>
                                     </span>
                                 </g:if>
                                 <g:if test="${event.eventType == 'fired'}">
                                     <span class="text-info">
                                         <g:icon name="play-circle"/>
+                                    </span>
+                                </g:if>
+                                <g:if test="${event.eventType == 'condition:notmet'}">
+                                    <span class="text-muted">
+                                        <g:icon name="exclamation-sign"/>
                                     </span>
                                 </g:if>
                                 at
@@ -186,9 +212,14 @@
                                 %{--classes="table-condensed table-bordered"--}%
                                 %{--fields="${event.eventDataMap.keySet().sort()}"/>--}%
                                 </g:if>
-                                <g:if test="${event.eventType == 'error' && event.eventDataMap?.error}">
+                                <g:if test="${event.eventType =~ '^(error|warn)' && event.eventDataMap?.error}">
                                     <span class="text-warning">
-                                        ${event.eventDataMap.error}
+                                        <g:autoLink>${event.eventDataMap.error}</g:autoLink>
+                                    </span>
+                                </g:if>
+                                <g:if test="${event.eventType == 'condition:notmet' && event.eventDataMap?.message}">
+                                    <span class="text-muted">
+                                        <g:autoLink>${event.eventDataMap.message}</g:autoLink>
                                     </span>
                                 </g:if>
                                 <g:if test="${event.associatedType == 'Execution' && event.associatedId}">

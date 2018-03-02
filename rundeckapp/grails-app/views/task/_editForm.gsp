@@ -32,6 +32,16 @@
                 get('TaskAction')]] : [data: false]}"
         id="actionConfigJson"/>
 
+<g:embedJSON
+    data="${task?.conditionList != null ?
+            [
+                data  : true,
+                list  : task?.conditionList,
+                errors: validation?.get('TaskCondition')
+            ]
+                                        : [data: false]}"
+    id="conditionListJson"/>
+
 <g:embedJSON data="${task?.userData ?: [:]}" id="taskUserDataJson"/>
 
 <div class="list-group">
@@ -105,6 +115,71 @@
 
         </div>
 
+        <div class="form-group ${g.hasErrors(bean: task, field: 'conditionList', 'has-error')}">
+            <label for="description"
+                   class="required ${enc(attr: labelColClass)}">
+                Conditions
+            </label>
+
+            <div class="${fieldColSize}">
+                <!-- Single button -->
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-success-hollow dropdown-toggle"
+                            data-toggle="dropdown"
+                            aria-haspopup="true"
+                            aria-expanded="false">
+                        <g:icon name="plus"/>
+                        Add Condition <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu">
+                        <g:each in="${conditionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
+                                var="plugin">
+                            <li>
+                                <a href="#" data-bind="click: addConditionType" data-plugin-type="${plugin.name}">
+                                    <stepplugin:message
+                                        service="${org.rundeck.core.tasks.TaskPluginTypes.TaskCondition}"
+                                        name="${plugin.name}"
+                                        code="plugin.title"
+                                        default="${plugin.title ?: plugin.name}"/>
+                                </a>
+                            </li>
+
+                        </g:each>
+                    </ul>
+                </div>
+
+            </div>
+
+            <div data-bind="foreach: {data: conditions, as: 'cond'}">
+
+                <div class="${offsetColSize}">
+                    <input type="hidden"
+                           data-bind="attr: {name: $root.conditionInputPrefix+'_indexes' }, value: cond.uid"/>
+                    <input type="hidden"
+                           data-bind="attr: {name: $root.conditionInputPrefix+'entry[' + cond.uid() + '].type' }, value: cond.provider"/>
+                    <a href="#" class="btn btn-sm btn-danger-hollow" data-bind="click: $parent.removeCondition">
+                        Remove
+                    </a>
+                </div>
+
+                <div class="${offsetColSize}">
+
+                    <busy-spinner params="busy: cond.loading"></busy-spinner>
+
+                    <div data-bind="attr: {id: cond.formId }">
+                    </div>
+                    %{--<g:hasErrors bean="${task}" field="triggerType">--}%
+
+                    %{--<span class="text-warning">--}%
+                    %{--<g:renderErrors bean="${task}" as="list" field="triggerType"/>--}%
+                    %{--</span>--}%
+
+                    %{--</g:hasErrors>--}%
+                </div>
+            </div>
+
+        </div>
+
         <div class="form-group ${g.hasErrors(bean: task, field: 'triggerType', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
@@ -113,8 +188,9 @@
 
             <div class="${fieldColSize}">
 
-                <select name="triggerType" value="${task?.triggerType}" class="form-control"
-                        id="conditionTypeSelect" data-bind="value: taskEditor.trigger.provider">
+                <select name="triggerType" value="${task?.triggerType}"
+                        class="form-control"
+                        data-bind="value: taskEditor.trigger.provider">
                     <g:if test="${!task?.triggerType}">
                         <option value="" selected>-Choose-</option>
                     </g:if>

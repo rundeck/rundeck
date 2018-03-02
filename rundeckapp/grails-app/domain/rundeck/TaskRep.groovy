@@ -12,6 +12,7 @@ class TaskRep implements EmbeddedJsonData {
     String serverNodeUuid
     String triggerType
     String triggerData
+    String conditionData
     String actionType
     String actionData
     String taskUserData
@@ -32,6 +33,7 @@ class TaskRep implements EmbeddedJsonData {
         triggerData(nullable: true, blank: true)
         actionType(nullable: false, blank: false)
         actionData(nullable: true, blank: true)
+        conditionData(nullable: true, blank: true)
         taskUserData(nullable: true, blank: true)
         userCreated(nullable: false, blank: false)
         userModified(nullable: false, blank: false)
@@ -56,13 +58,14 @@ class TaskRep implements EmbeddedJsonData {
         actionData(type: 'text')
         triggerData(type: 'text')
         taskUserData(type: 'text')
+        conditionData(type: 'text')
         userCreated(type: 'text')
         userModified(type: 'text')
         authUser(type: 'text')
         authRoleList(type: 'text')
     }
     //ignore fake property 'configuration' and do not store it
-    static transients = ['actionConfig', 'triggerConfig', 'userData']
+    static transients = ['actionConfig', 'triggerConfig', 'userData', 'conditionList']
 
     public Map getActionConfig() {
         return asJsonMap(actionData)
@@ -86,6 +89,14 @@ class TaskRep implements EmbeddedJsonData {
 
     public void setUserData(Map obj) {
         taskUserData = serializeJsonMap(obj)
+    }
+
+    public List getConditionList() {
+        return asJsonList(conditionData)
+    }
+
+    public void setConditionList(List obj) {
+        conditionData = serializeJsonList(obj)
     }
 
 

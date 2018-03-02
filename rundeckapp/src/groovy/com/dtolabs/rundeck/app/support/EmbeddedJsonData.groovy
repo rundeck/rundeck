@@ -33,8 +33,27 @@ trait EmbeddedJsonData {
         }
     }
 
+    List asJsonList(String data) {
+        //de-serialize the json
+        if (null != data) {
+            final ObjectMapper mapper = new ObjectMapper()
+            return mapper.readValue(data, List.class)
+        } else {
+            return null
+        }
+    }
+
 
     String serializeJsonMap(Map obj) {
+        //serialize json and store into field
+        if (null != obj) {
+            final ObjectMapper mapper = new ObjectMapper()
+            return mapper.writeValueAsString(obj)
+        } else {
+            return null
+        }
+    }
+    String serializeJsonList(List obj) {
         //serialize json and store into field
         if (null != obj) {
             final ObjectMapper mapper = new ObjectMapper()

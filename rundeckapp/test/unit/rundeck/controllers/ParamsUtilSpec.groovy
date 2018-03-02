@@ -17,6 +17,7 @@
 package rundeck.controllers
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 class ParamsUtilSpec extends Specification {
     def "cleanMap"() {
@@ -116,6 +117,28 @@ class ParamsUtilSpec extends Specification {
         ['0.key': 'abc', '0.value': 'xyz', '2.key': 'def', '1.value': 'pqr'] | [abc: 'xyz']
         ['0.key': 'abc', '0.value': 'xyz', 'blah': 'blee']                   | [abc: 'xyz']
         ['0.key': 'abc', '0.value': 'xyz', '2.key': 'def', '2.value': 'pqr'] | [abc: 'xyz']
+
+    }
+
+    @Unroll
+    def "parseMapList"() {
+        given:
+
+        when:
+        def result = ParamsUtil.parseMapList(input)
+        then:
+        result != null
+        result == expect
+
+        where:
+        input                                                                                                     |
+        expect
+        ['abc': 'xyz']                                                                                            | []
+        ['_indexes': ['1', '2']]                                                                                  | []
+        ['_indexes': ['1', '2'], 'entry[1]': [:]]                                                                 | []
+        ['_indexes': ['1', '2'], 'entry[1]': [a: '']]                                                             | [[:]]
+        ['_indexes': ['1', '2'], 'entry[1]': [a: 'b']]                                                            | [[a: 'b']]
+        ['_indexes': ['1', '2'], 'entry[1]': [a: 'b', 'c._type': 'map', 'c.map': ['0.key': 'z', '0.value': 'w']]] | [[a: 'b', c: [z: 'w']]]
 
     }
 }

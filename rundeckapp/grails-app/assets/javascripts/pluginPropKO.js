@@ -25,6 +25,7 @@ function PluginEditor(data) {
     self.service = ko.observable(data.service);
     self.provider = ko.observable(data.provider);
     self.config = ko.observable(data.config);
+    self.uid = ko.observable(data.uid);
     self.loading = ko.observable(false);
     self.formId = data.formId;
     self.formPrefixes = data.formPrefixes;
