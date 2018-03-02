@@ -203,7 +203,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
      * @throws NodeStepException on error
      */
     @Override
-    public NodeStepResult executeRemoteScript(
+    public NodeExecutorResult executeRemoteScript(
             final ExecutionContext context,
             final Framework framework,
             final INodeEntry node,
@@ -230,7 +230,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
      * @throws NodeStepException on error
      */
     @Override
-    public NodeStepResult executeRemoteScript(
+    public NodeExecutorResult executeRemoteScript(
             final ExecutionContext context,
             final Framework framework,
             final INodeEntry node,
@@ -266,7 +266,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
      * @throws NodeStepException on error
      */
     @Override
-    public NodeStepResult executeRemoteScript(
+    public NodeExecutorResult executeRemoteScript(
             final ExecutionContext context,
             final Framework framework,
             final INodeEntry node,

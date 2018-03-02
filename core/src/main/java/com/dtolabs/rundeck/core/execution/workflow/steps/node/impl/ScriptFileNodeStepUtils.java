@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.execution.ExecArgList;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.ExecutionService;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
@@ -102,7 +103,7 @@ public interface ScriptFileNodeStepUtils {
      *
      * @throws NodeStepException on error
      */
-    NodeStepResult executeRemoteScript(
+    NodeExecutorResult executeRemoteScript(
             ExecutionContext context,
             Framework framework,
             INodeEntry node,
@@ -125,7 +126,7 @@ public interface ScriptFileNodeStepUtils {
      *
      * @throws NodeStepException on error
      */
-    NodeStepResult executeRemoteScript(
+    NodeExecutorResult executeRemoteScript(
             ExecutionContext context,
             Framework framework,
             INodeEntry node,
@@ -151,7 +152,7 @@ public interface ScriptFileNodeStepUtils {
      *
      * @throws NodeStepException on error
      */
-    NodeStepResult executeRemoteScript(
+    NodeExecutorResult executeRemoteScript(
             ExecutionContext context,
             Framework framework,
             INodeEntry node,

@@ -337,6 +337,10 @@ beans={
         DailyIntervalTaskTrigger,
         SimpleScheduleTaskTrigger,
         OneTimeTaskTrigger,
+        //task conditions,
+        ScriptTaskCondition,
+        //task condition handlers,
+        ScriptTaskConditionHandler,
         //task actions
         JobRunTaskAction
     ].each {
