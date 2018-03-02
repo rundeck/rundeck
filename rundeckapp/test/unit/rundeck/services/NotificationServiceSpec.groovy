@@ -111,7 +111,7 @@ class NotificationServiceSpec extends Specification {
             _ * getRundeckFramework() >> Mock(Framework) {
                 _ * getWorkflowStrategyService()
             }
-            _ * getPluginControlService() >> new PluginControlService(Mock(Framework))
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
 
         }
         service.orchestratorPluginService = Mock(OrchestratorPluginService)
@@ -167,7 +167,7 @@ class NotificationServiceSpec extends Specification {
             _ * getRundeckFramework() >> Mock(Framework) {
                 _ * getWorkflowStrategyService()
             }
-            _ * getPluginControlService() >> new PluginControlService(Mock(Framework))
+            _ * getPluginControlService(_) >> Mock(PluginControlService)
 
         }
         service.mailService = Mock(MailService)
