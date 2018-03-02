@@ -24,14 +24,7 @@
 package com.dtolabs.rundeck.core.execution;
 
 import com.dtolabs.rundeck.core.authorization.AuthContext;
-import com.dtolabs.rundeck.core.common.Framework;
-import com.dtolabs.rundeck.core.common.INodeEntry;
-import com.dtolabs.rundeck.core.common.INodeSet;
-import com.dtolabs.rundeck.core.common.NodeSetImpl;
-import com.dtolabs.rundeck.core.common.NodesSelector;
-import com.dtolabs.rundeck.core.common.OrchestratorConfig;
-import com.dtolabs.rundeck.core.common.PluginControlService;
-import com.dtolabs.rundeck.core.common.SelectorUtils;
+import com.dtolabs.rundeck.core.common.*;
 import com.dtolabs.rundeck.core.data.*;
 import com.dtolabs.rundeck.core.dispatcher.*;
 import com.dtolabs.rundeck.core.execution.workflow.*;
@@ -189,7 +182,8 @@ public class ExecutionContextImpl implements ExecutionContext, StepExecutionCont
                     NodeExecutionContext original1 = (NodeExecutionContext) original;
                     ctx.singleNodeContext = original1.getSingleNodeContext();
                 }
-                ctx.pluginControlService = new PluginControlService(original.getFramework());
+                ctx.pluginControlService =
+                    PluginControlServiceImpl.forProject(original.getFramework(), original.getFrameworkProject());
             }
         }
 

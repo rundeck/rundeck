@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
@@ -1396,9 +1397,17 @@ class ExecutionController extends ControllerBase{
     private String convertContentDataType(final Object input, final String inputDataType, Map<String,String> meta, final String outputType, String projectName) {
 //        log.error("find converter : ${input.class}(${inputDataType}) => ?($outputType)")
         def plugins = listViewPlugins()
+
+        def isPluginEnabled = executionService.getFrameworkService().
+            getPluginControlService(projectName).
+            enabledPredicateForService(ServiceNameConstants.ContentConverter)
+
+        plugins = plugins.findAll { isPluginEnabled.test(it.key) }
+
         List<DescribedPlugin<ContentConverterPlugin>> foundPlugins = findOutputViewPlugins(
-                plugins,inputDataType,
-                input.class
+            plugins,
+            inputDataType,
+            input.class
         )
         def chain = []
 
@@ -1440,7 +1449,6 @@ class ExecutionController extends ControllerBase{
             def otype = inputDataType
             try {
                 chain.each { plugin ->
-                    executionService.getFrameworkService().getPluginControlService().checkDisabledPlugin(projectName, plugin.name)
                     def nexttype = plugin.instance.getOutputDataTypeForContentDataType(ovalue.getClass(), otype)
                     ovalue = plugin.instance.convert(ovalue, otype, meta)
                     otype = nexttype

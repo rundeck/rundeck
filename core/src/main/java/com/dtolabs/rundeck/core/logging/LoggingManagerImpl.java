@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.execution.HasLoggingFilterConfiguration;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
 
 import java.util.List;
@@ -98,7 +99,18 @@ public class LoggingManagerImpl implements LoggingManager {
     {
         for (PluginConfiguration pluginConfiguration : filterConfigurations) {
 
-            context.getPluginControlService().checkDisabledPlugin(context.getFrameworkProject(), pluginConfiguration.getProvider());
+            boolean disabled = context
+                .getPluginControlService()
+                .isDisabledPlugin(
+                    pluginConfiguration.getProvider(),
+                    pluginConfiguration.getService()
+                );
+            if (disabled) {
+                throw new RuntimeException(String.format(
+                    "Could not configure log filter plugin, it is disabled via project configuration: %s",
+                    pluginConfiguration.getProvider()
+                ));
+            }
             LogFilterPlugin load = pluginLoader.load(
                     pluginConfiguration.getProvider(),
                     pluginConfiguration.getConfiguration()

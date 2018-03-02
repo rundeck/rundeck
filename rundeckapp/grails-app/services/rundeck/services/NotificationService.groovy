@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.logging.LogEvent
 import com.dtolabs.rundeck.core.logging.LogUtil
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
@@ -175,7 +176,8 @@ public class NotificationService implements ApplicationContextAware{
             notes.each{ Notification n ->
                 try{
 
-                    frameworkService.getPluginControlService().checkDisabledPlugin(source.project, n.type)
+                    frameworkService.getPluginControlService(source.project).
+                        checkDisabledPlugin(n.type, ServiceNameConstants.Notification)
 
                 if(n.type=='email'){
                     //sending notification of a status trigger for the Job

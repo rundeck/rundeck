@@ -38,7 +38,6 @@ import com.dtolabs.rundeck.core.logging.LogLevel
 import com.dtolabs.rundeck.core.logging.LoggingManager
 import com.dtolabs.rundeck.core.logging.LoggingManagerImpl
 import com.dtolabs.rundeck.core.logging.OverridableStreamingLogWriter
-import com.dtolabs.rundeck.core.plugins.PluginConfiguration
 import com.dtolabs.rundeck.core.utils.NodeSet
 import com.dtolabs.rundeck.core.utils.OptsUtil
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
@@ -1368,6 +1367,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         //create execution context
         def builder = ExecutionContextImpl.builder((StepExecutionContext)origContext)
         builder.with {
+            pluginControlService(PluginControlServiceImpl.forProject(framework, origContext?.frameworkProject?:execMap.project))
             frameworkProject(origContext?.frameworkProject?:execMap.project)
             storageTree(storageService.storageTreeWithContext(authContext))
             jobService(jobStateService.jobServiceWithAuthContext(authContext))

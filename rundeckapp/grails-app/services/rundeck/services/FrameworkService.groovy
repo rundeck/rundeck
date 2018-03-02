@@ -652,9 +652,9 @@ class FrameworkService implements ApplicationContextAware {
         return rundeckFramework;
     }
 
-    def PluginControlService getPluginControlService(){
+    def PluginControlService getPluginControlService(String project) {
         if(!pluginControlService){
-            pluginControlService = new PluginControlService(getRundeckFramework())
+            pluginControlService = PluginControlServiceImpl.forProject(getRundeckFramework(), project)
         }
         return pluginControlService
     }
