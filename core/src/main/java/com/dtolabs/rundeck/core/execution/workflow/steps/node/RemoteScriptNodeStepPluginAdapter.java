@@ -111,7 +111,7 @@ class RemoteScriptNodeStepPluginAdapter implements NodeStepExecutor, Describable
                     null,
                     context.getSharedDataContext(),
                     false,
-                    true
+                    false
             );
         }
         final String providerName = item.getNodeStepType();

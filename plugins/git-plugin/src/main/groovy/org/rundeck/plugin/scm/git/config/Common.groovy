@@ -96,7 +96,8 @@ Some examples:
 * `http[s]://host.xz[:port]/path/to/repo.git/`
 * `ftp[s]://host.xz[:port]/path/to/repo.git/`
 * `rsync://host.xz/path/to/repo.git/`''',
-            required = true
+            required = true,
+            validatorClass = GitURLValidator
     )
     @RenderingOption(
             key = StringRenderingConstants.GROUP_NAME,

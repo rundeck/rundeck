@@ -401,8 +401,9 @@ class ReportService  {
                 lastDate = it.dateCompleted.time
             }
         }
-
-        def total = ExecReport.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def total = ExecReport.withTransaction([isolationLevel: isolationLevel]) {
             ExecReport.createCriteria().count {
                 applyExecutionCriteria(query, delegate, isJobs)
             }

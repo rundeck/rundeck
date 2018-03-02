@@ -981,7 +981,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 frameworkService.serverUUID,
                 [max: query.max, offset: query.offset]
         )
-        def queuedIds=logFileStorageService.getQueuedIncompleteRequestIds()
+        def queuedIncompleteIds=logFileStorageService.getQueuedIncompleteRequestIds()
+        def retryIds=logFileStorageService.getQueuedRetryRequestIds()
+        def queuedIds=logFileStorageService.getQueuedRequestIds()
         def failedIds=logFileStorageService.getFailedRequestIds()
         withFormat{
             json{
@@ -993,7 +995,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         contents = list.collect { LogFileStorageRequest req ->
                             exportRequestMap(
                                     req,
-                                    queuedIds.contains(req.id),
+                                    retryIds.contains(req.id) || queuedIds.contains(req.id) || queuedIncompleteIds.contains(req.id),
                                     failedIds.contains(req.id),
                                     failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
                             )
@@ -1279,7 +1281,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if (input.hasErrors()) {
             request.errors = input.errors
-            return renderErrorView()
+            return renderErrorView([:])
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -1713,7 +1715,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if (input.hasErrors()) {
             request.errors = input.errors
-            return renderErrorView()
+            return renderErrorView([:])
         }
 
         if (input.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
@@ -2439,7 +2441,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 frameworkService.serverUUID,
                 [max: query.max?:20, offset: query.offset?:0]
         )
-        def queuedIds=logFileStorageService.getQueuedIncompleteRequestIds()
+        def queuedIncompleteIds=logFileStorageService.getQueuedIncompleteRequestIds()
+        def retryIds=logFileStorageService.getQueuedRetryRequestIds()
+        def queuedIds=logFileStorageService.getQueuedRequestIds()
         def failedIds=logFileStorageService.getFailedRequestIds()
         withFormat{
             json{
@@ -2450,7 +2454,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     executions = list.collect { LogFileStorageRequest req ->
                         def data=exportRequestMap(
                                 req,
-                                queuedIds.contains(req.id),
+                                retryIds.contains(req.id) || queuedIds.contains(req.id) || queuedIncompleteIds.contains(req.id),
                                 failedIds.contains(req.id),
                                 failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
                         )
