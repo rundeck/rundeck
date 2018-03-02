@@ -21,7 +21,7 @@ import java.util.Map;
 /**
  * Handles a TaskAction
  */
-public interface TaskActionHandler<T> {
+public interface TaskActionHandler<T extends TaskContext> {
     /**
      * @return true if this handler needs registration info at system startup
      */
@@ -37,7 +37,7 @@ public interface TaskActionHandler<T> {
      * @param taskTrigger  taskTrigger
      * @param action       action
      */
-    Map performTaskAction(String taskId, T contextInfo, Map triggerMap, TaskTrigger taskTrigger, TaskAction action)
+    Map performTaskAction(T contextInfo, Map triggerMap, TaskTrigger taskTrigger, TaskAction action)
             throws ActionFailed;
 
     /**

@@ -16,11 +16,23 @@
 
 package org.rundeck.core.tasks;
 
+/**
+ * Basis for context information for tasks
+ */
 public interface TaskContext {
+    /**
+     * @return task ID
+     */
+    String getTaskId();
+
+    /**
+     * @return project name
+     */
     String getProject();
 
+    /**
+     *
+     * @return server node UUID
+     */
     String getServerNodeUUID();
-
-    boolean isClusterModeEnabled();
-//    UserAndRolesAuthContext getAuthContext()
 }

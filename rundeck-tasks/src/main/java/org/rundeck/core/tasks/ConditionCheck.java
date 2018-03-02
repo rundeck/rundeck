@@ -18,14 +18,23 @@ package org.rundeck.core.tasks;
 
 import java.util.Map;
 
-/**
- * Provides a callback when a trigger is fired by the TaskTriggerHandler
- */
-public interface TaskActionInvoker<T extends TaskContext> {
-    /**
-     * The condition was met for a registered trigger
-     *
-     * @param triggerMap any additional data from the trigger
-     */
-    void taskTriggerFired(T contextInfo, Map triggerMap);
+public interface ConditionCheck {
+    boolean isConditionMet();
+
+    Map getConditionData();
+
+    static ConditionCheck result(final boolean wasMet, Map data) {
+        return new ConditionCheck() {
+            @Override
+            public boolean isConditionMet() {
+                return wasMet;
+            }
+
+            @Override
+            public Map getConditionData() {
+                return data;
+            }
+        };
+    }
+
 }

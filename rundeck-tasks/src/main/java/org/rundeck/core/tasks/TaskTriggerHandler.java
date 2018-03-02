@@ -16,10 +16,12 @@
 
 package org.rundeck.core.tasks;
 
+import java.util.List;
+
 /**
  * Trigger  handler
  */
-public interface TaskTriggerHandler<T> {
+public interface TaskTriggerHandler<T extends TaskContext> {
     /**
      * @return true if this handler needs registration info at system startup
      */
@@ -29,44 +31,42 @@ public interface TaskTriggerHandler<T> {
 
     /**
      * @param taskTrigger
-     * @param contextInfo
+     * @param context
      * @return true if the given taskTrigger should be handled
      */
-    boolean handlesTrigger(TaskTrigger taskTrigger, T contextInfo);
+    boolean handlesTrigger(TaskTrigger taskTrigger, T context);
 
     /**
      * Register taskTrigger checks for the trigger, will be called when a trigger is created or modified, so if the
      * registration has already occurred for the given trigger, the taskTrigger data should be checked for changes
      *
-     * @param triggerId
-     * @param contextInfo
-     * @param taskTrigger
+     * @param context
+     * @param trigger
      * @param action
      * @param service
      * @return true if successful
      */
     boolean registerTriggerForAction(
-            String triggerId,
-            T contextInfo,
-            TaskTrigger taskTrigger,
-            TaskAction action,
-            TaskActionInvoker<T> service
-    );
+        T context,
+        TaskTrigger trigger,
+        List<TaskCondition> conditions,
+        TaskAction action,
+        TaskActionInvoker<T> service
+    ) throws TriggerException;
 
     /**
      * Remove taskTrigger check registration for the action
      *
-     * @param triggerId
-     * @param contextInfo
-     * @param taskTrigger
+     * @param context
+     * @param trigger
      * @param action
      * @param service
      */
     void deregisterTriggerForAction(
-            String triggerId,
-            T contextInfo,
-            TaskTrigger taskTrigger,
-            TaskAction action,
-            TaskActionInvoker<T> service
-    );
+        T context,
+        TaskTrigger trigger,
+        List<TaskCondition> conditions,
+        TaskAction action,
+        TaskActionInvoker<T> service
+    ) throws TriggerException;
 }

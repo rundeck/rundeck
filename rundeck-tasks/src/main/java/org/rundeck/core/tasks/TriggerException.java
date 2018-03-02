@@ -16,16 +16,28 @@
 
 package org.rundeck.core.tasks;
 
-import java.util.Map;
+public class TriggerException extends Exception {
+    public TriggerException() {
+    }
 
-/**
- * Provides a callback when a trigger is fired by the TaskTriggerHandler
- */
-public interface TaskActionInvoker<T extends TaskContext> {
-    /**
-     * The condition was met for a registered trigger
-     *
-     * @param triggerMap any additional data from the trigger
-     */
-    void taskTriggerFired(T contextInfo, Map triggerMap);
+    public TriggerException(final String message) {
+        super(message);
+    }
+
+    public TriggerException(final String message, final Throwable cause) {
+        super(message, cause);
+    }
+
+    public TriggerException(final Throwable cause) {
+        super(cause);
+    }
+
+    public TriggerException(
+        final String message,
+        final Throwable cause,
+        final boolean enableSuppression,
+        final boolean writableStackTrace
+    ) {
+        super(message, cause, enableSuppression, writableStackTrace);
+    }
 }

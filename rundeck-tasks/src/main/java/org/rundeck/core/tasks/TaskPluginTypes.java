@@ -25,10 +25,12 @@ import java.util.Map;
  * Declares plugin types for Tasks
  */
 public class TaskPluginTypes implements PluginType {
-    public static final String TaskTrigger        = "TaskTrigger";
-    public static final String TaskTriggerHandler = "TaskTriggerHandler";
-    public static final String TaskAction         = "TaskAction";
-    public static final String TaskActionHandler  = "TaskActionHandler";
+    public static final String TaskTrigger          = "TaskTrigger";
+    public static final String TaskTriggerHandler   = "TaskTriggerHandler";
+    public static final String TaskAction           = "TaskAction";
+    public static final String TaskActionHandler    = "TaskActionHandler";
+    public static final String TaskCondition        = "TaskCondition";
+    public static final String TaskConditionHandler = "TaskConditionHandler";
     /**
      * Map of Service name to Class
      */
@@ -40,6 +42,8 @@ public class TaskPluginTypes implements PluginType {
         map.put(TaskPluginTypes.TaskTriggerHandler, TaskTriggerHandler.class);
         map.put(TaskPluginTypes.TaskAction, TaskAction.class);
         map.put(TaskPluginTypes.TaskActionHandler, TaskActionHandler.class);
+        map.put(TaskPluginTypes.TaskCondition, TaskCondition.class);
+        map.put(TaskPluginTypes.TaskConditionHandler, TaskConditionHandler.class);
         TYPES = map;
     }
 
