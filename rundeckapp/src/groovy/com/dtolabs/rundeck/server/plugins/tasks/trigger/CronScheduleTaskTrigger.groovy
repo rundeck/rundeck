@@ -59,7 +59,7 @@ class CronScheduleTaskTrigger
     }
 
 
-    Trigger buildQuartzTrigger(TriggerBuilder builder) {
+    void withQuartzTriggerBuilder(TriggerBuilder builder) {
         def Trigger trigger
         try {
 
@@ -67,14 +67,12 @@ class CronScheduleTaskTrigger
             if (timeZone) {
                 schedule.inTimeZone(createTimeZone())
             }
-            trigger = builder.withSchedule(schedule)
+            builder.withSchedule(schedule)
             //.startAt() //TODO: set a start time
-                             .build()
 
         } catch (java.text.ParseException ex) {
             throw new RuntimeException("Failed creating trigger. Invalid cron expression: " + cronExpression)
         }
-        return trigger
     }
 
     @Override

@@ -43,12 +43,14 @@ import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
-import com.dtolabs.rundeck.server.plugins.trigger.action.JobRunTaskAction
-import com.dtolabs.rundeck.server.plugins.trigger.condition.CalendarIntervalTaskTrigger
-import com.dtolabs.rundeck.server.plugins.trigger.condition.CronScheduleTaskTrigger
-import com.dtolabs.rundeck.server.plugins.trigger.condition.DailyIntervalTaskTrigger
-import com.dtolabs.rundeck.server.plugins.trigger.condition.OneTimeTaskTrigger
-import com.dtolabs.rundeck.server.plugins.trigger.condition.SimpleScheduleTaskTrigger
+import com.dtolabs.rundeck.server.plugins.tasks.action.JobRunTaskAction
+import com.dtolabs.rundeck.server.plugins.tasks.condition.ScriptTaskCondition
+import com.dtolabs.rundeck.server.plugins.tasks.condition.ScriptTaskConditionHandler
+import com.dtolabs.rundeck.server.plugins.tasks.trigger.CalendarIntervalTaskTrigger
+import com.dtolabs.rundeck.server.plugins.tasks.trigger.CronScheduleTaskTrigger
+import com.dtolabs.rundeck.server.plugins.tasks.trigger.DailyIntervalTaskTrigger
+import com.dtolabs.rundeck.server.plugins.tasks.trigger.OneTimeTaskTrigger
+import com.dtolabs.rundeck.server.plugins.tasks.trigger.SimpleScheduleTaskTrigger
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
 import grails.util.Environment
 import groovy.io.FileType
@@ -316,27 +318,27 @@ beans={
 
     //list of plugin classes to generate factory beans for
     [
-            //log converters
-            JsonConverterPlugin,
-            PropertiesConverterPlugin,
-            HTMLTableViewConverterPlugin,
-            MarkdownConverterPlugin,
-            TabularDataConverterPlugin,
-            HTMLViewConverterPlugin,
-            //log filters
-            MaskPasswordsFilterPlugin,
-            SimpleDataFilterPlugin,
-            RenderDatatypeFilterPlugin,
-            QuietFilterPlugin,
-            HighlightFilterPlugin,
-            //task triggers
-            CronScheduleTaskTrigger,
-            CalendarIntervalTaskTrigger,
-            DailyIntervalTaskTrigger,
-            SimpleScheduleTaskTrigger,
-            OneTimeTaskTrigger,
-            //task actions
-            JobRunTaskAction
+        //log converters
+        JsonConverterPlugin,
+        PropertiesConverterPlugin,
+        HTMLTableViewConverterPlugin,
+        MarkdownConverterPlugin,
+        TabularDataConverterPlugin,
+        HTMLViewConverterPlugin,
+        //log filters
+        MaskPasswordsFilterPlugin,
+        SimpleDataFilterPlugin,
+        RenderDatatypeFilterPlugin,
+        QuietFilterPlugin,
+        HighlightFilterPlugin,
+        //task triggers
+        CronScheduleTaskTrigger,
+        CalendarIntervalTaskTrigger,
+        DailyIntervalTaskTrigger,
+        SimpleScheduleTaskTrigger,
+        OneTimeTaskTrigger,
+        //task actions
+        JobRunTaskAction
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }

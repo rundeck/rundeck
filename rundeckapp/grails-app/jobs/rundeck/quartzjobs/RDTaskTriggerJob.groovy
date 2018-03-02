@@ -30,7 +30,7 @@ class RDTaskTriggerJob implements Job {
         log.error("RDTriggerConditionJob fired")
         def data = jobExecutionContext.getMergedJobDataMap()
 
-        String triggerId = data['triggerId']
+        String taskId = data['taskId']
         RDTaskContext context = data['context']
         TaskTrigger trigger = data['trigger']
         TaskAction action = data['action']
@@ -38,6 +38,6 @@ class RDTaskTriggerJob implements Job {
 
         def invocationData = (trigger.triggerData?: [:]) + [fireTime: jobExecutionContext.fireTime]
         log.error("RDTriggerConditionJob: invoking with: $invocationData")
-        invoker.taskTriggerFired(triggerId, context, invocationData)
+        invoker.taskTriggerFired(context, invocationData)
     }
 }

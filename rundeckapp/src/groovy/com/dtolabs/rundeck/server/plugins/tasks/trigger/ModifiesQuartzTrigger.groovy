@@ -16,10 +16,10 @@
 
 package com.dtolabs.rundeck.server.plugins.tasks.trigger
 
-import org.quartz.Trigger
 import org.quartz.TriggerBuilder
 
-interface QuartzSchedulerTaskTrigger extends ModifiesQuartzTrigger {
-    boolean isValidSchedule()
+interface ModifiesQuartzTrigger {
+
+    void withQuartzTriggerBuilder(TriggerBuilder builder)
 
 }

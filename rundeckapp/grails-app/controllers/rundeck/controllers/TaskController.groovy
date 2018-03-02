@@ -84,6 +84,12 @@ class TaskController extends ControllerBase implements PluginListRequired {
         }
         def task = result.task
 
+        if (!result.registration) {
+            flash.error = "Task created, but trigger could not be registered"
+        } else {
+            flash.message = "Task created"
+        }
+
         return redirect(action: 'show', params: [id: task.uuid, project: input.project])
     }
 
@@ -125,7 +131,6 @@ class TaskController extends ControllerBase implements PluginListRequired {
         if (notFoundResponse(task, 'Task', input.id)) {
             return
         }
-        System.err.println("params: ${params.actionConfig}")
         Map triggerMap = ParamsUtil.cleanMap(params.triggerConfig)
         Map actionMap = ParamsUtil.cleanMap(params.actionConfig)
         List conditionList = ParamsUtil.parseMapList(params.conditionList)
@@ -150,8 +155,12 @@ class TaskController extends ControllerBase implements PluginListRequired {
                     model: [task: task, validation: result.validation, project: input.project]
             )
         }
+        if (!result.registration) {
+            flash.error = "Task updated, but trigger could not be registered"
+        } else {
+            flash.message = "Task updated"
+        }
 
-        flash.message = "Task updated"
         redirect(action: 'show', params: [project: input.project, id: input.id])
     }
 

@@ -3,7 +3,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.task.TaskCreate
 import com.dtolabs.rundeck.app.support.task.TaskUpdate
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.plugins.ServiceNameConstants
+import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
@@ -52,15 +52,33 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
             }?.value
             if (bean) {
                 def action = actionFor(task)
-                bean.registerTriggerForAction(
-                        task.uuid,
+                def conditions = conditionsFor(task)
+                try {
+                    bean.registerTriggerForAction(
                         taskContext,
                         trigger,
+                        conditions,
                         action,
                         this
-                )
-                triggerRegistrationMap[task.uuid] = bean
-                log.warn("Startup: registered trigger handler for: ${task.uuid} with triggerType: ${task.triggerType}")
+                    )
+                    triggerRegistrationMap[task.uuid] = bean
+                    log.info(
+                        "Startup: registered trigger handler for: ${task.uuid} with triggerType: ${task.triggerType}"
+                    )
+                } catch (TriggerException e) {
+                    log.error(
+                        "FAILED: register trigger handler for: ${task.uuid} with triggerType: ${task.triggerType}",
+                        e
+                    )
+                    createTaskEvent(
+                        [error: e.message],
+                        task,
+                        'warn:trigger:register',
+                        null,
+                        null,
+                        null
+                    )
+                }
             } else {
                 log.warn("Startup: No TaskTriggerHandler instance found to handle this task: ${task.uuid} with triggerType: ${task.triggerType}")
             }
@@ -74,7 +92,7 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
                 task.authRoleList.split(',').toList(),
                 task.project
         )
-        new RDTaskContext(clusterContextInfo + [project: task.project, authContext: authContext])
+        new RDTaskContext(clusterContextInfo + [project: task.project, authContext: authContext, taskId: task.uuid])
     }
 
     public Map<String, DescribedPlugin<TaskTrigger>> getTaskTriggerPluginDescriptions() {
@@ -215,46 +233,85 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         rep.triggerType ? getValidatedTriggerPlugin(rep.triggerType, rep.triggerConfig) : null
     }
 
-    private def registerTask(TaskRep task, boolean enabled) {
+    /**
+     * Handle registration of the task trigger
+     * @param task
+     * @param enabled true if it should be registered, false to be deregistered
+     * @return true if successfully registered or degistered
+     */
+    private boolean processTaskRegistration(TaskRep task, boolean enabled) {
 
         def trigger = triggerFor(task)
-        def action = actionFor(task)
         def taskContext = contextForTask(task)
-        TaskTriggerHandler condHandler = getTriggerHandlerForTask(task, trigger, taskContext)
+        TaskTriggerHandler triggerHandler = getTriggerHandlerForTask(task, trigger, taskContext)
 
-        if (!condHandler) {
+        if (!triggerHandler) {
             log.warn("No TaskTriggerHandler instance found to handle this task: ${task.uuid} with triggerType: ${task.triggerType}")
             return
         }
 
+        def action = actionFor(task)
+
         def conditions = conditionsFor(task)
+
         if (enabled) {
-            condHandler.registerTriggerForAction(
-                    task.uuid,
+            try {
+                triggerHandler.registerTriggerForAction(
                     taskContext,
                     trigger,
                     conditions,
                     action,
                     this
-            )
-            triggerRegistrationMap[task.uuid] = condHandler
-
+                )
+                triggerRegistrationMap[task.uuid] = triggerHandler
+            } catch (TriggerException e) {
+                log.error("FAILED: register trigger handler for: ${task.uuid} with triggerType: ${task.triggerType}", e)
+                createTaskEvent(
+                    [error: e.message],
+                    task,
+                    'warn:trigger:register',
+                    null,
+                    null,
+                    null
+                )
+                return false
+            }
         } else {
-
-            condHandler.deregisterTriggerForAction(
-                    task.uuid,
+            try {
+                triggerHandler.deregisterTriggerForAction(
                     taskContext,
                     trigger,
+                    conditions,
                     action,
                     this
-            )
-            triggerRegistrationMap.remove task.uuid
+                )
+                triggerRegistrationMap.remove task.uuid
+            } catch (TriggerException e) {
+                log.error(
+                    "FAILED: deregister trigger handler for: ${task.uuid} with triggerType: ${task.triggerType}",
+                    e
+                )
+                createTaskEvent(
+                    [error: e.message],
+                    task,
+                    'warn:trigger:deregister',
+                    null,
+                    null,
+                    null
+                )
+                return false
+            }
         }
+        true
     }
 
-    public TaskTriggerHandler<RDTaskContext> getTriggerHandlerForTask(TaskRep trigger, TaskTrigger condition, RDTaskContext triggerContext) {
-        triggerRegistrationMap[trigger.uuid] ?: taskTriggerHandlerMap.find {
-            it.value.handlesTrigger(condition, triggerContext)
+    public TaskTriggerHandler<RDTaskContext> getTriggerHandlerForTask(
+        TaskRep task,
+        TaskTrigger trigger,
+        RDTaskContext taskContext
+    ) {
+        triggerRegistrationMap[task.uuid] ?: taskTriggerHandlerMap.find {
+            it.value.handlesTrigger(trigger, taskContext)
         }?.value
     }
 
@@ -310,8 +367,8 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
             return result
         }
         rep.save(flush: true)
-        registerTask rep, rep.enabled
-        return [error: false, task: rep]
+        boolean regresult = processTaskRegistration rep, rep.enabled
+        return [error: false, task: rep, registration: regresult]
     }
 
     Map validateTask(TaskRep rep) {
@@ -394,13 +451,13 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
             return result
         }
         task.save(flush: true)
-        registerTask task, task.enabled
+        boolean regresult = processTaskRegistration task, task.enabled
 
-        return [error: false, task: task]
+        return [error: false, task: task, registration: regresult]
     }
 
     boolean deleteTask(TaskRep task) {
-        registerTask task, false
+        processTaskRegistration task, false
         task.delete(flush: true)
         true
     }
@@ -410,16 +467,17 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
      * @param taskId
      * @param triggerMap
      */
-    void taskTriggerFired(String taskId, RDTaskContext contextInfo, Map triggerMap) {
-        def task = TaskRep.findByUuid(taskId)
+    void taskTriggerFired(RDTaskContext contextInfo, Map triggerMap) {
+        def task = TaskRep.findByUuid(contextInfo.taskId)
 
-        def event = new TaskEvent(
-                eventDataMap: triggerMap,
-                timeZone: ZoneId.systemDefault().toString(),
-                eventType: 'fired',
-                taskRep: task
+        def event = createTaskEvent(
+            triggerMap,
+            task,
+            'fired',
+            null,
+            null,
+            null
         )
-        event.save(flush: true)
 
         def action = actionFor(task)
         def trigger = triggerFor(task)
@@ -452,32 +510,29 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
 
         try {
             def result = actHandler.performTaskAction(
-                    taskId,
                     contextInfo,
                     [trigger: triggerMap, task: task.userData],
                     trigger,
                     action
             )
-            def event2 = new TaskEvent(
-                    eventDataMap: result,
-                    timeZone: ZoneId.systemDefault().toString(),
-                    eventType: 'result',
-                    taskRep: task,
-                    associatedId: result?.associatedId,
-                    associatedType: result?.associatedType,
-                    associatedEvent: event
+            createTaskEvent(
+                result,
+                task,
+                'result',
+                result?.associatedId,
+                result?.associatedType,
+                event
             )
-            event2.save(flush: true)
         } catch (Throwable t) {
-            log.error("Failed to run task action for $taskId: $t.message", t)
-            def event2 = new TaskEvent(
-                    eventDataMap: [error: t.message],
-                    timeZone: ZoneId.systemDefault().toString(),
-                    eventType: 'error',
-                    taskRep: task,
-                    associatedEvent: event
+            log.error("Failed to run task action for ${contextInfo.taskId}: $t.message", t)
+            createTaskEvent(
+                [error: t.message],
+                task,
+                'error:action:perform',
+                null,
+                null,
+                event
             )
-            event2.save(flush: true)
         }
     }
 
@@ -499,7 +554,8 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
 }
 
 @ToString(includeFields = true, includeNames = true)
-class RDTaskContext {
+class RDTaskContext implements TaskContext {
+    String taskId
     String project
     String serverNodeUUID
     boolean clusterModeEnabled

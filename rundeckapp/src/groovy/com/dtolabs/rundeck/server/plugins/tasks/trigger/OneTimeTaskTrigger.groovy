@@ -51,10 +51,9 @@ class OneTimeTaskTrigger
     String time
 
     @Override
-    Trigger buildQuartzTrigger(TriggerBuilder builder) {
+    void withQuartzTriggerBuilder(TriggerBuilder builder) {
         Date date = createDate(time, createTimeZone())
-        return builder.startAt(date).build()
-
+        builder.startAt(date)
     }
 
     @Override
