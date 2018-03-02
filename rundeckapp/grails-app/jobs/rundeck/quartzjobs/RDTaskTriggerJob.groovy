@@ -27,7 +27,6 @@ import rundeck.services.RDTaskContext
 class RDTaskTriggerJob implements Job {
     @Override
     void execute(JobExecutionContext jobExecutionContext) throws JobExecutionException {
-        log.error("RDTriggerConditionJob fired")
         def data = jobExecutionContext.getMergedJobDataMap()
 
         String taskId = data['taskId']
@@ -37,7 +36,7 @@ class RDTaskTriggerJob implements Job {
         TaskActionInvoker invoker = data['invoker']
 
         def invocationData = (trigger.triggerData?: [:]) + [fireTime: jobExecutionContext.fireTime]
-        log.error("RDTriggerConditionJob: invoking with: $invocationData")
+        log.debug("RDTriggerConditionJob: invoking with: $invocationData")
         invoker.taskTriggerFired(context, invocationData)
     }
 }
