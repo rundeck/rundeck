@@ -321,7 +321,8 @@ public class NotificationService implements ApplicationContextAware{
                                                     scheduledExecution: source,
                                                     msgtitle          : subjectmsg,
                                                     execstate         : state,
-                                                    nodestatus        : content.nodestatus
+                                                    nodestatus        : content.nodestatus,
+                                                    jobref            : content.jobref
                                             ]
                                     )
                                 }

@@ -24,7 +24,9 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.converters.JSON
 import org.grails.plugins.metricsweb.MetricService
+import rundeck.ExecReport
 import rundeck.Execution
+import rundeck.ReferencedExecution
 import rundeck.ScheduledExecution
 import rundeck.services.ApiService
 import rundeck.services.ExecutionService
@@ -121,6 +123,31 @@ class ReportsController extends ControllerBase{
             //auto date filter based on session login
             query.dostartafterFilter=true
             query.startafterFilter=new Date(session.creationTime)
+        }
+        if(params.includeJobRef && params.jobIdFilter){
+            ScheduledExecution.withTransaction {
+                ScheduledExecution sched = ScheduledExecution.get(params.jobIdFilter)
+                def list = ReferencedExecution.findAllByScheduledExecution(sched)
+                def include = []
+                list.each {refex ->
+                    boolean add = true
+                    if(refex.execution.project != params.project){
+                        if(unauthorizedResponse(frameworkService.authorizeProjectResourceAll(authContext, AuthorizationUtil
+                                .resourceType('event'), [AuthConstants.ACTION_READ],
+                                params.project), AuthConstants.ACTION_READ,'Events in project',refex.execution.project)){
+                            log.debug('Cant read executions on project '+refex.execution.project)
+                        }else{
+                            include << String.valueOf(refex.execution.id)
+                        }
+                    }else{
+                        include << String.valueOf(refex.execution.id)
+                    }
+                }
+                if(include){
+                    query.execIdFilter = include
+                }
+            }
+
         }
 
         if(null!=query){

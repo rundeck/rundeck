@@ -29,7 +29,6 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyUtil;
 
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 
 /**

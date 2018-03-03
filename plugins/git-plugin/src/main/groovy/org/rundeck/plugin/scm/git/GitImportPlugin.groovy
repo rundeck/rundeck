@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
+import org.eclipse.jgit.api.PullResult
+import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.lib.ObjectId
@@ -140,7 +142,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    GitImportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
+    GitImportSynchState   getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //look for any unimported paths
         if (!trackedItemsSelected) {
             return null
@@ -573,5 +575,19 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     boolean isTrackedPath(final String path) {
         return trackedItems?.contains(path) || isUseTrackingRegex() && trackingRegex && path.matches(trackingRegex)
+    }
+
+
+    Map clusterFixJobs(List<JobScmReference> jobs){
+        Status st = git.status().call()
+        def bstat = BranchTrackingStatus.of(repo, branch)
+        if(st.clean && bstat && bstat.behindCount>0){
+            PullResult result = git.pull().call()
+            jobs.each{job ->
+                refreshJobStatus(job,null)
+            }
+            return [updated:true]
+        }
+        [:]
     }
 }
