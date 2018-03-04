@@ -1372,7 +1372,10 @@ class ProjectController extends ControllerBase{
 
         switch (respFormat) {
             case 'text':
-                render(contentType: 'text/plain',text: project.propertyFile.text)
+                response.setContentType("text/plain")
+                def props=project.getProjectProperties() as Properties
+                props.store(response.outputStream,request.forwardURI)
+                response.outputStream.close()
                 break
             case 'xml':
                 apiService.renderSuccessXml(request, response) {
