@@ -173,6 +173,7 @@ function getCurSEID(){
             ko.applyBindings(nodeFilter,jQuery('#nodegroupitem')[0]);
             registerNodeFilters(nodeFilter, '#nodegroupitem');
             nodeSummary.reload();
+            nodeFilter.updateMatchedNodes();
             jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 handleNodeFilterLink(this);
