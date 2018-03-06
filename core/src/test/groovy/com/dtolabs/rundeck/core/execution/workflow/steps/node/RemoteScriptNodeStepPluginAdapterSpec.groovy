@@ -224,7 +224,7 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
                 _,
                 true
         ) >>
-                Mock(NodeStepResult) {
+                Mock(NodeExecutorResult) {
                     isSuccess() >> true
                 }
         where:
@@ -270,7 +270,7 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
                 _,
                 true
         ) >>
-                Mock(NodeStepResult) {
+                Mock(NodeExecutorResult) {
                     isSuccess() >> true
                 }
         where:
