@@ -27,19 +27,20 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="triggers"/>
-    <title><g:appTitle/> - Task List</title>
+    <title><g:appTitle/> - <g:message code="page.task.list.title" /></title>
 </head>
 
 <body>
 <g:render template="/common/messages"/>
 
-<div class="row " id="triggerListPage">
+<div class="row">
 
     <div class="col-sm-10 col-sm-offset-1">
-        <h3>Triggers
+        <h3>
+            <g:message code="gui.menu.Tasks" />
             <g:link action="create" class="btn btn-success btn-sm pull-right" params="[project: project]">
                 <i class="glyphicon glyphicon-plus"></i>
-                New Task &hellip;
+                <g:message code="button.new.task" />
             </g:link>
         </h3>
 
@@ -69,12 +70,12 @@
                         <g:link action="delete" class="btn btn-danger-hollow btn-sm"
                                 params="[project: project, id: task.uuid]">
                             <i class="glyphicon glyphicon-remove"></i>
-                            Delete
+                            <g:message code="button.action.Delete" />
                         </g:link>
                         <g:link action="edit" class="btn btn-info-hollow btn-sm"
                                 params="[project: project, id: task.uuid]">
                             <i class="glyphicon glyphicon-pencil"></i>
-                            Edit
+                            <g:message code="button.Edit.label" />
                         </g:link>
                     </td>
                 </tr>
