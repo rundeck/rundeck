@@ -30,6 +30,7 @@ function PluginEditor(data) {
     self.formId = data.formId;
     self.formPrefixes = data.formPrefixes;
     self.inputFieldPrefix = data.inputFieldPrefix;
+    self.postLoadEditor = data.postLoadEditor;
 
     self.loadPluginEditView = function (service, name, params, data, report) {
         return jQuery.ajax(
@@ -45,7 +46,7 @@ function PluginEditor(data) {
                 method: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({config: data, report: report}),
-                succes: function () {
+                success: function () {
                     self.config(null);
                 }
             }
@@ -70,9 +71,13 @@ function PluginEditor(data) {
         }
         self.loading(true);
         self.loadPluginEditView(self.service(), val, {inputFieldPrefix: self.inputFieldPrefix}, self.getConfigData(), self.getConfigReport()).success(function (data) {
-            jQuery('#' + self.formId).html(data).show();
+            var formDom = jQuery('#' + self.formId);
+            formDom.html(data).show();
             //TODO: ko binding?
             self.loading(false);
+            if (typeof(self.postLoadEditor) === 'function') {
+                self.postLoadEditor(formDom);
+            }
         });
     };
     self.provider.subscribe(self.loadActionSelect);

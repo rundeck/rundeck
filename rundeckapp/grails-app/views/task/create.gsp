@@ -43,11 +43,17 @@
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ext-language_tools"/><!--<![endif]-->
     <g:javascript>"use strict";
     var confirm = new PageConfirm(message('page.unsaved.changes'));
+    var postLoadEditor=function(dom) {
+          dom.find('.apply_ace').each(function () {
+                _setupAceTextareaEditor(this, confirm.setNeetsConfirm);
+            });
+        };
     jQuery(function () {
         jQuery('.apply_ace').each(function () {
             _setupAceTextareaEditor(this, confirm.setNeetsConfirm);
         });
          window.taskEditor=new TaskEditor({
+                postLoadEditor:postLoadEditor,
                 triggerConfig:loadJsonData('triggerConfigJson'),
                 triggerFormId:'condeditor',
                 triggerFormPrefixes:['triggerConfig.', 'orig.triggerConfig.'],

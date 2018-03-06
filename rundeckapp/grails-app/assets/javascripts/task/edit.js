@@ -44,7 +44,8 @@ function TaskEditor(data) {
         config: data.triggerConfig,
         formId: data.triggerFormId,
         formPrefixes: data.triggerFormPrefixes,
-        inputFieldPrefix: data.triggerInputPrefix
+        inputFieldPrefix: data.triggerInputPrefix,
+        postLoadEditor: data.postLoadEditor
     });
     self.conditions = ko.observableArray();
     self.action = new PluginEditor({
@@ -52,7 +53,8 @@ function TaskEditor(data) {
         config: data.actionConfig,
         formId: data.actionFormId,
         formPrefixes: data.actionFormPrefixes,
-        inputFieldPrefix: data.actionInputPrefix
+        inputFieldPrefix: data.actionInputPrefix,
+        postLoadEditor: data.postLoadEditor
     });
     self.userData = new MultiMap({data: data.userData, inputPrefix: data.userDataInputPrefix});
     self.init = function () {
@@ -70,7 +72,8 @@ function TaskEditor(data) {
             config: config,
             formId: 'form_' + id,
             formPrefixes: [self.conditionFormPrefixes + 'entry[cond_' + id + '].'],
-            inputFieldPrefix: self.conditionInputPrefix + 'entry[cond_' + id + '].config.'
+            inputFieldPrefix: self.conditionInputPrefix + 'entry[cond_' + id + '].config.',
+            postLoadEditor: data.postLoadEditor
         });
     };
     self.addConditionType = function (obj, evt) {
