@@ -28,6 +28,7 @@ import org.apache.tools.ant.types.Environment;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -714,6 +715,23 @@ public class DataContextUtils {
 
     public static MutableDataContext context(final String key, final Map<String, String> data) {
         return new BaseDataContext(key, data);
+    }
+
+    /**
+     * Convert all map values to strings
+     *
+     * @param input     map
+     * @param converter convert to string, or null to use toString
+     */
+    public static Map<String, String> stringValueMap(Map input, Function<Object, String> converter) {
+        Map<String, String> map = new HashMap<String, String>();
+        if (null == converter) {
+            converter = Object::toString;
+        }
+        for (Object o : input.keySet()) {
+            map.put(o.toString(), input.get(o) != null ? converter.apply(input.get(o)) : "");
+        }
+        return map;
     }
 
     /**
