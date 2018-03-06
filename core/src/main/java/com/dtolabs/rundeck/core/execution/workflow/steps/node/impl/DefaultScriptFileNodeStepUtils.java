@@ -61,7 +61,7 @@ public class DefaultScriptFileNodeStepUtils implements ScriptFileNodeStepUtils {
      * @throws NodeStepException on error
      */
     @Override
-    public NodeStepResult executeScriptFile(
+    public NodeExecutorResult executeScriptFile(
             StepExecutionContext context,
             INodeEntry node,
             String scriptString,

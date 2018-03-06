@@ -148,7 +148,7 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
         1 * adapter.scriptUtils.executeRemoteScript({ ExecutionContext ctx ->
             ctx.getDataContext().get('config') == instanceConfig
         }, _, node, ['someargs'].toArray(), _) >>
-                Mock(NodeStepResult) {
+                Mock(NodeExecutorResult) {
                     isSuccess() >> true
                 }
         _ * framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
@@ -178,7 +178,7 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
         then:
         _ * script.getScript() >> 'a script'
         1 * adapter.scriptUtils.executeRemoteScript(context, framework, node, ['someargs'].toArray(), _) >>
-                Mock(NodeStepResult) {
+                Mock(NodeExecutorResult) {
                     isSuccess() >> true
                 }
         _ * framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {

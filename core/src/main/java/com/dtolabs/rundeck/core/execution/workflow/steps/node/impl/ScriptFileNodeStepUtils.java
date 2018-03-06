@@ -52,7 +52,7 @@ public interface ScriptFileNodeStepUtils {
      *
      * @throws NodeStepException on error
      */
-    NodeStepResult executeScriptFile(
+    NodeExecutorResult executeScriptFile(
             StepExecutionContext context,
             INodeEntry node,
             String scriptString,
