@@ -486,7 +486,9 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         int index = 0
         for (TaskCondition condition : conditions) {
             TaskConditionHandler handler = getConditionHandlerForCondition(task, condition, contextInfo)
-            if (!handler.checkCondition(contextInfo, triggerMap, trigger, condition)) {
+            def condition1 = handler.checkCondition(contextInfo, task.userData?:[:], triggerMap, trigger, condition)
+            log.error("Condition check met? ${condition1.conditionMet}: $condition1.conditionData")
+            if (!condition1.conditionMet) {
                 conditionsMet = false
                 break
             }

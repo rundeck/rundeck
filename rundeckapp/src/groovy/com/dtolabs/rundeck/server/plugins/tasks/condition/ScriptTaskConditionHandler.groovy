@@ -46,6 +46,7 @@ class ScriptTaskConditionHandler implements TaskConditionHandler<RDTaskContext> 
     @Override
     ConditionCheck checkCondition(
         final RDTaskContext contextInfo,
+        final Map taskMap,
         final Map triggerMap,
         final TaskTrigger taskTrigger,
         final TaskCondition condition

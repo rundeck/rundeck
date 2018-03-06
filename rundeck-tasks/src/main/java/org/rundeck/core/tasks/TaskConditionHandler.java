@@ -29,6 +29,7 @@ public interface TaskConditionHandler<T extends TaskContext> {
 
     ConditionCheck checkCondition(
         T contextInfo,
+        Map taskMap,
         Map triggerMap,
         TaskTrigger taskTrigger,
         TaskCondition condition
