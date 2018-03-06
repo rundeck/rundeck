@@ -1149,6 +1149,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     }
 
     /**
+     *
+     * @param id execution id
+     * @return quartz scheduler JobExecutionContext
+     */
+    def JobExecutionContext findExecutingQuartzJob(Long id) {
+        JobExecutionContext found = null
+        quartzScheduler.getCurrentlyExecutingJobs().each {def JobExecutionContext jexec ->
+            def job = jexec.getJobInstance()
+            if (job instanceof ExecutionJob && id == job.executionId) {
+                found = jexec
+            }
+        }
+
+        return found
+    }
+
+    /**
      * Interrupt a running quartz job if present or optinoally delete from scheduler if not
      * @param quartzIntanceId quartz fire instance Id
      * @param jobName
