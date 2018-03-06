@@ -1,3 +1,7 @@
+% Version 2.10.7
+% greg
+% 03/05/2018
+
 Release 2.10.7
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: Crimson"><span class="glyphicon glyphicon-sunglasses">
 
 ## Upgrading from Earlier versions
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 

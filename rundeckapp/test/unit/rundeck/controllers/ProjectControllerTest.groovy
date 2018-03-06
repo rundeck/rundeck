@@ -1095,7 +1095,7 @@ class ProjectControllerTest {
             }
             getFrameworkProject{name->
                 assertEquals('test1',name)
-                [name:name,propertyFile: [text: propFileText]]
+                [name:name]
             }
             setFrameworkProjectConfig{proj,configProps->
                 assertEquals props,configProps
@@ -1464,23 +1464,6 @@ class ProjectControllerTest {
         assertEquals HttpServletResponse.SC_OK, response.status
         assertEquals 'value1', response.json['prop1']
         assertEquals 'value2', response.json['prop2']
-    }
-    @Test
-    void apiProjectConfigPut_text_success(){
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
-                prop2: 'value2'], true, null, 'prop1=value1\nprop2=value2')
-        request.api_version = 11
-        params.project = 'test1'
-        request.content='prop1=value1\nprop2=value2'.bytes
-        request.contentType='text/plain'
-        request.method='PUT'
-        controller.apiProjectConfigPut()
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertTrue response.contentType.contains('text/plain')
-        assertEquals 'prop1=value1\nprop2=value2', response.text
     }
 
 

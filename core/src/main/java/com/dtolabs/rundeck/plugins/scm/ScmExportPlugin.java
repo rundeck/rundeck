@@ -36,6 +36,11 @@ public interface ScmExportPlugin {
 
 
     /**
+     * perform a total clean
+     */
+    default void totalClean(){}
+
+    /**
      * @param actionId action ID
      *
      * @return input view for the specified action

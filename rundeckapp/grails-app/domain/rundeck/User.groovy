@@ -36,8 +36,8 @@ class User {
     static hasMany = [reportfilters:ReportFilter,jobfilters:ScheduledExecutionFilter,nodefilters:NodeFilter]
     static constraints={
         login(matches: '^[a-zA-Z0-9\\.,@\\(\\)\\s_\\\\/-]+$')
-        firstName(nullable:true, matches: '^[a-zA-Z0-9\\s\\.,\\(\\)-]+$')
-        lastName(nullable:true, matches: '^[a-zA-Z0-9\\s\\.,\\(\\)-]+$')
+        firstName(nullable:true, matches: '^[a-zA-Z0-9À-ÖØ-öø-ÿ\\s\\.,\\(\\)-]+$')
+        lastName(nullable:true, matches: '^[a-zA-Z0-9À-ÖØ-öø-ÿ\\s\\.,\\(\\)-]+$')
         email(nullable:true,validator: { val ->
             (!val || new AnyDomainEmailValidator().isValid(val)) ? null : 'email.invalid'
         })
