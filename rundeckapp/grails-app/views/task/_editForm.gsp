@@ -51,7 +51,7 @@
         <div class="form-group ${g.hasErrors(bean: task, field: 'name', 'has-error')}">
             <label for="triggerName"
                    class="required ${enc(attr: labelColClass)}">
-                Name
+                <g:message code="Task.domain.name.title" />
             </label>
 
             <div class="${fieldColSize}">
@@ -73,7 +73,7 @@
         <div class="form-group ${g.hasErrors(bean: task, field: 'description', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
-                Description
+                <g:message code="Task.domain.description.title" />
             </label>
 
             <div class="${fieldColSize}">
@@ -96,7 +96,7 @@
         <div class="form-group ${g.hasErrors(bean: task, field: 'enabled', 'has-error')}">
             <label for="enabled"
                    class="required ${enc(attr: labelColClass)}">
-                Enabled
+                <g:message code="Task.domain.enabled.title" />
             </label>
 
             <div class="${fieldColSize}">
@@ -118,7 +118,7 @@
         <div class="form-group ${g.hasErrors(bean: task, field: 'conditionList', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
-                Conditions
+                <g:message code="Task.domain.conditions.title" />
             </label>
 
             <div class="${fieldColSize}">
@@ -129,7 +129,8 @@
                             aria-haspopup="true"
                             aria-expanded="false">
                         <g:icon name="plus"/>
-                        Add Condition <span class="caret"></span>
+                        <g:message code="button.add.condition.title" />
+                        <span class="caret"></span>
                     </button>
                     <ul class="dropdown-menu">
                         <g:each in="${conditionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
@@ -158,7 +159,7 @@
                     <input type="hidden"
                            data-bind="attr: {name: $root.conditionInputPrefix+'entry[' + cond.uid() + '].type' }, value: cond.provider"/>
                     <a href="#" class="btn btn-sm btn-danger-hollow" data-bind="click: $parent.removeCondition">
-                        Remove
+                        <g:message code="button.remove.title" />
                     </a>
                 </div>
 
@@ -192,7 +193,7 @@
                         class="form-control"
                         data-bind="value: taskEditor.trigger.provider">
                     <g:if test="${!task?.triggerType}">
-                        <option value="" selected>-Choose-</option>
+                        <option value="" selected><g:message code="select.noselection.choose.label" /></option>
                     </g:if>
                     <g:each in="${triggerPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
                             var="plugin">
@@ -225,7 +226,7 @@
         <div class="form-group ${g.hasErrors(bean: task, field: 'actionType', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
-                Action
+                <g:message code="task.action.display.title" />
             </label>
 
             <div class="${fieldColSize}">
@@ -233,7 +234,7 @@
                 <select name="actionType" value="${task?.actionType}" class="form-control" id="actionTypeSelect"
                         data-bind="value: taskEditor.action.provider">
                     <g:if test="${!task?.actionType}">
-                        <option value="" selected>-Choose-</option>
+                        <option value="" selected><g:message code="select.noselection.choose.label" /></option>
                     </g:if>
                     <g:each in="${actionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
                             var="plugin">
@@ -263,10 +264,10 @@
 
         </div>
 
-        <div class="form-group ${g.hasErrors(bean: task, field: 'taskUserData', 'has-error')}">
+        <div class="form-group ${g.hasErrors(bean: task, field: 'userData', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
-                User Data
+                <g:message code="Task.domain.userData.title" />
             </label>
 
             <div class="${fieldColSize}">
@@ -316,8 +317,7 @@
                     </div>
 
                     <div class="help-block">
-                        Add extra Key/Value pairs available within the Task.  They can be
-                        referenced with $<!-- -->{task.key}
+                        <g:message code="Task.domain.userData.description" />
                     </div>
                 </div>
 
