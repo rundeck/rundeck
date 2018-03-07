@@ -47,7 +47,7 @@ class JobRunTaskActionServiceSpec extends Specification {
             getId() >> '999'
         }
         when:
-        def result = service.performTaskAction(id, context, map, trigger, action)
+        def result = service.performTaskAction(context, map, trigger, action)
         then:
         1 * service.jobStateService.jobForID(context.authContext, jobId, project) >> jobRef
         1 * service.jobStateService.startJob(context.authContext, jobRef, optionMap, jobFilter, asUser) >> execref
