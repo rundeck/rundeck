@@ -1768,18 +1768,23 @@ ansi-bg-default'''))
      * Output a basic table for a single datapoint, with field names on the left, values on the right
      *
      * @attr classes additional css classes for the table
-     * @attr fields required list of fields to output in order
+     * @attr fields list of fields to output in order (optional)
      * @attr fieldTitle map of field name to display title (optional)
      * @attr data required single data object with fields
      * @attr dataTitles tooltip titles for data fields
      */
     def basicData = { attrs, body ->
         def data = attrs.data
-        out << "<table class=\"table ${attrs.classes}\">"
 
-        attrs.fields.each {
+        def fields = attrs.fields ?: (data instanceof Map ? data.keySet().sort() : [])
+        if (!fields) {
+            return
+        }
+
+        out << "<table class=\"table ${attrs.classes?:''}\">"
+        fields.each {
             out << "<tr>"
-            out << "<td class=\"${attrs.labelClasses}\">${attrs.fieldTitle?.get(it) ?: it}</td>"
+            out << "<td class=\"${attrs.labelClasses?:''}\">${attrs.fieldTitle?.get(it) ?: it}</td>"
             def val = (data.hasProperty(it) || data[it]) ? data[it] : ''
             def title = (attrs.dataTitles?.hasProperty(it) || attrs.dataTitles?.get(it)) ? attrs.dataTitles[it] : ''
             out << "<td title=\"${title}\">${val}</td>"
