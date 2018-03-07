@@ -19,3 +19,4 @@
 //= require ui/toggle
 //= require pluginPropKO
 //= require ko/component/job-link
+//= require koBind

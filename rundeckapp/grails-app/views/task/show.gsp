@@ -30,7 +30,13 @@
     <asset:javascript src="task/show.js"/>
     <g:jsMessages code="job.not.found.with.id.0"/>
     <title><g:appTitle/> - <g:message code="Task.domain.title" /> - ${task.name ?: task.uuid}</title>
+    <g:javascript>"use strict";
+    jQuery(function () {
+        initKoBind(null, {});
+    });
 
+
+    </g:javascript>
 </head>
 
 <body>
@@ -221,6 +227,25 @@
                                     <span class="text-muted">
                                         <g:autoLink>${event.eventDataMap.message}</g:autoLink>
                                     </span>
+                                    <g:if test="${event.eventDataMap?.condition?.data}">
+                                        <span data-ko-controller="UIToggle">
+
+                                            <span class="btn btn-link btn-muted"
+                                                  data-bind="click: toggle">
+                                                <g:message code="more"/>
+                                                <i class="glyphicon"
+                                                   data-bind="css: {'glyphicon-chevron-right':!value(),'glyphicon-chevron-down':value }"></i>
+                                            </span>
+
+                                            <div data-bind="if: value">
+
+                                                <g:basicData data="${event.eventDataMap?.condition?.data}"
+                                                             classes="table-bordered table-compact"/>
+
+                                            </div>
+                                        </span>
+
+                                    </g:if>
                                 </g:if>
                                 <g:if test="${event.associatedType == 'Execution' && event.associatedId}">
                                     <g:link controller="execution" action="show"
