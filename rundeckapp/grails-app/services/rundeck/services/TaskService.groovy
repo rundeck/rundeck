@@ -493,11 +493,13 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         def conditions = conditionsFor(task)
         boolean conditionsMet = true
         int index = 0
+        Map conditionData = null
         for (TaskCondition condition : conditions) {
             TaskConditionHandler handler = getConditionHandlerForCondition(task, condition, contextInfo)
             def condition1 = handler.checkCondition(contextInfo, task.userData?:[:], triggerMap, trigger, condition)
             log.error("Condition check met? ${condition1.conditionMet}: $condition1.conditionData")
             if (!condition1.conditionMet) {
+                conditionData = condition1.conditionData
                 conditionsMet = false
                 break
             }
@@ -506,7 +508,13 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
 
         if (!conditionsMet) {
             createTaskEvent(
-                [message: 'Trigger was fired, but a condition was not met', conditionIndex: index],
+                [
+                    message  : 'Trigger was fired, but a condition was not met',
+                    condition: [
+                        index: index,
+                        data : conditionData ?: [:]
+                    ]
+                ],
                 task,
                 'condition:notmet',
                 null,
