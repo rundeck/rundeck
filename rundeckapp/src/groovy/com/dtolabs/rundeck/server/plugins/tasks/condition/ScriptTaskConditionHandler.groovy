@@ -17,13 +17,16 @@
 package com.dtolabs.rundeck.server.plugins.tasks.condition
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListenerImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepException
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.DefaultScriptFileNodeStepUtils
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepUtils
 import com.dtolabs.rundeck.core.plugins.Plugin
+import com.dtolabs.rundeck.util.BasicExecutionLogger
 import org.rundeck.core.tasks.*
 import org.springframework.beans.factory.annotation.Autowired
 import rundeck.services.FrameworkService
@@ -32,10 +35,6 @@ import rundeck.services.RDTaskContext
 @Plugin(name = ScriptTaskConditionHandler.PROVIDER_NAME, service = TaskPluginTypes.TaskConditionHandler)
 class ScriptTaskConditionHandler implements TaskConditionHandler<RDTaskContext> {
     static final String PROVIDER_NAME = "script-handler"
-
-    @Autowired
-    FrameworkService frameworkService
-
 
     @Override
     boolean handlesCondition(final TaskCondition condition, final RDTaskContext contextInfo) {
@@ -57,15 +56,22 @@ class ScriptTaskConditionHandler implements TaskConditionHandler<RDTaskContext> 
         ScriptTaskCondition scriptCondition = (ScriptTaskCondition) condition
 
 
-        def framework = frameworkService.getRundeckFramework()
-        def fwkProject = frameworkService.getFrameworkProject(contextInfo.project)
-        def nodeName = framework.getFrameworkNodeName()
+        def fwk = contextInfo.framework
+        def fwkProject = fwk.frameworkProjectMgr.getFrameworkProject(contextInfo.project)
+        def nodeName = fwk.getFrameworkNodeName()
         def node = fwkProject.getNodeSet().getNode(nodeName)
-        def stepContext = ExecutionContextImpl.builder().
-            framework(framework).
-            singleNodeContext(node, true).
-            frameworkProject(contextInfo.project).
+        def logger = new BasicExecutionLogger(System.out)
+        def data = DataContextUtils.context('trigger', DataContextUtils.stringValueMap(triggerMap, null))
+        data = DataContextUtils.addContext('task', DataContextUtils.stringValueMap(taskMap, null), data)
+        def stepContext = ExecutionContextImpl.builder().with {
+            framework fwk
+            singleNodeContext node, true
+            frameworkProject contextInfo.project
+            executionListener new WorkflowExecutionListenerImpl(null, logger)
+            executionLogger logger
+            dataContext data
             build()
+        }
 
         try {
             NodeExecutorResult result = scriptUtils.executeScriptFile(
@@ -78,9 +84,10 @@ class ScriptTaskConditionHandler implements TaskConditionHandler<RDTaskContext> 
                 null, //TODO: args,interpreter,quoted..
                 null,
                 false,
-                executionService,
+                fwk.executionService,
                 true
             )
+
 
             return ConditionCheck.result(result.success, [exitCode: result.resultCode])
         } catch (NodeStepException e) {
