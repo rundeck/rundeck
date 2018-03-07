@@ -24,7 +24,7 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
-import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
+import com.dtolabs.rundeck.core.plugins.MultiPluginProviderLoader;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.descriptions.*;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
@@ -367,10 +367,6 @@ public class PluginAdapterUtility {
         return null != string && !"".equals(string);
     }
 
-    private static final List<PropertyScope> instanceScopes = Arrays.asList(PropertyScope.Instance,
-            PropertyScope.InstanceOnly);
-
-
     /**
      * Set field values on a plugin object by using annotated field values to create a Description, and setting field
      * values to resolved property values. Any resolved properties that are not mapped to a field will  be included in
@@ -397,10 +393,35 @@ public class PluginAdapterUtility {
      * @param defaultScope a default property scope to assume for unspecified properties
      *
      * @return Map of resolved properties that were not configured in the object's fields
+     * @deprecated use
+     * {@link #configureProperties(PropertyResolver, Description, Object, PropertyScope, MultiPluginProviderLoader)}
      */
     public static Map<String, Object> configureProperties(final PropertyResolver resolver,
-            final Description description,
-            final Object object, PropertyScope defaultScope) {
+                                                          final Description description,
+                                                          final Object object, PropertyScope defaultScope
+    ) {
+
+        return configureProperties(resolver, description, object, defaultScope, null);
+    }
+
+    /**
+     * Set field values on a plugin object by using a Description, and setting field values to resolved property values.
+     * Any resolved properties that are not mapped to a field will  be included in the return result.
+     *
+     * @param resolver     the property resolver
+     * @param description  the property descriptions
+     * @param object       the target object, which can implement {@link Configurable}, otherwise introspection will be
+     *                     used
+     * @param defaultScope a default property scope to assume for unspecified properties
+     * @return Map of resolved properties that were not configured in the object's fields
+     */
+    public static Map<String, Object> configureProperties(
+        final PropertyResolver resolver,
+        final Description description,
+        final Object object,
+        PropertyScope defaultScope,
+        final MultiPluginProviderLoader loader
+    ) {
         Map<String, Object> inputConfig = mapDescribedProperties(resolver, description, defaultScope);
         if (object instanceof Configurable) {
             Configurable configObject = (Configurable) object;
@@ -412,7 +433,7 @@ public class PluginAdapterUtility {
 
             }
         } else {
-            inputConfig = configureObjectFieldsWithProperties(object, description.getProperties(), inputConfig);
+            inputConfig = configureObjectFieldsWithProperties(object, description.getProperties(), inputConfig, loader);
         }
         return inputConfig;
     }
@@ -434,9 +455,23 @@ public class PluginAdapterUtility {
     public static Map<String, Object> configureObjectFieldsWithProperties(
             final Object object,
             final Map<String, Object> inputConfig
-    )
-    {
-        return configureObjectFieldsWithProperties(object, buildFieldProperties(object), inputConfig);
+    ) {
+        return configureObjectFieldsWithProperties(object, inputConfig, null);
+    }
+
+    /**
+     * Set field values on an object using introspection and input values for those properties
+     *
+     * @param object      object
+     * @param inputConfig input
+     * @return Map of resolved properties that were not configured in the object's fields
+     */
+    public static Map<String, Object> configureObjectFieldsWithProperties(
+        final Object object,
+        final Map<String, Object> inputConfig,
+        final MultiPluginProviderLoader loader
+    ) {
+        return configureObjectFieldsWithProperties(object, buildFieldProperties(object), inputConfig, loader);
     }
 
     /**
@@ -450,12 +485,28 @@ public class PluginAdapterUtility {
             final Object object,
             final List<Property> properties,
             final Map<String, Object> inputConfig
-    )
-    {
+    ) {
+        return configureObjectFieldsWithProperties(object, properties, inputConfig, null);
+    }
+
+    /**
+     * Set field values on an object given a list of properties and input values for those properties
+     *
+     * @param object      object
+     * @param properties  properties
+     * @param inputConfig input
+     * @return Map of resolved properties that were not configured in the object's fields
+     */
+    public static Map<String, Object> configureObjectFieldsWithProperties(
+        final Object object,
+        final List<Property> properties,
+        final Map<String, Object> inputConfig,
+        final MultiPluginProviderLoader loader
+    ) {
         HashMap<String, Object> modified = new HashMap<>(inputConfig);
         for (final Property property : properties) {
             if (null != modified.get(property.getName())) {
-                if (setValueForProperty(property, modified.get(property.getName()), object)) {
+                if (setValueForProperty(property, modified.get(property.getName()), object, loader)) {
                     modified.remove(property.getName());
                 }
             }
@@ -549,24 +600,41 @@ public class PluginAdapterUtility {
 
     }
 
-    private static Object createEmbeddedPlugin(Class<?> type, String provider, Map<String, Object> config) {
+    private static Object createEmbeddedPlugin(
+        Class<?> type,
+        String provider,
+        Map<String, Object> config,
+        final MultiPluginProviderLoader loader
+    ) {
 
-        throw new UnsupportedOperationException("createEmbeddedPlugin");
+        if (loader == null) {
+            throw new UnsupportedOperationException("createEmbeddedPlugin");
+        }
+        return loader.load(type, provider, config);
+
     }
 
-    private static Object createEmbeddedObject(Class<?> type, Map<String, Object> config) {
+    private static Object createEmbeddedObject(
+        Class<?> type,
+        Map<String, Object> config,
+        final MultiPluginProviderLoader loader
+    ) {
 
         Object inst = createInstanceFromType(type);
-        configureObjectFieldsWithProperties(inst, config);
+        configureObjectFieldsWithProperties(inst, config, loader);
         return inst;
     }
 
-    private static Object createEmbeddedFieldValue(Property property, Map<String, Object> config) {
+    private static Object createEmbeddedFieldValue(
+        Property property,
+        Map<String, Object> config,
+        final MultiPluginProviderLoader loader
+    ) {
         Class<?> embeddedType = property.getEmbeddedType();
         Class<?> embeddedPluginType = property.getEmbeddedPluginType();
 
         if (null != embeddedType) {
-            return createEmbeddedObject(embeddedType, config);
+            return createEmbeddedObject(embeddedType, config, loader);
         } else if (null != embeddedPluginType) {
             Object providerEntry = config.get("type");
             Object configEntry = config.get("config");
@@ -576,7 +644,7 @@ public class PluginAdapterUtility {
                 && Map.class.isAssignableFrom(configEntry.getClass())) {
                 String provider = (String) providerEntry;
                 Map<String, Object> provConfig = (Map<String, Object>) configEntry;
-                return createEmbeddedPlugin(embeddedPluginType, provider, provConfig);
+                return createEmbeddedPlugin(embeddedPluginType, provider, provConfig, loader);
             } else {
                 throw new IllegalStateException(
                     String.format(
@@ -604,7 +672,12 @@ public class PluginAdapterUtility {
     /**
      * Set instance field value for the given property, returns true if the field value was set, false otherwise
      */
-    private static boolean setValueForProperty(final Property property, final Object value, final Object object) {
+    private static boolean setValueForProperty(
+        final Property property,
+        final Object value,
+        final Object object,
+        final MultiPluginProviderLoader loader
+    ) {
         final Field field = fieldForPropertyName(property.getName(), object);
         if (null == field) {
             return false;
@@ -615,19 +688,23 @@ public class PluginAdapterUtility {
 
 
         if (type != Property.Type.Embedded && ftype != property.getType()
-                && !(ftype == Property.Type.String
-                     && (property.getType() == Property.Type.Select ||
-                         property.getType() == Property.Type.FreeSelect ||
-                         property.getType() == Property.Type.Options))) {
+            && !(
+            ftype == Property.Type.String
+            && (
+                property.getType() == Property.Type.Select ||
+                property.getType() == Property.Type.FreeSelect ||
+                property.getType() == Property.Type.Options
+            )
+        )) {
 
             throw new IllegalStateException(
-                    String.format(
-                            "cannot map property {%s type: %s} to field {%s type: %s}",
-                            property.getName(),
-                            property.getType(),
-                            field.getName(),
-                            ftype
-                    ));
+                String.format(
+                    "cannot map property {%s type: %s} to field {%s type: %s}",
+                    property.getName(),
+                    property.getType(),
+                    field.getName(),
+                    ftype
+                ));
         }
         if (type == Property.Type.Embedded
             || type == Property.Type.Options
@@ -635,7 +712,7 @@ public class PluginAdapterUtility {
                    property.getEmbeddedPluginType() != null
                    || property.getEmbeddedType() != null
                )) {
-            resolvedValue = mapValueForEmbeddedType(property, value, field, type, ftype);
+            resolvedValue = mapValueForEmbeddedType(property, value, field, type, ftype, loader);
         } else if (type == Property.Type.Integer) {
             final Integer intvalue;
             if (value instanceof String) {
@@ -783,7 +860,8 @@ public class PluginAdapterUtility {
         final Object value,
         final Field field,
         final Property.Type type,
-        final Property.Type ftype
+        final Property.Type ftype,
+        final MultiPluginProviderLoader loader
     ) {
         final Object resolvedValue;
         if (ftype == Property.Type.Options) {
@@ -805,7 +883,7 @@ public class PluginAdapterUtility {
             for (Object o : values) {
                 if (Map.class.isAssignableFrom(o.getClass())) {
                     Map<String, Object> config = (Map<String, Object>) o;
-                    objects.add(createEmbeddedFieldValue(property, config));
+                    objects.add(createEmbeddedFieldValue(property, config, loader));
                 } else {
                     throw new IllegalStateException(
                         String.format(
@@ -841,7 +919,7 @@ public class PluginAdapterUtility {
 
             }
             Map<String, Object> config = (Map<String, Object>) value;
-            resolvedValue = createEmbeddedFieldValue(property, config);
+            resolvedValue = createEmbeddedFieldValue(property, config, loader);
 
         } else {
             //invalid
