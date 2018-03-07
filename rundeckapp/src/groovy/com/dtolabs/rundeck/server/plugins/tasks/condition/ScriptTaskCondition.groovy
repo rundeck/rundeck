@@ -40,7 +40,7 @@ class ScriptTaskCondition implements TaskCondition, PluginBaseMetaTrait {
     @PluginProperty(title = "Script", description = "Script to Execute", required = true)
     @RenderingOptions([
         @RenderingOption(key = StringRenderingConstants.DISPLAY_TYPE_KEY, value = "CODE"),
-        @RenderingOption(key = StringRenderingConstants.CODE_SYNTAX_MODE, value = "bash"),
+        @RenderingOption(key = StringRenderingConstants.CODE_SYNTAX_MODE, value = "sh"),
         @RenderingOption(key = StringRenderingConstants.CODE_SYNTAX_SELECTABLE, value = "true")
     ])
     String script
