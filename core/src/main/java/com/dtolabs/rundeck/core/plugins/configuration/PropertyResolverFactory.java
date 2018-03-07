@@ -23,7 +23,7 @@
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
-import com.dtolabs.rundeck.core.common.Framework;
+import com.dtolabs.rundeck.core.common.IFramework;
 import com.dtolabs.rundeck.core.common.IRundeckProject;
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
@@ -131,7 +131,7 @@ public class PropertyResolverFactory {
      * @param providerName provider name
      * @param instanceProperties instance properties, or null
      */
-    public static PropertyResolver createFrameworkProjectRuntimeResolver(final Framework framework,
+    public static PropertyResolver createFrameworkProjectRuntimeResolver(final IFramework framework,
             final String projectName,
             final Map<String, Object> instanceProperties,
             final String pluginType,
@@ -222,12 +222,12 @@ public class PropertyResolverFactory {
         return createResolver(instanceRetriever(instanceProperties), null, null);
     }
 
-    private static PropertyRetriever frameworkRetriever(final String frameworkPrefix, Framework framework) {
+    private static PropertyRetriever frameworkRetriever(final String frameworkPrefix, IFramework framework) {
         return prefixedRetriever(frameworkPrefix, framework.getPropertyRetriever());
     }
 
     private static PropertyRetriever projectRetriever(final String projectPrefix,
-                                                      final Framework framework,
+                                                      final IFramework framework,
                                                       final String project) {
         IRundeckProject frameworkProject = framework
                 .getFrameworkProjectMgr()
