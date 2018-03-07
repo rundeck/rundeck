@@ -35,7 +35,7 @@ import java.util.zip.GZIPOutputStream
  * @author greg
  * @since 2014-03-12
  */
-class ControllerBase {
+class ControllerBase implements AfterInterceptorChain {
     public static final ArrayList<String> UIPLUGIN_PAGES = [
             'menu/jobs',
             'menu/home',
@@ -118,7 +118,8 @@ class ControllerBase {
         sort
     }
 
-    def afterInterceptor = { model ->
+    @AfterInterceptor
+    def addUIPlugins(Map model) {
         model.uiplugins = loadUiPlugins(controllerName + "/" + actionName)
         model.uipluginsorder = sortUiPlugins(model.uiplugins)
         model.uipluginsPath = controllerName + "/" + actionName

@@ -19,6 +19,7 @@ package rundeck.controllers
 import rundeck.services.PluginService
 
 /**
+ * Use with {@link AfterInterceptorChain}
  * @author greg
  * @since 5/19/17
  */
@@ -36,8 +37,8 @@ trait PluginListRequired {
     }
 
 
-    def afterInterceptor = { model ->
-
+    @AfterInterceptor
+    def loadRequiredPlugins(Map model) {
         if ((requiredPluginActionNames != null && !(actionName in requiredPluginActionNames)) || (requiredPluginExcludedActionNames != null && actionName in requiredPluginExcludedActionNames)) {
             return
         }
