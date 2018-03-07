@@ -32,7 +32,11 @@ if (Environment.isDevelopmentMode() && targetDir != null) {
         }
     }
     logger 'grails.artefact.Interceptor', DEBUG, ['STDOUT'], false
+    logger 'rundeck.interceptors', DEBUG, ['STDOUT'], false
     logger "rundeckapp.BootStrap", INFO, ["STDOUT"], false
     logger("StackTrace", ERROR, ['FULL_STACKTRACE'], false)
+} else if(Environment.PRODUCTION == Environment.current) {
+    logger 'grails.artefact.Interceptor', DEBUG, ['STDOUT'], false
+    logger "rundeckapp.BootStrap", INFO, ["STDOUT"], false
 }
 root(ERROR, ['STDOUT'])

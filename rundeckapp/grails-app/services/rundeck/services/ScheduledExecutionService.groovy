@@ -654,7 +654,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             } catch (Exception e) {
                 failedJobs << [job: se, error: e.message]
                 log.error("Job not rescheduled in project ${se.project}: ${se.extid}: ${e.message}", e)
-                log.error(e)
+                //log.error(e)
             }
         }
 

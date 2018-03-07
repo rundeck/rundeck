@@ -1,19 +1,12 @@
 package rundeck.interceptors
 
-import com.codahale.metrics.MetricRegistry
-import org.apache.log4j.Logger
-import org.apache.log4j.MDC
-import org.grails.web.util.WebUtils
-
-import javax.servlet.http.HttpServletRequest
-
-
-/*
+/* Copied from:
  * ApiRequestFilters.java
  *
  * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  * Created: Feb 1, 2011 12:14:56 PM
  *
+ * Copy made by Stephen Joyner Feb 2, 2018
  */
 class ApiAccessInterceptor {
 
@@ -32,7 +25,7 @@ class ApiAccessInterceptor {
      * Disallow api access if a request comes for non-api url after login
      */
     boolean before() {
-        if(InterceptorHelper.matchesStaticAssets(request.requestURI)) return true
+        if(InterceptorHelper.matchesStaticAssets(controllerName)) return true
 
         if(allowed_pre_api_reqs[controllerName] && (actionName in allowed_pre_api_reqs[controllerName])){
             return true

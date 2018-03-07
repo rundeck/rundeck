@@ -3,7 +3,7 @@ package rundeck.interceptors
 
 class PostApiTokenInterceptor {
 
-    int order = HIGHEST_PRECEDENCE + 60
+    int order = HIGHEST_PRECEDENCE + 105
 
     PostApiTokenInterceptor() {
         matchAll().excludes(controller:'user',action:'logout')

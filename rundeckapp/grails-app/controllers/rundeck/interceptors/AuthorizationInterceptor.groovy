@@ -2,13 +2,19 @@ package rundeck.interceptors
 
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.app.api.ApiVersions
+import groovy.json.JsonBuilder
 
 
 class AuthorizationInterceptor {
 
     int order = HIGHEST_PRECEDENCE + 50
 
+    AuthorizationInterceptor() {
+        matchAll()
+    }
+
     boolean before() {
+        if(InterceptorHelper.matchesStaticAssets(controllerName)) return true
         if (request.invalidApiAuthentication) {
             response.setStatus(403)
             def authid = session.user ?: "(${request.invalidAuthToken ?: 'unauthenticated'})"
@@ -17,14 +23,14 @@ class AuthorizationInterceptor {
                 //api request
                 if (response.format in ['json']) {
                     render(contentType: "application/json", encoding: "UTF-8") {
-                        error = true
-                        apiversion = ApiRequestFilters.API_CURRENT_VERSION
-                        errorCode = "unauthorized"
-                        message = ("${authid} is not authorized for: ${request.forwardURI}")
+                        error true
+                        apiversion ApiVersions.API_CURRENT_VERSION
+                        errorCode "unauthorized"
+                        message ("${authid} is not authorized for: ${request.forwardURI}")
                     }
                 } else {
                     render(contentType: "text/xml", encoding: "UTF-8") {
-                        result(error: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+                        result(error: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
                             delegate.'error'(code: "unauthorized") {
                                 message("${authid} is not authorized for: ${request.forwardURI}")
                             }
