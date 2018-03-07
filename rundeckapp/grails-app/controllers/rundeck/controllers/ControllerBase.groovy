@@ -72,7 +72,12 @@ class ControllerBase implements AfterInterceptorChain {
             "framework/editProjectConfig",
             "framework/editProjectFile",
             "scm/index",
-            "reports/index",
+        "reports/index",
+        "task/list",
+        "task/edit",
+        "task/show",
+        "task/create",
+        "task/delete",
     ]
     def grailsApplication
     UiPluginService uiPluginService
