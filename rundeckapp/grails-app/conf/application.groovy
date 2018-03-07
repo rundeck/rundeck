@@ -29,7 +29,7 @@ environments {
     production {
         dataSource {
             dbCreate = "update"
-            url = "jdbc:h2:file:rundeck/grailsh2"
+            url = "jdbc:h2:file:/rundeck/grailsh2"
             properties {
                 jmxEnabled= true
                 initialSize= 5
@@ -56,7 +56,7 @@ environments {
 grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"
 
 grails.plugin.springsecurity.interceptUrlMap = [
-        [pattern: '/j_security_check', access: ['permitAll']],
+        [pattern: '/user/j_security_check', access: ['permitAll']],
         [pattern: '/error',          access: ['permitAll']],
         [pattern: '/error.gsp',      access: ['permitAll']],
         [pattern: '/404',            access: ['permitAll']],
@@ -82,7 +82,7 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/assets/**',      filters: 'none'],
         [pattern: '/feed/**',        filters: 'none'],
         [pattern: '/test/**',        filters: 'none'],
-        [pattern: '/api/**',         filters: 'none'],
+        [pattern: '/api/**',         filters: 'JOINED_FILTERS'],
         [pattern: '/404',            filters: 'none'],
         [pattern: '/404.gsp',        filters: 'none'],
         [pattern: '/**/js/**',       filters: 'none'],
@@ -100,7 +100,7 @@ grails.plugin.springsecurity.filterChain.filterNames = [
         'exceptionTranslationFilter', 'filterInvocationInterceptor'
 ]
 
-grails.plugin.springsecurity.apf.filterProcessesUrl = "/j_security_check"
+grails.plugin.springsecurity.apf.filterProcessesUrl = "/user/j_security_check"
 grails.plugin.springsecurity.apf.usernameParameter = "j_username"
 grails.plugin.springsecurity.apf.passwordParameter = "j_password"
 grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"

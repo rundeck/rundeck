@@ -47,6 +47,7 @@ import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
 import grails.util.Environment
 import groovy.io.FileType
+
 import org.rundeck.security.RundeckJaasAuthorityGranter
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
 import org.rundeck.web.infosec.ContainerRoleSource
@@ -55,23 +56,22 @@ import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
-import org.springframework.security.authentication.jaas.memory.InMemoryConfiguration
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
 
-import javax.security.auth.login.AppConfigurationEntry
+import javax.security.auth.login.Configuration
 
 beans={
     xmlns context: "http://www.springframework.org/schema/context"
     if (Environment.PRODUCTION == Environment.current) {
-        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
-            targetClass = "org.springframework.util.Log4jConfigurer"
-            targetMethod = "initLogging"
-            arguments = ["classpath:log4j.properties"]
-        }
+//        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
+//            targetClass = "org.springframework.util.Log4jConfigurer"
+//            targetMethod = "initLogging"
+//            arguments = ["classpath:log4j.properties"]
+//        }
     }
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'
@@ -370,15 +370,12 @@ beans={
     jaasApiIntegrationFilter(JaasApiIntegrationFilter)
     rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter)
 
-    rundeckJaasConfiguration(AppConfigurationEntry, "org.eclipse.jetty.jaas.spi.PropertyFileLoginModule", AppConfigurationEntry.LoginModuleControlFlag.REQUIRED, [debug:"true",file:"/Users/stephen/dev-svr/server/config/realm.properties"]) {
-
-    }
-    jaasConfig(InMemoryConfiguration,[ref('rundeckJaasConfiguration')]) {
-    }
     jaasAuthProvider(DefaultJaasAuthenticationProvider) {
-        configuration = ref('jaasConfig')
+        configuration = Configuration.getConfiguration()
+        loginContextName = "rundecklogin"
         authorityGranters = [
                 ref('rundeckJaasAuthorityGranter')
         ]
     }
+
 }

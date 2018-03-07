@@ -2214,7 +2214,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/14/project/PROJECT/resource/NAME, version 14
      */
     def apiResourcev14 () {
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
             return
         }
         return apiResource()
@@ -2267,7 +2267,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/2/project/NAME/resources, version 2
      */
     def apiResourcesv2(ExtNodeFilters query) {
-        if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
+        if (!apiService.requireVersion(request, response,ApiVersions.V2)) {
             return
         }
         return apiResources(query)
@@ -2307,7 +2307,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 response.format && !(response.format in ['all','html','xml','yaml'])) {
             //expected another content type
             def reqformat = params.format ?: response.format
-            if (!apiService.requireVersion(request, response,ApiRequestFilters.V3)) {
+            if (!apiService.requireVersion(request, response,ApiVersions.V3)) {
                 return
             }
         }
@@ -2340,7 +2340,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 response.format &&
                 !(response.format in ['all', 'html', 'xml', 'yaml'])) {
             //expected another content type
-            if (!apiService.requireVersion(request, response, ApiRequestFilters.V3)) {
+            if (!apiService.requireVersion(request, response, ApiVersions.V3)) {
                 return
             }
             def reqformat = params.format ?: response.format
@@ -2421,7 +2421,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * /api/14/system/acl/* endpoint
      */
     def apiSystemAcls(){
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -2470,7 +2470,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     private def renderAclHref(String path) {
-        createLink(absolute: true, uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/system/acl/$path")
+        createLink(absolute: true, uri: "/api/${ApiVersions.API_CURRENT_VERSION}/system/acl/$path")
     }
     private def apiSystemAclsPutResource(String storagePath, boolean create) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)

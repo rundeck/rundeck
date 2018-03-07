@@ -30,6 +30,8 @@ class ApiVersionInterceptor {
         match(uri: '/api/**')
     }
 
+    def allowed_actions = ["renderError", "error"]
+
     static def logDetail(HttpServletRequest request, project, String action, String controller, String message = null) {
         request[METRIC_TIMER].stop()
 

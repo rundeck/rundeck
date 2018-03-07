@@ -1601,7 +1601,7 @@ class ProjectController extends ControllerBase{
 
     def apiProjectExportAsyncDownload() {
         def token = params.token
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
             return
         }
         if (!apiService.requireParameters(params, response, ['token'])) {

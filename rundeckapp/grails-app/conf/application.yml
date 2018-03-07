@@ -13,6 +13,7 @@ grails:
             events: false
     databinding:
         trimStrings: false
+
 info:
     app:
         name: '@info.app.name@'
@@ -101,6 +102,8 @@ rundeck:
         location: ${user.home}/dev-3-svr/server/config/rundeck-config.properties
         storage:
     security:
+        apiCookieAccess:
+            enabled: true
         authorization:
             containerPrincipal:
                 enabled: true
