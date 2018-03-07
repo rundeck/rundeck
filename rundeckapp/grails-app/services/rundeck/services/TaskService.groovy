@@ -3,7 +3,11 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.task.TaskCreate
 import com.dtolabs.rundeck.app.support.task.TaskUpdate
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.jobs.JobService
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.storage.StorageTree
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
@@ -22,6 +26,8 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
 
     def pluginService
     def frameworkService
+    def storageService
+    def jobStateService
     ApplicationContext applicationContext
     private Map<String, TaskTriggerHandler<RDTaskContext>> triggerRegistrationMap = [:]
     private Map<String, TaskConditionHandler<RDTaskContext>> conditionRegistrationMap = [:]
@@ -92,7 +98,16 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
                 task.authRoleList.split(',').toList(),
                 task.project
         )
-        new RDTaskContext(clusterContextInfo + [project: task.project, authContext: authContext, taskId: task.uuid])
+        new RDTaskContext(
+            project: task.project,
+            authContext: authContext,
+            taskId: task.uuid,
+            clusterModeEnabled: frameworkService.isClusterModeEnabled(),
+            serverNodeUUID: frameworkService.serverUUID,
+            framework: frameworkService.rundeckFramework,
+            storageTree: storageService.storageTreeWithContext(authContext),
+            jobService: jobStateService.jobServiceWithAuthContext(authContext)
+        )
     }
 
     public Map<String, DescribedPlugin<TaskTrigger>> getTaskTriggerPluginDescriptions() {
@@ -165,12 +180,6 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
 
     }
 
-    public Map getClusterContextInfo() {
-        [
-                clusterModeEnabled: frameworkService.isClusterModeEnabled(),
-                serverNodeUUID    : frameworkService.serverUUID
-        ]
-    }
 
     public List<TaskRep> listEnabledTasks() {
         TaskRep.findAllByEnabled(true)
@@ -562,5 +571,8 @@ class RDTaskContext implements TaskContext {
     String serverNodeUUID
     boolean clusterModeEnabled
     UserAndRolesAuthContext authContext
+    IFramework framework
+    StorageTree storageTree
+    JobService jobService
 }
 

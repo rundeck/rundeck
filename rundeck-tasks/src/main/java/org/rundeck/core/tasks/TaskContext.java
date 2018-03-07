@@ -16,6 +16,11 @@
 
 package org.rundeck.core.tasks;
 
+import com.dtolabs.rundeck.core.authorization.AuthContext;
+import com.dtolabs.rundeck.core.common.IFramework;
+import com.dtolabs.rundeck.core.jobs.JobService;
+import com.dtolabs.rundeck.core.storage.StorageTree;
+
 /**
  * Basis for context information for tasks
  */
@@ -35,4 +40,22 @@ public interface TaskContext {
      * @return server node UUID
      */
     String getServerNodeUUID();
+
+    /**
+     * @return the framework
+     */
+    public IFramework getFramework();
+
+    /**
+     * @return the authorization context
+     */
+    public AuthContext getAuthContext();
+    /**
+     * @return the storage service
+     */
+    public StorageTree getStorageTree();
+    /**
+     * @return the job service
+     */
+    public JobService getJobService();
 }
