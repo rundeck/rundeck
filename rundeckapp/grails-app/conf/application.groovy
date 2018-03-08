@@ -38,7 +38,13 @@ environments {
     }
 }
 
-grails.config.locations = [ ]
+grails.config.locations = [
+        "classpath:ClusterEvents.groovy",
+        "classpath:ExecutionCompleteEvents.groovy",
+        "classpath:JobChangeEvents.groovy",
+        "classpath:QuartzConfig.groovy",
+        "classpath:WebrealmsConfig.groovy"
+]
 
 if(environment=="development"){
     grails.config.locations << "file:${userHome}/.grails/${appName}-config.properties"
