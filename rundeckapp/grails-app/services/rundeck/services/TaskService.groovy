@@ -122,14 +122,14 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         pluginService.getPluginDescriptor(provider, TaskAction)
     }
 
-    public ConfiguredPlugin<TaskAction> getConfiguredActionPlugin(String provider, Map config) {
+    public ConfiguredPlugin<TaskAction> getConfiguredActionPlugin(String provider, Map config, String project) {
         //TODO: project scope
-        pluginService.configurePlugin(provider, config, TaskAction)
+        pluginService.configurePlugin(provider, config, TaskAction, project)
     }
 
-    public ConfiguredPlugin<TaskCondition> getConfiguredConditionPlugin(String provider, Map config) {
+    public ConfiguredPlugin<TaskCondition> getConfiguredConditionPlugin(String provider, Map config, String project) {
         //TODO: project scope
-        pluginService.configurePlugin(provider, config, TaskCondition)
+        pluginService.configurePlugin(provider, config, TaskCondition, project)
     }
 
     public ValidatedPlugin getValidatedActionPlugin(String provider, Map config) {
@@ -146,9 +146,9 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         pluginService.getPluginDescriptor(provider, TaskTrigger)
     }
 
-    public ConfiguredPlugin<TaskTrigger> getConfiguredTriggerPlugin(String provider, Map config) {
+    public ConfiguredPlugin<TaskTrigger> getConfiguredTriggerPlugin(String provider, Map config, String project) {
         //TODO: project scope
-        pluginService.configurePlugin(provider, config, TaskTrigger)
+        pluginService.configurePlugin(provider, config, TaskTrigger, project)
     }
 
     public ValidatedPlugin getValidatedTriggerPlugin(String provider, Map config) {
@@ -198,7 +198,7 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
     }
 
     TaskTrigger triggerFor(TaskRep rep) {
-        def condition = getConfiguredTriggerPlugin(rep.triggerType, rep.triggerConfig)
+        def condition = getConfiguredTriggerPlugin(rep.triggerType, rep.triggerConfig, rep.project)
         if (!condition) {
             throw new IllegalArgumentException("Unknown condition type: ${rep.triggerType}")
         }
@@ -206,7 +206,7 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
     }
 
     TaskAction actionFor(TaskRep rep) {
-        def action = getConfiguredActionPlugin(rep.actionType, rep.actionConfig)
+        def action = getConfiguredActionPlugin(rep.actionType, rep.actionConfig, rep.project)
         if (!action) {
             throw new IllegalArgumentException("Unknown action type: ${rep.actionType}")
         }
@@ -216,7 +216,7 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
     List<TaskCondition> conditionsFor(TaskRep rep) {
         def configList = rep.getConditionList()
         def list = configList?.collect { Map condMap ->
-            getConfiguredConditionPlugin(condMap.type, condMap.config).instance
+            getConfiguredConditionPlugin(condMap.type, condMap.config, rep.project).instance
         } ?: []
         def missing = list.findIndexOf { !it }
         if (missing >= 0) {
