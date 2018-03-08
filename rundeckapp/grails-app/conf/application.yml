@@ -46,6 +46,8 @@ grails:
                         - WebKit
                         - Presto
                         - Trident
+        file:
+            extensions: true
         types:
             all: '*/*'
             atom: application/atom+xml
@@ -69,6 +71,13 @@ grails:
             xml:
               - text/xml
               - application/xml
+            yaml:
+              - text/yaml
+              - application/yaml
+        use:
+            accept:
+                header: true
+
     urlmapping:
         cache:
             maxsize: 1000
@@ -76,9 +85,12 @@ grails:
         defaultScope: singleton
     converters:
         encoding: UTF-8
+        json:
+            default:
+                deep: true
     views:
         default:
-            codec: html
+            codec: none
         gsp:
             encoding: UTF-8
             htmlcodec: xml
@@ -87,6 +99,41 @@ grails:
                 scriptlets: html
                 taglib: none
                 staticparts: none
+    enable:
+        native2ascii: true
+    json:
+        legacy:
+            builder: false
+    mail:
+        default:
+            from: rundeck-server@localhost
+    databinding:
+        trimStrings: false
+        dateFormats:
+#            default grails patterns
+            - yyyy-MM-dd HH:mm:ss.S
+            - yyyy-MM-dd'T'hh:mm:ss'Z'
+#            ISO8601 patterns
+            - yyyy-MM-dd'T'HH:mm:ssX
+            - yyyy-MM-dd'T'HH:mm:ss.SSSX
+            - yyyy-MM-dd'T'HH:mm:ssXX
+            - yyyy-MM-dd'T'HH:mm:ss.SSSXX
+            - yyyy-MM-dd'T'HH:mm:ssXXX
+            - yyyy-MM-dd'T'HH:mm:ss.SSSXXX
+            - yyyy-MM-dd'T'HH:mm:ss.XXX
+            - yyyy-MM-dd'T'HH:mm:ssZ
+            - yyyy-MM-dd'T'HH:mm:ss'Z'
+    plugins:
+        twitterbootstrap:
+            fixtaglib: true
+    assets:
+        less:
+            compile: less4j
+        plugin:
+            twitter-bootstrap:
+                excludes: ["**/*.less"]
+                includes: ["bootstrap.less"]
+---
 endpoints:
     jmx:
         unique-names: true
@@ -96,6 +143,7 @@ endpoints:
 rdeck:
     base: ${user.home}/dev-3-svr/server/config
 
+---
 rundeck:
     executionMode: active
     config:
@@ -110,10 +158,84 @@ rundeck:
             container:
                 enabled: true
             preauthenticated:
-                delimiter: ','
-                enabled: false
                 attributeName: REMOTE_USER_GROUPS
+                enabled: false
+                userNameHeader: null
+                userRolesHeader: null
+                delimiter: ','
+        useHMacRequestTokens: true
+        apiCookieAccess:
+            enabled: true
     storage:
+    metrics:
+        enabled: true
+        jmxEnabled: true
+        requestFilterEnabled: true
+        servletUrlPattern: '/metrics/*'
+        execution:
+            finalize:
+                retryMax: 10
+                retryDelay: 5000
+            status:
+                retryMax: 5
+                retryDelay: 5000
+            logs:
+                fileStorage:
+                    cancelOnStorageFailure: true
+        gui:
+            execution:
+                tail:
+                    lines:
+                        default: 20
+                        max: 500
+    mail:
+        template:
+            subject: '${notification.eventStatus} [${execution.project}] ${job.group}/${job.name} ${execution.argstring}'
+    web:
+        metrics:
+            servlets:
+                metrics:
+                    enabled: true
+                ping:
+                    enabled: true
+                threads:
+                    enabled: true
+                healthcheck:
+                    enabled: true
+    gui:
+        job:
+            description:
+                disableHTML: false
+        clusterIdentityInHeader: false
+        clusterIdentityInFooter: true
+    pagination:
+        default:
+            max: 20
+    projectService:
+        projectExportCache:
+            spec: "expireAfterAccess=30m"
+    projectManagerService:
+        projectCache:
+            spec: 'expireAfterAccess=10m,refreshAfterWrite=1m'
+    logFileStorageService:
+        startup:
+            resumeMode: async
+    projectsStorageType: filesystem
+    ajax:
+        compression: gzip
+        executionState:
+            compression:
+                nodeThreshold: 500
+    nodeService:
+        nodeCache:
+            enabled: true
+            spec: 'refreshInterval=30s'
+---
+
+beans:
+    cacheManager:
+        shared: true
+
 
 plugin:
     platformCore:
@@ -133,18 +255,3 @@ plugin:
 
 server:
     port: 4440
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

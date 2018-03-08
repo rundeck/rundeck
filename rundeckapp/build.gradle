@@ -70,6 +70,7 @@ dependencies {
     compile 'com.atlassian.commonmark:commonmark-ext-gfm-tables:0.10.0'
     compile 'com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20171016.1'
     compile 'org.owasp.encoder:encoder:1.2.1'
+    compile 'org.grails.plugins:external-config:1.1.2'
 
     // Grails Plugins.
     //compile 'org.grails:grails-plugin-filters:3.0.17'
