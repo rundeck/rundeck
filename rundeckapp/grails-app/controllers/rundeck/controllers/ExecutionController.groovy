@@ -619,13 +619,17 @@ class ExecutionController extends ControllerBase{
             log.error("Database acces failure, forced job interruption",ex)
             //force interrupt on database problem
             JobExecutionContext jexec = scheduledExecutionService.findExecutingQuartzJob(Long.valueOf(params.id))
-            def didCancel = scheduledExecutionService.interruptJob(
-                jexec.fireInstanceId,
-                jexec.getJobDetail().key.getName(),
-                jexec.getJobDetail().key.getGroup(),
-                true
-            )
             abortresult = new ExecutionService.AbortResult()
+            def didCancel = false
+            if(jexec){
+                didCancel = scheduledExecutionService.interruptJob(
+                    jexec.fireInstanceId,
+                    jexec.getJobDetail().key.getName(),
+                    jexec.getJobDetail().key.getGroup(),
+                    true
+                )
+            }
+
             abortresult.abortstate = didCancel?ExecutionService.ABORT_ABORTED:ExecutionService.ABORT_PENDING
         }
 
@@ -1705,33 +1709,53 @@ class ExecutionController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        def Execution e = Execution.get(params.id)
-        if(!apiService.requireExists(response,e,['Execution ID',params.id])){
-            return
-        }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
-        if(!apiService.requireAuthorized(
-                frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_KILL]),
+        ExecutionService.AbortResult abortresult
+        try {
+            def Execution e = Execution.get(params.id)
+            if (!apiService.requireExists(response, e, ['Execution ID', params.id])) {
+                return
+            }
+            AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, e.project)
+            if (!apiService.requireAuthorized(
+                frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_KILL]),
                 response,
-                [AuthConstants.ACTION_KILL, "Execution", params.id] as Object[])){
-            return
-        }
+                [AuthConstants.ACTION_KILL, "Execution", params.id] as Object[]
+            )) {
+                return
+            }
 
-        def ScheduledExecution se = e.scheduledExecution
-        def user=session.user
-        def killas=null
-        if (params.asUser && apiService.requireVersion(request,response,ApiRequestFilters.V5)) {
-            //authorized within service call
-            killas= params.asUser
-        }
-        ExecutionService.AbortResult abortresult = executionService.abortExecution(
+            def ScheduledExecution se = e.scheduledExecution
+            def user = session.user
+            def killas = null
+            if (params.asUser && apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
+                //authorized within service call
+                killas = params.asUser
+            }
+            abortresult = executionService.abortExecution(
                 se,
                 e,
                 user,
                 authContext,
                 killas,
                 params.forceIncomplete == 'true'
-        )
+            )
+        }catch (DataAccessResourceFailureException ex){
+            log.error("Database acces failure, forced job interruption",ex)
+            //force interrupt on database problem
+            JobExecutionContext jexec = scheduledExecutionService.findExecutingQuartzJob(Long.valueOf(params.id))
+            abortresult = new ExecutionService.AbortResult()
+            def didCancel = false
+            if(jexec){
+                didCancel = scheduledExecutionService.interruptJob(
+                    jexec.fireInstanceId,
+                    jexec.getJobDetail().key.getName(),
+                    jexec.getJobDetail().key.getGroup(),
+                    true
+                )
+            }
+
+            abortresult.abortstate = didCancel?ExecutionService.ABORT_ABORTED:ExecutionService.ABORT_PENDING
+        }
 
         def reportstate=[status: abortresult.abortstate]
         if(abortresult.reason){
