@@ -115,6 +115,50 @@
 
         </div>
 
+
+
+        <div class="form-group ${g.hasErrors(bean: task, field: 'triggerType', 'has-error')}">
+            <label for="description"
+                   class="required ${enc(attr: labelColClass)}">
+                <g:message code="task.trigger.display.title" />
+            </label>
+
+            <div class="${fieldColSize}">
+
+                <select name="triggerType" value="${task?.triggerType}"
+                        class="form-control"
+                        data-bind="value: taskEditor.trigger.provider">
+                    <g:if test="${!task?.triggerType}">
+                        <option value="" selected><g:message code="select.noselection.choose.label" /></option>
+                    </g:if>
+                    <g:each in="${triggerPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
+                            var="plugin">
+                        <option value="${plugin.name}" ${task?.triggerType == plugin.name ? 'selected' :
+                                ''}><stepplugin:message
+                                service="${org.rundeck.core.tasks.TaskPluginTypes.TaskTrigger}"
+                                name="${plugin.name}"
+                                code="plugin.title"
+                                default="${plugin.title ?: plugin.name}"/></option>
+                    </g:each>
+                </select>
+            </div>
+
+            <div class="${offsetColSize}">
+
+                <busy-spinner params="busy: taskEditor.trigger.loading, css: 'text-muted'"></busy-spinner>
+                <div id="condeditor">
+                </div>
+                <g:hasErrors bean="${task}" field="triggerType">
+
+                    <span class="text-warning">
+                        <g:renderErrors bean="${task}" as="list" field="triggerType"/>
+                    </span>
+
+                </g:hasErrors>
+            </div>
+
+        </div>
+
         <div class="form-group ${g.hasErrors(bean: task, field: 'conditionList', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
@@ -177,48 +221,6 @@
 
                     %{--</g:hasErrors>--}%
                 </div>
-            </div>
-
-        </div>
-
-        <div class="form-group ${g.hasErrors(bean: task, field: 'triggerType', 'has-error')}">
-            <label for="description"
-                   class="required ${enc(attr: labelColClass)}">
-                <g:message code="task.trigger.display.title" />
-            </label>
-
-            <div class="${fieldColSize}">
-
-                <select name="triggerType" value="${task?.triggerType}"
-                        class="form-control"
-                        data-bind="value: taskEditor.trigger.provider">
-                    <g:if test="${!task?.triggerType}">
-                        <option value="" selected><g:message code="select.noselection.choose.label" /></option>
-                    </g:if>
-                    <g:each in="${triggerPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
-                            var="plugin">
-                        <option value="${plugin.name}" ${task?.triggerType == plugin.name ? 'selected' :
-                                ''}><stepplugin:message
-                                service="${org.rundeck.core.tasks.TaskPluginTypes.TaskTrigger}"
-                                name="${plugin.name}"
-                                code="plugin.title"
-                                default="${plugin.title ?: plugin.name}"/></option>
-                    </g:each>
-                </select>
-            </div>
-
-            <div class="${offsetColSize}">
-
-                <busy-spinner params="busy: taskEditor.trigger.loading"></busy-spinner>
-                <div id="condeditor">
-                </div>
-                <g:hasErrors bean="${task}" field="triggerType">
-
-                    <span class="text-warning">
-                        <g:renderErrors bean="${task}" as="list" field="triggerType"/>
-                    </span>
-
-                </g:hasErrors>
             </div>
 
         </div>
