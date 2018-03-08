@@ -66,7 +66,6 @@ class BootStrap {
 
      def init = { ServletContext servletContext ->
          //setup profiler logging
-         println("Grails config -> \n${grailsApplication.config}")
 
          if(!(grailsApplication.config?.grails?.profiler?.disable) && grailsApplication.mainContext.profilerLog) {
              //re-enable log output for profiler info, which is disabled by miniprofiler
@@ -387,13 +386,12 @@ class BootStrap {
                  }
              } else {
                  log.debug("executionService.cleanupRunningJobs: starting asynchronously")
-                 println("VAI PASSAR............")
+
                  executionService.cleanupRunningJobsAsync(
                          clusterMode ? serverNodeUUID : null,
                          cleanupStatus,
                          new Date()
                  )
-                 println("PASSSOUUUU.........")
              }
 
              if (clusterMode && configurationService.getBoolean(
