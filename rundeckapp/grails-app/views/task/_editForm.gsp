@@ -209,7 +209,7 @@
 
                 <div class="${offsetColSize}">
 
-                    <busy-spinner params="busy: cond.loading"></busy-spinner>
+                    <busy-spinner params="busy: cond.loading, css: 'text-muted'"></busy-spinner>
 
                     <div data-bind="attr: {id: cond.formId }">
                     </div>
@@ -251,7 +251,7 @@
             </div>
 
             <div class="${offsetColSize}">
-                <busy-spinner params="busy: taskEditor.action.loading"></busy-spinner>
+                <busy-spinner params="busy: taskEditor.action.loading, css: 'text-muted'"></busy-spinner>
 
                 <div id="actionEditor">
                 </div>
