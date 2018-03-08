@@ -16,9 +16,10 @@
 
 package com.dtolabs.rundeck.server.plugins
 
-import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
+import com.dtolabs.rundeck.core.plugins.MultiPluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
@@ -41,42 +42,52 @@ public interface PluginRegistry {
      * @param name name of bean or provider
      * @param service provider service
      * @param configuration map of configuration data
+     * @param loader plugin loader
      * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
-     */
-    public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service, Map configuration);
-    /**
-     * Create and configure a plugin instance with the given bean or provider name, resolving properties via
-     * the framework and specified project properties as well as instance configuration.
-     * @param name name of bean or provider
-     * @param service provider service
-     * @param framework framework
-     * @param project project name or null
-     * @param instanceConfiguration configuration or null
-     * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
-     */
-    public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
-                                                     Framework framework,
-                                        String project, Map instanceConfiguration) ;
-    /**
-     * Create and configure a plugin instance with the given bean or provider name, resolving properties via
-     * the framework and specified project properties as well as instance configuration.
-     * @param name name of bean or provider
-     * @param service provider service
-     * @param framework framework
-     * @param project project name or null
-     * @param instanceConfiguration configuration or null
-     * @return
      */
     public <T> ConfiguredPlugin<T> configurePluginByName(
-            String name,
-            PluggableProviderService<T> service,
-            IPropertyLookup frameworkLookup,
-            IPropertyLookup projectLookup,
-            Map instanceConfiguration
-    )
+        String name,
+        PluggableProviderService<T> service,
+        Map configuration,
+        final MultiPluginProviderLoader loader
+    );
+    /**
+     * Create and configure a plugin instance with the given bean or provider name, resolving properties via
+     * the framework and specified project properties as well as instance configuration.
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param framework framework
+     * @param project project name or null
+     * @param instanceConfiguration configuration or null
+     * @param loader loader for plugins
+     * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
+     */
+    public <T> ConfiguredPlugin<T> configurePluginByName(
+        String name,
+        PluggableProviderService<T> service,
+        IFramework framework,
+        String project,
+        Map instanceConfiguration,
+        MultiPluginProviderLoader loader
+    );
 
-    public <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
-                                                         PropertyResolver resolver, PropertyScope defaultScope);
+    /**
+     * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
+     * default property scope
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @param loader plugin loader
+     * @return Map of [instance: plugin instance, configuration: resolved configuration properties]
+     */
+    public <T> ConfiguredPlugin<T> configurePluginByName(
+        String name,
+        PluggableProviderService<T> service,
+        PropertyResolver resolver,
+        PropertyScope defaultScope,
+        MultiPluginProviderLoader loader
+    );
     /**
      * Create and configure a plugin instance with the given bean or provider name using a property resolver and a
      * default property scope, retain the instance to prevent unloading it
@@ -132,8 +143,13 @@ public interface PluginRegistry {
      * @param instanceConfiguration config map
      * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
      */
-    ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Framework framework,
-                                    String project, Map instanceConfiguration);
+    ValidatedPlugin validatePluginByName(
+        String name,
+        PluggableProviderService service,
+        IFramework framework,
+        String project,
+        Map instanceConfiguration
+    );
 
     /**
      * Validate a provider for a service with an instance configuration

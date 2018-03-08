@@ -17,8 +17,10 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
+import com.dtolabs.rundeck.core.plugins.MultiPluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
 import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
@@ -27,7 +29,6 @@ import com.dtolabs.rundeck.core.plugins.ScriptPluginProvider
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.PluginRegistry
@@ -122,9 +123,14 @@ class PluginServiceTests extends GrailsUnitTestCase {
         Map extraConfiguration
         Map allConfiguration
 
+
         @Override
-        <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
-                                                     Map configuration) {
+        def <T> ConfiguredPlugin<T> configurePluginByName(
+            final String name,
+            final PluggableProviderService<T> service,
+            final Map configuration,
+            final MultiPluginProviderLoader loader
+        ) {
             cpbnMapCalled = true
             return new ConfiguredPlugin<T>(plugin, extraConfiguration)
         }
@@ -135,15 +141,26 @@ class PluginServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
-        <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
-        Framework framework, String project, Map instanceConfiguration) {
+        def <T> ConfiguredPlugin<T> configurePluginByName(
+            final String name,
+            final PluggableProviderService<T> service,
+            final IFramework framework,
+            final String project,
+            final Map instanceConfiguration,
+            final MultiPluginProviderLoader loader
+        ) {
             cpWithFrameworkCalled=true
             return new ConfiguredPlugin<T>( plugin,  extraConfiguration)
         }
 
         @Override
-        <T> ConfiguredPlugin<T> configurePluginByName(String name, PluggableProviderService<T> service,
-        PropertyResolver resolver, PropertyScope defaultScope) {
+        def <T> ConfiguredPlugin<T> configurePluginByName(
+            final String name,
+            final PluggableProviderService<T> service,
+            final PropertyResolver resolver,
+            final PropertyScope defaultScope,
+            final MultiPluginProviderLoader loader
+        ) {
             cpWithResolverCalled=true
             return new ConfiguredPlugin<T>( plugin,  extraConfiguration)
         }
@@ -162,17 +179,6 @@ class PluginServiceTests extends GrailsUnitTestCase {
             throw new IllegalArgumentException("test not implemented")
         }
 
-        @Override
-        def <T> ConfiguredPlugin<T> configurePluginByName(
-                final String name,
-                final PluggableProviderService<T> service,
-                final IPropertyLookup frameworkLookup,
-                final IPropertyLookup projectLookup,
-                final Map instanceConfiguration
-        )
-        {
-            return null
-        }
 
         @Override
         ValidatedPlugin validatePluginByName(String name, PluggableProviderService service,
@@ -188,7 +194,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
         }
 
         @Override
-        ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Framework framework, String project, Map instanceConfiguration) {
+        ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, IFramework framework, String project, Map instanceConfiguration) {
             validateWithFrameworkCalled=true
             return pluginValidation
         }
@@ -365,6 +371,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
     void testConfigurePluginWithFrameworkExists(){
         mockLogging(PluginService)
         def service = new PluginService()
+        service.frameworkService=new FrameworkService()
         def TestRegistry testReg = new TestRegistry()
         service.rundeckPluginRegistry = testReg
         def test = "Test configure"
@@ -381,6 +388,7 @@ class PluginServiceTests extends GrailsUnitTestCase {
     void testConfigurePluginWithFrameworkExistsInvalidConfiguration(){
         mockLogging(PluginService)
         def service = new PluginService()
+        service.frameworkService=new FrameworkService()
         def TestRegistry testReg = new TestRegistry()
         service.rundeckPluginRegistry = testReg
         def test = "Test configure"
