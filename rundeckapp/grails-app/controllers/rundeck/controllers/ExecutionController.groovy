@@ -1710,8 +1710,9 @@ class ExecutionController extends ControllerBase{
             return
         }
         ExecutionService.AbortResult abortresult
+        def Execution e
         try {
-            def Execution e = Execution.get(params.id)
+            e = Execution.get(params.id)
             if (!apiService.requireExists(response, e, ['Execution ID', params.id])) {
                 return
             }
@@ -1755,6 +1756,7 @@ class ExecutionController extends ControllerBase{
             }
 
             abortresult.abortstate = didCancel?ExecutionService.ABORT_ABORTED:ExecutionService.ABORT_PENDING
+            throw ex
         }
 
         def reportstate=[status: abortresult.abortstate]
