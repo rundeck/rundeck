@@ -248,12 +248,13 @@
                                 <div class="form-group">
                                     <g:each in="${trackingItems}" var="trackedItem">
                                         <g:set var="job" value="${trackedItem.jobId?jobMap[trackedItem.jobId]:null}"/>
+                                        <g:set var="jobst" value="${scmStatus?.get(job.extid)?.synchState?.toString()}"/>
+
                                         <div class="checkbox col-sm-12">
                                             <label title="${trackedItem.id}">
                                                 <g:checkBox name="chosenTrackedItem"
-                                                            value="${trackedItem.id}"
+                                                            value="${(jobst == 'DELETE_NEEDED')?trackedItem.jobId:trackedItem.id}"
                                                             checked="${selectedItems?.contains(trackedItem.id)||trackedItem.selected||(trackedItem.jobId && selected?.contains(trackedItem.jobId))}"/>
-
                                                 <g:if test="${job}">
 
                                                     <g:set var="jobstatus" value="${scmStatus?.get(job.extid)}"/>

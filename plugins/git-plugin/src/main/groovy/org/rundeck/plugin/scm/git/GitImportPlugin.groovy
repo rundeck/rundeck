@@ -146,6 +146,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     GitImportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //look for any unimported paths
+        trackedItemsSelected = config.shouldUseFilePattern()
         if (!trackedItemsSelected) {
             return null
         }
@@ -446,6 +447,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     List<Action> actionsAvailableForContext(ScmOperationContext context) {
         if (context.frameworkProject) {
             //project-level actions
+            trackedItemsSelected = config.shouldUseFilePattern()
             if (!trackedItemsSelected) {
                 return [actions[ACTION_INITIALIZE_TRACKING]]
             } else {
@@ -527,6 +529,19 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         } else if (actionId == ACTION_IMPORT_ALL) {
 
             List<ScmImportTrackedItem> found = []
+            //files to delete
+            jobStateMap?.each {job->
+                String status = job.getValue()?.get("synch")
+                if (status.equalsIgnoreCase('DELETE_NEEDED')){
+                    found << trackPath(
+                        job.getValue().get("path").toString(),
+                        true,
+                        job.key.toString()
+                    )
+                }
+            }
+
+
 
             //walk the repo files and look for possible candidates
             walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
