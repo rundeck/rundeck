@@ -32,7 +32,7 @@
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <asset:stylesheet href="rundeck.css"/>
     <!--[if lt IE 9]>
-    <g:javascript library="respond.min"/>
+    <asset:javascript src="respond.min.js"/>
     <![endif]-->
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="bootstrap.js"/>
