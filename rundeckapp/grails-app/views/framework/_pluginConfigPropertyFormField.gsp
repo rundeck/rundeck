@@ -293,7 +293,7 @@
                         <job-link params="id: value, project:project, action: toggle.toggle"></job-link>
                     </span>
                     <span data-bind="if: !value()" class="text-info">
-                        Select a Job
+                        <g:message code="plugin.property.displayType.RUNDECK_JOB.empty.message" />
                     </span>
                 </span>
                 <span class="textbtn textbtn-info" data-bind="click: toggle.toggle, visible: !toggle.value()">
