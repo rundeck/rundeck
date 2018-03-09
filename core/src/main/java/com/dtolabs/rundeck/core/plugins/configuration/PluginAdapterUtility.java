@@ -301,7 +301,7 @@ public class PluginAdapterUtility {
 
 
         String name = annotation.name();
-        if (null == name || "".equals(name)) {
+        if ("".equals(name)) {
             name = field.getName();
         }
         pbuild.name(name);
