@@ -18,7 +18,7 @@ if [ "-" == "$1" ] ; then
 fi
 apiurl="${url}/api"
 if [ -z "$RDAUTH" ] ; then
-    loginurl="${url}/j_security_check"
+    loginurl="${url}/user/j_security_check"
     
     # curl opts to use a cookie jar, and follow redirects, showing only errors
     CURLOPTS="-s -S -L -c $DIR/cookies -b $DIR/cookies"

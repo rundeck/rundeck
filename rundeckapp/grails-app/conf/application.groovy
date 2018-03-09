@@ -124,7 +124,8 @@ grails.plugin.springsecurity.filterChain.chainMap = [
 ]
 
 grails.plugin.springsecurity.filterChain.filterNames = [
-        'authFilter','securityContextPersistenceFilter', 'logoutFilter',
+        'securityContextPersistenceFilter', 'logoutFilter',
+        'rundeckPreauthFilter',
         'authenticationProcessingFilter', 'jaasApiIntegrationFilter',
         'securityContextHolderAwareRequestFilter',
         'rememberMeAuthenticationFilter', 'anonymousAuthenticationFilter',
@@ -135,9 +136,12 @@ grails.plugin.springsecurity.apf.filterProcessesUrl = "/user/j_security_check"
 grails.plugin.springsecurity.apf.usernameParameter = "j_username"
 grails.plugin.springsecurity.apf.passwordParameter = "j_password"
 grails.plugin.springsecurity.auth.loginFormUrl = "/user/login"
+grails.plugin.springsecurity.logout.filterProcessesUrl = '/user/logout'
+grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
 
 grails.plugin.springsecurity.providerNames = [
+        'preAuthenticatedAuthProvider',
         'jaasAuthProvider',
         'anonymousAuthenticationProvider',
         'rememberMeAuthenticationProvider']
