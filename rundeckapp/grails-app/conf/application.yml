@@ -20,7 +20,7 @@ info:
         version: '@info.app.version@'
         grailsVersion: '@info.app.grailsVersion@'
 build:
-    ident: 'REPLACE-ME'
+    ident: '@build.ident@'
 
 spring:
     main:
