@@ -20,74 +20,174 @@
 
 "use strict";
 
+class ProviderDescription {
+    constructor(data) {
+        this.service = ko.observable(data.service);
+        this.name = ko.observable(data.name);
+        this.title = ko.observable(data.title);
+    }
+}
+
+class ProviderDescriptionSet {
+
+    constructor(service, data) {
+        const self = this;
+        this.service = ko.observable(service);
+        this.providers = ko.observableArray(
+            data.map((plugin) => new ProviderDescription(Object.assign({service: service}, plugin)))
+        );
+        this.providerByName = (name) => ko.utils.arrayFirst(self.providers(), (provider) => provider.name() === name);
+    }
+}
+
+class PluginServices {
+    constructor(data) {
+        const self = this;
+        this.services = ko.observableArray(
+            data.map((service) => new ProviderDescriptionSet(service.name, service.providers))
+        );
+        this.serviceByName = (name) => ko.utils.arrayFirst(self.services(), (service) => service.service() === name);
+
+    }
+}
+
+/**
+ * Manages a single plugin's configuration editor
+ * @param data
+ * @constructor
+ */
 function PluginEditor(data) {
-    var self = this;
+    const self = this;
     self.service = ko.observable(data.service);
     self.provider = ko.observable(data.provider);
     self.config = ko.observable(data.config);
     self.uid = ko.observable(data.uid);
     self.loading = ko.observable(false);
+    self.mode = ko.observable('edit');
     self.formId = data.formId;
     self.formPrefixes = data.formPrefixes;
     self.inputFieldPrefix = data.inputFieldPrefix;
     self.postLoadEditor = data.postLoadEditor;
+    self.formDom = () => jQuery('#' + self.formId);
 
-    self.loadPluginEditView = function (service, name, params, data, report) {
-        return jQuery.ajax(
-            {
-                url: _genUrl(
-                    appLinks.pluginPropertiesForm,
-                    jQuery.extend({
-                            service: service,
-                            name: name
-                        },
-                        params
-                    )),
-                method: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({config: data, report: report}),
-                success: function () {
-                    self.config(null);
-                }
-            }
-        );
+    self.urls = {
+        edit    : appLinks.pluginPropertiesForm,
+        view    : appLinks.pluginPropertiesPreview,
+        validate: appLinks.pluginPropertiesValidateAjax,
     };
-    self.getConfigData = function () {
+
+    self.loadPluginView = (url, service, name, params, data, report) => jQuery.ajax(
+        {
+            url        : _genUrl(
+                url,
+                jQuery.extend(
+                    {
+                        service: service,
+                        name   : name
+                    },
+                    params
+                )
+            ),
+            method     : 'POST',
+            contentType: 'application/json',
+            data       : JSON.stringify({config: data, report: report}),
+
+        }
+    );
+
+
+    self.getFormData = () => jQueryFormData(self.formDom(), self.formPrefixes);
+    self.hasConfigData = () => self.config() && self.config().data;
+    self.getConfigData = () => {
         if (self.config() !== null) {
             return self.config().data ? self.config().config : {};
         } else {
             //serialize form data
-            return jQueryFormData(jQuery('#' + self.formId), self.formPrefixes);
+            return self.getFormData();
         }
     };
-    self.getConfigReport = function () {
+    self.getConfigReport = () => {
         if (self.config() !== null) {
             return self.config().data ? self.config().report : {};
         }
     };
-    self.loadActionSelect = function (val) {
-        if (!val) {
+
+    self.contentHtml = ko.observable();
+
+    self.setModeEdit = () => self.mode('edit');
+    self.isModeEdit = ko.pureComputed(() => self.mode() === 'edit');
+    self.setModeView = () => self.mode('view');
+    self.isModeView = ko.pureComputed(() => self.mode() === 'view');
+    self.modeToggle = () => self.mode(self.mode() === 'view' ? 'edit' : 'view');
+    self.loadModeView = (val) => {
+        if (!self.provider()) {
             return;
         }
         self.loading(true);
-        self.loadPluginEditView(self.service(), val, {inputFieldPrefix: self.inputFieldPrefix}, self.getConfigData(), self.getConfigReport()).success(function (data) {
-            var formDom = jQuery('#' + self.formId);
-            formDom.html(data).show();
-            //TODO: ko binding?
+        return self.loadPluginView(
+            self.urls[val],
+            self.service(),
+            self.provider(),
+            {inputFieldPrefix: self.inputFieldPrefix},
+            self.getConfigData(),
+            self.getConfigReport()
+        ).success(function (data) {
             self.loading(false);
-            if (typeof(self.postLoadEditor) === 'function') {
-                self.postLoadEditor(formDom);
-            }
+            self.contentHtml(data);
         });
     };
-    self.provider.subscribe(self.loadActionSelect);
-    self.init = function () {
-        self.loadActionSelect(self.provider());
+    self.save = () => {
+        //validate changes
+        let config = self.getFormData();
+        self.loadPluginView(
+            self.urls['validate'],
+            self.service(),
+            self.provider(),
+            {inputFieldPrefix: self.inputFieldPrefix},
+            config,
+            {}
+        ).success(function (json) {
+            if (json.valid) {
+                self.config({config, data: true, report: {}});
+                self.mode('view');
+            } else {
+                //reload with error data
+                self.config({config, data: true, report: json});
+                self.loadModeView('edit');
+            }
+        });
+
     };
+
+    self.contentHtml.subscribe((html) => {
+        self.formDom().html(html);
+        if (typeof(self.postLoadEditor) === 'function') {
+            self.postLoadEditor(self.formDom());
+        }
+    });
+
+    // self.provider.subscribe(self.loadActionSelect);
+    self.init = () => {
+        self.mode(self.hasConfigData() ? 'view' : 'edit');
+        self.mode.subscribe((mode) => {
+            self.loadModeView(mode);
+        });
+        self.provider.subscribe((val) => {
+            if (val && self.mode()) {
+                self.loadModeView(self.mode());
+            }
+        });
+        self.loadModeView(self.mode());
+    }
 }
 
+/**
+ * A single plugin configuration property
+ * @param data
+ * @constructor
+ */
 function PluginProperty(data) {
-    var self = this;
+    const self = this;
     self.project = ko.observable(data.project);
     self.name = ko.observable(data.name);
     self.service = ko.observable(data.service);
@@ -98,20 +198,88 @@ function PluginProperty(data) {
     self.idkey = ko.observable(data.idkey);
     self.util = ko.observable({});
     self.type = ko.observable(data.type);
-    self.renderingOptions = ko.observable(data.renderingOptions||{});
+    self.renderingOptions = ko.observable(data.renderingOptions || {});
 
-    self.getField = function () {
-        return jQuery('#' + self.fieldid());
-    };
+    self.getField = () => jQuery('#' + self.fieldid());
     self.value = ko.observable(data.value);
     self.toggle = new UIToggle({value: false});
-    self.getAssociatedProperty = function () {
-        var associated = self.renderingOptions()['associatedProperty'];
-        var idkey = self.idkey();
+    self.getAssociatedProperty = () => {
+        const associated = self.renderingOptions()['associatedProperty'];
+        const idkey = self.idkey();
         if (associated && idkey && typeof(PluginSet) === 'object' && typeof(PluginSet[idkey]) === 'object') {
             return PluginSet[idkey][associated];
-
         }
         return null;
     };
+}
+
+/**
+ * A list of plugins of the same service
+ */
+class PluginListEditor {
+    constructor(data) {
+        const self = this;
+        Object.assign(this, {
+            items         : ko.observableArray(),
+            privInc       : 0,
+            formPrefixes  : data.formPrefixes,
+            inputPrefix   : data.inputPrefix,
+            postLoadEditor: data.postLoadEditor,
+            service       : data.service,
+
+            init() {
+                ko.utils.arrayForEach(self.items(), function (d) {
+                    d.init()
+                });
+            },
+
+            createItem(id, type, config) {
+                return new PluginEditor({
+                                            uid             : `cond_${id}`,
+                                            service         : self.service,
+                                            provider        : type,
+                                            config          : config,
+                                            formId          : `form_${id}`,
+                                            formPrefixes    : self.formPrefixes.map((val) => `${val}entry[cond_${id}].`),
+                                            inputFieldPrefix: `${self.inputPrefix}entry[cond_${id}].`,
+                                            postLoadEditor  : self.postLoadEditor
+                                        });
+            },
+
+            addType(obj, evt) {
+                const id = (++self.privInc);
+                let data = jQuery(evt.target).data();
+                let type = data['pluginType'];
+                if (!type) {
+                    return;
+                }
+                const pluginEditor = self.createItem(id, type, {data: false, type: type, config: {}});
+                self.items.push(pluginEditor);
+                pluginEditor.init();
+            },
+
+            removeItem(item) {
+                self.items.splice(self.items.indexOf(item), 1);
+            }
+        });
+
+        if (data && data.data) {
+            let errors = data.errors;
+            data.list.forEach(function (val, n) {
+                let id = (++self.privInc);
+                let error = errors && errors.length > n ? errors[n] : null;
+                let pluginEditor = self.createItem(
+                    id,
+                    val.type,
+                    {
+                        config: val.config,
+                        data  : true,
+                        report: {errors: error}
+                    }
+                );
+                self.items.push(pluginEditor);
+            });
+
+        }
+    }
 }

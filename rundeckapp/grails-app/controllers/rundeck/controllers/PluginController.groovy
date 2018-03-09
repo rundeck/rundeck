@@ -5,7 +5,7 @@ import grails.converters.JSON
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.services.UiPluginService
 
-class PluginController {
+class PluginController extends ControllerBase {
     def UiPluginService uiPluginService
     def pluginService
 
@@ -125,6 +125,9 @@ class PluginController {
     }
 
     def pluginPropertiesForm(String service, String name) {
+        if (requireAjax(controller: 'menu', action: 'index')) {
+            return
+        }
         def describedPlugin = pluginService.getPluginDescriptor(name, service)
         def config = [:]
         def report = [:]
@@ -155,6 +158,7 @@ class PluginController {
 
         [
                 inputFieldPrefix       : params.inputFieldPrefix ?: '',
+
                 config                 : config,
                 report                 : report,
                 service                : service,
@@ -164,5 +168,27 @@ class PluginController {
                 pluginDescription      : describedPlugin.description,
                 project                : params.project
         ]
+    }
+
+    def pluginPropertiesPreview(String service, String name) {
+        pluginPropertiesForm(service, name)
+    }
+
+    def pluginPropertiesValidateAjax(String service, String name) {
+        if (requireAjax(controller: 'menu', action: 'index')) {
+            return
+        }
+        def describedPlugin = pluginService.getPluginDescriptor(name, service)
+        def config = [:]
+        if (request.method == 'POST' && request.format == 'json') {
+            config = request.JSON.config
+        }
+
+        def validation = pluginService.validatePluginConfig(service, name, config)
+
+        render(contentType: 'application/json') {
+            valid = validation.valid
+            delegate.errors = validation.report.errors
+        }
     }
 }

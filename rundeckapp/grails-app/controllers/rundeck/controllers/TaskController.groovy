@@ -59,8 +59,8 @@ class TaskController extends ControllerBase implements PluginListRequired {
 
         //TODO: auth
 
-        Map triggerMap = ParamsUtil.cleanMap(params.triggerConfig)
-        Map actionMap = ParamsUtil.cleanMap(params.actionConfig)
+        Map triggerMap = ParamsUtil.cleanMap(params.triggerConfig?.config)
+        Map actionMap = ParamsUtil.cleanMap(params.actionConfig?.config)
 
         List conditionList = ParamsUtil.parseMapList(params.conditionList)
         conditionList = conditionList?.collect {
@@ -131,8 +131,8 @@ class TaskController extends ControllerBase implements PluginListRequired {
         if (notFoundResponse(task, 'Task', input.id)) {
             return
         }
-        Map triggerMap = ParamsUtil.cleanMap(params.triggerConfig)
-        Map actionMap = ParamsUtil.cleanMap(params.actionConfig)
+        Map triggerMap = ParamsUtil.cleanMap(params.triggerConfig?.config)
+        Map actionMap = ParamsUtil.cleanMap(params.actionConfig?.config)
         List conditionList = ParamsUtil.parseMapList(params.conditionList)
         conditionList = conditionList?.collect {
             [config: ParamsUtil.cleanMap(it.config ?: [:]), type: it.type]

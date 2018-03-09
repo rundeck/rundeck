@@ -30,35 +30,32 @@
 
 <g:set var="definedConfig" value="${config}"/>
 <div data-plugin-name="${pluginName}" data-plugin-service="${service}" class="plugin-config">
-    <span class="text-info">
-        <g:render template="/scheduledExecution/description"
-                  model="[description: stepplugin.messageText(
-                          service: service,
-                          name: pluginName,
-                          code: 'plugin.description',
-                          default: pluginDescription.description
-                  ),
-                          textCss    : '',
-                          mode       : 'collapsed',
-                          moreText   : message(code: 'more.information'),
-                          rkey       : g.rkey()]"/>
-    </span>
+
+    <g:render template="/framework/renderPluginDesc" model="${[
+        serviceName    : service,
+        description    : pluginDescription,
+        showPluginIcon : true,
+        showNodeIcon   : showNodeIcon,
+        hideTitle      : hideTitle,
+        hideDescription: hideDescription,
+        fullDescription: fullDescription
+    ]}"/>
 
     <div>
 
         <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                service                : service,
-                provider               : pluginDescription.name,
-                properties             : pluginDescription?.properties,
-                dynamicProperties      : dynamicProperties,
-                dynamicPropertiesLabels: dynamicPropertiesLabels,
-                report                 : report,
-                prefix                 : prefix,
-                values                 : definedConfig,
-                fieldnamePrefix        : prefix,
-                origfieldnamePrefix    : 'orig.' + prefix,
-                allowedScope           : PropertyScope.Instance,
-                idkey                  : pluginkey
+            service                : service,
+            provider               : pluginDescription.name,
+            properties             : pluginDescription?.properties,
+            dynamicProperties      : dynamicProperties,
+            dynamicPropertiesLabels: dynamicPropertiesLabels,
+            report                 : report,
+            prefix                 : prefix,
+            values                 : definedConfig,
+            fieldnamePrefix        : "${prefix}config.",
+            origfieldnamePrefix    : "orig.${prefix}config.",
+            allowedScope           : PropertyScope.Instance,
+            idkey                  : pluginkey
         ]}"/>
 
     </div>

@@ -23,14 +23,48 @@
 <g:set var="fieldColShortSize" value="col-sm-4"/>
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
+<g:embedJSON data="${
+    actionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }.collect {
+        [name : it.name,
+         title: stepplugin.message(
+             service: org.rundeck.core.tasks.TaskPluginTypes.TaskAction,
+             name: it.name,
+             code: 'plugin.title',
+             default: it.title ?: it.name
+         )]
+    }
+}" id="actionPluginDescJson"/>
+<g:embedJSON data="${
+    triggerPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }.collect {
+        [name : it.name,
+         title: stepplugin.message(
+             service: org.rundeck.core.tasks.TaskPluginTypes.TaskTrigger,
+             name: it.name,
+             code: 'plugin.title',
+             default: it.title ?: it.name
+         )]
+    }
+}" id="triggerPluginDescJson"/>
+<g:embedJSON data="${
+    conditionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }.collect {
+        [name : it.name,
+         title: stepplugin.message(
+             service: org.rundeck.core.tasks.TaskPluginTypes.TaskCondition,
+             name: it.name,
+             code: 'plugin.title',
+             default: it.title ?: it.name
+         )]
+    }
+}" id="conditionPluginDescJson"/>
+%{--<g:embedJSON data="${}" id="pluginDescriptions"/>--}%
 <g:embedJSON
-    data="${task?.triggerConfig != null ? [data: true, config: task?.triggerConfig, report: [errors: validation?.
+    data="${task?.triggerConfig != null ? [data: true, type: task?.triggerType, config: task?.triggerConfig, report: [errors: validation?.
                 get('TaskTrigger')]] : [data: false]}"
     id="triggerConfigJson"/>
 <g:embedJSON
-        data="${task?.actionConfig != null ? [data: true, config: task?.actionConfig, report: [errors: validation?.
+    data="${task?.actionConfig != null ? [data: true, type: task?.actionType, config: task?.actionConfig, report: [errors: validation?.
                 get('TaskAction')]] : [data: false]}"
-        id="actionConfigJson"/>
+    id="actionConfigJson"/>
 
 <g:embedJSON
     data="${task?.conditionList != null ?
@@ -125,28 +159,38 @@
 
             <div class="${fieldColSize}">
 
-                <select name="triggerType" value="${task?.triggerType}"
+                <!-- ko if: !taskEditor.trigger.provider() -->
+                <select name="triggerType"
                         class="form-control"
-                        data-bind="value: taskEditor.trigger.provider">
-                    <g:if test="${!task?.triggerType}">
-                        <option value="" selected><g:message code="select.noselection.choose.label" /></option>
-                    </g:if>
-                    <g:each in="${triggerPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
-                            var="plugin">
-                        <option value="${plugin.name}" ${task?.triggerType == plugin.name ? 'selected' :
-                                ''}><stepplugin:message
-                                service="${org.rundeck.core.tasks.TaskPluginTypes.TaskTrigger}"
-                                name="${plugin.name}"
-                                code="plugin.title"
-                                default="${plugin.title ?: plugin.name}"/></option>
-                    </g:each>
+                        data-bind="value: taskEditor.trigger.provider,
+                        options: taskEditor.pluginServices.serviceByName('TaskTrigger').providers,
+                        optionsCaption: message('select.noselection.choose.label'),
+                        optionsText: 'title',
+                        optionsValue: 'name'">
                 </select>
-            </div>
+                <!-- /ko -->
 
-            <div class="${offsetColSize}">
+                <!-- ko if: taskEditor.trigger.provider() -->
+                <input type="hidden" name="triggerType" data-bind="value: taskEditor.trigger.provider">
+                <!-- /ko -->
 
-                <busy-spinner params="busy: taskEditor.trigger.loading, css: 'text-muted'"></busy-spinner>
-                <div id="condeditor">
+
+                <div>
+                    <busy-spinner params="busy: taskEditor.trigger.loading, css: 'text-muted'"></busy-spinner>
+
+                    <a href="#" class="btn btn-info-hollow btn-sm"
+                       data-bind="click: taskEditor.trigger.setModeEdit, visible: taskEditor.trigger.isModeView">
+                        <g:icon name="pencil"/>
+                        <g:message code="button.Edit.label"/>
+                    </a>
+
+                    <a href="#" class="btn btn-primary-hollow btn-sm"
+                       data-bind="click: taskEditor.trigger.save, visible: taskEditor.trigger.isModeEdit">
+                        <g:message code="button.action.Save"/>
+                    </a>
+                </div>
+
+                <div id="trigeditor">
                 </div>
                 <g:hasErrors bean="${task}" field="triggerType">
 
@@ -162,99 +206,131 @@
         <div class="form-group ${g.hasErrors(bean: task, field: 'conditionList', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
-                <g:message code="Task.domain.conditions.title" />
+                <g:message code="Task.domain.conditions.title"/>
             </label>
 
             <div class="${fieldColSize}">
-                <!-- Single button -->
-                <div class="btn-group">
-                    <button type="button" class="btn btn-sm btn-success-hollow dropdown-toggle"
-                            data-toggle="dropdown"
-                            aria-haspopup="true"
-                            aria-expanded="false">
-                        <g:icon name="plus"/>
-                        <g:message code="button.add.condition.title" />
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <g:each in="${conditionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
-                                var="plugin">
+
+                <div data-bind="foreach: {data: conditions.items, as: 'cond'}">
+
+                    <div>
+                        <input type="hidden"
+                               data-bind="attr: {name: $parent.conditions.inputPrefix+'_indexes' }, value: cond.uid"/>
+                        %{--<input type="hidden"--}%
+                        %{--data-bind="attr: {name: $parent.conditions.inputPrefix+'entry[' + cond.uid() + '].type' }, value: cond.provider"/>--}%
+
+                        <busy-spinner params="busy: cond.loading, css: 'text-muted'"></busy-spinner>
+                        <span data-bind="text: $index() + 1">
+
+                        </span>
+                        <span class="btn-group">
+                            <a href="#" class="btn btn-sm btn-danger-hollow"
+                               data-bind="click: $parent.conditions.removeItem">
+                                <g:icon name="remove"/>
+                                <g:message code="button.remove.title"/>
+
+                            </a>
+
+                            <!-- ko if: cond.mode()==='view' -->
+                            <a href="#" class="btn btn-info-hollow btn-sm"
+                               data-bind="click: cond.setModeEdit">
+                                <g:icon name="pencil"/>
+                                <g:message code="button.Edit.label"/>
+                            </a>
+                            <!-- /ko -->
+
+                            <!-- ko if: cond.mode()==='edit' -->
+
+                            <a href="#" class="btn btn-primary-hollow btn-sm"
+                               data-bind="click: cond.save">
+                                <g:message code="button.action.Save"/>
+                            </a>
+                            <!-- /ko -->
+                        </span>
+                    </div>
+
+                    <div>
+
+                        <div data-bind="attr: {id: cond.formId }">
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-sm btn-success-hollow dropdown-toggle"
+                                data-toggle="dropdown"
+                                aria-haspopup="true"
+                                aria-expanded="false">
+                            <g:icon name="plus"/>
+                            <g:message code="button.add.condition.title"/>
+                            <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu"
+                            data-bind="foreach: {data:taskEditor.pluginServices.serviceByName('TaskCondition').providers, as: 'provider'}">
                             <li>
-                                <a href="#" data-bind="click: addConditionType" data-plugin-type="${plugin.name}">
-                                    <stepplugin:message
-                                        service="${org.rundeck.core.tasks.TaskPluginTypes.TaskCondition}"
-                                        name="${plugin.name}"
-                                        code="plugin.title"
-                                        default="${plugin.title ?: plugin.name}"/>
+                                <a href="#"
+                                   data-bind="click: $root.conditions.addType,
+                                        attr:{'data-plugin-type': provider.name},
+                                        text: provider.title">
+
                                 </a>
                             </li>
-
-                        </g:each>
-                    </ul>
-                </div>
-
-            </div>
-
-            <div data-bind="foreach: {data: conditions, as: 'cond'}">
-
-                <div class="${offsetColSize}">
-                    <input type="hidden"
-                           data-bind="attr: {name: $root.conditionInputPrefix+'_indexes' }, value: cond.uid"/>
-                    <input type="hidden"
-                           data-bind="attr: {name: $root.conditionInputPrefix+'entry[' + cond.uid() + '].type' }, value: cond.provider"/>
-                    <a href="#" class="btn btn-sm btn-danger-hollow" data-bind="click: $parent.removeCondition">
-                        <g:message code="button.remove.title" />
-                    </a>
-                </div>
-
-                <div class="${offsetColSize}">
-
-                    <busy-spinner params="busy: cond.loading, css: 'text-muted'"></busy-spinner>
-
-                    <div data-bind="attr: {id: cond.formId }">
+                        </ul>
                     </div>
-                    %{--<g:hasErrors bean="${task}" field="triggerType">--}%
 
-                    %{--<span class="text-warning">--}%
-                    %{--<g:renderErrors bean="${task}" as="list" field="triggerType"/>--}%
-                    %{--</span>--}%
-
-                    %{--</g:hasErrors>--}%
                 </div>
             </div>
 
         </div>
 
         <div class="form-group ${g.hasErrors(bean: task, field: 'actionType', 'has-error')}">
-            <label for="description"
-                   class="required ${enc(attr: labelColClass)}">
-                <g:message code="task.action.display.title" />
-            </label>
+            <div class=" ${enc(attr: labelColClass)}">
+                <label  class="required " data-bind="visible: taskEditor.action.isModeEdit">
+                    <g:message code="task.action.display.title" />
+                </label>
+                <a href="#" class="btn btn-info-hollow btn-sm"
+                   data-bind="click: taskEditor.action.setModeEdit, visible: taskEditor.action.isModeView">
+                    <g:icon name="pencil"/>
+                    <g:message code="task.action.display.title" />
+                </a>
+            </div>
 
             <div class="${fieldColSize}">
 
-                <select name="actionType" value="${task?.actionType}" class="form-control" id="actionTypeSelect"
-                        data-bind="value: taskEditor.action.provider">
-                    <g:if test="${!task?.actionType}">
-                        <option value="" selected><g:message code="select.noselection.choose.label" /></option>
-                    </g:if>
-                    <g:each in="${actionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
-                            var="plugin">
-                        <option value="${plugin.name}" ${task?.actionType == plugin.name ? 'selected' :
-                                ''}><stepplugin:message
-                                service="${org.rundeck.core.tasks.TaskPluginTypes.TaskAction}"
-                                name="${plugin.name}"
-                                code="plugin.title"
-                                default="${plugin.title ?: plugin.name}"/></option>
-                    </g:each>
+                <!-- ko if: !taskEditor.action.provider() -->
+                <select name="actionType"
+                        class="form-control"
+                        data-bind="value: taskEditor.action.provider,
+                        options: taskEditor.pluginServices.serviceByName('TaskAction').providers,
+                        optionsCaption: message('select.noselection.choose.label'),
+                        optionsText: 'title',
+                        optionsValue: 'name'">
                 </select>
-            </div>
+                <!-- /ko -->
 
-            <div class="${offsetColSize}">
-                <busy-spinner params="busy: taskEditor.action.loading, css: 'text-muted'"></busy-spinner>
+                <!-- ko if: taskEditor.action.provider() -->
+                <input type="hidden" name="actionType" data-bind="value: taskEditor.action.provider">
 
-                <div id="actionEditor">
+
+                <div data-bind="css: { 'panel panel-default': taskEditor.action.isModeEdit }">
+
+
+                    <div  data-bind="attr: {id: taskEditor.action.formId }, css: { 'panel-body': taskEditor.action.isModeEdit }">
+                    </div>
+
+                    <div data-bind="visible: taskEditor.action.isModeEdit" class="panel-footer">
+
+                        <a href="#" class="btn btn-primary btn-sm"
+                           data-bind="click: taskEditor.action.save">
+                            <g:message code="button.action.Save"/>
+                        </a>
+                        <busy-spinner params="busy: taskEditor.action.loading, css: 'text-muted'"></busy-spinner>
+                    </div>
                 </div>
+                <!-- /ko -->
+
                 <g:hasErrors bean="${task}" field="actionType">
 
                     <span class="text-warning">
