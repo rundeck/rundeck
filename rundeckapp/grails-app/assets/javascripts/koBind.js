@@ -39,7 +39,7 @@ function initKoBind(sel, mapping) {
             }
             ko.applyBindings(obj, el);
         } else if (/^[a-z]/.match(controller) && mapping && typeof(mapping[controller]) === 'object' || typeof(window[controller]) === 'object') {
-            ko.applyBindings(mapping[controller] || window[controller], el);
+            ko.applyBindings(mapping && mapping[controller] || window[controller], el);
         }
     })
 }
