@@ -17,9 +17,9 @@ package rundeck.interceptors
  */
 
 class InterceptorHelper {
-    public static final String STATIC_ASSETS = ["static","assets","feed"]
+    public static final List<String> STATIC_ASSETS = ["static","assets","feed"]
 
-    public static matchesStaticAssets(String controllerName) {
+    static matchesStaticAssets(String controllerName) {
         return STATIC_ASSETS.contains(controllerName)
     }
 }
