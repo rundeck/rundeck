@@ -29,7 +29,10 @@ import java.time.ZonedDateTime
  * Defines a timeZone field
  */
 trait TimeZonePropertyTrait {
-    @PluginProperty(title = "Time Zone", description = "Time Zone to use for schedule")
+    @PluginProperty(
+        title = "Time Zone",
+        description = "Time Zone to use for schedule",
+        name = 'timeZone')
     @DynamicSelectValues(generatorClass = TimeZonePropertyTrait.TimeZoneGenerator)
     @SelectValues(freeSelect = true, values = [])
     String timeZone
