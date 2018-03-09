@@ -1,3 +1,5 @@
+def rundeckAppName = "rundeck"
+
 hibernate {
     cache.queries = true
     cache.use_second_level_cache = true
@@ -32,9 +34,18 @@ environments {
         grails.profiler.disable=false
         feature.incubator.'*'=true
         rundeck.feature.'*'.enabled=true
+        dataSource {
+            dbCreate = "create-drop" // one of 'create', 'create-drop','update'
+            url = "jdbc:h2:file:./db/devDb"
+        }
+
     }
     test {
         grails.profiler.disable=true
+        dataSource {
+            dbCreate = "update"
+            url = "jdbc:h2:file:./db/testDb"
+        }
     }
     production {
         dataSource {
@@ -74,10 +85,10 @@ grails.config.locations = [
 if(environment=="development"){
     grails.config.locations << "file:${userHome}/.grails/${appName}-config.properties"
 }
-if(System.properties["${appName}.config.location"]) {
-    grails.config.locations << "file:" + System.properties["${appName}.config.location"]
+if(System.properties["${rundeckAppName}.config.location"]) {
+    grails.config.locations << "file:" + System.properties["${rundeckAppName}.config.location"]
 }else{
-    grails.config.locations << "classpath:${appName}-config.properties"
+    grails.config.locations << "classpath:${rundeckAppName}-config.properties"
 }
 
 grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"

@@ -130,7 +130,8 @@ dependencies {
 
 bootRun {
     jvmArgs('-Dspring.output.ansi.enabled=always')
-    systemProperties = System.properties
+    systemProperties(System.properties)
+    systemProperty "build.ident", project.version
     addResources = true
 }
 
@@ -155,4 +156,20 @@ assets {
 
 artifacts {
     war war
+}
+
+buildProperties.doLast {
+    File grailsBuildInfoFile = it.outputs.files.files.find { it.name == 'grails.build.info' }
+    if (!grailsBuildInfoFile) return
+    Properties properties = new Properties()
+
+    grailsBuildInfoFile.withInputStream {
+        properties.load(it)
+    }
+
+    properties.setProperty("build.ident",properties.getProperty("info.app.version"))
+
+    grailsBuildInfoFile.withOutputStream {
+        properties.store(it,null)
+    }
 }

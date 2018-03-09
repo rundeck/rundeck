@@ -71,13 +71,13 @@ import javax.security.auth.login.Configuration
 
 beans={
     xmlns context: "http://www.springframework.org/schema/context"
-    if (Environment.PRODUCTION == Environment.current) {
+//    if (Environment.PRODUCTION == Environment.current) {
 //        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
 //            targetClass = "org.springframework.util.Log4jConfigurer"
 //            targetMethod = "initLogging"
 //            arguments = ["classpath:log4j.properties"]
 //        }
-    }
+//    }
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'
         services=[grailsApplication: ref('grailsApplication'),
@@ -98,6 +98,19 @@ beans={
         System.err.println("rdeck.base was not defined in application config or as a system property")
         return
     }
+
+    if (Environment.PRODUCTION == Environment.current) {
+        def cfgRundeckLogDir = application.config.rundeck?.log?.dir
+        if(cfgRundeckLogDir) { System.setProperty("rundeck.log.dir", cfgRundeckLogDir )}
+        String log4jPropFile = application.config.rundeck.log4j.config.file ?: "classpath:log4j.properties"
+        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
+            targetClass = "org.springframework.util.Log4jConfigurer"
+            targetMethod = "initLogging"
+            arguments = [log4jPropFile]
+        }
+    }
+
+
     def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${rdeckBase}/libext"
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
