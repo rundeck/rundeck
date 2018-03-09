@@ -136,7 +136,7 @@
                 <g:textField name="${fieldname}"
                              value="${inputValues && null != inputValues[prop.name] ? inputValues[prop.name] :
                                       prop.defaultValue}"
-                             id="${fieldid}" size="100" class="${formControlType}${extraInputCss}"/>
+                             id="${fieldid}" size="100" class="${formControlType}${extraInputCss?:''}"/>
             </div>
 
             <div class="${valueColTypeSplitB}">
@@ -329,7 +329,7 @@
             <g:else>
                 <g:textField name="${fieldname}" value="${valueText}"
                              data-bind="value: value"
-                             id="${fieldid}" size="100" class="${formControlType}${extraInputCss}"/>
+                             id="${fieldid}" size="100" class="${formControlType}${extraInputCss?:''}"/>
             </g:else>
         </div>
 
