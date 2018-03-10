@@ -29,7 +29,6 @@ class TaskEditor {
                 data.conditionData
             )
         );
-        self.pluginServices = new PluginServices(data.pluginServices);
 
         self.trigger = new PluginEditor(
             {

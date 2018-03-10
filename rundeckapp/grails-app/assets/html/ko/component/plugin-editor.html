@@ -1,0 +1,53 @@
+<!--
+  ~ Copyright 2018 Rundeck, Inc. (http://rundeck.com)
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+
+<!-- ko if: !editor.provider() -->
+<select
+    class="form-control"
+    data-bind="
+        attr: {name: typeField },
+        value: editor.provider,
+        options: pluginServices.serviceByName(service).providers,
+        optionsCaption: message('select.noselection.choose.label'),
+        optionsText: 'title',
+        optionsValue: 'name'
+">
+</select>
+<!-- /ko -->
+
+<!-- ko if: editor.provider() -->
+<input type="hidden" data-bind="value: editor.provider, attr: { name: typeField } ">
+
+
+<div data-bind="css: { 'panel panel-default': editor.isModeEdit }">
+
+
+    <div data-bind="attr: {id: editor.formId }, css: { 'panel-body': editor.isModeEdit }">
+    </div>
+
+    <div data-bind="visible: editor.isModeEdit" class="panel-footer">
+
+        <a href="#" class="btn btn-danger btn-sm" data-bind="click: editor.delete">
+            %%button.action.Delete%%
+        </a>
+        <a href="#" class="btn btn-success btn-sm" data-bind="click: editor.save">
+            %%button.action.Save%%
+        </a>
+        <busy-spinner params="busy: editor.loading, css: 'text-muted'"></busy-spinner>
+    </div>
+</div>
+<!-- /ko -->

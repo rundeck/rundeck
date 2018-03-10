@@ -68,6 +68,7 @@ function PluginEditor(data) {
     self.formPrefixes = data.formPrefixes;
     self.inputFieldPrefix = data.inputFieldPrefix;
     self.postLoadEditor = data.postLoadEditor;
+    self.deleteCallback = data.deleteCallback;
     self.formDom = () => jQuery('#' + self.formId);
 
     self.urls = {
@@ -156,7 +157,15 @@ function PluginEditor(data) {
                 self.loadModeView('edit');
             }
         });
-
+    };
+    self.delete = () => {
+        self.provider(null);
+        self.config(null);
+        self.mode('edit');
+        self.formDom().html(null);
+        if (self.deleteCallback) {
+            self.deleteCallback(self);
+        }
     };
 
     self.contentHtml.subscribe((html) => {
@@ -219,49 +228,54 @@ function PluginProperty(data) {
 class PluginListEditor {
     constructor(data) {
         const self = this;
-        Object.assign(this, {
-            items         : ko.observableArray(),
-            privInc       : 0,
-            formPrefixes  : data.formPrefixes,
-            inputPrefix   : data.inputPrefix,
-            postLoadEditor: data.postLoadEditor,
-            service       : data.service,
+        Object.assign(
+            this,
+            {
+                items         : ko.observableArray(),
+                privInc       : 0,
+                formPrefixes  : data.formPrefixes,
+                inputPrefix   : data.inputPrefix,
+                postLoadEditor: data.postLoadEditor,
+                service       : data.service,
 
-            init() {
-                ko.utils.arrayForEach(self.items(), function (d) {
-                    d.init()
-                });
-            },
+                init() {
+                    ko.utils.arrayForEach(self.items(), function (d) {
+                        d.init()
+                    });
+                },
 
-            createItem(id, type, config) {
-                return new PluginEditor({
-                                            uid             : `cond_${id}`,
-                                            service         : self.service,
-                                            provider        : type,
-                                            config          : config,
-                                            formId          : `form_${id}`,
-                                            formPrefixes    : self.formPrefixes.map((val) => `${val}entry[cond_${id}].`),
-                                            inputFieldPrefix: `${self.inputPrefix}entry[cond_${id}].`,
-                                            postLoadEditor  : self.postLoadEditor
-                                        });
-            },
+                createItem(id, type, config) {
+                    return new PluginEditor(
+                        {
+                            uid             : `cond_${id}`,
+                            service         : self.service,
+                            provider        : type,
+                            config          : config,
+                            formId          : `form_${id}`,
+                            formPrefixes    : self.formPrefixes.map((val) => `${val}entry[cond_${id}].config.`),
+                            inputFieldPrefix: `${self.inputPrefix}entry[cond_${id}].`,
+                            postLoadEditor  : self.postLoadEditor,
+                            deleteCallback  : self.removeItem
+                        });
+                },
 
-            addType(obj, evt) {
-                const id = (++self.privInc);
-                let data = jQuery(evt.target).data();
-                let type = data['pluginType'];
-                if (!type) {
-                    return;
+                addType(obj, evt) {
+                    const id = (++self.privInc);
+                    let data = jQuery(evt.target).data();
+                    let type = data['pluginType'];
+                    if (!type) {
+                        return;
+                    }
+                    const pluginEditor = self.createItem(id, type, {data: false, type: type, config: {}});
+                    self.items.push(pluginEditor);
+                    pluginEditor.init();
+                },
+
+                removeItem(item) {
+                    self.items.splice(self.items.indexOf(item), 1);
                 }
-                const pluginEditor = self.createItem(id, type, {data: false, type: type, config: {}});
-                self.items.push(pluginEditor);
-                pluginEditor.init();
-            },
-
-            removeItem(item) {
-                self.items.splice(self.items.indexOf(item), 1);
             }
-        });
+        );
 
         if (data && data.data) {
             let errors = data.errors;
