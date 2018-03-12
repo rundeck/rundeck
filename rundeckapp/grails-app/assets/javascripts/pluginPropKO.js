@@ -64,6 +64,7 @@ function PluginEditor(data) {
     self.uid = ko.observable(data.uid);
     self.loading = ko.observable(false);
     self.mode = ko.observable('edit');
+    self.validationErrors = ko.observable(false);
     self.formId = data.formId;
     self.formPrefixes = data.formPrefixes;
     self.inputFieldPrefix = data.inputFieldPrefix;
@@ -149,9 +150,11 @@ function PluginEditor(data) {
             {}
         ).success(function (json) {
             if (json.valid) {
+                self.validationErrors(false);
                 self.config({config, data: true, report: {}});
                 self.mode('view');
             } else {
+                self.validationErrors(true);
                 //reload with error data
                 self.config({config, data: true, report: json});
                 self.loadModeView('edit');

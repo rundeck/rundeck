@@ -426,7 +426,15 @@
                                        ), textCss         : '',
                                                mode       : 'collapsed', rkey: g.rkey()]"/></div>
     <g:if test="${error}">
-        <div class="text-warning"><g:enc>${error}</g:enc></div>
+        <g:if test="${error=='required'}">
+            <div class="text-warning">
+                <g:icon name="warning-sign"/>
+                <g:message code="form.validation.required.message" />
+            </div>
+        </g:if>
+        <g:else>
+            <div class="text-warning"><g:enc>${error}</g:enc></div>
+        </g:else>
     </g:if>
     <g:if test="${outofscope}">
         <g:render template="/framework/pluginConfigPropertyScopeInfo" model="[prefix:prefix,specialConfiguration:specialConfiguration,propScope:propScope,mapping:mapping, frameworkMapping: frameworkMapping, hideMissingFrameworkMapping: hideMissingFrameworkMapping]"/>

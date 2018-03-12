@@ -48,6 +48,12 @@
             %%button.action.Save%%
         </a>
         <busy-spinner params="busy: editor.loading, css: 'text-muted'"></busy-spinner>
+        <!-- ko if: editor.validationErrors -->
+        <span class="text-warning">
+            <i class="glyphicon glyphicon-alert"></i>
+            %%form.validation.failure.description%%
+        </span>
+        <!-- /ko -->
     </div>
 </div>
 <!-- /ko -->
