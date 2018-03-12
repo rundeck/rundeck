@@ -199,12 +199,12 @@
 
                 <div class=" ${enc(attr: labelColClass)}">
                     <label class="required " data-bind="visible: cond.isModeEdit">
-                        Condition <span data-bind="text: $index() + 1"></span>
+                        <span data-bind="messageTemplate: $index() + 1"><g:message code="Task.domain.conditions.label.condition.0"/></span>
                     </label>
                     <a href="#" class="btn btn-info-hollow btn-sm"
                        data-bind="click: cond.setModeEdit, visible: cond.isModeView">
                         <g:icon name="pencil"/>
-                        Condition <span data-bind="text: $index() + 1"></span>
+                        <span data-bind="messageTemplate: $index() + 1"><g:message code="Task.domain.conditions.label.condition.0"/></span>
                     </a>
                 </div>
 
