@@ -213,8 +213,6 @@
                     <div>
                         <input type="hidden"
                                data-bind="attr: {name: $parent.conditions.inputPrefix+'_indexes' }, value: cond.uid"/>
-                        %{--<input type="hidden"--}%
-                        %{--data-bind="attr: {name: $parent.conditions.inputPrefix+'entry[' + cond.uid() + '].type' }, value: cond.provider"/>--}%
 
                         <busy-spinner params="busy: cond.loading, css: 'text-muted'"></busy-spinner>
 
