@@ -59,6 +59,7 @@ class FrameworkService implements ApplicationContextAware {
     def metricService
     def Framework rundeckFramework
     def rundeckPluginRegistry
+    def PluginControlService pluginControlService
 
     def getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath;
@@ -639,6 +640,13 @@ class FrameworkService implements ApplicationContextAware {
             initialize()
         }
         return rundeckFramework;
+    }
+
+    def PluginControlService getPluginControlService(String project) {
+        if(!pluginControlService){
+            pluginControlService = PluginControlServiceImpl.forProject(getRundeckFramework(), project)
+        }
+        return pluginControlService
     }
 
     public UserAndRolesAuthContext getAuthContextForSubject(Subject subject) {
