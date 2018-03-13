@@ -54,6 +54,7 @@ public class Option implements Comparable{
     SortedSet<String> values
     static hasMany = [values:String]
     URL valuesUrl
+    String label
     /**
      * supercedes valuesUrl and allows longer values. 
      */
@@ -93,6 +94,7 @@ public class Option implements Comparable{
         optionType(nullable: true, maxSize: 255)
         configData(nullable: true)
         multivalueAllSelected(nullable: true)
+        label(nullable: true)
     }
 
 
@@ -155,6 +157,9 @@ public class Option implements Comparable{
             map.isDate=isDate
             map.dateFormat=dateFormat
         }
+        if(label){
+            map.label = label
+        }
         if(description){
             map.description=description
         }
@@ -192,6 +197,9 @@ public class Option implements Comparable{
     public static Option fromMap(String name,Map data){
         Option opt = new Option()
         opt.name=name
+        if(data.label){
+            opt.label=data.label
+        }
         opt.enforced=data.enforced?true:false
         opt.required=data.required?true:false
         opt.isDate=data.isDate?true:false
@@ -329,7 +337,7 @@ public class Option implements Comparable{
         Option opt = new Option()
         ['name', 'description', 'defaultValue', 'defaultStoragePath', 'sortIndex', 'enforced', 'required', 'isDate',
          'dateFormat', 'values', 'valuesList', 'valuesUrl', 'valuesUrlLong', 'regex', 'multivalued',
-         'multivalueAllSelected',
+         'multivalueAllSelected', 'label',
          'delimiter',
          'secureInput', 'secureExposed', 'optionType', 'configData'].
                 each { k ->

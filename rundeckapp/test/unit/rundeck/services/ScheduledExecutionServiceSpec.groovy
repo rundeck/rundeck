@@ -2755,4 +2755,40 @@ class ScheduledExecutionServiceSpec extends Specification {
         results.scheduledExecution.nodeThreadcountDynamic=="\${option.threadcount}"
     }
 
+    def "do update job options with label field"(){
+        given:
+        setupDoUpdate()
+
+        def se = new ScheduledExecution(createJobParams(options:[
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
+        ])).save()
+        def newJob = new ScheduledExecution(createJobParams(
+                options: input
+        ))
+        service.fileUploadService = Mock(FileUploadService)
+
+        when:
+        def results = service._doupdateJob(se.id,newJob, mockAuth())
+
+
+        then:
+        results.success
+
+        results.scheduledExecution.options?.size() == input?.size()
+
+        for(def i=0;i<input?.size();i++){
+            for(def prop:['name','label']){
+                results.scheduledExecution.options[0]."$prop"==input[i]."$prop"
+            }
+        }
+
+        where:
+        input|_
+        [new Option(name: 'test1', label: 'label1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"),
+         new Option(name: 'test3', label: 'label2', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd']),
+        ] |  _
+        null |  _
+
+    }
 }

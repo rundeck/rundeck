@@ -35,6 +35,7 @@ used by _editOptions.gsp template
                                   (optionordering ?: optsmap.keySet().sort()).collect {
                                       def optionSelect = optsmap[it].selopt
                                       def optName = optionSelect.name
+                                      def optLabel = optionSelect.label
                                       def selectedMultiValues = null
                                       if (selectedoptsmap && selectedoptsmap[optName] &&
                                               optionSelect.multivalued &&
@@ -51,6 +52,7 @@ used by _editOptions.gsp template
                                       }
                                       return [
                                               name               : optName,
+                                              label              : optLabel?:optName,
                                               required           : optionSelect.required,
                                               description        : optionSelect.description,
                                               descriptionHtml    : optionSelect.description?.decodeMarkdown(),
@@ -114,7 +116,7 @@ data for configuring remote option cascading/dependencies
                     <span data-bind="text: name"></span>
                 </span>
                 <span data-bind="if: !hasRemote()">
-                    <span data-bind="text: name"></span>
+                    <span data-bind="text: label"></span>
                 </span>
             </label>
 
