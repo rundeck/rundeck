@@ -105,8 +105,7 @@ class ImportJobs extends BaseAction implements GitImportAction {
                     success = false
                     sb << ("Failed deleting job with id: ${path}: " + importResult.errorMessage)
                 } else {
-                    plugin.importTracker.trackJobAtPath(importResult.job,walk.getPathString())
-                    sb << ("Succeeded deleting job with id ${path}: ${importResult}")
+                    sb << ("Succeeded deleting job with id ${path}")
                 }
             }
         }
