@@ -532,7 +532,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             //files to delete
             jobStateMap?.each {job->
                 String status = job.getValue()?.get("synch")
-                if (status.equalsIgnoreCase('DELETE_NEEDED')){
+                if (status?.equalsIgnoreCase('DELETE_NEEDED')){
                     found << trackPath(
                         job.getValue().get("path").toString(),
                         true,

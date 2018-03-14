@@ -1424,4 +1424,76 @@ class GitExportPluginSpec extends Specification {
         theEventType                                    | _
         JobChangeEvent.JobChangeEventType.MODIFY_RENAME | _
     }
+
+    def "get job status, does not exist in repo, respect serialize true"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior:  'remove'])
+
+        //create a git dir
+        def git = createGit(origindir)
+
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobExportReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        when:
+        def status = plugin.getJobStatus(jobref, null, true)
+
+        then:
+        status != null
+        status.synchState == SynchState.CREATE_NEEDED
+        status.commit == null
+        1 * serializer.serialize('xml', _, (false), null) >> { args ->
+            args[1].write('data'.bytes)
+        }
+        0 * serializer.serialize(*_)
+
+    }
+
+    def "get job status, does not exist in repo, respect serialize false"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior:  'remove'])
+
+        //create a git dir
+        def git = createGit(origindir)
+
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobExportReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        when:
+        def status = plugin.getJobStatus(jobref, null, false)
+
+        then:
+        status != null
+        status.synchState == SynchState.CREATE_NEEDED
+        status.commit == null
+        0 * serializer.serialize('xml', _, (false), null) >> { args ->
+            args[1].write('data'.bytes)
+        }
+        0 * serializer.serialize(*_)
+
+    }
 }
