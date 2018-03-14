@@ -23,11 +23,16 @@
 <g:set var="propkey" value="${g.rkey()}"/>
 
 <g:embedJSON id="${propkey}_json" data="${[
-        service : service,
-        provider: provider,
-        name    : prop.name,
-        value   : values[prop.name],
-        project : project ?: params.project ?: request.project
+    service              : service,
+    provider             : provider,
+    name                 : prop.name,
+    value                : values[prop.name],
+    type                 : prop.type.toString(),
+    project              : project ?: params.project ?: request.project,
+    renderingOptions     : prop.renderingOptions,
+    hasEmbeddedType      : prop.embeddedType != null,
+    hasEmbeddedPluginType: prop.embeddedPluginType != null,
+    previewMode          : true
 
 ]}"/>
 <g:javascript>"use strict";
@@ -38,8 +43,9 @@
         }
         var json=loadJsonData('${propkey}_json');
         var prop = new PluginProperty(json);
-        ko.applyBindings(prop,jQuery('#${propkey}')[0]);
         PluginProperties['${propkey}']=prop;
+%{--ko.applyBindings(prop,jQuery('#${propkey}')[0]);--}%
+    initKoBind('#${propkey}',{pluginProperty:prop});
     })
 </g:javascript>
 <span id="${propkey}">
@@ -123,6 +129,17 @@
 
         </span>
 
+    </g:elseif>
+    <g:elseif test="${prop.type.toString() == 'Embedded'}">
+        <g:if test="${prop.embeddedType != null || prop.embeddedPluginType != null}">
+
+            <div data-ko-controller="pluginProperty">
+
+                <plugin-editor
+                    params="editor: editor, typeField: fieldname()+'._type', service: service, provider: provider, propname:name"></plugin-editor>
+            </div>
+
+        </g:if>
     </g:elseif>
 <g:elseif test="${values[prop.name]}">
     <span class="configpair">

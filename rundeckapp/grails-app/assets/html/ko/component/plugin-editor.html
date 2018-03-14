@@ -15,7 +15,7 @@
   -->
 
 
-<!-- ko if: !editor.provider() -->
+<!-- ko if: !editor.provider() && !editor.propname() -->
 <select
     class="form-control"
     data-bind="
@@ -29,7 +29,7 @@
 </select>
 <!-- /ko -->
 
-<!-- ko if: editor.provider() -->
+<!-- ko if: editor.provider() && !editor.propname() -->
 <input type="hidden" data-bind="value: editor.provider, attr: { name: typeField } ">
 
 
@@ -48,6 +48,24 @@
             %%button.action.Save%%
         </a>
         <busy-spinner params="busy: editor.loading, css: 'text-muted'"></busy-spinner>
+        <!-- ko if: editor.validationErrors -->
+        <span class="text-warning">
+            <i class="glyphicon glyphicon-alert"></i>
+            %%form.validation.failure.description%%
+        </span>
+        <!-- /ko -->
+    </div>
+</div>
+<!-- /ko -->
+<!-- ko if: editor.provider() && editor.propname() -->
+<div >
+    <input type="hidden" data-bind="attr: { name: typeField } " value="embedded">
+
+    <div data-bind="attr: {id: editor.formId }">
+    </div>
+
+    <div data-bind="visible: editor.isModeEdit" >
+
         <!-- ko if: editor.validationErrors -->
         <span class="text-warning">
             <i class="glyphicon glyphicon-alert"></i>

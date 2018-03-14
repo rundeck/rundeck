@@ -202,8 +202,9 @@ class ParamsUtil {
             findAll { it.value && !it.key.startsWith('_') }.
             collectEntries { [it.key, it.value] } : [:]
         //parse map type entries
-        return parseMapTypeEntries(datamap)
-
+        datamap = parseMapTypeEntries(datamap)
+        datamap = parseEmbeddedTypeEntries(datamap)
+        datamap
     }
 
     /**
@@ -215,28 +216,56 @@ class ParamsUtil {
      * @param datamap
      */
     public static Map parseMapTypeEntries(Map datamap) {
+        parseMapEntries(datamap, 'map', 'map', true)
+    }
+
+    /**
+     * Finds all "map" type entries, and converts them using the {@link #parseIndexedMapParams(java.util.Map)}.
+     * A map entry is defined as an entry PREFIX, where a key PREFIX_.type is present with value "map",
+     * and a PREFIX.map is present which can be parsed as an indexed map param. (Alternately, if the PREFIX value is a Map which contains a "map" entry, that is used.)
+     * All entries starting with "PREFIX." are
+     * removed and an entry PREFIX is created which contains the parsed indexed map.
+     * @param datamap
+     */
+    public static Map parseEmbeddedTypeEntries(Map datamap) {
+        parseMapEntries(datamap, 'embedded', 'config', false)
+    }
+
+    public static Map parseMapEntries(Map datamap, String typeVal, String suffix, Boolean expectIndexed) {
         def outmap = new HashMap(datamap)
         def types = datamap.keySet().findAll { it.endsWith('._type') }
         types.each { String typek ->
             def keyname = typek.substring(0, typek.length() - ('._type'.length()))
-            def typeval = datamap.get(typek)
-            def mapval = datamap.get(keyname + '.map')
+            def thetype = datamap.get(typek)
+            def mapval = datamap.get(keyname + '.' + suffix)
             if (!mapval && datamap.get(keyname) instanceof Map) {
-                mapval = datamap.get(keyname).get('map')
+                mapval = datamap.get(keyname).get(suffix)
             }
-            if (typeval == 'map' && (mapval instanceof Map)) {
-                def pmap = parseIndexedMapParams(mapval)
+            if (!mapval) {
+                //collect prefixes
+                def testprefix = keyname + '.' + suffix + '.'
+                def list = datamap.keySet().findAll { it.startsWith(testprefix) }
+                if (list) {
+                    mapval = list.collectEntries { String k ->
+                        def val = datamap[k]
+                        [k.substring(testprefix.length()), val]
+                    }
+                }
+            }
+            if (thetype == typeVal && (mapval instanceof Map)) {
+                def pmap = expectIndexed ? parseIndexedMapParams(mapval) : mapval
 
                 outmap[keyname] = pmap
                 def entries = datamap.keySet().findAll { it.startsWith(keyname + '.') }
                 entries.each { outmap.remove(it) }
-            } else if (typeval == 'map' && !mapval) {
+            } else if (thetype == typeVal && !mapval) {
                 //empty map
                 outmap[keyname] = [:]
                 def entries = datamap.keySet().findAll { it.startsWith(keyname + '.') }
                 entries.each { outmap.remove(it) }
 
             }
+
         }
         outmap
     }

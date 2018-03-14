@@ -31,16 +31,17 @@
 <g:set var="definedConfig" value="${config}"/>
 <div data-plugin-name="${pluginName}" data-plugin-service="${service}" class="plugin-config">
 
-    <g:render template="/framework/renderPluginDesc" model="${[
-        serviceName    : service,
-        description    : pluginDescription,
-        showPluginIcon : true,
-        showNodeIcon   : showNodeIcon,
-        hideTitle      : hideTitle,
-        hideDescription: hideDescription,
-        fullDescription: fullDescription
-    ]}"/>
-
+    <g:if test="${!hidePluginSummary}">
+        <g:render template="/framework/renderPluginDesc" model="${[
+            serviceName    : service,
+            description    : pluginDescription,
+            showPluginIcon : true,
+            showNodeIcon   : showNodeIcon,
+            hideTitle      : hideTitle,
+            hideDescription: hideDescription,
+            fullDescription: fullDescription
+        ]}"/>
+    </g:if>
     <div>
 
         <g:render template="/framework/pluginConfigPropertiesInputs" model="${[

@@ -16,13 +16,16 @@
 
 package com.dtolabs.rundeck.core.plugins.configuration
 
+import com.dtolabs.rundeck.core.plugins.EmbeddedType
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.SelectValues
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class ValidatorSpec extends Specification {
     @Unroll
-    def "validateProperties options can have collection values"() {
+    def "validateProperties options can have collection values #input"() {
         given:
         def resolver = PropertyResolverFactory.createInstanceResolver(input)
         def defScope = PropertyScope.Instance
@@ -87,6 +90,151 @@ class ValidatorSpec extends Specification {
         [testMap: 'asdf']         || false   | 'Invalid data type: expected a Map'
         [testMap: ['abc', 'def']] || false   | 'Invalid data type: expected a Map'
         [testMap: [asdf: 'xyz']]  || true    | null
+
+    }
+
+    @EmbeddedType(name = 'test')
+    static class TestEmbed {
+        @PluginProperty
+        String myname
+
+        @PluginProperty(required = true)
+        String asdf
+
+        @PluginProperty()
+        @SelectValues(values = ['asdf', 'xyz'])
+        List<String> myopts
+    }
+
+    @Unroll
+    def "validateProperties embedded requires a map"() {
+        given:
+        def resolver = PropertyResolverFactory.createInstanceResolver(input)
+        def defScope = PropertyScope.Instance
+        def igScope = null
+        def props = [
+            PropertyBuilder.builder().name('testMap').type(Property.Type.Embedded).embeddedType(TestEmbed).build()
+        ]
+        when:
+        def report = Validator.validateProperties(resolver, props, defScope, igScope)
+        then:
+        report.valid == isValid
+
+        report.errors['testMap'] == errMessage
+
+        where:
+        input                     || isValid | errMessage
+        [testMap: 'asdf']         || false   | 'Invalid data type: expected a Map'
+        [testMap: ['abc', 'def']] || false   | 'Invalid data type: expected a Map'
+        [testMap: [asdf: 'xyz']]  || true    | null
+    }
+
+    @Unroll
+    def "validateProperties embedded list requires a list of maps or map"() {
+        given:
+        def resolver = PropertyResolverFactory.createInstanceResolver(input)
+        def defScope = PropertyScope.Instance
+        def igScope = null
+        def props = [
+            PropertyBuilder.builder().name('testMap').type(Property.Type.Options).embeddedType(TestEmbed).build()
+        ]
+        when:
+        def report = Validator.validateProperties(resolver, props, defScope, igScope)
+        then:
+        report.valid == isValid
+
+        report.errors['testMap'] == errMessage
+
+        where:
+        input                      || isValid | errMessage
+        [testMap: 'asdf']          || false   | 'Invalid data type: expected a Map or List of Map'
+        [testMap: ['abc', 'def']]  || false   | 'Invalid data type: expected a Map or List of Map'
+        [testMap: [asdf: 'xyz']]   || true    | null
+        [testMap: [[asdf: 'xyz']]] || true    | null
+    }
+
+    @Unroll
+    def "validateProperties embedded tests values"() {
+        given:
+        def resolver = PropertyResolverFactory.createInstanceResolver(input)
+        def defScope = PropertyScope.Instance
+        def igScope = null
+        def props = [
+            PropertyBuilder.builder().name('testMap').type(Property.Type.Embedded).embeddedType(TestEmbed).build()
+        ]
+        when:
+        def report = Validator.validateProperties(resolver, props, defScope, igScope)
+        then:
+        report.valid == isValid
+
+        report.errors == errors
+
+
+        where:
+        input                                              || isValid | errors
+        [testMap: [zasdf: 'boof']]                         || false   | ['testMap.asdf': 'required']
+        [testMap: [asdf: 'boof']]                          || true    | [:]
+        [testMap: [asdf: 'boof', myopts: 'z']]             || false   | ['testMap.myopts': 'Invalid value(s): [z]']
+        [testMap: [asdf: 'boof', myopts: 'asdf']]          || true    | [:]
+        [testMap: [asdf: 'boof', myopts: ['asdf']]]        || true    | [:]
+        [testMap: [asdf: 'boof', myopts: ['xyz', 'asdf']]] || true    | [:]
+
+    }
+
+    @Unroll
+    def "validateProperties embedded list tests values"() {
+        given:
+        def resolver = PropertyResolverFactory.createInstanceResolver(input)
+        def defScope = PropertyScope.Instance
+        def igScope = null
+        def props = [
+            PropertyBuilder.builder().name('testMap').type(Property.Type.Options).embeddedType(TestEmbed).build()
+        ]
+        when:
+        def report = Validator.validateProperties(resolver, props, defScope, igScope)
+        then:
+        report.valid == isValid
+
+        report.errors == errors
+
+
+        where:
+        input                                              || isValid | errors
+        [testMap: [zasdf: 'boof']]                         || false   | ['testMap.asdf': 'required']
+        [testMap: [asdf: 'boof']]                          || true    | [:]
+        [testMap: [asdf: 'boof', myopts: 'z']]             || false   | ['testMap.myopts': 'Invalid value(s): [z]']
+        [testMap: [asdf: 'boof', myopts: 'asdf']]          || true    | [:]
+        [testMap: [asdf: 'boof', myopts: ['asdf']]]        || true    | [:]
+        [testMap: [asdf: 'boof', myopts: ['xyz', 'asdf']]] || true    | [:]
+
+    }
+
+    @Unroll
+    def "validateProperties embedded plugin Not Implemented"() {
+        given:
+        def resolver = PropertyResolverFactory.createInstanceResolver(input)
+        def defScope = PropertyScope.Instance
+        def igScope = null
+        def props = [
+            PropertyBuilder.builder().name('testMap').type(Property.Type.Embedded).embeddedPluginType(TestEmbed).build()
+        ]
+        when:
+        def report = Validator.validateProperties(resolver, props, defScope, igScope)
+        then:
+//        report.valid == isValid
+//
+//        report.errors == errors
+        IllegalArgumentException e = thrown()
+
+
+        where:
+        input                                              || isValid | errors
+        [testMap: [zasdf: 'boof']]                         || false   | ['testMap.asdf': 'required']
+        [testMap: [asdf: 'boof']]                          || true    | [:]
+        [testMap: [asdf: 'boof', myopts: 'z']]             || false   | ['testMap.myopts': 'Invalid value(s): [z]']
+        [testMap: [asdf: 'boof', myopts: 'asdf']]          || true    | [:]
+        [testMap: [asdf: 'boof', myopts: ['asdf']]]        || true    | [:]
+        [testMap: [asdf: 'boof', myopts: ['xyz', 'asdf']]] || true    | [:]
 
     }
 }

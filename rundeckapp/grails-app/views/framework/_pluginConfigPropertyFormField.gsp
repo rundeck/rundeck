@@ -41,17 +41,19 @@
     <g:set var="propkey" value="${g.rkey()}"/>
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:embedJSON id="${propkey}_json" data="${[
-            service         : service,
-            provider        : provider,
-            name            : prop.name,
-            type            : prop.type.toString(),
-            origfieldname   : origfieldname,
-            fieldname       : fieldname,
-            fieldid         : fieldid,
-            value           : valueText,
-            project         : project ?: params.project ?: request.project,
-            renderingOptions: prop.renderingOptions,
-            idkey           : idkey
+        service              : service,
+        provider             : provider,
+        name                 : prop.name,
+        type                 : prop.type.toString(),
+        origfieldname        : origfieldname,
+        fieldname            : fieldname,
+        fieldid              : fieldid,
+        value                : valueText,
+        project              : project ?: params.project ?: request.project,
+        renderingOptions     : prop.renderingOptions,
+        idkey                : idkey,
+        hasEmbeddedType      : prop.embeddedType != null,
+        hasEmbeddedPluginType: prop.embeddedPluginType != null
 
     ]}"/>
     <g:javascript>"use strict";
@@ -89,7 +91,7 @@
                    StringRenderingConstants.SelectionAccessor.RUNDECK_JOB_OPTIONS,
                    'RUNDECK_JOB_OPTIONS'
            ]}"/>
-    <div class="form-group ${enc(attr: hasError)}" id="${propkey}">
+    <div class="form-group ${enc(attr: hasError)}" id="${propkey}" data-ko-controller="pluginProperty">
     <g:if test="${outofscope}">
         <label class="${labelColType} form-control-static ${error ? 'has-error' : ''}  ${prop.required ? 'required' :
                                                                                          ''}">
@@ -171,6 +173,9 @@
         </g:else>
     </g:elseif>
     <g:elseif test="${prop.type.toString() == 'Options'}">
+        <g:if test="${prop.embeddedType != null || prop.embeddedPluginType != null}">
+            ${prop.embeddedType?.toString()}
+        </g:if>
 
         <label class="${labelColType}   ${prop.required ? 'required' : ''}"
                for="${enc(attr: fieldid)}"><stepplugin:message
@@ -225,6 +230,17 @@
                 <g:hiddenField name="${fieldname}._type" value="map"/>
                 <map-editor params="prefix: '${fieldname}.map.', value: value"></map-editor>
             </div>
+        </g:elseif>
+        <g:elseif test="${prop.type.toString() == 'Embedded'}">
+            <g:if test="${prop.embeddedType != null || prop.embeddedPluginType != null}">
+
+                <div data-ko-controller="pluginProperty">
+
+                    <plugin-editor
+                        params="editor: editor, typeField: fieldname()+'._type', service: service, provider: provider, propname:name"></plugin-editor>
+                </div>
+
+            </g:if>
         </g:elseif>
 
         <g:else>

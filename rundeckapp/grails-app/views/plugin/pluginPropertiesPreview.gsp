@@ -37,7 +37,7 @@
         type             : pluginDescription.name,
         description      : pluginDescription,
         showPluginIcon   : true,
-        values           : definedConfig,
+        values           : config,
         allowedScope     : PropertyScope.Instance,
         idkey            : pluginkey,
         includeFormFields: true,

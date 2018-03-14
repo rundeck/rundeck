@@ -64,7 +64,7 @@ public class PluginAdapterUtilityTest extends TestCase {
         try {
             description = PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder());
             fail("no plugin annotation and no buildDescription method should cause exception");
-        } catch (IllegalStateException e) {
+        } catch (IllegalArgumentException e) {
 
         }
 

@@ -124,17 +124,21 @@ class PluginController extends ControllerBase {
         }
     }
 
-    def pluginPropertiesForm(String service, String name) {
+    def pluginPropertiesForm(String service, String name, String embeddedProperty) {
         if (requireAjax(controller: 'menu', action: 'index')) {
             return
         }
-        def describedPlugin = pluginService.getPluginDescriptor(name, service)
+        def describedPlugin = embeddedProperty ?
+                              pluginService.getPluginEmbeddedDescriptor(name, service, embeddedProperty) :
+                              pluginService.getPluginDescriptor(name, service)
+
         def config = [:]
         def report = [:]
         if (request.method == 'POST' && request.format == 'json') {
             config = request.JSON.config
             report = request.JSON.report ?: [:]
         }
+        config = ParamsUtil.cleanMap(config)
         def dynamicProperties = [:]
         def dynamicPropertiesLabels = [:]
         describedPlugin.description.properties.each {
@@ -157,32 +161,33 @@ class PluginController extends ControllerBase {
         }
 
         [
-                inputFieldPrefix       : params.inputFieldPrefix ?: '',
-
-                config                 : config,
-                report                 : report,
-                service                : service,
-                name                   : name,
-                dynamicPropertiesLabels: dynamicPropertiesLabels,
-                dynamicProperties      : dynamicProperties,
-                pluginDescription      : describedPlugin.description,
-                project                : params.project
+            inputFieldPrefix       : params.inputFieldPrefix ?: '',
+            config                 : config,
+            report                 : report,
+            service                : service,
+            name                   : name,
+            dynamicPropertiesLabels: dynamicPropertiesLabels,
+            dynamicProperties      : dynamicProperties,
+            pluginDescription      : describedPlugin.description,
+            project                : params.project,
+            hidePluginSummary      : params.hidePluginSummary ? true : false
         ]
     }
 
-    def pluginPropertiesPreview(String service, String name) {
-        pluginPropertiesForm(service, name)
+    def pluginPropertiesPreview(String service, String name, String embeddedProperty) {
+        pluginPropertiesForm(service, name, embeddedProperty)
     }
 
     def pluginPropertiesValidateAjax(String service, String name) {
         if (requireAjax(controller: 'menu', action: 'index')) {
             return
         }
-        def describedPlugin = pluginService.getPluginDescriptor(name, service)
+
         def config = [:]
         if (request.method == 'POST' && request.format == 'json') {
             config = request.JSON.config
         }
+        config = ParamsUtil.cleanMap(config)
 
         def validation = pluginService.validatePluginConfig(service, name, config)
 

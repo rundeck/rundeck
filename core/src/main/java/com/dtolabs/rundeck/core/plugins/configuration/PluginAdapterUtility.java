@@ -24,6 +24,7 @@
 package com.dtolabs.rundeck.core.plugins.configuration;
 
 import com.dtolabs.rundeck.core.common.PropertyRetriever;
+import com.dtolabs.rundeck.core.plugins.EmbeddedType;
 import com.dtolabs.rundeck.core.plugins.MultiPluginProviderLoader;
 import com.dtolabs.rundeck.core.plugins.Plugin;
 import com.dtolabs.rundeck.plugins.descriptions.*;
@@ -72,19 +73,63 @@ public class PluginAdapterUtility {
      * @param includeAnnotatedFieldProperties
      *                if true, add DescriptionProperties to the Description based on annotations of fields in the class of the instance
      */
-    public static Description buildDescription(final Object object, final DescriptionBuilder builder,
-                                               final boolean includeAnnotatedFieldProperties) {
+    public static Description buildDescription(
+        final Object object,
+        final DescriptionBuilder builder,
+        final boolean includeAnnotatedFieldProperties
+    ) {
+        collaborateTypeDescription(object.getClass(), builder, includeAnnotatedFieldProperties);
+
+        builder.collaborate(object);
+        return builder.build();
+    }
+
+    /**
+     * @param type                            the object
+     * @param builder                         builder
+     * @param includeAnnotatedFieldProperties if true, add DescriptionProperties to the Description based on annotations
+     *                                        of fields in the class of the instance
+     * @return Create a Description using a builder by analyzing the annotations on a plugin object.
+     */
+    public static Description buildDescription(
+        final Class<?> type,
+        final DescriptionBuilder builder,
+        final boolean includeAnnotatedFieldProperties
+    ) {
+        collaborateTypeDescription(type, builder, includeAnnotatedFieldProperties);
+
+        return builder.build();
+    }
+
+    public static void collaborateTypeDescription(
+        final Class<?> type,
+        final DescriptionBuilder builder,
+        final boolean includeAnnotatedFieldProperties
+    ) {
         //analyze this class to determine properties
-        final Plugin annotation1 = object.getClass().getAnnotation(Plugin.class);
+        final Plugin annotation1 = type.getAnnotation(Plugin.class);
+        final EmbeddedType embeddedAnnotation = type.getAnnotation(EmbeddedType.class);
         if (null != annotation1) {
             final String pluginName = annotation1.name();
             builder
-                    .name(pluginName)
-                    .title(pluginName)
-                    .description("");
+                .name(pluginName)
+                .title(pluginName)
+                .description("");
+        } else if (null != embeddedAnnotation) {
+            final String pluginName = embeddedAnnotation.name();
+            builder
+                .name(pluginName)
+                .title(pluginName)
+                .description("");
+
+        } else {
+            throw new IllegalArgumentException(String.format(
+                "Cannot build description from type: %s, it has no @Plugin or @EmbeddedType annotation",
+                type
+            ));
         }
 
-        final PluginDescription descAnnotation = object.getClass().getAnnotation(PluginDescription.class);
+        final PluginDescription descAnnotation = type.getAnnotation(PluginDescription.class);
         if (null != descAnnotation) {
             if (!"".equals(descAnnotation.title())) {
                 builder.title(descAnnotation.title());
@@ -95,10 +140,8 @@ public class PluginAdapterUtility {
         }
 
         if (includeAnnotatedFieldProperties) {
-            buildFieldProperties(object, builder);
+            buildFieldProperties(type, builder);
         }
-        builder.collaborate(object);
-        return builder.build();
     }
 
     /**
@@ -587,7 +630,7 @@ public class PluginAdapterUtility {
         return PropertyResolverFactory.mapPropertyValues(properties, defaulted);
     }
 
-    protected static Object createInstanceFromType(final Class<?> execClass) {
+    public static Object createInstanceFromType(final Class<?> execClass) {
 
 
         try {

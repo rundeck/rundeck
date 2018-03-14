@@ -31,6 +31,7 @@ class ParamsUtilSpec extends Specification {
         [:]                                                                                                    || [:]
         [a: 'b', c: '']                                                                                        || [a: 'b']
         [a: 'b', c: null]                                                                                      || [a: 'b']
+        ['z._type': 'embedded', 'z.config.x': 'y', 'z.config.t': 'u']                                          || [z: [x: 'y', t: 'u']]
         [optionData: [_type: "map"], "optionData._type": "map", jobId: "0226f979-9ef3-485d-a916-faa1a8f9791e"] || [optionData: [:], jobId: "0226f979-9ef3-485d-a916-faa1a8f9791e"]
         ["optionData.map.0.key"  : "bwapba",
          optionData              :
@@ -92,6 +93,26 @@ class ParamsUtilSpec extends Specification {
         ['a._type': 'map', 'a.map': ['0.key': 'z', '0.value': 'x']] || [a: [z: 'x']]
         ['a._type': 'map', 'a.map': ['0.key': 'z', '0.value': 'x'],
          'b._type': 'map', 'b.map': ['0.key': 'p', '0.value': 'q']] || [a: [z: 'x'], b: [p: 'q']]
+    }
+
+    def "parseEmbeddedTypeEntries"() {
+        given:
+        when:
+        def result = ParamsUtil.parseEmbeddedTypeEntries(input)
+        then:
+        result == expect
+        where:
+        input                                                               || expect
+        [:]                                                                 || [:]
+//        ['a._type': 'embedded']                                             || [a: [:]]
+//        ['a._type': 'embedded', 'a.config': 'x']                            || ['a._type': 'embedded', 'a.config': 'x']
+//        ['a._type': 'embedded', 'a.config': [:]]                            || [a: [:]]
+//        ['a._type': 'embedded', 'a.config': [:], 'a.extra': 'asdf']         || [a: [:]]
+//        ['a._type': 'zmap', 'a.config': [:]]                                || ['a._type': 'zmap', 'a.config': [:]]
+//        ['a._type': 'embedded', 'a.config': ['0.key': 'z', '0.value': 'x']] || [a: [z: 'x']]
+//        ['a._type': 'embedded', 'a.config': ['0.key': 'z', '0.value': 'x'],
+//         'b._type': 'embedded', 'b.config': ['0.key': 'p', '0.value': 'q']] || [a: [z: 'x'], b: [p: 'q']]
+        ['z._type': 'embedded', 'z.config.x': 'y', 'z.config.t': 'u']       || [z: [x: 'y', t: 'u']]
     }
 
     def "parseIndexedMap"() {

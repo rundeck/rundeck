@@ -22,12 +22,15 @@ import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.MultiPluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
+import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
+import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.core.plugins.configuration.Validator
 import com.dtolabs.rundeck.plugins.ServiceTypes
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.PluginRegistry
@@ -93,6 +96,34 @@ class PluginService {
      */
     def DescribedPlugin getPluginDescriptor(String name, String service) {
         getPluginDescriptor(name, getPluginTypeByService(service))
+    }
+    /**
+     *
+     * @param name
+     * @return map containing [instance:(plugin instance), description: (map or Description), ]
+     */
+
+    def DescribedPlugin getPluginEmbeddedDescriptor(String name, String service, String property) {
+        def descriptor = getPluginDescriptor(name, getPluginTypeByService(service))
+//        def list = property.split('\\.')
+//        list.each { String key ->
+        def prop = descriptor.description.properties.find { it.name == property }
+        if (prop && (prop.embeddedType)) {
+            def embeddedDesc = PluginAdapterUtility.buildDescription(
+                prop.embeddedType,
+                DescriptionBuilder.builder(),
+                true
+            )
+            return new DescribedPlugin(
+                null,//PluginAdapterUtility.createInstanceFromType(prop.embeddedType),
+                embeddedDesc,
+                "$name/$property"
+            )
+
+        } else {
+            throw new IllegalArgumentException("Not an embedded type property: ${property} for $service plugin: $name")
+        }
+//        }
     }
     /**
      *

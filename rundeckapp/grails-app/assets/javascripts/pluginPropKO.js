@@ -60,16 +60,19 @@ function PluginEditor(data) {
     const self = this;
     self.service = ko.observable(data.service);
     self.provider = ko.observable(data.provider);
+    self.propname = ko.observable(data.propname);
     self.config = ko.observable(data.config);
     self.uid = ko.observable(data.uid);
     self.loading = ko.observable(false);
-    self.mode = ko.observable('edit');
+    self.mode = ko.observable(data.previewMode ? 'view' : 'edit');
     self.validationErrors = ko.observable(false);
     self.formId = data.formId;
     self.formPrefixes = data.formPrefixes;
     self.inputFieldPrefix = data.inputFieldPrefix;
     self.postLoadEditor = data.postLoadEditor;
     self.deleteCallback = data.deleteCallback;
+    self.canDelete = data.canDelete !== null ? data.canDelete : true;
+    self.canSelectProvider = data.canSelectProvider !== null ? data.canSelectProvider : true;
     self.formDom = () => jQuery('#' + self.formId);
 
     self.urls = {
@@ -77,23 +80,35 @@ function PluginEditor(data) {
         view    : appLinks.pluginPropertiesPreview,
         validate: appLinks.pluginPropertiesValidateAjax,
     };
+    self.queryParams = () => {
+        if (self.propname()) {
+            return {
+                service          : self.service(),
+                name             : self.provider(),
+                embeddedProperty : self.propname(),
+                hidePluginSummary: true
+            }
+        } else {
+            return {
+                service: self.service(),
+                name   : self.provider()
 
-    self.loadPluginView = (url, service, name, params, data, report) => jQuery.ajax(
+            }
+        }
+    };
+
+    self.loadPluginView = (url, params, data, report) => jQuery.ajax(
         {
             url        : _genUrl(
                 url,
                 jQuery.extend(
-                    {
-                        service: service,
-                        name   : name
-                    },
+                    self.queryParams(),
                     params
                 )
             ),
             method     : 'POST',
             contentType: 'application/json',
             data       : JSON.stringify({config: data, report: report}),
-
         }
     );
 
@@ -128,8 +143,6 @@ function PluginEditor(data) {
         self.loading(true);
         return self.loadPluginView(
             self.urls[val],
-            self.service(),
-            self.provider(),
             {inputFieldPrefix: self.inputFieldPrefix},
             self.getConfigData(),
             self.getConfigReport()
@@ -143,8 +156,6 @@ function PluginEditor(data) {
         let config = self.getFormData();
         self.loadPluginView(
             self.urls['validate'],
-            self.service(),
-            self.provider(),
             {inputFieldPrefix: self.inputFieldPrefix},
             config,
             {}
@@ -180,7 +191,15 @@ function PluginEditor(data) {
 
     // self.provider.subscribe(self.loadActionSelect);
     self.init = () => {
-        self.mode(self.hasConfigData() ? 'view' : 'edit');
+        let initMode;
+        if (data.previewMode) {
+            initMode = 'view';
+        } else if (data.embedded) {
+            initMode = 'edit';
+        } else {
+            initMode = self.hasConfigData() ? 'view' : 'edit';
+        }
+        self.mode(initMode);
         self.mode.subscribe((mode) => {
             self.loadModeView(mode);
         });
@@ -210,6 +229,9 @@ function PluginProperty(data) {
     self.idkey = ko.observable(data.idkey);
     self.util = ko.observable({});
     self.type = ko.observable(data.type);
+    self.hasEmbeddedType = ko.observable(data.hasEmbeddedType);
+    self.hasEmbeddedPluginType = ko.observable(data.hasEmbeddedPluginType);
+    self.editor = null;
     self.renderingOptions = ko.observable(data.renderingOptions || {});
 
     self.getField = () => jQuery('#' + self.fieldid());
@@ -223,6 +245,37 @@ function PluginProperty(data) {
         }
         return null;
     };
+    self.init = function () {
+        if (self.type() === 'Embedded') {
+            //load embedded editor
+            const eid = self.idkey();
+            self.editor = new PluginEditor(
+                {
+                    uid             : `eprop_${eid}`,
+                    service         : self.service(),
+                    provider        : self.provider(),
+                    propname        : self.name(),
+                    config          : data.value &&
+                                      typeof(data.value) ===
+                                      'object' ?
+                                      {
+                                          data  : true,
+                                          config: data.value
+                                      } :
+                                      {data: false},
+                    formId          : `form_eprop_${eid}`,
+                    formPrefixes    : [`${self.fieldname()}.config.`, `orig.${self.fieldname()}.config.`],
+                    inputFieldPrefix: `${self.fieldname()}.`,
+                    previewMode     : data.previewMode,
+                    embedded        : true
+                    // postLoadEditor  : self.postLoadEditor,
+                    // deleteCallback  : self.removeItem
+                }
+            );
+            self.editor.init();
+        }
+    };
+    self.init();
 }
 
 /**

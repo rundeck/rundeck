@@ -23,7 +23,10 @@
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * Validator utility class can create a validation report for a set of input properties and a configuration
@@ -145,30 +148,88 @@ public class Validator {
         List<Property> properties,
         PropertyScope ignoredScope
     ) {
+        return validate(inputValues, report, properties, ignoredScope, null);
+    }
+
+    /**
+     * Validate, ignoring properties below a scope, if set
+     *
+     * @param inputValues  input properties
+     * @param report       report
+     * @param properties   property definitions
+     * @param ignoredScope ignore scope
+     */
+    private static Report validate(
+        Map inputValues,
+        Report report,
+        List<Property> properties,
+        PropertyScope ignoredScope,
+        String prefix
+    ) {
         if (null == properties) {
             return report;
         }
+        props:
         for (final Property property : properties) {
             if (null != ignoredScope && property.getScope() != null
                 && property.getScope().compareTo(ignoredScope) <= 0) {
                 continue;
             }
             final String key = property.getName();
+            final String prefixedKey = prefix != null ? prefix + key : key;
+            Consumer<String> reportError = (msg) -> report.errors.put(prefixedKey, msg);
             final Object value = inputValues.get(key);
             if (null == value || "".equals(value)) {
                 if (property.isRequired()) {
-                    report.errors.put(key, "required");
+                    reportError.accept("required");
                 }
             } else {
                 //try to validate
                 final PropertyValidator validator = property.getValidator();
-                if (!(value instanceof Map) && property.getType() == Property.Type.Map) {
-                    report.errors.put(key, "Invalid data type: expected a Map");
-                } else if ((
-                    value instanceof Collection && property.getType() != Property.Type.Options
-                    || value instanceof Map && property.getType() != Property.Type.Map
-                )) {
-                    report.errors.put(key, "Invalid data type: expected a String");
+                if (!validateDataType(property, reportError, value)) {
+                    continue;
+                }
+                if (property.getType() == Property.Type.Embedded
+                    || property.getType() == Property.Type.Options &&
+                       (null != property.getEmbeddedType() || null != property.getEmbeddedPluginType())) {
+
+                    //validate embedded type/plugin
+                    Class<?> embeddedType = property.getEmbeddedType();
+                    Class<?> pluginType = property.getEmbeddedPluginType();
+
+                    if (null != embeddedType) {
+                        Description
+                            description =
+                            PluginAdapterUtility.buildDescription(embeddedType, DescriptionBuilder.builder(), true);
+                        List<Map> values = new ArrayList<>();
+                        if (property.getType() == Property.Type.Embedded) {
+                            values.add((Map) value);
+                        } else if (property.getType() == Property.Type.Options) {
+                            //require value to be a map or collection of maps
+
+                            if (value instanceof Map) {
+                                values.add((Map) value);
+                            } else if (value instanceof Collection) {
+                                Collection c = (Collection) value;
+
+                                for (Object o : c) {
+                                    if (!Map.class.isAssignableFrom(o.getClass())) {
+                                        reportError.accept("Invalid data type: expected a Map or List of Maps");
+                                        continue props;
+                                    }
+                                }
+                                values.addAll((Collection) value);
+                            } else {
+                                reportError.accept("Invalid data type: expected a Map or List of Maps");
+                                continue;
+                            }
+                        }
+                        for (Map map : values) {
+                            validate(map, report, description.getProperties(), ignoredScope, prefixedKey + ".");
+                        }
+                    } else if (null != pluginType) {
+                        throw new IllegalArgumentException("Cannot validate plugin type");
+                    }
                 } else if (null != validator) {
                     List<String> valueSet = null;
                     if (value instanceof String) {
@@ -192,13 +253,54 @@ public class Validator {
                         }
 
                         if (!sb.isEmpty()) {
-                            report.errors.put(key, "Invalid value(s): " + sb);
+                            reportError.accept("Invalid value(s): " + sb);
                         }
                     }
                 }
             }
         }
         return report;
+    }
+
+    private static boolean validateDataType(
+        final Property property,
+        final Consumer<String> reportError,
+        final Object value
+    ) {
+
+        Class expectedData = String.class;
+        if ((property.getEmbeddedType() != null || property.getEmbeddedPluginType() != null)
+            || property.getType() == Property.Type.Map
+            || property.getType() == Property.Type.Embedded) {
+            expectedData = Map.class;
+        }
+
+        if (value instanceof Collection && property.getType() == Property.Type.Options) {
+            for (Object o : (Collection) value) {
+                if (!(expectedData.isAssignableFrom(o.getClass()))) {
+                    reportError.accept(String.format(
+                        "Invalid data type: expected a %s or List of %s",
+                        expectedData.getSimpleName(),
+                        expectedData.getSimpleName()
+                    ));
+                    return false;
+                }
+            }
+        } else if (property.getType() == Property.Type.Options && !(expectedData.isAssignableFrom(value.getClass()))) {
+            reportError.accept(String.format(
+                "Invalid data type: expected a %s or List of %s",
+                expectedData.getSimpleName(),
+                expectedData.getSimpleName()
+            ));
+            return false;
+        } else if (!(expectedData.isAssignableFrom(value.getClass()))) {
+            reportError.accept(String.format(
+                "Invalid data type: expected a %s",
+                expectedData.getSimpleName()
+            ));
+            return false;
+        }
+        return true;
     }
 
     /**

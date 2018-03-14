@@ -324,7 +324,6 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         PropertyScope defaultScope,
         PropertyScope ignoredScope
     ) {
-        //TODO: validate embedded types/plugins
         def pluginDesc = loadPluginDescriptorByName(name, service)
         if (null == pluginDesc) {
             return null
