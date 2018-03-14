@@ -1,3 +1,5 @@
+import java.util.jar.JarInputStream
+
 buildscript {
     ext {
         bootstrapFramework = [
@@ -45,16 +47,38 @@ apply plugin: "com.siprell.plugins.bootstrap-framework"
 
 configurations {
     war{}
+    pluginFiles {
+        transitive = false
+
+    }
+    pluginFiles.extendsFrom(runtime)
 }
 
 repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
+    maven { url "https://jitpack.io" }
+
 }
 
 def springBootVersion = "1.5.8.RELEASE"
 
 dependencies {
+
+    //Rundeck plugin dependencies
+    pluginFiles project(':plugins:script-plugin'),
+                project(':plugins:stub-plugin'),
+                project(':plugins:localexec-plugin'),
+                project(':plugins:copyfile-plugin'),
+                project(':plugins:job-state-plugin'),
+                project(':plugins:flow-control-plugin'),
+                project(':plugins:jasypt-encryption-plugin'),
+                project(':plugins:orchestrator-plugin'),
+                project(':plugins:git-plugin'),
+                project(':plugins:source-refresh-plugin'),
+                project(':plugins:upvar-plugin'),
+                "com.github.Batix:rundeck-ansible-plugin:2.0.2",
+                "com.github.rundeck-plugins:aws-s3-model-source:v1.0"
 
     // Rundeck project dependencies.
     compile project(':core')
@@ -86,7 +110,8 @@ dependencies {
     compile "org.springframework.boot:spring-boot-autoconfigure"
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
-    provided "org.springframework.boot:spring-boot-starter-tomcat"
+    //provided "org.springframework.boot:spring-boot-starter-tomcat"
+    compile "org.springframework.boot:spring-boot-starter-jetty"
     compile "org.grails:grails-web-boot"
     compile "org.grails:grails-logging"
     compile "org.grails:grails-plugin-rest"
@@ -172,4 +197,56 @@ buildProperties.doLast {
     grailsBuildInfoFile.withOutputStream {
         properties.store(it,null)
     }
+}
+
+task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
+    println "copying plugin libs"
+    File libextDir = new File(temporaryDir, "WEB-INF/rundeck/plugins")
+    File manifestFile = new File(temporaryDir, "WEB-INF/rundeck/plugins/manifest.properties")
+    println "libdir: ${libextDir.canonicalPath}"
+    def filelist=[]
+    libextDir.mkdirs()
+    configurations.pluginFiles.files.each { pluginFile ->
+        copy {
+            from pluginFile
+            into libextDir
+        }
+        filelist << pluginFile.name
+        //load jar manifest
+        def pluginProps = [:]
+
+        pluginFile.withInputStream {
+            def jarmf=new JarInputStream(it).manifest
+            jarmf.getMainAttributes().findAll{it.key.toString().startsWith('Rundeck-Plugin')}.each{k,v->
+                pluginProps[k.toString()]=v
+            }
+        }
+        def f= pluginFile.name
+        Properties fileProps = new Properties()
+        fileProps[  'plugin.name']= pluginProps['Rundeck-Plugin-Name']?:f
+        fileProps[  'plugin.description']= pluginProps['Rundeck-Plugin-Description'] ?:'Rundeck bundled plugin'
+        fileProps[  'plugin.author']= pluginProps['Rundeck-Plugin-Author'] ?:'Rundeck, Inc.'
+        fileProps[  'plugin.version']= pluginProps['Rundeck-Plugin-File-Version'] ?:version
+        fileProps[  'plugin.url']= pluginProps['Rundeck-Plugin-URL'] ?:'http://rundeck.com'
+        fileProps[  'plugin.date']= pluginProps['Rundeck-Plugin-BuildDate'] ?:(new Date().toString())
+        fileProps[  'plugin.filename']= f
+
+        //write properties file
+        new File(libextDir,pluginFile.name+'.properties').withOutputStream {
+            fileProps.store(it,"generated manifest")
+        }
+    }
+    Properties manifestProps = new Properties()
+    manifestProps['pluginFileList'] = (filelist.join(','))
+    manifestFile.withWriter { w ->
+        manifestProps.store(w,"generated manifest")
+    }
+    from(libextDir) {
+        into('WEB-INF/rundeck/plugins')
+    }
+}
+
+war {
+    println "running war archive process"
+
 }
