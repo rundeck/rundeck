@@ -14,13 +14,14 @@
  * limitations under the License.
  */
 
-rootProject.name = 'rundeck'
-include 'core',
-    'rundeck-storage',
+rootProject.name = 'rundeck-project'
+
+include	'rundeck-storage',
     'rundeck-storage:rundeck-storage-api',
     'rundeck-storage:rundeck-storage-data',
     'rundeck-storage:rundeck-storage-conf',
     'rundeck-storage:rundeck-storage-filesys',
+    'core',
 	'plugins:localexec-plugin',
 	'plugins:script-plugin',
 	'plugins:stub-plugin',
@@ -32,8 +33,10 @@ include 'core',
 	'plugins:orchestrator-plugin',
 	'plugins:git-plugin',
 	'plugins:upvar-plugin',
-	'rundeckapp',
-	'rundeckapp:metricsweb',
+    'rundeckapp',
+    'rundeckapp:metricsweb',
 	'rundeck-launcher',
 	'rundeck-launcher:launcher',
 	'rundeck-launcher:rundeck-jetty-server'
+
+project(":rundeckapp").name = "rundeck"

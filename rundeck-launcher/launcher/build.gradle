@@ -28,8 +28,8 @@ archivesBaseName = 'rundeck-launcher'
 defaultTasks 'clean','launcherJar'
 ext.launcherMainClass = mainClassName
 ext.launcherStartClass = "com.dtolabs.rundeck.RunServer"
-ext.launcherJettyLibs = "javax.servlet-3.0.0.v201112011016.jar jetty-${jettyVersion}.jar jetty-security-${jettyVersion}.jar jetty-server-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-io-${jettyVersion}.jar jetty-http-${jettyVersion}.jar jetty-jaas-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.17.jar"
-ext.launcherJettyLibsUnexpanded = 'javax.servlet-3.0.0.v201112011016.jar jetty-${jettyVersion}.jar jetty-security-${jettyVersion}.jar jetty-server-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-io-${jettyVersion}.jar jetty-http-${jettyVersion}.jar jetty-jaas-${jettyVersion}.jar jna-3.2.2.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.17.jar'
+ext.launcherJettyLibs = "javax.servlet-3.0.0.v201112011016.jar jetty-${jettyVersion}.jar jetty-security-${jettyVersion}.jar jetty-server-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-io-${jettyVersion}.jar jetty-http-${jettyVersion}.jar jetty-jaas-${jettyVersion}.jar jna-platform-${jnaVersion}.jar jna-${jnaVersion}.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.17.jar"
+ext.launcherJettyLibsUnexpanded = 'javax.servlet-3.0.0.v201112011016.jar jetty-${jettyVersion}.jar jetty-security-${jettyVersion}.jar jetty-server-${jettyVersion}.jar jetty-util-${jettyVersion}.jar jetty-io-${jettyVersion}.jar jetty-http-${jettyVersion}.jar jetty-jaas-${jettyVersion}.jar jna-platform-${jnaVersion}.jar jna-${jnaVersion}.jar libpam4j-1.5.jar not-yet-commons-ssl-0.3.17.jar'
 ext.launcherJettyLibPath = "pkgs/webapp/WEB-INF/lib"
 
 ext.launcherContentsDir = new File("$projectDir/build/launcher-contents")
@@ -45,7 +45,7 @@ dependencies {
     compile project(":rundeck-launcher:rundeck-jetty-server"),
 		'commons-cli:commons-cli:1.0'
 	
-    warBundle project(path: ':rundeckapp', configuration: 'war')
+    warBundle project(path: ':rundeck', configuration: 'war')
 	
 
     jettyServerLib(project(path:":rundeck-launcher:rundeck-jetty-server", configuration:'runtime')) {

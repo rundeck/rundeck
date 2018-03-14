@@ -55,11 +55,8 @@ import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
-import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
-import org.springframework.security.authentication.AuthenticationManager
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
-import org.springframework.security.core.userdetails.UserDetailsByNameServiceWrapper
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
