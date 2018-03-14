@@ -482,9 +482,10 @@ class ScmService {
         { JobChangeEvent event, JobSerializer serializer ->
             log.debug("job change event: " + event)
             if(event.eventType == JobChangeEvent.JobChangeEventType.CREATE){
+                def metadata = jobMetadataService.getJobPluginMeta(event.jobReference.project, event.jobReference.id, 'scm-import')
                 //generate "source" UUID in case the local UUID will not be exported
                 jobMetadataService.setJobPluginMeta(event.jobReference.project, event.jobReference.id, 'scm-import',[
-                        srcId:UUID.randomUUID().toString()
+                        srcId:(metadata?.srcId)?:UUID.randomUUID().toString()
                 ])
             }
             JobScmReference scmRef = scmJobRef(event.jobReference, serializer)
@@ -1068,6 +1069,23 @@ class ScmService {
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
             }
         }
+        status
+    }
+    /**
+     * Return a map of status for jobs
+     * @param jobs
+     * @return
+     */
+    Map<String, JobState> exportStatusForJob(ScheduledExecution job) {
+        def status = [:]
+        def jobReference = exportJobRef(job)
+        def plugin = getLoadedExportPluginFor jobReference.project
+        if (plugin) {
+            def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
+            status[jobReference.id] = plugin.getJobStatus(jobReference, originalPath, false)
+            log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
+        }
+
         status
     }
     /**

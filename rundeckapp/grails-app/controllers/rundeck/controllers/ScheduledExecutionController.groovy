@@ -437,7 +437,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
             if(scmService.projectHasConfiguredExportPlugin(params.project)){
                 dataMap.scmExportEnabled = true
-                dataMap.scmExportStatus = scmService.exportStatusForJobs([scheduledExecution])
+                dataMap.scmExportStatus = scmService.exportStatusForJob(scheduledExecution)
                 dataMap.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
             }
         }

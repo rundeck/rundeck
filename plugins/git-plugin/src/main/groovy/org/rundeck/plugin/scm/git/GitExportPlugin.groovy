@@ -329,13 +329,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         def jobstat = Collections.synchronizedMap([:])
         def commit = lastCommitForPath(path)
 
-
-
         if (job instanceof JobExportReference && doSerialize) {
             serialize(job, format, config.exportPreserve, config.exportOriginal)
         }
-
-
 
         def statusb = git.status().addPath(path)
         if (originalPath) {
@@ -427,6 +423,19 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         def status = hasJobStatusCached(job, originalPath)
         if (!status) {
             status = refreshJobStatus(job, originalPath)
+        }
+        return createJobStatus(status, jobActionsForStatus(status))
+    }
+
+    @Override
+    JobState getJobStatus(final JobExportReference job, final String originalPath, final boolean serialize) {
+        log.debug("getJobStatus(${job.id},${originalPath}): ${job}, serialize ${serialize}")
+        if (!inited) {
+            return null
+        }
+        def status = hasJobStatusCached(job, originalPath)
+        if (!status) {
+            status = refreshJobStatus(job, originalPath,serialize)
         }
         return createJobStatus(status, jobActionsForStatus(status))
     }

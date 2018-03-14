@@ -248,7 +248,7 @@
                                 <div class="form-group">
                                     <g:each in="${trackingItems}" var="trackedItem">
                                         <g:set var="job" value="${trackedItem.jobId?jobMap[trackedItem.jobId]:null}"/>
-                                        <g:set var="jobst" value="${scmStatus?.get(job.extid)?.synchState?.toString()}"/>
+                                        <g:set var="jobst" value="${job?scmStatus?.get(job.extid)?.synchState?.toString():null}"/>
 
                                         <div class="checkbox col-sm-12">
                                             <label title="${trackedItem.id}">
