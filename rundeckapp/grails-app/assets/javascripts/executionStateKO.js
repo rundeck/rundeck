@@ -948,6 +948,14 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
             });
         }
     };
+    self.markExecAction = function () {
+        if (self.execFollowingControl) {
+            self.execFollowingControl.doincomplete().then(function (data) {
+                self.killRequested(true);
+                self.killResponseData(data);
+            });
+        }
+    };
     self.killStatusFailed = ko.computed(function () {
         "use strict";
         var req = self.killRequested();
@@ -979,6 +987,15 @@ function NodeFlowViewModel(workflow, outputUrl, nodeStateUpdateUrl, multiworkflo
         } else {
             return (data ? data['error'] || data.reason : '') || 'Failed to Kill Job.';
         }
+    });
+    self.killedbutNotSaved = ko.computed(function () {
+        "use strict";
+        var req = self.killRequested();
+        var data = self.killResponseData();
+        if (!req) {
+            return "";
+        }
+        return data && data.cancelled && data.status === 'db-error';
     });
     self.totalNodeCount=ko.observable(0);
     self.nodeIndex={};

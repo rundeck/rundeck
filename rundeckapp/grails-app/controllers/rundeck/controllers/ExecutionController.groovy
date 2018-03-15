@@ -349,13 +349,6 @@ class ExecutionController extends ControllerBase{
             return render(contentType: 'application/json', text: [error: "Execution not found for id: " + params.id] as JSON)
         }
 
-        JobExecutionContext jexec = scheduledExecutionService.findExecutingQuartzJob(Long.valueOf(params.id))
-        if(!jexec && !e.dateCompleted){
-            log.debug("Mark killed execution ${params.id} as incomplete")
-            executionService.cleanupExecution(e,'incomplete')
-        }
-
-
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
 
         if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
@@ -630,7 +623,8 @@ class ExecutionController extends ControllerBase{
                 )
             }
 
-            abortresult.abortstate = didCancel?ExecutionService.ABORT_ABORTED:ExecutionService.ABORT_PENDING
+            abortresult.abortstate = ExecutionService.ABORT_ABORTED
+            abortresult.status = "db-error"
         }
 
 
