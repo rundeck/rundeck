@@ -102,7 +102,7 @@
     </span>
 </g:elseif>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in ['RUNDECK_JOB']}">
-        <span class="configpair">
+        <span class="configpair" data-ko-controller="pluginProperty">
             <span title="${enc(attr: propdesc)}"><stepplugin:message
                     service="${service}"
                     name="${provider}"
@@ -133,7 +133,7 @@
     <g:elseif test="${prop.type.toString() == 'Embedded'}">
         <g:if test="${prop.embeddedType != null || prop.embeddedPluginType != null}">
 
-            <div data-ko-controller="pluginProperty">
+            <div>
 
                 <plugin-editor
                     params="editor: editor, typeField: fieldname()+'._type', service: service, provider: provider, propname:name"></plugin-editor>
