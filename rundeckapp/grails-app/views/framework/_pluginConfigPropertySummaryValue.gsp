@@ -168,6 +168,30 @@
             </g:else>
 
         </g:if>
+        <g:elseif test="${prop.type.toString() in ['Map']}">
+
+            <g:set var="defval" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>
+
+            <g:if
+                test="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.RUNDECK_JOB_OPTIONS, 'RUNDECK_JOB_OPTIONS']}">
+                <g:set var="defvalset" value="${defval && defval instanceof Map ? defval : [:]}"/>
+                <span class="text-success">
+                    <g:each in="${defvalset}" var="mapentry">
+                        <span class="text-info">-${mapentry.key}</span> <span class="configvalue">${mapentry.value}</span>
+                    </g:each>
+                </span>
+            </g:if>
+            <g:else>
+                <g:set var="defvalset" value="${defval && defval instanceof Map ? defval : [:]}"/>
+                <span class="text-success">
+                    <g:each in="${defvalset}" var="mapentry">
+                        <span class="text-info">${mapentry.key}</span>:
+                        <span class="configvalue">${mapentry.value}</span>
+                    </g:each>
+                </span>
+            </g:else>
+
+        </g:elseif>
         <g:else>
             <span class="text-success"><g:enc>${values[prop.name]}</g:enc></span>
         </g:else>
