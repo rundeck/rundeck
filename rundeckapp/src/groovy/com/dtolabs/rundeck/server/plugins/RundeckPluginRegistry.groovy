@@ -20,21 +20,8 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException
-import com.dtolabs.rundeck.core.plugins.CloseableProvider
-import com.dtolabs.rundeck.core.plugins.MultiPluginProviderLoader
-import com.dtolabs.rundeck.core.plugins.PluginMetadata
-import com.dtolabs.rundeck.core.plugins.PluginResourceLoader
-import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
-import com.dtolabs.rundeck.core.plugins.PluggableProviderService
-import com.dtolabs.rundeck.core.plugins.ProviderIdent
-import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
-import com.dtolabs.rundeck.core.plugins.configuration.Describable
-import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
-import com.dtolabs.rundeck.core.utils.IPropertyLookup
+import com.dtolabs.rundeck.core.plugins.*
+import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.plugins.ServiceTypes
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
@@ -292,6 +279,23 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         return validatePluginByName(name, service, resolver, PropertyScope.InstanceOnly)
     }
     /**
+     * Validate a provider for a service with an instance configuration
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param instanceConfiguration config map
+     * @param loader plugin loader for embedded plugin types
+     * @return Map containing valid:true/false, and report: {@link Validator.Report}
+     */
+    ValidatedPlugin validatePluginByName(
+        String name,
+        PluggableProviderService service,
+        Map instanceConfiguration,
+        MultiPluginProviderLoader loader
+    ) {
+        final PropertyResolver resolver = PropertyResolverFactory.createInstanceResolver(instanceConfiguration);
+        return validatePluginByName(name, service, resolver, PropertyScope.InstanceOnly, loader)
+    }
+    /**
      * Validate a provider for a service using a property resolver and a
      * default property scope
      * @param name name of bean or provider
@@ -306,7 +310,26 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         PropertyResolver resolver,
         PropertyScope defaultScope
     ) {
-        return validatePluginByName(name, service, resolver, defaultScope, null)
+        return validatePluginByName(name, service, resolver, defaultScope, null, null)
+    }
+    /**
+     * Validate a provider for a service using a property resolver and a
+     * default property scope
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @param loader plugin loader for embedded plugin types
+     * @return Map containing valid:true/false, and report: {@link Validator.Report}
+     */
+    public ValidatedPlugin validatePluginByName(
+        String name,
+        PluggableProviderService service,
+        PropertyResolver resolver,
+        PropertyScope defaultScope,
+        MultiPluginProviderLoader loader
+    ) {
+        return validatePluginByName(name, service, resolver, defaultScope, null, loader)
     }
     /**
      * Validate a provider for a service using a property resolver and a
@@ -324,6 +347,26 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         PropertyScope defaultScope,
         PropertyScope ignoredScope
     ) {
+        validatePluginByName(name, service, resolver, defaultScope, ignoredScope, null)
+    }
+    /**
+     * Validate a provider for a service using a property resolver and a
+     * default property scope, and an ignoredScope
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @param loader plugin loader for embedded plugin types
+     * @return Map containing valid:true/false, and report: {@link Validator.Report}
+     */
+    public ValidatedPlugin validatePluginByName(
+        String name,
+        PluggableProviderService service,
+        PropertyResolver resolver,
+        PropertyScope defaultScope,
+        PropertyScope ignoredScope,
+        MultiPluginProviderLoader loader
+    ) {
         def pluginDesc = loadPluginDescriptorByName(name, service)
         if (null == pluginDesc) {
             return null
@@ -331,7 +374,7 @@ class RundeckPluginRegistry implements ApplicationContextAware, PluginRegistry, 
         ValidatedPlugin result = new ValidatedPlugin()
         def description = pluginDesc.description
         if (description && description instanceof Description) {
-            def report = Validator.validate(resolver, description, defaultScope, ignoredScope)
+            def report = Validator.validate(resolver, description, defaultScope, ignoredScope, loader)
             result.valid = report.valid
             result.report = report
         }

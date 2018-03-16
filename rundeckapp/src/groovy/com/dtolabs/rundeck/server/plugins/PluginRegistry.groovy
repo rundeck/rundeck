@@ -123,6 +123,23 @@ public interface PluginRegistry {
     ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, PropertyResolver resolver, PropertyScope defaultScope) ;
     /**
      * Validate a provider for a service using a property resolver and a
+     * default property scope
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param resolver a property resolver
+     * @param defaultScope default scope to search for property values when undeclared
+     * @param loader plugin loader
+     * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
+     */
+    ValidatedPlugin validatePluginByName(
+        String name,
+        PluggableProviderService service,
+        PropertyResolver resolver,
+        PropertyScope defaultScope,
+        MultiPluginProviderLoader loader
+    );
+    /**
+     * Validate a provider for a service using a property resolver and a
      * default property scope, and an ignoredScope
      * @param name name of bean or provider
      * @param service provider service
@@ -159,6 +176,21 @@ public interface PluginRegistry {
      * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
      */
     ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Map instanceConfiguration);
+
+    /**
+     * Validate a provider for a service with an instance configuration
+     * @param name name of bean or provider
+     * @param service provider service
+     * @param instanceConfiguration config map
+     * @param loader loader for embedded plugin types
+     * @return Map containing valid:true/false, and report: {@link com.dtolabs.rundeck.core.plugins.configuration.Validator.Report}
+     */
+    ValidatedPlugin validatePluginByName(
+        String name,
+        PluggableProviderService service,
+        Map instanceConfiguration,
+        MultiPluginProviderLoader loader
+    );
     /**
      * Load a plugin instance with the given bean or provider name
      * @param name name of bean or provider
