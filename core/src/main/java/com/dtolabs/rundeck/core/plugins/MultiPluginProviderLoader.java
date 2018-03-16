@@ -16,6 +16,8 @@
 
 package com.dtolabs.rundeck.core.plugins;
 
+import com.dtolabs.rundeck.core.plugins.configuration.Description;
+
 import java.util.Map;
 
 /**
@@ -31,4 +33,13 @@ public interface MultiPluginProviderLoader {
      * @return instance
      */
     <T> T load(Class<T> clazz, String provider, Map<String, Object> configuration);
+
+    /**
+     * Get the Description of the given provider
+     *
+     * @param clazz    service class
+     * @param provider provider name
+     * @return description
+     */
+    Description describe(Class<?> clazz, String provider);
 }

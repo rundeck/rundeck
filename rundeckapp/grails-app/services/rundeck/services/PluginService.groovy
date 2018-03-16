@@ -578,4 +578,10 @@ class RDMultiPluginLoader implements MultiPluginProviderLoader {
         def plugin = pluginService.configurePlugin(provider, config, projectName, framework, service, this)
         plugin?.instance
     }
+
+    @Override
+    Description describe(final Class<?> clazz, final String provider) {
+        def descriptor = pluginService.getPluginDescriptor(provider, clazz)
+        descriptor?.description
+    }
 }
