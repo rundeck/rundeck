@@ -32,7 +32,9 @@
     renderingOptions     : prop.renderingOptions,
     hasEmbeddedType      : prop.embeddedType != null,
     hasEmbeddedPluginType: prop.embeddedPluginType != null,
-    previewMode          : true
+    previewMode          : true,
+    embeddedServiceName  : prop.embeddedPluginType ? pluginServicesByClass[prop.embeddedPluginType] : null,
+    idkey                : idkey
 
 ]}"/>
 <g:javascript>"use strict";
@@ -41,11 +43,11 @@
         if(typeof(window.PluginProperties)!=='object'){
             window.PluginProperties={};
         }
-        var json=loadJsonData('${propkey}_json');
-        var prop = new PluginProperty(json);
+        const json=loadJsonData('${propkey}_json');
+        const prop = new PluginProperty(json);
         PluginProperties['${propkey}']=prop;
-%{--ko.applyBindings(prop,jQuery('#${propkey}')[0]);--}%
-    initKoBind('#${propkey}',{pluginProperty:prop});
+
+        initKoBind('#${propkey}',{pluginProperty:prop});
     })
 </g:javascript>
 <span id="${propkey}">
@@ -133,10 +135,15 @@
     <g:elseif test="${prop.type.toString() == 'Embedded'}">
         <g:if test="${prop.embeddedType != null || prop.embeddedPluginType != null}">
 
-            <div>
+            <div data-ko-controller="pluginProperty" class="embedded-plugin" style="margin-left: 10px">
+                <span title="${enc(attr: propdesc)}"><stepplugin:message
+                    service="${service}"
+                    name="${provider}"
+                    code="${messagePrefix}property.${prop.name}.title"
+                    default="${prop.title ?: prop.name}"/>:</span>
 
                 <plugin-editor
-                    params="editor: editor, typeField: fieldname()+'._type', propname:name"></plugin-editor>
+                    params="editor: editor, typeField: fieldname()+'._type', embeddedTypeField: fieldname()+'.type', propname:name"></plugin-editor>
             </div>
 
         </g:if>

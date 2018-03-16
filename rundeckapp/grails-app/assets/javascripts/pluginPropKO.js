@@ -291,9 +291,16 @@ function PluginProperty(data) {
         if (self.type() === 'Embedded') {
             //load embedded editor
             const eid = self.idkey();
-            const configVal = data.value && typeof(data.value) === 'object'
-                ? {data: true, config: data.value}
-                : {data: false};
+            let configVal = {data: false};
+            let embeddedType = null;
+            if (data.value && typeof(data.value) === 'object') {
+                if (self.hasEmbeddedType()) {
+                    configVal = {data: true, config: data.value};
+                } else if (self.hasEmbeddedPluginType()) {
+                    embeddedType = data.value.type;
+                    configVal = {data: true, config: data.value.config};
+                }
+            }
             self.editor = new PluginEditor(
                 {
                     uid                : `eprop_${eid}`,
@@ -309,6 +316,7 @@ function PluginProperty(data) {
                     embedded           : true,
                     embeddedMode       : self.hasEmbeddedType() ? 'type' : 'plugin',
                     embeddedServiceName: self.embeddedServiceName(),
+                    embeddedProvider   : embeddedType,
                     // postLoadEditor  : self.postLoadEditor,
                     // deleteCallback  : self.removeItem
                 }

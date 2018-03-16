@@ -112,7 +112,8 @@ class PluginService {
             def embeddedDesc = PluginAdapterUtility.buildDescription(
                 prop.embeddedType,
                 DescriptionBuilder.builder(),
-                true
+                true,
+                prop.name
             )
             return new DescribedPlugin(
                 null,//PluginAdapterUtility.createInstanceFromType(prop.embeddedType),

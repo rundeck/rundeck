@@ -179,10 +179,14 @@ class PluginController extends ControllerBase {
         pluginPropertiesForm(service, name, embeddedProperty)
     }
 
-    def pluginPropertiesValidateAjax(String service, String name) {
+    def pluginPropertiesValidateAjax(String project, String service, String name) {
         if (requireAjax(controller: 'menu', action: 'index')) {
             return
         }
+        if (requireParams(['project', 'service', 'name'])) {
+            return
+        }
+
 
         def config = [:]
         if (request.method == 'POST' && request.format == 'json') {
@@ -190,7 +194,7 @@ class PluginController extends ControllerBase {
         }
         config = ParamsUtil.cleanMap(config)
 
-        def validation = pluginService.validatePluginConfig(service, name, config)
+        def validation = pluginService.validatePluginConfig(service, name, config, project)
 
         render(contentType: 'application/json') {
             valid = validation.valid
