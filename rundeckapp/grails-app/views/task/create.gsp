@@ -35,50 +35,18 @@
 
     <asset:javascript src="task/edit.js"/>
     <g:jsMessages
-            code="page.unsaved.changes,button.title.add.key.value.pair,key.value.key.title,loading.text,job.not.found.with.id.0"/>
+            code="form.validation.failure.description,button.action.Delete,button.action.Save,select.noselection.choose.label,page.unsaved.changes,button.title.add.key.value.pair,key.value.key.title,loading.text,job.not.found.with.id.0"/>
     <g:jsMessages id="jobi18n1"
                   code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
 
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
     <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ext-language_tools"/><!--<![endif]-->
     <g:javascript>"use strict";
-    var confirm = new PageConfirm(message('page.unsaved.changes'));
-    var postLoadEditor=function(dom) {
-          dom.find('.apply_ace').each(function () {
-                _setupAceTextareaEditor(this, confirm.setNeetsConfirm);
-            });
-        };
-    jQuery(function () {
-        jQuery('.apply_ace').each(function () {
-            _setupAceTextareaEditor(this, confirm.setNeetsConfirm);
-        });
-         window.taskEditor=new TaskEditor({
-                postLoadEditor:postLoadEditor,
-                triggerConfig:loadJsonData('triggerConfigJson'),
-                triggerFormId:'condeditor',
-                triggerFormPrefixes:['triggerConfig.', 'orig.triggerConfig.'],
-                triggerInputPrefix:'triggerConfig.',
-                actionConfig:loadJsonData('actionConfigJson'),
-                actionFormId:'actionEditor',
-                actionFormPrefixes:['actionConfig.', 'orig.actionConfig.'],
-                actionInputPrefix:'actionConfig.',
-                conditionData:loadJsonData('conditionListJson'),
-                conditionFormPrefixes:['conditionList.', 'orig.conditionList.'],
-                conditionInputPrefix:'conditionList.',
-                userData:loadJsonData('taskUserDataJson'),
-                userDataInputPrefix:'userData.'
-            });
-            taskEditor.init();
-            //indicates form was submitted
-            taskEditor.formSubmit=new UIToggle();
-            initKoBind(null,{taskEditor:taskEditor});
-    });
+
         function getFrameworkProject() {
             return "${project}";
         }
     </g:javascript>
-    <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
-    <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
 
 </head>
 

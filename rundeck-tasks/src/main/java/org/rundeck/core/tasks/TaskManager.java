@@ -14,12 +14,24 @@
  * limitations under the License.
  */
 
-"use strict";
+package org.rundeck.core.tasks;
 
-//= require ui/toggle
-//= require pluginPropKO
-//= require ko/component/job-link
-//= require ko/component/map-editor
-//= require ko/component/busy-spinner
-//= require ko/component/plugin-editor
-//= require koBind
+import java.util.Map;
+
+public interface TaskManager<T extends TaskContext> {
+    /**
+     * @param action
+     * @param taskContext
+     * @return handler for the action
+     */
+    public TaskActionHandler<T> getActionHandlerForTaskAction(TaskAction action, T taskContext);
+
+    /**
+     * @param action
+     * @param contextInfo
+     * @param triggerMap
+     * @param trigger
+     * @return result of performing the action
+     */
+    public Map performTaskAction(TaskAction action, T contextInfo, Map triggerMap, Map userData, TaskTrigger trigger) throws ActionFailed;
+}

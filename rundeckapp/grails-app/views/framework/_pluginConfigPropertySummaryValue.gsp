@@ -23,11 +23,20 @@
 <g:set var="propkey" value="${g.rkey()}"/>
 
 <g:embedJSON id="${propkey}_json" data="${[
-        service : service,
-        provider: provider,
-        name    : prop.name,
-        value   : values[prop.name],
-        project : project ?: params.project ?: request.project
+    service              : service,
+    provider             : provider,
+    name                 : prop.name,
+    value                : values?.get(prop.name),
+    origfieldname        : (origfieldnamePrefix ?: '') + prop.name,
+    fieldname            : (fieldnamePrefix ?: '') + prop.name,
+    type                 : prop.type.toString(),
+    project              : project ?: params.project ?: request.project,
+    renderingOptions     : prop.renderingOptions,
+    hasEmbeddedType      : prop.embeddedType != null,
+    hasEmbeddedPluginType: prop.embeddedPluginType != null,
+    previewMode          : true,
+    embeddedServiceName  : prop.embeddedPluginType && pluginServicesByClass? pluginServicesByClass[prop.embeddedPluginType] : null,
+    idkey                : idkey
 
 ]}"/>
 <g:javascript>"use strict";
@@ -36,10 +45,11 @@
         if(typeof(window.PluginProperties)!=='object'){
             window.PluginProperties={};
         }
-        var json=loadJsonData('${propkey}_json');
-        var prop = new PluginProperty(json);
-        ko.applyBindings(prop,jQuery('#${propkey}')[0]);
+        const json=loadJsonData('${propkey}_json');
+        const prop = new PluginProperty(json);
         PluginProperties['${propkey}']=prop;
+
+        initKoBind('#${propkey}',{pluginProperty:prop});
     })
 </g:javascript>
 <span id="${propkey}">
@@ -96,7 +106,7 @@
     </span>
 </g:elseif>
     <g:elseif test="${prop.renderingOptions?.(StringRenderingConstants.DISPLAY_TYPE_KEY) in ['RUNDECK_JOB']}">
-        <span class="configpair">
+        <span class="configpair" data-ko-controller="pluginProperty">
             <span title="${enc(attr: propdesc)}"><stepplugin:message
                     service="${service}"
                     name="${provider}"
@@ -123,6 +133,22 @@
 
         </span>
 
+    </g:elseif>
+    <g:elseif test="${prop.type.toString() == 'Embedded'}">
+        <g:if test="${prop.embeddedType != null || prop.embeddedPluginType != null}">
+
+            <div data-ko-controller="pluginProperty" class="embedded-plugin" style="margin-left: 10px">
+                <span title="${enc(attr: propdesc)}"><stepplugin:message
+                    service="${service}"
+                    name="${provider}"
+                    code="${messagePrefix}property.${prop.name}.title"
+                    default="${prop.title ?: prop.name}"/>:</span>
+
+                <plugin-editor
+                    params="editor: editor, typeField: fieldname()+'._type', embeddedTypeField: fieldname()+'.type', propname:name"></plugin-editor>
+            </div>
+
+        </g:if>
     </g:elseif>
 <g:elseif test="${values[prop.name]}">
     <span class="configpair">
@@ -151,6 +177,30 @@
             </g:else>
 
         </g:if>
+        <g:elseif test="${prop.type.toString() in ['Map']}">
+
+            <g:set var="defval" value="${values && null != values[prop.name] ? values[prop.name] : prop.defaultValue}"/>
+
+            <g:if
+                test="${prop.renderingOptions?.(StringRenderingConstants.SELECTION_ACCESSOR_KEY) in [StringRenderingConstants.SelectionAccessor.RUNDECK_JOB_OPTIONS, 'RUNDECK_JOB_OPTIONS']}">
+                <g:set var="defvalset" value="${defval && defval instanceof Map ? defval : [:]}"/>
+                <span class="text-success">
+                    <g:each in="${defvalset}" var="mapentry">
+                        <span class="text-info">-${mapentry.key}</span> <span class="configvalue">${mapentry.value}</span>
+                    </g:each>
+                </span>
+            </g:if>
+            <g:else>
+                <g:set var="defvalset" value="${defval && defval instanceof Map ? defval : [:]}"/>
+                <span class="text-success">
+                    <g:each in="${defvalset}" var="mapentry">
+                        <span class="text-info">${mapentry.key}</span>:
+                        <span class="configvalue">${mapentry.value}</span>
+                    </g:each>
+                </span>
+            </g:else>
+
+        </g:elseif>
         <g:else>
             <span class="text-success"><g:enc>${values[prop.name]}</g:enc></span>
         </g:else>

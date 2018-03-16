@@ -44,6 +44,9 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.tasks.action.JobRunTaskAction
+import com.dtolabs.rundeck.server.plugins.tasks.action.MultiActionHandler
+import com.dtolabs.rundeck.server.plugins.tasks.action.MultipleTaskAction
+import com.dtolabs.rundeck.server.plugins.tasks.action.TestEmbedTaskAction
 import com.dtolabs.rundeck.server.plugins.tasks.condition.ScriptTaskCondition
 import com.dtolabs.rundeck.server.plugins.tasks.condition.ScriptTaskConditionHandler
 import com.dtolabs.rundeck.server.plugins.tasks.trigger.CalendarIntervalTaskTrigger
@@ -341,8 +344,11 @@ beans={
         ScriptTaskCondition,
         //task condition handlers,
         ScriptTaskConditionHandler,
+        MultiActionHandler,
         //task actions
-        JobRunTaskAction
+        JobRunTaskAction,
+        MultipleTaskAction,
+        TestEmbedTaskAction
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }

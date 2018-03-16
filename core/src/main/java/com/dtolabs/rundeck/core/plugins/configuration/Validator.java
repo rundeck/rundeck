@@ -23,7 +23,12 @@
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
+import com.dtolabs.rundeck.core.plugins.MultiPluginProviderLoader;
+import com.dtolabs.rundeck.core.utils.Pair;
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
+
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * Validator utility class can create a validation report for a set of input properties and a configuration
@@ -145,30 +150,194 @@ public class Validator {
         List<Property> properties,
         PropertyScope ignoredScope
     ) {
+        return validate(inputValues, report, properties, ignoredScope, null, null);
+    }
+
+    /**
+     * Validate, ignoring properties below a scope, if set
+     *
+     * @param inputValues  input properties
+     * @param report       report
+     * @param properties   property definitions
+     * @param ignoredScope ignore scope
+     */
+    private static Report validate(
+        Map inputValues,
+        Report report,
+        List<Property> properties,
+        PropertyScope ignoredScope,
+        MultiPluginProviderLoader loader
+    ) {
+        return validate(inputValues, report, properties, ignoredScope, null, loader);
+    }
+
+    /**
+     * Validate, ignoring properties below a scope, if set
+     *
+     * @param inputValues  input properties
+     * @param report       report
+     * @param properties   property definitions
+     * @param ignoredScope ignore scope
+     */
+    private static Report validate(
+        Map inputValues,
+        Report report,
+        List<Property> properties,
+        PropertyScope ignoredScope,
+        String prefix
+    ) {
+        return validate(inputValues, report, properties, ignoredScope, prefix, null);
+    }
+
+    /**
+     * Validate, ignoring properties below a scope, if set
+     *
+     * @param inputValues  input properties
+     * @param report       report
+     * @param properties   property definitions
+     * @param ignoredScope ignore scope
+     */
+    private static Report validate(
+        Map inputValues,
+        Report report,
+        List<Property> properties,
+        PropertyScope ignoredScope,
+        String prefix,
+        MultiPluginProviderLoader loader
+    ) {
         if (null == properties) {
             return report;
         }
+        props:
         for (final Property property : properties) {
             if (null != ignoredScope && property.getScope() != null
                 && property.getScope().compareTo(ignoredScope) <= 0) {
                 continue;
             }
             final String key = property.getName();
+            final String prefixedKey = prefix != null ? prefix + key : key;
+            Consumer<String> reportError = (msg) -> report.errors.put(prefixedKey, msg);
             final Object value = inputValues.get(key);
             if (null == value || "".equals(value)) {
                 if (property.isRequired()) {
-                    report.errors.put(key, "required");
+                    reportError.accept("required");
                 }
             } else {
                 //try to validate
                 final PropertyValidator validator = property.getValidator();
-                if (!(value instanceof Map) && property.getType() == Property.Type.Map) {
-                    report.errors.put(key, "Invalid data type: expected a Map");
-                } else if ((
-                    value instanceof Collection && property.getType() != Property.Type.Options
-                    || value instanceof Map && property.getType() != Property.Type.Map
-                )) {
-                    report.errors.put(key, "Invalid data type: expected a String");
+                if (!validateDataType(property, reportError, value)) {
+                    continue;
+                }
+                if (property.getType() == Property.Type.Embedded
+                    || property.getType() == Property.Type.Options &&
+                       (null != property.getEmbeddedType() || null != property.getEmbeddedPluginType())) {
+
+                    //validate embedded type/plugin
+                    Class<?> embeddedType = property.getEmbeddedType();
+                    Class<?> pluginType = property.getEmbeddedPluginType();
+
+                    if (null != embeddedType) {
+                        Description
+                            description =
+                            PluginAdapterUtility.buildDescription(
+                                embeddedType,
+                                DescriptionBuilder.builder(),
+                                true,
+                                property.getName()
+                            );
+                        List<Map> values = new ArrayList<>();
+                        if (property.getType() == Property.Type.Embedded) {
+                            values.add((Map) value);
+                        } else if (property.getType() == Property.Type.Options) {
+                            //require value to be a map or collection of maps
+
+                            if (value instanceof Map) {
+                                values.add((Map) value);
+                            } else if (value instanceof Collection) {
+                                Collection c = (Collection) value;
+
+                                for (Object o : c) {
+                                    if (!Map.class.isAssignableFrom(o.getClass())) {
+                                        reportError.accept("Invalid data type: expected a Map or List of Maps");
+                                        continue props;
+                                    }
+                                }
+                                values.addAll((Collection) value);
+                            } else {
+                                reportError.accept("Invalid data type: expected a Map or List of Maps");
+                                continue;
+                            }
+                        }
+                        for (Map map : values) {
+                            validate(map, report, description.getProperties(), ignoredScope, prefixedKey + ".");
+                        }
+                    } else if (null != pluginType) {
+                        if (property.getType() == Property.Type.Embedded) {
+                            if (value instanceof Map) {
+                                Map data = (Map) value;
+                                Pair<String, Map<String, Object>> pair = getPluginConfig(reportError, data);
+
+                                if (pair == null) {
+                                    continue;
+                                }
+                                Description describe = loader.describe(pluginType, pair.getFirst());
+                                validate(
+                                    pair.getSecond(),
+                                    report,
+                                    describe.getProperties(),
+                                    ignoredScope,
+                                    prefixedKey + ".config."
+                                );
+
+                            }
+                        } else if (property.getType() == Property.Type.Options) {
+                            List<Pair<String, Map<String, Object>>> values = new ArrayList<>();
+                            if (value instanceof Map) {
+                                Pair<String, Map<String, Object>>
+                                    pluginConfig =
+                                    getPluginConfig(reportError, (Map) value);
+                                if (null == pluginConfig) {
+                                    continue;
+                                }
+                                values.add(pluginConfig);
+
+                            } else if (value instanceof Collection) {
+                                Collection c = (Collection) value;
+
+                                for (Object o : c) {
+                                    if (!Map.class.isAssignableFrom(o.getClass())) {
+                                        reportError.accept("Invalid data type: expected a Map or List of Maps");
+                                        continue props;
+                                    }
+                                    Pair<String, Map<String, Object>>
+                                        pluginConfig =
+                                        getPluginConfig(reportError, (Map) o);
+                                    if (null == pluginConfig) {
+                                        continue props;
+
+                                    }
+                                    values.add(pluginConfig);
+                                }
+
+                            } else {
+                                reportError.accept("Invalid data type: expected a Map or List of Maps");
+                                continue;
+                            }
+                            int i = 0;
+                            for (Pair<String, Map<String, Object>> pair : values) {
+                                Description describe = loader.describe(pluginType, pair.getFirst());
+                                validate(
+                                    pair.getSecond(),
+                                    report,
+                                    describe.getProperties(),
+                                    ignoredScope,
+                                    String.format("%s[%d].config.", prefixedKey, i)
+                                );
+                                i++;
+                            }
+
+                        }
+                    }
                 } else if (null != validator) {
                     List<String> valueSet = null;
                     if (value instanceof String) {
@@ -192,13 +361,77 @@ public class Validator {
                         }
 
                         if (!sb.isEmpty()) {
-                            report.errors.put(key, "Invalid value(s): " + sb);
+                            reportError.accept("Invalid value(s): " + sb);
                         }
                     }
                 }
             }
         }
         return report;
+    }
+
+    private static Pair<String, Map<String, Object>> getPluginConfig(
+        final Consumer<String> reportError,
+        final Map data
+    ) {
+        String type = null;
+        Map<String, Object> pluginConfig = null;
+        Pair<String, Map<String, Object>> pair = null;
+        if (data.containsKey("type") && data.get("type") instanceof String) {
+            type = (String) data.get("type");
+        }
+        if (data.containsKey("config") && data.get("config") instanceof Map) {
+            pluginConfig = (Map) data.get("config");
+        }
+        if (null == type || null == pluginConfig) {
+            reportError.accept(
+                "Invalid data type: expected a Map containing 'type' and 'config'");
+            return null;
+
+        }
+        pair = Pair.of(type, pluginConfig);
+        return pair;
+    }
+
+    private static boolean validateDataType(
+        final Property property,
+        final Consumer<String> reportError,
+        final Object value
+    ) {
+
+        Class expectedData = String.class;
+        if ((property.getEmbeddedType() != null || property.getEmbeddedPluginType() != null)
+            || property.getType() == Property.Type.Map
+            || property.getType() == Property.Type.Embedded) {
+            expectedData = Map.class;
+        }
+
+        if (value instanceof Collection && property.getType() == Property.Type.Options) {
+            for (Object o : (Collection) value) {
+                if (!(expectedData.isAssignableFrom(o.getClass()))) {
+                    reportError.accept(String.format(
+                        "Invalid data type: expected a %s or List of %s",
+                        expectedData.getSimpleName(),
+                        expectedData.getSimpleName()
+                    ));
+                    return false;
+                }
+            }
+        } else if (property.getType() == Property.Type.Options && !(expectedData.isAssignableFrom(value.getClass()))) {
+            reportError.accept(String.format(
+                "Invalid data type: expected a %s or List of %s",
+                expectedData.getSimpleName(),
+                expectedData.getSimpleName()
+            ));
+            return false;
+        } else if (!(expectedData.isAssignableFrom(value.getClass()))) {
+            reportError.accept(String.format(
+                "Invalid data type: expected a %s",
+                expectedData.getSimpleName()
+            ));
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -230,7 +463,26 @@ public class Validator {
         PropertyScope defaultScope,
         PropertyScope ignoredScope
     ) {
-        return validateProperties(resolver, description.getProperties(), defaultScope, ignoredScope);
+        return validate(resolver, description, defaultScope, ignoredScope, null);
+    }
+
+    /**
+     * Validate a set of properties for a description, and return a report.
+     *
+     * @param resolver     property resolver
+     * @param description  description
+     * @param defaultScope default scope for properties
+     * @param ignoredScope ignore properties at or below this scope, or null to ignore none
+     * @return the validation report
+     */
+    public static Report validate(
+        final PropertyResolver resolver,
+        final Description description,
+        PropertyScope defaultScope,
+        PropertyScope ignoredScope,
+        MultiPluginProviderLoader loader
+    ) {
+        return validateProperties(resolver, description.getProperties(), defaultScope, ignoredScope, loader);
     }
 
     /**
@@ -248,13 +500,33 @@ public class Validator {
             final List<Property> properties,
             PropertyScope defaultScope,
             PropertyScope ignoredScope
-    )
-    {
+    ) {
+        return validateProperties(resolver, properties, defaultScope, ignoredScope, null);
+    }
+
+    /**
+     * Validate a set of properties for a description, and return a report.
+     *
+     * @param resolver     property resolver
+     * @param properties   list of properties
+     * @param defaultScope default scope for properties
+     * @param ignoredScope ignore properties at or below this scope, or null to ignore none
+     * @return the validation report
+     */
+    public static Report validateProperties(
+        final PropertyResolver resolver,
+        final List<Property> properties,
+        PropertyScope defaultScope,
+        PropertyScope ignoredScope,
+        MultiPluginProviderLoader loader
+    ) {
         return validate(
             PluginAdapterUtility.mapProperties(resolver, properties, defaultScope),
             new Report(),
             properties,
-            ignoredScope
+            ignoredScope,
+            null,
+            loader
         );
     }
 

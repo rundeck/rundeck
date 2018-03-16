@@ -117,7 +117,7 @@ public abstract class BasePluggableProviderService<T> implements PluggableProvid
             return method.newInstance();
         } catch (NoSuchMethodException e) {
             throw new ProviderCreationException(
-                    "No constructor found with signature (Framework) or (): " + e.getMessage(), e,
+                    "No constructor found with signature (): " + e.getMessage(), e,
                     getName(),
                     providerName);
         } catch (Exception e) {

@@ -14,12 +14,17 @@
  * limitations under the License.
  */
 
-"use strict";
+package org.rundeck.core.plugins;
 
-//= require ui/toggle
-//= require pluginPropKO
-//= require ko/component/job-link
-//= require ko/component/map-editor
-//= require ko/component/busy-spinner
-//= require ko/component/plugin-editor
-//= require koBind
+import java.util.Map;
+
+/**
+ * Defines plugin types by name
+ */
+public interface PluginTypes {
+
+    /**
+     * @return map of service names to plugin types
+     */
+    Map<String, Class<?>> getPluginTypes();
+}

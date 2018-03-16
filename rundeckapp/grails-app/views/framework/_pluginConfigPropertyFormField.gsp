@@ -41,17 +41,21 @@
     <g:set var="propkey" value="${g.rkey()}"/>
     <g:set var="fieldid" value="${g.rkey()}"/>
     <g:embedJSON id="${propkey}_json" data="${[
-            service         : service,
-            provider        : provider,
-            name            : prop.name,
-            type            : prop.type.toString(),
-            origfieldname   : origfieldname,
-            fieldname       : fieldname,
-            fieldid         : fieldid,
-            value           : valueText,
-            project         : project ?: params.project ?: request.project,
-            renderingOptions: prop.renderingOptions,
-            idkey           : idkey
+        service              : service,
+        provider             : provider,
+        name                 : prop.name,
+        type                 : prop.type.toString(),
+        origfieldname        : origfieldname,
+        fieldname            : fieldname,
+        fieldid              : fieldid,
+        value                : valueText,
+        project              : project ?: params.project ?: request.project,
+        renderingOptions     : prop.renderingOptions,
+        idkey                : idkey,
+        hasEmbeddedType      : prop.embeddedType != null,
+        hasEmbeddedPluginType: prop.embeddedPluginType != null,
+        embeddedServiceName  : prop.embeddedPluginType&& pluginServicesByClass ? pluginServicesByClass[prop.embeddedPluginType] : null,
+        error                : error
 
     ]}"/>
     <g:javascript>"use strict";
@@ -89,9 +93,9 @@
                    StringRenderingConstants.SelectionAccessor.RUNDECK_JOB_OPTIONS,
                    'RUNDECK_JOB_OPTIONS'
            ]}"/>
-    <div class="form-group ${enc(attr: hasError)}" id="${propkey}">
+    <div class="form-group ${enc(attr: hasError)}" id="${propkey}" data-ko-controller="pluginProperty">
     <g:if test="${outofscope}">
-        <label class="${labelColType} form-control-static ${error ? 'has-error' : ''}  ${prop.required ? 'required' :
+        <label class="${labelColType} form-control-static ${hasError ? 'has-error' : ''}  ${prop.required ? 'required' :
                                                                                          ''}">
             <stepplugin:message
                     service="${service}"
@@ -136,7 +140,7 @@
                 <g:textField name="${fieldname}"
                              value="${inputValues && null != inputValues[prop.name] ? inputValues[prop.name] :
                                       prop.defaultValue}"
-                             id="${fieldid}" size="100" class="${formControlType}${extraInputCss}"/>
+                             id="${fieldid}" size="100" class="${formControlType}${extraInputCss?:''}"/>
             </div>
 
             <div class="${valueColTypeSplitB}">
@@ -171,6 +175,9 @@
         </g:else>
     </g:elseif>
     <g:elseif test="${prop.type.toString() == 'Options'}">
+        <g:if test="${prop.embeddedType != null || prop.embeddedPluginType != null}">
+            ${prop.embeddedType?.toString()}
+        </g:if>
 
         <label class="${labelColType}   ${prop.required ? 'required' : ''}"
                for="${enc(attr: fieldid)}"><stepplugin:message
@@ -225,6 +232,23 @@
                 <g:hiddenField name="${fieldname}._type" value="map"/>
                 <map-editor params="prefix: '${fieldname}.map.', value: value"></map-editor>
             </div>
+        </g:elseif>
+        <g:elseif test="${prop.type.toString() == 'Embedded'}">
+
+            <label class="${labelColType}  ${prop.required ? 'required' : ''}"
+                   for="${enc(attr: fieldid)}"><stepplugin:message
+                service="${service}"
+                name="${provider}"
+                code="${messagePrefix}property.${prop.name}.title"
+                default="${prop.title ?: prop.name}"/></label>
+
+
+            <div class="${hasSelector ? valueColTypeSplit80 : valueColType} " data-ko-controller="pluginProperty">
+
+                <plugin-editor
+                        params="editor: editor, typeField: fieldname()+'._type', embeddedTypeField: fieldname()+'.type', propname:name"></plugin-editor>
+            </div>
+
         </g:elseif>
 
         <g:else>
@@ -293,7 +317,7 @@
                         <job-link params="id: value, project:project, action: toggle.toggle"></job-link>
                     </span>
                     <span data-bind="if: !value()" class="text-info">
-                        Select a Job
+                        <g:message code="plugin.property.displayType.RUNDECK_JOB.empty.message" />
                     </span>
                 </span>
                 <span class="textbtn textbtn-info" data-bind="click: toggle.toggle, visible: !toggle.value()">
@@ -329,7 +353,7 @@
             <g:else>
                 <g:textField name="${fieldname}" value="${valueText}"
                              data-bind="value: value"
-                             id="${fieldid}" size="100" class="${formControlType}${extraInputCss}"/>
+                             id="${fieldid}" size="100" class="${formControlType}${extraInputCss?:''}"/>
             </g:else>
         </div>
 
@@ -425,8 +449,16 @@
                                                default: prop.description
                                        ), textCss         : '',
                                                mode       : 'collapsed', rkey: g.rkey()]"/></div>
-    <g:if test="${error}">
-        <div class="text-warning"><g:enc>${error}</g:enc></div>
+    <g:if test="${error && error instanceof String}">
+        <g:if test="${error=='required'}">
+            <div class="text-warning">
+                <g:icon name="warning-sign"/>
+                <g:message code="form.validation.required.message" />
+            </div>
+        </g:if>
+        <g:else>
+            <div class="text-warning"><g:enc>${error}</g:enc></div>
+        </g:else>
     </g:if>
     <g:if test="${outofscope}">
         <g:render template="/framework/pluginConfigPropertyScopeInfo" model="[prefix:prefix,specialConfiguration:specialConfiguration,propScope:propScope,mapping:mapping, frameworkMapping: frameworkMapping, hideMissingFrameworkMapping: hideMissingFrameworkMapping]"/>

@@ -43,6 +43,12 @@ import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.core.tasks.TaskAction
+import org.rundeck.core.tasks.TaskActionHandler
+import org.rundeck.core.tasks.TaskCondition
+import org.rundeck.core.tasks.TaskConditionHandler
+import org.rundeck.core.tasks.TaskTrigger
+import org.rundeck.core.tasks.TaskTriggerHandler
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
@@ -2033,6 +2039,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         pluginDescs['FileUploadPluginService']=pluginService.listPlugins(FileUploadPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['TaskTrigger']=pluginService.listPlugins(TaskTrigger).collect{it.value.description}.sort { a, b -> a.name <=> b.name }
+        pluginDescs['TaskTriggerHandler']=pluginService.listPlugins(TaskTriggerHandler).collect{it.value.description}.sort { a, b -> a.name <=> b.name }
+        pluginDescs['TaskCondition']=pluginService.listPlugins(TaskCondition).collect{it.value.description}.sort { a, b -> a.name <=> b.name }
+        pluginDescs['TaskConditionHandler']=pluginService.listPlugins(TaskConditionHandler).collect{it.value.description}.sort { a, b -> a.name <=> b.name }
+        pluginDescs['TaskAction']=pluginService.listPlugins(TaskAction).collect{it.value.description}.sort { a, b -> a.name <=> b.name }
+        pluginDescs['TaskActionHandler']=pluginService.listPlugins(TaskActionHandler).collect{it.value.description}.sort { a, b -> a.name <=> b.name }
 
 
         def uiPluginProfiles = [:]

@@ -16,10 +16,10 @@
 
 /*
 * PropertyBase.java
-* 
+ *
 * User: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
 * Created: 7/27/11 5:42 PM
-* 
+ *
 */
 package com.dtolabs.rundeck.core.plugins.configuration;
 
@@ -44,39 +44,45 @@ class PropertyBase implements Property {
     private final Map<String, Object> renderingOptions;
     private final Type                type;
     private final ValuesGenerator     valuesGenerator;
+    private final Class<?>            embeddedType;
+    private final Class<?>            embeddedPluginType;
     private final List<String>        selectValues;
     private final Map<String, String> selectLabels;
 
     public PropertyBase(Property base) {
         this(
-                base.getType(),
-                base.getName(),
-                base.getTitle(),
-                base.getDescription(),
-                base.isRequired(),
-                base.getDefaultValue(),
-                base.getSelectValues(),
-                base.getSelectLabels(),
-                base.getValidator(),
-                base.getValuesGenerator(),
-                base.getScope(),
-                base.getRenderingOptions()
+            base.getType(),
+            base.getName(),
+            base.getTitle(),
+            base.getDescription(),
+            base.isRequired(),
+            base.getDefaultValue(),
+            base.getSelectValues(),
+            base.getSelectLabels(),
+            base.getValidator(),
+            base.getValuesGenerator(),
+            base.getScope(),
+            base.getRenderingOptions(),
+            base.getEmbeddedType(),
+            base.getEmbeddedPluginType()
         );
     }
 
     public PropertyBase(
-            final Type type,
-            final String name,
-            final String title,
-            final String description,
-            final boolean required,
-            final String defaultValue,
-            final List<String> selectValues,
-            final Map<String, String> selectLabels,
-            final PropertyValidator validator,
-            final ValuesGenerator valuesGenerator,
-            final PropertyScope scope,
-            final Map<String, Object> renderingOptions
+        final Type type,
+        final String name,
+        final String title,
+        final String description,
+        final boolean required,
+        final String defaultValue,
+        final List<String> selectValues,
+        final Map<String, String> selectLabels,
+        final PropertyValidator validator,
+        final ValuesGenerator valuesGenerator,
+        final PropertyScope scope,
+        final Map<String, Object> renderingOptions,
+        final Class<?> embeddedType,
+        final Class<?> embeddedPluginType
     ) {
         this.type = type;
         this.title = title;
@@ -91,6 +97,8 @@ class PropertyBase implements Property {
         this.selectLabels = selectLabels;
         this.renderingOptions = renderingOptions == null ? Collections.<String, Object> emptyMap() : Collections
                 .unmodifiableMap(renderingOptions);
+        this.embeddedType = embeddedType;
+        this.embeddedPluginType = embeddedPluginType;
     }
 
     public String getTitle() {
@@ -130,7 +138,7 @@ class PropertyBase implements Property {
     public PropertyScope getScope() {
         return scope;
     }
-    
+
     @Override
     public Map<String, Object> getRenderingOptions() {
         return renderingOptions;
@@ -147,6 +155,16 @@ class PropertyBase implements Property {
     }
 
     @Override
+    public Class<?> getEmbeddedType() {
+        return embeddedType;
+    }
+
+    @Override
+    public Class<?> getEmbeddedPluginType() {
+        return embeddedPluginType;
+    }
+
+    @Override
     public String toString() {
         return "PropertyBase{" +
                "name='" + name + '\'' +
@@ -157,6 +175,8 @@ class PropertyBase implements Property {
                (validator != null ? ", validator=" + validator : "") +
                (scope != null ? ", scope=" + scope : "") +
                (renderingOptions != null ? ", renderingOptions=" + renderingOptions : "") +
+               (embeddedType != null ? ", embeddedType=" + embeddedType : "") +
+               (embeddedPluginType != null ? ", embeddedPluginType=" + embeddedPluginType : "") +
                '}';
     }
 }

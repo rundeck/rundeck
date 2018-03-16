@@ -4,12 +4,15 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
+import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.server.plugins.tasks.action.JobRunTaskAction
 import org.rundeck.core.tasks.TaskAction
 import org.rundeck.core.tasks.ActionFailed
+import org.rundeck.core.tasks.TaskManager
 import org.rundeck.core.tasks.TaskTrigger
 import org.rundeck.core.tasks.TaskActionHandler
 
+@Plugin(name = 'JobRunTaskActionService', service = 'TaskActionHandler')
 class JobRunTaskActionService implements TaskActionHandler<RDTaskContext> {
     static transactional = false
     JobStateService jobStateService
@@ -19,8 +22,10 @@ class JobRunTaskActionService implements TaskActionHandler<RDTaskContext> {
     Map performTaskAction(
         RDTaskContext contextInfo,
         Map triggerMap,
+        Map userData,
         TaskTrigger trigger,
-        TaskAction action
+        TaskAction action,
+        TaskManager<RDTaskContext> manager
     ) throws ActionFailed {
         log.debug("JobRunTaskActionService: performTaskAction: ${contextInfo.taskId}, $triggerMap, $trigger, $action")
         JobRunTaskAction runAction = (JobRunTaskAction) action

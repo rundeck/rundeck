@@ -14,12 +14,18 @@
  * limitations under the License.
  */
 
-"use strict";
+package com.dtolabs.rundeck.core.plugins;
 
-//= require ui/toggle
-//= require pluginPropKO
-//= require ko/component/job-link
-//= require ko/component/map-editor
-//= require ko/component/busy-spinner
-//= require ko/component/plugin-editor
-//= require koBind
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
+/**
+ * Required annotation for embedded types used with Plugin Property definitions.
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+public @interface EmbeddedType {
+
+}

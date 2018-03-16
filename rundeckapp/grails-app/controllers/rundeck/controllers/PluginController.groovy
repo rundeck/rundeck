@@ -5,7 +5,7 @@ import grails.converters.JSON
 import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.services.UiPluginService
 
-class PluginController {
+class PluginController extends ControllerBase {
     def UiPluginService uiPluginService
     def pluginService
 
@@ -124,14 +124,25 @@ class PluginController {
         }
     }
 
-    def pluginPropertiesForm(String service, String name) {
-        def describedPlugin = pluginService.getPluginDescriptor(name, service)
+    def pluginPropertiesForm(String service, String name, String embeddedProperty) {
+        if (requireAjax(controller: 'menu', action: 'index')) {
+            return
+        }
+        def describedPlugin = embeddedProperty ?
+                              pluginService.getPluginEmbeddedDescriptor(name, service, embeddedProperty) :
+                              pluginService.getPluginDescriptor(name, service)
+        if (!describedPlugin) {
+            response.status = 404
+            renderErrorView('Not found')
+            return
+        }
         def config = [:]
         def report = [:]
         if (request.method == 'POST' && request.format == 'json') {
             config = request.JSON.config
             report = request.JSON.report ?: [:]
         }
+        config = ParamsUtil.cleanMap(config)
         def dynamicProperties = [:]
         def dynamicPropertiesLabels = [:]
         describedPlugin.description.properties.each {
@@ -153,16 +164,73 @@ class PluginController {
             dynamicProperties[propName] = values
         }
 
+
         [
-                inputFieldPrefix       : params.inputFieldPrefix ?: '',
-                config                 : config,
-                report                 : report,
-                service                : service,
-                name                   : name,
-                dynamicPropertiesLabels: dynamicPropertiesLabels,
-                dynamicProperties      : dynamicProperties,
-                pluginDescription      : describedPlugin.description,
-                project                : params.project
+            inputFieldPrefix       : params.inputFieldPrefix ?: '',
+            config                 : config,
+            report                 : report,
+            service                : service,
+            name                   : name,
+            dynamicPropertiesLabels: dynamicPropertiesLabels,
+            dynamicProperties      : dynamicProperties,
+            pluginDescription      : describedPlugin.description,
+            project                : params.project,
+            hidePluginSummary      : params.hidePluginSummary ? true : false,
+            pluginServicesByClass  : pluginService.pluginTypesMap
         ]
+    }
+
+    def pluginPropertiesPreview(String service, String name, String embeddedProperty) {
+        pluginPropertiesForm(service, name, embeddedProperty)
+    }
+
+    def pluginPropertiesValidateAjax(String project, String service, String name) {
+        if (requireAjax(controller: 'menu', action: 'index')) {
+            return
+        }
+        if (requireParams(['project', 'service', 'name'])) {
+            return
+        }
+
+
+        def config = [:]
+        if (request.method == 'POST' && request.format == 'json') {
+            config = request.JSON.config
+        }
+        config = ParamsUtil.cleanMap(config)
+
+
+        def validation = pluginService.validatePluginConfig(service, name, config, project)
+        def errorsMap = validation.report.errors
+        def decomp= decomposeMap(errorsMap)
+        System.err.println("config: $config, errors: $errorsMap, decomp: $decomp")
+        render(contentType: 'application/json') {
+            valid = validation.valid
+            delegate.errors = decomp
+        }
+    }
+
+    private Map<String, String> decomposeMap(final HashMap<String, String> map) {
+        Map<String, String> result = [:]
+        map.keySet().each { key ->
+
+            def list = key.split(/\./)
+            def cur = result
+            def last = key
+            def lastmap = result
+            list.each { sub ->
+                if (null == cur[sub]) {
+                    cur[sub] = [:]
+
+                }
+                lastmap = cur
+                last = sub
+                cur = cur[sub]
+            }
+            if (null != cur && null != last) {
+                lastmap[last] = map[key]
+            }
+        }
+        result
     }
 }

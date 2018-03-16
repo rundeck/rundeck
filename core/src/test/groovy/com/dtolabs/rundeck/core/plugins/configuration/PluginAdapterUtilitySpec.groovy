@@ -16,8 +16,11 @@
 
 package com.dtolabs.rundeck.core.plugins.configuration
 
+import com.dtolabs.rundeck.core.plugins.MultiPluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.DynamicSelectValues
+import com.dtolabs.rundeck.plugins.descriptions.EmbeddedPluginProperty
+import com.dtolabs.rundeck.plugins.descriptions.EmbeddedTypeProperty
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOption
 import com.dtolabs.rundeck.plugins.descriptions.RenderingOptions
@@ -140,7 +143,12 @@ class PluginAdapterUtilitySpec extends Specification {
 
         HashMap<String, Object> configuration = new HashMap<String, Object>();
         configuration.put("testSelect3", value);
-        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+        PluginAdapterUtility.configureProperties(
+            new mapResolver(configuration),
+            PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder()),
+            test,
+            PropertyScope.InstanceOnly
+        );
 
         then:
         test.testSelect3 == value
@@ -160,7 +168,12 @@ class PluginAdapterUtilitySpec extends Specification {
 
         HashMap<String, Object> configuration = new HashMap<String, Object>();
         configuration.put("testSelect4", value);
-        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+        PluginAdapterUtility.configureProperties(
+            new mapResolver(configuration),
+            PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder()),
+            test,
+            PropertyScope.InstanceOnly
+        );
 
         then:
         test.testSelect4 == (expect as Set)
@@ -184,7 +197,12 @@ class PluginAdapterUtilitySpec extends Specification {
 
         HashMap<String, Object> configuration = new HashMap<String, Object>();
         configuration.put("testSelect5", value);
-        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+        PluginAdapterUtility.configureProperties(
+            new mapResolver(configuration),
+            PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder()),
+            test,
+            PropertyScope.InstanceOnly
+        );
 
         then:
         test.testSelect5 == expect
@@ -208,7 +226,12 @@ class PluginAdapterUtilitySpec extends Specification {
 
         HashMap<String, Object> configuration = new HashMap<String, Object>();
         configuration.put("testSelect6", value);
-        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+        PluginAdapterUtility.configureProperties(
+            new mapResolver(configuration),
+            PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder()),
+            test,
+            PropertyScope.InstanceOnly
+        );
 
         then:
         test.testSelect6 == expect
@@ -231,7 +254,12 @@ class PluginAdapterUtilitySpec extends Specification {
 
         HashMap<String, Object> configuration = new HashMap<String, Object>();
         configuration.put("testSelect6", value);
-        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+        PluginAdapterUtility.configureProperties(
+            new mapResolver(configuration),
+            PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder()),
+            test,
+            PropertyScope.InstanceOnly
+        );
 
         then:
         RuntimeException e = thrown()
@@ -254,7 +282,12 @@ class PluginAdapterUtilitySpec extends Specification {
 
         HashMap<String, Object> configuration = new HashMap<String, Object>();
         configuration.put("testSelect11", value);
-        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+        PluginAdapterUtility.configureProperties(
+            new mapResolver(configuration),
+            PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder()),
+            test,
+            PropertyScope.InstanceOnly
+        );
 
         then:
         test.testSelect11 == expect
@@ -277,7 +310,12 @@ class PluginAdapterUtilitySpec extends Specification {
 
         HashMap<String, Object> configuration = new HashMap<String, Object>();
         configuration.put("testMap", value);
-        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+        PluginAdapterUtility.configureProperties(
+            new mapResolver(configuration),
+            PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder()),
+            test,
+            PropertyScope.InstanceOnly
+        );
 
         then:
         test.testMap == expect
@@ -387,7 +425,12 @@ class PluginAdapterUtilitySpec extends Specification {
 
         HashMap<String, Object> configuration = new HashMap<String, Object>();
         configuration.put("testSelect4", value);
-        PluginAdapterUtility.configureProperties(new mapResolver(configuration), test);
+        PluginAdapterUtility.configureProperties(
+            new mapResolver(configuration),
+            PluginAdapterUtility.buildDescription(test, DescriptionBuilder.builder()),
+            test,
+            PropertyScope.InstanceOnly
+        );
 
         then:
         RuntimeException e = thrown()
@@ -467,6 +510,290 @@ class PluginAdapterUtilitySpec extends Specification {
         field2.type == Property.Type.String
         field2.validator != null
         field2.validator instanceof TestValidator1
+
+    }
+
+    static class MyClass implements MyPlugin {
+        @PluginProperty
+        String aString;
+    }
+
+    static interface MyPlugin {
+
+    }
+
+    static class MyClass2 {
+        @PluginProperty
+        String bString;
+
+        @PluginProperty
+        @EmbeddedTypeProperty
+        MyClass aType
+
+        @PluginProperty
+        @EmbeddedPluginProperty
+        MyPlugin aPlugin
+    }
+    /**
+     * test property types
+     */
+    @Plugin(name = "typeTest3", service = "x")
+    static class Configuretest3 {
+
+        @PluginProperty
+        @EmbeddedTypeProperty
+        MyClass someField;
+
+        @PluginProperty
+        @EmbeddedTypeProperty(type = MyClass)
+        List<MyClass> someList;
+
+        @PluginProperty
+        @EmbeddedTypeProperty(type = MyClass)
+        Set<MyClass> someSet;
+
+        @PluginProperty
+        @EmbeddedPluginProperty
+        MyClass someField2;
+
+        @PluginProperty
+        @EmbeddedPluginProperty(type = MyClass)
+        List<MyClass> someList2;
+
+        @PluginProperty
+        @EmbeddedPluginProperty(type = MyClass)
+        Set<MyClass> someSet2;
+    }
+
+    @Plugin(name = "typeTest4", service = "x")
+    static class Configuretest4 {
+
+        @PluginProperty
+        @EmbeddedTypeProperty
+        MyClass2 someFieldz;
+
+    }
+
+    def "embedded type annotation "() {
+        given:
+
+        when:
+        def list = PluginAdapterUtility.buildFieldProperties(Configuretest3)
+
+        then:
+        def field1 = list.find { it.name == 'someField' }
+        field1 != null
+        field1.type == Property.Type.Embedded
+        field1.embeddedType != null
+        field1.embeddedType == MyClass
+        def field2 = list.find { it.name == 'someList' }
+        field2 != null
+        field2.type == Property.Type.Options
+        field2.embeddedType != null
+        field2.embeddedType == MyClass
+        def field3 = list.find { it.name == 'someSet' }
+        field3 != null
+        field3.type == Property.Type.Options
+        field3.embeddedType != null
+        field3.embeddedType == MyClass
+
+    }
+
+    def "configure single embedded type"() {
+        given:
+        def obj = new Configuretest3()
+
+        when:
+        PluginAdapterUtility.configureObjectFieldsWithProperties(obj, inputConfig)
+
+        then:
+        obj.someField != null
+        obj.someField.aString == 'the string'
+
+        where:
+        inputConfig                          || _
+        [someField: [aString: 'the string']] || _
+
+    }
+
+    def "configure 2 level embedded type2"() {
+        given:
+        def obj = new Configuretest4()
+
+        when:
+        PluginAdapterUtility.configureObjectFieldsWithProperties(obj, inputConfig)
+
+        then:
+        obj.someFieldz != null
+        obj.someFieldz.bString == 'the b string'
+        obj.someFieldz.aType != null
+        obj.someFieldz.aType.aString == 'the 2 string'
+
+
+        where:
+        inputConfig                                                               || _
+        [someFieldz: [bString: 'the b string', aType: [aString: 'the 2 string']]] || _
+
+    }
+
+    def "configure 2 level embedded type and plugin type"() {
+        given:
+        def obj = new Configuretest4()
+        def loader = Mock(MultiPluginProviderLoader)
+
+        when:
+        PluginAdapterUtility.configureObjectFieldsWithProperties(obj, inputConfig, loader)
+
+        then:
+        obj.someFieldz != null
+        obj.someFieldz.bString == 'the b string'
+        obj.someFieldz.aPlugin != null
+        obj.someFieldz.aPlugin instanceof MyClass
+        obj.someFieldz.aPlugin.aString == 'plugin string'
+
+        1 * loader.load(MyPlugin, 'myprovider', inputConfig.someFieldz.aPlugin.config) >> new MyClass(inputConfig.someFieldz.aPlugin.config)
+
+
+        where:
+        inputConfig                                                                                                || _
+        [someFieldz: [bString: 'the b string', aPlugin: [type: 'myprovider', config: [aString: 'plugin string']]]] || _
+
+    }
+
+    def "configure single embedded plugin type without loader"() {
+        given:
+        def obj = new Configuretest3()
+
+        when:
+        PluginAdapterUtility.configureObjectFieldsWithProperties(obj, inputConfig)
+
+        then:
+        UnsupportedOperationException e = thrown()
+
+        where:
+        inputConfig                                                         || _
+        [someField2: [type: 'myProvider', config: [aString: 'the string']]] || _
+
+    }
+
+    def "configure single embedded plugin type"() {
+        given:
+        def obj = new Configuretest3()
+        def loader = Mock(MultiPluginProviderLoader)
+
+        when:
+        PluginAdapterUtility.configureObjectFieldsWithProperties(obj, inputConfig, loader)
+
+        then:
+        obj.someField2 != null
+        obj.someField2.aString == 'the string'
+        1 * loader.load(MyClass, 'myProvider', inputConfig.someField2.config) >>
+        new MyClass(inputConfig.someField2.config)
+        0 * loader.load(*_)
+
+        where:
+        inputConfig                                                         || _
+        [someField2: [type: 'myProvider', config: [aString: 'the string']]] || _
+
+    }
+
+    def "configure list embedded plugin"() {
+        given:
+        def obj = new Configuretest3()
+        def loader = Mock(MultiPluginProviderLoader)
+
+        when:
+        PluginAdapterUtility.configureObjectFieldsWithProperties(obj, inputConfig, loader)
+
+        then:
+        obj.someList2 != null
+        obj.someList2.size() == 2
+        obj.someList2.every { it instanceof MyClass }
+        obj.someList2*.aString == ['a string', 'b string']
+        1 * loader.load(MyClass, 'myProvider', inputConfig.someList2[0].config) >>
+        new MyClass(inputConfig.someList2[0].config)
+        1 * loader.load(MyClass, 'myProvider2', inputConfig.someList2[1].config) >>
+        new MyClass(inputConfig.someList2[1].config)
+        0 * loader.load(*_)
+
+        where:
+        inputConfig || _
+        [someList2: [
+            [type: 'myProvider', config: [aString: 'a string']],
+            [type: 'myProvider2', config: [aString: 'b string']],
+        ]]          || _
+
+    }
+
+    def "configure list embedded type"() {
+        given:
+        def obj = new Configuretest3()
+
+        when:
+        PluginAdapterUtility.configureObjectFieldsWithProperties(obj, inputConfig)
+
+        then:
+        obj.someList != null
+        obj.someList.size() == 2
+        obj.someList.every { it instanceof MyClass }
+        obj.someList*.aString == ['a string', 'b string']
+
+        where:
+        inputConfig || _
+        [someList: [
+            [aString: 'a string'],
+            [aString: 'b string'],
+        ]]          || _
+
+    }
+
+    def "configure set embedded type"() {
+        given:
+        def obj = new Configuretest3()
+
+        when:
+        PluginAdapterUtility.configureObjectFieldsWithProperties(obj, inputConfig)
+
+        then:
+        obj.someSet != null
+        obj.someSet.size() == 2
+        obj.someSet.every { it instanceof MyClass }
+        obj.someSet*.aString.sort() == ['a string', 'b string']
+
+        where:
+        inputConfig || _
+        [someSet: [
+            [aString: 'a string'],
+            [aString: 'b string'],
+        ]]          || _
+
+    }
+
+    def "configure set embedded plugin"() {
+        given:
+        def obj = new Configuretest3()
+        def loader = Mock(MultiPluginProviderLoader)
+
+        when:
+        PluginAdapterUtility.configureObjectFieldsWithProperties(obj, inputConfig, loader)
+
+        then:
+        obj.someSet2 != null
+        obj.someSet2.size() == 2
+        obj.someSet2.every { it instanceof MyClass }
+        obj.someSet2*.aString.sort() == ['a string', 'b string']
+        1 * loader.load(MyClass, 'myProvider', inputConfig.someSet2[0].config) >>
+        new MyClass(inputConfig.someSet2[0].config)
+        1 * loader.load(MyClass, 'myProvider2', inputConfig.someSet2[1].config) >>
+        new MyClass(inputConfig.someSet2[1].config)
+        0 * loader.load(*_)
+
+        where:
+        inputConfig || _
+        [someSet2: [
+            [type: 'myProvider', config: [aString: 'a string']],
+            [type: 'myProvider2', config: [aString: 'b string']],
+        ]]          || _
 
     }
 }

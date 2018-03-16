@@ -14,17 +14,22 @@
  * limitations under the License.
  */
 
-package org.rundeck.core.plugins;
 
-/**
- * Defines plugin types by name
- */
-public interface PluginType {
-    /**
-     * Get the plugin class for the given plugin service type
-     *
-     * @param name service name
-     * @return plugin class
-     */
-    Class<?> getPluginType(String name);
+//= require asset-ko-template-loader
+"use strict";
+
+function PluginEditorContent(params) {
+    const self = this;
+    self.editor = params.editor;
+    self.typeField = params.typeField;
+    self.embeddedTypeField = params.embeddedTypeField;
 }
+
+ko.components.register('plugin-editor', {
+    viewModel: {
+        createViewModel: function (params, componentInfo) {
+            return new PluginEditorContent(params);
+        }
+    },
+    template : {assetTemplate: 'plugin-editor.html'}
+});

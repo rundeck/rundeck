@@ -92,7 +92,7 @@ grails.project.dependency.resolution = {
     plugins {
         compile (':less-asset-pipeline:2.7.2')
         compile ':twitter-bootstrap:3.3.2.1'
-        compile (':asset-pipeline:2.7.2')
+        compile (':asset-pipeline:2.14.1')
         compile ':cache:1.1.8'
         compile ":platform-core:1.0.0"
         runtime (':hibernate4:4.3.10')
@@ -117,7 +117,7 @@ grails.project.dependency.resolution = {
                 'com.fasterxml.jackson.core:jackson-databind:2.8.10',
                 'com.fasterxml.jackson.core:jackson-annotations:2.8.10',
                 'com.codahale.metrics:metrics-core:3.0.1',
-                'com.google.guava:guava:15.0',
+                'com.google.guava:guava:19.0',
                 'org.owasp.encoder:encoder:1.2',
                 'org.quartz-scheduler:quartz:2.2.1',
                 'com.atlassian.commonmark:commonmark:0.9.0',

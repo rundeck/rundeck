@@ -29,80 +29,52 @@
 //= require ko/component/job-link
 //= require ko/component/map-editor
 //= require ko/component/busy-spinner
+//= require ko/component/plugin-editor
 //= require menu/joboptions
 //= require koBind
+//= require task/TaskEditor
 
-"use strict";
 
-function TaskEditor(data) {
-    var self = this;
-    self.conditionFormPrefixes = data.conditionFormPrefixes;
-    self.conditionInputPrefix = data.conditionInputPrefix;
-    var privInc = 0;
-    self.trigger = new PluginEditor({
-        service: 'TaskTrigger',
-        config: data.triggerConfig,
-        formId: data.triggerFormId,
-        formPrefixes: data.triggerFormPrefixes,
-        inputFieldPrefix: data.triggerInputPrefix,
-        postLoadEditor: data.postLoadEditor
-    });
-    self.conditions = ko.observableArray();
-    self.action = new PluginEditor({
-        service: 'TaskAction',
-        config: data.actionConfig,
-        formId: data.actionFormId,
-        formPrefixes: data.actionFormPrefixes,
-        inputFieldPrefix: data.actionInputPrefix,
-        postLoadEditor: data.postLoadEditor
-    });
-    self.userData = new MultiMap({data: data.userData, inputPrefix: data.userDataInputPrefix});
-    self.init = function () {
-        self.trigger.init();
-        self.action.init();
-        ko.utils.arrayForEach(self.conditions(), function (d) {
-            d.init()
+
+
+jQuery(function (z) {
+    const confirm = new PageConfirm(message('page.unsaved.changes'));
+
+    function postLoadEditor(dom) {
+        dom.find('.form-control.apply_ace').each(function () {
+            _setupAceTextareaEditor(this, confirm.setNeetsConfirm);
         });
-    };
-    self.createCondition = function (id, type, config) {
-        return new PluginEditor({
-            uid: 'cond_' + id,
-            service: 'TaskCondition',
-            provider: type,
-            config: config,
-            formId: 'form_' + id,
-            formPrefixes: [self.conditionFormPrefixes + 'entry[cond_' + id + '].'],
-            inputFieldPrefix: self.conditionInputPrefix + 'entry[cond_' + id + '].config.',
-            postLoadEditor: data.postLoadEditor
+        dom.find('.scriptContent.apply_ace').each(function () {
+            _applyAce(this, '400px');
         });
-    };
-    self.addConditionType = function (obj, evt) {
-        var id = (++privInc);
-        var data = jQuery(evt.target).data();
-        var type = data['pluginType'];
-        if (!type) {
-            return;
-        }
-        var pluginEditor = self.createCondition(id, type, {});
-        self.conditions.push(pluginEditor);
-        pluginEditor.init();
-    };
-
-    self.removeCondition = function (cond) {
-        self.conditions.splice(self.conditions.indexOf(cond), 1);
-    };
-    if (data.conditionData && data.conditionData.data) {
-        var errors = data.conditionData.errors;
-        data.conditionData.list.forEach(function (val, n) {
-            var id = (++privInc);
-            var error = errors && errors.length > n ? errors[n] : null;
-            var pluginEditor = self.createCondition(id, val.type, {
-                config: val.config,
-                data: true,
-                report: {errors: error}
-            });
-            self.conditions.push(pluginEditor);
-        });
-
     }
-}
+
+    postLoadEditor(jQuery('body'));
+    window.pluginServices = new PluginServices(
+        [
+            {name: 'TaskAction', providers: loadJsonData('actionPluginDescJson')},
+            {name: 'TaskTrigger', providers: loadJsonData('triggerPluginDescJson')},
+            {name: 'TaskCondition', providers: loadJsonData('conditionPluginDescJson')}
+        ]);
+    window.taskEditor = new TaskEditor(
+        {
+            postLoadEditor       : postLoadEditor,
+            triggerConfig        : loadJsonData('triggerConfigJson'),
+            triggerFormId        : 'trigeditor',
+            triggerFormPrefixes  : ['triggerConfig.config.', 'orig.triggerConfig.config.'],
+            triggerInputPrefix   : 'triggerConfig.',
+            actionConfig         : loadJsonData('actionConfigJson'),
+            actionFormId         : 'actionEditor',
+            actionFormPrefixes   : ['actionConfig.config.', 'orig.actionConfig.config.'],
+            actionInputPrefix    : 'actionConfig.',
+            conditionData        : loadJsonData('conditionListJson'),
+            conditionFormPrefixes: ['conditionList.', 'orig.conditionList.'],
+            conditionInputPrefix : 'conditionList.',
+            userData             : loadJsonData('taskUserDataJson'),
+            userDataInputPrefix  : 'userData.'
+        });
+
+    taskEditor.init();
+    taskEditor.formSubmit = new UIToggle();
+    initKoBind();
+});

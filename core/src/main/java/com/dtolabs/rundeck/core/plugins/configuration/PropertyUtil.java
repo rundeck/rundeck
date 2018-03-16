@@ -199,33 +199,84 @@ public class PropertyUtil {
      * @return a property instance for a particular simple type
      */
     public static Property forType(
-            final Property.Type type,
-            final String name,
-            final String title,
-            final String description,
-            final boolean required,
-            final String defaultValue,
-            final List<String> values,
-            final Map<String, String> labels,
-            final PropertyValidator validator,
-            final ValuesGenerator valuesGenerator,
-            final PropertyScope scope,
-            final Map<String, Object> renderingOptions,
-            final boolean dynamicValues
+        final Property.Type type,
+        final String name,
+        final String title,
+        final String description,
+        final boolean required,
+        final String defaultValue,
+        final List<String> values,
+        final Map<String, String> labels,
+        final PropertyValidator validator,
+        final ValuesGenerator valuesGenerator,
+        final PropertyScope scope,
+        final Map<String, Object> renderingOptions,
+        final boolean dynamicValues
+    ) {
+        return forType(
+            type,
+            name,
+            title,
+            description,
+            required,
+            defaultValue,
+            values,
+            labels,
+            validator,
+            valuesGenerator,
+            scope,
+            renderingOptions,
+            dynamicValues,
+            null,
+            null
+        );
+
+    }
+    /**
+     * @param type             type
+     * @param name             name
+     * @param title            optional title
+     * @param description      optional description
+     * @param required         true if required
+     * @param defaultValue     optional default value
+     * @param values           optional values list
+     * @param validator        validator
+     * @param scope            resolution scope
+     * @param renderingOptions options
+     * @return a property instance for a particular simple type
+     */
+    public static Property forType(
+        final Property.Type type,
+        final String name,
+        final String title,
+        final String description,
+        final boolean required,
+        final String defaultValue,
+        final List<String> values,
+        final Map<String, String> labels,
+        final PropertyValidator validator,
+        final ValuesGenerator valuesGenerator,
+        final PropertyScope scope,
+        final Map<String, Object> renderingOptions,
+        final boolean dynamicValues,
+        final Class<?> embeddedType,
+        final Class<?> embeddedPluginType
     ) {
         return new PropertyBase(
-                type,
-                name,
-                title,
-                description,
-                required,
-                defaultValue,
-                hasSelectValues(type) ? values : null,
-                hasSelectValues(type) ? labels : null,
-                typeValidatorFor(type, values, dynamicValues, validator),
-                valuesGenerator,
-                scope,
-                renderingOptions
+            type,
+            name,
+            title,
+            description,
+            required,
+            defaultValue,
+            hasSelectValues(type) ? values : null,
+            hasSelectValues(type) ? labels : null,
+            typeValidatorFor(type, values, dynamicValues, validator),
+            valuesGenerator,
+            scope,
+            renderingOptions,
+            embeddedType,
+            embeddedPluginType
         );
 
 

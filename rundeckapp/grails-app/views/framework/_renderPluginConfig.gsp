@@ -45,7 +45,7 @@
         <g:hiddenField name="${prefix}saved" value="true" class="wasSaved"/>
     </g:if>
     <g:hiddenField name="prefix" value="${prefix}"/>
-    <g:hiddenField name="${prefix+'type'}" value="${type}"/>
+    %{--<g:hiddenField name="${prefix+'type'}" value="${type}"/>--}%
     <div class="col-sm-12 form-horizontal">
     <g:if test="${values}">
 
@@ -53,7 +53,17 @@
             <g:if test="${description}">
                 <g:each in="${description.properties}" var="prop">
                     <g:render template="/framework/pluginConfigPropertySummaryValue"
-                              model="${[service: serviceName, provider: description.name, messagePrefix:messagePrefix, prop: prop, prefix: prefix, values: values, includeFormFields: includeFormFields]}"/>
+                              model="${[
+                                  service            : serviceName,
+                                  provider           : description.name,
+                                  messagePrefix      : messagePrefix,
+                                  prop               : prop,
+                                  prefix             : "${prefix}config.",
+                                  fieldnamePrefix    : "${prefix}config.",
+                                  origfieldnamePrefix: "orig.${prefix}config.",
+                                  values             : values,
+                                  includeFormFields  : includeFormFields
+                              ]}"/>
                 </g:each>
             </g:if>
         </span>

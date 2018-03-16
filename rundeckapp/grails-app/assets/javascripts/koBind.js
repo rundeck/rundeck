@@ -20,24 +20,26 @@
  * bind via knockout
  */
 function initKoBind(sel, mapping) {
-    var doc = jQuery('body');
+    let doc = jQuery('body');
     if (sel) {
         doc = jQuery(sel);
     }
     doc.find('[data-ko-controller]').each(function (i, el) {
-        var controller = jQuery(el).data('koController');
-        var data = jQuery(el).data();
-        var obj;
-        if (/^[A-Z]/.match(controller) && typeof(eval(controller)) === 'function') {
+        const controller = jQuery(el).data('koController');
+        const data = jQuery(el).data();
+        if (/^[A-Z]/.match(controller)) {
+            const ctrl = eval(controller);
+            if (typeof(ctrl) !== 'function') {
+                return;
+            }
             //create new instance
-            obj = eval("new " + controller + "(data)");
+            let obj = new ctrl(data);
             if (data['koControllerId']) {
                 window[data['koControllerId']] = obj;
             }
             ko.applyBindings(obj, el);
-        } else if (/^[a-z]/.match(controller) && mapping && typeof(mapping[controller]) === 'object') {
-
-            ko.applyBindings(mapping[controller], el);
+        } else if (/^[a-z]/.match(controller) && mapping && typeof(mapping[controller]) === 'object' || typeof(window[controller]) === 'object') {
+            ko.applyBindings(mapping && mapping[controller] || window[controller], el);
         }
     })
 }

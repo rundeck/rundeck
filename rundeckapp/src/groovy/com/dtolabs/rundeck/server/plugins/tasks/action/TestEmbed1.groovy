@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-"use strict";
+package com.dtolabs.rundeck.server.plugins.tasks.action
 
-//= require ui/toggle
-//= require pluginPropKO
-//= require ko/component/job-link
-//= require ko/component/map-editor
-//= require ko/component/busy-spinner
-//= require ko/component/plugin-editor
-//= require koBind
+import com.dtolabs.rundeck.core.plugins.EmbeddedType
+import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
+
+@EmbeddedType
+class TestEmbed1 {
+
+    @PluginProperty(title = "Some String", required = true)
+    String stringvalue
+}

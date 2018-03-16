@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.server.plugins.tasks.trigger.QuartzSchedulerTaskTrigger
 import org.quartz.JobBuilder
 import org.quartz.JobDataMap
@@ -20,6 +21,7 @@ import rundeck.quartzjobs.RDTaskTriggerJob
 /**
  * Handles trigger based schedules
  */
+@Plugin(name='ScheduledTaskTriggerService',service='TaskTriggerHandler')
 class ScheduledTaskTriggerService implements TaskTriggerHandler<RDTaskContext> {
 
     static transactional = false

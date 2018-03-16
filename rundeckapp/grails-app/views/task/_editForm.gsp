@@ -23,14 +23,48 @@
 <g:set var="fieldColShortSize" value="col-sm-4"/>
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
+<g:embedJSON data="${
+    actionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }.collect {
+        [name : it.name,
+         title: stepplugin.message(
+             service: org.rundeck.core.tasks.TaskPluginTypes.TaskAction,
+             name: it.name,
+             code: 'plugin.title',
+             default: it.title ?: it.name
+         )]
+    }
+}" id="actionPluginDescJson"/>
+<g:embedJSON data="${
+    triggerPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }.collect {
+        [name : it.name,
+         title: stepplugin.message(
+             service: org.rundeck.core.tasks.TaskPluginTypes.TaskTrigger,
+             name: it.name,
+             code: 'plugin.title',
+             default: it.title ?: it.name
+         )]
+    }
+}" id="triggerPluginDescJson"/>
+<g:embedJSON data="${
+    conditionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }.collect {
+        [name : it.name,
+         title: stepplugin.message(
+             service: org.rundeck.core.tasks.TaskPluginTypes.TaskCondition,
+             name: it.name,
+             code: 'plugin.title',
+             default: it.title ?: it.name
+         )]
+    }
+}" id="conditionPluginDescJson"/>
+%{--<g:embedJSON data="${}" id="pluginDescriptions"/>--}%
 <g:embedJSON
-    data="${task?.triggerConfig != null ? [data: true, config: task?.triggerConfig, report: [errors: validation?.
-                get('TaskTrigger')]] : [data: false]}"
+    data="${task?.triggerConfig != null ? [data: true, type: task?.triggerType, config: task?.triggerConfig, report: [errors: validation?.
+        get('TaskTrigger')]] : [data: false]}"
     id="triggerConfigJson"/>
 <g:embedJSON
-        data="${task?.actionConfig != null ? [data: true, config: task?.actionConfig, report: [errors: validation?.
-                get('TaskAction')]] : [data: false]}"
-        id="actionConfigJson"/>
+    data="${task?.actionConfig != null ? [data: true, type: task?.actionType, config: task?.actionConfig, report: [errors: validation?.
+        get('TaskAction')]] : [data: false]}"
+    id="actionConfigJson"/>
 
 <g:embedJSON
     data="${task?.conditionList != null ?
@@ -51,7 +85,7 @@
         <div class="form-group ${g.hasErrors(bean: task, field: 'name', 'has-error')}">
             <label for="triggerName"
                    class="required ${enc(attr: labelColClass)}">
-                Name
+                <g:message code="Task.domain.name.title"/>
             </label>
 
             <div class="${fieldColSize}">
@@ -73,7 +107,7 @@
         <div class="form-group ${g.hasErrors(bean: task, field: 'description', 'has-error')}">
             <label for="description"
                    class="required ${enc(attr: labelColClass)}">
-                Description
+                <g:message code="Task.domain.description.title"/>
             </label>
 
             <div class="${fieldColSize}">
@@ -96,7 +130,7 @@
         <div class="form-group ${g.hasErrors(bean: task, field: 'enabled', 'has-error')}">
             <label for="enabled"
                    class="required ${enc(attr: labelColClass)}">
-                Enabled
+                <g:message code="Task.domain.enabled.title"/>
             </label>
 
             <div class="${fieldColSize}">
@@ -115,102 +149,31 @@
 
         </div>
 
-        <div class="form-group ${g.hasErrors(bean: task, field: 'conditionList', 'has-error')}">
-            <label for="description"
-                   class="required ${enc(attr: labelColClass)}">
-                Conditions
-            </label>
+    </div>
 
-            <div class="${fieldColSize}">
-                <!-- Single button -->
-                <div class="btn-group">
-                    <button type="button" class="btn btn-sm btn-success-hollow dropdown-toggle"
-                            data-toggle="dropdown"
-                            aria-haspopup="true"
-                            aria-expanded="false">
-                        <g:icon name="plus"/>
-                        Add Condition <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu">
-                        <g:each in="${conditionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
-                                var="plugin">
-                            <li>
-                                <a href="#" data-bind="click: addConditionType" data-plugin-type="${plugin.name}">
-                                    <stepplugin:message
-                                        service="${org.rundeck.core.tasks.TaskPluginTypes.TaskCondition}"
-                                        name="${plugin.name}"
-                                        code="plugin.title"
-                                        default="${plugin.title ?: plugin.name}"/>
-                                </a>
-                            </li>
+    <div class="list-group-item ${g.hasErrors(bean: task, field: 'triggerType', 'has-error')}">
 
-                        </g:each>
-                    </ul>
-                </div>
+        <h4 class="list-group-item-heading">
 
+            <g:message code="task.trigger.display.title"/>
+        </h4>
+
+        <div class="container">
+            <div class=" ${enc(attr: labelColClass)}">
+                <label class="required " data-bind="visible: taskEditor.trigger.isModeEdit">
+                    <g:message code="task.trigger.display.title"/>
+                </label>
+                <a href="#" class="btn btn-info-hollow btn-sm"
+                   data-bind="click: taskEditor.trigger.setModeEdit, visible: taskEditor.trigger.isModeView">
+                    <g:icon name="pencil"/>
+                    <g:message code="task.trigger.display.title"/>
+                </a>
             </div>
-
-            <div data-bind="foreach: {data: conditions, as: 'cond'}">
-
-                <div class="${offsetColSize}">
-                    <input type="hidden"
-                           data-bind="attr: {name: $root.conditionInputPrefix+'_indexes' }, value: cond.uid"/>
-                    <input type="hidden"
-                           data-bind="attr: {name: $root.conditionInputPrefix+'entry[' + cond.uid() + '].type' }, value: cond.provider"/>
-                    <a href="#" class="btn btn-sm btn-danger-hollow" data-bind="click: $parent.removeCondition">
-                        Remove
-                    </a>
-                </div>
-
-                <div class="${offsetColSize}">
-
-                    <busy-spinner params="busy: cond.loading"></busy-spinner>
-
-                    <div data-bind="attr: {id: cond.formId }">
-                    </div>
-                    %{--<g:hasErrors bean="${task}" field="triggerType">--}%
-
-                    %{--<span class="text-warning">--}%
-                    %{--<g:renderErrors bean="${task}" as="list" field="triggerType"/>--}%
-                    %{--</span>--}%
-
-                    %{--</g:hasErrors>--}%
-                </div>
-            </div>
-
-        </div>
-
-        <div class="form-group ${g.hasErrors(bean: task, field: 'triggerType', 'has-error')}">
-            <label for="description"
-                   class="required ${enc(attr: labelColClass)}">
-                <g:message code="task.trigger.display.title" />
-            </label>
 
             <div class="${fieldColSize}">
 
-                <select name="triggerType" value="${task?.triggerType}"
-                        class="form-control"
-                        data-bind="value: taskEditor.trigger.provider">
-                    <g:if test="${!task?.triggerType}">
-                        <option value="" selected>-Choose-</option>
-                    </g:if>
-                    <g:each in="${triggerPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
-                            var="plugin">
-                        <option value="${plugin.name}" ${task?.triggerType == plugin.name ? 'selected' :
-                                ''}><stepplugin:message
-                                service="${org.rundeck.core.tasks.TaskPluginTypes.TaskTrigger}"
-                                name="${plugin.name}"
-                                code="plugin.title"
-                                default="${plugin.title ?: plugin.name}"/></option>
-                    </g:each>
-                </select>
-            </div>
+                <plugin-editor params="editor: taskEditor.trigger, typeField: 'triggerType'"></plugin-editor>
 
-            <div class="${offsetColSize}">
-
-                <busy-spinner params="busy: taskEditor.trigger.loading"></busy-spinner>
-                <div id="condeditor">
-                </div>
                 <g:hasErrors bean="${task}" field="triggerType">
 
                     <span class="text-warning">
@@ -219,39 +182,100 @@
 
                 </g:hasErrors>
             </div>
-
         </div>
 
-        <div class="form-group ${g.hasErrors(bean: task, field: 'actionType', 'has-error')}">
-            <label for="description"
-                   class="required ${enc(attr: labelColClass)}">
-                Action
-            </label>
+    </div>
+
+    <div class="list-group-item ${g.hasErrors(bean: task, field: 'conditionList', 'has-error')}">
+
+        <h4 class="list-group-item-heading">
+
+            <g:message code="Task.domain.conditions.title"/>
+        </h4>
+
+        <div class="container">
+            <div data-bind="foreach: {data: conditions.items, as: 'cond'}">
+
+                <div class=" ${enc(attr: labelColClass)}">
+                    <label class="required " data-bind="visible: cond.isModeEdit">
+                        <span data-bind="messageTemplate: $index() + 1"><g:message code="Task.domain.conditions.label.condition.0"/></span>
+                    </label>
+                    <a href="#" class="btn btn-info-hollow btn-sm"
+                       data-bind="click: cond.setModeEdit, visible: cond.isModeView">
+                        <g:icon name="pencil"/>
+                        <span data-bind="messageTemplate: $index() + 1"><g:message code="Task.domain.conditions.label.condition.0"/></span>
+                    </a>
+                </div>
+
+                <div class="${fieldColSize}">
+
+                    <div>
+                        <input type="hidden"
+                               data-bind="attr: {name: $parent.conditions.inputPrefix+'_indexes' }, value: cond.uid"/>
+                    </div>
+
+                    <div>
+
+                        <plugin-editor
+                            params="editor: cond, typeField: $parent.conditions.inputPrefix+'entry[' + cond.uid() + '].type'"></plugin-editor>
+
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="col-sm-2 control-label">
+
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-success-hollow dropdown-toggle"
+                            data-toggle="dropdown"
+                            aria-haspopup="true"
+                            aria-expanded="false">
+                        <g:icon name="plus"/>
+                        <g:message code="button.add.condition.title"/>
+                        <span class="caret"></span>
+                    </button>
+                    <ul class="dropdown-menu"
+                        data-bind="foreach: {data:pluginServices.serviceByName('TaskCondition').providers, as: 'provider'}">
+                        <li>
+                            <a href="#"
+                               data-bind="click: $root.conditions.addType,
+                                        attr:{'data-plugin-type': provider.name},
+                                        text: provider.title">
+
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <div class="list-group-item ${g.hasErrors(bean: task, field: 'actionType', 'has-error')}">
+
+        <h4 class="list-group-item-heading">
+
+            <g:message code="task.action.display.title"/>
+        </h4>
+
+        <div class="container">
+            <div class=" ${enc(attr: labelColClass)}">
+                <label class="required " data-bind="visible: taskEditor.action.isModeEdit">
+                    <g:message code="task.action.display.title"/>
+                </label>
+                <a href="#" class="btn btn-info-hollow btn-sm"
+                   data-bind="click: taskEditor.action.setModeEdit, visible: taskEditor.action.isModeView">
+                    <g:icon name="pencil"/>
+                    <g:message code="task.action.display.title"/>
+                </a>
+            </div>
 
             <div class="${fieldColSize}">
 
-                <select name="actionType" value="${task?.actionType}" class="form-control" id="actionTypeSelect"
-                        data-bind="value: taskEditor.action.provider">
-                    <g:if test="${!task?.actionType}">
-                        <option value="" selected>-Choose-</option>
-                    </g:if>
-                    <g:each in="${actionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }}"
-                            var="plugin">
-                        <option value="${plugin.name}" ${task?.actionType == plugin.name ? 'selected' :
-                                ''}><stepplugin:message
-                                service="${org.rundeck.core.tasks.TaskPluginTypes.TaskAction}"
-                                name="${plugin.name}"
-                                code="plugin.title"
-                                default="${plugin.title ?: plugin.name}"/></option>
-                    </g:each>
-                </select>
-            </div>
+                <plugin-editor params="editor: taskEditor.action, typeField: 'actionType'"></plugin-editor>
 
-            <div class="${offsetColSize}">
-                <busy-spinner params="busy: taskEditor.action.loading"></busy-spinner>
-
-                <div id="actionEditor">
-                </div>
                 <g:hasErrors bean="${task}" field="actionType">
 
                     <span class="text-warning">
@@ -260,86 +284,76 @@
 
                 </g:hasErrors>
             </div>
-
         </div>
 
-        <div class="form-group ${g.hasErrors(bean: task, field: 'taskUserData', 'has-error')}">
-            <label for="description"
-                   class="required ${enc(attr: labelColClass)}">
-                User Data
-            </label>
-
-            <div class="${fieldColSize}">
-
-                <div>
-
-                    <div class=" form-horizontal" data-bind="foreach: {data: userData.entries}">
-                        <div class="form-group">
-                            <div class="col-sm-4">
-                                <div class="input-group ">
-
-                                    <span class="input-group-addon">
-                                        <g:message code="key.value.key.title" />
-                                    </span>
-                                    <input type="text"
-                                           data-bind="value: key, attr: {name: keyFieldName }"
-                                           class="form-control "
-                                           placeholder="key"/>
-                                </div>
-
-                            </div>
+    </div>
 
 
-                            <div class=" col-sm-8">
-                                <div class="input-group ">
-                                    <input type="text"
-                                           data-bind="value: value, attr: {name: valueFieldName }"
-                                           class="form-control "
-                                           placeholder="value"/>
-                                    <span class="input-group-btn">
-                                        <button class="btn btn-danger-hollow" type="button"
-                                                data-bind="click: $root.userData.delete">
-                                            <g:icon name="remove"/>
-                                        </button>
-                                    </span>
-                                </div>
+    <div class="list-group-item ${g.hasErrors(bean: task, field: 'userData', 'has-error')}">
+
+        <h4 class="list-group-item-heading">
+
+            <g:message code="Task.domain.userData.title"/>
+        </h4>
+
+        <div class="container">
+
+            <div>
+
+                <div class=" form-horizontal" data-bind="foreach: {data: userData.entries}">
+                    <div class="form-group">
+                        <div class="col-sm-4">
+                            <div class="input-group ">
+
+                                <span class="input-group-addon">
+                                    <g:message code="key.value.key.title"/>
+                                </span>
+                                <input type="text"
+                                       data-bind="value: key, attr: {name: keyFieldName }"
+                                       class="form-control "
+                                       placeholder="key"/>
                             </div>
 
                         </div>
-                    </div>
 
-                    <div>
-                        <span class="btn btn-success-hollow btn-sm " data-bind="click: userData.newEntry">
-                            <g:message code="button.title.add.key.value.pair"/>
-                            <g:icon name="plus"/>
-                        </span>
-                    </div>
 
-                    <div class="help-block">
-                        Add extra Key/Value pairs available within the Task.  They can be
-                        referenced with $<!-- -->{task.key}
+                        <div class=" col-sm-8">
+                            <div class="input-group ">
+                                <input type="text"
+                                       data-bind="value: value, attr: {name: valueFieldName }"
+                                       class="form-control "
+                                       placeholder="value"/>
+                                <span class="input-group-btn">
+                                    <button class="btn btn-danger-hollow" type="button"
+                                            data-bind="click: $root.userData.delete">
+                                        <g:icon name="remove"/>
+                                    </button>
+                                </span>
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 
-                %{--<div>--}%
-
-                    %{--<textarea--}%
-                            %{--name="taskUserData"--}%
-                            %{--class="form-control code apply_ace"--}%
-                            %{--data-ace-autofocus='true'--}%
-                            %{--data-ace-session-mode="json"--}%
-                            %{--data-ace-height="150px"--}%
-                            %{--data-ace-control-soft-wrap="true">${task?.taskUserData}</textarea>--}%
-                %{--</div>--}%
-                <g:hasErrors bean="${task}" field="taskUserData">
-
-                    <span class="text-warning">
-                        <g:renderErrors bean="${task}" as="list" field="name"/>
+                <div>
+                    <span class="btn btn-success-hollow btn-sm " data-bind="click: userData.newEntry">
+                        <g:message code="button.title.add.key.value.pair"/>
+                        <g:icon name="plus"/>
                     </span>
+                </div>
 
-                </g:hasErrors>
+                <div class="help-block">
+                    <g:message code="Task.domain.userData.description"/>
+                </div>
             </div>
 
+            <g:hasErrors bean="${task}" field="taskUserData">
+
+                <span class="text-warning">
+                    <g:renderErrors bean="${task}" as="list" field="name"/>
+                </span>
+
+            </g:hasErrors>
         </div>
 
     </div>

@@ -16,7 +16,7 @@
 
 package org.rundeck.core.tasks;
 
-import org.rundeck.core.plugins.PluginType;
+import org.rundeck.core.plugins.PluginTypes;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +24,7 @@ import java.util.Map;
 /**
  * Declares plugin types for Tasks
  */
-public class TaskPluginTypes implements PluginType {
+public class TaskPluginTypes implements PluginTypes {
     public static final String TaskTrigger          = "TaskTrigger";
     public static final String TaskTriggerHandler   = "TaskTriggerHandler";
     public static final String TaskAction           = "TaskAction";
@@ -34,10 +34,10 @@ public class TaskPluginTypes implements PluginType {
     /**
      * Map of Service name to Class
      */
-    public static final Map<String, Class> TYPES;
+    private static final Map<String, Class<?>> TYPES;
 
     static {
-        HashMap<String, Class> map = new HashMap<>();
+        HashMap<String, Class<?>> map = new HashMap<>();
         map.put(TaskPluginTypes.TaskTrigger, TaskTrigger.class);
         map.put(TaskPluginTypes.TaskTriggerHandler, TaskTriggerHandler.class);
         map.put(TaskPluginTypes.TaskAction, TaskAction.class);
@@ -47,7 +47,8 @@ public class TaskPluginTypes implements PluginType {
         TYPES = map;
     }
 
-    public Class<?> getPluginType(String name) {
-        return TYPES.get(name);
+    @Override
+    public Map<String, Class<?>> getPluginTypes() {
+        return TYPES;
     }
 }
