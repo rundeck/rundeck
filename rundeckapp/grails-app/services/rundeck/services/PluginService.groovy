@@ -222,7 +222,7 @@ class PluginService {
         PluggableProviderService<T> service,
         MultiPluginProviderLoader loader
     ) {
-        def validation = rundeckPluginRegistry?.validatePluginByName(name, service, configuration)
+        def validation = rundeckPluginRegistry?.validatePluginByName(name, service, configuration, loader)
         if (validation != null && !validation.valid) {
             logValidationErrors(service.name, name, validation.report)
             return null
@@ -519,7 +519,22 @@ class PluginService {
      * @return validation
      */
     def ValidatedPlugin validatePluginConfig(String name, Class clazz, Map config) {
-        return rundeckPluginRegistry?.validatePluginByName(name, rundeckPluginRegistry?.createPluggableService(clazz), config)
+        validatePluginConfig(name, clazz, config, null)
+    }
+    /**
+     * Configure a new plugin using a specific property resolver for configuration
+     * @param name provider name
+     * @param service service
+     * @param config instance configuration data
+     * @return validation
+     */
+    def ValidatedPlugin validatePluginConfig(String name, Class clazz, Map config, String project) {
+        return rundeckPluginRegistry?.validatePluginByName(
+            name,
+            rundeckPluginRegistry?.createPluggableService(clazz),
+            config,
+            createMultiPluginLoader(project)
+        )
     }
 
     /**

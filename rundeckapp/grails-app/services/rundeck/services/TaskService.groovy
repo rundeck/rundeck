@@ -132,14 +132,14 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         pluginService.configurePlugin(provider, config, TaskCondition, project)
     }
 
-    public ValidatedPlugin getValidatedActionPlugin(String provider, Map config) {
+    public ValidatedPlugin getValidatedActionPlugin(String provider, Map config, String project) {
         //TODO: project scope
-        pluginService.validatePluginConfig(provider, TaskAction, config)
+        pluginService.validatePluginConfig(provider, TaskAction, config, project)
     }
 
-    public ValidatedPlugin getValidatedConditionPlugin(String provider, Map config) {
+    public ValidatedPlugin getValidatedConditionPlugin(String provider, Map config, String project) {
         //TODO: project scope
-        pluginService.validatePluginConfig(provider, TaskCondition, config)
+        pluginService.validatePluginConfig(provider, TaskCondition, config, project)
     }
 
     public DescribedPlugin<TaskTrigger> getTaskTriggerPlugin(String provider) {
@@ -151,9 +151,9 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         pluginService.configurePlugin(provider, config, TaskTrigger, project)
     }
 
-    public ValidatedPlugin getValidatedTriggerPlugin(String provider, Map config) {
+    public ValidatedPlugin getValidatedTriggerPlugin(String provider, Map config, String project) {
         //TODO: project scope
-        pluginService.validatePluginConfig(provider, TaskTrigger, config)
+        pluginService.validatePluginConfig(provider, TaskTrigger, config, project)
     }
     /**
      * Map of installed trigger handlers
@@ -226,20 +226,20 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
     }
 
     ValidatedPlugin validateActionFor(TaskRep rep) {
-        rep.actionType ? getValidatedActionPlugin(rep.actionType, rep.actionConfig) : null
+        rep.actionType ? getValidatedActionPlugin(rep.actionType, rep.actionConfig, rep.project) : null
     }
 
     List<ValidatedPlugin> validateConditionsFor(TaskRep rep) {
         List conditions = rep.getConditionList()
         conditions.collect { Map condMap ->
             condMap.type ?
-            getValidatedConditionPlugin(condMap.type, condMap.config) :
+            getValidatedConditionPlugin(condMap.type, condMap.config,  rep.project) :
             new ValidatedPlugin(valid: false, report: Validator.errorReport('type', 'missing'))
         }
     }
 
     ValidatedPlugin validateTriggerFor(TaskRep rep) {
-        rep.triggerType ? getValidatedTriggerPlugin(rep.triggerType, rep.triggerConfig) : null
+        rep.triggerType ? getValidatedTriggerPlugin(rep.triggerType, rep.triggerConfig, rep.project) : null
     }
 
     /**
