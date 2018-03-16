@@ -54,7 +54,8 @@
         idkey                : idkey,
         hasEmbeddedType      : prop.embeddedType != null,
         hasEmbeddedPluginType: prop.embeddedPluginType != null,
-        embeddedServiceName  : prop.embeddedPluginType ? pluginServicesByClass[prop.embeddedPluginType] : null
+        embeddedServiceName  : prop.embeddedPluginType ? pluginServicesByClass[prop.embeddedPluginType] : null,
+        error                : error
 
     ]}"/>
     <g:javascript>"use strict";
@@ -94,7 +95,7 @@
            ]}"/>
     <div class="form-group ${enc(attr: hasError)}" id="${propkey}" data-ko-controller="pluginProperty">
     <g:if test="${outofscope}">
-        <label class="${labelColType} form-control-static ${error ? 'has-error' : ''}  ${prop.required ? 'required' :
+        <label class="${labelColType} form-control-static ${hasError ? 'has-error' : ''}  ${prop.required ? 'required' :
                                                                                          ''}">
             <stepplugin:message
                     service="${service}"
@@ -448,7 +449,7 @@
                                                default: prop.description
                                        ), textCss         : '',
                                                mode       : 'collapsed', rkey: g.rkey()]"/></div>
-    <g:if test="${error}">
+    <g:if test="${error && error instanceof String}">
         <g:if test="${error=='required'}">
             <div class="text-warning">
                 <g:icon name="warning-sign"/>

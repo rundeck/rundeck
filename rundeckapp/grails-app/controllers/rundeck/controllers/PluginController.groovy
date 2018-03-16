@@ -160,6 +160,7 @@ class PluginController extends ControllerBase {
             dynamicProperties[propName] = values
         }
 
+
         [
             inputFieldPrefix       : params.inputFieldPrefix ?: '',
             config                 : config,
@@ -194,11 +195,38 @@ class PluginController extends ControllerBase {
         }
         config = ParamsUtil.cleanMap(config)
 
-        def validation = pluginService.validatePluginConfig(service, name, config, project)
 
+        def validation = pluginService.validatePluginConfig(service, name, config, project)
+        def errorsMap = validation.report.errors
+        def decomp= decomposeMap(errorsMap)
+        System.err.println("config: $config, errors: $errorsMap, decomp: $decomp")
         render(contentType: 'application/json') {
             valid = validation.valid
-            delegate.errors = validation.report.errors
+            delegate.errors = decomp
         }
+    }
+
+    private Map<String, String> decomposeMap(final HashMap<String, String> map) {
+        Map<String, String> result = [:]
+        map.keySet().each { key ->
+
+            def list = key.split(/\./)
+            def cur = result
+            def last = key
+            def lastmap = result
+            list.each { sub ->
+                if (null == cur[sub]) {
+                    cur[sub] = [:]
+
+                }
+                lastmap = cur
+                last = sub
+                cur = cur[sub]
+            }
+            if (null != cur && null != last) {
+                lastmap[last] = map[key]
+            }
+        }
+        result
     }
 }

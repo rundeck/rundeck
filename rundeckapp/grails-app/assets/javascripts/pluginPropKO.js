@@ -273,6 +273,7 @@ function PluginProperty(data) {
     self.hasEmbeddedType = ko.observable(data.hasEmbeddedType);
     self.hasEmbeddedPluginType = ko.observable(data.hasEmbeddedPluginType);
     self.embeddedServiceName = ko.observable(data.embeddedServiceName);
+    self.error = data.error;
     self.editor = null;
     self.renderingOptions = ko.observable(data.renderingOptions || {});
 
@@ -299,6 +300,17 @@ function PluginProperty(data) {
                 } else if (self.hasEmbeddedPluginType()) {
                     embeddedType = data.value.type;
                     configVal = {data: true, config: data.value.config};
+                }
+            }
+            if (self.hasEmbeddedType()) {
+                if (data.error && typeof(data.error) === 'object') {
+                    configVal['data'] = true;
+                    configVal['report'] = {errors: data.error};
+                }
+            } else if (self.hasEmbeddedPluginType()) {
+                if (data.error && typeof(data.error) === 'object' && data.error['config']) {
+                    configVal['data'] = true;
+                    configVal['report'] = {errors: data.error['config']};
                 }
             }
             self.editor = new PluginEditor(
