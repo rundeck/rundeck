@@ -104,16 +104,21 @@ class ParamsUtilSpec extends Specification {
         where:
         input                                                               || expect
         [:]                                                                 || [:]
-//        ['a._type': 'embedded']                                             || [a: [:]]
-//        ['a._type': 'embedded', 'a.config': 'x']                            || ['a._type': 'embedded', 'a.config': 'x']
-//        ['a._type': 'embedded', 'a.config': [:]]                            || [a: [:]]
-//        ['a._type': 'embedded', 'a.config': [:], 'a.extra': 'asdf']         || [a: [:]]
-//        ['a._type': 'zmap', 'a.config': [:]]                                || ['a._type': 'zmap', 'a.config': [:]]
-//        ['a._type': 'embedded', 'a.config': ['0.key': 'z', '0.value': 'x']] || [a: [z: 'x']]
-//        ['a._type': 'embedded', 'a.config': ['0.key': 'z', '0.value': 'x'],
-//         'b._type': 'embedded', 'b.config': ['0.key': 'p', '0.value': 'q']] || [a: [z: 'x'], b: [p: 'q']]
         ['z._type': 'embedded', 'z.config.x': 'y', 'z.config.t': 'u']       || [z: [x: 'y', t: 'u']]
     }
+
+    def "parseEmbeddedPluginEntries"() {
+        given:
+        when:
+        def result = ParamsUtil.parseEmbeddedPluginEntries(input)
+        then:
+        result == expect
+        where:
+        input                                                                                 || expect
+        [:]                                                                                   || [:]
+        ['z._type': 'embeddedPlugin', 'z.config.x': 'y', 'z.config.t': 'u', 'z.type': 'asdf'] || [z: [type: 'asdf', config: [x: 'y', t: 'u']]]
+    }
+
 
     def "parseIndexedMap"() {
         given:

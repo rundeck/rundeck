@@ -204,6 +204,7 @@ class ParamsUtil {
         //parse map type entries
         datamap = parseMapTypeEntries(datamap)
         datamap = parseEmbeddedTypeEntries(datamap)
+        datamap = parseEmbeddedPluginEntries(datamap)
         datamap
     }
 
@@ -230,8 +231,25 @@ class ParamsUtil {
     public static Map parseEmbeddedTypeEntries(Map datamap) {
         parseMapEntries(datamap, 'embedded', 'config', false)
     }
+    /**
+     * Finds all "embeddedPlugin" type entries, and expects it to contains a set of 'config' entries (config map values),
+     * and a 'type' entry (plugin provider type)
+     * @param datamap
+     */
+    public static Map parseEmbeddedPluginEntries(Map datamap) {
+        parseMapEntries(datamap, 'embeddedPlugin', 'config', false) { data, key, map ->
+            def type = data[key + '.type'] ?: (data[key] instanceof Map) ? data[key]['type'] : null
+            type ? [type: type, config: map] : map
+        }
+    }
 
-    public static Map parseMapEntries(Map datamap, String typeVal, String suffix, Boolean expectIndexed) {
+    public static Map parseMapEntries(
+        Map datamap,
+        String typeVal,
+        String suffix,
+        Boolean expectIndexed,
+        Closure transform = null
+    ) {
         def outmap = new HashMap(datamap)
         def types = datamap.keySet().findAll { it.endsWith('._type') }
         types.each { String typek ->
@@ -255,7 +273,7 @@ class ParamsUtil {
             if (thetype == typeVal && (mapval instanceof Map)) {
                 def pmap = expectIndexed ? parseIndexedMapParams(mapval) : mapval
 
-                outmap[keyname] = pmap
+                outmap[keyname] = transform ? transform(datamap, keyname, pmap) : pmap
                 def entries = datamap.keySet().findAll { it.startsWith(keyname + '.') }
                 entries.each { outmap.remove(it) }
             } else if (thetype == typeVal && !mapval) {
