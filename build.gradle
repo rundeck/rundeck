@@ -56,7 +56,7 @@ ext.exportedProjects = [
         ":rundeck-storage:rundeck-storage-data",
         ":rundeck-storage:rundeck-storage-filesys",
         ":rundeck-storage:rundeck-storage-conf",
-        ":rundeck-launcher:launcher"
+       // ":rundeck-launcher:launcher"
 ]
 /**
  * Defaults for all projects

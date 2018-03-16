@@ -55,6 +55,7 @@ class BootStrap {
     HealthCheckRegistry healthCheckRegistry
     def dataSource
     ApiMarshallerRegistrar apiMarshallerRegistrar
+    //def authenticationManager
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -66,7 +67,9 @@ class BootStrap {
 
      def init = { ServletContext servletContext ->
          //setup profiler logging
-
+//        authenticationManager.providers.each {
+//            println it.class.name
+//        }
          if(!(grailsApplication.config?.grails?.profiler?.disable) && grailsApplication.mainContext.profilerLog) {
              //re-enable log output for profiler info, which is disabled by miniprofiler
              grailsApplication.mainContext.profilerLog.appenderNames = ["loggingAppender", 'miniProfilerAppender']
