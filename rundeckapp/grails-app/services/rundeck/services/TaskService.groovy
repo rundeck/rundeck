@@ -22,7 +22,7 @@ import rundeck.TaskRep
 import java.time.ZoneId
 
 @Transactional
-class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskContext> {
+class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskContext>, TaskManager<RDTaskContext> {
 
     def pluginService
     def frameworkService
@@ -340,7 +340,14 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         TaskAction action,
         RDTaskContext taskContext
     ) {
-        actRegistrationMap[trigger.uuid] ?: triggerActionHandlerMap.find {
+        actRegistrationMap[trigger.uuid] ?: getActionHandlerForTaskAction(action, taskContext)
+    }
+
+    public TaskActionHandler<RDTaskContext> getActionHandlerForTaskAction(
+        TaskAction action,
+        RDTaskContext taskContext
+    ) {
+        triggerActionHandlerMap.find {
             it.value.handlesAction(action, taskContext)
         }?.value
     }
@@ -524,16 +531,11 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
             return
         }
 
-        TaskActionHandler actHandler = getActionHandlerForTask(task, action, contextInfo)
         //TODO: on executor
+        //TODO: pass condition data?
 
         try {
-            def result = actHandler.performTaskAction(
-                    contextInfo,
-                    [trigger: triggerMap, task: task.userData],
-                    trigger,
-                    action
-            )
+            Map result = performTaskAction(action, contextInfo, triggerMap, task.userData, trigger)
             createTaskEvent(
                 result,
                 task,
@@ -553,6 +555,28 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
                 event
             )
         }
+    }
+
+    public Map performTaskAction(
+        TaskAction action,
+        RDTaskContext contextInfo,
+        Map triggerMap,
+        Map userData,
+        TaskTrigger trigger
+    ) throws ActionFailed {
+        TaskActionHandler actHandler = getActionHandlerForTaskAction(action, contextInfo)
+        if (!actHandler) {
+            throw new ActionFailed("No handler found for action: $action")
+        }
+        def result = actHandler.performTaskAction(
+            contextInfo,
+            triggerMap,
+            userData,
+            trigger,
+            action,
+            this
+        )
+        result
     }
 
     public TaskEvent createTaskEvent(
