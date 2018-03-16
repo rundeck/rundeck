@@ -16,15 +16,15 @@
 
 package org.rundeck.core.plugins;
 
+import java.util.Map;
+
 /**
  * Defines plugin types by name
  */
-public interface PluginType {
+public interface PluginTypes {
+
     /**
-     * Get the plugin class for the given plugin service type
-     *
-     * @param name service name
-     * @return plugin class
+     * @return map of service names to plugin types
      */
-    Class<?> getPluginType(String name);
+    Map<String, Class<?>> getPluginTypes();
 }

@@ -152,6 +152,28 @@ class PluginService {
         ServiceTypes.getPluginType(service)
     }
     /**
+     * Return the map of Java plugin interface class associated with service name
+     * @param service
+     * @throws IllegalArgumentException
+     */
+    public Map<Class<?>, String> getPluginTypesMap() {
+        Map<Class<?>, String> types = [:]
+        //reverse the map
+        ServiceTypes.pluginTypesMap.each {
+            types[it.value] = it.key
+        }
+        types
+    }
+
+    /**
+     * Return the map of service name associated with Java plugin interface class
+     * @param service
+     * @throws IllegalArgumentException
+     */
+    public Map<String, Class<?>> getPluginServicesMap() {
+        ServiceTypes.pluginTypesMap
+    }
+    /**
      *
      * @param name
      * @return map containing [instance:(plugin instance), description: (map or Description), ]
