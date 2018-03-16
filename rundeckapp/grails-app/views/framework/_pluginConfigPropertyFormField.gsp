@@ -54,7 +54,7 @@
         idkey                : idkey,
         hasEmbeddedType      : prop.embeddedType != null,
         hasEmbeddedPluginType: prop.embeddedPluginType != null,
-        embeddedServiceName  : prop.embeddedPluginType ? pluginServicesByClass[prop.embeddedPluginType] : null,
+        embeddedServiceName  : prop.embeddedPluginType&& pluginServicesByClass ? pluginServicesByClass[prop.embeddedPluginType] : null,
         error                : error
 
     ]}"/>

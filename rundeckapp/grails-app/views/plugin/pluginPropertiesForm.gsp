@@ -51,7 +51,7 @@
             dynamicProperties      : dynamicProperties,
             dynamicPropertiesLabels: dynamicPropertiesLabels,
             report                 : report,
-            prefix                 : prefix,
+            prefix                 : "${prefix}config.",
             values                 : definedConfig,
             fieldnamePrefix        : "${prefix}config.",
             origfieldnamePrefix    : "orig.${prefix}config.",

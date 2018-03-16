@@ -173,7 +173,7 @@ class TaskController extends ControllerBase implements PluginListRequired {
             return
         }
 
-        [task: task, project: input.project]
+        [task: task, project: input.project,pluginServicesByClass  : pluginService.pluginTypesMap]
     }
 
     def test(TaskRequest input) {
@@ -294,7 +294,7 @@ class ParamsUtil {
      * @return
      */
     static List parseMapList(Map data) {
-        def entries = [data.get("_indexes")].flatten()
+        def entries = data?[data.get("_indexes")].flatten():[]
         List result = []
 
         entries.each { index ->

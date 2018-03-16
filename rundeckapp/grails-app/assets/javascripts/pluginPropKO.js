@@ -106,19 +106,22 @@ function PluginEditor(data) {
                     service          : self.service(),
                     name             : self.provider(),
                     embeddedProperty : self.propname(),
-                    hidePluginSummary: true
+                    hidePluginSummary: true,
+                    inputFieldPrefix : self.inputFieldPrefix
                 }
             } else if (self.embeddedMode() === 'plugin') {
                 return {
-                    service: self.embeddedServiceName(),
-                    name   : self.embeddedProvider(),
+                    service         : self.embeddedServiceName(),
+                    name            : self.embeddedProvider(),
+                    inputFieldPrefix: self.inputFieldPrefix
                     // hidePluginSummary: true
                 }
             }
         } else {
             return {
-                service: self.service(),
-                name   : self.provider()
+                service         : self.service(),
+                name            : self.provider(),
+                inputFieldPrefix: self.inputFieldPrefix
 
             }
         }
@@ -176,7 +179,7 @@ function PluginEditor(data) {
         self.loading(true);
         return self.loadPluginView(
             self.urls[val],
-            {inputFieldPrefix: self.inputFieldPrefix},
+            {},
             self.getConfigData(),
             self.getConfigReport()
         ).success(function (data) {
@@ -189,7 +192,7 @@ function PluginEditor(data) {
         let config = self.getFormData();
         self.loadPluginView(
             self.urls['validate'],
-            {inputFieldPrefix: self.inputFieldPrefix},
+            {},
             config,
             {}
         ).success(function (json) {
@@ -329,8 +332,8 @@ function PluginProperty(data) {
                     embeddedMode       : self.hasEmbeddedType() ? 'type' : 'plugin',
                     embeddedServiceName: self.embeddedServiceName(),
                     embeddedProvider   : embeddedType,
-                    // postLoadEditor  : self.postLoadEditor,
-                    // deleteCallback  : self.removeItem
+                    // postLoadEditor  : self.postLoadEditor, //TODO:
+                    // deleteCallback  : self.removeItem // TODO
                 }
             );
             self.editor.init();

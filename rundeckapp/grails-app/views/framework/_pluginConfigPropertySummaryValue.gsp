@@ -26,14 +26,16 @@
     service              : service,
     provider             : provider,
     name                 : prop.name,
-    value                : values[prop.name],
+    value                : values?.get(prop.name),
+    origfieldname        : (origfieldnamePrefix ?: '') + prop.name,
+    fieldname            : (fieldnamePrefix ?: '') + prop.name,
     type                 : prop.type.toString(),
     project              : project ?: params.project ?: request.project,
     renderingOptions     : prop.renderingOptions,
     hasEmbeddedType      : prop.embeddedType != null,
     hasEmbeddedPluginType: prop.embeddedPluginType != null,
     previewMode          : true,
-    embeddedServiceName  : prop.embeddedPluginType ? pluginServicesByClass[prop.embeddedPluginType] : null,
+    embeddedServiceName  : prop.embeddedPluginType && pluginServicesByClass? pluginServicesByClass[prop.embeddedPluginType] : null,
     idkey                : idkey
 
 ]}"/>

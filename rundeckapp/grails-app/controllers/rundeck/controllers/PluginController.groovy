@@ -131,7 +131,11 @@ class PluginController extends ControllerBase {
         def describedPlugin = embeddedProperty ?
                               pluginService.getPluginEmbeddedDescriptor(name, service, embeddedProperty) :
                               pluginService.getPluginDescriptor(name, service)
-
+        if (!describedPlugin) {
+            response.status = 404
+            renderErrorView('Not found')
+            return
+        }
         def config = [:]
         def report = [:]
         if (request.method == 'POST' && request.format == 'json') {

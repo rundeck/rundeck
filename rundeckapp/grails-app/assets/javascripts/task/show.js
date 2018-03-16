@@ -19,4 +19,7 @@
 //= require ui/toggle
 //= require pluginPropKO
 //= require ko/component/job-link
+//= require ko/component/map-editor
+//= require ko/component/busy-spinner
+//= require ko/component/plugin-editor
 //= require koBind
