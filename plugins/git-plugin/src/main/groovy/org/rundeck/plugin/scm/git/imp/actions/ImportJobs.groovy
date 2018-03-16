@@ -50,17 +50,28 @@ class ImportJobs extends BaseAction implements GitImportAction {
 
     @Override
     ScmExportResult performAction(
+        final ScmOperationContext context,
+        final GitImportPlugin plugin,
+        final JobImporter importer,
+        final List<String> selectedPaths,
+        final Map<String, String> input
+    )
+    {
+        performAction(context, plugin, importer, selectedPaths,null,input)
+    }
+
+    ScmExportResult performAction(
             final ScmOperationContext context,
             final GitImportPlugin plugin,
             final JobImporter importer,
             final List<String> selectedPaths,
+            final List<String> deletedJobs,
             final Map<String, String> input
     )
     {
         //perform git
         StringBuilder sb = new StringBuilder()
         boolean success = true
-        List<String> importedPaths = []
 
         //walk the repo files and look for possible candidates
         plugin.walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
@@ -68,8 +79,6 @@ class ImportJobs extends BaseAction implements GitImportAction {
             if (!(path in selectedPaths)) {
                 plugin.log.debug("not selected, skipping path ${path}")
                 return
-            }else{
-                importedPaths<<path
             }
             def objectId = walk.getObjectId(0)
             def size = plugin.repo.open(objectId, Constants.OBJ_BLOB).getSize()
@@ -95,19 +104,18 @@ class ImportJobs extends BaseAction implements GitImportAction {
             }
         }
 
-        selectedPaths.each { path ->
-            if(!(path in importedPaths)){
-                def importResult = importer.deleteJob(
-                    context.frameworkProject,
-                    path
-                )
-                if (!importResult.successful) {
-                    success = false
-                    sb << ("Failed deleting job with id: ${path}: " + importResult.errorMessage)
-                } else {
-                    sb << ("Succeeded deleting job with id ${path}")
-                }
+        deletedJobs?.each { jobId ->
+            def importResult = importer.deleteJob(
+                context.frameworkProject,
+                jobId
+            )
+            if (!importResult.successful) {
+                success = false
+                sb << ("Failed deleting job with id: ${jobId}: " + importResult.errorMessage)
+            } else {
+                sb << ("Succeeded deleting job with id ${jobId} ")
             }
+
         }
         def result = new ScmExportResultImpl()
         result.success = success

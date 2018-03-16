@@ -1224,10 +1224,14 @@ class ScmService {
             UserAndRolesAuthContext auth,
             String project,
             Map config,
-            List<String> chosenTrackedItems
+            List<String> chosenTrackedItems,
+            List<String> toDeleteItems = null
     )
     {
         log.debug("performImportAction project: ${project}, items: ${chosenTrackedItems}")
+        if(toDeleteItems){
+            log.debug("to delete items: ${toDeleteItems}")
+        }
         //store config
         def plugin = getLoadedImportPluginFor project
         def context = scmOperationContext(auth, project)
@@ -1242,7 +1246,11 @@ class ScmService {
         def jobImporter = new ResolvedJobImporter(context, scmJobImporter)
 
         try {
-            result = plugin.scmImport(context, actionId, jobImporter, chosenTrackedItems, config)
+            if(!toDeleteItems){
+                result = plugin.scmImport(context, actionId, jobImporter, chosenTrackedItems, config)
+            }else{
+                result = plugin.scmImport(context, actionId, jobImporter, chosenTrackedItems, toDeleteItems, config)
+            }
         } catch (ScmPluginInvalidInput e) {
             return [valid: false, report: e.report]
         } catch (ScmPluginException e) {

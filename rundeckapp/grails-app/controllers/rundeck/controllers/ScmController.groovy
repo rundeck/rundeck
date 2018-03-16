@@ -1119,6 +1119,7 @@ class ScmController extends ControllerBase {
         }
         def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null
         List<ScheduledExecution> jobs = []
+        def toDeleteItems = []
         def jobMap = [:]
         def scmStatus = []
         if (integration == 'export') {
@@ -1142,7 +1143,18 @@ class ScmController extends ControllerBase {
         def scmProjectStatus = scmService.getPluginStatus(authContext, integration, project)
         def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(jobs) : null
 
-
+        if(integration == 'import'){
+            //separate files to import and to delete
+            trackingItems.each { item ->
+                if(item.jobId){
+                    def tmpJob = jobMap[item.jobId]
+                    if(tmpJob && scmStatus.get(tmpJob.extid) && scmStatus.get(tmpJob.extid).synchState?.toString() == 'DELETE_NEEDED'){
+                        toDeleteItems.add(item)
+                    }
+                }
+            }
+            trackingItems.removeAll(toDeleteItems)
+        }
 
         [
                 pluginDescription: pluginDesc,
@@ -1153,6 +1165,7 @@ class ScmController extends ControllerBase {
                 selected        : params.id ? jobIds : [],
                 filesMap        : scmFiles,
                 trackingItems   : trackingItems,
+                toDeleteItems   : toDeleteItems,
                 deletedPaths    : deletedPaths,
                 selectedPaths   : selectedPaths,
                 renamedJobPaths : renamedJobPaths,
@@ -1211,6 +1224,7 @@ class ScmController extends ControllerBase {
         }
 
         List<String> chosenTrackedItems = [params.chosenTrackedItem].flatten().findAll { it }
+        List<String> toDeleteItems = [params.chosenDeleteItem].flatten().findAll { it }
 
         def deletePathsToJobIds = deletePaths.collectEntries { [it, scmService.deletedJobForPath(project, it)?.id] }
         def result
@@ -1229,7 +1243,8 @@ class ScmController extends ControllerBase {
                     authContext,
                     project,
                     params.pluginProperties,
-                    chosenTrackedItems
+                    chosenTrackedItems,
+                    toDeleteItems
             )
         }
         if (!result.valid || result.error) {
