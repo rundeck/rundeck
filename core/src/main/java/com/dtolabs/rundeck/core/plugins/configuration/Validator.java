@@ -239,7 +239,12 @@ public class Validator {
                     if (null != embeddedType) {
                         Description
                             description =
-                            PluginAdapterUtility.buildDescription(embeddedType, DescriptionBuilder.builder(), true);
+                            PluginAdapterUtility.buildDescription(
+                                embeddedType,
+                                DescriptionBuilder.builder(),
+                                true,
+                                property.getName()
+                            );
                         List<Map> values = new ArrayList<>();
                         if (property.getType() == Property.Type.Embedded) {
                             values.add((Map) value);
@@ -477,7 +482,7 @@ public class Validator {
         PropertyScope ignoredScope,
         MultiPluginProviderLoader loader
     ) {
-        return validateProperties(resolver, description.getProperties(), defaultScope, ignoredScope);
+        return validateProperties(resolver, description.getProperties(), defaultScope, ignoredScope, loader);
     }
 
     /**

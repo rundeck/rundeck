@@ -95,14 +95,41 @@ public class PluginAdapterUtility {
         final Class<?> type,
         final DescriptionBuilder builder,
         final boolean includeAnnotatedFieldProperties
+
     ) {
-        collaborateTypeDescription(type, builder, includeAnnotatedFieldProperties);
+        return buildDescription(type, builder, includeAnnotatedFieldProperties, null);
+    }
+
+    /**
+     * @param type                            the object
+     * @param builder                         builder
+     * @param includeAnnotatedFieldProperties if true, add DescriptionProperties to the Description based on annotations
+     *                                        of fields in the class of the instance
+     * @param name                            name to give the Description, or null to use the annotation entry
+     * @return Create a Description using a builder by analyzing the annotations on a plugin object.
+     */
+    public static Description buildDescription(
+        final Class<?> type,
+        final DescriptionBuilder builder,
+        final boolean includeAnnotatedFieldProperties,
+        final String name
+    ) {
+        collaborateTypeDescription(type, name, builder, includeAnnotatedFieldProperties);
 
         return builder.build();
     }
 
     public static void collaborateTypeDescription(
         final Class<?> type,
+        final DescriptionBuilder builder,
+        final boolean includeAnnotatedFieldProperties
+    ) {
+        collaborateTypeDescription(type, null, builder, includeAnnotatedFieldProperties);
+    }
+
+    public static void collaborateTypeDescription(
+        final Class<?> type,
+        String name,
         final DescriptionBuilder builder,
         final boolean includeAnnotatedFieldProperties
     ) {
@@ -116,7 +143,10 @@ public class PluginAdapterUtility {
                 .title(pluginName)
                 .description("");
         } else if (null != embeddedAnnotation) {
-            final String pluginName = embeddedAnnotation.name();
+            final String pluginName = name;
+            if (null == pluginName) {
+                throw new IllegalArgumentException("Plugin name is required for embedded types");
+            }
             builder
                 .name(pluginName)
                 .title(pluginName)

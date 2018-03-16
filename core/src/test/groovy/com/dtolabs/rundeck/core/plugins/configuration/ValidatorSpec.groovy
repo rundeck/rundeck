@@ -97,7 +97,7 @@ class ValidatorSpec extends Specification {
 
     }
 
-    @EmbeddedType(name = 'test')
+    @EmbeddedType
     static class TestEmbed {
         @PluginProperty
         String myname

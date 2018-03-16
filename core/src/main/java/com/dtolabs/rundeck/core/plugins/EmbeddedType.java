@@ -21,9 +21,11 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * Required annotation for embedded types used with Plugin Property definitions.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-
 public @interface EmbeddedType {
-    String name();
+
 }
