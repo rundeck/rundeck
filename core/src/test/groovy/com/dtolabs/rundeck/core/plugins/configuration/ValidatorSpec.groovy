@@ -17,8 +17,12 @@
 package com.dtolabs.rundeck.core.plugins.configuration
 
 import com.dtolabs.rundeck.core.plugins.EmbeddedType
+import com.dtolabs.rundeck.core.plugins.MultiPluginProviderLoader
+import com.dtolabs.rundeck.core.plugins.Plugin
 import com.dtolabs.rundeck.plugins.descriptions.PluginProperty
 import com.dtolabs.rundeck.plugins.descriptions.SelectValues
+import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -210,7 +214,7 @@ class ValidatorSpec extends Specification {
     }
 
     @Unroll
-    def "validateProperties embedded plugin Not Implemented"() {
+    def "validateProperties embedded plugin invalid input"() {
         given:
         def resolver = PropertyResolverFactory.createInstanceResolver(input)
         def defScope = PropertyScope.Instance
@@ -218,23 +222,115 @@ class ValidatorSpec extends Specification {
         def props = [
             PropertyBuilder.builder().name('testMap').type(Property.Type.Embedded).embeddedPluginType(TestEmbed).build()
         ]
+        def loader = Mock(MultiPluginProviderLoader)
         when:
-        def report = Validator.validateProperties(resolver, props, defScope, igScope)
+        def report = Validator.validateProperties(resolver, props, defScope, igScope, loader)
         then:
-//        report.valid == isValid
-//
-//        report.errors == errors
-        IllegalArgumentException e = thrown()
+        report.valid == isValid
+        report.errors == errors
+        0 * loader._(*_)
 
 
         where:
-        input                                              || isValid | errors
-        [testMap: [zasdf: 'boof']]                         || false   | ['testMap.asdf': 'required']
-        [testMap: [asdf: 'boof']]                          || true    | [:]
-        [testMap: [asdf: 'boof', myopts: 'z']]             || false   | ['testMap.myopts': 'Invalid value(s): [z]']
-        [testMap: [asdf: 'boof', myopts: 'asdf']]          || true    | [:]
-        [testMap: [asdf: 'boof', myopts: ['asdf']]]        || true    | [:]
-        [testMap: [asdf: 'boof', myopts: ['xyz', 'asdf']]] || true    | [:]
+        input                      || isValid | errors
+        [testMap: [zasdf: 'boof']] || false   |
+        ['testMap': 'Invalid data type: expected a Map containing \'type\' and \'config\'']
+        [testMap: 'asdf']          || false   |
+        ['testMap': 'Invalid data type: expected a Map']
+        [testMap: ['asdf']]        || false   |
+        ['testMap': 'Invalid data type: expected a Map']
+        [testMap: [['asdf': 'z']]] || false   |
+        ['testMap': 'Invalid data type: expected a Map']
+    }
 
+    @Plugin(name = 'test', service = 'Notification')
+    static class TestEmbedNotification implements NotificationPlugin {
+        @PluginProperty
+        String myname
+
+        @PluginProperty(required = true)
+        String asdf
+
+        @PluginProperty()
+        @SelectValues(values = ['asdf', 'xyz'])
+        List<String> myopts
+
+        @Override
+        boolean postNotification(final String trigger, final Map executionData, final Map config) {
+            return false
+        }
+    }
+
+    @Unroll
+    def "validateProperties embedded plugin valid"() {
+        given:
+        def resolver = PropertyResolverFactory.createInstanceResolver(input)
+        def defScope = PropertyScope.Instance
+        def igScope = null
+        def props = [
+            PropertyBuilder.builder().
+                name('testMap').
+                type(Property.Type.Embedded).
+                embeddedPluginType(TestEmbedNotification).
+                build()
+        ]
+        def loader = Mock(MultiPluginProviderLoader)
+        when:
+        def report = Validator.validateProperties(resolver, props, defScope, igScope, loader)
+        then:
+        report.valid == isValid
+        report.errors == errors
+        1 * loader.describe(TestEmbedNotification, 'test') >>
+        PluginAdapterUtility.buildDescription(TestEmbedNotification, DescriptionBuilder.builder(), true)
+        0 * loader._(*_)
+
+
+        where:
+        input                                                                   || isValid | errors
+        [testMap: [type: 'test', config: [:]]]                                  || false   |
+        ['testMap.config.asdf': 'required']
+        [testMap: [type: 'test', config: [asdf: 'x', myopts: 'z']]]             || false   |
+        ['testMap.config.myopts': 'Invalid value(s): [z]']
+        [testMap: [type: 'test', config: [asdf: 'x', myopts: 'asdf']]]          || true    | [:]
+        [testMap: [type: 'test', config: [asdf: 'x', myopts: 'xyz']]]           || true    | [:]
+        [testMap: [type: 'test', config: [asdf: 'x', myopts: ['asdf', 'xyz']]]] || true    | [:]
+    }
+
+    @Unroll
+    def "validateProperties embedded plugin list valid"() {
+        given:
+        def resolver = PropertyResolverFactory.createInstanceResolver(input)
+        def defScope = PropertyScope.Instance
+        def igScope = null
+        def props = [
+            PropertyBuilder.builder().
+                name('testMap').
+                type(Property.Type.Options).
+                embeddedPluginType(TestEmbedNotification).
+                build()
+        ]
+        def loader = Mock(MultiPluginProviderLoader)
+        when:
+        def report = Validator.validateProperties(resolver, props, defScope, igScope, loader)
+        then:
+        report.valid == isValid
+        report.errors == errors
+        count * loader.describe(TestEmbedNotification, 'test') >>
+        PluginAdapterUtility.buildDescription(TestEmbedNotification, DescriptionBuilder.builder(), true)
+        0 * loader._(*_)
+
+
+        where:
+        input                                                                         || isValid|count| errors
+        [testMap: [type: 'test', config: [:]]]                                        || false  |1| ['testMap[0].config.asdf': 'required']
+        [testMap: [[type: 'test', config: [asdf: 'x']], [type: 'test', config: [:]]]] || false  |2| ['testMap[1].config.asdf': 'required']
+        [testMap: [type: 'test', config: [asdf: 'x', myopts: 'z']]]                   || false  |1| ['testMap[0].config.myopts': 'Invalid value(s): [z]']
+        [testMap: [[type: 'test', config: [asdf: 'x']],[type: 'test', config: [asdf: 'x', myopts: 'z']]]]                   || false  |2| ['testMap[1].config.myopts': 'Invalid value(s): [z]']
+        [testMap: [type: 'test', config: [asdf: 'x', myopts: 'asdf']]]                || true   |1| [:]
+        [testMap: [[type: 'test', config: [asdf: 'x']],[type: 'test', config: [asdf: 'x', myopts: 'asdf']]]]                || true   |2| [:]
+        [testMap: [type: 'test', config: [asdf: 'x', myopts: 'xyz']]]                 || true   |1| [:]
+        [testMap: [[type: 'test', config: [asdf: 'x']],[type: 'test', config: [asdf: 'x', myopts: 'xyz']]]]                 || true   |2| [:]
+        [testMap: [type: 'test', config: [asdf: 'x', myopts: ['asdf', 'xyz']]]]       || true   |1| [:]
+        [testMap: [[type: 'test', config: [asdf: 'x']],[type: 'test', config: [asdf: 'x', myopts: ['asdf', 'xyz']]]]]       || true   |2| [:]
     }
 }

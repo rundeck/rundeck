@@ -39,4 +39,18 @@ public interface Pair<T, W> {
      * @return the second item
      */
     public W getSecond();
+
+    static <A, B> Pair<A, B> of(A a, B b) {
+        return new Pair<A, B>() {
+            @Override
+            public A getFirst() {
+                return a;
+            }
+
+            @Override
+            public B getSecond() {
+                return b;
+            }
+        };
+    }
 }
