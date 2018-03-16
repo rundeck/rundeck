@@ -37,8 +37,14 @@ public interface TaskActionHandler<T extends TaskContext> {
      * @param taskTrigger  taskTrigger
      * @param action       action
      */
-    Map performTaskAction(T contextInfo, Map triggerMap, TaskTrigger taskTrigger, TaskAction action)
-            throws ActionFailed;
+    Map performTaskAction(
+        T contextInfo,
+        Map triggerMap,
+        Map userData,
+        TaskTrigger taskTrigger,
+        TaskAction action,
+        TaskManager<T> manager
+    ) throws ActionFailed;
 
     /**
      * @param action
