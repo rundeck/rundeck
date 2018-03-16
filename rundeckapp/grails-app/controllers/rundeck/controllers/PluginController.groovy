@@ -170,7 +170,8 @@ class PluginController extends ControllerBase {
             dynamicProperties      : dynamicProperties,
             pluginDescription      : describedPlugin.description,
             project                : params.project,
-            hidePluginSummary      : params.hidePluginSummary ? true : false
+            hidePluginSummary      : params.hidePluginSummary ? true : false,
+            pluginServicesByClass  : pluginService.pluginTypesMap
         ]
     }
 

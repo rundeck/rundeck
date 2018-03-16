@@ -61,6 +61,11 @@ function PluginEditor(data) {
     self.service = ko.observable(data.service);
     self.provider = ko.observable(data.provider);
     self.propname = ko.observable(data.propname);
+    self.property = ko.observable(data.property);
+    self.embedded = ko.observable(data.embedded);
+    self.embeddedMode = ko.observable(data.embeddedMode);
+    self.embeddedServiceName = ko.observable(data.embeddedServiceName);
+    self.embeddedProvider = ko.observable(data.embeddedProvider);
     self.config = ko.observable(data.config);
     self.uid = ko.observable(data.uid);
     self.loading = ko.observable(false);
@@ -75,18 +80,40 @@ function PluginEditor(data) {
     self.canSelectProvider = data.canSelectProvider !== null ? data.canSelectProvider : true;
     self.formDom = () => jQuery('#' + self.formId);
 
+    /**
+     * indicator for the _type form field value
+     */
+    self.embeddedModeIndicator = ko.pureComputed(() => {
+        if (self.embedded()) {
+            if (self.embeddedMode() === 'type') {
+                return 'embedded';
+            } else if (self.embeddedMode() === 'plugin') {
+                return 'embeddedPlugin';
+            }
+        }
+
+    });
+
     self.urls = {
         edit    : appLinks.pluginPropertiesForm,
         view    : appLinks.pluginPropertiesPreview,
         validate: appLinks.pluginPropertiesValidateAjax,
     };
     self.queryParams = () => {
-        if (self.propname()) {
-            return {
-                service          : self.service(),
-                name             : self.provider(),
-                embeddedProperty : self.propname(),
-                hidePluginSummary: true
+        if (self.embedded()) {
+            if (self.embeddedMode() === 'type') {
+                return {
+                    service          : self.service(),
+                    name             : self.provider(),
+                    embeddedProperty : self.propname(),
+                    hidePluginSummary: true
+                }
+            } else if (self.embeddedMode() === 'plugin') {
+                return {
+                    service: self.embeddedServiceName(),
+                    name   : self.embeddedProvider(),
+                    // hidePluginSummary: true
+                }
             }
         } else {
             return {
@@ -137,8 +164,14 @@ function PluginEditor(data) {
     self.isModeView = ko.pureComputed(() => self.mode() === 'view');
     self.modeToggle = () => self.mode(self.mode() === 'view' ? 'edit' : 'view');
     self.loadModeView = (val) => {
-        if (!self.provider()) {
+        if (!self.embedded() && !self.provider()) {
             return;
+        } else if (self.embedded()) {
+            if (self.embeddedMode() === 'plugin' && !self.embeddedProvider()) {
+                return;
+            } else if (self.embeddedMode() === 'type' && !self.propname()) {
+                return;
+            }
         }
         self.loading(true);
         return self.loadPluginView(
@@ -203,11 +236,19 @@ function PluginEditor(data) {
         self.mode.subscribe((mode) => {
             self.loadModeView(mode);
         });
-        self.provider.subscribe((val) => {
-            if (val && self.mode()) {
-                self.loadModeView(self.mode());
-            }
-        });
+        if (!self.embedded()) {
+            self.provider.subscribe((val) => {
+                if (val && self.mode()) {
+                    self.loadModeView(self.mode());
+                }
+            });
+        } else if (self.embedded() && self.embeddedMode() === 'plugin') {
+            self.embeddedProvider.subscribe((val) => {
+                if (val && self.mode()) {
+                    self.loadModeView(self.mode());
+                }
+            });
+        }
         self.loadModeView(self.mode());
     }
 }
@@ -231,6 +272,7 @@ function PluginProperty(data) {
     self.type = ko.observable(data.type);
     self.hasEmbeddedType = ko.observable(data.hasEmbeddedType);
     self.hasEmbeddedPluginType = ko.observable(data.hasEmbeddedPluginType);
+    self.embeddedServiceName = ko.observable(data.embeddedServiceName);
     self.editor = null;
     self.renderingOptions = ko.observable(data.renderingOptions || {});
 
@@ -249,25 +291,24 @@ function PluginProperty(data) {
         if (self.type() === 'Embedded') {
             //load embedded editor
             const eid = self.idkey();
+            const configVal = data.value && typeof(data.value) === 'object'
+                ? {data: true, config: data.value}
+                : {data: false};
             self.editor = new PluginEditor(
                 {
-                    uid             : `eprop_${eid}`,
-                    service         : self.service(),
-                    provider        : self.provider(),
-                    propname        : self.name(),
-                    config          : data.value &&
-                                      typeof(data.value) ===
-                                      'object' ?
-                                      {
-                                          data  : true,
-                                          config: data.value
-                                      } :
-                                      {data: false},
-                    formId          : `form_eprop_${eid}`,
-                    formPrefixes    : [`${self.fieldname()}.config.`, `orig.${self.fieldname()}.config.`],
-                    inputFieldPrefix: `${self.fieldname()}.`,
-                    previewMode     : data.previewMode,
-                    embedded        : true
+                    uid                : `eprop_${eid}`,
+                    service            : self.service(),
+                    provider           : self.provider(),
+                    propname           : self.name(),
+                    property           : self,
+                    config             : configVal,
+                    formId             : `form_eprop_${eid}`,
+                    formPrefixes       : [`${self.fieldname()}.config.`, `orig.${self.fieldname()}.config.`],
+                    inputFieldPrefix   : `${self.fieldname()}.`,
+                    previewMode        : data.previewMode,
+                    embedded           : true,
+                    embeddedMode       : self.hasEmbeddedType() ? 'type' : 'plugin',
+                    embeddedServiceName: self.embeddedServiceName(),
                     // postLoadEditor  : self.postLoadEditor,
                     // deleteCallback  : self.removeItem
                 }
@@ -311,7 +352,8 @@ class PluginListEditor {
                             formPrefixes    : self.formPrefixes.map((val) => `${val}entry[cond_${id}].config.`),
                             inputFieldPrefix: `${self.inputPrefix}entry[cond_${id}].`,
                             postLoadEditor  : self.postLoadEditor,
-                            deleteCallback  : self.removeItem
+                            deleteCallback  : self.removeItem,
+                            embedded        : false
                         });
                 },
 

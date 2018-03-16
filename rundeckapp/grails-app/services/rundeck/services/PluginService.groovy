@@ -21,9 +21,9 @@ import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.plugins.CloseableProvider
 import com.dtolabs.rundeck.core.plugins.MultiPluginProviderLoader
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.DynamicProperties
 import com.dtolabs.rundeck.core.plugins.configuration.PluginAdapterUtility
-import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import com.dtolabs.rundeck.core.plugins.PluggableProviderService
@@ -119,7 +119,6 @@ class PluginService {
                 embeddedDesc,
                 "$name/$property"
             )
-
         } else {
             throw new IllegalArgumentException("Not an embedded type property: ${property} for $service plugin: $name")
         }
@@ -534,6 +533,21 @@ class PluginService {
             provider,
             rundeckPluginRegistry?.createPluggableService(getPluginTypeByService(service)),
             config
+        )
+    }
+    /**
+     * Configure a new plugin using a specific property resolver for configuration
+     * @param service service
+     * @param provider provider name
+     * @param config instance configuration data
+     * @return validation
+     */
+    def ValidatedPlugin validatePluginConfig(String service, String provider, Map config, String project) {
+        return rundeckPluginRegistry?.validatePluginByName(
+            provider,
+            rundeckPluginRegistry?.createPluggableService(getPluginTypeByService(service)),
+            config,
+            createMultiPluginLoader(project)
         )
     }
 

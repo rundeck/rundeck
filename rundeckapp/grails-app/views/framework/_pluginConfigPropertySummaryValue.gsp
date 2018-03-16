@@ -136,7 +136,7 @@
             <div>
 
                 <plugin-editor
-                    params="editor: editor, typeField: fieldname()+'._type', service: service, provider: provider, propname:name"></plugin-editor>
+                    params="editor: editor, typeField: fieldname()+'._type', propname:name"></plugin-editor>
             </div>
 
         </g:if>

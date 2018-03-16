@@ -15,13 +15,14 @@
   -->
 
 
-<!-- ko if: !editor.provider() && !editor.propname() -->
+<!-- ko if: !editor.embedded() -->
+<!-- ko if: !editor.provider() -->
 <select
     class="form-control"
     data-bind="
         attr: {name: typeField },
         value: editor.provider,
-        options: pluginServices.serviceByName(service).providers,
+        options: pluginServices.serviceByName(editor.service()).providers,
         optionsCaption: message('select.noselection.choose.label'),
         optionsText: 'title',
         optionsValue: 'name'
@@ -29,7 +30,7 @@
 </select>
 <!-- /ko -->
 
-<!-- ko if: editor.provider() && !editor.propname() -->
+<!-- ko if: editor.provider()  -->
 <input type="hidden" data-bind="value: editor.provider, attr: { name: typeField } ">
 
 
@@ -57,9 +58,32 @@
     </div>
 </div>
 <!-- /ko -->
-<!-- ko if: editor.provider() && editor.propname() -->
+<!-- /ko -->
+<!-- ko if: editor.embedded() -->
+<!-- ko if: editor.embeddedMode()==='plugin' -->
+
+
+
+<!-- ko if: !editor.embeddedProvider() -->
+<select
+    class="form-control"
+    data-bind="
+        attr: {name: embeddedTypeField },
+        value: editor.embeddedProvider,
+        options: pluginServices.serviceByName(editor.embeddedServiceName()).providers,
+        optionsCaption: message('select.noselection.choose.label'),
+        optionsText: 'title',
+        optionsValue: 'name'
+">
+</select>
+<!-- /ko -->
+
+<!-- /ko -->
+
 <div >
-    <input type="hidden" data-bind="attr: { name: typeField } " value="embedded">
+    <input type="hidden" data-bind="attr: { name: typeField }, value:  editor.embeddedModeIndicator" >
+    <input type="hidden" data-bind="attr: { name: embeddedTypeField }, value:  editor.embeddedProvider" >
+
 
     <div data-bind="attr: {id: editor.formId }">
     </div>

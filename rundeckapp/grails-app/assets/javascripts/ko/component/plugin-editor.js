@@ -20,9 +20,9 @@
 
 function PluginEditorContent(params) {
     const self = this;
-    self.service = params.service;
     self.editor = params.editor;
     self.typeField = params.typeField;
+    self.embeddedTypeField = params.embeddedTypeField;
 }
 
 ko.components.register('plugin-editor', {

@@ -172,8 +172,7 @@
 
             <div class="${fieldColSize}">
 
-                <plugin-editor
-                    params="editor: taskEditor.trigger, typeField: 'triggerType', service: 'TaskTrigger'"></plugin-editor>
+                <plugin-editor params="editor: taskEditor.trigger, typeField: 'triggerType'"></plugin-editor>
 
                 <g:hasErrors bean="${task}" field="triggerType">
 
@@ -218,7 +217,7 @@
                     <div>
 
                         <plugin-editor
-                            params="editor: cond, typeField: $parent.conditions.inputPrefix+'entry[' + cond.uid() + '].type', service: 'TaskCondition'"></plugin-editor>
+                            params="editor: cond, typeField: $parent.conditions.inputPrefix+'entry[' + cond.uid() + '].type'"></plugin-editor>
 
                     </div>
                 </div>
@@ -275,8 +274,7 @@
 
             <div class="${fieldColSize}">
 
-                <plugin-editor
-                    params="editor: taskEditor.action, typeField: 'actionType', service: 'TaskAction'"></plugin-editor>
+                <plugin-editor params="editor: taskEditor.action, typeField: 'actionType'"></plugin-editor>
 
                 <g:hasErrors bean="${task}" field="actionType">
 

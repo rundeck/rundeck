@@ -53,7 +53,8 @@
         renderingOptions     : prop.renderingOptions,
         idkey                : idkey,
         hasEmbeddedType      : prop.embeddedType != null,
-        hasEmbeddedPluginType: prop.embeddedPluginType != null
+        hasEmbeddedPluginType: prop.embeddedPluginType != null,
+        embeddedServiceName  : prop.embeddedPluginType ? pluginServicesByClass[prop.embeddedPluginType] : null
 
     ]}"/>
     <g:javascript>"use strict";
@@ -232,15 +233,21 @@
             </div>
         </g:elseif>
         <g:elseif test="${prop.type.toString() == 'Embedded'}">
-            <g:if test="${prop.embeddedType != null || prop.embeddedPluginType != null}">
 
-                <div data-ko-controller="pluginProperty">
+            <label class="${labelColType}  ${prop.required ? 'required' : ''}"
+                   for="${enc(attr: fieldid)}"><stepplugin:message
+                service="${service}"
+                name="${provider}"
+                code="${messagePrefix}property.${prop.name}.title"
+                default="${prop.title ?: prop.name}"/></label>
 
-                    <plugin-editor
-                        params="editor: editor, typeField: fieldname()+'._type', service: service, provider: provider, propname:name"></plugin-editor>
-                </div>
 
-            </g:if>
+            <div class="${hasSelector ? valueColTypeSplit80 : valueColType} " data-ko-controller="pluginProperty">
+
+                <plugin-editor
+                        params="editor: editor, typeField: fieldname()+'._type', embeddedTypeField: fieldname()+'.type', propname:name"></plugin-editor>
+            </div>
+
         </g:elseif>
 
         <g:else>
