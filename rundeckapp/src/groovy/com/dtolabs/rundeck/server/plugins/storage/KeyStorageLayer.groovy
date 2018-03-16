@@ -35,6 +35,7 @@ class KeyStorageLayer implements StorageConverterPlugin {
 
     @Override
     HasInputStream readResource(Path path, ResourceMetaBuilder resourceMetaBuilder, HasInputStream hasInputStream) {
+        validate(resourceMetaBuilder, path)
         return null
     }
 
