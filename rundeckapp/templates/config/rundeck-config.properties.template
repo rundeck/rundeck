@@ -1,0 +1,24 @@
+#loglevel.default is the default log level for jobs: ERROR,WARN,INFO,VERBOSE,DEBUG
+loglevel.default=INFO
+rdeck.base=${rdeck.base}
+
+#rss.enabled if set to true enables RSS feeds that are public (non-authenticated)
+rss.enabled=false
+server.address=${server.hostname}
+grails.serverURL=http://${server.hostname}:${server.http.port}${server.web.context}
+dataSource.dbCreate = update
+dataSource.url = jdbc:h2:file:${server.datastore.path};MVCC=true
+
+# Pre Auth mode settings
+rundeck.security.authorization.preauthenticated.enabled=false
+rundeck.security.authorization.preauthenticated.attributeName=REMOTE_USER_GROUPS
+rundeck.security.authorization.preauthenticated.delimiter=,
+# Header from which to obtain user name
+rundeck.security.authorization.preauthenticated.userNameHeader=X-Forwarded-Uuid
+# Header from which to obtain list of roles
+rundeck.security.authorization.preauthenticated.userRolesHeader=X-Forwarded-Roles
+# Redirect to upstream logout url
+rundeck.security.authorization.preauthenticated.redirectLogout=false
+rundeck.security.authorization.preauthenticated.redirectUrl=/oauth2/sign_in
+
+rundeck.log4j.config.file=${rundeck.server.configDir}/log4j.properties

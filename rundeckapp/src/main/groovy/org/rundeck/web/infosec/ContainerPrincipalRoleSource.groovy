@@ -17,6 +17,7 @@
 package org.rundeck.web.infosec
 
 import com.dtolabs.rundeck.core.authentication.Group
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 
 import javax.security.auth.Subject
 import javax.servlet.http.HttpServletRequest
@@ -57,6 +58,10 @@ class ContainerPrincipalRoleSource implements AuthorizationRoleSource {
                 principal.roles?.members.each { group ->
                     roles<<group.name
                 }
+            }
+        } else if(principal instanceof UsernamePasswordAuthenticationToken) {
+            principal.authorities.each {
+                roles << it.authority
             }
         }
         roles

@@ -1,5 +1,3 @@
-def rundeckAppName = "rundeck"
-
 hibernate {
     cache.queries = true
     cache.use_second_level_cache = true
@@ -78,17 +76,17 @@ grails.config.locations = [
         "classpath:ClusterEvents.groovy",
         "classpath:ExecutionCompleteEvents.groovy",
         "classpath:JobChangeEvents.groovy",
-        "classpath:QuartzConfig.groovy",
-        "classpath:WebrealmsConfig.groovy"
+        "classpath:QuartzConfig.groovy"
 ]
 
 if(environment=="development"){
     grails.config.locations << "file:${userHome}/.grails/${appName}-config.properties"
 }
-if(System.properties["${rundeckAppName}.config.location"]) {
-    grails.config.locations << "file:" + System.properties["${rundeckAppName}.config.location"]
+
+if(System.properties["${appName}.config.location"]) {
+    grails.config.locations << "file:" + System.properties["${appName}.config.location"]
 }else{
-    grails.config.locations << "classpath:${rundeckAppName}-config.properties"
+    grails.config.locations << "classpath:${appName}-config.properties"
 }
 
 grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"
@@ -149,10 +147,10 @@ grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
 
 grails.plugin.springsecurity.providerNames = [
         'preAuthenticatedAuthProvider',
+        'realmAuthProvider',
         'jaasAuthProvider',
         'anonymousAuthenticationProvider',
         'rememberMeAuthenticationProvider']
-
 log4j={
     // Example of changing the log pattern for the default console
     // appender:

@@ -56,7 +56,10 @@ import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
+import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider
 import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
@@ -407,4 +410,12 @@ beans={
         ]
     }
 
+    println "use jaas: " + grailsApplication.config.rundeck.useJaas
+    //if not using jaas for security provide a simple default
+    Properties realmProperties = new Properties()
+    realmProperties.load(new File(rdeckBase+"/server/config/realm.properties").newInputStream())
+    realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
+    realmAuthProvider(DaoAuthenticationProvider) {
+        userDetailsService = ref('realmPropertyFileDataSource')
+    }
 }

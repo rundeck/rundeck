@@ -49,16 +49,14 @@ configurations {
     war{}
     pluginFiles {
         transitive = false
-
     }
-    pluginFiles.extendsFrom(runtime)
 }
 
 repositories {
     mavenLocal()
     maven { url "https://repo.grails.org/grails/core" }
     maven { url "https://jitpack.io" }
-
+    flatDir dirs: "$rootDir/locallib"
 }
 
 def springBootVersion = "1.5.8.RELEASE"
@@ -113,7 +111,7 @@ dependencies {
     compile "org.grails:grails-core"
     compile "org.springframework.boot:spring-boot-starter-actuator"
     //provided "org.springframework.boot:spring-boot-starter-tomcat"
-    compile "org.springframework.boot:spring-boot-starter-jetty"
+    provided "org.springframework.boot:spring-boot-starter-jetty"
     compile "org.grails:grails-web-boot"
     compile "org.grails:grails-logging"
     compile "org.grails:grails-plugin-rest"
@@ -131,8 +129,10 @@ dependencies {
     compile "org.hibernate:hibernate-core:5.1.5.Final"
     compile "org.grails.plugins:gsp"
 
-    runtime 'org.eclipse.jetty:jetty-jaas:9.4.7.v20170914'
+    compile 'org.eclipse.jetty:jetty-jaas:9.4.7.v20170914'
     compile 'org.grails.plugins:spring-security-core:3.2.1'
+    compile 'org.kohsuke:libpam4j:1.5'
+    compile 'ca.juliusdavies:not-yet-commons-ssl:0.3.17'
 //    compile 'org.codehaus.groovy:groovy-all:2.4.13'
     console "org.grails:grails-console"
     profile "org.grails.profiles:web"
@@ -201,11 +201,17 @@ buildProperties.doLast {
     }
 }
 
+task('listPluginLibs') {
+    configurations.pluginFiles.files.each { pluginFile ->
+        println pluginFile.name
+    }
+}
+
 task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
     println "copying plugin libs"
-    File libextDir = new File(temporaryDir, "WEB-INF/rundeck/plugins")
-    File manifestFile = new File(temporaryDir, "WEB-INF/rundeck/plugins/manifest.properties")
-    println "libdir: ${libextDir.canonicalPath}"
+    File libextDir = new File(buildDir, "WEB-INF/rundeck/plugins")
+    File manifestFile = new File(buildDir, "WEB-INF/rundeck/plugins/manifest.properties")
+
     def filelist=[]
     libextDir.mkdirs()
     configurations.pluginFiles.files.each { pluginFile ->
@@ -243,12 +249,14 @@ task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
     manifestFile.withWriter { w ->
         manifestProps.store(w,"generated manifest")
     }
-    from(libextDir) {
-        into('WEB-INF/rundeck/plugins')
-    }
 }
 
 war {
-    println "running war archive process"
-
+    it.dependsOn copyPluginLibs
+    from("${buildDir}/WEB-INF/rundeck/plugins") {
+        into("WEB-INF/rundeck/plugins")
+    }
+    from("templates") {
+        into("templates")
+    }
 }
