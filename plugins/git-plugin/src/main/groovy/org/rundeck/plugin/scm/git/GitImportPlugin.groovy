@@ -554,7 +554,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     found << trackPath(
                         job.getValue().get("path").toString(),
                         true,
-                        job.key.toString()
+                        job.key.toString(),
+                        true
                     )
                 }
             }
@@ -583,12 +584,13 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    ScmImportTrackedItem trackPath(final String path, final boolean selected = false, String jobId = null) {
+    ScmImportTrackedItem trackPath(final String path, final boolean selected = false, String jobId = null, final boolean deleted = false) {
         ScmImportTrackedItemBuilder.builder().
                 id(path).
                 iconName('glyphicon-file').
                 selected(selected).
                 jobId(jobId).
+                deleted(deleted).
                 build()
     }
 

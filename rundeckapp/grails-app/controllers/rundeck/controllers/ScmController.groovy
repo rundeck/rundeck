@@ -859,6 +859,7 @@ class ScmController extends ControllerBase {
                 item.job = new JobReference(jobId: job.extid, jobName: job.jobName, groupPath: job.groupPath)
             }
             item.tracked = null != item.job
+            item.deleted = it.isDeleted()
 
             importActionItems << item
         }
@@ -1029,7 +1030,8 @@ class ScmController extends ControllerBase {
                     authContext,
                     project,
                     actionInput.input,
-                    actionInput.selectedItems
+                    actionInput.selectedItems,
+                actionInput.deletedItems
             )
         }
         [result, messages]
