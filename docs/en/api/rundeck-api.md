@@ -5840,6 +5840,7 @@ The content of `<scmPluginInputField>` is the same as shown in [Get SCM Plugin I
     * `jobId` job ID
     * `jobName` job name
 * `tracked` - boolean, true if there is an associated `job`
+* `deleted` - boolean, whether the job was deleted on remote and requires to be deleted
 
 
 
@@ -5855,6 +5856,7 @@ The content of `<scmPluginInputField>` is the same as shown in [Get SCM Plugin I
   <importItems>
     <!-- import only -->
     <scmImportActionItem>
+      <deleted>$boolean</deleted>
       <itemId>$string</itemId>
       <job>
         <!-- job tag may be empty if no associated job-->
@@ -5898,6 +5900,7 @@ The content of `"fields"` array is the same as shown in [Get SCM Plugin Input Fi
   "title": "$string",
   "importItems": [
     {
+      "deleted": $boolean,
       "itemId": "$string",
       "job": {
         "groupPath": "$jobgroup",
@@ -5934,8 +5937,11 @@ expect a set of `input` values.
 The set of `jobs` and `items` to choose from will be included in the Input Fields response,
 however where an Item has an associated Job, you can supply either the Job ID, or the Item ID.
 
-When there are items to be deleted (`export` integration), you can specify the Item IDs in the `deleted`
+When there are items to be deleted on `export` integration, you can specify the Item IDs in the `deleted`
 section.  However, if the item is associated with a renamed Job, including the Job ID will have the same effect.
+
+When there are items to be deleted on `import` integration, you must specify the Job IDs in the `deleted`
+section.
 
 Note: including the Item ID of an associated job, instead of the Job ID,
 will not automatically delete a renamed item.
@@ -5958,7 +5964,9 @@ will not automatically delete a renamed item.
     <items>
         <item itemId="$itemId"/>
     </items>
-    <deleted></deleted>
+    <deleted>
+        <item itemId="$itemId"/>
+    </deleted>
 </scmAction>
 ~~~~~~~~~~
 
@@ -5975,7 +5983,9 @@ will not automatically delete a renamed item.
     "items":[
         "$itemId"
     ],
-    "deleted":null
+    "deleted":[
+        "$jobId"
+    ]
 }
 ~~~~~~~~~~
 
