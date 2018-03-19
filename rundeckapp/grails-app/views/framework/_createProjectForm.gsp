@@ -23,7 +23,7 @@
     <meta name="tabpage" content="nodes"/>
     <title><g:message code="domain.Project.choose.title" default="Create a Project"/></title>
 
-    <g:javascript library="prototype/effects"/>
+    <asset:javascript src="prototype/effects"/>
     <asset:javascript src="storageBrowseKO.js"/>
     <g:javascript>
 

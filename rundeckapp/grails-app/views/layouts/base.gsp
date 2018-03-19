@@ -38,7 +38,7 @@
 
     <asset:stylesheet href="jquery-ui.css"/>
     <!--[if lt IE 9]>
-    <g:javascript library="respond.min"/>
+    <asset:javascript src="respond.min.js"/>
     <![endif]-->
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="jquery-ui.js"/>

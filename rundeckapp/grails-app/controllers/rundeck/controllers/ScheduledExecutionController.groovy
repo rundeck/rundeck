@@ -372,10 +372,10 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         render(contentType: 'application/json') {
-            total = model.total
-            nextExecution = model.nextExecution
-            nextExecutionW3CTime = model.nextExecutionW3CTime
-            max = model.max
+            total model.total
+            nextExecution model.nextExecution
+            nextExecutionW3CTime model.nextExecutionW3CTime
+            max model.max
             job(
                     id: se.extid,
                     name: (se.jobName),

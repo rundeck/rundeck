@@ -25,7 +25,7 @@
     <title><g:message code="gui.menu.Events"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
 
     <asset:javascript src="util/yellowfade.js"/>
-    <g:javascript library="pagehistory"/>
+    <asset:javascript src="pagehistory.js"/>
     <g:javascript>
                 
 
