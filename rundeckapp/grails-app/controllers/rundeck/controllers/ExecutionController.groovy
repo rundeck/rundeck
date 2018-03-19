@@ -85,7 +85,8 @@ class ExecutionController extends ControllerBase{
             apiExecutionDeleteBulk: ['POST'],
             apiExecutionModePassive: ['POST'],
             apiExecutionModeActive: ['POST'],
-            cancelExecution:'POST'
+            cancelExecution:'POST',
+            incompleteExecution: 'POST'
     ]
 
     def index() {
@@ -658,6 +659,68 @@ class ExecutionController extends ControllerBase{
         }
     }
 
+    def incompleteExecution (){
+        boolean valid=false
+        withForm{
+            valid=true
+            g.refreshFormTokensHeader()
+        }.invalidToken{
+
+        }
+        if(!valid){
+            response.status=HttpServletResponse.SC_BAD_REQUEST
+            request.error = g.message(code: 'request.error.invalidtoken.message')
+            return withFormat {
+                json {
+                    render(contentType: "text/json") {
+                        delegate.cancelled = false
+                        delegate.error= request.error
+                    }
+                }
+                xml {
+                    xmlerror()
+                }
+            }
+        }
+
+        ExecutionService.AbortResult abortresult
+        def Execution e = Execution.get(params.id)
+        if (!e) {
+            log.error("Execution not found for id: " + params.id)
+            return withFormat {
+                json {
+                    render(contentType: "text/json") {
+                        delegate.cancelled = false
+                        delegate.error = "Execution not found for id: " + params.id
+                    }
+                }
+                xml {
+                    xmlerror()
+                }
+            }
+        }
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, e.project)
+        def ScheduledExecution se = e.scheduledExecution
+        abortresult = executionService.abortExecution(
+            se,
+            e,
+            session.user,
+            authContext,
+            null,
+            true
+        )
+        def didcancel=abortresult.abortstate in [ExecutionService.ABORT_ABORTED, ExecutionService.ABORT_PENDING]
+        withFormat{
+            json{
+                render(contentType:"text/json"){
+                    delegate.cancelled=didcancel
+                    delegate.status=(abortresult.status?:(didcancel?'killed':'failed'))
+                    delegate.abortstate = abortresult.abortstate
+                }
+            }
+        }
+
+    }
     def downloadOutput() {
         Execution e = Execution.get(Long.parseLong(params.id))
         if(!e){

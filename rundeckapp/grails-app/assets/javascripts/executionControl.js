@@ -1466,7 +1466,7 @@ var FollowControl = Class.create({
         var obj=this;
         return jQuery.ajax({
             type: 'POST',
-            url: this.appLinks.executionCancelExecution,
+            url: this.appLinks.executionMarkExecutionIncomplete,
             dataType:'json',
             data: {id: this.executionId},
             beforeSend: _ajaxSendTokens.curry('exec_cancel_token'),
@@ -1474,7 +1474,7 @@ var FollowControl = Class.create({
                 obj.updatecancel(data);
             },
             error: function (jqxhr,status,err) {
-                obj.updatecancel({error: "Failed to kill Job: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err)});
+                obj.updatecancel({error: "Failed to mark Job as incomplete: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err)});
             }
         }).success(_ajaxReceiveTokens.curry('exec_cancel_token'));
     },
