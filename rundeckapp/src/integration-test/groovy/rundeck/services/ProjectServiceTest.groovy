@@ -16,14 +16,18 @@
 
 package rundeck.services
 
-import grails.test.mixin.TestFor
+import org.junit.Ignore
 import rundeck.Execution
+import spock.lang.Shared
 
 /**
  * Created by greg on 6/18/15.
  */
+@Ignore
 class ProjectServiceTest extends GroovyTestCase {
-    def ProjectService projectService
+    @Shared
+    ProjectService projectService = new ProjectService()
+
     def sessionFactory
 
 

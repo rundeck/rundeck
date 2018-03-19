@@ -476,7 +476,7 @@ class MenuControllerSpec extends Specification {
         1 * controller.authorizationService.validateYamlPolicy(project, 'acls/' + id, fileText) >>
                 new PoliciesValidation(validation: new ValidationSet(valid: true))
 
-        response.redirectedUrl == "/menu/projectAcls?project=$project"
+        response.redirectedUrl == "/project/$project/admin/acls"
         where:
         fileText    | create | exists | project
         'test-data' | true   | false  | 'testproj'
@@ -508,7 +508,7 @@ class MenuControllerSpec extends Specification {
         0 * controller.authorizationService._(*_)
 
         flash.message=~/was deleted/
-        response.redirectedUrl == "/menu/projectAcls?project=$project"
+        response.redirectedUrl == "/project/$project/admin/acls"
         where:
         fileText    |  exists | project
         'test-data' |  true  | 'testproj'

@@ -33,17 +33,17 @@ class DbStorageServiceTests {
     void testHasResource() {
         def storage = new Storage(data: 'abc'.bytes, dir: '', name: 'abc', storageMeta: [abc: 'xyz'])
         storage.validate()
-        assertNotNull(storage.errors.allErrors.collect{it.toString()}.join("; "), storage.save(true))
-        assertNotNull new Storage(data: 'abc'.bytes,dir: 'xyz', name:'abc',storageMeta: [abc:'xyz']).save(true)
+        assertNotNull(storage.errors.allErrors.collect{it.toString()}.join("; "), storage.save(flush:true))
+        assertNotNull new Storage(data: 'abc'.bytes,dir: 'xyz', name:'abc',storageMeta: [abc:'xyz']).save(flush:true)
         assertFalse(service.hasResource(null,'xyz'))
         assertTrue(service.hasResource(null,'xyz/abc'))
         assertTrue(service.hasResource(null,'abc'))
     }
     void testHasResource_Ns() {
         assertNotNull new Storage(namespace: 'zyx', data: 'abc'.bytes, dir: '', name: 'abc',
-                storageMeta: [abc: 'xyz']).save(true)
+                storageMeta: [abc: 'xyz']).save(flush:true)
         assertNotNull new Storage(namespace: 'zyx', data: 'abc'.bytes, dir: 'xyz', name: 'abc',
-                storageMeta: [abc: 'xyz']).save(true)
+                storageMeta: [abc: 'xyz']).save(flush:true)
         assertFalse(service.hasResource(null,'xyz'))
         assertFalse(service.hasResource(null,'xyz/abc'))
         assertFalse(service.hasResource(null,'abc'))

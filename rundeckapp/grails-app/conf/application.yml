@@ -164,8 +164,6 @@ rundeck:
                 userRolesHeader: null
                 delimiter: ','
         useHMacRequestTokens: true
-        apiCookieAccess:
-            enabled: true
     storage:
     metrics:
         enabled: true

@@ -312,40 +312,40 @@ class LogFileStorageServiceSpec extends Specification {
                                user: 'user1',
                                project: 'test',
                                serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
-        ).save()
+        ).save(flush: true)
 
         def l = new LogFileStorageRequest(
                 execution: e1,
                 pluginName: 'blah',
                 filetype: '*',
                 completed: false
-        ).save()
+        ).save(flush: true)
 
         def e2 = new Execution(dateStarted: new Date(),
                                dateCompleted: new Date(),
                                user: 'user2',
                                project: 'test',
                                serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
-        ).save()
+        ).save(flush: true)
         def l2 = new LogFileStorageRequest(
                 execution: e2,
                 pluginName: 'blah',
                 filetype: '*',
                 completed: false
-        ).save()
+        ).save(flush: true)
 
         def e3 = new Execution(dateStarted: new Date(),
                                dateCompleted: new Date(),
                                user: 'user3',
                                project: 'test',
                                serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
-        ).save()
+        ).save(flush: true)
         def l3 = new LogFileStorageRequest(
                 execution: e3,
                 pluginName: 'blah',
                 filetype: '*',
                 completed: false
-        ).save()
+        ).save(flush: true)
 
 
         service.logFileStorageTaskScheduler = Mock(TaskScheduler)

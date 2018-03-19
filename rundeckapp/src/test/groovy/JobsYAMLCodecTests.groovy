@@ -86,7 +86,7 @@ public class JobsYAMLCodecTests  {
                 assertEquals "wrong desc at ${i}", "test${i+1}".toString(), cmd.description
             }
             assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
-            assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'", doc[0].sequence.commands[1].script
+            assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", doc[0].sequence.commands[1].script?.toString()
             assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
             assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
             assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
@@ -180,7 +180,7 @@ public class JobsYAMLCodecTests  {
                 assertEquals "wrong desc at ${i}", "test${i+1}".toString(), cmd.description
             }
             assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
-            assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'", doc[0].sequence.commands[1].script
+            assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", doc[0].sequence.commands[1].script
             assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
             assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
             assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name
@@ -632,7 +632,7 @@ public class JobsYAMLCodecTests  {
         assertNotNull "missing commands", doc[0].sequence.commands
         assertEquals "missing commands", 4, doc[0].sequence.commands.size()
         assertEquals "missing command exec", "test script", doc[0].sequence.commands[0].exec
-        assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'", doc[0].sequence.commands[1].script
+        assertEquals "missing command script", "#!/bin/bash\n\necho test bash\n\necho tralaala 'something'\n", doc[0].sequence.commands[1].script
         assertEquals "missing command scriptfile", "some file path", doc[0].sequence.commands[2].scriptfile
         assertNotNull "missing command jobref", doc[0].sequence.commands[3].jobref
         assertEquals "missing command jobref.name", "another job", doc[0].sequence.commands[3].jobref.name

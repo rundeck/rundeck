@@ -543,7 +543,7 @@ class ProjectControllerSpec extends Specification{
 
         then:
         response.contentType==~/^application\/json(;.+)?$/
-        response.json==[contents:text]
+        response.json.delegate==[contents:text]
 
         where:
         filename    | text
@@ -552,7 +552,7 @@ class ProjectControllerSpec extends Specification{
     }
 
 
-    def "project file delete"(String filename,_){
+    def "project file delete"(String filename){
         given:
         controller.frameworkService=Mock(FrameworkService){
             1 * existsFrameworkProject('test') >> true
@@ -564,7 +564,7 @@ class ProjectControllerSpec extends Specification{
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,13) >> true
             1 * requireVersion(_,_,11) >> true
-            1 * extractResponseFormat(*_) >> 'xml'
+            1 * extractResponseFormat(_,_,_) >> 'xml'
         }
         when:
         params.filename=filename
@@ -1128,7 +1128,9 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * renderWrappedFileContents('blah','json',_)>>{args->args[2].contents=args[0]}
+            1 * renderWrappedFileContents('blah','json',_)>>{args->
+                args[2] contents: args[0]
+            }
         }
 
         controller.authorizationService=Stub(AuthorizationService){
@@ -1151,7 +1153,7 @@ class ProjectControllerSpec extends Specification{
         then:
         response.status==201
         response.contentType.split(';').contains('application/json')
-        response.json==[contents:'blah']
+        response.json.call==[contents:'blah'] //TODO: is needed to correct jsons that use StreamingJsonBuilder
 
 
     }
@@ -1172,7 +1174,7 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * renderJsonAclpolicyValidation(_,_)>>{args->args[1].contents='blah'}
+            1 * renderJsonAclpolicyValidation(_,_)>>{args->args[1] contents: 'blah'}
         }
 
         controller.authorizationService=Stub(AuthorizationService){
@@ -1195,7 +1197,7 @@ class ProjectControllerSpec extends Specification{
         then:
         response.status==400
         response.contentType.split(';').contains('application/json')
-        response.json==[contents:'blah']
+        response.json.call==[contents:'blah']
 
 
     }
@@ -1317,7 +1319,7 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * renderWrappedFileContents('blah','json',_)>>{args->args[2].contents=args[0]}
+            1 * renderWrappedFileContents('blah','json',_)>>{args->args[2] contents: args[0]}
         }
 
         controller.authorizationService=Stub(AuthorizationService){
@@ -1340,7 +1342,7 @@ class ProjectControllerSpec extends Specification{
         then:
         response.status==200
         response.contentType.split(';').contains('application/json')
-        response.json==[contents:'blah']
+        response.json.call==[contents:'blah']
 
 
     }

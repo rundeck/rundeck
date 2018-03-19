@@ -69,6 +69,7 @@ import java.util.concurrent.TimeUnit
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
  */
 class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, RundeckProjectConfigurable {
+    static transactional = true
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
     public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
     public static final String CONF_PROJECT_DISABLE_SCHEDULE = 'project.disable.schedule'
@@ -105,7 +106,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             disableExecution: CONF_PROJECT_DISABLE_EXECUTION,
             disableSchedule: CONF_PROJECT_DISABLE_SCHEDULE,
     ]
-    boolean transactional = true
+//    boolean transactional = true
 
     def FrameworkService frameworkService
     def NotificationService notificationService
@@ -429,7 +430,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         Date claimDate = new Date()
         while (retry) {
             try {
-                ScheduledExecution.withNewSession {
+//                ScheduledExecution.withNewSession { session -> //TODO: withNewSession dont work on integration test
                     scheduledExecution = ScheduledExecution.get(schedId)
                     scheduledExecution.refresh()
 
@@ -453,7 +454,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         claimedExecs << it
                     }
                     retry = false
-                }
+//                }
             } catch (org.springframework.dao.OptimisticLockingFailureException e) {
                 log.error("claimScheduledJob: failed for ${schedId} on node ${serverUUID}: locking failure")
                 retry = true

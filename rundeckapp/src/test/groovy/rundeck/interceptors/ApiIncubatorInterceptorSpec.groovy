@@ -14,7 +14,7 @@ class ApiIncubatorInterceptorSpec extends Specification implements InterceptorUn
 
     void "Test apiIncubator interceptor matching"() {
         when:"A request matches the interceptor"
-            withRequest(controller:"apiIncubator")
+            withRequest(uri:"/api/apiVersion")
 
         then:"The interceptor does match"
             interceptor.doesMatch()

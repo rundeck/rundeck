@@ -166,7 +166,7 @@ class FrameworkControllerSpec extends Specification {
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
             1 * renderWrappedFileContents(_,_,_) >> { args ->
-                args[2].success=true
+                args[2] success: true
             }
         }
         when:
@@ -257,7 +257,7 @@ class FrameworkControllerSpec extends Specification {
         controller.apiService=Mock(ApiService){
             1 * requireVersion(_,_,14) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy'],_)>>{args-> args[4].success=true}
+            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy'],_)>>{args-> args[4] success: true}
             0*_(*_)
         }
         when:
@@ -268,7 +268,7 @@ class FrameworkControllerSpec extends Specification {
         then:
         response.status==200
         response.contentType.split(';').contains('application/json')
-        response.json==[success:true]
+        response.json.call==[success:true]
 
     }
     def "system acls GET dir XML"(){
@@ -324,7 +324,7 @@ class FrameworkControllerSpec extends Specification {
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderWrappedFileContents(_,_,_) >> { args ->
-                args[2].contents=args[0]
+                args[2] contents: args[0]
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
@@ -348,7 +348,7 @@ class FrameworkControllerSpec extends Specification {
         response.status==201
         response.contentType!=null
         response.contentType.split(';').contains('application/json')
-        response.json==[contents:'blah']
+        response.json.call==[contents:'blah']
     }
     def "system acls POST already exists"(){
         setup:
@@ -446,7 +446,7 @@ class FrameworkControllerSpec extends Specification {
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderWrappedFileContents(_,_,_) >> { args ->
-                args[2].contents=args[0]
+                args[2] contents: args[0]
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
@@ -470,7 +470,7 @@ class FrameworkControllerSpec extends Specification {
         response.status==200
         response.contentType!=null
         response.contentType.split(';').contains('application/json')
-        response.json==[contents:'blah']
+        response.json.call==[contents:'blah']
     }
     def "system acls DELETE not found"(){
         setup:
@@ -542,7 +542,7 @@ class FrameworkControllerSpec extends Specification {
             1 * extractResponseFormat(_,_,_,_) >> 'json'
 
             1 * renderJsonAclpolicyValidation(_,_)>>{args->
-                args[1].contents='blahz'
+                args[1] contents:'blahz'
             }
         }
         controller.authorizationService=Stub(AuthorizationService){
@@ -565,7 +565,7 @@ class FrameworkControllerSpec extends Specification {
         then:
         response.status==400
         response.contentType.split(';').contains('application/json')
-        response.json==[contents:'blahz']
+        response.json.call==[contents:'blahz']
     }
     /**
      * Policy validation failure
