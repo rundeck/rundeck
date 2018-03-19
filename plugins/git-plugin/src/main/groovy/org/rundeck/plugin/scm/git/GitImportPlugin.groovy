@@ -408,7 +408,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     List<Action> jobActionsForStatus(Map status) {
-        if (status.synch == ImportSynchState.IMPORT_NEEDED) {
+        if (status.synch == ImportSynchState.IMPORT_NEEDED || status.synch == ImportSynchState.DELETE_NEEDED) {
             [actions[ACTION_IMPORT_ALL]]
         } else {
             []

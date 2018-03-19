@@ -1022,7 +1022,11 @@ class ScmController extends ControllerBase {
                         scm.actionId
                 )
                 trackingItems.findAll { it.jobId in actionInput.jobIds }.each {
-                    actionInput.selectedItems << it.id
+                    if(it.deleted){
+                        actionInput.deletedItems << it.jobId
+                    }else {
+                        actionInput.selectedItems << it.id
+                    }
                 }
             }
             result = scmService.performImportAction(
@@ -1618,8 +1622,8 @@ class ScmController extends ControllerBase {
             return
         }
         actionInput.jobIds = [scm.id]
-        actionInput.deletedItems = null
-        actionInput.selectedItems = null
+        actionInput.deletedItems = []
+        actionInput.selectedItems = []
 
         def (Map<String, Object> result, Map<String, String> messages) = performScmAction(
                 isExport,
