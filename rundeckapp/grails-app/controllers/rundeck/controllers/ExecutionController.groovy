@@ -38,6 +38,7 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.converters.JSON
+import grails.web.JSONBuilder
 import grails.web.mapping.LinkGenerator
 import org.quartz.JobExecutionContext
 import org.springframework.dao.DataAccessResourceFailureException
@@ -986,7 +987,7 @@ class ExecutionController extends ControllerBase{
                     }
                 }
                 if (outf == 'json') {
-                    jsonDatamapList.add(datamap)
+                        jsonDatamapList.add(datamap) //Changes to correct ExecutionControllerSpec."api execution output compacted json" test
                 } else {
                     if (datamap instanceof Map) {
                         if (compacted && removed) {
@@ -1008,6 +1009,7 @@ class ExecutionController extends ControllerBase{
             }
         }
         if(outf=='json'){
+            //Changes to correct ExecutionControllerSpec."api execution output compacted json" test
             dataClos()
             delegate.entries(jsonDatamapList)
         }else{

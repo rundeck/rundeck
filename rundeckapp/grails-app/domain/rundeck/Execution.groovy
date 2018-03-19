@@ -44,6 +44,7 @@ class Execution extends ExecutionContext {
     Execution retryExecution
     Orchestrator orchestrator;
     String userRoleList
+    String serverNodeUUID
     Integer nodeThreadcount=1
     Long retryOriginalId
 

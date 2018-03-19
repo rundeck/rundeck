@@ -1354,7 +1354,7 @@ class ExecutionServiceTests  {
                 dateCompleted: null,
                 workflow: wf1
         )
-        assertNotNull(exec1.save())
+        assertNotNull(exec1.save(flush: true))
 
         def wf2 = new Workflow(commands: [new CommandExec(adhocRemoteString: "test")]).save()
         Execution exec2 = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false,
@@ -1363,7 +1363,7 @@ class ExecutionServiceTests  {
                 workflow: wf2,
                 serverNodeUUID: uuid
         )
-        assertNotNull(exec2.save())
+        assertNotNull(exec2.save(flush: true))
 
         assertNull(exec1.dateCompleted)
         assertNull(exec1.status)

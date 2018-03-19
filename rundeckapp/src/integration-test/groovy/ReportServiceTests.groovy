@@ -15,6 +15,7 @@
  */
 
 import com.dtolabs.rundeck.app.support.ExecQuery
+import org.junit.Ignore
 import rundeck.ExecReport
 import rundeck.BaseReport
 import rundeck.services.ReportService
@@ -26,6 +27,8 @@ import rundeck.services.ReportService
  * Created: 8/23/12 2:57 PM
  * 
  */
+//@Integration
+@Ignore
 class ReportServiceTests extends GroovyTestCase {
     def ReportService reportService
     def sessionFactory
@@ -35,10 +38,9 @@ class ReportServiceTests extends GroovyTestCase {
         message:'message',title:'title']
         return new ExecReport(repprops+props)
     }
-    void testgetExecReportsReportIdFilter(){
+    void testGetExecReportsReportIdFilter(){
         def r1,r2,r3
 
-        ExecReport.withNewSession {
             r1=proto(reportId:'blah', jcExecId: '123')
             assert r1.validate()
             assert null!=r1.save(flush: true)
@@ -51,8 +53,6 @@ class ReportServiceTests extends GroovyTestCase {
             assert r3.validate()
             println r3.save(flush: true)
 
-            sessionFactory.currentSession.flush()
-        }
         r1=r1.refresh()
         r2=r2.refresh()
         r3=r3.refresh()
@@ -69,7 +69,7 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([reportIdFilter: 'blah3'], [r3])
         assertQueryResult([reportIdFilter: 'blah4'], [])
     }
-    void testgetExecNodeFilterReportIdFilter(){
+    void testGetExecNodeFilterReportIdFilter(){
         def r1,r2,r3, r4
 
         ExecReport.withNewSession {
@@ -110,7 +110,7 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([execnodeFilter: '.*'], [r4])
     }
 
-    void testgetExecReportsProjFilterIsExact(){
+    void testGetExecReportsProjFilterIsExact(){
         def r1,r2,r3
 
         ExecReport.withNewSession {
@@ -143,7 +143,7 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([projFilter: 'abcd'], [])
         assertQueryResult([projFilter: 'abcdef'], [r3])
     }
-    void testgetExecReportsJobListFilter(){
+    void testGetExecReportsJobListFilter(){
         def r1=proto(reportId:'group/name',jcExecId:'1')
         assert null!=r1.save(flush: true)
         def r2 = proto(reportId: 'group/name2', jcExecId: '2')
@@ -159,7 +159,7 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([jobListFilter: ['group/name2','group/name3']],[r2,r3])
         assertQueryResult([jobListFilter: ['group/name','group/name2','group/name3']],[r1,r2,r3])
     }
-    void testgetExecReportsStatusStringVariations(){
+    void testGetExecReportsStatusStringVariations(){
         def r1=proto(reportId:'group/name',jcExecId:'1',status:'failed',actionType: 'failed')
         assert null!=r1.save(flush: true)
         def r2=proto(reportId:'group/name2',jcExecId:'2',status:'fail',actionType: 'fail')
@@ -174,7 +174,7 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([statFilter: 'succeed'],[r3,r4])
 
     }
-    void testgetCombinedReportsExcludeJobListFilter(){
+    void testGetCombinedReportsExcludeJobListFilter(){
         def r1=proto(reportId:'group/name', jcExecId: '1')
         assert null!=r1.save(flush: true)
         def r2 = proto(reportId: 'group/name2', jcExecId: '2')
@@ -199,7 +199,7 @@ class ReportServiceTests extends GroovyTestCase {
         assert result.reports.containsAll(results)
     }
 
-    void testgetExecReportsFailedStat(){
+    void testGetExecReportsFailedStat(){
         def r1,r2,r3
 
         ExecReport.withNewSession {
@@ -232,7 +232,7 @@ class ReportServiceTests extends GroovyTestCase {
 
     }
 
-    void testgetExecReportsKilledStat(){
+    void testGetExecReportsKilledStat(){
         def r1,r2,r3
 
         ExecReport.withNewSession {

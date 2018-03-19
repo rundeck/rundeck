@@ -17,6 +17,8 @@
 
 package rundeck.controllers
 
+import com.dtolabs.rundeck.app.api.ApiVersions
+
 import static org.junit.Assert.*
 
 import com.dtolabs.rundeck.app.support.ProjectArchiveImportRequest
@@ -114,15 +116,15 @@ class ProjectControllerTest {
 
         response.format='json'
         controller.apiProjectList()
-        def base='http://localhost:8080/api/'+ApiVersionInterceptor.API_CURRENT_VERSION
+        def base='http://localhost:8080/api/'+ApiVersions.API_CURRENT_VERSION
         assert response.status == HttpServletResponse.SC_OK
-        assert response.json.call.size()==2
-        assert response.json.call[0].name=='testproject'
-        assert response.json.call[0].description==''
-        assert response.json.call[0].url==base+'/project/testproject'
-        assert response.json.call[1].name=='testproject2'
-        assert response.json.call[1].description==''
-        assert response.json.call[1].url==base+'/project/testproject2'
+        assert response.json.size()==2
+        assert response.json[0].name=='testproject'
+        assert response.json[0].description==''
+        assert response.json[0].url==base+'/project/testproject'
+        assert response.json[1].name=='testproject2'
+        assert response.json[1].description==''
+        assert response.json[1].url==base+'/project/testproject2'
     }
     @Test
     void apiProjectList_unacceptableReceivesXml(){
@@ -307,7 +309,7 @@ class ProjectControllerTest {
         //XML result has wrapper
         assertEquals 'result', response.xml.name()
         assertEquals 'true', response.xml.'@success'.text()
-        assertEquals ApiVersionInterceptor.API_CURRENT_VERSION.toString(), response.xml.'@apiversion'.text()
+        assertEquals ApiVersions.API_CURRENT_VERSION.toString(), response.xml.'@apiversion'.text()
 
         assertEquals 1, response.xml.projects.size()
         assertEquals 0, response.xml.project.size()
@@ -363,7 +365,7 @@ class ProjectControllerTest {
         //XML result has wrapper
         assertEquals 'result', response.xml.name()
         assertEquals 'true', response.xml.'@success'.text()
-        assertEquals ApiVersionInterceptor.API_CURRENT_VERSION.toString(), response.xml.'@apiversion'.text()
+        assertEquals ApiVersions.API_CURRENT_VERSION.toString(), response.xml.'@apiversion'.text()
 
         assertEquals 1, response.xml.projects.size()
         assertEquals 0, response.xml.project.size()
@@ -1934,7 +1936,7 @@ class ProjectControllerTest {
                 ["message": "api.error.invalid.request;Property [jobUuidOption] of class [class com.dtolabs.rundeck.app.support.ProjectArchiveParams] with value [blah] is not contained within the list [[preserve, remove]]",
                  "error": true,
                  "errorCode": "api.error.invalid.request",
-                 "apiversion": ApiVersionInterceptor.API_CURRENT_VERSION],
+                 "apiversion": ApiVersions.API_CURRENT_VERSION],
                 response.json
         )
     }
@@ -1994,7 +1996,7 @@ class ProjectControllerTest {
                               message:"api.error.item.unauthorized;[create, ACL for Project, [name:test1]]",
                               error: true,
                               errorCode : "api.error.item.unauthorized",
-                              apiversion: ApiVersionInterceptor.API_CURRENT_VERSION
+                              apiversion: ApiVersions.API_CURRENT_VERSION
                       ],
                       response.json
         )

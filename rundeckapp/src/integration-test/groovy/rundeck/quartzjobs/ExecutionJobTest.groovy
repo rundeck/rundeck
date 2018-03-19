@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import grails.testing.mixin.integration.Integration
 import groovy.mock.interceptor.MockFor
 import org.junit.Assert
+import org.junit.Ignore
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -46,6 +47,7 @@ import rundeck.services.FrameworkService
 
 @Integration
 //@RunWith(JUnit4.class)
+@Ignore
 class ExecutionJobTest extends GroovyTestCase{
     void testInitializeEmpty(){
         ExecutionJob job = new ExecutionJob()

@@ -1,6 +1,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import grails.gorm.transactions.Rollback
 import grails.testing.mixin.integration.Integration
 import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.JobDetail
@@ -21,6 +22,7 @@ import spock.lang.Specification
  * Integration tests for the ScheduledExecutionService.
  */
 @Integration
+@Rollback
 class ScheduledExecutionServiceIntegrationSpec extends Specification {
     public static final String TEST_UUID1 = 'BB27B7BB-4F13-44B7-B64B-D2435E2DD8C7'
     public static final String TEST_UUID2 = '490966E0-2E2F-4505-823F-E2665ADC66FB'
@@ -97,11 +99,11 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
         when:
         def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project, jobUuid)
-        ScheduledExecution.withSession { session ->
-            session.flush()
-            se.refresh()
-            e.refresh()
-        }
+//        ScheduledExecution.withSession { session ->
+//            session.flush()
+//            se.refresh()
+//            e.refresh()
+//        }
 
 
         then:
@@ -172,7 +174,7 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 serverNodeUUID: TEST_UUID1,
                 status: 'scheduled',
                 dateStarted: startTime
-        ).save(flush: true, failOnError: true)
+        ).save(flush: true)
 
         se.executions = [e]
         se.save(flush: true, failOnError: true)
@@ -245,10 +247,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
                 status: 'scheduled',
                 dateStarted: startTime,
                 dateCompleted: null
-        ).save(failOnError: true, flush: true)
+        ).save(flush: true)
 
         se.executions = [e]
-        se.save(flush: true, failOnError: true)
+        se.save(flush: true)
 
 
         when:
@@ -323,10 +325,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
         when:
         def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project)
-        ScheduledExecution.withSession { session ->
-            session.flush()
-            [se, e]*.refresh()
-        }
+//        ScheduledExecution.withSession { session ->
+//            session.flush()
+//            [se, e]*.refresh()
+//        }
 
 
         then:
@@ -392,10 +394,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
         when:
         def results = service.reclaimAndScheduleJobs(TEST_UUID1, true, project)
-        ScheduledExecution.withSession { session ->
-            session.flush()
-            [se, e]*.refresh()
-        }
+//        ScheduledExecution.withSession { session ->
+//            session.flush()
+//            [se, e]*.refresh()
+//        }
 
 
         then:
@@ -430,16 +432,16 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         assertTrue(resultMap[job1.extid].success)
         assertEquals(null, resultMap[job2.extid])
         assertEquals(null, resultMap[job3.extid])
-        ScheduledExecution.withSession {session->
-            session.flush()
-
-            job1 = ScheduledExecution.get(job1.id)
-            job1.refresh()
-            job2 = ScheduledExecution.get(job2.id)
-            job2.refresh()
-            job3 = ScheduledExecution.get(job3.id)
-            job3.refresh()
-        }
+//        ScheduledExecution.withSession {session->
+//            session.flush()
+//
+//            job1 = ScheduledExecution.get(job1.id)
+//            job1.refresh()
+//            job2 = ScheduledExecution.get(job2.id)
+//            job2.refresh()
+//            job3 = ScheduledExecution.get(job3.id)
+//            job3.refresh()
+//        }
 
 
         assertEquals(serverUUID, job1.serverNodeUUID)
@@ -458,16 +460,16 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
 
         def resultMap = testService.claimScheduledJobs(serverUUID, serverUUID2)
 
-        ScheduledExecution.withSession { session ->
-            session.flush()
-
-            job1 = ScheduledExecution.get(job1.id)
-            job1.refresh()
-            job2 = ScheduledExecution.get(job2.id)
-            job2.refresh()
-            job3 = ScheduledExecution.get(job3.id)
-            job3.refresh()
-        }
+//        ScheduledExecution.withSession { session ->
+//            session.flush()
+//
+//            job1 = ScheduledExecution.get(job1.id)
+//            job1.refresh()
+//            job2 = ScheduledExecution.get(job2.id)
+//            job2.refresh()
+//            job3 = ScheduledExecution.get(job3.id)
+//            job3.refresh()
+//        }
 
         assertEquals(null, job1.serverNodeUUID)
         assertEquals(serverUUID, job2.serverNodeUUID)
@@ -502,10 +504,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         when:
         def resultMap = service.claimScheduledJobs(targetserverUUID, null, true)
 
-        ScheduledExecution.withSession { session ->
-            session.flush()
-            jobs*.refresh()
-        }
+//        ScheduledExecution.withSession { session ->
+//            session.flush()
+//            jobs*.refresh()
+//        }
         then:
 
         assert job1.scheduled
@@ -533,10 +535,10 @@ class ScheduledExecutionServiceIntegrationSpec extends Specification {
         when:
         def resultMap = service.claimScheduledJobs(targetServerUUID, null, true, targetProject)
 
-        ScheduledExecution.withSession { session ->
-            session.flush()
-            jobs*.refresh()
-        }
+//        ScheduledExecution.withSession { session ->
+//            session.flush()
+//            jobs*.refresh()
+//        }
         then:
 
         resultList == resultMap.keySet() as List

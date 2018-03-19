@@ -3,6 +3,7 @@ package rundeck.interceptors
 import com.codahale.metrics.MetricRegistry
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import grails.testing.web.controllers.ControllerUnitTest
 import grails.testing.web.interceptor.InterceptorUnitTest
 import org.grails.gsp.GroovyPagesTemplateEngine
 import org.grails.web.gsp.io.CachingGrailsConventionGroovyPageLocator
@@ -18,23 +19,20 @@ import spock.lang.Unroll
  * @author greg
  * @since 4/4/17
  */
-@TestFor(ApiController)
-@Mock([AA_TimerInterceptor, ApiAccessInterceptor, RefererInterceptor])
 class RefererInterceptorSpec extends Specification implements InterceptorUnitTest<RefererInterceptor> {
 
-    static doWithSpring = {
+    ConfigurationService configurationService
+    Closure doWithSpring() { {->
         configurationService(ConfigurationService)
-        metricRegistry(MetricRegistry)
+    } }
 
-        //pageTemplateEngine,pageLocator,viewResolver, allows mocked filter to call `render(view:'/view')`
-        pageTemplateEngine(GroovyPagesTemplateEngine)
-        pageLocator(CachingGrailsConventionGroovyPageLocator)
-        viewResolver(GroovyPageViewResolver, pageTemplateEngine, pageLocator)
-    }
 
     @Unroll
     def "referer header filters api allowed #allowed"() {
+        def controller
         given:
+        controller = mockController(ApiController)
+
         controller.configurationService.grailsApplication = grailsApplication
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.csrf.referer.filterMethod = '*'
@@ -50,7 +48,7 @@ class RefererInterceptorSpec extends Specification implements InterceptorUnitTes
         }
 
         when:
-        withFilters(action: "apiTokenRemoveExpired", controller: "api") {
+        withInterceptors(action: "apiTokenRemoveExpired", controller: "api") {
             controller.apiTokenRemoveExpired()
         }
 
@@ -74,7 +72,9 @@ class RefererInterceptorSpec extends Specification implements InterceptorUnitTes
 
     @Unroll
     def "referer header filters for #filterMethod with method #method ref #referer is #status"() {
+        def controller
         given:
+        controller = mockController(ApiController)
         controller.configurationService.grailsApplication = grailsApplication
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.csrf.referer.filterMethod = filterMethod
@@ -90,7 +90,7 @@ class RefererInterceptorSpec extends Specification implements InterceptorUnitTes
         }
 
         when:
-        withFilters(action: "endpointMoved", controller: "api") {
+        withInterceptors(action: "endpointMoved", controller: "api") {
             controller.endpointMoved()
         }
 
@@ -119,7 +119,9 @@ class RefererInterceptorSpec extends Specification implements InterceptorUnitTes
 
     @Unroll
     def "referer header filters https required #requireHttps ref #referer"() {
+        def controller
         given:
+        controller = mockController(ApiController)
         controller.configurationService.grailsApplication = grailsApplication
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.security.csrf.referer.filterMethod = '*'
@@ -136,7 +138,7 @@ class RefererInterceptorSpec extends Specification implements InterceptorUnitTes
         }
 
         when:
-        withFilters(action: "apiTokenRemoveExpired", controller: "api") {
+        withInterceptors(action: "apiTokenRemoveExpired", controller: "api") {
             controller.apiTokenRemoveExpired()
         }
 

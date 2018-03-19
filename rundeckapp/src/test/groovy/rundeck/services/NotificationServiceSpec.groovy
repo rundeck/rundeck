@@ -20,8 +20,8 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.PluginControlService
 import com.dtolabs.rundeck.core.data.BaseDataContext
 import com.dtolabs.rundeck.core.execution.ExecutionContext
-//import grails.plugin.mail.MailMessageBuilder
-//import grails.plugin.mail.MailService
+import grails.plugins.mail.MailMessageBuilder
+import grails.plugins.mail.MailService
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.web.mapping.LinkGenerator

@@ -73,6 +73,7 @@ class ScheduledExecution extends ExecutionContext {
     String notifyRetryableFailureUrl
     Boolean multipleExecutions = false
     Orchestrator orchestrator
+    String serverNodeUUID
 
     String notifyAvgDurationThreshold
 

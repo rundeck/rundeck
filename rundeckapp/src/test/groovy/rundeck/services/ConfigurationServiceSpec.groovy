@@ -125,6 +125,7 @@ class ConfigurationServiceSpec extends Specification {
     void "set boolean"() {
         given:
         grailsApplication.config.clear()
+        grailsApplication.config.rundeck.something.value = ''
         when:
         service.setBoolean('something.value', tval)
         then:
