@@ -30,7 +30,7 @@
     <meta name="projtabtitle" content="${message(code: 'create.system.acl.policy')}"/>
     <title><g:message code="create.system.acl.policy" /></title>
 
-    <g:javascript library="prototype/effects"/>
+    <asset:javascript src="prototype/effects"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
@@ -85,6 +85,6 @@
     </g:form>
 </div>
 
-<!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
+<!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 </body>
 </html>

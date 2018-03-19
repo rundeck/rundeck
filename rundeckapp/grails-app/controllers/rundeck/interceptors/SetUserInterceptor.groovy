@@ -24,7 +24,7 @@ class SetUserInterceptor {
     int order = HIGHEST_PRECEDENCE + 30
 
     SetUserInterceptor() {
-        matchAll().excludes(controller: 'user', action: '(logout|login|error|loggedout|j_security_check)')
+        matchAll().excludes(controller: 'user', action: '(logout|login|error|loggedout)')
                   //.excludes(controller: ~/$STATIC_ASSETS/)
         //The documentation seems to indicate that adding the above line should exclude
         // controllers matching that pattern but in practice it appears to

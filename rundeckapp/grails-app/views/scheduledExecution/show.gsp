@@ -21,7 +21,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="jobs"/>
     <title><g:appTitle/> - <g:enc>${scheduledExecution?.jobName}</g:enc></title>
-    <g:javascript library="prototype/effects"/>
+    <asset:javascript src="prototype/effects"/>
     <asset:javascript src="menu/joboptions.js"/>
     <asset:javascript src="menu/jobs.js"/>
     <asset:javascript src="util/markdeep.js"/>

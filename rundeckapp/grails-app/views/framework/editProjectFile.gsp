@@ -25,7 +25,7 @@
     <meta name="projtabtitle" content="${message(code:filename=='readme.md'?'edit.readme':filename=='motd.md'?'edit.motd':'edit.project.file')}"/>
     <title><g:message code="edit.project.file" /></title>
 
-    <g:javascript library="prototype/effects"/>
+    <asset:javascript src="prototype/effects"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
@@ -115,6 +115,6 @@
         </g:form>
     </div>
 
-<!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
+<!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 </body>
 </html>
