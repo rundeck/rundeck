@@ -41,7 +41,8 @@
         allowedScope     : PropertyScope.Instance,
         idkey            : pluginkey,
         includeFormFields: true,
-        prefix           : inputFieldPrefix
+        prefix           : inputFieldPrefix,
+        showDescription  : !hidePluginSummary,
     ]}"/>
 
 </div>

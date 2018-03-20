@@ -21,7 +21,7 @@
  --%>
 
 <%@ page contentType="text/html;charset=UTF-8" %>
-<g:if test="${description}">
+<g:if test="${description && showDescription}">
 
     <div class="row">
         <div class="col-sm-12">
