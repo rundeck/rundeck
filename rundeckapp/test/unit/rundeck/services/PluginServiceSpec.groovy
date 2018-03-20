@@ -129,7 +129,7 @@ class PluginServiceSpec extends Specification {
 
         then:
         1 * service.rundeckPluginRegistry.createPluggableService(String) >> providerService
-        1 * service.rundeckPluginRegistry.validatePluginByName(provider, providerService, config)
+        1 * service.rundeckPluginRegistry.validatePluginByName(provider, providerService, config, null)
         1 * service.rundeckPluginRegistry.configurePluginByName(provider, providerService, config, null) >>
         configuredPlugin
         result == configuredPlugin

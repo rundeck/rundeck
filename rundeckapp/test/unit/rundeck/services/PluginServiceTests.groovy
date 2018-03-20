@@ -201,6 +201,27 @@ class PluginServiceTests extends GrailsUnitTestCase {
 
         @Override
         ValidatedPlugin validatePluginByName(String name, PluggableProviderService service, Map instanceConfiguration) {
+            return null
+        }
+
+        @Override
+        ValidatedPlugin validatePluginByName(
+            final String name,
+            final PluggableProviderService service,
+            final PropertyResolver resolver,
+            final PropertyScope defaultScope,
+            final MultiPluginProviderLoader loader
+        ) {
+            return null
+        }
+
+        @Override
+        ValidatedPlugin validatePluginByName(
+            final String name,
+            final PluggableProviderService service,
+            final Map instanceConfiguration,
+            final MultiPluginProviderLoader loader
+        ) {
             validateWithMapCalled=true
             return pluginValidation
         }

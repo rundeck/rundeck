@@ -5,6 +5,7 @@ import com.dtolabs.rundeck.core.execution.ExecutionReference
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.server.plugins.tasks.action.JobRunTaskAction
 import grails.test.mixin.TestFor
+import org.rundeck.core.tasks.TaskManager
 import org.rundeck.core.tasks.TaskTrigger
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -35,6 +36,7 @@ class JobRunTaskActionServiceSpec extends Specification {
 
         def trigger = Mock(TaskTrigger)
         def map = [:]
+        def userData = [:]
         def context = new RDTaskContext()
         context.authContext = Mock(UserAndRolesAuthContext)
         context.project = project
@@ -47,7 +49,7 @@ class JobRunTaskActionServiceSpec extends Specification {
             getId() >> '999'
         }
         when:
-        def result = service.performTaskAction(context, map, trigger, action)
+        def result = service.performTaskAction(context, map, userData, trigger, action, Mock(TaskManager))
         then:
         1 * service.jobStateService.jobForID(context.authContext, jobId, project) >> jobRef
         1 * service.jobStateService.startJob(context.authContext, jobRef, optionMap, jobFilter, asUser) >> execref
