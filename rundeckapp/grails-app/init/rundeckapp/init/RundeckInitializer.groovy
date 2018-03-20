@@ -32,9 +32,10 @@ class RundeckInitializer {
     private static final String TEMPLATE_SUFFIX = ".template"
     private static final String LOCATION_SUFFIX = ".location"
 
-    private static final String PROP_LOGINMODULE_NAME = "loginmodule.name";
     private static final String SERVER_DATASTORE_PATH = "server.datastore.path";
     private static final String CONFIG_DEFAULTS_PROPERTIES = "config-defaults.properties";
+    public static final String PROP_LOGINMODULE_NAME = "loginmodule.name";
+    public static final String PROP_REALM_LOCATION = "realm.properties.location"
 
     public static final String RUNDECK_SSL_CONFIG = "rundeck.ssl.config";
     public static final String RUNDECK_KEYSTORE = "keystore";
@@ -48,6 +49,7 @@ class RundeckInitializer {
     public static final String SPRING_BOOT_TRUSTSTORE_PROP = "server.ssl.trust-store"
     public static final String SPRING_BOOT_TRUSTSTORE_PWD_PROP = "server.ssl.trust-store-password"
     public static final String SPRING_BOOT_ENABLE_SSL_PROP = "server.ssl.enabled"
+    private static final String LINESEP = System.getProperty("line.separator");
 
     private File basedir;
     private File serverdir;
@@ -59,11 +61,6 @@ class RundeckInitializer {
     File workdir;
     File toolsdir;
     File toolslibdir;
-
-    private boolean useJaas;
-    private static final String RUNDECK_JAASLOGIN = "rundeck.jaaslogin";
-
-    private static final String LINESEP = System.getProperty("line.separator");
 
     /**
      * Config properties are defaulted in config-defaults.properties, but can be overridden by system properties
@@ -326,17 +323,18 @@ class RundeckInitializer {
 
         System.setProperty(RundeckInitConfig.SYS_PROP_RUNDECK_CONFIG_LOCATION, new File(config.configDir, config.runtimeConfiguration.getProperty(
                 RundeckInitConfig.RUNDECK_CONFIG_NAME_PROP)).getAbsolutePath());
-        if (useJaas) {
+
+        if (config.useJaas) {
             System.setProperty("java.security.auth.login.config", new File(config.configDir,
                                                                            config.runtimeConfiguration.getProperty("loginmodule.conf.name")).getAbsolutePath());
-            System.setProperty(PROP_LOGINMODULE_NAME, configuration.getProperty(PROP_LOGINMODULE_NAME));
+            System.setProperty(PROP_LOGINMODULE_NAME, config.runtimeConfiguration.getProperty(PROP_LOGINMODULE_NAME));
         }
     }
 
     private void initConfigurations() {
         final Properties defaults = loadDefaults(CONFIG_DEFAULTS_PROPERTIES);
         final Properties configuration = createConfiguration(defaults);
-        configuration.put("realm.properties.location", forwardSlashPath(config.configDir)
+        configuration.put(PROP_REALM_LOCATION, forwardSlashPath(config.configDir)
                 + "/realm.properties");
         config.runtimeConfiguration = configuration
     }

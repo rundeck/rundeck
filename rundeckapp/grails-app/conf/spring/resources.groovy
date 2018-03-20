@@ -384,7 +384,6 @@ beans={
     apiMarshallerRegistrar(ApiMarshallerRegistrar)
 
     //spring security preauth filter configuration
-
     rundeckUserDetailsService(RundeckUserDetailsService)
 
     rundeckPreauthFilter(RundeckPreauthenticationRequestHeaderFilter) {
@@ -398,24 +397,25 @@ beans={
         preAuthenticatedUserDetailsService = ref('rundeckUserDetailsService')
     }
 
-    //spring security jaas configuration
-    jaasApiIntegrationFilter(JaasApiIntegrationFilter)
-    rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter)
+    if(grailsApplication.config.rundeck.useJaas in [true,'true']) {
+        //spring security jaas configuration
+        jaasApiIntegrationFilter(JaasApiIntegrationFilter)
+        rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter)
 
-    jaasAuthProvider(DefaultJaasAuthenticationProvider) {
-        configuration = Configuration.getConfiguration()
-        loginContextName = "rundecklogin"
-        authorityGranters = [
-                ref('rundeckJaasAuthorityGranter')
-        ]
-    }
-
-    println "use jaas: " + grailsApplication.config.rundeck.useJaas
-    //if not using jaas for security provide a simple default
-    Properties realmProperties = new Properties()
-    realmProperties.load(new File(rdeckBase+"/server/config/realm.properties").newInputStream())
-    realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
-    realmAuthProvider(DaoAuthenticationProvider) {
-        userDetailsService = ref('realmPropertyFileDataSource')
+        jaasAuthProvider(DefaultJaasAuthenticationProvider) {
+            configuration = Configuration.getConfiguration()
+            loginContextName = grailsApplication.config.rundeck.security.jaasLoginModuleName
+            authorityGranters = [
+                    ref('rundeckJaasAuthorityGranter')
+            ]
+        }
+    } else {
+        //if not using jaas for security provide a simple default
+        Properties realmProperties = new Properties()
+        realmProperties.load(new File(grailsApplication.config.rundeck.security.fileUserDataSource).newInputStream())
+        realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
+        realmAuthProvider(DaoAuthenticationProvider) {
+            userDetailsService = ref('realmPropertyFileDataSource')
+        }
     }
 }

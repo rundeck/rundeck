@@ -35,10 +35,7 @@ import javax.naming.directory.InitialDirContext;
 import javax.naming.directory.SearchControls;
 import javax.naming.directory.SearchResult;
 import javax.security.auth.Subject;
-import javax.security.auth.callback.Callback;
-import javax.security.auth.callback.CallbackHandler;
-import javax.security.auth.callback.NameCallback;
-import javax.security.auth.callback.UnsupportedCallbackException;
+import javax.security.auth.callback.*;
 import javax.security.auth.login.LoginException;
 
 import org.eclipse.jetty.jaas.callback.ObjectCallback;
@@ -102,6 +99,8 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
     private static final Logger LOG = Log.getLogger(JettyCachingLdapLoginModule.class);
 
     private static final Pattern rolePattern = Pattern.compile("^cn=([^,]+)", Pattern.CASE_INSENSITIVE);
+    private static final String CRYPT_TYPE   = "CRYPT:";
+    private static final String MD5_TYPE     = "MD5:";
 
     protected final String _roleMemberFilter = "member=*";
     /**
@@ -277,11 +276,26 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
         }
 
         pwdCredential = convertCredentialLdapToJetty(pwdCredential);
-
+        pwdCredential = decodeBase64EncodedPwd(pwdCredential);
         Credential credential = Credential.getCredential(pwdCredential);
         List roles = getUserRoles(_rootContext, username);
 
         return new UserInfo(username, credential, roles);
+    }
+
+    private String decodeBase64EncodedPwd(String encoded) {
+        String chkString = null;
+        String prefix = null;
+        if(encoded.startsWith(CRYPT_TYPE)) {
+            chkString = encoded.substring(CRYPT_TYPE.length(),encoded.length());
+            prefix = CRYPT_TYPE;
+        } else if(encoded.startsWith(MD5_TYPE)) {
+            chkString = encoded.substring(MD5_TYPE.length(), encoded.length());
+            prefix = MD5_TYPE;
+        }
+
+        return org.apache.commons.codec.binary.Base64.isBase64(chkString) ? prefix+org.apache.commons.codec.binary.Hex.encodeHexString(org.apache.commons.codec.binary.Base64.decodeBase64(chkString)) : chkString;
+
     }
 
     protected String doRFC2254Encoding(String inputString) {
@@ -628,6 +642,9 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
 
         String webUserName = ((NameCallback) callbacks[0]).getName();
         Object webCredential = ((ObjectCallback) callbacks[1]).getObject();
+        if (webCredential == null) {
+            webCredential = ((PasswordCallback)callbacks[2]).getPassword();
+        }
         return new Object[]{webUserName,webCredential};
     }
 
@@ -676,7 +693,9 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                 return false;
             }
 
-            setCurrentUser(new JAASUserInfo(userInfo));
+            JAASUserInfo jaasUserInfo = new JAASUserInfo(userInfo);
+            jaasUserInfo.fetchRoles(); //must run this otherwise will throw NPE later
+            setCurrentUser(jaasUserInfo);
 
             if (webCredential instanceof String) {
                 return credentialLogin(Credential.getCredential((String) webCredential));
