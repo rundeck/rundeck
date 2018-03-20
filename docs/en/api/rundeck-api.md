@@ -5831,6 +5831,7 @@ The content of `<scmPluginInputField>` is the same as shown in [Get SCM Plugin I
 * `deleted` - boolean, whether the job was deleted and requires deleting the associated repo item
 * `renamed` - boolean if the job was renamed
 * `originalId` - ID of a repo item if the job was renamed and now is stored at a different repo path, or empty/null
+* `status` - file status String, the same value as in the `$synchState` of [Get Job SCM Status](#get-job-scm-status).
 
 `scmImportActionItem` values:
 
@@ -5841,6 +5842,7 @@ The content of `<scmPluginInputField>` is the same as shown in [Get SCM Plugin I
     * `jobName` job name
 * `tracked` - boolean, true if there is an associated `job`
 * `deleted` - boolean, whether the job was deleted on remote and requires to be deleted
+* `status` - file status String, the same value as in the `$synchState` of [Get Job SCM Status](#get-job-scm-status).
 
 
 
@@ -5865,6 +5867,7 @@ The content of `<scmPluginInputField>` is the same as shown in [Get SCM Plugin I
           <jobName>$jobname</jobName>
       </job>
       <tracked>$boolean</tracked>
+      <status>$string</status>
     </scmImportActionItem>
   </importItems>
   <exportItems>
@@ -5879,6 +5882,7 @@ The content of `<scmPluginInputField>` is the same as shown in [Get SCM Plugin I
       </job>
       <originalId>$string</originalId>
       <renamed>$boolean</renamed>
+      <status>$string</status>
     </scmExportActionItem>
   </exportItems>
 </scmActionInput>
@@ -5907,7 +5911,8 @@ The content of `"fields"` array is the same as shown in [Get SCM Plugin Input Fi
         "jobId": "$jobid",
         "jobName": "$jobname"
       },
-      "tracked": $boolean
+      "tracked": $boolean,
+      "status": "$string"
     }
   ],
   "exportItems": [
@@ -5920,7 +5925,8 @@ The content of `"fields"` array is the same as shown in [Get SCM Plugin Input Fi
         "jobName": "$jobname"
       },
       "originalId": "$string",
-      "renamed": $boolean
+      "renamed": $boolean,
+      "status": "$string"
     }
   ]
 }

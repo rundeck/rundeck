@@ -45,6 +45,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
+import com.dtolabs.rundeck.plugins.scm.ImportSynchState
 import com.dtolabs.rundeck.plugins.scm.JobImportState
 import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
@@ -760,6 +761,17 @@ class ScmController extends ControllerBase {
         List<ScmExportActionItem> exportActionItems = null
         if (isExport) {
             exportActionItems = getViewExportActionItems(project, jobId ? [jobId] : null)
+            exportActionItems?.each { item ->
+                if(item.job){
+                    if(item.job.jobId){
+                        def se = ScheduledExecution.findByUuid(item.job.jobId)
+                        if(se){
+                            def status = scmService.exportStatusForJob(se)
+                            item.status = status?.get(item.job.jobId)?.synchState
+                        }
+                    }
+                }
+            }
         }
 
         /**
@@ -769,8 +781,18 @@ class ScmController extends ControllerBase {
 
         if (!isExport) {
             importActionItems = getViewImportItems(project, actionId, jobId ? [jobId] : null)
-            //todo: job scm status
-            //scmJobStatus = scmService.importStatusForJobs(jobs)
+            importActionItems?.each { item ->
+                item.status = ImportSynchState.IMPORT_NEEDED
+                if(item.job){
+                    if(item.job.jobId){
+                        def se = ScheduledExecution.findByUuid(item.job.jobId)
+                        if(se){
+                            def status = scmService.importStatusForJob(se)
+                            item.status = status?.get(item.job.jobId).synchState
+                        }
+                    }
+                }
+            }
         }
 
         //todo: project scm status

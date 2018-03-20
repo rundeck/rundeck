@@ -1107,6 +1107,21 @@ class ScmService {
         status
     }
     /**
+     * Return a map of status for jobs
+     * @param jobs
+     * @return
+     */
+    Map<String, JobImportState> importStatusForJob(ScheduledExecution job) {
+        def status = [:]
+        JobScmReference jobReference = scmJobRef(job)
+        def plugin = getLoadedImportPluginFor jobReference.project
+        if (plugin) {
+            status[jobReference.id] = plugin.getJobStatus(jobReference)
+            log.debug("Status for job ${jobReference}: ${status[jobReference.id]},")
+        }
+        status
+    }
+    /**
      * Return a map of [path: Map[id: jobid, jobNameAndGroup: string]]
      * @param jobs
      * @return
