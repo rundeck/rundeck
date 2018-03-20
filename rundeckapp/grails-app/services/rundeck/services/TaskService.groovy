@@ -503,8 +503,24 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         Map conditionData = null
         for (TaskCondition condition : conditions) {
             TaskConditionHandler handler = getConditionHandlerForCondition(task, condition, contextInfo)
+            if (!handler) {
+                log.error("(taskId: $task.uuid): Condition handler not found for condition: $condition")
+
+                createTaskEvent(
+                    [error: "Handler not found for condition[$index]: $condition".toString()],
+                    task,
+                    'error:condition:check',
+                    null,
+                    null,
+                    event
+                )
+
+                return
+            }
             def condition1 = handler.checkCondition(contextInfo, task.userData?:[:], triggerMap, trigger, condition)
-            log.error("Condition check met? ${condition1.conditionMet}: $condition1.conditionData")
+            log.error(
+                "(taskId: $task.uuid): Condition check met? ${condition1.conditionMet}: $condition1.conditionData"
+            )
             if (!condition1.conditionMet) {
                 conditionData = condition1.conditionData
                 conditionsMet = false
