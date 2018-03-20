@@ -19,8 +19,24 @@
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: 7/28/11 12:03 PM
  --%>
-<%@ page import="com.dtolabs.rundeck.core.plugins.configuration.StringRenderingConstants" contentType="text/html;charset=UTF-8" %>
-<g:set var="propValue" value="${enc(attr:values[prop.name])}"/>
-<g:if test="${includeFormFields && values[prop.name]}">
-    <input type="hidden" name="${enc(attr:prefix+ 'config.'+prop.name)}" value="${propValue}"/>
+<%@ page contentType="text/html;charset=UTF-8" %>
+<g:set var="propValue" value="${values[prop.name]}"/>
+<g:if test="${includeFormFields && propValue}">
+
+    <g:if test="${prop.type.toString() in ['Options'] && propValue instanceof Collection}">
+        <g:each in="${propValue}" var="val">
+            <input type="hidden" name="${enc(attr: prefix + 'config.' + prop.name)}" value="${val}"/>
+        </g:each>
+    </g:if>
+    <g:elseif test="${prop.type.toString() in ['Map'] && propValue instanceof Map}">
+        <input type="hidden" name="${enc(attr: "${prefix}config.${prop.name}.${i}._type")}" value="map"/>
+        <g:each in="${propValue.keySet()}" var="keyVal" status="i">
+            <input type="hidden" name="${enc(attr: "${prefix}config.${prop.name}.${i}.key")}" value="${keyVal}"/>
+            <input type="hidden" name="${enc(attr: "${prefix}config.${prop.name}.${i}.value")}"
+                   value="${propValue[keyVal]}"/>
+        </g:each>
+    </g:elseif>
+    <g:else>
+        <input type="hidden" name="${enc(attr: prefix + 'config.' + prop.name)}" value="${propValue}"/>
+    </g:else>
 </g:if>

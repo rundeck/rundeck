@@ -143,7 +143,7 @@ function PluginEditor(data) {
     );
 
 
-    self.getFormData = () => jQueryFormData(self.formDom(), self.formPrefixes);
+    self.getFormData = () => jQueryFormData(self.formDom(), self.formPrefixes, [self.inputFieldPrefix]);
     self.hasConfigData = () => self.config() && self.config().data;
     self.getConfigData = () => {
         if (self.config() !== null) {

@@ -52,19 +52,23 @@ function html_unescape(text){
 /**
  * Extract form data
  * @param selected
- * @param rmprefixes
+ * @param rmprefixes Array of form field name prefixes to remove
+ * @param reqprefixes Array of form field name prefixes to require (only fields with these prefixes will be serialized)
  * @returns {{}}
  */
 function jQueryFormData(selected, rmprefixes,reqprefixes) {
-    var data = {};
+    const data = {};
     selected.find('input, textarea, select').each(function (n, el) {
-        var name = jQuery(el).attr('name');
+        let name = jQuery(el).attr('name');
+        const attr = jQuery(el).attr('type');
+        if ((attr === 'checkbox' || attr === 'radio') && !el.checked) {
+            return;
+        }
         if(name) {
             if(reqprefixes){
-                var found=ko.utils.arrayFirst(reqprefixes,function (el) {
+                if (!ko.utils.arrayFirst(reqprefixes, function (el) {
                     return name.startsWith(el);
-                });
-                if(!found){
+                    })) {
                     return;
                 }
             }
@@ -73,7 +77,13 @@ function jQueryFormData(selected, rmprefixes,reqprefixes) {
                     name = name.substring(val.length);
                 }
             });
-            data[name] = jQuery(el).val();
+            if (data[name] && typeof(data[name]) === 'string') {
+                data[name] = [data[name], jQuery(el).val()];
+            } else if (data[name] && jQuery.isArray(data[name])) {
+                data[name].push(jQuery(el).val());
+            } else {
+                data[name] = jQuery(el).val();
+            }
         }
 
     });
