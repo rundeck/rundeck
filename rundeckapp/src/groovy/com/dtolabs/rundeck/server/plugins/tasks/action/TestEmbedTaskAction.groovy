@@ -32,7 +32,7 @@ class TestEmbedTaskAction implements TaskAction, PluginBaseMetaTrait {
     static final String PROVIDER_NAME = "testaction1"
 
 
-    @PluginProperty(required = true, title = 'Test Enbed', description = 'Embed type')
+    @PluginProperty(required = true, title = 'Test Embedded type', description = 'Embed type')
     @EmbeddedTypeProperty(type = TestEmbed1)
     TestEmbed1 actions
 
