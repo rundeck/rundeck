@@ -732,7 +732,7 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
         }
 
         public boolean test(final String o) {
-            return regex.matcher(o).matches();
+            return o != null && regex.matcher(o).matches();
         }
 
     }
@@ -816,7 +816,11 @@ public class RuleEvaluator implements Authorization, AclRuleSetSource {
             tests.add(stringPredicate.apply((String) test));
         } else {
             //unexpected format, do not match
-            logger.error(sourceIdentity + ": cannot evaluate unexpected type: " + test.getClass().getName());
+            if (test != null) {
+                logger.error(sourceIdentity + ": cannot evaluate unexpected type: " + test.getClass().getName());
+            } else {
+                logger.error(sourceIdentity + ": cannot evaluate: null value for key `" + key + "`");
+            }
             return false;
         }
         String value = resource.get(key);

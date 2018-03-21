@@ -24,19 +24,25 @@
     },
 
     formatTime : function (text, format) {
-        var time = moment(text);
-
+        var time = moment.isMoment(text) ? text : moment(text);
         if (text && time.isValid()) {
             return time.format(format);
         } else {
             return '';
         }
     },
+         formatTimeUTC: function (text, format) {
+             "use strict";
+             return MomentUtil.formatTime(moment.utc(text), format);
+         },
     formatTimeSimple : function (text) {
         return MomentUtil.formatTime(text, 'h:mm:ss a');
     },
+         formatTimeSimpleUTC: function (text) {
+             return MomentUtil.formatTimeUTC(text, 'h:mm:ss a');
+         },
     formatTimeAtDate : function (text) {
-        var time = moment(text);
+        var time = moment.isMoment(text) ? text : moment(text);
         if (!text || !time.isValid()) {
             return '';
         }
@@ -58,6 +64,11 @@
             return time.format('M/D ha');
         }
     },
+         formatTimeAtDateUTC: function (text) {
+             "use strict";
+
+             return MomentUtil.formatTimeAtDate(moment.utc(text));
+         },
     formatDurationSimple : function (ms) {
         if (ms < 0) {
             return '';

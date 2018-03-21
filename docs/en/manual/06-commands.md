@@ -53,7 +53,7 @@ The dispatch settings let you control the amount of concurrency and error
 handling for the command execution.
 
 * Thread count: Number of concurrent command executions. By default the value is 1 which causes a sequential execution.
-* On node failure: If a command execution fails on the node, you can choose to continue (default) or stop immediatly at the failed node.
+* On node failure: If a command execution fails on the node, you can choose to continue (default) or stop immediately at the failed node.
 
 ## Select the nodes
 

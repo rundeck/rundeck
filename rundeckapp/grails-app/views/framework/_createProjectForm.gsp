@@ -24,14 +24,10 @@
     <title><g:message code="domain.Project.choose.title" default="Create a Project"/></title>
 
     <g:javascript library="prototype/effects"/>
-    <g:javascript library="resourceModelConfig"/>
     <asset:javascript src="storageBrowseKO.js"/>
     <g:javascript>
 
-    var configControl;
     function init(){
-        configControl=new ResourceModelConfigControl('${enc(js:prefixKey)}');
-        configControl.pageInit();
         $$('input').each(function(elem){
             if(elem.type=='text'){
                 elem.observe('keypress',noenter);

@@ -30,6 +30,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
 
     String jobName
     String jobGroup
+    String jobProject
     String jobIdentifier
     String argString
     String nodeFilter
@@ -44,6 +45,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     static constraints = {
         jobName(nullable: false, blank: false, maxSize: 1024)
         jobGroup(nullable: true, blank: true, maxSize: 2048)
+        jobProject(nullable: true, blank: true, maxSize: 2048)
         argString(nullable: true, blank: true)
         nodeStep(nullable: true)
         nodeKeepgoing(nullable: true)
@@ -58,12 +60,13 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         argString type: 'text'
         jobName type: 'string'
         jobGroup type: 'string'
+        jobProject type: 'string'
         nodeFilter type: 'text'
         nodeRankAttribute type: 'text'
     }
 
     public String toString() {
-        return "jobref(name=\"${jobName}\" group=\"${jobGroup}\" argString=\"${argString}\" " +
+        return "jobref(name=\"${jobName}\" group=\"${jobGroup}\" project=\"${jobProject}\" argString=\"${argString}\" " +
                 "nodeStep=\"${nodeStep}\"" +
                 "nodeFilter=\"${nodeFilter}\"" +
                 "nodeKeepgoing=\"${nodeKeepgoing}\"" +
@@ -97,6 +100,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
      */
     public Map toMap(){
         final Map map = [jobref: [group: jobGroup ? jobGroup : '', name: jobName]]
+        if(jobProject){
+            map.jobref.project = jobProject
+        }
         if(argString){
             map.jobref.args=argString
         }
@@ -132,6 +138,8 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
             if(dispatch){
                 map.jobref.nodefilters.dispatch=dispatch
             }
+        } else if (null != nodeIntersect) {
+            map.jobref.nodefilters = [dispatch: [nodeIntersect: nodeIntersect]]
         }
         return map
     }
@@ -140,6 +148,9 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         JobExec exec = new JobExec()
         exec.jobGroup=map.jobref.group
         exec.jobName=map.jobref.name
+        if (map.jobref.project || map.project) {
+            exec.jobProject = map.jobref.project ?: map.project
+        }
         if(map.jobref.args){
             exec.argString=map.jobref.args
         }
@@ -150,7 +161,7 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         }
         exec.keepgoingOnSuccess = !!map.keepgoingOnSuccess
         exec.description=map.description?.toString()
-        if(map.jobref.nodefilters){
+        if(map.jobref.nodefilters instanceof Map){
             exec.nodeFilter=map.jobref.nodefilters.filter?.toString()
             if(exec.nodeFilter){
                 def dispatch = map.jobref.nodefilters.dispatch
@@ -171,14 +182,15 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
                 if (null != dispatch?.rankOrder) {
                     exec.nodeRankOrderAscending = (dispatch.rankOrder == 'ascending')
                 }
-                if(null!=dispatch?.nodeIntersect){
-                    if (dispatch.nodeIntersect in ['true', true]) {
-                        exec.nodeIntersect=true
-                    }else{
-                        exec.nodeIntersect=false
-                    }
-                }
+
                 exec.nodeRankAttribute= dispatch?.rankAttribute
+            }
+            if(map.jobref.nodefilters.dispatch && null!=map.jobref.nodefilters.dispatch?.nodeIntersect){
+                if (map.jobref.nodefilters.dispatch.nodeIntersect in ['true', true]) {
+                    exec.nodeIntersect=true
+                }else{
+                    exec.nodeIntersect=false
+                }
             }
         }
         //nb: error handler is created inside Workflow.fromMap

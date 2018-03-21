@@ -42,8 +42,6 @@ import java.util.*;
  */
 public abstract class ExecutionListenerOverrideBase implements ExecutionListenerOverride {
     private FailedNodesListener failedNodesListener;
-    private boolean terse;
-    private String logFormat;
     private ExecutionListenerOverrideBase delegate;
 
     protected ExecutionListenerOverrideBase(ExecutionListenerOverrideBase delegate) {
@@ -51,25 +49,10 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
     }
 
     public ExecutionListenerOverrideBase(
-        final FailedNodesListener failedNodesListener,
-        final boolean terse,
-        final String logFormat
+            final FailedNodesListener failedNodesListener
     ) {
 
         this.failedNodesListener = failedNodesListener;
-        this.terse = terse;
-        this.logFormat = logFormat;
-    }
-
-    /**
-     * Method should be overridden
-     * @return appropriate logging context data
-     */
-    public Map<String, String> getLoggingContext() {
-        if (null != delegate) {
-            return delegate.getLoggingContext();
-        }
-        return null;
     }
 
 
@@ -178,24 +161,6 @@ public abstract class ExecutionListenerOverrideBase implements ExecutionListener
             return delegate.getFailedNodesListener();
         }
         return failedNodesListener;
-    }
-
-
-    public boolean isTerse() {
-        if (null != delegate) {
-            return delegate.isTerse();
-        }
-        return terse;
-    }
-
-    public String getLogFormat() {
-        if (null != logFormat) {
-            return logFormat;
-        }
-        if (null != delegate) {
-            return delegate.getLogFormat();
-        }
-        return logFormat;
     }
 
     public void setFailedNodesListener(FailedNodesListener failedNodesListener) {

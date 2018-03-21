@@ -37,11 +37,8 @@ var VersionIdentity=function(data){
         var span=jQuery('<span></span>').attr('title',self.version.appId+' '+self.version.versionString +' ('+text+')' + (self.version.versionDate?' '+self.version.versionDate:'')).append(span2);
 
         if (data.tag && data.tag != 'GA') {
-            var s = data.tag.toLowerCase();
-            if(s=~/snapshot/i && self.version.versionDate){
-                s = s.replace(/snapshot/i,self.version.versionDate);
-            }
-            span.append(jQuery('<span></span>').addClass('badge badge-default').text(' ' + s));
+            var s = data.tag + " / " + self.version.versionDate;
+            span.append(jQuery('<span></span>').addClass('badge badge-default').text(' ' + s).css({ 'background': self.stripeBg(color,15,'#5c5c5c',20)}));
         } else if (self.version.versionDate) {
             var vdate = jQuery('<span></span>').addClass('rundeck-version-date').text(' ' + self.version.versionDate);
             span.append(vdate);
@@ -97,34 +94,71 @@ var VersionIdentity=function(data){
             span.append(vdate);
         }
     };
+    self.serverNameStyle = function (name) {
+        if (name === 'underline') {
+            return jQuery('<span></span>').css({
+                'border': '1px solid transparent',
+                'border-image': self.stripeAllBg('90deg', self.version.versionData['sixes'], 20),
+                'border-width': '0 0 3px 0',
+                'padding': '1px',
+                'border-color': 'solid transparent',
+                'border-image-slice': '1'
+            });
+        }
+        if (name === 'solid') {
+
+            return jQuery('<span></span>').css({
+                'color': '#' + self.version.versionData['sixes'][0],
+                'border-radius': '5px',
+                'padding': '3px'
+                // 'color':'white',
+                // 'text-shadow':'1px 1px 3px #333333'
+            });
+        }
+        if (name === 'solidbg') {
+
+            return jQuery('<span></span>').css({
+                'background-color': '#' + self.version.versionData['sixes'][0],
+                'border-radius': '3px',
+                'padding': '2px',
+                'color':'white',
+                'text-shadow':'1px 1px 2px #000000'
+            });
+        }
+        if (name === 'double-solid') {
+            return jQuery('<span></span>').css({
+                'color': '#' + self.version.versionData['sixes'][0],
+                'background-color': '#' + self.version.versionData['sixes'][1],
+                'border-radius': '5px',
+                'padding': '3px',
+                'text-shadow':'1px 1px 3px #333333'
+            });
+        }
+        return jQuery('<span></span>');
+    };
     self.showServerName=function(dom){
         if(!data.serverUuid){
             return;
         }
+        var domdata = jQuery(dom).data();
+        var uuidSize = (domdata && domdata['uuidSize']) || 2;
         var color='#'+((self.version.versionData['hexuuid0'].substring(0,6)));
         var icon=self.version.iconForVersion(self.version.versionData['uuid0']);
         var codename=[
             icon,
-            self.version.versionData['hexuuid0'].substring(0,2)
+            self.version.versionData['uuid'].substring(0, uuidSize)
         ].join('-').toLowerCase();
         var name=self.version.serverName?self.version.serverName:'';
-        var shortname=self.version.versionData['hexuuid0'].substring(0,2);
-        var nodeicon= jQuery('<i></i>').addClass('rdicon node node-runnable icon-small');
+        var shortname = self.version.versionData['uuid'].substring(0, uuidSize);
         var glyphicon= jQuery('<span></span>');
         var ispan = jQuery('<span></span>');
         ispan.append(jQuery('<i></i>').addClass('glyphicon glyphicon-' + icon));
         glyphicon.append(ispan);
         var nametext= jQuery('<span></span>').text(' '+name+' ');
-        var colorpill= jQuery('<span></span>').css({
-            'border':'1px solid transparent',
-            'border-image': self.stripeAllBg('90deg',self.version.versionData['sixes'],20),
-            'border-width':'0 0 2px 0',
-            'padding': '1px',
-            'border-color':'solid transparent',
-            'border-image-slice':'1'
-            //'color': 'white',
-            //'text-shadow': '1px 1px 3px #333333'
-        });
+
+        var namestyle = self.serverNameStyle(domdata['nameStyle'] || 'plain');
+        var idstyle = self.serverNameStyle(domdata['uuidStyle'] || 'solid');
+
         var span=jQuery('<span></span>')
                 .attr('title',codename+' / '+data.serverUuid)
                 //.addClass('version-icon')
@@ -133,8 +167,10 @@ var VersionIdentity=function(data){
                     //'text-shadow': '1px 1px 3px #333333'
                 })
             .append(
-                colorpill
+                namestyle
                     .append(nametext)
+            ).append(
+                idstyle
                     .append(glyphicon)
                     .append(' '+(self.version.serverName?shortname:codename))
             )

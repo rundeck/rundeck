@@ -28,6 +28,10 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionService;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutor;
+import com.dtolabs.rundeck.core.logging.LoggingManager;
+import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
+
+import java.util.function.Supplier;
 
 /**
  * WorkflowExecutionServiceThread is ...
@@ -39,28 +43,46 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
     WorkflowExecutionItem weitem;
     private StepExecutionContext context;
     private WorkflowExecutionResult result;
+    private LoggingManager loggingManager;
 
-    public WorkflowExecutionServiceThread(WorkflowExecutionService eservice, WorkflowExecutionItem eitem, StepExecutionContext econtext) {
+    public WorkflowExecutionServiceThread(
+            WorkflowExecutionService eservice,
+            WorkflowExecutionItem eitem,
+            StepExecutionContext econtext,
+            LoggingManager loggingManager
+    )
+    {
         this.weservice = eservice;
         this.weitem = eitem;
         this.context = econtext;
+        this.loggingManager = loggingManager;
     }
 
     public void run() {
         if (null == this.weservice || null == this.weitem || null == context) {
             throw new IllegalStateException("project or execution detail not instantiated");
         }
+        if (loggingManager != null) {
+            PluginLoggingManager pluginLogging = loggingManager.createPluginLogging(context, null);
+            resultObject = pluginLogging.runWith(this::runWorkflow);
+        } else {
+            resultObject = runWorkflow();
+        }
+    }
+
+    public WorkflowExecutionResult runWorkflow() {
         try {
             final WorkflowExecutor executorForItem = weservice.getExecutorForItem(weitem);
-            setResult(executorForItem.executeWorkflow(context,weitem));
+            setResult(executorForItem.executeWorkflow(context, weitem));
             success = getResult().isSuccess();
             if (null != getResult().getException()) {
                 thrown = getResult().getException();
             }
-            resultObject = getResult();
+            return getResult();
         } catch (Throwable e) {
             e.printStackTrace(System.err);
             thrown = e;
+            return null;
         }
     }
 

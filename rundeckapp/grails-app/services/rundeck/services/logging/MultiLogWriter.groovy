@@ -31,22 +31,33 @@ class MultiLogWriter implements StreamingLogWriter {
     public static final Logger log = Logger.getLogger(MultiLogWriter.class)
     List<StreamingLogWriter> writers
 
-    MultiLogWriter (List<StreamingLogWriter> writers) {
+    MultiLogWriter(List<StreamingLogWriter> writers) {
         this.writers = new ArrayList<StreamingLogWriter>(writers)
     }
 
     @Override
     void openStream() {
-        writers*.openStream()
+        if (!closed) {
+            writers*.openStream()
+        }
     }
 
     @Override
     void addEvent(LogEvent event) {
-        writers*.addEvent(event)
+        if (!closed) {
+            writers*.addEvent(event)
+        } else {
+            log.debug("Lost event, log is closed: $event")
+        }
     }
+
+    private volatile boolean closed = false
 
     @Override
     void close() {
-        writers*.close()
+        if (!closed) {
+            closed = true
+            writers*.close()
+        }
     }
 }

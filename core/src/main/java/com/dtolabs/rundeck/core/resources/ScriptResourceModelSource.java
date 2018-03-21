@@ -146,7 +146,7 @@ public class ScriptResourceModelSource implements Configurable, ResourceModelSou
         configdata.put("project", project);
         configDataContext.put("context", configdata);
 
-        executionDataContext = ScriptDataContextUtil.createScriptDataContextForProject(framework, project);
+        executionDataContext = ScriptDataContextUtil.createScriptDataContextObjectForProject(framework, project);
 
         executionDataContext.putAll(configDataContext);
     }

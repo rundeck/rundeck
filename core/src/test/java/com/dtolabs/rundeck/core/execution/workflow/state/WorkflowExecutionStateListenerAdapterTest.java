@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.execution.BaseExecutionItem;
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.ControlBehavior;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionResult;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResult;
@@ -111,6 +112,11 @@ public class WorkflowExecutionStateListenerAdapterTest extends TestCase {
         @Override
         public ControlBehavior getControlBehavior() {
             return controlBehavior;
+        }
+
+        @Override
+        public WFSharedContext getSharedContext() {
+            return null;
         }
     }
 

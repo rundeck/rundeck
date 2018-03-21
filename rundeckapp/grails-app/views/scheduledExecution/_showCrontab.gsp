@@ -23,6 +23,7 @@
             at <span class="cronselected" style="display:inline;"><g:enc>${scheduledExecution?.hour}</g:enc>
     :
     <g:enc>${scheduledExecution?.minute?.size()<2 ? "0"+scheduledExecution?.minute : scheduledExecution?.minute}</g:enc>
+        <g:enc>${scheduledExecution?.timeZone}</g:enc>
             <g:if test="${scheduledExecution?.seconds !='0'}">
                 : <g:enc>${scheduledExecution?.seconds?.size()<2 ? "0"+scheduledExecution?.seconds : scheduledExecution?.seconds}</g:enc>
             </g:if>

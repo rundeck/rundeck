@@ -148,6 +148,11 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
 
     public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
                                              final INodeEntry node)  {
+        return executeCommand(executionContext, command, node, true);
+    }
+
+    public NodeExecutorResult executeCommand(final ExecutionContext executionContext, final String[] command,
+                                             final INodeEntry node, boolean showError)  {
         File workingdir = null;
         String scriptargs;
         String dirstring;
@@ -232,6 +237,9 @@ public class ScriptNodeExecutor implements NodeExecutor, Describable {
             outthread.join();
             exec.getErrorStream().close();
             exec.getInputStream().close();
+            if(null!=executionContext.getOutputContext()){
+                executionContext.getOutputContext().addOutput("exec", "exitCode", String.valueOf(result));
+            }
             success = 0 == result;
             executionContext.getExecutionListener().log(3,
                                                         "[script-exec]: result code: " + result + ", success: "

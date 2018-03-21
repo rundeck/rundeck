@@ -28,6 +28,7 @@ import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
+import rundeck.services.authorization.PoliciesValidation
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -49,6 +50,39 @@ class ProjectControllerSpec extends Specification{
 
     }
     def cleanup(){
+
+    }
+
+    def "api project config PUT "() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.apiService = Mock(ApiService)
+        params.project = 'aproject'
+        request.contentType = 'text/plain'
+        request.content = 'a=b\nz=d\n'.bytes
+        request.method = 'PUT'
+        when:
+        controller.apiProjectConfigPut()
+        then:
+        response.status == 200
+        response.contentType == 'text/plain'
+        response.text.split(/[\n\r]/).contains 'x=y'
+        1 * controller.apiService.requireVersion(_, _, 11) >> true
+        1 * controller.apiService.extractResponseFormat(*_) >> 'text'
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authResourceForProject('aproject')
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject) {
+            getProjectProperties() >> [
+                x: 'y'
+            ]
+        }
+        1 * controller.frameworkService.setFrameworkProjectConfig(_, [a: 'b', z: 'd']) >> [success: true]
+        0 * controller.frameworkService._(*_)
+        0 * controller.apiService._(*_)
+        0 * controller.projectService._(*_)
 
     }
     @Unroll
@@ -187,6 +221,71 @@ class ProjectControllerSpec extends Specification{
         where:
         all  | jobs  | execs | configs | readmes | acls
         true | false | false | false   | false   | false
+    }
+
+    def "api project delete error"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+
+        when:
+        request.method = 'DELETE'
+        def result = controller.apiProjectDelete()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, _) >> true
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['delete', 'admin']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.deleteProject(_, _, _, _) >> [success: false, error: 'message']
+        1 * controller.apiService.renderErrorFormat(_, [
+                status : 500,
+                code   : 'api.error.unknown',
+                message: 'message'
+        ]
+        )
+
+
+    }
+
+    def "export prepare"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.exportAll = all
+        params.exportJobs = jobs
+        params.exportExecutions = execs
+        params.exportConfigs = configs
+        params.exportReadmes = readmes
+        params.exportAcls = acls
+
+        when:
+        def result = controller.exportPrepare()
+
+        then:
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['admin', 'export']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.exportProjectToFileAsync(_, _, _, _, { ArchiveOptions opts ->
+            opts.executionsOnly == false &&
+                    opts.all == (all ?: false) &&
+                    opts.jobs == (jobs ?: false) &&
+                    opts.executions == (execs ?: false) &&
+                    opts.configs == (configs ?: false) &&
+                    opts.readmes == (readmes ?: false) &&
+                    opts.acls == (acls ?: false)
+        }
+        ) >> 'dummytoken'
+        response.redirectedUrl == '/project/exportWait?token=dummytoken&project=aproject'
+
+        where:
+        all  | jobs  | execs | configs | readmes | acls
+        true | false | false | false   | false   | false
+        true | false | false | false   | false   | null
     }
 
     def "api export execution ids async"() {
@@ -1033,7 +1132,7 @@ class ProjectControllerSpec extends Specification{
         }
 
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -1077,7 +1176,7 @@ class ProjectControllerSpec extends Specification{
         }
 
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>false
             }
         }
@@ -1121,7 +1220,7 @@ class ProjectControllerSpec extends Specification{
         }
 
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>false
             }
         }
@@ -1173,7 +1272,7 @@ class ProjectControllerSpec extends Specification{
         }
 
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -1222,7 +1321,7 @@ class ProjectControllerSpec extends Specification{
         }
 
         controller.authorizationService=Stub(AuthorizationService){
-            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(Validation){
+            validateYamlPolicy('test','test.aclpolicy',_)>>Stub(PoliciesValidation){
                 isValid()>>true
             }
         }
@@ -1365,7 +1464,7 @@ class ProjectControllerSpec extends Specification{
         def result=controller.importArchive()
 
         then:
-        response.redirectedUrl=='/menu/admin?project=test'
+        response.redirectedUrl=='/menu/projectImport?project=test'
         flash.message=='archive.successfully.imported'
         response.status==302
     }
@@ -1418,7 +1517,7 @@ class ProjectControllerSpec extends Specification{
         def result=controller.importArchive()
 
         then:
-        response.redirectedUrl=='/menu/admin?project=test'
+        response.redirectedUrl=='/menu/projectImport?project=test'
         flash.message=='archive.successfully.imported'
         response.status==302
     }
@@ -1496,8 +1595,96 @@ class ProjectControllerSpec extends Specification{
         def result=controller.importArchive()
 
         then:
-        response.redirectedUrl=='/menu/admin?project=test'
+        response.redirectedUrl=='/menu/projectImport?project=test'
         flash.error=='request.error.invalidtoken.message'
+
+    }
+
+    def "export Instance Prepare"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.exportAll = true
+        params.exportJobs = true
+        params.exportExecutions = true
+        params.exportConfigs = true
+        params.exportReadmes = true
+        params.exportAcls = true
+        params.url = url
+        params.apitoken = token
+        params.targetproject = target
+        params.preserveuuid = preserveuuid
+
+
+        when:
+        def result = controller.exportInstancePrepare()
+
+        then:
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['admin', 'promote']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.exportProjectToInstanceAsync(_, _, _, _, { ArchiveOptions opts ->
+            opts.executionsOnly == false &&
+                    opts.all == true &&
+                    opts.jobs == true &&
+                    opts.executions == true &&
+                    opts.configs == true &&
+                    opts.readmes == true &&
+                    opts.acls == true
+        },_,_,_,preserveuuid?:false
+        ) >> 'dummytoken'
+        response.redirectedUrl == '/project/exportWait?token=dummytoken&project=aproject&instance='+url+'&iproject='+target
+
+        where:
+        url      | token  | target      | preserveuuid
+        'url1'   | '123'  | 'proj1'     | null
+        'url2'   | '456'  | 'proj2'     | true
+
+    }
+
+    def "export Instance Prepare With missing properties"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+        params.exportAll = true
+        params.exportJobs = true
+        params.exportExecutions = true
+        params.exportConfigs = true
+        params.exportReadmes = true
+        params.exportAcls = true
+        params.url = url
+        params.apitoken = token
+        params.targetproject = target
+        params.preserveuuid = preserveuuid
+
+
+        when:
+        def result = controller.exportInstancePrepare()
+
+        then:
+        0 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        0 * controller.projectService.exportProjectToInstanceAsync(_, _, _, _, { ArchiveOptions opts ->
+            opts.executionsOnly == false &&
+                    opts.all == true &&
+                    opts.jobs == true &&
+                    opts.executions == true &&
+                    opts.configs == true &&
+                    opts.readmes == true &&
+                    opts.acls == true
+        },_,_,_,preserveuuid?:false
+        ) >> 'dummytoken'
+        flash.error
+        response.redirectedUrl == '/menu/projectExport?project=aproject'
+
+        where:
+        url      | token  | target      | preserveuuid
+        null     | '123'  | 'proj1'     | null
+        'url1'   | null   | 'proj2'     | true
+        'url2'   | '456'  | null        | true
 
     }
 }

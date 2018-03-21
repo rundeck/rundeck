@@ -15,9 +15,9 @@ The plugin interface is [OrchestratorPlugin](../javadoc/com/dtolabs/rundeck/plug
 
 This is actually a Factory pattern, which produces an [Orchestrator](../javadoc/com/dtolabs/rundeck/plugins/orchestrator/Orchestrator.html) instance.
 
-The `Orchestrator` instance is responsible for determining what order and how many nodes are available to execute on. 
+The `Orchestrator` instance is responsible for determining what order and how many nodes are available to execute on.
 
-All of the methods on the orchestrator will be called on the same thread, 
+All of the methods on the orchestrator will be called on the same thread,
 so your Orchestrator implementation does not need to worry about synchronization.
 
 The `getNode()` method will be called multiple times to retrieve any available Nodes for processing.

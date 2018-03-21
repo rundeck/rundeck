@@ -31,7 +31,10 @@ import com.dtolabs.rundeck.core.logging.ReverseSeekingStreamingLogReader
 import com.dtolabs.rundeck.core.logging.StreamingLogReader
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.utils.OptsUtil
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.converters.JSON
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import rundeck.CommandExec
@@ -39,11 +42,13 @@ import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
+import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FileUploadService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
 import rundeck.services.OrchestratorPluginService
+import rundeck.services.PluginService
 import rundeck.services.ScheduledExecutionService
 import rundeck.services.WorkflowService
 import rundeck.services.logging.ExecutionLogReader
@@ -67,6 +72,8 @@ class ExecutionController extends ControllerBase{
     ApiService apiService
     WorkflowService workflowService
     FileUploadService fileUploadService
+    PluginService pluginService
+    ConfigurationService configurationService
 
     static allowedMethods = [
             delete:['POST','DELETE'],
@@ -79,13 +86,15 @@ class ExecutionController extends ControllerBase{
             cancelExecution:'POST'
     ]
 
-    def index ={
+    def index() {
         redirect(controller:'menu',action:'index')
     }
-    def follow ={
+
+    def follow() {
         return render(view:'show',model:show())
     }
-    def followFragment ={
+
+    def followFragment() {
         return render(view:'showFragment',model:show())
     }
     /**
@@ -168,6 +177,24 @@ class ExecutionController extends ControllerBase{
         }
     }
 
+    private Map loadExecutionViewPlugins() {
+        def pluginDescs = [node: [:], workflow: [:]]
+
+        frameworkService.getNodeStepPluginDescriptions().each { desc ->
+            pluginDescs['node'][desc.name] = desc
+        }
+        frameworkService.getStepPluginDescriptions().each { desc ->
+            pluginDescs['workflow'][desc.name] = desc
+        }
+        [
+
+                stepPluginDescriptions: pluginDescs,
+                orchestratorPlugins   : orchestratorPluginService.getOrchestratorPlugins(),
+                strategyPlugins       : scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
+                logFilterPlugins      : pluginService.listPlugins(LogFilterPlugin),
+        ]
+    }
+
     public def show (ExecutionViewParams viewparams){
         if (viewparams.hasErrors()) {
             flash.errors=viewparams.errors
@@ -222,19 +249,25 @@ class ExecutionController extends ControllerBase{
             order('dateStarted', 'desc')
         }
         eprev = result ? result[0] : null
-        //load plugins for WF steps
-        def pluginDescs=[node:[:],workflow:[:]]
 
-        frameworkService.getNodeStepPluginDescriptions().each{desc->
-            pluginDescs['node'][desc.name]=desc
-        }
-        frameworkService.getStepPluginDescriptions().each{desc->
-            pluginDescs['workflow'][desc.name]=desc
-        }
         def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, 0)
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
-        return [
+
+        def projectNames = frameworkService.projectNames(authContext)
+        def authProjectsToCreate = []
+        projectNames.each{
+            if(it != params.project && frameworkService.authorizeProjectResource(
+                    authContext,
+                    AuthConstants.RESOURCE_TYPE_JOB,
+                    AuthConstants.ACTION_CREATE,
+                    it
+            )){
+                authProjectsToCreate.add(it)
+            }
+        }
+
+        return loadExecutionViewPlugins() + [
                 scheduledExecution    : e.scheduledExecution ?: null,
                 execution             : e,
                 workflowTree          : workflowTree,
@@ -242,15 +275,15 @@ class ExecutionController extends ControllerBase{
                 nextExecution         : e.scheduledExecution?.scheduled ? scheduledExecutionService.nextExecutionTime(
                         e.scheduledExecution
                 ) : null,
-                orchestratorPlugins   : orchestratorPluginService.listOrchestratorPlugins(),
-                strategyPlugins       : scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 enext                 : enext,
                 eprev                 : eprev,
-                stepPluginDescriptions: pluginDescs,
-                inputFilesMap         : inputFilesMap
+                inputFilesMap         : inputFilesMap,
+                projectNames          : authProjectsToCreate,
+                clusterModeEnabled    : frameworkService.isClusterModeEnabled()
         ]
     }
-    def delete = {
+
+    def delete() {
         withForm{
         def Execution e = Execution.get(params.id)
         if (notFoundResponse(e, 'Execution ID', params.id)) {
@@ -329,16 +362,20 @@ class ExecutionController extends ControllerBase{
             def long avg = Math.floor(e.scheduledExecution.totalTime / e.scheduledExecution.execCount)
             jobAverage = avg
         }
+        def isClusterExec = frameworkService.isClusterModeEnabled() && e.serverNodeUUID !=
+                frameworkService.getServerUUID()
         def data=[
-            completed:jobcomplete,
-            execDuration: execDuration,
-            executionState:execState.toUpperCase(),
-            executionStatusString:e.customStatusString,
-            jobAverageDuration: jobAverage,
-            startTime:StateMapping.encodeDate(e.dateStarted),
-            endTime: StateMapping.encodeDate(e.dateCompleted),
-            retryAttempt: e.retryAttempt,
-            retry: e.retry,
+                completed            : jobcomplete,
+                execDuration         : execDuration,
+                executionState       : execState.toUpperCase(),
+                executionStatusString: e.customStatusString,
+                jobAverageDuration   : jobAverage,
+                startTime            : StateMapping.encodeDate(e.dateStarted),
+                endTime              : StateMapping.encodeDate(e.dateCompleted),
+                retryAttempt         : e.retryAttempt,
+                retry                : e.retry,
+                serverNodeUUID       : e.serverNodeUUID,
+                clusterExec          : isClusterExec
         ]
         if(e.retryExecution){
             data['retryExecutionId']=e.retryExecution.id
@@ -360,7 +397,7 @@ class ExecutionController extends ControllerBase{
                 true,
                 params.stepStates == 'true'
         )
-        if (loader.state == ExecutionLogState.AVAILABLE) {
+        if (loader.state.isAvailableOrPartial()) {
             data.state = loader.workflowState
         }else if(loader.state in [ExecutionLogState.NOT_FOUND]) {
             data.state = [error: 'not found',
@@ -370,11 +407,32 @@ class ExecutionController extends ControllerBase{
             data.state = [error: 'error', errorMessage: g.message(code: loader.errorCode, args: loader.errorData)]
         }else if (loader.state in [ ExecutionLogState.PENDING_LOCAL, ExecutionLogState.WAITING,
                 ExecutionLogState.AVAILABLE_REMOTE, ExecutionLogState.PENDING_REMOTE]) {
+            data.completed = false
             data.state = [error: 'pending',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
+        } else if (loader.state in [ExecutionLogState.AVAILABLE_REMOTE_PARTIAL]) {
+            data.completed = false
+            data.state = [error       : 'pending',
+                          errorMessage: g.message(
+                                  code: 'execution.state.storage.state.' + loader.state,
+                                  default: "Pending"
+                          )]
+        } else {
+            data.state = [error       : 'unknown',
+                          errorMessage: g.message(
+                                  code: 'execution.state.storage.state.UNKNOWN',
+                                  args: ["state: " + loader.state].toArray()
+                          )]
+        }
+        if (loader.state == ExecutionLogState.AVAILABLE_PARTIAL) {
+            data.completed = false
+            data.state.partial = true
+        }
+        if(loader.retryBackoff>0){
+            data.retryBackoff = loader.retryBackoff
         }
         def limit=grailsApplication.config.rundeck?.ajax?.executionState?.compression?.nodeThreshold?:500
-        if(selectedNodes || data.state.allNodes?.size()>limit) {
+        if (selectedNodes || data.state?.allNodes?.size() > limit) {
             return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
         }else{
             return render(contentType: 'application/json', text: data.encodeAsJSON())
@@ -399,7 +457,7 @@ class ExecutionController extends ControllerBase{
         def data=[:]
         def selectedNode=params.node
         def loader = workflowService.requestStateSummary(e,[selectedNode],true)
-        if (loader.state == ExecutionLogState.AVAILABLE) {
+        if (loader.state.isAvailableOrPartial()) {
             data = [
                     name:selectedNode,
                     summary:loader.workflowState.nodeSummaries[selectedNode],
@@ -415,10 +473,17 @@ class ExecutionController extends ControllerBase{
                 ExecutionLogState.AVAILABLE_REMOTE, ExecutionLogState.PENDING_REMOTE]) {
             data = [error: 'pending',
                     errorMessage: g.message(code: 'execution.state.storage.state.' + loader.state, default: "Pending")]
+        } else {
+            data.state = [error       : 'unknown',
+                          errorMessage: g.message(
+                                  code: 'execution.state.storage.state.UNKNOWN',
+                                  args: ["state: " + loader.state].toArray()
+                          )]
         }
         return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
     }
-    def mail ={
+
+    def mail() {
         def Execution e = Execution.get(params.id)
         if (notFoundResponse(e, 'Execution ID', params.id)) {
             return
@@ -431,9 +496,16 @@ class ExecutionController extends ControllerBase{
         final state = ExecutionService.getExecutionState(e)
         if(e.scheduledExecution){
             def ScheduledExecution se = e.scheduledExecution //ScheduledExecution.get(e.scheduledExecutionId)
-            return render(view:"mailNotification/status" ,model: [execstate: state, scheduledExecution: se, execution:e, filesize:filesize])
+            return render(
+                    view: "mailNotification/status",
+                    model: loadExecutionViewPlugins() + [execstate: state, scheduledExecution: se, execution: e,
+                                                         filesize: filesize]
+            )
         }else{
-            return render(view:"mailNotification/status" ,model:  [execstate: state, execution:e, filesize:filesize])
+            return render(
+                    view: "mailNotification/status",
+                    model: loadExecutionViewPlugins() + [execstate: state, execution: e, filesize: filesize]
+            )
         }
     }
     def executionMode(){
@@ -451,11 +523,11 @@ class ExecutionController extends ControllerBase{
             }
             if(requestActive == executionService.executionsAreActive){
                 flash.message=g.message(code:'action.executionMode.notchanged.'+(requestActive?'active':'passive')+'.text')
-                return redirect(controller: 'menu',action:'systemConfig',params:[project:params.project])
+                return redirect(controller: 'menu',action:'executionMode')
             }
             executionService.setExecutionsAreActive(requestActive)
             flash.message=g.message(code:'action.executionMode.changed.'+(requestActive?'active':'passive')+'.text')
-            return redirect(controller: 'menu',action:'systemConfig',params:[project:params.project])
+            return redirect(controller: 'menu',action:'executionMode')
         }.invalidToken{
 
             request.error=g.message(code:'request.error.invalidtoken.message')
@@ -464,7 +536,7 @@ class ExecutionController extends ControllerBase{
     }
 
 
-    def xmlerror={
+    private def xmlerror() {
         render(contentType:"text/xml",encoding:"UTF-8"){
             result(error:"true"){
                 delegate.'error'{
@@ -486,6 +558,7 @@ class ExecutionController extends ControllerBase{
         boolean valid=false
         withForm{
             valid=true
+            g.refreshFormTokensHeader()
         }.invalidToken{
 
         }
@@ -500,29 +573,35 @@ class ExecutionController extends ControllerBase{
                     }
                 }
                 xml {
-                    xmlerror.call()
+                    xmlerror()
                 }
             }
         }
         def Execution e = Execution.get(params.id)
         if(!e){
             log.error("Execution not found for id: "+params.id)
-            flash.error = "Execution not found for id: "+params.id
             return withFormat {
                 json{
                     render(contentType:"text/json"){
                         delegate.cancelled=false
-                        delegate.status=(statusStr?statusStr:(didcancel?'killed':'failed'))
+                        delegate.error = "Execution not found for id: " + params.id
                     }
                 }
                 xml {
-                    xmlerror.call()
+                    xmlerror()
                 }
             }
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         def ScheduledExecution se = e.scheduledExecution
-        ExecutionService.AbortResult abortresult=executionService.abortExecution(se, e, session.user, authContext)
+        ExecutionService.AbortResult abortresult = executionService.abortExecution(
+                se,
+                e,
+                session.user,
+                authContext,
+                null,
+                params.forceIncomplete == 'true'
+        )
 
 
         def didcancel=abortresult.abortstate in [ExecutionService.ABORT_ABORTED, ExecutionService.ABORT_PENDING]
@@ -533,6 +612,7 @@ class ExecutionController extends ControllerBase{
                 render(contentType:"text/json"){
                     delegate.cancelled=didcancel
                     delegate.status=(abortresult.status?:(didcancel?'killed':'failed'))
+                    delegate.abortstate = abortresult.abortstate
                     if(reasonstr){
                         delegate.'reason'=reasonstr
                     }
@@ -540,9 +620,12 @@ class ExecutionController extends ControllerBase{
             }
             xml {
                 render(contentType:"text/xml",encoding:"UTF-8"){
-                    result(error:false,success:didcancel){
+                    result(error: false, success: didcancel, abortstate: abortresult.abortstate) {
                         success{
                             message("Job status: ${abortresult.status?:(didcancel?'killed': 'failed')}")
+                        }
+                        if (reasonstr) {
+                            reason(reasonstr)
                         }
                     }
                 }
@@ -550,7 +633,7 @@ class ExecutionController extends ControllerBase{
         }
     }
 
-    def downloadOutput = {
+    def downloadOutput() {
         Execution e = Execution.get(Long.parseLong(params.id))
         if(!e){
             log.error("Execution with id "+params.id+" not found")
@@ -609,7 +692,8 @@ class ExecutionController extends ControllerBase{
         }
         iterator.close()
     }
-    def renderOutput = {
+
+    def renderOutput() {
         Execution e = Execution.get(Long.parseLong(params.id))
         if(!e){
             log.error("Execution with id "+params.id+" not found")
@@ -657,13 +741,27 @@ class ExecutionController extends ControllerBase{
 <div class="ansicolor ansicolor-${(params.ansicolor in ['false','off'])?'off':'on'}" >"""
 
         def csslevel=!(params.loglevels in ['off','false'])
+        def renderContent = shouldConvertContent(params)
         iterator.each{ LogEvent msgbuf ->
             if(msgbuf.eventType != LogUtil.EVENT_TYPE_LOG){
                 return
             }
             def message = msgbuf.message
             def msghtml=message.encodeAsHTML()
-            if (message.contains('\033[')) {
+            boolean converted = false
+            if (renderContent && msgbuf.metadata['content-data-type']) {
+                //look up content-type
+                Map meta = [:]
+                msgbuf.metadata.keySet().findAll { it.startsWith('content-meta:') }.each {
+                    meta[it.substring('content-meta:'.length())] = msgbuf.metadata[it]
+                }
+                String result = convertContentDataType(message, msgbuf.metadata['content-data-type'], meta, 'text/html')
+                if (result != null) {
+                    msghtml = result.encodeAsSanitizedHTML()
+                    converted = true
+                }
+            }
+            if (!converted && message.contains('\033[')) {
                 try {
                     msghtml = message.decodeAnsiColor()
                 } catch (Exception exc) {
@@ -688,10 +786,21 @@ class ExecutionController extends ControllerBase{
 </html>
 '''
     }
+
+    /**
+     * @param params
+     * @return true if configuration/params enable log data content conversion plugins
+     */
+    private boolean shouldConvertContent(Map params) {
+        configurationService.getBoolean(
+                'gui.execution.logs.renderConvertedContent',
+                true
+        ) && !(params.convertContent in ['false', false, 'off'])
+    }
     /**
      * API: /api/execution/{id}/output, version 5
      */
-    def apiExecutionOutput = {
+    def apiExecutionOutput() {
         if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
             return
         }
@@ -701,6 +810,9 @@ class ExecutionController extends ControllerBase{
             params.nodename = null
             params.stepctx = null
         }
+        if (request.api_version < ApiRequestFilters.V21) {
+            params.remove('compacted')
+        }
         return tailExecutionOutput()
     }
     static final String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
@@ -709,9 +821,13 @@ class ExecutionController extends ControllerBase{
     /**
      * Use a builder delegate to render tailExecutionOutput result in XML or JSON
      */
-    private def renderOutputClosure= {String outf, Map data, List outputData, apiVersion,delegate, stateoutput=false ->
-        def keys= ['id','offset','completed','empty','unmodified', 'error','message','execCompleted', 'hasFailedNodes',
-                'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize', 'lastLinesSupported']
+    private def renderOutputFormat(String outf, Map data, List outputData, apiVersion, delegate, stateoutput = false) {
+        def keys = [
+                'id', 'offset', 'completed', 'empty', 'unmodified', 'error', 'message', 'execCompleted',
+                'hasFailedNodes', 'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize',
+                'lastLinesSupported', 'retryBackoff', 'clusterExec', 'serverNodeUUID',
+                'compacted',
+        ]
         def setProp={k,v->
             if(outf=='json'){
                 delegate[k]=v
@@ -736,6 +852,13 @@ class ExecutionController extends ControllerBase{
 
 
         def timeFmt = new SimpleDateFormat("HH:mm:ss")
+        def compacted = data.compacted
+        def compactedAttr = null
+        if (compacted && outf == 'json') {
+            setProp('compactedAttr', 'log')
+            compactedAttr = 'log'
+        }
+        def prev = [:]
         def dataClos= {
             outputData.each {
                 def datamap = stateoutput?(it + [
@@ -751,16 +874,45 @@ class ExecutionController extends ControllerBase{
                 if (it.loghtml) {
                     datamap.loghtml = it.loghtml
                 }
+                def removed = []
+                if (compacted) {
+                    def origmap = new HashMap(datamap)
+                    prev.each { k, v ->
+                        if (datamap[k] == prev[k]) {
+                            datamap.remove(k)
+                        } else if (null == datamap[k] && null != prev[k]) {
+                            datamap[k] = null
+                            removed << k
+                        }
+                    }
+                    prev = origmap
+                    if (compactedAttr && datamap.size() == 1 && datamap[compactedAttr] != null) {
+                        //compact the single attribute into just the string
+                        datamap = datamap[compactedAttr]
+                    }
+                }
                 if (outf == 'json') {
-                    delegate.'entries'(datamap)
-                } else {
-                    datamap.log = datamap.log.replaceAll(invalidXmlPattern, '')
-                    //xml
-                    if (apiVersion <= ApiRequestFilters.V5) {
-                        def text = datamap.remove('log')
-                        delegate.'entry'(datamap, text)
+                    if (datamap instanceof Map) {
+                        delegate.'entries'(datamap)
                     } else {
-                        delegate.'entry'(datamap)
+                        delegate.element(datamap)
+                    }
+                } else {
+                    if (datamap instanceof Map) {
+                        if (compacted && removed) {
+                            datamap['removed'] = removed.join(',')
+                            removed.each{datamap.remove(it)}
+                        }
+                        if(datamap.log!=null) {
+                            datamap.log = datamap.log?.replaceAll(invalidXmlPattern, '')
+                        }
+                        //xml
+                        if (apiVersion <= ApiRequestFilters.V5) {
+                            def text = datamap.remove('log')
+                            delegate.'entry'(datamap, text)
+                        } else {
+                            delegate.'entry'(datamap)
+                        }
                     }
                 }
             }
@@ -774,11 +926,14 @@ class ExecutionController extends ControllerBase{
     /**
      * API: /api/execution/{id}/output/state, version ?
      */
-    def apiExecutionStateOutput = {
+    def apiExecutionStateOutput() {
         if (!apiService.requireVersion(request,response,ApiRequestFilters.V10)) {
             return
         }
         params.stateOutput = true
+        if (request.api_version < ApiRequestFilters.V21) {
+            params.remove('compacted')
+        }
         return tailExecutionOutput()
     }
     /**
@@ -805,7 +960,7 @@ class ExecutionController extends ControllerBase{
                         response.setStatus(status)
                     }
                     render(contentType: "application/json") {
-                        renderOutputClosure('json', [
+                        renderOutputFormat('json', [
                                 error: message,
                                 id: params.id.toString(),
                                 offset: "0",
@@ -836,7 +991,17 @@ class ExecutionController extends ControllerBase{
         def execState = e.executionState
         def statusString = e.customStatusString
         def execDuration = 0L
-        execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
+        execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted
+                                                                                                     .getTime()
+
+        def isClusterExec = frameworkService.isClusterModeEnabled() && e.serverNodeUUID !=
+                frameworkService.getServerUUID()
+        def clusterInfo = [
+                serverNodeUUID: e.serverNodeUUID,
+                clusterExec   : isClusterExec
+        ]
+        def compacted = params.compacted == 'true' &&
+                !configurationService.getBoolean('gui.execution.logs.compacted.disabled', false)
 
         ExecutionLogReader reader
         reader = loggingService.getLogReader(e)
@@ -849,16 +1014,16 @@ class ExecutionController extends ControllerBase{
             def errmsg = g.message(code: "execution.log.storage.state.NOT_FOUND")
             //execution has not be started yet
             def dataMap= [
-                    empty:true,
-                    id: params.id.toString(),
-                    offset: "0",
-                    completed: jobcomplete,
-                    execCompleted: jobcomplete,
+                    empty         : true,
+                    id            : params.id.toString(),
+                    offset        : "0",
+                    completed     : jobcomplete,
+                    execCompleted : jobcomplete,
                     hasFailedNodes: hasFailedNodes,
-                    execState: execState,
-                    statusString: statusString,
-                    execDuration: execDuration
-            ]
+                    execState     : execState,
+                    statusString  : statusString,
+                    execDuration  : execDuration
+            ] + clusterInfo
             if (e.dateCompleted) {
                 dataMap.error=errmsg
             } else {
@@ -868,13 +1033,13 @@ class ExecutionController extends ControllerBase{
                 xml {
                     apiService.renderSuccessXml(request,response) {
                         output{
-                            renderOutputClosure('xml', dataMap, [], request.api_version, delegate)
+                            renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
                         }
                     }
                 }
                 json {
                     render(contentType: "application/json") {
-                        renderOutputClosure('json', dataMap, [], request.api_version, delegate)
+                        renderOutputFormat('json', dataMap, [], request.api_version, delegate)
                     }
                 }
                 text {
@@ -885,8 +1050,8 @@ class ExecutionController extends ControllerBase{
                         response.addHeader('X-Rundeck-ExecOutput-Message', errmsg.toString())
                     }
                     response.addHeader('X-Rundeck-ExecOutput-Empty', dataMap.empty.toString())
-                    response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.execCompleted.toString())
-                    response.addHeader('X-Rundeck-Exec-Completed', dataMap.completed.toString())
+                    response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.completed.toString())
+                    response.addHeader('X-Rundeck-Exec-Completed', dataMap.execCompleted.toString())
                     response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
                     response.addHeader('X-Rundeck-Exec-Status-String', dataMap.statusString.toString())
                     response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
@@ -900,39 +1065,41 @@ class ExecutionController extends ControllerBase{
         else if (null == reader || reader.state in [ExecutionLogState.PENDING_LOCAL, ExecutionLogState.PENDING_REMOTE, ExecutionLogState.WAITING]) {
             //pending data
             def dataMap=[
-                    message:"Pending",
-                    pending: g.message(code: 'execution.log.storage.state.' + reader.state, default: "Pending"),
-                    id:params.id.toString(),
-                    offset: params.offset ? params.offset.toString() : "0",
-                    completed:false,
-                    execCompleted:jobcomplete,
+                    message       :"Pending",
+                    pending       : g.message(code: 'execution.log.storage.state.' + reader.state, default: "Pending"),
+                    id            :params.id.toString(),
+                    offset        : params.offset ? params.offset.toString() : "0",
+                    completed     :false,
+                    execCompleted :jobcomplete,
                     hasFailedNodes:hasFailedNodes,
-                    execState:execState,
-                    statusString: statusString,
-                    execDuration:execDuration
-            ]
+                    execState     :execState,
+                    statusString  : statusString,
+                    execDuration  : execDuration,
+                    retryBackoff  : reader.retryBackoff
+            ] + clusterInfo
             withFormat {
                 xml {
                     apiService.renderSuccessXml(request,response) {
                         output {
-                            renderOutputClosure('xml', dataMap, [], request.api_version, delegate)
+                            renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
                         }
                     }
                 }
                 json {
                     render(contentType: "application/json") {
-                        renderOutputClosure('json', dataMap, [], request.api_version, delegate)
+                        renderOutputFormat('json', dataMap, [], request.api_version, delegate)
                     }
                 }
                 text {
                     response.addHeader('X-Rundeck-ExecOutput-Message', dataMap.message.toString())
                     response.addHeader('X-Rundeck-ExecOutput-Pending', dataMap.pending.toString())
                     response.addHeader('X-Rundeck-ExecOutput-Offset', dataMap.offset.toString())
-                    response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.execCompleted.toString())
-                    response.addHeader('X-Rundeck-Exec-Completed', dataMap.completed.toString())
+                    response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.completed.toString())
+                    response.addHeader('X-Rundeck-Exec-Completed', dataMap.execCompleted.toString())
                     response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
                     response.addHeader('X-Rundeck-Exec-Status-String', dataMap.statusString?.toString())
                     response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
+                    response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', dataMap.retryBackoff.toString())
                     render(contentType: "text/plain") {
                         ''
                     }
@@ -985,44 +1152,46 @@ class ExecutionController extends ControllerBase{
 
             if (lastmodl <= ll && (offset==0 || totsize <= offset)) {
                 def dataMap=[
-                        message:"Unmodified",
-                        unmodified:true,
-                        id:params.id.toString(),
-                        offset:params.offset ? params.offset.toString() : "0",
-                        completed:jobcomplete,
-                        execCompleted:jobcomplete,
+                        message       : "Unmodified",
+                        unmodified    : true,
+                        id            : params.id.toString(),
+                        offset        : params.offset ? params.offset.toString() : "0",
+                        completed     : reader.state == ExecutionLogState.AVAILABLE,
+                        execCompleted : jobcomplete,
                         hasFailedNodes:hasFailedNodes,
-                        execState:execState,
-                        statusString: statusString,
-                        lastModified:lastmodl.toString(),
-                        execDuration:execDuration,
-                        totalSize:totsize
-                ]
+                        execState     : execState,
+                        statusString  : statusString,
+                        lastModified  : lastmodl.toString(),
+                        execDuration  : execDuration,
+                        totalSize     : totsize,
+                        retryBackoff  : reader.retryBackoff
+                ] + clusterInfo
 
                 withFormat {
                     xml {
                         apiService.renderSuccessXml(request,response) {
                             output {
-                                renderOutputClosure('xml', dataMap, [], request.api_version, delegate)
+                                renderOutputFormat('xml', dataMap, [], request.api_version, delegate)
                             }
                         }
                     }
                     json {
                         render(contentType: "application/json") {
-                            renderOutputClosure('json', dataMap, [], request.api_version, delegate)
+                            renderOutputFormat('json', dataMap, [], request.api_version, delegate)
                         }
                     }
                     text {
                         response.addHeader('X-Rundeck-ExecOutput-Message', dataMap.message.toString())
                         response.addHeader('X-Rundeck-ExecOutput-Unmodified', dataMap.unmodified.toString())
                         response.addHeader('X-Rundeck-ExecOutput-Offset', dataMap.offset.toString())
-                        response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.execCompleted.toString())
-                        response.addHeader('X-Rundeck-Exec-Completed', dataMap.completed.toString())
+                        response.addHeader('X-Rundeck-ExecOutput-Completed', dataMap.completed.toString())
+                        response.addHeader('X-Rundeck-Exec-Completed', dataMap.execCompleted.toString())
                         response.addHeader('X-Rundeck-Exec-State', dataMap.execState.toString())
                         response.addHeader('X-Rundeck-Exec-Status-String', dataMap.statusString?.toString())
                         response.addHeader('X-Rundeck-Exec-Duration', dataMap.execDuration.toString())
                         response.addHeader('X-Rundeck-ExecOutput-LastModifed', dataMap.lastModified.toString())
                         response.addHeader('X-Rundeck-ExecOutput-TotalSize', dataMap.totalSize.toString())
+                        response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', dataMap.retryBackoff.toString())
                         render(contentType: "text/plain") {
                             ''
                         }
@@ -1091,7 +1260,9 @@ class ExecutionController extends ControllerBase{
             }
         }
         storeoffset= logread.offset
-        completed = logread.complete || (jobcomplete && storeoffset==totsize)
+        //not completed if the reader state is only AVAILABLE_PARTIAL
+        completed = reader.state == ExecutionLogState.AVAILABLE &&
+                (logread.complete || (jobcomplete && storeoffset == totsize))
         log.debug("finish stream iterator, offset: ${storeoffset}, completed: ${completed}")
         if (storeoffset == offset) {
             //don't change last modified unless new data has been read
@@ -1110,6 +1281,28 @@ class ExecutionController extends ControllerBase{
                 }
             }
 //        }
+        if (shouldConvertContent(params)) {
+            //interpret any log content
+
+            entry.each {logentry->
+                if (logentry.mesg && logentry['content-data-type']) {
+                    //look up content-type
+                    Map meta = [:]
+                    logentry.keySet().findAll{it.startsWith('content-meta:')}.each{
+                        meta[it.substring('content-meta:'.length())]=logentry[it]
+                    }
+                    String result = convertContentDataType(
+                            logentry.mesg,
+                            logentry['content-data-type'],
+                            meta,
+                            'text/html'
+                    )
+                    if (result != null) {
+                        logentry.loghtml = result.encodeAsSanitizedHTML()
+                    }
+                }
+            }
+        }
         if("true" == servletContext.getAttribute("output.markdown.enabled") && !params.disableMarkdown){
             entry.each{
                 if(it.mesg){
@@ -1145,31 +1338,33 @@ class ExecutionController extends ControllerBase{
 
         def resultData= [
                 id: e.id.toString(),
-                offset: storeoffset.toString(),
-                completed: completed,
-                execCompleted: jobcomplete,
-                hasFailedNodes: hasFailedNodes,
-                execState: execState,
-                statusString: statusString,
-                lastModified: lastmodl.toString(),
-                execDuration: execDuration,
-                percentLoaded: percent,
-                totalSize: totsize,
+                offset            : storeoffset.toString(),
+                completed         : completed,
+                execCompleted     : jobcomplete,
+                hasFailedNodes    : hasFailedNodes,
+                execState         : execState,
+                statusString      : statusString,
+                lastModified      : lastmodl.toString(),
+                execDuration      : execDuration,
+                percentLoaded     : percent,
+                totalSize         : totsize,
                 lastlinesSupported: lastlinesSupported,
-                nodename:params.nodename,
-                stepctx:params.stepctx
-        ]
+                nodename          :params.nodename,
+                stepctx           : params.stepctx,
+                retryBackoff      : reader.retryBackoff,
+                compacted         : compacted
+        ] + clusterInfo
         withFormat {
             xml {
                 apiService.renderSuccessXml(request,response) {
                     output {
-                        renderOutputClosure('xml', resultData, entry, request.api_version, delegate, stateoutput)
+                        renderOutputFormat('xml', resultData, entry, request.api_version, delegate, stateoutput)
                     }
                 }
             }
             json {
                 render(contentType: "application/json") {
-                    renderOutputClosure('json', resultData, entry, request.api_version, delegate, stateoutput)
+                    renderOutputFormat('json', resultData, entry, request.api_version, delegate, stateoutput)
                 }
             }
             text{
@@ -1182,6 +1377,7 @@ class ExecutionController extends ControllerBase{
                 response.addHeader('X-Rundeck-ExecOutput-LastModifed', lastmodl.toString())
                 response.addHeader('X-Rundeck-ExecOutput-TotalSize', totsize.toString())
                 response.addHeader('X-Rundeck-ExecOutput-LastLinesSupported', lastlinesSupported.toString())
+                response.addHeader('X-Rundeck-ExecOutput-RetryBackoff', reader.retryBackoff.toString())
                 def lineSep = System.getProperty("line.separator")
                 response.setHeader("Content-Type","text/plain")
                 response.outputStream.withWriter("UTF-8"){w->
@@ -1192,6 +1388,91 @@ class ExecutionController extends ControllerBase{
                 response.outputStream.close()
             }
         }
+    }
+
+    //TODO: move to a service
+    private String convertContentDataType(final Object input, final String inputDataType, Map<String,String> meta, final String outputType) {
+//        log.error("find converter : ${input.class}(${inputDataType}) => ?($outputType)")
+        def plugins = listViewPlugins()
+        List<DescribedPlugin<ContentConverterPlugin>> foundPlugins = findOutputViewPlugins(
+                plugins,
+                inputDataType,
+                input.class
+        )
+        def chain = []
+
+        def resultPlugin = foundPlugins.find {
+            it.instance.getOutputDataTypeForContentDataType(input.class, inputDataType) == outputType
+        }
+
+        //attempt to resolve the data type
+        if (!resultPlugin) {
+//            log.error("not found converter : ${input.class}(${inputDataType}) => $outputType, searching ${foundPlugins.size()} plugins...")
+            foundPlugins.find {
+                def otype = it.instance.getOutputDataTypeForContentDataType(input.class, inputDataType)
+                def oclass = it.instance.getOutputClassForDataType(input.class, inputDataType)
+                def results = findOutputViewPlugins(plugins, otype, oclass)
+
+//                log.error("search subconverter :<${it.name}>  ${oclass}($otype) => ${results}")
+                def plugin2 = results.find {
+                    it.instance.getOutputDataTypeForContentDataType(oclass, otype) == outputType
+                }
+                if (plugin2) {
+//                    log.error(
+//                            " found converter :<${it.name}> ${input.class}(${inputDataType}) => ${oclass}($otype)"
+//                    )
+//                    log.error(" found converter :<${plugin2.name}> ${oclass}(${otype}) => ?($outputType)")
+                    chain = [it, plugin2]
+                }else{
+
+//                    log.error("not found subconverter :<${it.name}> ${input.class}(${inputDataType}) => ${oclass}($otype) => ${outputType}")
+                }
+                //end loop when found
+                plugin2 != null
+            }
+        } else {
+            chain = [resultPlugin]
+        }
+//        log.error("chain: "+chain)
+        if (chain) {
+            def ovalue = input
+            def otype = inputDataType
+            try {
+                chain.each { plugin ->
+                    def nexttype = plugin.instance.getOutputDataTypeForContentDataType(ovalue.getClass(), otype)
+                    ovalue = plugin.instance.convert(ovalue, otype, meta)
+                    otype = nexttype
+                }
+            } catch (Throwable t) {
+                log.warn(
+                        "Failed converting data type ${input.getClass()}($inputDataType)  with plugins: ${chain*.name}",
+                        t
+                )
+            }
+            return ovalue
+        }
+
+        return null
+    }
+
+    private List<DescribedPlugin<ContentConverterPlugin>> findOutputViewPlugins(
+            Map<String, DescribedPlugin<ContentConverterPlugin>> plugins,
+            String inputDataType,
+            Class clazz
+    )
+    {
+        def foundPlugins = plugins.entrySet().findAll {
+            it.value.instance.isSupportsDataType(clazz, inputDataType)
+        }.collect { it.value }
+        foundPlugins
+    }
+    Map<String, DescribedPlugin<ContentConverterPlugin>> viewPluginsMap = [:]
+
+    private Map<String, DescribedPlugin<ContentConverterPlugin>> listViewPlugins() {
+        if (!viewPluginsMap) {
+            viewPluginsMap = pluginService.listPlugins(ContentConverterPlugin)
+        }
+        viewPluginsMap
     }
 
     /**
@@ -1225,7 +1506,7 @@ class ExecutionController extends ControllerBase{
     /**
      * Render execution list xml given a List of executions, and a builder delegate
      */
-    public def renderApiExecutions= { LinkGenerator grailsLinkGenerator, List execlist, paging=[:],delegate ->
+    private def renderApiExecutions(LinkGenerator grailsLinkGenerator, List execlist, paging, delegate) {
         apiService.renderExecutionsXml(execlist.collect{ Execution e->
             [
                 execution:e,
@@ -1416,7 +1697,14 @@ class ExecutionController extends ControllerBase{
             //authorized within service call
             killas= params.asUser
         }
-        ExecutionService.AbortResult abortresult = executionService.abortExecution(se, e, user, authContext, killas)
+        ExecutionService.AbortResult abortresult = executionService.abortExecution(
+                se,
+                e,
+                user,
+                authContext,
+                killas,
+                params.forceIncomplete == 'true'
+        )
 
         def reportstate=[status: abortresult.abortstate]
         if(abortresult.reason){

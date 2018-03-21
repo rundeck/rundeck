@@ -150,6 +150,7 @@ class JobsXMLCodec {
         map.scheduleEnabled = XmlParserUtil.stringToBool(map.scheduleEnabled, true)
         map.executionEnabled = XmlParserUtil.stringToBool(map.executionEnabled, true)
         map.nodeFilterEditable = XmlParserUtil.stringToBool(map.nodeFilterEditable, true)
+        map.multipleExecutions = XmlParserUtil.stringToBool(map.multipleExecutions, false)
 
         //perform structure conversions for expected input for populating ScheduledExecution
 
@@ -191,7 +192,7 @@ class JobsXMLCodec {
             }
             if (map.context?.options && map.context?.options?.option) {
                 final def opts = map.context.options.remove('option')
-                def ndx = map.context.options.preserveOrder ? 0 : -1;
+                def ndx = XmlParserUtil.stringToBool(map.context.options.preserveOrder, false) ? 0 : -1;
                 map.remove('context')
                 map.options = [:]
                 if (opts && opts instanceof Map) {
@@ -223,6 +224,21 @@ class JobsXMLCodec {
                         }
                         if (null != optm.required) {
                             optm.required = XmlParserUtil.stringToBool(optm.remove('required'), false)
+                        }
+                        if (null != optm.multivalued) {
+                            optm.multivalued = XmlParserUtil.stringToBool(optm.remove('multivalued'), false)
+                        }
+                        if(optm.multivalued) {
+                            optm.multivaluedAllSelected = XmlParserUtil.stringToBool(
+                                    optm.remove('multivaluedAllSelected'),
+                                    false
+                            )
+                        }
+                        if(optm.isDate) {
+                            optm.isDate = XmlParserUtil.stringToBool(
+                                    optm.remove('isDate'),
+                                    false
+                            )
                         }
                         if (ndx > -1) {
                             optm.sortIndex = ndx++;
@@ -261,6 +277,11 @@ class JobsXMLCodec {
                 //convert to boolean
                 def value= map.nodefilters.dispatch.excludePrecedence
                 map.nodefilters.dispatch.excludePrecedence= XmlParserUtil.stringToBool(value,false)
+            }
+            if(null!=map.nodefilters.dispatch.successOnEmptyNodeFilter){
+                //convert to boolean
+                def value= map.nodefilters.dispatch.successOnEmptyNodeFilter
+                map.nodefilters.dispatch.successOnEmptyNodeFilter= XmlParserUtil.stringToBool(value,false)
             }
             if(map.nodesSelectedByDefault){
                 map.nodesSelectedByDefault=XmlParserUtil.stringToBool(map.nodesSelectedByDefault,false)
@@ -344,6 +365,12 @@ class JobsXMLCodec {
                 }
             }
         }
+        if(map.retry instanceof Map){
+            if(map.retry.delay){
+                map.retryDelay = map.retry.delay
+            }
+            map.retry = map.retry['<text>']
+        }
         return map
     }
     static convertXmlWorkflowToMap(Map data){
@@ -380,6 +407,11 @@ class JobsXMLCodec {
                     }
                     if (null != cmd.jobref.dispatch && (cmd.jobref.nodefilters instanceof Map)) {
                         cmd.jobref.nodefilters.dispatch = cmd.jobref.remove('dispatch')
+                    } else if (null != cmd.jobref.dispatch) {
+                        cmd.jobref.nodefilters = [dispatch: cmd.jobref.remove('dispatch')]
+                    }
+                    if (cmd.project) {
+                        cmd.jobref.project = cmd.remove('project')
                     }
                 }else if(cmd['node-step-plugin'] || cmd['step-plugin']){
                     def parsePluginConfig={ plc->
@@ -412,6 +444,17 @@ class JobsXMLCodec {
                 if(null!= cmd.keepgoingOnSuccess){
                     cmd.keepgoingOnSuccess= XmlParserUtil.stringToBool(cmd.keepgoingOnSuccess,false)
                 }
+                if (cmd.plugins && cmd.plugins instanceof Map && cmd.plugins.LogFilter ) {
+                    if(!(cmd.plugins.LogFilter instanceof Collection)){
+                        cmd.plugins.LogFilter = [cmd.plugins.remove('LogFilter')]
+                    }
+                    cmd.plugins.LogFilter.each {
+                        if (!it.config) {
+                            //remove potential empty string result
+                            it.remove('config')
+                        }
+                    }
+                }
             }
             data.commands.each(fixup)
             data.commands.each {
@@ -422,6 +465,18 @@ class JobsXMLCodec {
         }
         if(null!=data.keepgoing && data.keepgoing instanceof String){
             data.keepgoing = XmlParserUtil.stringToBool(data.keepgoing,false)
+        }
+        if (data.pluginConfig && data.pluginConfig instanceof Map
+                && data.pluginConfig?.LogFilter ) {
+            if(!(data.pluginConfig?.LogFilter instanceof Collection)){
+                data.pluginConfig.LogFilter = [data.pluginConfig.remove('LogFilter')]
+            }
+            data.pluginConfig.LogFilter.each {
+                if (!it.config) {
+                    //remove potential empty string result
+                    it.remove('config')
+                }
+            }
         }
     }
     /**
@@ -563,6 +618,10 @@ class JobsXMLCodec {
                 map.schedule.year=BuilderUtil.toAttrMap('year',map.schedule.remove('year'))
             }
         }
+        if(map.retry instanceof Map && map.retry.delay){
+            map.retry = ['<text>':map.retry.retry,delay:map.retry.delay]
+            BuilderUtil.makeAttribute(map.retry,'delay')
+        }
 
         convertWorkflowMapForBuilder(map.sequence)
         if(map.notification){
@@ -616,6 +675,16 @@ class JobsXMLCodec {
         BuilderUtil.makeAttribute(map, 'keepgoing')
         BuilderUtil.makeAttribute(map, 'strategy')
         map.command = map.remove('commands')
+        if(map.pluginConfig?.LogFilter) {
+            map.pluginConfig.LogFilter.each { Map plugindef ->
+                BuilderUtil.makeAttribute(plugindef, 'type')
+                if (!plugindef.config) {
+                    //remove null or empty config map
+                    plugindef.remove('config')
+                }
+            }
+        }
+
         //convert script args values to idiosyncratic label
 
         def gencmd= { cmd, iseh=false ->
@@ -637,6 +706,11 @@ class JobsXMLCodec {
                     BuilderUtil.makeAttribute(cmd.jobref, 'group')
                 } else {
                     cmd.jobref.remove('group')
+                }
+                if (cmd.jobref.project) {
+                    BuilderUtil.makeAttribute(cmd.jobref, 'project')
+                } else {
+                    cmd.jobref.remove('project')
                 }
                 final def remove = cmd.jobref.remove('args')
                 if (null != remove) {
@@ -672,6 +746,15 @@ class JobsXMLCodec {
             }
             if(iseh){
                 BuilderUtil.makeAttribute(cmd, 'keepgoingOnSuccess')
+            }
+            if(cmd.plugins?.LogFilter) {
+                cmd.plugins.LogFilter.each { Map plugindef ->
+                    BuilderUtil.makeAttribute(plugindef, 'type')
+                    if (!plugindef.config) {
+                        //remove null or empty config map
+                        plugindef.remove('config')
+                    }
+                }
             }
         }
         map.command.each(gencmd)

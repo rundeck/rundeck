@@ -17,6 +17,8 @@
 package rundeck.services.jobs
 
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.execution.ExecutionReference
+import com.dtolabs.rundeck.core.execution.ExecutionNotFound
 import com.dtolabs.rundeck.core.jobs.JobNotFound
 import com.dtolabs.rundeck.core.jobs.JobReference
 import com.dtolabs.rundeck.core.jobs.JobService
@@ -48,4 +50,31 @@ class ResolvedAuthJobService implements JobService {
     JobState getJobState(JobReference jobReference) throws JobNotFound {
         authJobService.getJobState(authContext, jobReference)
     }
+
+    List<ExecutionReference> searchExecutions(String state, String project, String job, String excludeJob,
+                                              String since, boolean reverseSince){
+        authJobService.searchExecutions(authContext, state, project, job, excludeJob, since, reverseSince)
+    }
+
+    List<ExecutionReference> searchExecutions(String state, String project, String job, String excludeJob, String since){
+        authJobService.searchExecutions(authContext, state, project, job, excludeJob, since)
+    }
+
+    ExecutionReference executionForId(String id, String project) throws ExecutionNotFound{
+        authJobService.executionForId(authContext, id, project)
+    }
+
+
+    String startJob(JobReference jobReference, String jobArgString, String jobFilter, String asUser) throws JobNotFound{
+        authJobService.startJob(authContext, jobReference, jobArgString, jobFilter, asUser)
+    }
+
+    Map deleteBulkExecutionIds(Collection ids, String asUser){
+        authJobService.deleteBulkExecutionIds(authContext, ids, asUser)
+    }
+
+    Map queryExecutions(Map filter){
+        authJobService.queryExecutions(authContext, filter)
+    }
+
 }

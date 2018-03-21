@@ -52,39 +52,7 @@ public interface IRundeckProject extends IRundeckProjectConfig {
      */
     INodeSet getNodeSet() throws NodeFileParserException;
 
-    /**
-     * Conditionally update the nodes resources file if a URL source is defined for it and return
-     * true if the update process was invoked and succeeded
-     *
-     * @return true if the update succeeded, false if it was not performed
-     * @throws com.dtolabs.rundeck.core.common.UpdateUtils.UpdateException if an error occurs while trying to update the resources file
-     *
-     */
-    boolean updateNodesResourceFile() throws UpdateUtils.UpdateException;
 
-    /**
-     * Update the nodes resources file from a specific URL, with BASIC authentication as provided or
-     * as defined in the URL's userInfo section.
-     * @param providerURL URL to retrieve resources file definition
-     * @param username username or null
-     * @param password or null
-     * @throws com.dtolabs.rundeck.core.common.UpdateUtils.UpdateException if an error occurs during the update process
-     */
-    void updateNodesResourceFileFromUrl(
-            String providerURL, String username,
-            String password
-    ) throws UpdateUtils.UpdateException;
-
-    /**
-     * Update the resources file given an input Nodes set
-     *
-     * @param nodeset nodes
-     *
-     * @throws com.dtolabs.rundeck.core.common.UpdateUtils.UpdateException if an error occurs while trying to update the
-     *                                                                     resources file or generate
-     *                                                                     nodes
-     */
-    void updateNodesResourceFile(INodeSet nodeset) throws UpdateUtils.UpdateException;
 
     /**
      * @param name property name

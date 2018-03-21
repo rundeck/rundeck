@@ -1,6 +1,10 @@
 Rundeck
 ========
 
+| Travis | Deb | RPM | War | Jar |
+|--------|-----|-----|-----|-----|
+|[![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-deb/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-deb/rundeck/_latestVersion)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-rpm/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-rpm/rundeck/_latestVersion)| [![Download](https://api.bintray.com/packages/rundeck/rundeck-maven/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-maven/rundeck/_latestVersion)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-maven/rundeck-launcher/images/download.svg) ](https://bintray.com/rundeck/rundeck-maven/rundeck-launcher/_latestVersion)
+
 Rundeck is an open source automation service with a web console, 
 command line tools and a WebAPI.
 It lets you easily run automation tasks across a set of nodes.

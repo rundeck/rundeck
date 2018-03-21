@@ -79,7 +79,7 @@
                     </td>
                 </g:if>
 
-                <td class="runstatus " style="width:200px" colspan="2">
+                <td class="runstatus " style="width:200px" colspan="3">
 
                     <g:if test="${execution.dateCompleted}">
                         <span class="timelabel" title="completed: ${enc(attr:execution.dateCompleted)}">

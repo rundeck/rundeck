@@ -2,7 +2,7 @@
 % Greg Schueler, Alex Honor
 % November 20, 2010
 
-## About 
+## About
 
 Resource Model Sources provide the means to retrieve Node resources for a Project.
 You can implement a Resource Model Source using a [Java Plugin Type](#java-plugin-type)
@@ -17,9 +17,9 @@ your plugin, which will be displayed as a web form when the Project is configure
 
 ## Java Plugin Type
 
-A ResourceModelSource provider is actually a Factory class.  
+A ResourceModelSource provider is actually a Factory class.
 An instance of your ResourceModelSource provider will be
-re-used, so each time a new ResourceModelSource with a new configuration is required, 
+re-used, so each time a new ResourceModelSource with a new configuration is required,
 your Factory class will be invoked to produce it.
 
 Your provider class must implement the interface
@@ -30,30 +30,30 @@ public interface ResourceModelSourceFactory {
     /**
      * Return a resource model source for the given configuration
      */
-    public ResourceModelSource createResourceModelSource(Properties configuration) 
+    public ResourceModelSource createResourceModelSource(Properties configuration)
        throws ConfigurationException;
 }
 ~~~~~~~~~
 
 
-### Plugin properties 
+### Plugin properties
 
 See [Plugin Development - Java Plugins - Descriptions](plugin-development.html#plugin-descriptions)
 to learn how to create configuration properties for your ResourceModelSource plugin.
 
 ## Script Plugin Type
 
-See the [Script Plugin Development](plugin-development.html#script-plugin-development) 
+See the [Script Plugin Development](plugin-development.html#script-plugin-development)
 for the basics of developing script-based plugins for Rundeck.
 
 ### Instance scope properties
 
-Instance scoped properties for ResourceModelSources are loaded from the project's Resource Model Source entries.  A project can define multiple entries, and at execution time, the Instance scoped values come from those entries.  
+Instance scoped properties for ResourceModelSources are loaded from the project's Resource Model Source entries.  A project can define multiple entries, and at execution time, the Instance scoped values come from those entries.
 
 ### Example
 
-Here is an example `plugin.yaml` script-based ResourceModelSource plugin 
-declaring a provider clled "mysource" that produces resource-format `resourceyaml` output.
+Here is an example `plugin.yaml` script-based ResourceModelSource plugin
+declaring a provider called "mysource" that produces resource-format `resourceyaml` output.
 The provider declares three config properties (account, url, region)
 and illustrates the use
 of three different types (Integer, String, FreeSelect).
@@ -122,6 +122,6 @@ Exit code:
 
 Script output:
 
-* All output on `STDOUT` will be captured and passed to a 
+* All output on `STDOUT` will be captured and passed to a
 [ResourceFormatParser](model-format-parser-and-generator-plugin.html#resourceformatparser) for the specified `resource-format` to create the Node definitions.
 

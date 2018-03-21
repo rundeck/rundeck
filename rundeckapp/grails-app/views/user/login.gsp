@@ -30,7 +30,6 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <asset:stylesheet href="rundeck.css"/>
-    <asset:stylesheet href="non_responsive.css"/>
     <!--[if lt IE 9]>
     <g:javascript library="respond.min"/>
     <![endif]-->
@@ -93,6 +92,17 @@
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">Login</button>
             </div>
+
+            <g:set var="footermessagehtml" value="${grailsApplication.config.rundeck?.gui?.login?.footerMessageHtml ?: ''}"/>
+            <g:if test="${footermessagehtml}">
+                <div class="row">
+                    <span class="col-sm-12">
+                        ${enc(sanitize:footermessagehtml)}
+                    </span>
+                </div>
+            </g:if>
+
+
         </form>
         </div>
         <g:if test="${flash.loginerror}">

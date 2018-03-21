@@ -15,7 +15,7 @@ the base directory for Rundeck and generate configuration files.
 (2)  Using the [keytool] command, generate a keystore for use as the
 server cert and client truststore. Specify passwords for key and keystore:
 
-[keytool]: http://linux.die.net/man/1/keytool-java-1.6.0-openjdk
+[keytool]: https://linux.die.net/man/1/keytool-java-1.6.0-openjdk
 
         keytool -keystore etc/keystore -alias rundeck -genkey -keyalg RSA -keypass admin -storepass admin
     

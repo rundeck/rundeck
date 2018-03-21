@@ -19,6 +19,7 @@ package rundeck.filters
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 
 import javax.servlet.http.HttpServletResponse
@@ -49,8 +50,8 @@ import javax.servlet.http.HttpServletResponse
  */
 public class ProjectSelectFilters {
     def frameworkService
-    
-    def dependsOn = [ApiRequestFilters]
+
+    def dependsOn = [ApiRequestFilters, AuthorizationFilters]
     
     def filters = {
         /**
@@ -72,17 +73,25 @@ public class ProjectSelectFilters {
                 if(controllerName=='assets'){
                     return
                 }
-                if (session && session.user) {
+                if (session && session.user && session.subject) {
                     //get user authorizations
                     def AuthContext authContext = frameworkService.userAuthContext(session)
 
 
                     def selected = params.project
+                    if (selected && !(selected =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
+                        response.setStatus(400)
+                        request.errorCode = 'project.name.invalid'
+                        params.project = null
+                        render(view: '/common/error')
+                        AA_TimerFilters.afterRequest(request, response, session)
+                        return false
+                    }
                     if (selected && !frameworkService.existsFrameworkProject(selected)) {
                         response.setStatus(404)
-                        flash.title= 'Not Found'
-                        flash.errorCode= 'scheduledExecution.project.invalid.message'
-                        flash.errorArgs= [params.project]
+                        request.title= 'Not Found'
+                        request.errorCode= 'scheduledExecution.project.invalid.message'
+                        request.errorArgs= [params.project]
                         params.project=null
                         render(view: '/common/error')
                         AA_TimerFilters.afterRequest(request, response, session)

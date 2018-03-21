@@ -16,12 +16,19 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.utils.FileUtils;
 import org.apache.log4j.Logger;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Represents a generic framework resource. Each resoure has a name, a
@@ -39,15 +46,13 @@ public class FrameworkResource implements IFrameworkResource {
      *
      * @param name Name of resource
      * @param dir  Base directory of resource
-     * @param parent The parent resource
      */
-    public FrameworkResource(final String name, final File dir, final IFrameworkResourceParent parent) {
+    public FrameworkResource(final String name, final File dir) {
         if ("".equals(name)) {
             throw new IllegalArgumentException("empty string cannot be used as a name");
         }
         this.name = name;
         baseDir = dir;
-        this.parent = parent;
         logger = Logger.getLogger(this.getClass().getName());
     }
 
@@ -57,7 +62,6 @@ public class FrameworkResource implements IFrameworkResource {
 
     /**
      * constains name of resource. The name should be unique for its
-     * {@link FrameworkResourceParent} if it has one.
      */
     private final String name;
 
@@ -82,35 +86,37 @@ public class FrameworkResource implements IFrameworkResource {
         return baseDir;
     }
 
-
-    private IFrameworkResourceParent parent;
-
-    public IFrameworkResourceParent getParent() {
-        return parent;
-    }
-
-    public boolean isValid() {
-        return getParent().childCouldBeLoaded(getName());
-    }
-
-
     public String toString() {
         return name;
     }
 
-    /**
-     * Store properties to disk
-     *
-     * @param props Properties to store
-     * @param file  File to write property data to
-     * @throws IOException thrown if file not found or can't write to file
-     */
-    protected void storeProperties(final Properties props, final File file) throws IOException {
-        final FileOutputStream fileOutputStream = new FileOutputStream(file);
-        try {
-            props.store(fileOutputStream, "auto generated. do not edit.");
-        } finally {
-            fileOutputStream.close();
-        }
+    protected boolean existsSubdir(String name) {
+        return getSubdir(name).isDirectory();
     }
+
+    protected File getSubdir(String name) {
+        return new File(getBaseDir(), name);
+    }
+
+    protected List<File> listSubdirs() {
+        File[] values = getBaseDir().listFiles(file ->
+                                                       file.isDirectory() &&
+                                                       file.getName().matches(VALID_RESOURCE_NAME_REGEX));
+        if (values != null) {
+            return Stream.of(values).collect(Collectors.toList());
+        }
+        return new ArrayList<>();
+    }
+
+    protected List<String> listSubdirNames() {
+        return listSubdirs().stream().map(File::getName).collect(Collectors.toList());
+    }
+
+    protected boolean removeSubDir(String name) {
+        if (existsSubdir(name)) {
+            return FileUtils.deleteDir(getSubdir(name));
+        }
+        return false;
+    }
+
 }

@@ -10,7 +10,7 @@ fashion.
 Rundeck includes a number of "built-in" providers, as well as a few 
 "included" plugin files.
 
-In this document "plugin" and "provider" are used somewhat interchangably. When 
+In this document "plugin" and "provider" are used somewhat interchangeably. When
 referring to an actual file containing the provider implementations we will say
 "plugin file".
 

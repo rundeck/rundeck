@@ -299,7 +299,7 @@
                                         <g:img file="spinner-gray.gif" width="24px" height="24px"/>
                                     </span>
                                     <span data-bind="if: $root.projectForName(project).auth().admin">
-                                        <a href="${g.createLink(controller: "menu", action: "admin", params: [project: '<$>'])}"
+                                        <a href="${g.createLink(controller: "framework", action: "editProject", params: [project: '<$>'])}"
                                             data-bind="urlPathParam: project"
                                            class="btn btn-default btn-sm">
                                             <g:message code="gui.menu.Admin"/>

@@ -26,103 +26,106 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
+    <meta name="tabtitle" content="${g.message(code: 'gui.menu.SystemInfo')}"/>
     <title><g:message code="gui.menu.SystemInfo" /></title>
 </head>
 
 <body>
 
 <div class="row">
-<div class="col-sm-3">
-    <g:render template="configNav" model="[selected: 'sysinfo']"/>
-</div>
-<div class="col-sm-9">
+    <div class="col-sm-10 col-sm-offset-1">
+        <div class="panel panel-default">
 
-    <h3>System Info</h3>
-    <g:if test="${schedulerThreadRatio && schedulerThreadRatio>=1.0}">
-        <div class="alert alert-warning alert-dismissable">
-            <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-            <p>
-                <g:message code="quartz.scheduler.thread.usage.is.currently.at"
-                args="[g.formatNumber(number:schedulerThreadRatio,format: '#.##%')]"
-                />:
-                <g:message code="0.1.threads.in.use" args="[schedulerRunningCount, threadPoolSize]" />
-            </p>
-            <p>
-                <g:message code="jobs.and.ad.hoc.executions.will.be.queued.until.previous.executions.complete" />
-            </p>
-            <p>
-                <a href="${g.helpLinkUrl(path:'/administration/tuning-rundeck.html#quartz-job-threadcount')}">
-                    <g:icon name="question-sign"/>
-                    <g:message code="more.information" />
-                </a>
-            </p>
-        </div>
+            <div class="panel-body">
+                <g:if test="${schedulerThreadRatio && schedulerThreadRatio>=1.0}">
+                    <div class="alert alert-warning alert-dismissable">
+                        <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
 
-    </g:if>
+                        <p>
+                            <g:message code="quartz.scheduler.thread.usage.is.currently.at"
+                                       args="[g.formatNumber(number:schedulerThreadRatio, format: '#.##%')]"/>:
+                            <g:message code="0.1.threads.in.use" args="[schedulerRunningCount, threadPoolSize]" />
+                        </p>
 
-    <div class="btn-group">
-        <g:link uri='/metrics/metrics?pretty=true' class="btn btn-sm btn-info" title="View JSON metrics data">
-            Metrics (json)
-            <i class="glyphicon glyphicon-file"></i>
-        </g:link>
-        <g:link uri='/metrics/threads' class="btn btn-sm btn-info" title="View Java thread dump">
-            Thread Dump
-            <i class="glyphicon glyphicon-file"></i>
-        </g:link>
-        <g:link uri='/metrics/healthcheck' class="btn btn-sm btn-info" title="Healthcheck">
-            <g:message code="healthcheck.json" />
-            <i class="glyphicon glyphicon-file"></i>
-        </g:link>
-    </div>
+                        <p>
+                            <g:message code="jobs.and.ad.hoc.executions.will.be.queued.until.previous.executions.complete" />
+                        </p>
 
-    <g:set var="datapercol" value="${5.0}"/>
-    <g:set var="colcount" value="${(int)Math.ceil((float)systemInfo.size()/datapercol)}"/>
-    <table>
-        <tr>
-            <g:each in="${0..colcount-1}" var="colnum">
-                <g:set var="colstart" value="${(int)(colnum)*datapercol}"/>
-                <g:set var="colmax" value="${(int)(colnum+1)*datapercol-1}"/>
-                <g:set var="coldata"
-                       value="${systemInfo[colstart..(colmax<systemInfo.size?colmax:systemInfo.size-1)]}"/>
-                <td style="vertical-align: top;">
-                    <table class="simpleForm">
-                        <g:each in="${coldata}" var="dataset">
-                            <g:each in="${dataset.keySet().sort()}" var="dataname">
-                                <g:if test="${dataset[dataname] instanceof Map}">
-                                    <tbody>
-                                    <th colspan="2"><g:enc>${dataname}</g:enc></th>
-                                    <g:each
-                                        in="${dataset[dataname].keySet().sort().grep{!it.endsWith('.unit') && !it.endsWith('.info')&& !it.endsWith('.status')}}"
-                                        var="valuename">
-                                        <tr>
-                                            <td title="${enc(attr:dataset[dataname][valuename + '.info'] ?: '')}"><g:enc>${valuename}</g:enc></td>
-                                            <td class="${valuename=='serverUUID'?'rundeck-server-uuid':''} ${dataset[dataname][valuename+'.status']?'text-'+dataset[dataname][valuename+'.status']:''}" data-server-uuid="${ valuename=='serverUUID'? dataset[dataname][valuename]:''}">
+                        <p>
+                            <a href="${g.helpLinkUrl(path:'/administration/tuning-rundeck.html#quartz-job-threadcount')}">
+                                <g:icon name="question-sign"/>
+                                <g:message code="more.information" />
+                            </a>
+                        </p>
+                    </div>
 
-                                                <g:if test="${dataset[dataname][valuename+'.unit']=='ratio'}">
-                                                    <g:render template="/common/progressBar"
-                                                              model="${[completePercent:(int)(100*dataset[dataname][valuename]),title:dataset[dataname][valuename+'.info']?dataset[dataname][valuename+'.info']:dataset[dataname][valuename],progressClass:'progress-embed',showpercent:true]}"/>
-                                                </g:if>
-                                                <g:elseif test="${dataset[dataname][valuename+'.unit']}">
-                                                    <g:humanize value="${dataset[dataname][valuename]}"
-                                                                unit="${dataset[dataname][valuename+'.unit']}"/>
-                                                </g:elseif>
-                                                <g:else>
-                                                    <g:enc>${dataset[dataname][valuename]}</g:enc>
-                                                </g:else>
-                                            </td>
-                                        </tr>
+                </g:if>
 
+                <div class="btn-group">
+                    <g:link uri='/metrics/metrics?pretty=true' class="btn btn-sm btn-info" title="View JSON metrics data">
+                        Metrics (json)
+                        <i class="glyphicon glyphicon-file"></i>
+                    </g:link>
+                    <g:link uri='/metrics/threads' class="btn btn-sm btn-info" title="View Java thread dump">
+                        Thread Dump
+                        <i class="glyphicon glyphicon-file"></i>
+                    </g:link>
+                    <g:link uri='/metrics/healthcheck' class="btn btn-sm btn-info" title="Healthcheck">
+                        <g:message code="healthcheck.json" />
+                        <i class="glyphicon glyphicon-file"></i>
+                    </g:link>
+                </div>
+
+                <g:set var="datapercol" value="${5.0}"/>
+                <g:set var="colcount" value="${(int)Math.ceil((float)systemInfo.size()/datapercol)}"/>
+                <table>
+                    <tr>
+                        <g:each in="${0..colcount-1}" var="colnum">
+                            <g:set var="colstart" value="${(int)(colnum)*datapercol}"/>
+                            <g:set var="colmax" value="${(int)(colnum+1)*datapercol-1}"/>
+                            <g:set var="coldata"
+                                   value="${systemInfo[colstart..(colmax<systemInfo.size?colmax:systemInfo.size-1)]}"/>
+                            <td style="vertical-align: top;">
+                                <table class="simpleForm">
+                                    <g:each in="${coldata}" var="dataset">
+                                        <g:each in="${dataset.keySet().sort()}" var="dataname">
+                                            <g:if test="${dataset[dataname] instanceof Map}">
+                                                <tbody>
+                                                <th colspan="2"><g:enc>${dataname}</g:enc></th>
+                                                <g:each
+                                                        in="${dataset[dataname].keySet().sort().grep{!it.endsWith('.unit') && !it.endsWith('.info')&& !it.endsWith('.status')}}"
+                                                        var="valuename">
+                                                    <tr>
+                                                        <td title="${enc(attr:dataset[dataname][valuename + '.info'] ?: '')}"><g:enc>${valuename}</g:enc></td>
+                                                        <td class="${valuename=='serverUUID'?'rundeck-server-uuid':''} ${dataset[dataname][valuename+'.status']?'text-'+dataset[dataname][valuename+'.status']:''}" data-server-uuid="${ valuename=='serverUUID'? dataset[dataname][valuename]:''}">
+
+                                                            <g:if test="${dataset[dataname][valuename+'.unit']=='ratio'}">
+                                                                <g:render template="/common/progressBar"
+                                                                          model="${[completePercent:(int)(100*dataset[dataname][valuename]),title:dataset[dataname][valuename+'.info']?dataset[dataname][valuename+'.info']:dataset[dataname][valuename],progressClass:'progress-embed',showpercent:true]}"/>
+                                                            </g:if>
+                                                            <g:elseif test="${dataset[dataname][valuename+'.unit']}">
+                                                                <g:humanize value="${dataset[dataname][valuename]}"
+                                                                            unit="${dataset[dataname][valuename+'.unit']}"/>
+                                                            </g:elseif>
+                                                            <g:else>
+                                                                <g:enc>${dataset[dataname][valuename]}</g:enc>
+                                                            </g:else>
+                                                        </td>
+                                                    </tr>
+
+                                                </g:each>
+                                                </tbody>
+                                            </g:if>
+                                        </g:each>
                                     </g:each>
-                                    </tbody>
-                                </g:if>
-                            </g:each>
+                                </table>
+                            </td>
                         </g:each>
-                    </table>
-                </td>
-            </g:each>
-        </tr>
-    </table>
-</div>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 </html>

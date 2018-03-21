@@ -32,10 +32,12 @@ interface ExecutionFileProducer {
      * @return true if the file will be generated, false if it was previously generated
      */
     boolean isExecutionFileGenerated()
+    boolean isCheckpointable()
 
     /**
      * @param e execution
      * @return the file to store
      */
     ExecutionFile produceStorageFileForExecution(Execution e)
+    ExecutionFile produceStorageCheckpointForExecution(Execution e)
 }

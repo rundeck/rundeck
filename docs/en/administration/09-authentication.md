@@ -8,9 +8,9 @@ the Servlet Container is Jetty,
 and the underlying security mechanism is JAAS,
 so you are free to use what ever JAAS provider
 you feel is suitable for your environment.
-See [JAAS](http://en.wikipedia.org/wiki/Java_Authentication_and_Authorization_Service)
+See [JAAS](https://en.wikipedia.org/wiki/Java_Authentication_and_Authorization_Service)
 and specifically for Jetty,
-[JAAS for Jetty](http://docs.codehaus.org/display/JETTY/JAAS).
+[JAAS for Jetty](https://wiki.eclipse.org/Jetty/Feature/JAAS).
 
 If you use the Rundeck war file with a different container, such as Tomcat, refer to [Container authentication and authorization](#container-authentication-and-authorization) below.
 
@@ -101,12 +101,12 @@ having the passwords in plaintext within the configuration file.
 To accomplish this, you'll need a properly hashed or encrypted
 password to use in the config.  Pass the
 username and password to the `Password` utility which is part of the
-`jetty-all-7.6.0.v20120127.jar` file.
+`jetty-all-9.0.7.v20131107.jar` file.
 
 Location:
 
-* Launcher install: `$RDECK_BASE/server/lib/jetty-all-7.6.0.v20120127.jar`
-* RPM/Deb install: `/var/lib/rundeck/bootstrap/jetty-all-7.6.0.v20120127.jar`
+* Launcher install: `$RDECK_BASE/server/lib/jetty-all-9.0.7.v20131107.jar`
+* RPM/Deb install: `/var/lib/rundeck/bootstrap/jetty-all-9.0.7.v20131107.jar`
 
 Use the correct path below.
 
@@ -114,7 +114,7 @@ In this example,
 we'll setup a new user named "jsmith", with a password of "mypass":
 
 ~~~~~~ {.bash }
-$ java -cp jetty-all-7.6.0.v20120127.jar org.eclipse.jetty.util.security.Password jsmith mypass
+$ java -cp jetty-all-9.0.7.v20131107.jar org.eclipse.jetty.util.security.Password jsmith mypass
 ~~~~~~
 
 ~~~~~~
@@ -539,7 +539,7 @@ To verify your CA has been added, run keytool list and look for CompanyAD in the
 keytool -list -keystore $JAVA_HOME/lib/security/cacerts -storepass changeit
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Refer to: http://download.oracle.com/javase/1.5.0/docs/tooldocs/solaris/keytool.html for more information how how to import a certificate.
+Refer to: https://docs.oracle.com/javase/1.5.0/docs/tooldocs/solaris/keytool.html for more information how how to import a certificate.
 
 Finally, in your `ldap-activedirectory.conf` be sure to change the *providerUrl* to be `ldaps://ad-server`.  Including the port is optional as the default is 686.
 
@@ -627,7 +627,7 @@ JAAS configurations can contain multiple LoginModule definitions, which are proc
 
 In your config file, separate the LoginModule definitions with a `;` and be sure to select the appropriate Flag for the module, one of `required`, `requisite`, `sufficient`, or `optional`.  
 
-The full syntax and the description of how these Flags work is described in more detail under the [JAAS Configuration Documentation](http://docs.oracle.com/javase/6/docs/api/javax/security/auth/login/Configuration.html).
+The full syntax and the description of how these Flags work is described in more detail under the [JAAS Configuration Documentation](https://docs.oracle.com/javase/6/docs/api/javax/security/auth/login/Configuration.html).
 
 Here is an example combining an LDAP module flagged as `sufficient`, and a flat file realm.properties config flagged as `required`:
 
@@ -718,7 +718,7 @@ This method can be enabled with this config in `rundeck-config.properties`:
 
 This configuration requires some additional setup to enable:
 
-1. The file `WEB-INF/web.xml` inside the war contents **must** be modified to remove the `<auth-constraint>` element.  This disables the behavior which causes the Container to trigger its authentication mechanism when a user browses to a Rundeck page requiring authorizaton.
+1. The file `WEB-INF/web.xml` inside the war contents **must** be modified to remove the `<auth-constraint>` element.  This disables the behavior which causes the Container to trigger its authentication mechanism when a user browses to a Rundeck page requiring authorization.
 
 2. Apache HTTPD and Tomcat must be configured to communicate so that a list of User Roles is sent to Tomcat as a request Attribute with the given "attributeName".
 
@@ -730,7 +730,7 @@ For Tomcat and Apache HTTPd with `mod_proxy_ajp`, here are some additional instr
 
 2. Configure Apache to perform the necessary authentication, and to pass an environment variable named "REMOTE_USER_GROUPS", the value should be all colon-separated e.g.: "user:admin:ops" (or using the `delimiter` you have configured.)
 
-Here is an example using just `mod_proxy_ajp`, and passing a static list of roles. A real solution should use [mod_lookup_identity](http://www.adelton.com/apache/mod_lookup_identity/):
+Here is an example using just `mod_proxy_ajp`, and passing a static list of roles. A real solution should use [mod_lookup_identity](https://www.adelton.com/apache/mod_lookup_identity/):
 
 
     <Location /rundeck>

@@ -63,8 +63,6 @@ public class WorkflowExecutionService extends ChainedProviderService<WorkflowExe
         registry = new HashMap<>();
         //TODO:
         registry.put(WorkflowExecutor.NODE_FIRST, NodeFirstWorkflowExecutor.class);
-//        registry.put(WorkflowExecutor.STEP_FIRST, StepFirstWorkflowExecutor.class);
-//        registry.put(WorkflowExecutor.PARALLEL, ParallelWorkflowExecutor.class);
 
         registry.put(WorkflowExecutor.STEP_FIRST, EngineWorkflowExecutor.class);
         registry.put(WorkflowExecutor.PARALLEL, EngineWorkflowExecutor.class);
@@ -75,12 +73,7 @@ public class WorkflowExecutionService extends ChainedProviderService<WorkflowExe
                 registry
         );
 
-//        final ProviderService<WorkflowExecutor> pluginService =
-//                ServiceFactory.pluginService(SERVICE_NAME, framework, WorkflowExecutor.class);
-
-
         serviceList.add(primaryService);
-//        serviceList.add(pluginService);
     }
 
     @Override

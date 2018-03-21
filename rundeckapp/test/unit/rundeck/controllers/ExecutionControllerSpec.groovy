@@ -29,11 +29,16 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
+import groovy.xml.MarkupBuilder
 import rundeck.Execution
+import rundeck.UtilityTagLib
 import rundeck.codecs.AnsiColorCodec
 import rundeck.codecs.HTMLElementCodec
 import rundeck.codecs.URIComponentCodec
+import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
+import rundeck.services.ApiServiceSpec
+import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
@@ -43,6 +48,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import javax.servlet.http.HttpServletResponse
+import java.text.SimpleDateFormat
 
 /**
  * Created by greg on 1/6/16.
@@ -253,6 +259,7 @@ class ExecutionControllerSpec extends Specification {
         )
         e1.save() != null
         controller.loggingService = Mock(LoggingService)
+        controller.configurationService = Mock(ConfigurationService)
         def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
         reader.reader = new TestReader(logs:
                                                [
@@ -283,5 +290,265 @@ class ExecutionControllerSpec extends Specification {
         '<script>alert("hi");</script> \033[31mred\033[0m' |
                 '&lt;script&gt;alert(&quot;hi&quot;);&lt;/script&gt; <span class="ansi-fg-red">red</span><span ' +
                 'class="ansi-mode-normal"></span>'
+    }
+
+    /**
+     * compacted=true, the log entries returned will include only the changed
+     * attributes, and if only the "log" is changed, will produce only a string instead of a map.
+     * an empty map means the same entries as previously, an null map entry means remove the previous
+     * value.
+     * @return
+     */
+    def "api execution output compacted json"() {
+        given:
+
+        def assetTaglib = mockTagLib(UtilityTagLib)
+        Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+        controller.loggingService = Mock(LoggingService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.frameworkService = Mock(FrameworkService) {
+            authorizeProjectExecutionAll(*_) >> true
+            1 * getAuthContextForSubjectAndProject(*_)
+            1 * isClusterModeEnabled()
+            _ * getServerUUID()
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            requireVersion(*_) >> true
+            requireExists(*_) >> true
+            0 * _(*_)
+        }
+        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def date1 = new Date(90000000)
+        def sdf=new SimpleDateFormat('yyyy-MM-dd\'T\'HH:mm:ssXXX')
+        sdf.timeZone=TimeZone.getTimeZone('GMT')
+        def abstime=sdf.format(date1)
+        def sdf2=new SimpleDateFormat('HH:mm:ss')
+//        sdf2.timeZone=TimeZone.getTimeZone('GMT')
+        def timestr=sdf2.format(date1)
+        reader.reader = new TestReader(logs:
+                                               [
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message1',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message2',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message2',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message3',
+                                                               metadata: [stepctx: '1'],
+                                                               loglevel: LogLevel.DEBUG
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message4',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.DEBUG
+                                                       ),
+                                               ]
+        )
+        when:
+        params.id = e1.id.toString()
+        params.compacted = 'true'
+        request.api_version = 21
+        response.format = 'json'
+        controller.apiExecutionOutput()
+        def json = response.json
+        then:
+        1 * controller.loggingService.getLogReader(e1) >> reader
+        json.compacted == true
+        json.compactedAttr == 'log'
+        json.entries.size() == 5
+        json.entries[0] == [
+                absolute_time: abstime,
+                log          : 'message1',
+                level        : 'NORMAL',
+                time         : timestr,
+        ]
+        json.entries[1] == 'message2'
+        json.entries[2] == [:]
+        json.entries[3] == [log: 'message3', stepctx: '1', level: 'DEBUG']
+        json.entries[4] == [log: 'message4', stepctx: null]
+
+    }
+    /**
+     * compacted=true, the log entries returned will include only the changed
+     * attributes, and if only the "log" is changed, will produce only a string instead of a map.
+     * an empty map means the same entries as previously, an null map entry means remove the previous
+     * value.
+     * @return
+     */
+    def "api execution output compacted xml"() {
+        given:
+
+        def assetTaglib = mockTagLib(UtilityTagLib)
+        Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                dateEnded: new Date(),
+                status: 'successful'
+
+        )
+        e1.save() != null
+        controller.loggingService = Mock(LoggingService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.frameworkService = Mock(FrameworkService) {
+            authorizeProjectExecutionAll(*_) >> true
+            1 * getAuthContextForSubjectAndProject(*_)
+            1 * isClusterModeEnabled()
+            _ * getServerUUID()
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            requireVersion(*_) >> true
+            requireExists(*_) >> true
+            renderSuccessXml(_, _, _) >> { args ->
+                def writer = new StringWriter()
+                def xml = new MarkupBuilder(writer)
+                def response = args[1]
+                def recall = args[2]
+                xml.with {
+                    recall.delegate = delegate
+                    recall.resolveStrategy = Closure.DELEGATE_FIRST
+                    recall()
+                }
+                def xmlstr = writer.toString()
+                response.setContentType('application/xml')
+                response.setCharacterEncoding('UTF-8')
+                def out = response.outputStream
+                out << xmlstr
+                out.flush()
+            }
+            0 * _(*_)
+        }
+        def reader = new ExecutionLogReader(state: ExecutionLogState.AVAILABLE)
+        def date1 = new Date(90000000)
+        def sdf=new SimpleDateFormat('yyyy-MM-dd\'T\'HH:mm:ssXXX')
+        sdf.timeZone=TimeZone.getTimeZone('GMT')
+        def abstime=sdf.format(date1)
+        def sdf2=new SimpleDateFormat('HH:mm:ss')
+//        sdf2.timeZone=TimeZone.getTimeZone('GMT')
+        def timestr=sdf2.format(date1)
+        reader.reader = new TestReader(logs:
+                                               [
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message1',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message2',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message2',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.NORMAL
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message3',
+                                                               metadata: [stepctx: '1'],
+                                                               loglevel: LogLevel.DEBUG
+                                                       ),
+                                                       new DefaultLogEvent(
+                                                               eventType: LogUtil.EVENT_TYPE_LOG,
+                                                               datetime: date1,
+                                                               message: 'message4',
+                                                               metadata: [:],
+                                                               loglevel: LogLevel.DEBUG
+                                                       ),
+                                               ]
+        )
+        when:
+        params.id = e1.id.toString()
+        params.compacted = 'true'
+        request.api_version = 21
+        response.format = 'xml'
+        controller.apiExecutionOutput()
+        def xml = response.xml
+        then:
+        1 * controller.loggingService.getLogReader(e1) >> reader
+        xml != null
+        xml.compacted.text() == 'true'
+        xml.entries.entry.size() == 5
+
+        xml.entries.entry[0]."@absolute_time".text() == abstime
+        xml.entries.entry[0]."@log".text() == 'message1'
+        xml.entries.entry[0]."@level".text() == 'NORMAL'
+        xml.entries.entry[0]."@time".text() == timestr
+        xml.entries.entry[0]."@time".size() == 1
+        xml.entries.entry[0]."@node".size() == 0
+        xml.entries.entry[0]."@stepctx".size() == 0
+        xml.entries.entry[0]."@removed".size() == 0
+
+        xml.entries.entry[1]."@absolute_time".size() == 0
+        xml.entries.entry[1]."@log".text() == 'message2'
+        xml.entries.entry[1]."@level".size() == 0
+        xml.entries.entry[1]."@time".size() == 0
+        xml.entries.entry[1]."@node".size() == 0
+        xml.entries.entry[1]."@stepctx".size() == 0
+        xml.entries.entry[0]."@removed".size() == 0
+
+        xml.entries.entry[2]."@absolute_time".size() == 0
+        xml.entries.entry[2]."@log".size() == 0
+        xml.entries.entry[2]."@level".size() == 0
+        xml.entries.entry[2]."@time".size() == 0
+        xml.entries.entry[2]."@node".size() == 0
+        xml.entries.entry[2]."@stepctx".size() == 0
+        xml.entries.entry[0]."@removed".size() == 0
+
+
+        xml.entries.entry[3]."@absolute_time"
+        xml.entries.entry[3]."@log".text() == 'message3'
+        xml.entries.entry[3]."@level".text() == 'DEBUG'
+        xml.entries.entry[3]."@time".size() == 0
+        xml.entries.entry[3]."@node".size() == 0
+        xml.entries.entry[3]."@stepctx".text() == '1'
+        xml.entries.entry[3]."@removed".size() == 0
+
+        xml.entries.entry[4]."@absolute_time".size() == 0
+        xml.entries.entry[4]."@log".text() == 'message4'
+        xml.entries.entry[4]."@level".size() == 0
+        xml.entries.entry[4]."@time".size() == 0
+        xml.entries.entry[4]."@node".size() == 0
+        xml.entries.entry[4]."@stepctx".size() == 0
+        xml.entries.entry[4]."@removed".text() == 'stepctx'
+
     }
 }

@@ -27,6 +27,8 @@ import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
+import com.dtolabs.rundeck.core.authorization.Validation;
+import com.dtolabs.rundeck.core.authorization.ValidationSet;
 import junit.framework.TestCase;
 
 import javax.security.auth.Subject;
@@ -59,16 +61,21 @@ public class TestYamlPolicyCollection extends TestCase {
     }
 
     public void testCountPolicies() throws Exception {
-        YamlPolicyCollection policies = makeTestPolicies(YamlProvider.sourceFromFile(test1));
+        ValidationSet validationSet = new ValidationSet();
+        YamlPolicyCollection policies = makeTestPolicies(YamlProvider.sourceFromFile(test1), validationSet);
+        validationSet.complete();
+        assertTrue("invalid: " + validationSet, validationSet.isValid());
         assertEquals(6, policies.countPolicies());
     }
 
-    private YamlPolicyCollection makeTestPolicies(final CacheableYamlSource source) throws IOException {
+    private YamlPolicyCollection makeTestPolicies(final CacheableYamlSource source, ValidationSet validation)
+            throws IOException
+    {
         return new YamlPolicyCollection(
                 "test",
-                YamlPolicy.loader(source, null),
-                YamlPolicy.creator(null, null),
-                null
+                YamlParsePolicy.loader(source, validation),
+                YamlParsePolicy.creator(null, validation),
+                validation
         );
     }
 //
@@ -133,7 +140,10 @@ public class TestYamlPolicyCollection extends TestCase {
     }
 
     public void testGroupNames() throws Exception {
-        YamlPolicyCollection policies = makeTestPolicies(YamlProvider.sourceFromFile(test1));
+        ValidationSet validationSet = new ValidationSet();
+        YamlPolicyCollection policies = makeTestPolicies(YamlProvider.sourceFromFile(test1), validationSet);
+        validationSet.complete();
+        assertTrue("invalid: " + validationSet, validationSet.isValid());
         final Collection<String> strings = policies.groupNames();
         assertEquals(4, strings.size());
         assertTrue(strings.contains("qa_group"));

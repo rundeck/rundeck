@@ -25,6 +25,7 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatParser
 import com.dtolabs.rundeck.core.resources.format.ResourceFormatParserService
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.core.utils.FileUtils
+import com.dtolabs.utils.Streams
 import spock.lang.Specification
 
 /**
@@ -85,16 +86,22 @@ class DirectoryResourceModelSourceSpec extends Specification {
         def path = file.absolutePath
         def file2 = new File(directory, "test2.nodes")
         file<<'nodes'
-        file2<<'nodes'
+        file2 << 'nodes2'
         def nodes2 = new NodeSetImpl()
         nodes2.putNode(new NodeEntryImpl("anode1"))
 
         framework.resourceFormatParserService.registerInstance('testnodes',Mock(ResourceFormatParser) {
             getFileExtensions() >> new HashSet<String>(['nodes'])
-            parseDocument(file)>>{
-                throw new NullPointerException("test npe")
+            parseDocument(_ as InputStream) >> { args ->
+                ByteArrayOutputStream baos = new ByteArrayOutputStream()
+                Streams.copyStream(args[0], baos)
+                def string = new String(baos.toByteArray())
+                if (string == 'nodes') {
+                    throw new NullPointerException("test npe")
+                } else {
+                    return nodes2
+                }
             }
-            parseDocument(file2)>>nodes2
         })
 
         Properties props = ["project": PROJECT_NAME, "directory": directory.getAbsolutePath()]

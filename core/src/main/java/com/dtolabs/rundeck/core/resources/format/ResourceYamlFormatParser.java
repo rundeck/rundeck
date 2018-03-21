@@ -47,16 +47,29 @@ import java.util.*;
 public class ResourceYamlFormatParser implements ResourceFormatParser,Describable {
     public static final String SERVICE_PROVIDER_TYPE = "resourceyaml";
 
-    public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("yaml","yml")));
-    public static final Set<String> MIME_TYPES = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList(
-        "*/yaml", "*/x-yaml", "text/plain")));
+    public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            "yaml",
+            "yml"
+    )));
+    public static final Set<String> MIME_TYPES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            "*/yaml", "*/x-yaml", "text/plain")));
 
     public Set<String> getFileExtensions() {
         return EXTENSIONS;
     }
 
+    @Override
+    public String getPreferredFileExtension() {
+        return "yaml";
+    }
+
     public Set<String> getMIMETypes() {
         return MIME_TYPES;
+    }
+
+    @Override
+    public String getPreferredMimeType() {
+        return "text/yaml";
     }
 
     public INodeSet parseDocument(final File file) throws ResourceFormatParserException {

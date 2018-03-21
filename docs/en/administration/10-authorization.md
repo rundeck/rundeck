@@ -77,7 +77,7 @@ If an authorization request occurs in the context of a specific Project
 (e.g. "does a user have Run access for a specific Job in this project?")
 then the Project-level policies created via the API area also used to evaluate the authorization request.
 
-Otherwise, only the policies on the filesystem, and uploaded ot the System ACLs API are evaluated for the request.
+Otherwise, only the policies on the filesystem, and uploaded to the System ACLs API are evaluated for the request.
 
 ### rd-acl
 
@@ -134,7 +134,7 @@ for:
   project:
     - match:
         name: '.*'
-      allow: [read,import,export,configure,delete,admin] # allow full access of all projects or use 'admin'
+      allow: [read,import,export,configure,delete,promote,admin] # allow full access of all projects or use 'admin'
   project_acl:
     - match:
         name: '.*'
@@ -227,6 +227,7 @@ aclpolicy:
     * Importing archives `import`
     * Exporting archives `export`
     * Deleting executions `delete_execution`
+    * Export project to another Rundeck instance `promote`
     * Full access `admin`
 * Managing Project level ACL Policies on specific projects by name (actions on a `project_acl` type)
     * Reading `read`

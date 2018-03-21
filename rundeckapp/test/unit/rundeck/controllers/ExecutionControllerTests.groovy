@@ -34,7 +34,7 @@ import rundeck.services.LoggingService
 import rundeck.services.logging.ExecutionLogState
 
 @TestFor(ExecutionController)
-@Mock([Workflow,ScheduledExecution,Execution])
+@Mock([Workflow,ScheduledExecution,Execution,CommandExec])
 class ExecutionControllerTests  {
 
     /**
@@ -412,7 +412,7 @@ class ExecutionControllerTests  {
         def fwkControl = mockFor(FrameworkService, false)
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         def execControl = mockFor(ExecutionService, false)
-        execControl.demand.abortExecution { se, e, user, framework, killas ->
+        execControl.demand.abortExecution { se, e, user, framework, killas, force ->
             assert null == killas
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
@@ -513,7 +513,7 @@ class ExecutionControllerTests  {
         def fwkControl = mockFor(FrameworkService, false)
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         def execControl = mockFor(ExecutionService, false)
-        execControl.demand.abortExecution { se, e, user, framework, killas ->
+        execControl.demand.abortExecution { se, e, user, framework, killas,force ->
             assert killas == 'testuser'
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }
@@ -553,7 +553,7 @@ class ExecutionControllerTests  {
         def fwkControl = mockFor(FrameworkService, false)
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
         def execControl = mockFor(ExecutionService, false)
-        execControl.demand.abortExecution { se, e, user, framework, killas ->
+        execControl.demand.abortExecution { se, e, user, framework, killas, force ->
             assert killas == 'testuser'
             [abortstate: 'aborted', jobstate: 'running', status: 'blah', reason: null]
         }

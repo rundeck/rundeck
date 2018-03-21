@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ExecQuery
+import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
 
 class ReportService  {
@@ -229,10 +230,8 @@ class ReportService  {
                 tags: 'tags',
         ]
 
-        def filters = [:]
-        filters.putAll(txtfilters)
-        filters.putAll(eqfilters)
-
+        //in cancel case the real stat is failed but AbortedByUser != null
+        boolean fixCancel = (query.statFilter=='cancel' && !query.abortedByFilter)
 
         delegate.with {
 
@@ -241,6 +240,13 @@ class ReportService  {
                     if (query["${key}Filter"]) {
                         ilike(val, '%' + query["${key}Filter"] + '%')
                     }
+                }
+
+                if(fixCancel){
+                    query.statFilter='fail'
+                    isNotNull('abortedByUser')
+                }else if(query.statFilter=='fail' && !query.abortedByFilter){
+                    isNull('abortedByUser')
                 }
 
                 eqfilters.each { key, val ->
@@ -339,6 +345,9 @@ class ReportService  {
 
             }
         }
+        if(fixCancel){
+            query.statFilter='cancel'
+        }
     }
     def getExecutionReports(ExecQuery query, boolean isJobs) {
         def eqfilters = [
@@ -355,10 +364,14 @@ class ReportService  {
                 title: 'title',
                 tags: 'tags',
         ]
+        def specialfilters = [
+                execnode: 'execnode'
+        ]
 
         def filters = [:]
         filters.putAll(txtfilters)
         filters.putAll(eqfilters)
+
         def runlist=ExecReport.createCriteria().list {
 
             if (query?.max) {
@@ -388,11 +401,14 @@ class ReportService  {
                 lastDate = it.dateCompleted.time
             }
         }
-
-
-        def total = ExecReport.createCriteria().count{
-            applyExecutionCriteria(query, delegate,isJobs)
-        };
+        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def total = ExecReport.withTransaction([isolationLevel: isolationLevel]) {
+            ExecReport.createCriteria().count {
+                applyExecutionCriteria(query, delegate, isJobs)
+            }
+        }
+        filters.putAll(specialfilters)
 
         return [
             query:query,

@@ -126,6 +126,12 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         git?.close()
     }
 
+    @Override
+    void totalClean(){
+        File base = new File(config.dir)
+        base?.deleteDir()
+    }
+
 
     @Override
     BasicInputView getInputViewForAction(final ScmOperationContext context, String actionId) {
@@ -203,6 +209,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (performFetch) {
             try {
                 fetchFromRemote(context)
+                if(config.shouldPullAutomatically()){
+                    actions[PROJECT_SYNCH_ACTION_ID].perform(this,null,null,context,[refresh:'rebase',resolution:'ours'])
+                }
             } catch (Exception e) {
                 fetchError=true
                 msgs<<"Fetch from the repository failed: ${e.message}"

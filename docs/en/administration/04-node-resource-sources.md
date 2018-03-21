@@ -120,21 +120,21 @@ from <code>project.resources.url</code> and then stored at
 anvils resource model, it will request the resources.xml file from
 the viewvc URL, obtaining the latest revision.
 
-[subversion]: http://subversion.tigris.org/
+[subversion]: https://subversion.apache.org/
 [viewvc]: http://www.viewvc.org/
 
 #### Amazon EC2 Nodes ####
 
-[Amazon's EC2](http://aws.amazon.com/ec2/) (Elastic Cloud Compute) is a cloud service in wide use for dynamic infrastructure; it is easy to start up and shut down Node "Instances" in the cloud.  
+[Amazon's EC2](https://aws.amazon.com/ec2/) (Elastic Cloud Compute) is a cloud service in wide use for dynamic infrastructure; it is easy to start up and shut down Node "Instances" in the cloud.
 
 For Rundeck, we would like to have a way of querying the EC2 service to see what EC2 Instances are available for use as Rundeck Nodes.
 
 Amazon has a well-defined API for communication with their services, which would allow us to pull out the EC2 data, and generate XML if we wanted to. We could write a script that produces that data and use that script on a server to produce data via a URL, or we could use that script with the [script resource model source plugin](../plugins-user-guide/resource-model-source-plugins.html#script-resource-model-source-configuration) to generate it. This would give us complete control of the output, but does require extra work.
 
-However, there is already a plugin to do this for you: the [Rundeck EC2 Nodes Plugin](https://github.com/gschueler/rundeck-ec2-nodes-plugin).
+However, there is already a plugin to do this for you: the [Rundeck EC2 Nodes Plugin](https://github.com/rundeck-plugins/rundeck-ec2-nodes-plugin).
 
-* [rundeck-ec2-nodes-plugin](https://github.com/gschueler/rundeck-ec2-nodes-plugin) project source code on github
-* [download the binary distribution](https://github.com/gschueler/rundeck-ec2-nodes-plugin/downloads).
+* [rundeck-ec2-nodes-plugin](https://github.com/rundeck-plugins/rundeck-ec2-nodes-plugin) project source code on github
+* [download the binary distribution](https://github.com/rundeck-plugins/rundeck-ec2-nodes-plugin/downloads).
 
 Use is fairly simple:
 
@@ -145,7 +145,7 @@ Use is fairly simple:
 5. Enter the configuration details (see below) for the plugin and click "Save".
 6. Click "Save" for the Project Configuration.
 
-Minimal configuration details for the plugin includes your AWS access credentials you can find here <http://aws.amazon.com/security-credentials>.
+Minimal configuration details for the plugin includes your AWS access credentials you can find here <https://console.aws.amazon.com/iam/home>
 
 *Access Key*
 :    Specify your AWS Access key.
@@ -161,7 +161,7 @@ You can manage the set of Nodes that gets returned from the plugin by organizing
 
 The EC2 plugin will automatically add tags for the nodes based on an EC2 Instance Tag named "Rundeck-Tags", as well as the Instance's state.  You can also add "Mapping parameters" to the EC2 Plugin configuration to add additional tags.
 
-You can add filters to the EC2 Plugin configuration under the "Filter Params" configuration area, with the sytanx of: `filter=value;filter2=value2`. The available filter names are listed in [AWS API - DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-DescribeInstances.html).
+You can add filters to the EC2 Plugin configuration under the "Filter Params" configuration area, with the syntax of: `filter=value;filter2=value2`. The available filter names are listed in [AWS API - DescribeInstances](https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html).
 
 You can also configure your EC2 Plugin manually or automatically by creating or modifying the [project.properties] file, and defining a [Resource Model Source] provider, like this:
 
@@ -238,7 +238,7 @@ Rundeck lets the remote site inform it when the following steps occur:
 * The user cancels the Node changes, or otherwise has finished without saving
 * An error occurs and an error message should be shown.
 
-Due to web browser security restrictions, direct communication between different webpages can only be done through use of the [postMessage](http://www.whatwg.org/specs/web-apps/current-work/#crossDocumentMessages) method.  
+Due to web browser security restrictions, direct communication between different webpages can only be done through use of the [postMessage](https://html.spec.whatwg.org/#crossDocumentMessages) method.
 
 The remote page can send these messages simply with this javascript:
 
@@ -255,7 +255,7 @@ The first argument to `postMessage` is one of the message codes shown below.  Th
 Rundeck can receive the following messages sent by the remote site:
 
 `rundeck:node:edit:started`
-  ~ Sent as soon as the remote edit URL is loaded and indicates that the remote Site understands the messaging protocol and has loaded the correct edit page.  You would probably send this on the "edit" or "form" page for the targetted node.
+  ~ Sent as soon as the remote edit URL is loaded and indicates that the remote Site understands the messaging protocol and has loaded the correct edit page.  You would probably send this on the "edit" or "form" page for the targeted node.
 
 `rundeck:node:edit:error` or `rundeck:node:edit:error:An error message`
   ~ Sent if some error occurs.  The remote editing form will close and the error message (if any) will be shown.  You would probably send this on the "edit" or "view" page if there is an error locating the targeted Node or loading anything required for the edit process.
@@ -326,7 +326,7 @@ venkman:
 
 The [ndbtest](https://github.com/gschueler/ndbtest) project on github provides an example of how the remote Resource Editor can integrate with Rundeck using JavaScript.
 
-This project is a simple [Grails](http://grails.org) application which provides a database of Node data.  The standard web-based user flow is:
+This project is a simple [Grails](https://grails.org) application which provides a database of Node data.  The standard web-based user flow is:
 
 * List all nodes.
 * Edit a Node with the edit page. From here the User can:
@@ -362,10 +362,10 @@ To complete the round-trip of editing a Node and then showing the results back i
 
 
 
-[curl]: http://curl.haxx.se/
+[curl]: https://curl.haxx.se/
 [xmlstarlet]: http://xmlstar.sourceforge.net/
-[CMDB]: http://en.wikipedia.org/wiki/Configuration_management_database
-[AJAX]: http://en.wikipedia.org/wiki/Ajax_(programming)
+[CMDB]: https://en.wikipedia.org/wiki/Configuration_management_database
+[AJAX]: https://en.wikipedia.org/wiki/Ajax_(programming)
 
 [project.properties]: configuration-file-reference.html#project.properties
 [Tutorial]: ../tutorials/index.html

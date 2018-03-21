@@ -44,7 +44,7 @@
       <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
       <asset:javascript src="workflow.js"/>
-      <g:javascript src="executionControl.js"/>
+      <asset:javascript src="executionControl.js"/>
       <g:javascript src="executionState.js"/>
       <asset:javascript src="executionState_HistoryKO.js"/>
 
@@ -102,7 +102,7 @@
             multiworkflow:multiworkflow,
             appLinks:appLinks,
 
-            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}",
+            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}&renderContent=${enc(js:enc(url: params.renderContent))}",
             lastlines: '${enc(js:params.int('lastlines') ?: defaultLastLines)}',
             maxLastLines:'${enc(js:params.int('maxlines') ?: maxLastLines)}',
             collapseCtx: {value:${enc(js:null == execution?.dateCompleted)},changed:false},
@@ -113,6 +113,7 @@
             execData: {},
             groupOutput:{value:${enc(js:followmode == 'browse')}},
             updatepagetitle:${enc(js:null == execution?.dateCompleted)},
+            killjobauth:${enc(js: authChecks[AuthConstants.ACTION_KILL] ? true : false)},
           <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
               killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
           </g:if>
@@ -126,7 +127,8 @@
             workflow,
             "${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
             "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecNodeState', id: execution.id))}",
-            multiworkflow
+            multiworkflow,
+            {followControl:followControl,executionId:'${enc(js:execution.id)}'}
           );
           flowState = new FlowState('${enc(js:execution?.id)}','flowstate',{
             workflow:workflow,
@@ -135,46 +137,8 @@
             selectedOutputStatusId:'selectedoutputview',
             reloadInterval:1500
          });
-            flowState.addUpdater({
-            updateError:function(error,data){
-                nodeflowvm.stateLoaded(false);
-                if(error!='pending'){
-                    nodeflowvm.errorMessage(data.state.errorMessage?data.state.errorMessage:error);
-                }else{
-                    nodeflowvm.statusMessage(data.state.errorMessage?data.state.errorMessage:error);
-                }
-                ko.mapping.fromJS({
-                    executionState:data.executionState,
-                    executionStatusString:data.executionStatusString,
-                    retryExecutionId:data.retryExecutionId,
-                    retryExecutionUrl:data.retryExecutionUrl,
-                    retryExecutionState:data.retryExecutionState,
-                    retryExecutionAttempt:data.retryExecutionAttempt,
-                    retry:data.retry,
-                    completed:data.completed,
-                    execDuration:data.execDuration,
-                    jobAverageDuration:data.jobAverageDuration,
-                    startTime:data.startTime? data.startTime : data.state ? data.state.startTime: null,
-                    endTime:data.endTime ? data.endTime : data.state ? data.state.endTime : null
-                },{},nodeflowvm);
-            },
-            updateState:function(data){
-                ko.mapping.fromJS({
-                    executionState:data.executionState,
-                    executionStatusString:data.executionStatusString,
-                    retryExecutionId:data.retryExecutionId,
-                    retryExecutionUrl:data.retryExecutionUrl,
-                    retryExecutionState:data.retryExecutionState,
-                    retryExecutionAttempt:data.retryExecutionAttempt,
-                    retry:data.retry,
-                    completed:data.completed,
-                    execDuration:data.execDuration,
-                    jobAverageDuration:data.jobAverageDuration,
-                    startTime:data.startTime? data.startTime : data.state ? data.state.startTime: null,
-                    endTime:data.endTime ? data.endTime : data.state ? data.state.endTime : null
-                },{},nodeflowvm);
-                nodeflowvm.updateNodes(data.state);
-            }});
+          nodeflowvm.followFlowState(flowState,true);
+
             ko.mapping.fromJS({
                 completed:'${execution.dateCompleted!=null}',
                 startTime:'${enc(js:execution.dateStarted)}',
@@ -218,12 +182,18 @@
                 _applyAce(this);
             });
             followControl.bindActions('outputappendform');
+
+            PageActionHandlers.registerHandler('copy_other_project',function(el){
+                jQuery('#jobid').val(el.data('jobId'));
+                jQuery('#selectProject').modal();
+            });
         }
         jQuery(init);
       </g:javascript>
 
       <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
           <asset:javascript src="workflow.test.js"/>
+          <asset:javascript src="util/compactMapList.test.js"/>
       </g:if>
       <style type="text/css">
 
@@ -356,18 +326,23 @@
                             <div class="col-sm-8">
 
                                 <g:if test="${null == execution.dateCompleted}">
-                                    <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-                                        <div class="pull-right">
-                                            <span id="cancelresult"
-                                                  data-bind="visible: !completed()">
+                                    <div class="pull-right" data-bind="if: canKillExec()">
+                                        <span data-bind="visible: !completed() ">
+                                            <!-- ko if: !killRequested() || killStatusFailed() -->
                                                 <span class="btn btn-danger btn-sm"
-                                                      onclick="followControl.docancel();">
+                                                      data-bind="click: killExecAction">
                                                     <g:message code="button.action.kill.job" />
                                                     <i class="glyphicon glyphicon-remove"></i>
                                                 </span>
-                                            </span>
+                                            <!-- /ko -->
+                                            <!-- ko if: killRequested() -->
+                                            <!-- ko if: killStatusPending() -->
+                                            <g:img file="spinner-gray.gif" width="16px" height="16px"/>
+                                            <!-- /ko -->
+                                            <span class="loading" data-bind="text: killStatusText"></span>
+                                            <!-- /ko -->
+                                        </span>
                                         </div>
-                                    </g:if>
                                 </g:if>
 
                                 %{--auth checks for delete execution--}%
@@ -397,7 +372,7 @@
                                             </g:link>
                                         </g:if>
                                         %{--run again links--}%
-                                        <g:if test="${adhocRunAllowed && g.executionMode(active:true)}">
+                                        <g:if test="${adhocRunAllowed && g.executionMode(active:true,project:execution.project)}">
                                             %{--run again only--}%
                                             <g:link
                                                     controller="framework"
@@ -469,7 +444,7 @@
                                     %{--job buttons--}%
                                     <div class="pull-right">
 
-                                        <g:if test="${authChecks[AuthConstants.ACTION_RUN] && g.executionMode(active:true)}">
+                                        <g:if test="${authChecks[AuthConstants.ACTION_RUN] && g.executionMode(active:true,project:execution.project)}">
                                             %{--Run again link--}%
                                             <g:link controller="scheduledExecution"
                                                     action="execute"
@@ -595,7 +570,7 @@
 
             <g:if test="${execution.scheduledExecution}">
             %{--progress bar--}%
-                <div class="row" data-bind="if: !completed()">
+                <div class="row row-space" data-bind="if: !completed()">
                 <div class="col-sm-12">
                     <section class="runstatus " data-bind="if: !completed() && jobAverageDuration()>0">
                         <g:set var="progressBind" value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/>
@@ -766,6 +741,8 @@
             </div>
         </div>
     </g:if>
+<g:render template="/menu/copyModal"
+          model="[projectNames: projectNames]"/>
 
   <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
 

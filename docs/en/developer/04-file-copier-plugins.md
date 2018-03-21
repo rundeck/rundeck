@@ -16,19 +16,19 @@ Your provider class must implement the interface
 ~~~~~ {.java}
 public interface FileCopier {
 
-    public String copyFileStream(ExecutionContext context, 
-                                 InputStream input, 
-                                 INodeEntry node, 
+    public String copyFileStream(ExecutionContext context,
+                                 InputStream input,
+                                 INodeEntry node,
                                  String destination) throws FileCopierException;
 
-    public String copyFile(ExecutionContext context, 
-                           File file, 
-                           INodeEntry node, 
+    public String copyFile(ExecutionContext context,
+                           File file,
+                           INodeEntry node,
                            String destination) throws FileCopierException;
 
-    public String copyScriptContent(ExecutionContext context, 
-                                    String script, 
-                                    INodeEntry node, 
+    public String copyScriptContent(ExecutionContext context,
+                                    String script,
+                                    INodeEntry node,
                                     String destination) throws FileCopierException;
 }
 ~~~~~~~~~
@@ -48,7 +48,7 @@ to learn how to create configuration properties for your plugin.
 
 ## Script Plugin Type
 
-See the [Script Plugin Development](plugin-development.html#script-plugin-development) 
+See the [Script Plugin Development](plugin-development.html#script-plugin-development)
 for the basics of developing script-based plugins for Rundeck.
 
 ### Additional data context properties

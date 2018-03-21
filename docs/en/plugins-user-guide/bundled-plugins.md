@@ -123,7 +123,7 @@ This plugin provides password based encryption for storage contents.
 It uses the [Jasypt][] encryption library. The built in Java JCE is used unless another provider is specified, [Bouncycastle][] can be used by specifying the 'BC' provider name.
 
 [Jasypt]: (http://jasypt.org)
-[Bouncycastle]: http://www.bouncycastle.org/
+[Bouncycastle]: https://www.bouncycastle.org/
 
 Password, algorithm, provider, etc can be specified directly, or via environment variables (the `*EnvVarName` properties), or Java System properties (the `*SysPropName` properties).
 
@@ -189,6 +189,8 @@ Example configuration for the Project Configuration storage facility:
 File: `rundeck-jasypt-encryption-plugin-${VERSION}.jar`
 
 ## Git Plugin
+
+* See [SCM Git Plugin](git-plugins.html)
 
 Provides SCM Export and SCM Import providers for Git.
 

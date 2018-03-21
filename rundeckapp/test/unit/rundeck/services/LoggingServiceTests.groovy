@@ -131,7 +131,8 @@ class LoggingServiceTests  {
             assertEquals([test: "blah"], defaultMeta)
             writer
         }
-        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+        lfmock.demand.getFileForExecutionFiletype(1..1) {
+            Execution e2, String filetype, boolean stored, boolean partial ->
             assertEquals(1, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
@@ -188,7 +189,8 @@ class LoggingServiceTests  {
         assertEquals(plugin1, multiWriters[0].writer)
         assertTrue(multiWriters[1] instanceof DisablingLogWriter)
         assertEquals(plugin2, multiWriters[1].writer)
-        assertEquals(writer,multiWriters[2])
+        assertTrue(multiWriters[2] instanceof DisablingLogWriter)
+        assertEquals(writer, multiWriters[2].writer)
     }
     void testOpenLogWriterNoPlugins(){
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
@@ -204,7 +206,8 @@ class LoggingServiceTests  {
             assertEquals(null,x)
             writer
         }
-        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+        lfmock.demand.getFileForExecutionFiletype(1..1) {
+            Execution e2, String filetype, boolean stored, boolean partial ->
             assertEquals(1, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
@@ -227,7 +230,8 @@ class LoggingServiceTests  {
         assertTrue(filtered.writer instanceof MultiLogWriter)
         MultiLogWriter multi= filtered.writer
         assertEquals(1,multi.writers.size())
-        assertEquals([writer],multi.writers)
+        assertTrue(multi.writers[0] instanceof DisablingLogWriter)
+        assertEquals(writer, multi.writers[0].writer)
     }
     void testOpenLogWriter_with_fileSizeThresholdWatcher(){
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
@@ -243,7 +247,8 @@ class LoggingServiceTests  {
             assertNotNull("expected a value watcher for logging file size threshold",x)
             writer
         }
-        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+        lfmock.demand.getFileForExecutionFiletype(1..1) {
+            Execution e2, String filetype, boolean stored, boolean partial ->
             assertEquals(1, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
@@ -279,7 +284,8 @@ class LoggingServiceTests  {
             assertNull("expected no logging file size threshold",x)
             writer
         }
-        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+        lfmock.demand.getFileForExecutionFiletype(1..1) {
+            Execution e2, String filetype, boolean stored, boolean partial ->
             assertEquals(1, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)
@@ -321,7 +327,8 @@ class LoggingServiceTests  {
             assertNull("expected no logging file size threshold",x)
             writer
         }
-        lfmock.demand.getFileForExecutionFiletype(1..1) { Execution e2, String filetype, boolean stored ->
+        lfmock.demand.getFileForExecutionFiletype(1..1) {
+            Execution e2, String filetype, boolean stored, boolean partial ->
             assertEquals(1, e2.id)
             assertEquals("rdlog", filetype)
             assertEquals(false, stored)

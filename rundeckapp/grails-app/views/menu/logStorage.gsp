@@ -27,6 +27,7 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="configure"/>
+    <meta name="tabtitle" content="${g.message(code:'menu.logStorage.page.title')}"/>
     <title><g:message code="menu.logStorage.page.title"/></title>
     <asset:javascript src="menu/logStorage.js"/>
     <g:javascript>
@@ -50,11 +51,7 @@
 </div>
 
 <div class="row">
-    <div class="col-sm-3">
-        <g:render template="configNav" model="[selected: 'logstorage']"/>
-    </div>
-
-    <div class="col-sm-9">
+    <div class="col-sm-10 col-sm-offset-1">
 
         <h3><g:message code="menu.logStorage.page.title"/>
             <span data-bind="if: !loaded() || loading()">
@@ -138,7 +135,9 @@
                     </g:each>
                 </tr>
                 <tr>
-                    <td></td>
+                    <td class=" text-center">
+                        Running: <span data-bind="text: running, css: { 'text-info': running()>0 , 'text-muted': running()<1 } "></span>
+                    </td>
                     <td>
 
                         <div data-bind="if: queuedCount()>0">

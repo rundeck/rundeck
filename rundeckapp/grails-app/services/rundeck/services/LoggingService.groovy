@@ -70,13 +70,23 @@ class LoggingService implements ExecutionFileProducer {
 
     @Override
     boolean isExecutionFileGenerated() {
-        return false
+        false
     }
 
     @Override
     ExecutionFile produceStorageFileForExecution(final Execution e) {
-        File file = getLogFileForExecution(e)
+        File file = getLogFileForExecution e
         new ProducedExecutionFile(localFile: file, fileDeletePolicy: ExecutionFileDeletePolicy.WHEN_RETRIEVABLE)
+    }
+
+    @Override
+    boolean isCheckpointable() {
+        true
+    }
+
+    @Override
+    ExecutionFile produceStorageCheckpointForExecution(final Execution e) {
+        produceStorageFileForExecution e
     }
 
     /**
@@ -126,12 +136,15 @@ class LoggingService implements ExecutionFileProducer {
         }
         def outfilepath = null
         if (plugins.size() < 1 || isLocalFileStorageEnabled()) {
-            plugins << logFileStorageService.getLogFileWriterForExecution(
+            plugins << DisablingLogWriter.create(
+                    logFileStorageService.getLogFileWriterForExecution(
                     execution,
                     defaultMeta,
                     threshold?.watcherForType(LoggingThreshold.TOTAL_FILE_SIZE)
+                    ),
+                    "FSStreamingLogWriter(execution:${execution.id})"
             )
-            outfilepath = logFileStorageService.getFileForExecutionFiletype(execution, LOG_FILE_FILETYPE, false)
+            outfilepath = logFileStorageService.getFileForExecutionFiletype(execution, LOG_FILE_FILETYPE, false, false)
         } else {
             log.debug("File log writer disabled for execution ${execution.id}")
         }
@@ -166,7 +179,7 @@ class LoggingService implements ExecutionFileProducer {
      * Return the log file for the execution
      */
     public File getLogFileForExecution(Execution execution) {
-        logFileStorageService.getFileForExecutionFiletype(execution, LOG_FILE_FILETYPE, true)
+        logFileStorageService.getFileForExecutionFiletype(execution, LOG_FILE_FILETYPE, false, false)
     }
 
     String getConfiguredStreamingReaderPluginName() {

@@ -18,6 +18,7 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
@@ -37,7 +38,7 @@ class WorkflowControllerTests {
         //test insert
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
-
+        ctrl.frameworkService = createMockFrameworkService(false)
         def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0,
                 params: [jobName: 'blah', jobGroup: 'blee',description:'desc1',newitemtype: 'job']])
         assertNull result.error
@@ -79,10 +80,12 @@ class WorkflowControllerTests {
 
     private FrameworkService createMockFrameworkService(boolean nodestep,Map expectedParams=null) {
         def fwmock = mockFor(FrameworkService)
+        fwmock.demand.getAuthContextForSubject{ subject -> null }
+        fwmock.demand.projectNames{authContext -> null}
         if(nodestep){
-            fwmock.demand.getNodeStepPluginDescription { type -> null }
+            fwmock.demand.getNodeStepPluginDescription { type -> DescriptionBuilder.builder().name('blah').build() }
         }else{
-            fwmock.demand.getStepPluginDescription { type -> null }
+            fwmock.demand.getStepPluginDescription { type -> DescriptionBuilder.builder().name('blah').build() }
         }
         fwmock.demand.validateDescription { Description description,
                                             String prefix,
@@ -97,7 +100,27 @@ class WorkflowControllerTests {
             assertEquals(PropertyScope.Project,ignored)
             [valid: true, props: params]
         }
+
         fwmock.createMock()
+    }
+
+    /**
+     * utility method to mock a class
+     */
+    private mockWith(Class clazz,Closure clos){
+        def mock = mockFor(clazz,true)
+        mock.demand.with(clos)
+        return mock.createMock()
+    }
+
+    private FrameworkService minimalFrameworkService(){
+        mockWith(FrameworkService){
+            getAuthContextForSubject(0..3){subj->
+                null
+            }
+            projectNames(0..3){authContext ->
+                null}
+        }
     }
     /**
      * Multi line config values with \r\n should be converted to \n
@@ -151,7 +174,7 @@ class WorkflowControllerTests {
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
         wf.commands = new ArrayList()
 
-
+        ctrl.frameworkService = createMockFrameworkService(false)
         def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0,
                 params: [newitemtype: 'command',adhocRemoteString: 'some string',description: 'monkey']])
 
@@ -175,7 +198,7 @@ class WorkflowControllerTests {
 
         assertEquals 1, wf.commands.size()
 
-
+        ctrl.frameworkService = createMockFrameworkService(false)
         def result = ctrl._applyWFEditAction(wf, [action: 'remove', num: 0])
         assertNull result.error
         assertEquals 0, wf.commands.size()
@@ -196,7 +219,7 @@ class WorkflowControllerTests {
         wf.addToCommands(je)
 
         assertEquals 1, wf.commands.size()
-
+        ctrl.frameworkService = createMockFrameworkService(false)
         def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0, params: [jobName: 'xxa', jobGroup: 'xxz',description: 'xyz']])
         assertNull result.error
         assertEquals 1, wf.commands.size()
@@ -310,7 +333,7 @@ class WorkflowControllerTests {
 
         assertEquals 3, wf.commands.size()
 
-
+        ctrl.frameworkService = createMockFrameworkService(false)
         def result = ctrl._applyWFEditAction(wf, [action: 'move', from: 0, to: 2])
         assertNull result.error
         assertEquals 3, wf.commands.size()
@@ -369,7 +392,7 @@ class WorkflowControllerTests {
 
         assertEquals 1, wf.commands.size()
 
-
+        ctrl.frameworkService = createMockFrameworkService(false)
         def result = ctrl._applyWFEditAction(wf, [action: 'remove', num: 0])
         assertNull result.error
         assertEquals 0, wf.commands.size()
@@ -425,7 +448,7 @@ class WorkflowControllerTests {
         //test addHandler
         test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new JobExec(jobName: 'asdf', jobGroup: 'blee')])
-
+            ctrl.frameworkService = minimalFrameworkService()
             def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [jobName: 'blah', jobGroup: 'blee']])
             assertNull result.error
             assertEquals 1, wf.commands.size()
@@ -567,7 +590,7 @@ class WorkflowControllerTests {
         Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
                 [new CommandExec(adhocRemoteString: 'test', errorHandler: new PluginStep(type: 'test1', nodeStep: true, configuration: ['elf': 'monkey']))])
         assertNotNull(wf.commands[0].errorHandler)
-
+        ctrl.frameworkService = createMockFrameworkService(false)
         def result = ctrl._applyWFEditAction(wf, [action: 'removeHandler', num: 0])
         assertNull result.error
         assertEquals 1, wf.commands.size()
@@ -665,14 +688,13 @@ class WorkflowControllerTests {
         assertEquals(['elf': 'monkey'], result.undo.params.configuration)
     }
 
-    public void testUndoWFEditActions() {
+    public void testUndoWFEditActionsInsert() {
         WorkflowController ctrl = new WorkflowController()
         //test insert & then undo
-        test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             wf.commands = new ArrayList()
 
-
+            ctrl.frameworkService = minimalFrameworkService()
             def result = ctrl._applyWFEditAction(wf, [action: 'insert', num: 0, params: [jobName: 'blah', jobGroup: 'blee']])
             assertNull result.error
             assertEquals 1, wf.commands.size()
@@ -690,15 +712,16 @@ class WorkflowControllerTests {
             assertNull result2.error
             assertEquals 0, wf.commands.size()
         }
+    public void testUndoWFEditActionsRemove() {
+        WorkflowController ctrl = new WorkflowController()
         //test remove & undo
-        test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
             wf.addToCommands(je)
 
             assertEquals 1, wf.commands.size()
 
-
+            ctrl.frameworkService = minimalFrameworkService()
             def result = ctrl._applyWFEditAction(wf, [action: 'remove', num: 0])
             assertNull result.error
             assertEquals 0, wf.commands.size()
@@ -720,15 +743,16 @@ class WorkflowControllerTests {
 
         }
 
+    public void testUndoWFEditActionsModify() {
+        WorkflowController ctrl = new WorkflowController()
         //test modify & undo
-        test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
             wf.addToCommands(je)
 
             assertEquals 1, wf.commands.size()
 
-
+            ctrl.frameworkService = minimalFrameworkService()
             def result = ctrl._applyWFEditAction(wf, [action: 'modify', num: 0, params: [jobName: 'xxa', jobGroup: 'xxz']])
             assertNull result.error
             assertEquals 1, wf.commands.size()
@@ -757,8 +781,9 @@ class WorkflowControllerTests {
 
         }
 
+    public void testUndoWFEditActionsMove() {
+        WorkflowController ctrl = new WorkflowController()
         //test move
-        test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
             JobExec je = new JobExec(jobName: 'blah', jobGroup: 'blee')
             CommandExec ce = new CommandExec(adhocExecution: true, adhocRemoteString: 'echo something')
@@ -769,7 +794,7 @@ class WorkflowControllerTests {
 
             assertEquals 3, wf.commands.size()
 
-
+            ctrl.frameworkService = minimalFrameworkService()
             def result = ctrl._applyWFEditAction(wf, [action: 'move', from: 0, to: 2])
             assertNull result.error
             assertEquals 3, wf.commands.size()
@@ -797,7 +822,6 @@ class WorkflowControllerTests {
             assertEquals ce, xitem1
             final Object xitem2 = wf.commands.get(2)
             assertEquals ce2, xitem2
-        }
     }
 
     public void testUndoWFErrorHandlerEditActionsAddHandler() {
@@ -805,7 +829,7 @@ class WorkflowControllerTests {
         //test addHandler then undo
         test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new JobExec(jobName: 'bladf', jobGroup: 'elf')])
-
+            ctrl.frameworkService = minimalFrameworkService()
             def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [jobName: 'blah', jobGroup: 'blee']])
             assertNull result.error
             assertEquals 1, wf.commands.size()
@@ -836,7 +860,7 @@ class WorkflowControllerTests {
         //test addHandler then undo
         test: {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands: [new JobExec(jobName: 'bladf', jobGroup: 'elf')])
-
+            ctrl.frameworkService = minimalFrameworkService()
             def result = ctrl._applyWFEditAction(wf, [action: 'addHandler', num: 0, params: [jobName: 'blah', jobGroup: 'blee', keepgoingOnSuccess: 'true']])
             assertNull result.error
             assertEquals 1, wf.commands.size()
@@ -870,7 +894,7 @@ class WorkflowControllerTests {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
                     [new JobExec(jobName: 'monkey', jobGroup: 'elf', errorHandler: new JobExec(jobName: 'blah', jobGroup: 'blee'))])
             assertNotNull(wf.commands[0].errorHandler)
-
+            ctrl.frameworkService = minimalFrameworkService()
             def result = ctrl._applyWFEditAction(wf, [action: 'removeHandler', num: 0])
             assertNull result.error
             assertEquals 1, wf.commands.size()
@@ -910,7 +934,7 @@ class WorkflowControllerTests {
             Workflow wf = new Workflow(threadcount: 1, keepgoing: true, commands:
                     [new CommandExec(adhocRemoteString: 'test', errorHandler: new JobExec(jobName: 'blah', jobGroup: 'blee'))])
             assertNotNull(wf.commands[0].errorHandler)
-
+            ctrl.frameworkService = minimalFrameworkService()
             def result = ctrl._applyWFEditAction(wf, [action: 'modifyHandler', num: 0, params: [jobName: 'blah2', jobGroup: 'blee2']])
             assertNull result.error
             assertEquals 1, wf.commands.size()

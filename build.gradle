@@ -37,7 +37,8 @@
         mavenCentral()
     }
     dependencies {
-        classpath 'com.adaptc.gradle:nexus-workflow:0.5'
+        classpath 'com.adaptc.gradle:nexus-workflow:0.6'
+        classpath 'com.google.gradle:osdetector-gradle-plugin:1.4.0'
     }
 }
 description = 'The master-build project for Rundeck';
@@ -45,6 +46,7 @@ description = 'The master-build project for Rundeck';
 apply plugin: 'nexus-workflow'
 apply plugin: 'eclipse';
 apply plugin: 'idea'
+apply plugin: 'com.google.osdetector'
 
 eclipse.project.name = 'rundeck'
 
@@ -90,7 +92,7 @@ allprojects{
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '1.12'
+    gradleVersion = '3.5'
 }
 
 // prompt for PGP key passphrase if not set
@@ -198,7 +200,7 @@ exportedProjects.each {
         //utility to create a pom for building
         if(!(project.name in ['core','launcher'])){
             //:core buildfile will generate its own pom for specialized purpose
-            task createPom << {
+            task('createPom').doLast {
                 publishPom.writeTo("pom.xml")
             }
         }

@@ -19,12 +19,15 @@ package com.dtolabs.rundeck.core.common;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.Authorization;
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext;
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceService;
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService;
 import com.dtolabs.rundeck.core.utils.PropertyLookup;
 import com.dtolabs.utils.Streams;
 
 import java.io.*;
 import java.net.URI;
 import java.util.*;
+import java.util.function.Supplier;
 
 
 /**
@@ -32,15 +35,10 @@ import java.util.*;
  * organized by their type.
  * <br>
  */
-public class FrameworkProject extends FrameworkResourceParent implements IRundeckProject {
+public class FrameworkProject extends FrameworkResource implements IRundeckProject {
     public static final String PROP_FILENAME = "project.properties";
     public static final String ETC_DIR_NAME = "etc";
     public static final String NODES_XML = "resources.xml";
-    public static final String PROJECT_RESOURCES_URL_PROPERTY = "project.resources.url";
-    public static final String PROJECT_RESOURCES_FILE_PROPERTY = "project.resources.file";
-    public static final String PROJECT_RESOURCES_FILEFORMAT_PROPERTY = "project.resources.file.format";
-    public static final String PROJECT_RESOURCES_ALLOWED_URL_PREFIX = "project.resources.allowedURL.";
-    public static final String FRAMEWORK_RESOURCES_ALLOWED_URL_PREFIX = "framework.resources.allowedURL.";
     public static final String RESOURCES_SOURCE_PROP_PREFIX = "resources.source";
     public static final String PROJECT_RESOURCES_MERGE_NODE_ATTRIBUTES = "project.resources.mergeNodeAttributes";
 
@@ -72,8 +70,7 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
     /**
      * Direct projec properties
      */
-    private FilesystemFramework filesystemFramework;
-    private Framework framework;
+    private IFilesystemFramework filesystemFramework;
     private IProjectNodesFactory projectNodesFactory;
     private Authorization projectAuthorization;
     private IRundeckProjectConfig projectConfig;
@@ -91,14 +88,14 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
     public FrameworkProject(
             final String name,
             final File basedir,
-            final FilesystemFramework filesystemFramework,
+            final IFilesystemFramework filesystemFramework,
             final IFrameworkProjectMgr resourceMgr,
             final IRundeckProjectConfig projectConfig,
             final IRundeckProjectConfigModifier projectConfigModifier
     )
     {
 
-        super(name, basedir, null);
+        super(name, basedir);
         this.filesystemFramework=filesystemFramework;
         projectResourceMgr = resourceMgr;
         resourcesBaseDir = new File(getBaseDir(), "resources");
@@ -114,7 +111,6 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
 
         this.projectConfig=projectConfig;
         this.projectConfigModifier=projectConfigModifier;
-        initialize();
     }
 
     @Override
@@ -212,41 +208,24 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         return getProjectNodes().listResourceModelConfigurations();
     }
 
-    /**
-     * @param name        project name
-     * @param projectsDir projects dir
-     * @param resourceMgr resourcemanager
-     *
-     * @return Create a new Project object at the specified projects.directory
-     */
-    public static FrameworkProject create(
-            final String name,
-            final File projectsDir,
-            final FilesystemFramework filesystemFramework,
-            final IFrameworkProjectMgr resourceMgr,
-            IProjectNodesFactory nodesFactory
-    )
-    {
-        return FrameworkFactory.createFrameworkProject(name,
-                                                       new File(projectsDir, name),
-                                                       filesystemFramework,
-                                                       resourceMgr,
-                                                       nodesFactory,
-                                                       null);
-    }
+
 
     /**
-     * @param name        project name
-     * @param projectsDir projects dir
-     * @param resourceMgr resourcemanager
+     * @param getResourceFormatGeneratorService
+     * @param getResourceModelSourceService
+     * @param name                              project name
+     * @param projectsDir                       projects dir
+     * @param resourceMgr                       resourcemanager
      *
      * @return Create a new Project object at the specified projects.directory
      */
     public static FrameworkProject create(
             final String name,
             final File projectsDir,
-            final FilesystemFramework filesystemFramework,
-            final IFrameworkProjectMgr resourceMgr
+            final IFilesystemFramework filesystemFramework,
+            final IFrameworkProjectMgr resourceMgr,
+            final Supplier<ResourceFormatGeneratorService> getResourceFormatGeneratorService,
+            final Supplier<ResourceModelSourceService> getResourceModelSourceService
     )
     {
         return FrameworkFactory.createFrameworkProject(
@@ -254,15 +233,16 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
                 new File(projectsDir, name),
                 filesystemFramework,
                 resourceMgr,
-                FrameworkFactory.createNodesFactory(filesystemFramework),
+                FrameworkFactory.createNodesFactory(
+                        filesystemFramework,
+                        getResourceFormatGeneratorService,
+                        getResourceModelSourceService
+                ),
                 null
         );
     }
 
 
-    public IFrameworkResource loadChild(String name) {
-        throw new NoSuchResourceException("project named " + name + " doesn't exist", this);
-    }
 
     public boolean childCouldBeLoaded(String name) {
 
@@ -284,14 +264,6 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
             }
         }
         return childnames;
-    }
-
-    /**
-     * Create a new type and store it
-     *
-     */
-    public IFrameworkResource createChild(final String resourceType) {
-        throw new UnsupportedOperationException("createChild");
     }
 
 
@@ -324,54 +296,6 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         return getProjectNodes().getNodeSet();
     }
 
-    /**
-     * Conditionally update the nodes resources file if a URL source is defined for it and return
-     * true if the update process was invoked and succeeded
-     *
-     * @return true if the update succeeded, false if it was not performed
-     * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file
-     *
-     */
-    @Override
-    public boolean updateNodesResourceFile() throws UpdateUtils.UpdateException {
-        return getProjectNodes().updateNodesResourceFile(ProjectNodeSupport.getNodesResourceFilePath(this, framework));
-    }
-
-    /**
-     * Update the nodes resources file from a specific URL, with BASIC authentication as provided or
-     * as defined in the URL's userInfo section.
-     * @param providerURL URL to retrieve resources file definition
-     * @param username username or null
-     * @param password or null
-     * @throws com.dtolabs.rundeck.core.common.UpdateUtils.UpdateException if an error occurs during the update process
-     */
-    @Override
-    public void updateNodesResourceFileFromUrl(
-            final String providerURL, final String username,
-            final String password
-    ) throws UpdateUtils.UpdateException
-    {
-        getProjectNodes().updateNodesResourceFileFromUrl(
-                providerURL,
-                username,
-                password,
-                ProjectNodeSupport.getNodesResourceFilePath(this, framework)
-        );
-    }
-
-
-    /**
-     * Update the resources file given an input Nodes set
-     *
-     * @param nodeset nodes
-     * @throws UpdateUtils.UpdateException if an error occurs while trying to update the resources file or generate
-     * nodes
-     *
-     */
-    @Override
-    public void updateNodesResourceFile(final INodeSet nodeset) throws UpdateUtils.UpdateException {
-       getProjectNodes().updateNodesResourceFile(nodeset,ProjectNodeSupport.getNodesResourceFilePath(this, framework));
-    }
 
 
 
@@ -493,13 +417,6 @@ public class FrameworkProject extends FrameworkResourceParent implements IRundec
         return getProjectNodes().getResourceModelSourceExceptions();
     }
 
-    public Framework getFramework() {
-        return framework;
-    }
-
-    public void setFramework(final Framework framework) {
-        this.framework = framework;
-    }
 
 
     @Override

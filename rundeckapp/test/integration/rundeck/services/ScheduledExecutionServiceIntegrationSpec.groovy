@@ -1,5 +1,6 @@
 package rundeck.services
 
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import grails.test.spock.IntegrationSpec
 import org.hibernate.criterion.CriteriaSpecification
 import org.quartz.JobDetail
@@ -47,11 +48,15 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
         def project = 'testProject'
         service.executionServiceBean    = Mock(ExecutionService)
         service.quartzScheduler         = Mock(Scheduler)
+        service.jobSchedulerService = Mock(JobSchedulerService)
         service.frameworkService        = Stub(FrameworkService) {
             existsFrameworkProject(project) >> true
             isClusterModeEnabled() >> true
             getServerUUID() >> TEST_UUID2
             getRundeckBase() >> ''
+            getFrameworkProject(project) >> Mock(IRundeckProject){
+                getProjectProperties()>>[:]
+            }
         }
         service.fileUploadService=Mock(FileUploadService)
 
@@ -111,11 +116,15 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
         def project = 'testProject'
         service.executionServiceBean    = Mock(ExecutionService)
         service.quartzScheduler         = Mock(Scheduler)
+        service.jobSchedulerService = Mock(JobSchedulerService)
         service.frameworkService        = Stub(FrameworkService) {
             existsFrameworkProject(project) >> true
             isClusterModeEnabled() >> true
             getServerUUID() >> TEST_UUID2
             getRundeckBase() >> ''
+            getFrameworkProject(project) >> Mock(IRundeckProject){
+                getProjectProperties()>>[:]
+            }
         }
         service.fileUploadService=Mock(FileUploadService)
 
@@ -191,14 +200,19 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
     def "ad hoc scheduled job should be rescheduled via Quartz"() {
         given:
         def project                     = 'testProject'
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> [:]
+        }
         service.executionServiceBean    = Mock(ExecutionService)
         service.fileUploadService = Mock(FileUploadService)
         service.quartzScheduler         = Mock(Scheduler)
+        service.jobSchedulerService = Mock(JobSchedulerService)
         service.frameworkService = Stub(FrameworkService) {
             existsFrameworkProject(project) >> true
             isClusterModeEnabled() >> true
             getServerUUID() >> TEST_UUID2
             getRundeckBase() >> ''
+            getFrameworkProject(_) >> projectMock
         }
 
         String jobUuid  = UUID.randomUUID().toString()
@@ -248,12 +262,7 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
         e.serverNodeUUID == TEST_UUID2
         se != null
         1 * service.executionServiceBean.executionsAreActive >> true
-        1 * service.quartzScheduler.scheduleJob(_ as JobDetail, _ as SimpleTrigger) >> {
-            arguments ->
-                SimpleTrigger trigger = arguments[1]
-                assert trigger.getStartTime().getTime() == startTime.getTime()
-                return startTime
-        }
+        1 * service.jobSchedulerService.scheduleJob(_,_,_, startTime) >>  startTime
 
         // Both jobs should've been claimed
         jobUuid in results
@@ -273,6 +282,9 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
             isClusterModeEnabled() >> true
             getServerUUID() >> TEST_UUID2
             getRundeckBase() >> ''
+            getFrameworkProject(project) >> Mock(IRundeckProject){
+                getProjectProperties()>>[:]
+            }
         }   
         
         String jobUuid  = UUID.randomUUID().toString()
@@ -336,6 +348,9 @@ class ScheduledExecutionServiceIntegrationSpec extends IntegrationSpec {
             isClusterModeEnabled() >> true
             getServerUUID() >> TEST_UUID2
             getRundeckBase() >> ''
+            getFrameworkProject(project) >> Mock(IRundeckProject){
+                getProjectProperties()>>[:]
+            }
         }
 
         String jobUuid  = UUID.randomUUID().toString()

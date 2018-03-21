@@ -287,7 +287,6 @@ class ReportsController extends ControllerBase{
 
         if (query.hasErrors()) {
             response.status=400
-            log.error("query errors: "+(query.errors.allErrors.collect{it.toString()}.join(", ")))
             return render(contentType: 'application/json', text:  [errors: query.errors] as JSON)
         }
         def results = index(query)
@@ -360,19 +359,19 @@ class ReportsController extends ControllerBase{
         }
         filter.fillProperties()
         if(!filter.save(flush:true)){
-            flash.error=filter.errors.allErrors.collect { g.message(error:it) }.join("\n")
+            flash.errors = filter.errors
             params.saveFilter=true
             chain(controller:'reports',action:'index',params:params)
         }
         if(saveuser){
             if(!u.save(flush:true)){
-                return renderErrorView(u.errors.allErrors.collect { g.message(error: it) }.join("\n"))
+                return renderErrorView([beanErrors: u.errors])
             }
         }
-        redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[filterName:filter.name,project:params.project])
+            redirect(controller: 'reports', action: 'index', params: [filterName: filter.name, project: params.project])
         }.invalidToken {
             flash.error=g.message(code:'request.error.invalidtoken.message')
-            redirect(controller: 'reports', action: params.fragment ? 'eventsFragment' : 'index', params: [project: params.project])
+            redirect(controller: 'reports', action: 'index', params: [project: params.project])
         }
     }
 
@@ -385,10 +384,14 @@ class ReportsController extends ControllerBase{
                 ffilter.delete(flush:true)
                 flash.message="Filter deleted: ${filtername}"
             }
-            redirect(controller:'reports',action:params.fragment?'eventsFragment':'index',params:[project:params.project])
+            redirect(controller: 'reports', action: 'index', params: [project: params.project])
         }.invalidToken {
             flash.error= g.message(code: 'request.error.invalidtoken.message')
-            redirect(controller: 'reports', action: params.fragment ? 'eventsFragment' : 'index', params: [filterName: params.delFilterName,project: params.project])
+            redirect(
+                    controller: 'reports',
+                    action: 'index',
+                    params: [filterName: params.delFilterName, project: params.project]
+            )
         }
     }
    

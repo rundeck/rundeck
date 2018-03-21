@@ -9,7 +9,7 @@ you to the top level navigation of the interface.
 
 ## Essential Concepts
 
-Several fundamental concepts underly and drive the Rundeck system. 
+Several fundamental concepts underlie and drive the Rundeck system.
 If you are a new user, knowing about them will
 help you use or integrate Rundeck into your environment.
 
@@ -48,7 +48,7 @@ Choose the one that best suits your infrastructure.
 After installation, be sure Rundeck has been started.
 See [Startup](../administration/startup-and-shutdown.html) to learn how to
 startup and shutdown rundeck.
-* You can run the [vagrant](http://github.com/rundeck/anvils-demo) demo. 
+* You can run the [vagrant](https://github.com/rundeck/anvils-demo) demo.
 The demo contains a project with tagged nodes, example job workflows with
 dynamic options, and a set of users, each with varying degrees of privilege.
 
@@ -116,7 +116,7 @@ Nodes
 
 Commands
 
-:    The Commands page lets you execute abitrary commands against the
+:    The Commands page lets you execute arbitrary commands against the
      nodes that match the node filter.
      
      See [Commands](commands.html).

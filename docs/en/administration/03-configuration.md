@@ -68,11 +68,12 @@ Some important settings:
 * `framework.rundeck.url`: Base URL for Rundeck server.
 
 
-SSH Connection settings:
+SSH Connection settings (See [Plugins User Guide > SSH Plugins](../plugins-user-guide/ssh-plugins.html)):
 
 * `framework.ssh.keypath`: Path to the SSH private key file used for SSH connections
 * `framework.ssh.user`: Default username for SSH Connections, if not overridden by Node specific value.
-* `framework.ssh.timeout`: timeout in milliseconds for SSH connections and executions. The default is "0" (no timeout).  You can modify this to change the maximum time allowed for SSH connections.
+* `framework.ssh-connect-timeout`: timeout in milliseconds for SSH connections. The default is "0" (no timeout).  You can modify this to change the connect/socket timeout. (Deprecated: `framework.ssh.timeout`.)
+* `framework.ssh-command-timeout`: timeout in milliseconds for SSH commands. The default is "0" (no timeout).  You can modify this to change the maximum time allowed for SSH commands to run.
 
 Other settings:
 
@@ -105,7 +106,7 @@ Global variables can be overridden in the [`project.properties`](#project.proper
 Rundeck uses [log4j] as its application logging facility. This file
 defines the logging configuration for the Rundeck server.
 
-[log4j]: http://logging.apache.org/log4j/
+[log4j]: https://logging.apache.org/log4j/2.x/
 
 ## cli-log4j.properties
 
@@ -119,7 +120,7 @@ tools like umask, Java home and classpath, and SSL options.
 
 ## project.properties
 
-Rundeck project configuration file when using Filsystem based project defintions (see [Project Setup - Project Definitions](project-setup.html#project-definitions)).
+Rundeck project configuration file when using Filesystem based project definitions (see [Project Setup - Project Definitions](project-setup.html#project-definitions)).
 
 One of these is
 generated at project setup time. Each project has a directory within the Rundeck projects directory, and the config file is within the `etc` subdirectory:
@@ -234,14 +235,15 @@ The following sections describe configuration values for this file.
     correctly if they use username and password login.
 
 * `rundeck.api.tokens.duration.max`: Duration string indicating maximum lifetime of API Tokens. If unset, the value
-    will be "30d" (30 days). Format: "##{ydhms}" (years, days, hours, minutes, seconds).
+    will be "30d" (30 days). Format: "##{ydhms}" (years, days, hours, minutes, seconds). 
+    If you want to disable the max expiration you can set it to 0 and create token with 0 duration that don't expire.
 
 * `rundeck.security.csrf.referer.filterMethod`:`NONE|POST|*`. Set HTTP Method to filter based on Referer header.  Can be POST, or "*" for all methods. Default: NONE (disabled)
 
-* `rundeck.security.csrf.referer.allowApi`: `true|false`. Allow /api/* requests without requireing matching Referer header. Default: true.
+* `rundeck.security.csrf.referer.allowApi`: `true|false`. Allow /api/* requests without requiring matching Referer header. Default: true.
 
 * `rundeck.security.csrf.referer.requireHttps`: `true|false`. If server URL is HTTPS, Require referer header to be from HTTPS version of server URL, if false allow HTTP as well. Default: true.
-
+ 
 ### Execution Mode
 
 * `rundeck.executionMode`:`active/passive`. Default `active`. Set the Execution
@@ -299,7 +301,7 @@ Delay is in milliseconds. If a max is set to `-1`, then retries will happen inde
 
 ### Metrics servlets
 
-Rundeck includes the [Metrics](http://metrics.codahale.com) servlets.  You can selectively disable these by setting these config values:
+Rundeck includes the [Metrics](http://metrics.dropwizard.io/3.0.2/) servlets.  You can selectively disable these by setting these config values:
 
 `rundeck.web.metrics.servlets.[name].enabled=true/false`
 
@@ -353,6 +355,24 @@ Default value: 3
 Change this by setting:
 
     rundeck.jobs.options.remoteUrlRetry=[total]
+
+### Job File Option Uploads
+
+Values to configure file uploads for File type Job options:
+
+Max temp file size.
+File size in bytes or with a suffix of `k`,`m`,`g`,`t` (kilo,mega,giga,tera).
+
+    rundeck.fileUploadService.tempfile.maxsize=200M
+
+Max temp file expiration (duration in milliseconds).
+The uploaded file will be removed if not used as a job option within ths time period.
+(This primarily affects Job executions performed via API
+because the File Upload and Job Run are performed as separate steps.)
+
+    # default is 10 minutes
+    rundeck.fileUploadService.tempfile.expiration=600000
+
 
 ### Groovy config format
 

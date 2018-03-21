@@ -22,6 +22,7 @@
 //= require historyKO
 //= require nodeFiltersKO
 //= require adhocCommandKO
+//= require executionStateKO
 
 /*
  Manifest for "framework/adhoc.gsp" page
@@ -120,7 +121,8 @@ function startRunFollow(data) {
             if (status == 'success') {
                 Element.show('runcontent');
                 _initAffix();
-                continueRunFollow(data);
+                var nodeflowvm=continueRunFollow(data);
+                ko.applyBindings(nodeflowvm,jQuery('#runcontent .executionshow')[0]);
             } else {
                 requestFailure(jqxhr);
             }
@@ -146,11 +148,13 @@ function continueRunFollow(data) {
         iconUrl: pageParams.iconUrl,
         lastlines: pageParams.lastlines,
         maxLastLines: pageParams.maxLastLines,
+        killjobauth: pageParams.adhocKillAllowed,
         //showFinalLine: {value: false, changed: false},
         colStep: {value: false},
         collapseCtx: {value: false, changed: false},
         groupOutput:{value:false},
         tailmode: true,
+        taildelay: 1.5,
         browsemode: false,
         nodemode: false,
         //taildelay: 1,
@@ -160,12 +164,29 @@ function continueRunFollow(data) {
         onComplete: onRunComplete,
         dobind: true
     });
+    var nodeflowvm=new NodeFlowViewModel(
+        workflow,
+        null,
+        null,
+        null,
+        {followControl:followControl,executionId:data.id}
+    );
+    var flowState = new FlowState(data.id,null,{
+        workflow:workflow,
+        loadUrl:_genUrl(appLinks.executionAjaxExecState,{id:data.id}),
+        outputUrl:null,
+        selectedOutputStatusId:null,
+        reloadInterval:1500
+    });
+    nodeflowvm.followFlowState(flowState);
     followControl.beginFollowingOutput(data.id);
+    flowState.beginFollowing();
     var oldControl=adhocCommand.followControl;
     adhocCommand.followControl=followControl;
     if(oldControl){
         oldControl.stopFollowingOutput();
     }
+    return nodeflowvm;
 }
 function onRunComplete() {
     adhocCommand.running(false);

@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.common.NodeSetImpl
 import com.dtolabs.rundeck.core.common.NodesSelector
 import com.dtolabs.rundeck.core.execution.ExecutionContextImpl
 import com.dtolabs.rundeck.core.execution.StepExecutionItem
+import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ExecCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileCommandExecutionItem
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptURLCommandExecutionItem
@@ -56,9 +57,11 @@ class ExecutionServiceTests  {
         mock.demand.with(clos)
         return mock.createMock()
     }
-    private UserAndRolesAuthContext createAuthContext(String user){
+
+    private UserAndRolesAuthContext createAuthContext(String user, Set<String> roles = []) {
         def mock=mockFor(UserAndRolesAuthContext)
         mock.demand.getUsername{ user }
+        mock.demand.getRoles { roles }
         mock.createMock()
     }
     void testCreateExecutionRunning(){
@@ -151,6 +154,48 @@ class ExecutionServiceTests  {
         assertNotNull(e2.dateStarted)
         assertNull(e2.dateCompleted)
         assertEquals('user1', e2.user)
+        assertEquals('scheduled', e2.executionType)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
+    }
+
+    void testCreateExecutionSimple_userRoles() {
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                )
+        se.save()
+
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService = fsvc
+
+        Execution e2 = svc.createExecution(
+                se,
+                createAuthContext("user1", ['a', 'b'] as Set),
+                null,
+                [executionType: 'scheduled']
+        )
+
+        assertNotNull(e2)
+        assertEquals('-a b -c d', e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals('user1', e2.user)
+        assertEquals(['a', 'b'], e2.userRoles)
         assertEquals('scheduled', e2.executionType)
         def execs = se.executions
         assertNotNull(execs)
@@ -290,7 +335,6 @@ class ExecutionServiceTests  {
         def opt1 = new Option(name: 'test', enforced: false,)
         se.addToOptions(opt1)
         if (!se.validate()) {
-            System.out.println(se.errors.allErrors*.toString().join("; "))
         }
         assertNotNull se.save()
 
@@ -327,7 +371,6 @@ class ExecutionServiceTests  {
         def opt1 = new Option(name: 'test', enforced: false,)
         se.addToOptions(opt1)
         if (!se.validate()) {
-            System.out.println(se.errors.allErrors*.toString().join("; "))
         }
         assertNotNull se.save()
 
@@ -737,7 +780,7 @@ class ExecutionServiceTests  {
 
 
             Execution se = new Execution(argString:"-test args",user:"testuser",project:"testproj", loglevel:'WARN',doNodedispatch: false)
-            def val= service.createContext(se,null,null,null,null,null,null)
+            def val= service.createContext(se,null,null,null,null,null,(WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNull(val.nodeSelector)
             assertEquals("testproj",val.frameworkProject)
@@ -769,7 +812,7 @@ class ExecutionServiceTests  {
         //check datacontext
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = service.createContext(se, null,null, null, null, null, null)
+            def val = service.createContext(se, null,null, null, null, null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.dataContext)
             assertNotNull(val.dataContext.job)
@@ -813,7 +856,7 @@ class ExecutionServiceTests  {
         //check datacontext, inputargs instead of argString
 
             Execution se = new Execution(user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = service.createContext(se, null,null, null, null, null,null, ['-test','args','-test2',
+            def val = service.createContext(se, null,null, null, null, null,null,null, ['-test','args','-test2',
                     'monkey args'] as String[])
             assertNotNull(val)
             assertNotNull(val.dataContext)
@@ -846,7 +889,7 @@ class ExecutionServiceTests  {
         //check datacontext, include job data
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = service.createContext(se, null,null, null, null, [id:"3",name:"testjob"], null, null)
+            def val = service.createContext(se, null,null, null, null, [id:"3",name:"testjob"], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.dataContext)
             assertNotNull(val.dataContext.job)
@@ -877,7 +920,7 @@ class ExecutionServiceTests  {
         //check nodeset, empty
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
-            def val = service.createContext(se, null,null, null, null, [id:"3",name:"testjob"], null, null)
+            def val = service.createContext(se, null,null, null, null, [id:"3",name:"testjob"], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNull(val.nodeSelector)
     }
@@ -904,7 +947,7 @@ class ExecutionServiceTests  {
         //check nodeset, filtered from execution obj. include name
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeIncludeName: "testnode")
-            def val = service.createContext(se, null, null, null, null, [id: "3", name: "testjob"], null, null)
+            def val = service.createContext(se, null, null, null, null, [id: "3", name: "testjob"], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -965,7 +1008,7 @@ class ExecutionServiceTests  {
         //check nodeset, filtered from execution obj. exclude name
 
             Execution se = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true, nodeExcludeName: "testnode")
-            def val = service.createContext(se, null, null, null, null, [id: "3", name: "testjob"], null, null)
+            def val = service.createContext(se, null, null, null, null, [id: "3", name: "testjob"], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -1010,7 +1053,7 @@ class ExecutionServiceTests  {
 
             Execution se = new Execution(argString: "-test args -test3 something", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: true,nodeIncludeName: "basic")
             def val = service.createContext(se, null, null, null, null, [id:'3',name:'blah',group:'something/else',
-                    username:'bill',project:'testproj'], null, null)
+                    username:'bill',project:'testproj'], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -1053,7 +1096,7 @@ class ExecutionServiceTests  {
                     nodeExcludePrecedence: false,
             )
             def val = service.createContext(execution, null, null, null, null, [id:'3',name:'blah',group:'something/else',
-                    username:'bill',project:'testproj'], null, null)
+                    username:'bill',project:'testproj'], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -1108,7 +1151,7 @@ class ExecutionServiceTests  {
                 nodeExcludeOsVersion: "n,\${job.id} \${job.name} \${job.group} \${job.username} \${job.project}",
             )
             def val = service.createContext(se, null, null, null, null, [id:'3',name:'blah',group:'something/else',
-                    username:'bill',project:'testproj'], null, null)
+                    username:'bill',project:'testproj'], null, (WorkflowExecutionListener)null)
             assertNotNull(val)
             assertNotNull(val.nodeSelector)
             assertNotNull(val.nodeSelector.exclude)
@@ -1154,7 +1197,7 @@ class ExecutionServiceTests  {
             filter: "monkey:a,\${option.test} !environment:b,\${option.test3},d",
         )
         def val = service.createContext(se, null, null, null, null, [id:'3',name:'blah',group:'something/else',
-                username:'bill',project:'testproj'], null, null)
+                username:'bill',project:'testproj'], null, (WorkflowExecutionListener)null)
         assertNotNull(val)
         assertNotNull(val.nodeSelector)
         assertNotNull(val.nodeSelector.exclude)
@@ -1197,7 +1240,7 @@ class ExecutionServiceTests  {
             filter: "\${option.test}",
         )
         def val = service.createContext(execution, null, null, null, null, [id:'3',name:'blah',group:'something/else',
-                username:'bill',project:'testproj'], null, null)
+                username:'bill',project:'testproj'], null, (WorkflowExecutionListener)null)
         assertNotNull(val)
         assertNotNull(val.nodeSelector)
         assertNotNull(val.nodeSelector.exclude)
@@ -1266,10 +1309,15 @@ class ExecutionServiceTests  {
         assertEquals(2,Execution.findAll().size())
         assertEquals(1,Execution.findAllByDateCompletedAndServerNodeUUID(null, null).size())
         testService.cleanupRunningJobs((String)null)
-        exec1.refresh()
+
+        Execution.withSession { session ->
+            session.flush()
+            exec1.refresh()
+            exec2.refresh()
+        }
+
         assertNotNull(exec1.dateCompleted)
         assertEquals("false", exec1.status)
-        exec2.refresh()
         assertNull(exec2.dateCompleted)
         assertEquals(null, exec2.status)
 
@@ -1304,10 +1352,14 @@ class ExecutionServiceTests  {
         assertNull(exec2.status)
 
         testService.cleanupRunningJobs(uuid)
-        exec1.refresh()
+        Execution.withSession { session ->
+            session.flush()
+            exec1.refresh()
+            exec2.refresh()
+        }
+
         assertNull(exec1.dateCompleted)
         assertNull(exec1.status)
-        exec2.refresh()
         assertNotNull(exec2.dateCompleted)
         assertEquals("false", exec2.status)
     }
@@ -1329,7 +1381,12 @@ class ExecutionServiceTests  {
         assertEquals(ExecutionService.EXECUTION_SCHEDULED, exec1.status)
 
         testService.cleanupRunningJobs(uuid)
-        exec1.refresh()
+
+        Execution.withSession { session ->
+            session.flush()
+            exec1.refresh()
+        }
+
         assertNull(exec1.dateCompleted)
         assertEquals(ExecutionService.EXECUTION_SCHEDULED, exec1.status)
     }
@@ -1344,7 +1401,7 @@ class ExecutionServiceTests  {
                                           .threadCount(1)
                                           .keepgoing(false)
                                           .build()
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, null, null, null, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null,null, context, null, null, null, null, null, null)
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1359,7 +1416,7 @@ class ExecutionServiceTests  {
                                           .threadCount(1)
                                           .keepgoing(false)
                                           .build()
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, null, 2, null, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null,null, context, null, 2, null, null, null, null)
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1374,7 +1431,7 @@ class ExecutionServiceTests  {
                                           .threadCount(1)
                                           .keepgoing(false)
                                           .build()
-        def newctx=service.overrideJobReferenceNodeFilter(null, context, null, null, true, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null,null, context, null, null, true, null, null, null)
         assertEquals(['x','y'],newctx.nodes.nodeNames as List)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1399,7 +1456,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(new ExecutionContextImpl() , context, 'z p', null, null, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null,new ExecutionContextImpl() , context, 'z p', null, null, null, null, null)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(false,newctx.keepgoing)
         assertEquals(1,newctx.threadCount)
@@ -1424,7 +1481,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(new ExecutionContextImpl(), context, 'z p', 2, null, null, null, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null,new ExecutionContextImpl(), context, 'z p', 2, null, null, null, null)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(false,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
@@ -1449,7 +1506,7 @@ class ExecutionServiceTests  {
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(new ExecutionContextImpl(), context, 'z p', 2, true, null, null, false)
+        def newctx=service.overrideJobReferenceNodeFilter(null,new ExecutionContextImpl(), context, 'z p', 2, true, null, null, false)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
@@ -1475,7 +1532,7 @@ class ExecutionServiceTests  {
         }
         assertEquals(null, context.nodeRankAttribute)
         assertEquals(true, context.nodeRankOrderAscending)
-        def newctx=service.overrideJobReferenceNodeFilter(new ExecutionContextImpl(), context, 'z p', 2, true, 'rank', false, null)
+        def newctx=service.overrideJobReferenceNodeFilter(null,new ExecutionContextImpl(), context, 'z p', 2, true, 'rank', false, null)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
@@ -1506,7 +1563,7 @@ class ExecutionServiceTests  {
                 dataContext([option:[test1:'blah']]).build()
         assertEquals(null, context.nodeRankAttribute)
         assertEquals(true, context.nodeRankOrderAscending)
-        def newctx=service.overrideJobReferenceNodeFilter(origContext, context, 'z p ${option.test1}', 2, true, 'rank', false, false)
+        def newctx=service.overrideJobReferenceNodeFilter(null,origContext, context, 'z p ${option.test1}', 2, true, 'rank', false, false)
         assertEquals(['z','p'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(2,newctx.threadCount)
@@ -1541,16 +1598,13 @@ class ExecutionServiceTests  {
                 .keepgoing(false)
                 .build()
         service.frameworkService=mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                makeNodeSet(['a',])
-            }
             filterAuthorizedNodes(1..1){ final String project, final Set<String> actions, final INodeSet unfiltered,
                                          AuthContext authContext->
                 makeNodeSet(['a'])
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(origContext, newContext, 'a x', 2, null, null, null, true)
+        def newctx=service.overrideJobReferenceNodeFilter(null,origContext, newContext, 'a x', 2, null, null, null, true)
         assertEquals(['a'] as Set,newctx.nodes.nodeNames as Set)
     }
 
@@ -1580,16 +1634,13 @@ class ExecutionServiceTests  {
                 .keepgoing(true)
                 .build()
         service.frameworkService=mockWith(FrameworkService){
-            filterNodeSet(1..1){ NodesSelector selector, String project->
-                makeNodeSet(['x','y'])
-            }
             filterAuthorizedNodes(1..1){ final String project, final Set<String> actions, final INodeSet unfiltered,
                                          AuthContext authContext->
                 makeNodeSet(['x','y'])
             }
         }
 
-        def newctx=service.overrideJobReferenceNodeFilter(origContext, newContext, null, 0, null, null, null, true)
+        def newctx=service.overrideJobReferenceNodeFilter(null,origContext, newContext, null, 0, null, null, null, true)
         assertEquals(['x','y'] as Set,newctx.nodes.nodeNames as Set)
         assertEquals(true,newctx.keepgoing)
         assertEquals(10,newctx.threadCount)
@@ -1650,7 +1701,7 @@ class ExecutionServiceTests  {
                 null
             }
         }
-        def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],null,null,null,null,null,false);
+        def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],null,null,null,null,null,null, false,true);
 
         //verify nodeset
         assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)
@@ -1726,7 +1777,7 @@ class ExecutionServiceTests  {
         }
         assertEquals(null, context.nodeRankAttribute)
         assertEquals(true, context.nodeRankOrderAscending)
-        def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],'z p',true,3, 'rank', false,false);
+        def newCtxt=service.createJobReferenceContext(job,null,context,['-test1','value'] as String[],'z p',true,3, 'rank', false,null, false,true);
 
         //verify nodeset
         assertEquals(['z','p'] as Set,newCtxt.nodes.nodeNames as Set)
@@ -1808,7 +1859,7 @@ class ExecutionServiceTests  {
                 null
             }
         }
-        def newCtxt=service.createJobReferenceContext(job,null,context,['test1','${option.monkey}'] as String[],null,null,null, null, null,false);
+        def newCtxt=service.createJobReferenceContext(job,null,context,['test1','${option.monkey}'] as String[],null,null,null, null, null,null, false,true);
 
         //verify nodeset
         assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)
@@ -1903,7 +1954,7 @@ class ExecutionServiceTests  {
         }
         def newCtxt=service.createJobReferenceContext(job,null,context,
                                                       ['test1','${option.monkey}','test2','${option.balloon}'] as String[],
-                                                      null,null,null, null, null,false);
+                                                      null,null,null, null, null,null, false,true);
 
         //verify nodeset
         assertEquals(['x','y'] as Set,newCtxt.nodes.nodeNames as Set)
@@ -1960,5 +2011,109 @@ class ExecutionServiceTests  {
         def execs = se.executions
         assertNotNull(execs)
         assertTrue(execs.contains(e2))
+    }
+
+    void testCreateExecutionRetryWithDelay(){
+
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                argString: '-a b -c d',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                retry:'1',
+                retryDelay: '3s'
+        )
+        se.save()
+
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService=fsvc
+
+        Execution ex=svc.createExecution(se,createAuthContext("user1"),null,[executionType:'user','extra.option.test':'12'])
+
+        assertNotNull(ex)
+        assertEquals('-a b -c d', ex.argString)
+        assertEquals(se, ex.scheduledExecution)
+        assertNotNull(ex.dateStarted)
+        assertNull(ex.dateCompleted)
+        assertEquals('1',ex.retry)
+        assertEquals('3s',ex.retryDelay)
+        assertEquals(0,ex.retryAttempt)
+        assertEquals('user1', ex.user)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(ex))
+    }
+    void testCreateExecutionRetryDelayWithOptionValue(){
+
+        def jobRetryDelayValue = '${option.test}'
+        def testOptionValue = '1s'
+
+        assertRetryDelayOptionValueValid(jobRetryDelayValue, testOptionValue,'-test 1s')
+    }
+    private void assertRetryDelayOptionValueValid(String jobRetryValue, String testOptionValue, String argString) {
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                uuid: 'abc',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                retry: '2',
+                retryDelay: jobRetryValue
+        )
+        def opt1 = new Option(name: 'test', enforced: false,)
+        se.addToOptions(opt1)
+        if (!se.validate()) {
+            System.out.println(se.errors.allErrors*.toString().join("; "))
+        }
+        assertNotNull se.save()
+
+
+        ExecutionService svc = new ExecutionService()
+        FrameworkService fsvc = new FrameworkService()
+        svc.frameworkService = fsvc
+
+
+        Execution e2 = svc.createExecution(se,createAuthContext("user1"),null, [executionType:'user',('option.test'): testOptionValue])
+
+        assertNotNull(e2)
+        assertEquals(argString, e2.argString)
+        assertEquals(se, e2.scheduledExecution)
+        assertNotNull(e2.dateStarted)
+        assertNull(e2.dateCompleted)
+        assertEquals(testOptionValue, e2.retryDelay)
+        assertEquals(0, e2.retryAttempt)
+        assertEquals('user1', e2.user)
+        def execs = se.executions
+        assertNotNull(execs)
+        assertTrue(execs.contains(e2))
+    }
+
+    void testExportContextForExectuion(){
+        def filterFixture = "foo bar"
+
+        def ex = new Execution(
+                project: "test",
+                user: "test",
+                workflow: new Workflow(
+                        commands: [
+                                new CommandExec(adhocRemoteString: "exec")
+                        ]
+                ),
+                filter: filterFixture
+        )
+
+        def lg = mockFor(org.codehaus.groovy.grails.web.mapping.LinkGenerator)
+        lg.demand.link(2..2) { return '' }
+
+        def jobcontext = ExecutionService.exportContextForExecution(ex, lg.createMock())
+
+        assertEquals(filterFixture, jobcontext.filter)
+
+        lg.verify()
     }
 }

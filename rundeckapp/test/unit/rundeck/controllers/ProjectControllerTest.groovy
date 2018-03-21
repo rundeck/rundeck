@@ -641,7 +641,8 @@ class ProjectControllerTest {
 
         //test project element
         assertEquals 'true', result.'@error'.text()
-        assertEquals 0,result.error.'@code'.size()
+        assertEquals 1,result.error.'@code'.size()
+        assertEquals 'api.error.unknown',result.error.'@code'.text()
         assertEquals 'error1; error2', result.error.message.text()
     }
     /**
@@ -669,7 +670,7 @@ class ProjectControllerTest {
 
         //test project element
         assertEquals true, result.error
-        assertEquals null, result.errorCode
+        assertEquals 'api.error.unknown', result.errorCode
         assertEquals 'error1; error2', result.message
     }
     /**
@@ -1094,7 +1095,7 @@ class ProjectControllerTest {
             }
             getFrameworkProject{name->
                 assertEquals('test1',name)
-                [name:name,propertyFile: [text: propFileText]]
+                [name:name]
             }
             setFrameworkProjectConfig{proj,configProps->
                 assertEquals props,configProps
@@ -1464,23 +1465,6 @@ class ProjectControllerTest {
         assertEquals 'value1', response.json['prop1']
         assertEquals 'value2', response.json['prop2']
     }
-    @Test
-    void apiProjectConfigPut_text_success(){
-        controller.apiService = new ApiService()
-        mockCodec(JSONCodec)
-        controller.apiService.messageSource = mockWith(MessageSource) { getMessage { code, args, locale -> code } }
-        controller.frameworkService= mockFrameworkServiceForProjectConfigPut(true, true, 'configure', ['prop1': 'value1',
-                prop2: 'value2'], true, null, 'prop1=value1\nprop2=value2')
-        request.api_version = 11
-        params.project = 'test1'
-        request.content='prop1=value1\nprop2=value2'.bytes
-        request.contentType='text/plain'
-        request.method='PUT'
-        controller.apiProjectConfigPut()
-        assertEquals HttpServletResponse.SC_OK, response.status
-        assertTrue response.contentType.contains('text/plain')
-        assertEquals 'prop1=value1\nprop2=value2', response.text
-    }
 
 
     @Test
@@ -1740,7 +1724,7 @@ class ProjectControllerTest {
                 [] as Set, [] as Set)
         session.user='user1'
         request.method='PUT'
-        controller.apiProjectImport(new ProjectArchiveParams())
+        controller.apiProjectImport(new ProjectArchiveParams(project:'test1'))
         assertEquals HttpServletResponse.SC_OK,response.status
         assertEquals 'failed',response.xml.'@status'.text()
         assertEquals '2',response.xml.errors.'@count'.text()

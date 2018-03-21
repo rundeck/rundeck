@@ -1,0 +1,111 @@
+<joblist>
+  <job>
+    <description></description>
+    <dispatch>
+      <excludePrecedence>true</excludePrecedence>
+      <keepgoing>false</keepgoing>
+      <rankOrder>ascending</rankOrder>
+      <threadcount>1</threadcount>
+    </dispatch>
+    <executionEnabled>true</executionEnabled>
+    <id>4fd7f51b-ed22-479e-8785-8393411c0106</id>
+    <loglevel>INFO</loglevel>
+    <name>run module</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <nodefilters>
+      <filter>tags: ansible-nodes</filter>
+    </nodefilters>
+    <nodesSelectedByDefault>true</nodesSelectedByDefault>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <step-plugin type='com.batix.rundeck.plugins.AnsibleModuleWorkflowStep'>
+          <configuration>
+            <entry key='ansible-become' value='false' />
+            <entry key='ansible-module' value='ping' />
+          </configuration>
+        </step-plugin>
+      </command>
+      <pluginConfig>
+        <WorkflowStrategy>
+          <node-first />
+        </WorkflowStrategy>
+      </pluginConfig>
+    </sequence>
+    <uuid>4fd7f51b-ed22-479e-8785-8393411c0106</uuid>
+  </job>
+  <job>
+    <description></description>
+    <dispatch>
+      <excludePrecedence>true</excludePrecedence>
+      <keepgoing>false</keepgoing>
+      <rankOrder>ascending</rankOrder>
+      <threadcount>1</threadcount>
+    </dispatch>
+    <executionEnabled>true</executionEnabled>
+    <id>72d84cce-0eac-49dc-9a16-1515453e3604</id>
+    <loglevel>INFO</loglevel>
+    <name>run playbook</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <nodefilters>
+      <filter>tags: ansible-nodes</filter>
+    </nodefilters>
+    <nodesSelectedByDefault>true</nodesSelectedByDefault>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <step-plugin type='com.batix.rundeck.plugins.AnsiblePlaybookWorkflowStep'>
+          <configuration>
+            <entry key='ansible-become' value='false' />
+            <entry key='ansible-playbook' value='/home/rundeck/atest/example-playbook.yaml' />
+          </configuration>
+        </step-plugin>
+      </command>
+      <pluginConfig>
+        <WorkflowStrategy>
+          <node-first />
+        </WorkflowStrategy>
+      </pluginConfig>
+    </sequence>
+    <uuid>72d84cce-0eac-49dc-9a16-1515453e3604</uuid>
+  </job>
+  <job>
+    <description></description>
+    <dispatch>
+      <excludePrecedence>true</excludePrecedence>
+      <keepgoing>false</keepgoing>
+      <rankOrder>ascending</rankOrder>
+      <threadcount>1</threadcount>
+    </dispatch>
+    <executionEnabled>true</executionEnabled>
+    <id>df5fa3e8-5891-456e-a8da-7d3f81f7b644</id>
+    <loglevel>INFO</loglevel>
+    <name>run script</name>
+    <nodeFilterEditable>false</nodeFilterEditable>
+    <nodefilters>
+      <filter>tags: ansible-nodes</filter>
+    </nodefilters>
+    <nodesSelectedByDefault>true</nodesSelectedByDefault>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='node-first'>
+      <command>
+        <script><![CDATA[#!/bin/bash
+
+echo "DATE ----"
+date
+echo "-----"
+
+echo "UNAME ----"
+uname -a
+echo "------"]]></script>
+        <scriptargs />
+      </command>
+      <pluginConfig>
+        <WorkflowStrategy>
+          <node-first />
+        </WorkflowStrategy>
+      </pluginConfig>
+    </sequence>
+    <uuid>df5fa3e8-5891-456e-a8da-7d3f81f7b644</uuid>
+  </job>
+</joblist>

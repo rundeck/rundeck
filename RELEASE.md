@@ -1,16 +1,9 @@
-Release 2.8.2
+Release 2.10.7
 ===========
 
-Date: 2017-04-19
+Date: 2018-03-05
 
-Name: <span style="color: Olive"><span class="glyphicon glyphicon-flag"></span> "cafe cubano olive flag"</span>
-
-## Upgrading from 2.8.0
-
-**Important Note**: please see the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html) if you are using Mysql or H2 database,
-and are upgrading from Rundeck 2.8.0.
-
-A DB schema change requires a manual fix before upgrading.
+Name: <span style="color: Crimson"><span class="glyphicon glyphicon-sunglasses"></span> "cafe mocha crimson sunglasses"</span>
 
 ## Upgrading from Earlier versions
 
@@ -18,25 +11,34 @@ A DB schema change requires a manual fix before upgrading.
 
 ## Notes
 
-Bug fixes and a few slight enhancements.
+Some bugfixes, and some improvements to Git SCM plugin:
+
+* Export: Option to Synchronize automatically during fetch (default: false)
+* Import: Option to Pull automatically when fetching (default: true)
+* new Clean button in the GUI: allows removing local git repo 
+* Import: automatic Tracking init during Setup, if you use a regular expression
+	* API improvement: does not require a second step after setup to initialize Git Import
+* Export: Push Remotely is checked by default when making commits
+* (see full details [#PR3152](https://github.com/rundeck/rundeck/pull/3152))
 
 ## Contributors
 
 * Greg Schueler (gschueler)
-* jtobard
+* Jaime Tobar (jtobard)
+* Rene Fragoso (ctrlrsf)
 
-## Reporters
+## Bug Reporters
 
+* SpencerMalone
+* ctrlrsf
+* gentunian
 * jtobard
-* al-heisner
-* jquick
-* ahonor
 
 ## Issues
 
-[Milestone 2.8.2](https://github.com/rundeck/rundeck/milestone/54)
+[Milestone 2.10.7](https://github.com/rundeck/rundeck/milestone/71)
 
-* [Using option value in key storage path](https://github.com/rundeck/rundeck/pull/2443)
-* [Jobs hang when retry is enabled and step fails on at least one node](https://github.com/rundeck/rundeck/issues/2442)
-* [v2.8.1 Cannot create table job_file_record due to reserved word (oracle)](https://github.com/rundeck/rundeck/issues/2441)
-* [Expand global properties in plugin.yaml context](https://github.com/rundeck/rundeck/issues/2399)
+* [SCM usability enhancement](https://github.com/rundeck/rundeck/pull/3152)
+* [PUT Project Configuration API endpoint fails w/ text/plain input](https://github.com/rundeck/rundeck/issues/3127)
+* [Documentation: add job.executionType to context variables documentation](https://github.com/rundeck/rundeck/issues/1811)
+* [Profile firstName does not accepts accents](https://github.com/rundeck/rundeck/issues/1581)

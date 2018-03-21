@@ -124,22 +124,6 @@ public class RundeckProject implements IRundeckProject{
         return projectConfig.getConfigLastModifiedTime();
     }
 
-    @Override
-    public boolean updateNodesResourceFile() throws UpdateUtils.UpdateException {
-        return getProjectNodes().updateNodesResourceFile(projectService.getNodesResourceFilePath(this));
-    }
-
-    @Override
-    public void updateNodesResourceFileFromUrl(final String providerURL, final String username, final String password)
-            throws UpdateUtils.UpdateException
-    {
-        getProjectNodes().updateNodesResourceFileFromUrl(providerURL, username, password,projectService.getNodesResourceFilePath(this));
-    }
-
-    @Override
-    public void updateNodesResourceFile(final INodeSet nodeset) throws UpdateUtils.UpdateException {
-        getProjectNodes().updateNodesResourceFile(nodeset,projectService.getNodesResourceFilePath(this));
-    }
 
     public IProjectNodes getProjectNodes() {
         return getNodesFactory().getNodes(getName());

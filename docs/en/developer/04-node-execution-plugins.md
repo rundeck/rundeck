@@ -4,7 +4,7 @@
 
 ## About
 
-A Node Executor provider executes a certain command on a remote or 
+A Node Executor provider executes a certain command on a remote or
 local node.
 
 ## Java Plugin Type
@@ -14,7 +14,7 @@ Your provider class must implement the interface
 
 ~~~~~ {.java}
 public interface NodeExecutor {
-     public NodeExecutorResult executeCommand(ExecutionContext context, 
+     public NodeExecutorResult executeCommand(ExecutionContext context,
               String[] command, INodeEntry node);
 }
 ~~~~~~~~~
@@ -27,7 +27,7 @@ to learn how to create configuration properties for your plugin.
 
 ## Script Plugin Type
 
-See the [Script Plugin Development](plugin-development.html#script-plugin-development) 
+See the [Script Plugin Development](plugin-development.html#script-plugin-development)
 for the basics of developing script-based plugins for Rundeck.
 
 ### Additional data context properties

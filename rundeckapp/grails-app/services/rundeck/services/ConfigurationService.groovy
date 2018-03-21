@@ -16,6 +16,10 @@
 
 package rundeck.services
 
+import org.rundeck.util.Sizes
+
+import java.util.concurrent.TimeUnit
+
 
 class ConfigurationService {
     static transactional = false
@@ -123,6 +127,35 @@ class ConfigurationService {
     boolean getBoolean(String service, String name, String property, boolean defval) {
         def val = appConfig."${service}"?."${name}"?."${property}"
         return booleanValue(defval, val)
+    }
+
+    /**
+     * Lookup a string property and interpret it as a time duration in the form "1d2h3m15s"
+     * @param property property name
+     * @param defval default time duration string to use if unset
+     * @param unit units to return
+     * @return duration in the given unit
+     */
+    long getTimeDuration(String property, String defval, TimeUnit unit = TimeUnit.SECONDS) {
+        def confStr = getString(property, defval)
+        if (!Sizes.validTimeDuration(confStr)) {
+            log.warn(
+                    "Invalid configuration for ${property}: " + confStr + ", using ${defval}"
+            )
+            confStr = defval
+        }
+        Sizes.parseTimeDuration(confStr, unit)
+    }
+
+    /**
+     * Lookup a string property and interpret it as a file size in the form  "###[tgkm][b]" (case insensitive)
+     * @param property property name
+     * @param defval default value to return
+     * @return bytes
+     */
+    long getFileSize(String property, long defval) {
+        def confStr = getString(property, null)
+        confStr ? (Sizes.parseFileSize(confStr) ?: defval) : defval
     }
 
     private int intValue(int defval, val) {

@@ -14,7 +14,7 @@
   limitations under the License.
   --}%
 
-<%@ page import="grails.util.Environment; rundeck.User" %>
+<%@ page import="grails.util.Environment; rundeck.User; com.dtolabs.rundeck.server.authorization.AuthConstants" %>
 <html>
 <head>
     <g:set var="ukey" value="${g.rkey()}" />
@@ -22,8 +22,9 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="adhoc"/>
     <title><g:message code="gui.menu.Adhoc"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
-    <g:javascript library="executionControl"/>
-    <g:javascript library="yellowfade"/>
+    <g:javascript src="executionState.js"/>
+    <asset:javascript src="executionControl.js"/>
+    <asset:javascript src="util/yellowfade.js"/>
     <g:javascript library="pagehistory"/>
     <asset:javascript src="framework/adhoc.js"/>
     <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
@@ -38,7 +39,8 @@
             emptyQuery:emptyQuery?:null,
             ukey:ukey,
             project:params.project?:request.project,
-            runCommand:runCommand?:''
+            runCommand:runCommand?:'',
+            adhocKillAllowed:auth.adhocAllowedTest(action: AuthConstants.ACTION_KILL,project:params.project)
     ]}"/>
     <g:jsMessages code="Node,Node.plural"/>
 </head>
@@ -54,7 +56,7 @@
     <g:render template="/common/messages"/>
         <div id="tabsarea">
             <div class="row ">
-                <g:ifExecutionMode active="true">
+                <g:ifExecutionMode active="true" project="${params.project ?: request.project}">
                 <div class="col-sm-10" >
                     <div class="" id="runtab">
                             <div class="form form-horizontal clearfix" id="runbox">
@@ -259,7 +261,7 @@
                     </button>
                 </div>
                 </g:ifExecutionMode>
-                <g:ifExecutionMode active="false">
+                <g:ifExecutionMode active="false" project="${params.project ?: request.project}">
                     <div class="col-sm-12">
                         <div class="alert alert-warning ">
                             <g:message code="disabled.execution.run"/>

@@ -31,7 +31,6 @@
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <asset:stylesheet href="rundeck.css"/>
-    <asset:stylesheet href="non_responsive.css"/>
     <!--[if lt IE 9]>
     <g:javascript library="respond.min"/>
     <![endif]-->

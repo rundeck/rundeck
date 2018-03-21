@@ -29,7 +29,6 @@ import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.impl.common.BaseFileCopier;
 import com.dtolabs.rundeck.core.execution.script.ScriptfileUtils;
-import com.dtolabs.rundeck.core.execution.service.FileCopier;
 import com.dtolabs.rundeck.core.execution.service.FileCopierException;
 import com.dtolabs.rundeck.core.execution.service.MultiFileCopier;
 import com.dtolabs.rundeck.core.execution.workflow.steps.FailureReason;
@@ -37,7 +36,6 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.plugins.configuration.Describable;
 import com.dtolabs.rundeck.core.plugins.configuration.Description;
 import com.dtolabs.rundeck.core.tasks.net.SSHTaskBuilder;
-import com.dtolabs.rundeck.core.utils.FileUtils;
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 import org.apache.tools.ant.BuildException;
 import org.apache.tools.ant.Project;
@@ -207,7 +205,7 @@ public class JschScpFileCopier extends BaseFileCopier implements MultiFileCopier
     ) throws FileCopierException {
 
         Project project = new Project();
-        ArrayList<String> ret = new ArrayList<String>();
+        ArrayList<String> ret = new ArrayList<>();
 
         if(null==remotePath) {
             throw new FileCopierException("[jsch-scp] remotePath cant be null on multiple files",StepFailureReason.ConfigurationFailure);
@@ -268,7 +266,8 @@ public class JschScpFileCopier extends BaseFileCopier implements MultiFileCopier
         JschNodeExecutor.ExtractFailure failure = JschNodeExecutor.extractFailure(
                 e,
                 node,
-                nodeAuthentication.getSSHTimeout(),
+                nodeAuthentication.getCommandTimeout(),
+                nodeAuthentication.getConnectTimeout(),
                 framework
         );
         final String errormsg = failure.getErrormsg();

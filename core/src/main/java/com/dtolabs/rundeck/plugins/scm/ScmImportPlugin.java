@@ -83,6 +83,10 @@ public interface ScmImportPlugin {
      */
     void cleanup();
 
+    /**
+     * perform a total clean
+     */
+    default void totalClean(){}
 
     /**
      * Provide the input view for an action.

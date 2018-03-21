@@ -44,9 +44,9 @@ public class ResourceXMLFormatGenerator implements ResourceFormatGenerator,Descr
     public static final String SERVICE_PROVIDER_TYPE = "resourcexml";
 
 
-    public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<String>(Arrays.asList("xml")));
-    public static final List<String> MIME_TYPES = Collections.unmodifiableList(Arrays.asList(
-        "text/xml"));
+    public static final Set<String> EXTENSIONS = Collections.unmodifiableSet(new HashSet<>(Collections.singletonList(
+            "xml")));
+    public static final List<String> MIME_TYPES = Collections.unmodifiableList(Collections.singletonList("text/xml"));
 
     public Set<String> getFileExtensions() {
         return EXTENSIONS;
@@ -55,7 +55,6 @@ public class ResourceXMLFormatGenerator implements ResourceFormatGenerator,Descr
     public List<String> getMIMETypes() {
         return MIME_TYPES;
     }
-    
     public void generateDocument(final INodeSet nodeset, final OutputStream stream) throws
         ResourceFormatGeneratorException,
         IOException {

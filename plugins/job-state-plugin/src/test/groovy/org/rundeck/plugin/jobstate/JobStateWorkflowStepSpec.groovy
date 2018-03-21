@@ -82,4 +82,43 @@ class JobStateWorkflowStepSpec extends Specification {
 
 
     }
+
+    def "state check shouldn't fail with or without jobProject"() {
+        given:
+        def step = new JobStateWorkflowStep()
+        step.halt = false
+        step.fail = true
+        def actualState = 'failed'
+        step.executionState =  actualState
+        step.jobUUID = 'auuid'
+        step.jobProject = jobProject
+
+
+        def context = Mock(PluginStepContext)
+        def config = [:]
+
+        when:
+        step.executeStep(context, config)
+        then:
+        1 * context.getFrameworkProject() >> 'projectName'
+        1 * context.getExecutionContext() >> Mock(ExecutionContext) {
+            getJobService() >> Mock(JobService) {
+                1 * jobForID('auuid', _) >> Mock(JobReference)
+                1 * getJobState(_) >> Mock(JobState) {
+                    getPreviousExecutionState() >> actualState
+                }
+            }
+        }
+        1 * context.getLogger() >> Mock(PluginLogger) {
+            1 * log(2, _)
+        }
+
+
+        where:
+        jobProject | _
+        null       | _
+        'project'  | _
+
+
+    }
 }

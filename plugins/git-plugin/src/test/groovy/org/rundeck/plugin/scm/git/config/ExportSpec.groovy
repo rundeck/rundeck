@@ -108,4 +108,33 @@ class ExportSpec extends Specification {
         eval       | _
         'original' | _
     }
+
+    def "automatic synch eval"() {
+
+        given:
+        Map<String, String> input = [
+                dir                  : 'notnull',
+                pathTemplate         : 'notnull',
+                branch               : 'notnull',
+                committerName        : 'notnull',
+                committerEmail       : 'notnull',
+                strictHostKeyChecking: 'yes',
+                format               : 'xml',
+                url                  : 'notnull',
+                exportUuidBehavior   : 'remove',
+                pullAutomatically    : eval
+
+        ]
+
+        when:
+        def config = Config.create(Export, input)
+        then:
+        config.shouldPullAutomatically() == expected
+
+        where:
+        eval        | expected
+        'true'      | true
+        'false'     | false
+        null        | false
+    }
 }

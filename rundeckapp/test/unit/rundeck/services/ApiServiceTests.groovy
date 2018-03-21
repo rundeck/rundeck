@@ -82,7 +82,7 @@ class ApiServiceTests {
         assertNotNull(xml)
         def gpath = assertXmlErrorText(xml)
         assertEquals('test.code', gpath.error['@code'].text())
-        assertEquals(['message1', 'message2'], gpath.error.message*.text())
+        assertEquals(['message1', 'message2'], gpath.error.messages[0].message*.text())
     }
     void testRenderSuccessXmlCode(){
         def mock = mockFor(GrailsMockHttpServletResponse)

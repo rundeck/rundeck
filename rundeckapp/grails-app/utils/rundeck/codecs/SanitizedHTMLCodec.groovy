@@ -93,6 +93,7 @@ class SanitizedHTMLCodec {
                             'i',
                             'b',
                             'div',
+                            'article',
                             'a',
                             'ul','ol','li',
                             'pre', 'code',
@@ -115,6 +116,7 @@ class SanitizedHTMLCodec {
                             'strong',
                             'b',
                             'div',
+                            'article',
                             'a',
                             'pre', 'code',
                             'ul','ol','li',
@@ -128,6 +130,8 @@ class SanitizedHTMLCodec {
                             'hr'
                     ).allowAttributes('style').onElements(
                             'td','th',
+                    ).allowAttributes('colspan').onElements(
+                            'th',
                     )
 
                                 .toFactory()

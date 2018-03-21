@@ -36,6 +36,7 @@
 <g:set var="authEnableDisableSchedule" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_TOGGLE_SCHEDULE])}"/>
 <g:set var="authEnableDisableExecution" value="${auth.jobAllowedTest(job: scheduledExecution, action: [AuthConstants.ACTION_TOGGLE_EXECUTION])}"/>
 <g:set var="authJobCreate" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project)}"/>
+<g:set var="authOtherProject" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_CREATE, project: scheduledExecution.project, others: true)}"/>
 <g:set var="authJobDelete" value="${auth.resourceAllowedTest(kind: 'job', action: AuthConstants.ACTION_DELETE, project: scheduledExecution.project)}"/>
 <g:set var="authProjectExport" value="${auth.resourceAllowedTest(
         context: 'application',
@@ -67,6 +68,21 @@
             <g:message
                     code="scheduledExecution.action.duplicate.button.label"/>
         </g:link>
+    </li>
+</g:if>
+<g:if test="${authRead && authOtherProject}">
+    <li>
+        <g:link controller="scheduledExecution"
+                title="${g.message(code:'scheduledExecution.action.duplicate.button.tooltip')}"
+                action="copyanother"
+                data-job-id="${enc(attr: scheduledExecution.extid)}"
+                data-action="copy_other_project"
+                class="page_action">
+            <i class="glyphicon glyphicon-plus"></i>
+            <g:message
+                    code="scheduledExecution.action.duplicate.other.button.label"/>
+        </g:link>
+
     </li>
 </g:if>
 

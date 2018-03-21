@@ -59,6 +59,10 @@ class NodeService implements InitializingBean, RundeckProjectConfigurable,IProje
     String category='resourceModelSource'
 
     @Override
+    Map<String, String> getCategories() {
+        [enabled: 'resourceModelSource', delay: 'resourceModelSource']
+    }
+    @Override
     List<Property> getProjectConfigProperties() {
         [
                 PropertyBuilder.builder().with {

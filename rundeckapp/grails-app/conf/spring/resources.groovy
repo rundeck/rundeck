@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 import com.dtolabs.rundeck.app.api.ApiMarshallerRegistrar
 import com.dtolabs.rundeck.app.internal.framework.FrameworkPropertyLookupFactory
 import com.dtolabs.rundeck.app.internal.framework.RundeckFrameworkFactory
@@ -30,35 +31,40 @@ import com.dtolabs.rundeck.core.utils.GrailsServiceInjectorJobListener
 import com.dtolabs.rundeck.server.plugins.PluginCustomizer
 import com.dtolabs.rundeck.server.plugins.RundeckEmbeddedPluginExtractor
 import com.dtolabs.rundeck.server.plugins.RundeckPluginRegistry
-import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import com.dtolabs.rundeck.server.plugins.fileupload.FSFileUploadPlugin
+import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
+import com.dtolabs.rundeck.server.plugins.logging.HighlightFilterPlugin
+import com.dtolabs.rundeck.server.plugins.logging.MaskPasswordsFilterPlugin
+import com.dtolabs.rundeck.server.plugins.logging.PluginFactoryBean
+import com.dtolabs.rundeck.server.plugins.logging.QuietFilterPlugin
+import com.dtolabs.rundeck.server.plugins.logging.RenderDatatypeFilterPlugin
+import com.dtolabs.rundeck.server.plugins.logging.SimpleDataFilterPlugin
+import com.dtolabs.rundeck.server.plugins.logs.*
 import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePluginFactory
-import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.PluggableStoragePluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.ScmExportPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.ScmImportPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.StorageConverterPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
-import com.dtolabs.rundeck.server.plugins.services.UIPluginProviderService
+import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
+import grails.util.Environment
+import groovy.io.FileType
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
 import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
-import groovy.io.FileType
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
+import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import rundeck.services.PasswordFieldsService
+import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
 
 beans={
-    log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
-        targetClass = "org.springframework.util.Log4jConfigurer"
-        targetMethod = "initLogging"
-        arguments = ["classpath:log4j.properties"]
+    xmlns context: "http://www.springframework.org/schema/context"
+    if (Environment.PRODUCTION == Environment.current) {
+        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
+            targetClass = "org.springframework.util.Log4jConfigurer"
+            targetMethod = "initLogging"
+            arguments = ["classpath:log4j.properties"]
+        }
     }
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'
@@ -123,6 +129,10 @@ beans={
         bean.factoryMethod='createFromDirectory'
     }
 
+    rundeckJobScheduleManager(QuartzJobScheduleManager){
+        quartzScheduler=ref('quartzScheduler')
+    }
+
     //cache for provider loaders bound to a file
     providerFileCache(PluginManagerService) { bean ->
         bean.factoryMethod = 'createProviderLoaderFileCache'
@@ -177,8 +187,16 @@ beans={
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
 //        pluginRegistry=ref("rundeckPluginRegistry")
     }
-    logFileTaskExecutor(SimpleAsyncTaskExecutor,"LogFileStorage"){
-        concurrencyLimit= 2 + (application.config.rundeck?.execution?.logs?.fileStorage?.concurrencyLimit ?: 5)
+    logFileTaskExecutor(SimpleAsyncTaskExecutor, "LogFileTask") {
+        concurrencyLimit = 1 + (application.config.rundeck?.execution?.logs?.fileStorage?.retrievalTasks?.concurrencyLimit ?: 5)
+    }
+    logFileStorageTaskExecutor(SimpleAsyncTaskExecutor, "LogFileStorageTask") {
+        concurrencyLimit = 1 + (application.config.rundeck?.execution?.logs?.fileStorage?.storageTasks?.concurrencyLimit ?: 10)
+    }
+    logFileStorageTaskScheduler(ThreadPoolTaskScheduler) {
+        threadNamePrefix="LogFileStorageScheduledTask"
+        poolSize= (application.config.rundeck?.execution?.logs?.fileStorage?.scheduledTasks?.poolSize ?: 5)
+
     }
     nodeTaskExecutor(SimpleAsyncTaskExecutor,"NodeService-SourceLoader") {
         concurrencyLimit = (application.config.rundeck?.nodeService?.concurrencyLimit ?: 25) //-1 for unbounded
@@ -289,12 +307,37 @@ beans={
         basePath = uploadsDir.absolutePath
     }
     pluginRegistry['filesystem-temp'] = 'fsFileUploadPlugin'
+
+    //list of plugin classes to generate factory beans for
+    [
+            //log converters
+            JsonConverterPlugin,
+            PropertiesConverterPlugin,
+            HTMLTableViewConverterPlugin,
+            MarkdownConverterPlugin,
+            TabularDataConverterPlugin,
+            HTMLViewConverterPlugin,
+            //log filters
+            MaskPasswordsFilterPlugin,
+            SimpleDataFilterPlugin,
+            RenderDatatypeFilterPlugin,
+            QuietFilterPlugin,
+            HighlightFilterPlugin,
+    ].each {
+        "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
+    }
+
+    //TODO: scan defined plugins:
+    //    context.'component-scan'('base-package': "com.dtolabs.rundeck.server.plugins.logging")
+    rundeckPluginRegistryMap(MapFactoryBean) {
+        sourceMap = pluginRegistry
+    }
     /**
      * Registry bean contains both kinds of plugin
      */
     rundeckPluginRegistry(RundeckPluginRegistry){
         rundeckEmbeddedPluginExtractor = ref('rundeckEmbeddedPluginExtractor')
-        pluginRegistryMap=pluginRegistry
+        pluginRegistryMap = ref('rundeckPluginRegistryMap')
         rundeckServerServiceProviderLoader=ref('rundeckServerServiceProviderLoader')
         pluginDirectory=pluginDir
         pluginCacheDirectory=cacheDir

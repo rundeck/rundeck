@@ -76,3 +76,13 @@
 
     <span class="text-muted"><g:message code="execution.retry.attempt.x.of.max.ko" args="${['text: retryExecutionAttempt()','text: retry()']}"/></span>
 </div>
+
+<g:if test="${clusterModeEnabled && execution.serverNodeUUID}">
+    <span id="execRemoteServerUUID">
+        <g:message code="on" />
+        <span data-server-uuid="${execution.serverNodeUUID}"
+              data-server-name="${execution.serverNodeUUID}"
+              class="rundeck-server-uuid text-muted">
+        </span>
+    </span>
+</g:if>

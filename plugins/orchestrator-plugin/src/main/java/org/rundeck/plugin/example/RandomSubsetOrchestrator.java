@@ -31,11 +31,19 @@ import java.util.Random;
  */
 public class RandomSubsetOrchestrator implements Orchestrator {
 
-    Random random = new Random(System.currentTimeMillis());
+    Random random;
+    long seed;
     final int count;
     List<INodeEntry> nodes;
 
-    public RandomSubsetOrchestrator(int count, StepExecutionContext context, Collection<INodeEntry> nodes) {
+    public RandomSubsetOrchestrator(
+            int count,
+            StepExecutionContext context,
+            Collection<INodeEntry> nodes, final long seed
+    )
+    {
+        this.seed = seed;
+        this.random = new Random(seed);
         this.count = count;
         this.nodes = select(count, nodes);
     }

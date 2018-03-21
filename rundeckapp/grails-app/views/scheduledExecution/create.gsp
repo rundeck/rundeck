@@ -25,6 +25,7 @@
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="jobEditPage_bundle.js"/>
     <asset:javascript src="util/markdeep.js"/>
+    <asset:javascript src="util/yellowfade.js"/>
     <g:jsMessages code="page.unsaved.changes"/>
     <g:javascript>
         var workflowEditor = new WorkflowEditor();
@@ -32,6 +33,7 @@
         _onJobEdit(confirm.setNeedsConfirm);
     </g:javascript>
     <g:embedJSON data="${globalVars ?: []}" id="globalVarData"/>
+    <g:embedJSON data="${timeZones ?: []}" id="timeZonesData"/>
 </head>
 <body>
 

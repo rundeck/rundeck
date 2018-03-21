@@ -138,6 +138,7 @@
                 </div>
 
                 <div data-bind="if:!multivalued()">
+                    <!-- ko if: !hasRemote() || loadedRemoteValues() -->
                     <select class="optionvalues form-control"
                             data-bind="attr: {name: !hasTextfield()?fieldName():'', id: !hasTextfield()?fieldId():'' },
                          options: selectOptions,
@@ -145,6 +146,7 @@
                          optionsValue: 'value',
                         value:selectedOptionValue">
                     </select>
+                    <!-- /ko -->
 
                 </div>
 
