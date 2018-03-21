@@ -1841,7 +1841,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 return [success: false, scheduledExecution: scheduledExecution,
                         errorCode: 'api.error.job.toggleSchedule.notScheduled' ]
             }
-            scheduledExecution.serverNodeUUID = frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null
+            if(!scheduledExecution.serverNodeUUID && frameworkService.isClusterModeEnabled()){
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }
             scheduledExecution.properties.scheduleEnabled = params.scheduleEnabled
         }
 
@@ -1855,7 +1857,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         errorCode   : 'api.error.item.unauthorized',
                         unauthorized: true]
             }
-            scheduledExecution.serverNodeUUID = frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null
+            if(!scheduledExecution.serverNodeUUID && frameworkService.isClusterModeEnabled()){
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }
             scheduledExecution.properties.executionEnabled = params.executionEnabled
         }
 
@@ -2018,12 +2022,9 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
-        if (frameworkService.isClusterModeEnabled()) {
-            scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
-        } else {
-            scheduledExecution.serverNodeUUID = null
+        if(!scheduledExecution.serverNodeUUID && frameworkService.isClusterModeEnabled()){
+            scheduledExecution.serverNodeUUID = frameworkService.serverUUID
         }
-
         def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
         if (renamed) {
             changeinfo.rename = true
@@ -2690,10 +2691,8 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
-        if (frameworkService.isClusterModeEnabled()) {
-            scheduledExecution.serverNodeUUID = frameworkService.getServerUUID()
-        } else {
-            scheduledExecution.serverNodeUUID = null
+        if(!scheduledExecution.serverNodeUUID && frameworkService.isClusterModeEnabled()){
+            scheduledExecution.serverNodeUUID = frameworkService.serverUUID
         }
 
         def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()

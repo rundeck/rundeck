@@ -1112,8 +1112,8 @@ class ScheduledExecutionServiceSpec extends Specification {
         [defaultValue: 'val1,val2,val4'] | 'defaultValue'
         [secureInput: true]              | 'multivalued'
     }
-    def setupDoUpdate(enabled=false){
-        def uuid=UUID.randomUUID().toString()
+    def setupDoUpdate(enabled=false, serverUUID = null){
+        def uuid=serverUUID?:UUID.randomUUID().toString()
         def projectMock = Mock(IRundeckProject) {
             getProjectProperties() >> [:]
         }
@@ -2698,6 +2698,35 @@ class ScheduledExecutionServiceSpec extends Specification {
         false           | true             | true        | false
         true            | false            | true        | false
         false           | false            | true        | false
+    }
+
+
+    @Unroll
+    def "do update job on cluster"(){
+        given:
+        def inparams = [description: 'new job', jobName: 'monkey', workflow:
+            new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])]
+        def serverUUID = '802d38a5-0cd1-44b3-91ff-824d495f8105'
+        def currentOwner = '05b604ed-9a1e-4cb4-8def-b17a071afec9'
+        def uuid = setupDoUpdate(true,serverUUID)
+
+        def orig = [serverNodeUUID: currentOwner]
+
+        def se = new ScheduledExecution(createJobParams(orig)).save()
+        def newJob = new ScheduledExecution(createJobParams(inparams))
+        service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
+        service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
+
+
+
+        when:
+        def results = service._doupdateJob(se.id,newJob, mockAuth())
+
+
+        then:
+        results.success
+        results.scheduledExecution.serverNodeUUID == currentOwner
+        results.scheduledExecution.serverNodeUUID != serverUUID
     }
 
 }
