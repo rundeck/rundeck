@@ -214,9 +214,9 @@
                             </td>
                             <td>
                                 <g:if test="${event.eventType == 'result' && event.eventDataMap}">
-                                %{--<g:basicData data="${event.eventDataMap}"--}%
-                                %{--classes="table-condensed table-bordered"--}%
-                                %{--fields="${event.eventDataMap.keySet().sort()}"/>--}%
+                                    <g:basicData data="${event.eventDataMap}"
+                                                 classes="table-condensed table-bordered"
+                                                 fields="${event.eventDataMap.keySet().sort()}"/>
                                 </g:if>
                                 <g:if test="${event.eventType =~ '^(error|warn)' && event.eventDataMap?.error}">
                                     <span class="text-warning">
