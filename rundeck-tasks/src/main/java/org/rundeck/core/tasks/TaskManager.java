@@ -27,11 +27,20 @@ public interface TaskManager<T extends TaskContext> {
     public TaskActionHandler<T> getActionHandlerForTaskAction(TaskAction action, T taskContext);
 
     /**
-     * @param action
-     * @param contextInfo
-     * @param triggerMap
-     * @param trigger
+     * @param action        action
+     * @param contextInfo   context
+     * @param triggerMap    trigger data map
+     * @param userData      user data map
+     * @param conditionData condition result data
+     * @param trigger       trigger
      * @return result of performing the action
      */
-    public Map performTaskAction(TaskAction action, T contextInfo, Map triggerMap, Map userData, TaskTrigger trigger) throws ActionFailed;
+    public Map performTaskAction(
+        TaskAction action,
+        T contextInfo,
+        Map triggerMap,
+        Map userData,
+        Map conditionData,
+        TaskTrigger trigger
+    ) throws ActionFailed;
 }

@@ -32,15 +32,19 @@ public interface TaskActionHandler<T extends TaskContext> {
     /**
      * The action for a task should be performed
      *
-     * @param contextInfo    context info
-     * @param triggerMap data from the taskTrigger
-     * @param taskTrigger  taskTrigger
-     * @param action       action
+     * @param contextInfo   context info
+     * @param triggerMap    data from the taskTrigger
+     * @param userData      user data map
+     * @param conditionData condition result data
+     * @param taskTrigger   taskTrigger
+     * @param action        action
+     * @param manager       task manager
      */
     Map performTaskAction(
         T contextInfo,
         Map triggerMap,
         Map userData,
+        Map conditionData,
         TaskTrigger taskTrigger,
         TaskAction action,
         TaskManager<T> manager

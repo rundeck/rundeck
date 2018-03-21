@@ -59,7 +59,7 @@ class TaskServiceSpec extends Specification {
         def mockTrigger = Mock(TaskTrigger)
         def mockActionHandler = Mock(TaskActionHandler) {
             handlesAction(mockAction, _) >> true
-            1 * performTaskAction(context, triggerData, _, mockTrigger, mockAction, service) >> [result: 'data']
+            1 * performTaskAction(context, triggerData, _, _, mockTrigger, mockAction, service) >> [result: 'data']
             0 * _(*_)
         }
 
@@ -122,7 +122,7 @@ class TaskServiceSpec extends Specification {
         def mockConditionB = Mock(TaskCondition)
         def mockActionHandler = Mock(TaskActionHandler) {
             handlesAction(mockAction, _) >> true
-            1 * performTaskAction(context, triggerData, _, mockTrigger, mockAction, service) >> [result: 'data']
+            1 * performTaskAction(context, triggerData, _, _,  mockTrigger, mockAction, service) >> [result: 'data']
             0 * _(*_)
         }
         def mockConditionHandler = Mock(TaskConditionHandler) {
@@ -367,7 +367,7 @@ class TaskServiceSpec extends Specification {
         def mockTrigger = Mock(TaskTrigger)
         def mockActionHandler = Mock(TaskActionHandler) {
             handlesAction(mockAction, _) >> true
-            1 * performTaskAction(context, triggerData, _, mockTrigger, mockAction, service) >> {
+            1 * performTaskAction(context, triggerData, _, _,  mockTrigger, mockAction, service) >> {
                 throw new ActionFailed('test failure')
             }
             0 * _(*_)

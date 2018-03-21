@@ -500,7 +500,8 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         def conditions = conditionsFor(task)
         boolean conditionsMet = true
         int index = 0
-        Map conditionData = null
+        Map conditionData = [:]
+
         for (TaskCondition condition : conditions) {
             TaskConditionHandler handler = getConditionHandlerForCondition(task, condition, contextInfo)
             if (!handler) {
@@ -521,8 +522,8 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
             log.error(
                 "(taskId: $task.uuid): Condition check met? ${condition1.conditionMet}: $condition1.conditionData"
             )
+            conditionData.putAll(condition1.conditionData)
             if (!condition1.conditionMet) {
-                conditionData = condition1.conditionData
                 conditionsMet = false
                 break
             }
@@ -548,10 +549,9 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         }
 
         //TODO: on executor
-        //TODO: pass condition data?
 
         try {
-            Map result = performTaskAction(action, contextInfo, triggerMap, task.userData, trigger)
+            Map result = performTaskAction(action, contextInfo, triggerMap, task.userData, conditionData, trigger)
             createTaskEvent(
                 result,
                 task,
@@ -578,6 +578,7 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         RDTaskContext contextInfo,
         Map triggerMap,
         Map userData,
+        Map conditionData,
         TaskTrigger trigger
     ) throws ActionFailed {
         TaskActionHandler actHandler = getActionHandlerForTaskAction(action, contextInfo)
@@ -588,6 +589,7 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
             contextInfo,
             triggerMap,
             userData,
+            conditionData,
             trigger,
             action,
             this

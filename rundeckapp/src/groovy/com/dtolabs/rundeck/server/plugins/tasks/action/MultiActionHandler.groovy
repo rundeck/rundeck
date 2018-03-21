@@ -38,6 +38,7 @@ class MultiActionHandler implements TaskActionHandler<RDTaskContext> {
         final RDTaskContext contextInfo,
         final Map triggerMap,
         final Map userData,
+        Map conditionData,
         final TaskTrigger taskTrigger,
         final TaskAction action,
         TaskManager<RDTaskContext> manager
@@ -47,12 +48,19 @@ class MultiActionHandler implements TaskActionHandler<RDTaskContext> {
 
             MultipleTaskAction multi = (MultipleTaskAction) action
 
-
+            //TODO: multiple actions
             TaskAction subaction = multi.stubAction
 
-            def submap = manager.performTaskAction(subaction, contextInfo, triggerMap, userData, taskTrigger)
+            def submap = manager.performTaskAction(
+                subaction,
+                contextInfo,
+                triggerMap,
+                userData,
+                conditionData,
+                taskTrigger
+            )
 
-            return [subaction: submap]
+            return submap
         } else if (action instanceof TestEmbedTaskAction) {
             TestEmbedTaskAction test = (TestEmbedTaskAction) action
             return [result: test.actions.stringvalue]

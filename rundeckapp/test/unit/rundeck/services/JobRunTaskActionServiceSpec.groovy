@@ -49,7 +49,7 @@ class JobRunTaskActionServiceSpec extends Specification {
             getId() >> '999'
         }
         when:
-        def result = service.performTaskAction(context, map, userData, trigger, action, Mock(TaskManager))
+        def result = service.performTaskAction(context, map, userData, [:], trigger, action, Mock(TaskManager))
         then:
         1 * service.jobStateService.jobForID(context.authContext, jobId, project) >> jobRef
         1 * service.jobStateService.startJob(context.authContext, jobRef, optionMap, jobFilter, asUser) >> execref

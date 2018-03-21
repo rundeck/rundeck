@@ -23,6 +23,7 @@ class JobRunTaskActionService implements TaskActionHandler<RDTaskContext> {
         RDTaskContext contextInfo,
         Map triggerMap,
         Map userData,
+        Map conditionData,
         TaskTrigger trigger,
         TaskAction action,
         TaskManager<RDTaskContext> manager
@@ -32,6 +33,7 @@ class JobRunTaskActionService implements TaskActionHandler<RDTaskContext> {
 
         AuthContext auth = contextInfo.authContext
 
+        //TODO: pass task/trigger/condition data into exec context
         try {
             JobReference jobReference = jobStateService.jobForID(auth, runAction.jobId, contextInfo.project)
             ExecutionReference exec = jobStateService.startJob(
