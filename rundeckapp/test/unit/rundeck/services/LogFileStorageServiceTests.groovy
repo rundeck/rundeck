@@ -516,6 +516,16 @@ class LogFileStorageServiceTests  {
         assertEquals(1,task.count)
         assertFalse(svc.executorService.executeCalled)
         assertEquals(0,svc.getCurrentRequests().size())
+
+        def request
+        LogFileStorageRequest.withSession { session ->
+            session.flush()
+            request=LogFileStorageRequest.get(task.requestId)
+            request.refresh()
+        }
+
+        assertEquals(false, request.completed)
+        assertEquals('rdlog', request.filetype)
     }
     /**
      * failure of one filetype should set request filetype to the failed type(s)
@@ -683,6 +693,16 @@ class LogFileStorageServiceTests  {
         assertEquals(1,task.count)
         assertTrue(svc.executorService.executeCalled)
         assertTrue(!svc.failedRequestIds.contains(task.requestId))
+
+        LogFileStorageRequest request
+        LogFileStorageRequest.withSession { session ->
+            session.flush()
+            request=LogFileStorageRequest.get(task.requestId)
+            request.refresh()
+        }
+
+        assertNotNull(request)
+        assertTrue(request.completed)
     }
     void testRunStorageRequestFailure(){
         grailsApplication.config.clear()
@@ -734,6 +754,15 @@ class LogFileStorageServiceTests  {
 
         assertEquals(1,task.count)
         assertTrue(svc.executorService.executeCalled)
+
+        def request
+        LogFileStorageRequest.withSession { session ->
+            session.flush()
+            request=LogFileStorageRequest.get(task.requestId)
+            request?.refresh()
+        }
+
+        assertNull(request)
 
     }
     void testRunStorageRequestFailureWithRetry(){
@@ -807,6 +836,7 @@ class LogFileStorageServiceTests  {
         emock.execute={Closure cls->
             emock.executeCalled=true
             assertNotNull(cls)
+            cls.call()
         }
         service.frameworkService = fmock.createMock()
         service.pluginService = pmock.createMock()
