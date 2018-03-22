@@ -3572,4 +3572,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return isProjectExecutionEnabled(project) && isProjectScheduledEnabled(project)
     }
 
+    def deleteScheduledExecutionById(jobid, String callingAction){
+        def session = getSession()
+        def user = session.user
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        deleteScheduledExecutionById(jobid, authContext, false, user, callingAction)
+    }
 }

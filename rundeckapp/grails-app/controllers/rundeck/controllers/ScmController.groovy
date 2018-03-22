@@ -45,6 +45,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
+import com.dtolabs.rundeck.plugins.scm.ImportSynchState
 import com.dtolabs.rundeck.plugins.scm.JobImportState
 import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
@@ -760,6 +761,17 @@ class ScmController extends ControllerBase {
         List<ScmExportActionItem> exportActionItems = null
         if (isExport) {
             exportActionItems = getViewExportActionItems(project, jobId ? [jobId] : null)
+            exportActionItems?.each { item ->
+                if(item.job){
+                    if(item.job.jobId){
+                        def se = ScheduledExecution.findByUuid(item.job.jobId)
+                        if(se){
+                            def status = scmService.exportStatusForJob(se)
+                            item.status = status?.get(item.job.jobId)?.synchState
+                        }
+                    }
+                }
+            }
         }
 
         /**
@@ -769,8 +781,18 @@ class ScmController extends ControllerBase {
 
         if (!isExport) {
             importActionItems = getViewImportItems(project, actionId, jobId ? [jobId] : null)
-            //todo: job scm status
-            //scmJobStatus = scmService.importStatusForJobs(jobs)
+            importActionItems?.each { item ->
+                item.status = ImportSynchState.IMPORT_NEEDED
+                if(item.job){
+                    if(item.job.jobId){
+                        def se = ScheduledExecution.findByUuid(item.job.jobId)
+                        if(se){
+                            def status = scmService.importStatusForJob(se)
+                            item.status = status?.get(item.job.jobId).synchState
+                        }
+                    }
+                }
+            }
         }
 
         //todo: project scm status
@@ -859,6 +881,7 @@ class ScmController extends ControllerBase {
                 item.job = new JobReference(jobId: job.extid, jobName: job.jobName, groupPath: job.groupPath)
             }
             item.tracked = null != item.job
+            item.deleted = it.isDeleted()
 
             importActionItems << item
         }
@@ -1021,7 +1044,11 @@ class ScmController extends ControllerBase {
                         scm.actionId
                 )
                 trackingItems.findAll { it.jobId in actionInput.jobIds }.each {
-                    actionInput.selectedItems << it.id
+                    if(it.deleted){
+                        actionInput.deletedItems << it.jobId
+                    }else {
+                        actionInput.selectedItems << it.id
+                    }
                 }
             }
             result = scmService.performImportAction(
@@ -1029,7 +1056,8 @@ class ScmController extends ControllerBase {
                     authContext,
                     project,
                     actionInput.input,
-                    actionInput.selectedItems
+                    actionInput.selectedItems,
+                actionInput.deletedItems
             )
         }
         [result, messages]
@@ -1119,6 +1147,7 @@ class ScmController extends ControllerBase {
         }
         def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null
         List<ScheduledExecution> jobs = []
+        def toDeleteItems = []
         def jobMap = [:]
         def scmStatus = []
         if (integration == 'export') {
@@ -1142,7 +1171,18 @@ class ScmController extends ControllerBase {
         def scmProjectStatus = scmService.getPluginStatus(authContext, integration, project)
         def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(jobs) : null
 
-
+        if(integration == 'import'){
+            //separate files to import and to delete
+            trackingItems.each { item ->
+                if(item.jobId){
+                    def tmpJob = jobMap[item.jobId]
+                    if(tmpJob && scmStatus.get(tmpJob.extid) && scmStatus.get(tmpJob.extid).synchState?.toString() == 'DELETE_NEEDED'){
+                        toDeleteItems.add(item)
+                    }
+                }
+            }
+            trackingItems.removeAll(toDeleteItems)
+        }
 
         [
                 pluginDescription: pluginDesc,
@@ -1153,6 +1193,7 @@ class ScmController extends ControllerBase {
                 selected        : params.id ? jobIds : [],
                 filesMap        : scmFiles,
                 trackingItems   : trackingItems,
+                toDeleteItems   : toDeleteItems,
                 deletedPaths    : deletedPaths,
                 selectedPaths   : selectedPaths,
                 renamedJobPaths : renamedJobPaths,
@@ -1211,6 +1252,7 @@ class ScmController extends ControllerBase {
         }
 
         List<String> chosenTrackedItems = [params.chosenTrackedItem].flatten().findAll { it }
+        List<String> toDeleteItems = [params.chosenDeleteItem].flatten().findAll { it }
 
         def deletePathsToJobIds = deletePaths.collectEntries { [it, scmService.deletedJobForPath(project, it)?.id] }
         def result
@@ -1229,7 +1271,8 @@ class ScmController extends ControllerBase {
                     authContext,
                     project,
                     params.pluginProperties,
-                    chosenTrackedItems
+                    chosenTrackedItems,
+                    toDeleteItems
             )
         }
         if (!result.valid || result.error) {
@@ -1601,8 +1644,8 @@ class ScmController extends ControllerBase {
             return
         }
         actionInput.jobIds = [scm.id]
-        actionInput.deletedItems = null
-        actionInput.selectedItems = null
+        actionInput.deletedItems = []
+        actionInput.selectedItems = []
 
         def (Map<String, Object> result, Map<String, String> messages) = performScmAction(
                 isExport,

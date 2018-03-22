@@ -23,4 +23,6 @@ class ScmImportActionItem {
     String itemId
     JobReference job
     boolean tracked
+    boolean deleted
+    String status
 }

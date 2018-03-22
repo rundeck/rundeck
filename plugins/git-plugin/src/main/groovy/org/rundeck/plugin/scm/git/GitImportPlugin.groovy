@@ -43,7 +43,6 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     public static final String ACTION_PULL = 'remote-pull'
     public static final String ACTION_FETCH = 'remote-fetch'
     boolean inited
-    boolean trackedItemsSelected = false
     List<String> trackedItems = null
     Import config
     /**
@@ -70,6 +69,28 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     ) throws ScmPluginException
     {
         return actions[actionId]?.performAction(context, this, importer, selectedPaths, input)
+    }
+
+    @Override
+    ScmExportResult scmImport(
+        final ScmOperationContext context,
+        final String actionId,
+        final JobImporter importer,
+        final List<String> selectedPaths,
+        final List<String> deletedJobs,
+        final Map<String, String> input
+    ) throws ScmPluginException
+    {
+        if(actionId == ACTION_IMPORT_ALL){
+            deletedJobs.each { jobid ->
+                jobStateMap.remove(jobid)
+            }
+            return ((ImportJobs)actions[ACTION_IMPORT_ALL]).performAction(context, this, importer, selectedPaths, deletedJobs, input)
+        }else{
+            log.debug("deletedJobs list to non import action, ignored")
+            actions[actionId]?.performAction(context, this, importer, selectedPaths, input)
+        }
+
     }
 
     void initialize(final ScmOperationContext context) {
@@ -146,7 +167,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     GitImportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //look for any unimported paths
-        if (!trackedItemsSelected) {
+        if (!config.shouldUseFilePattern() && !trackedItems) {
             return null
         }
 
@@ -387,7 +408,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     List<Action> jobActionsForStatus(Map status) {
-        if (status.synch == ImportSynchState.IMPORT_NEEDED) {
+        if (status.synch == ImportSynchState.IMPORT_NEEDED || status.synch == ImportSynchState.DELETE_NEEDED) {
             [actions[ACTION_IMPORT_ALL]]
         } else {
             []
@@ -431,9 +452,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     Action getSetupAction(ScmOperationContext context) {
-        trackedItemsSelected=config.shouldUseFilePattern()
-
-        if (!trackedItemsSelected) {
+        if (!config.shouldUseFilePattern()) {
             return actions[ACTION_INITIALIZE_TRACKING]
         }else{
             log.debug("SetupTracking: ${input} (true)")
@@ -446,7 +465,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     List<Action> actionsAvailableForContext(ScmOperationContext context) {
         if (context.frameworkProject) {
             //project-level actions
-            if (!trackedItemsSelected) {
+            if (!config.shouldUseFilePattern() && !trackedItems) {
                 return [actions[ACTION_INITIALIZE_TRACKING]]
             } else {
 
@@ -528,6 +547,19 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
             List<ScmImportTrackedItem> found = []
 
+            //files to delete
+            jobStateMap?.each {job->
+                String status = job.getValue()?.get("synch")
+                if (status?.equalsIgnoreCase('DELETE_NEEDED')){
+                    found << trackPath(
+                        job.getValue().get("path").toString(),
+                        true,
+                        job.key.toString(),
+                        true
+                    )
+                }
+            }
+
             //walk the repo files and look for possible candidates
             walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
                 found << trackPath(
@@ -552,12 +584,13 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    ScmImportTrackedItem trackPath(final String path, final boolean selected = false, String jobId = null) {
+    ScmImportTrackedItem trackPath(final String path, final boolean selected = false, String jobId = null, final boolean deleted = false) {
         ScmImportTrackedItemBuilder.builder().
                 id(path).
                 iconName('glyphicon-file').
                 selected(selected).
                 jobId(jobId).
+                deleted(deleted).
                 build()
     }
 
@@ -572,7 +605,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (useFilter) {
             if (config.shouldUseFilePattern()) {
                 tree.setFilter(PathRegexFilter.create(config.filePattern))
-            } else {
+            } else if(trackedItems) {
                 tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
             }
         }

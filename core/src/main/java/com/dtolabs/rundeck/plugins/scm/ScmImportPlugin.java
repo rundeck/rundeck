@@ -43,6 +43,23 @@ public interface ScmImportPlugin {
     ) throws ScmPluginException;
 
     /**
+     * Perform import with the input
+     *
+     * @param input    result of GUI input
+     * @param importer can import files as jobs
+     */
+    default ScmExportResult scmImport(
+        ScmOperationContext context,
+        String actionId,
+        JobImporter importer,
+        List<String> selectedPaths,
+        List<String> deletedJobs,
+        Map<String, String> input
+    ) throws ScmPluginException{
+        return scmImport(context, actionId, importer, selectedPaths, input);
+    }
+
+    /**
      * @return overall status
      */
     ScmImportSynchState getStatus(ScmOperationContext context) throws ScmPluginException;

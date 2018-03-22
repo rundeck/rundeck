@@ -25,4 +25,5 @@ class ScmExportActionItem {
     JobReference job
     boolean deleted
     boolean renamed
+    String status
 }

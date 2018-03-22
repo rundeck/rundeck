@@ -482,9 +482,10 @@ class ScmService {
         { JobChangeEvent event, JobSerializer serializer ->
             log.debug("job change event: " + event)
             if(event.eventType == JobChangeEvent.JobChangeEventType.CREATE){
+                def metadata = jobMetadataService.getJobPluginMeta(event.jobReference.project, event.jobReference.id, 'scm-import')
                 //generate "source" UUID in case the local UUID will not be exported
                 jobMetadataService.setJobPluginMeta(event.jobReference.project, event.jobReference.id, 'scm-import',[
-                        srcId:UUID.randomUUID().toString()
+                        srcId:(metadata?.srcId)?:UUID.randomUUID().toString()
                 ])
             }
             JobScmReference scmRef = scmJobRef(event.jobReference, serializer)
@@ -1075,6 +1076,23 @@ class ScmService {
      * @param jobs
      * @return
      */
+    Map<String, JobState> exportStatusForJob(ScheduledExecution job) {
+        def status = [:]
+        def jobReference = exportJobRef(job)
+        def plugin = getLoadedExportPluginFor jobReference.project
+        if (plugin) {
+            def originalPath = getRenamedPathForJobId(jobReference.project, jobReference.id)
+            status[jobReference.id] = plugin.getJobStatus(jobReference, originalPath, false)
+            log.debug("Status for job ${jobReference}: ${status[jobReference.id]}, origpath: ${originalPath}")
+        }
+
+        status
+    }
+    /**
+     * Return a map of status for jobs
+     * @param jobs
+     * @return
+     */
     Map<String, JobImportState> importStatusForJobs(List<ScheduledExecution> jobs) {
         def status = [:]
         scmJobRefsForJobs(jobs).each { JobScmReference jobReference ->
@@ -1085,6 +1103,21 @@ class ScmService {
                 status[jobReference.id] = plugin.getJobStatus(jobReference)
                 log.debug("Status for job ${jobReference}: ${status[jobReference.id]},")
             }
+        }
+        status
+    }
+    /**
+     * Return a map of status for jobs
+     * @param jobs
+     * @return
+     */
+    Map<String, JobImportState> importStatusForJob(ScheduledExecution job) {
+        def status = [:]
+        JobScmReference jobReference = scmJobRef(job)
+        def plugin = getLoadedImportPluginFor jobReference.project
+        if (plugin) {
+            status[jobReference.id] = plugin.getJobStatus(jobReference)
+            log.debug("Status for job ${jobReference}: ${status[jobReference.id]},")
         }
         status
     }
@@ -1206,10 +1239,14 @@ class ScmService {
             UserAndRolesAuthContext auth,
             String project,
             Map config,
-            List<String> chosenTrackedItems
+            List<String> chosenTrackedItems,
+            List<String> toDeleteItems = null
     )
     {
         log.debug("performImportAction project: ${project}, items: ${chosenTrackedItems}")
+        if(toDeleteItems){
+            log.debug("to delete items: ${toDeleteItems}")
+        }
         //store config
         def plugin = getLoadedImportPluginFor project
         def context = scmOperationContext(auth, project)
@@ -1224,7 +1261,11 @@ class ScmService {
         def jobImporter = new ResolvedJobImporter(context, scmJobImporter)
 
         try {
-            result = plugin.scmImport(context, actionId, jobImporter, chosenTrackedItems, config)
+            if(!toDeleteItems){
+                result = plugin.scmImport(context, actionId, jobImporter, chosenTrackedItems, config)
+            }else{
+                result = plugin.scmImport(context, actionId, jobImporter, chosenTrackedItems, toDeleteItems, config)
+            }
         } catch (ScmPluginInvalidInput e) {
             return [valid: false, report: e.report]
         } catch (ScmPluginException e) {
