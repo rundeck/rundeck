@@ -114,6 +114,7 @@ grails.project.dependency.resolution = {
                 'log4j:log4j:1.2.17',
                 'commons-collections:commons-collections:3.2.2',
                 'commons-codec:commons-codec:1.5',
+                'com.fasterxml.jackson.core:jackson-core:2.8.11',
                 'com.fasterxml.jackson.core:jackson-databind:2.8.11.1',
                 'com.fasterxml.jackson.core:jackson-annotations:2.8.11',
                 'com.codahale.metrics:metrics-core:3.0.1',
