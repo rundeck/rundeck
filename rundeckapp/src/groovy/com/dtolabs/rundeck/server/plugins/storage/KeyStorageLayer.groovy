@@ -32,9 +32,15 @@ class KeyStorageLayer implements StorageConverterPlugin {
     public static final String PASSWORD_MIME_TYPE = "application/x-rundeck-data-password"
     public static final String RUNDECK_KEY_TYPE = "Rundeck-key-type"
     public static final String RUNDECK_DATA_TYPE = "Rundeck-data-type"
+    public static final String RUNDECK_CONTENT_MASK = 'Rundeck-content-mask'
+    public static final String CONTENT_MASK_TYPE_CONTENT = 'content'
+    public static final String KEY_TYPE_PRIVATE = 'private'
+    public static final String KEY_TYPE_PUBLIC = 'public'
+    public static final String KEY_TYPE_PASSWORD = 'password'
 
     @Override
     HasInputStream readResource(Path path, ResourceMetaBuilder resourceMetaBuilder, HasInputStream hasInputStream) {
+        validate(resourceMetaBuilder, path)
         return null
     }
 
@@ -48,13 +54,13 @@ class KeyStorageLayer implements StorageConverterPlugin {
         def type = resourceMetaBuilder.contentType
 
         if (type.equals(PRIVATE_KEY_MIME_TYPE)) {
-            resourceMetaBuilder.setMeta('Rundeck-content-mask', 'content')
-            resourceMetaBuilder.setMeta(RUNDECK_KEY_TYPE, 'private')
+            resourceMetaBuilder.setMeta(RUNDECK_CONTENT_MASK, CONTENT_MASK_TYPE_CONTENT)
+            resourceMetaBuilder.setMeta(RUNDECK_KEY_TYPE, KEY_TYPE_PRIVATE)
         }else if (type.equals(PUBLIC_KEY_MIME_TYPE)){
-            resourceMetaBuilder.setMeta(RUNDECK_KEY_TYPE, 'public')
+            resourceMetaBuilder.setMeta(RUNDECK_KEY_TYPE, KEY_TYPE_PUBLIC)
         }else if (type.equals(PASSWORD_MIME_TYPE)){
-            resourceMetaBuilder.setMeta('Rundeck-content-mask', 'content')
-            resourceMetaBuilder.setMeta(RUNDECK_DATA_TYPE, 'password')
+            resourceMetaBuilder.setMeta(RUNDECK_CONTENT_MASK, CONTENT_MASK_TYPE_CONTENT)
+            resourceMetaBuilder.setMeta(RUNDECK_DATA_TYPE, KEY_TYPE_PASSWORD)
         }
     }
 
