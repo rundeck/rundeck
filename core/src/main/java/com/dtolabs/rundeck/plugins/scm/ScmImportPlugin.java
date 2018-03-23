@@ -31,22 +31,29 @@ public interface ScmImportPlugin {
     /**
      * Perform import with the input
      *
-     * @param input    result of GUI input
-     * @param importer can import files as jobs
+     * @param context       scm operation context
+     * @param actionId      action ID
+     * @param importer      can import files as jobs
+     * @param selectedPaths selected scm paths to import
+     * @param input         result of GUI input
      */
     ScmExportResult scmImport(
-            ScmOperationContext context,
-            String actionId,
-            JobImporter importer,
-            List<String> selectedPaths,
-            Map<String, String> input
+        ScmOperationContext context,
+        String actionId,
+        JobImporter importer,
+        List<String> selectedPaths,
+        Map<String, String> input
     ) throws ScmPluginException;
 
     /**
      * Perform import with the input
      *
-     * @param input    result of GUI input
-     * @param importer can import files as jobs
+     * @param context       scm operation context
+     * @param actionId      action ID
+     * @param importer      can import files as jobs
+     * @param selectedPaths selected scm paths to import
+     * @param deletedJobs   selected Job IDS to delete
+     * @param input         result of GUI input
      */
     default ScmExportResult scmImport(
         ScmOperationContext context,
@@ -55,7 +62,7 @@ public interface ScmImportPlugin {
         List<String> selectedPaths,
         List<String> deletedJobs,
         Map<String, String> input
-    ) throws ScmPluginException{
+    ) throws ScmPluginException {
         return scmImport(context, actionId, importer, selectedPaths, input);
     }
 

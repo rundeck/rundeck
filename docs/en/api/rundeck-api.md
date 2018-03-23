@@ -5946,7 +5946,7 @@ however where an Item has an associated Job, you can supply either the Job ID, o
 When there are items to be deleted on `export` integration, you can specify the Item IDs in the `deleted`
 section.  However, if the item is associated with a renamed Job, including the Job ID will have the same effect.
 
-When there are items to be deleted on `import` integration, you must specify the Job IDs in the `deleted`
+When there are items to be deleted on `import` integration, you must specify the Job IDs in the `deletedJobs`
 section.
 
 Note: including the Item ID of an associated job, instead of the Job ID,
@@ -5973,6 +5973,9 @@ will not automatically delete a renamed item.
     <deleted>
         <item itemId="$itemId"/>
     </deleted>
+    <deletedJobs>
+        <job jobId="$jobId"/>
+    </deletedJobs>
 </scmAction>
 ~~~~~~~~~~
 
@@ -5990,6 +5993,9 @@ will not automatically delete a renamed item.
         "$itemId"
     ],
     "deleted":[
+        "$itemId"
+    ],
+    "deletedJobs":[
         "$jobId"
     ]
 }

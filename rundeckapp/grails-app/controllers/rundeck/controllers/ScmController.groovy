@@ -1045,7 +1045,7 @@ class ScmController extends ControllerBase {
                 )
                 trackingItems.findAll { it.jobId in actionInput.jobIds }.each {
                     if(it.deleted){
-                        actionInput.deletedItems << it.jobId
+                        actionInput.deletedJobs << it.jobId
                     }else {
                         actionInput.selectedItems << it.id
                     }
@@ -1057,7 +1057,7 @@ class ScmController extends ControllerBase {
                     project,
                     actionInput.input,
                     actionInput.selectedItems,
-                actionInput.deletedItems
+                    actionInput.deletedJobs
             )
         }
         [result, messages]
@@ -1252,7 +1252,7 @@ class ScmController extends ControllerBase {
         }
 
         List<String> chosenTrackedItems = [params.chosenTrackedItem].flatten().findAll { it }
-        List<String> toDeleteItems = [params.chosenDeleteItem].flatten().findAll { it }
+        List<String> jobIdsToDelete = [params.chosenDeleteItem].flatten().findAll { it }
 
         def deletePathsToJobIds = deletePaths.collectEntries { [it, scmService.deletedJobForPath(project, it)?.id] }
         def result
@@ -1272,7 +1272,7 @@ class ScmController extends ControllerBase {
                     project,
                     params.pluginProperties,
                     chosenTrackedItems,
-                    toDeleteItems
+                    jobIdsToDelete
             )
         }
         if (!result.valid || result.error) {
