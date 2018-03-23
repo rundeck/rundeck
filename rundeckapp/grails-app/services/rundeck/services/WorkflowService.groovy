@@ -42,7 +42,6 @@ import rundeck.JobExec
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
-import rundeck.services.events.ExecutionCompleteEvent
 import rundeck.services.logging.ExecutionFile
 import rundeck.services.logging.ExecutionFileDeletePolicy
 import rundeck.services.logging.ExecutionFileProducer
@@ -52,7 +51,6 @@ import rundeck.services.logging.WorkflowStateFileLoader
 import rundeck.services.workflow.StateMapping
 
 import java.nio.file.Files
-import java.util.concurrent.TimeUnit
 
 class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     public static final String STATE_FILE_FILETYPE = "state.json"
@@ -62,7 +60,6 @@ class WorkflowService implements ApplicationContextAware,ExecutionFileProducer{
     def ApplicationContext applicationContext
     def LogFileStorageService logFileStorageService
     def grailsApplication
-    def grailsEvents
     def ConfigurationService configurationService
     static transactional = false
     def stateMapping = new StateMapping()

@@ -97,7 +97,10 @@ class ExecutionController extends ControllerBase{
     }
 
     def follow() {
-        return render(view:'show',model:show())
+        def m = show()
+        if(response.status != 302) {
+            render(view:'show',model:m)
+        }
     }
 
     def followFragment() {
@@ -225,7 +228,8 @@ class ExecutionController extends ControllerBase{
             return
         }
         if(!params.project || params.project!=e.project) {
-            return redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project])
+            redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project])
+            return
         }
         params.project=e.project
         request.project=e.project

@@ -13,6 +13,8 @@ grails:
             events: false
     databinding:
         trimStrings: false
+    servlet:
+        version: 3.0
 
 info:
     app:
