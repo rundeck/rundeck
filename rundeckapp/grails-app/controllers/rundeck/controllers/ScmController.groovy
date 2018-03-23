@@ -1014,7 +1014,7 @@ class ScmController extends ControllerBase {
             Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(project)
             //add deleted paths from renamed jobs
             renamedJobPaths.each { k, v ->
-                if (actionInput.jobIds.contains(k)) {
+                if (exportJobIds.contains(k)) {
                     actionInput.deletedItems << v
                 }
             }
