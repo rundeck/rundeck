@@ -16,11 +16,24 @@
 
 package com.dtolabs.rundeck.app.api.scm
 
+import com.dtolabs.rundeck.app.api.marshall.ApiResource
+import com.dtolabs.rundeck.app.api.marshall.ApiVersion
+import com.dtolabs.rundeck.app.api.marshall.Ignore
+
 /**
  * Created by greg on 10/30/15.
  */
+@ApiResource
 class ScmImportActionItem {
     String itemId
     JobReference job
     boolean tracked
+
+    @ApiVersion(22)
+    @Ignore(onlyIfNull = true)
+    boolean deleted
+
+    @ApiVersion(22)
+    @Ignore(onlyIfNull = true)
+    String status
 }

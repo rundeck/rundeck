@@ -73,10 +73,8 @@ files will be watched for changes.'''
         if (selectedPaths != null) {
             GitImportPlugin.log.debug("SetupTracking: ${selectedPaths}, ${input} (true)")
             plugin.trackedItems = selectedPaths
-            plugin.trackedItemsSelected = true
         } else {
             GitImportPlugin.log.debug("SetupTracking: ${selectedPaths}, ${input} (false)")
-            plugin.trackedItemsSelected = false
         }
     }
 

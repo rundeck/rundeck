@@ -46,4 +46,9 @@ public interface ScmImportTrackedItem {
      * @return true if the item is selected
      */
     boolean isSelected();
+
+    /**
+     * @return true if the item was deleted on remote
+     */
+    boolean isDeleted();
 }

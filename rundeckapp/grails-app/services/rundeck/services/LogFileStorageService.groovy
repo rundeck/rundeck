@@ -248,6 +248,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
 
         failedRequests.remove(requestId)
         failures.remove(requestId)
+        long retryMax = 30000;
 
         LogFileStorageRequest.withNewSession {
             Execution execution = Execution.get(execId)
@@ -262,8 +263,11 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 if (!success && failuremap && failuremap.size() > 1 || !failuremap[filetype]) {
                     def ftype = failuremap.keySet().findAll { it != null && it != 'null' }.join(',')
 
-                    LogFileStorageRequest request = LogFileStorageRequest.get(requestId)
-                    if (request.filetype != ftype || request.completed != success) {
+                    LogFileStorageRequest request = retryLoad(requestId, retryMax)
+                    if (!request) {
+                        log.error("Storage request [ID#${task.id}]: Error updating: not found for id $requestId")
+                        success = false
+                    } else if (request.filetype != ftype || request.completed != success) {
                         int retryC = 5
                         boolean saveDone = false
                         Exception saveError
@@ -283,7 +287,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                             retryC--
                         }
                         if (!saveDone) {
-                            log.error("Error updating LogFileStorageRequest: $saveError", saveError)
+                            log.error("Storage request [ID#${task.id}]: Error updating: $saveError", saveError)
                         }
                     }
 
@@ -305,16 +309,15 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 //if policy, remove the request from db
                 executorService.execute {
                     //use executorService to run within hibernate session
-                    LogFileStorageRequest request = LogFileStorageRequest.get(requestId)
-                    while(!request){
-                        Thread.sleep(500)
-                        request = LogFileStorageRequest.get(requestId)
+                    LogFileStorageRequest request = retryLoad(requestId, retryMax)
+                    if (!request) {
+                        log.error("Storage request [ID#${task.id}]: Error deleting: not found for id $requestId")
+                    } else {
+                        request.delete(flush: true)
+                        log.debug("Storage request [ID#${task.id}] cancelled.")
                     }
-                    request.delete(flush:true)
-
-                    log.debug("Storage request [ID#${task.id}] cancelled.")
-                    failedRequests.add(requestId)
                 }
+                failedRequests.add(requestId)
             }else{
                 log.error("Storage request [ID#${task.id}] FAILED ${retry} attempts, giving up")
 
@@ -326,21 +329,33 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             //use executorService to run within hibernate session
             executorService.execute {
                 log.debug("executorService saving storage request status...")
-                LogFileStorageRequest request = LogFileStorageRequest.get(requestId)
-                while(!request){
-                    Thread.sleep(500)
-                    request = LogFileStorageRequest.get(requestId)
-                    if(request){
-                        log.debug("Loaded LogFileStorageRequest ${requestId} [ID#${task.id}] after retry")
-                    }
-                }
-                request.completed = success
-                request.save(flush: true)
+                LogFileStorageRequest request = retryLoad(requestId, retryMax)
+                if (!request) {
+                    log.error("Storage request [ID#${task.id}]: Error saving: not found for id $requestId")
+                } else if (request) {
+                    log.debug("Loaded LogFileStorageRequest ${requestId} [ID#${task.id}] after retry")
 
-                log.debug("Storage request [ID#${task.id}] complete.")
+                    request.completed = success
+                    request.save(flush: true)
+
+                    log.debug("Storage request [ID#${task.id}] complete.")
+                }
                 getStorageSuccessCounter()?.inc()
             }
         }
+    }
+
+    LogFileStorageRequest retryLoad(long requestId, long retryMaxMs) {
+        long start = System.currentTimeMillis()
+        LogFileStorageRequest request = LogFileStorageRequest.get(requestId)
+        while (!request) {
+            Thread.sleep(500)
+            request = LogFileStorageRequest.get(requestId)
+            if ((System.currentTimeMillis() - start) > retryMaxMs) {
+                break;
+            }
+        }
+        request
     }
 
     /**

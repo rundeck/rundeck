@@ -62,4 +62,9 @@ class ResolvedJobImporter implements JobImporter {
     ImportResult importFromMap(final Map input, final Map importMetadata, boolean preserveUuid) {
         return jobImporter.importFromMap(context, input, importMetadata, preserveUuid)
     }
+
+    @Override
+    ImportResult deleteJob(String project, String jobid){
+        return jobImporter.deleteJob(context,project, jobid)
+    }
 }
