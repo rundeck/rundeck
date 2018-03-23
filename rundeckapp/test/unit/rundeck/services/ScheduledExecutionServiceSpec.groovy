@@ -2704,16 +2704,47 @@ class ScheduledExecutionServiceSpec extends Specification {
     @Unroll
     def "do update job on cluster"(){
         given:
-        def inparams = [description: 'new job', jobName: 'monkey', workflow:
-            new Workflow(commands: [new CommandExec(adhocRemoteString: 'test command', adhocExecution: true)])]
+        def serverUuid = '8527d81a-49cd-42e3-a853-43b956b77600'
+        def jobOwnerUuid = '5e0e96a0-042a-426a-80a4-488f7f6a4f13'
+        def uuid=setupDoUpdate(true, serverUuid)
+        def se = new ScheduledExecution(createJobParams([serverNodeUUID:jobOwnerUuid])).save()
+        service.jobSchedulerService = Mock(JobSchedulerService)
+
+        when:
+        def results = service._doupdate([id: se.id.toString()] + inparams, mockAuth())
+
+
+        then:
+        results.success
+        results.scheduledExecution.serverNodeUUID == (shouldChange?serverUuid:jobOwnerUuid)
+
+        where:
+        inparams                                        | shouldChange
+        [jobName: 'newName']                            | false
+        [jobName: 'newName', scheduled: false]          | true
+        [jobName: 'newName', scheduled: true]           | false
+        [jobName: 'newName', timeZone: 'GMT+1']         | true
+        [jobName: 'newName', dayOfMonth: '10']          | true
+        [jobName: 'newName', scheduleEnabled: true]     | false
+        [jobName: 'newName', scheduleEnabled: false]    | true
+        [jobName: 'newName', executionEnabled: true]     | false
+        [jobName: 'newName', executionEnabled: false]    | true
+
+    }
+
+
+    @Unroll
+    def "do update list of jobs on cluster"(){
+        given:
         def serverUUID = '802d38a5-0cd1-44b3-91ff-824d495f8105'
         def currentOwner = '05b604ed-9a1e-4cb4-8def-b17a071afec9'
         def uuid = setupDoUpdate(true,serverUUID)
+        service.jobSchedulerService = Mock(JobSchedulerService)
 
         def orig = [serverNodeUUID: currentOwner]
 
         def se = new ScheduledExecution(createJobParams(orig)).save()
-        def newJob = new ScheduledExecution(createJobParams(inparams))
+        def newJob = new ScheduledExecution(createJobParams(inparams)).save()
         service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
 
@@ -2722,11 +2753,24 @@ class ScheduledExecutionServiceSpec extends Specification {
         when:
         def results = service._doupdateJob(se.id,newJob, mockAuth())
 
-
         then:
         results.success
-        results.scheduledExecution.serverNodeUUID == currentOwner
-        results.scheduledExecution.serverNodeUUID != serverUUID
+        results.scheduledExecution.serverNodeUUID == (shouldChange?serverUUID:currentOwner)
+
+        where:
+        inparams                                        | shouldChange
+        [jobName: 'newName']                            | false
+        [jobName: 'newName', scheduled: false]          | true
+        [jobName: 'newName', scheduled: true]           | false
+        [jobName: 'newName', timeZone: 'GMT+1']         | true
+        [jobName: 'newName', dayOfMonth: '10']          | true
+        [jobName: 'newName', scheduleEnabled: true]     | false
+        [jobName: 'newName', scheduleEnabled: false]    | true
+        [jobName: 'newName', executionEnabled: true]     | false
+        [jobName: 'newName', executionEnabled: false]    | true
     }
+
+
+
 
 }

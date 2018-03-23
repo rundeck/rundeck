@@ -1946,6 +1946,10 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def crontab = [:]
         def oldjobname = scheduledExecution.generateJobScheduledName()
         def oldjobgroup = scheduledExecution.generateJobGroupName()
+        def originalCron = scheduledExecution.generateCrontabExression()
+        def originalSchedule = scheduledExecution.scheduleEnabled
+        def originalExecution = scheduledExecution.executionEnabled
+        def originalTz = scheduledExecution.timeZone
         def oldsched = scheduledExecution.scheduled
         def nonopts = params.findAll { !it.key.startsWith("option.") && it.key != 'workflow' && it.key != 'options' && it.key != 'notifications'}
         if (scheduledExecution.uuid) {
@@ -2022,8 +2026,20 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
-        if(!scheduledExecution.serverNodeUUID && frameworkService.isClusterModeEnabled()){
-            scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+
+        if(frameworkService.isClusterModeEnabled()){
+
+            if (originalCron != scheduledExecution.generateCrontabExression() ||
+                originalSchedule != scheduledExecution.scheduleEnabled ||
+                originalExecution != scheduledExecution.executionEnabled ||
+                originalTz != scheduledExecution.timeZone ||
+                oldsched != scheduledExecution.scheduled
+            ) {
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }
+            if (!scheduledExecution.serverNodeUUID) {
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }
         }
         def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
         if (renamed) {
@@ -2624,6 +2640,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         def oldjobname = scheduledExecution.generateJobScheduledName()
         def oldjobgroup = scheduledExecution.generateJobGroupName()
         def oldsched = scheduledExecution.scheduled
+        def originalCron = scheduledExecution.generateCrontabExression()
+        def originalSchedule = scheduledExecution.scheduleEnabled
+        def originalExecution = scheduledExecution.executionEnabled
+        def originalTz = scheduledExecution.timeZone
+
         scheduledExecution.properties = null
         final Collection foundprops = params.properties.keySet().findAll {it != 'lastUpdated' && it != 'dateCreated' && (params.properties[it] instanceof String || params.properties[it] instanceof Boolean || params.properties[it] instanceof Integer) }
         final Map newprops = foundprops ? params.properties.subMap(foundprops) : [:]
@@ -2691,8 +2712,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             //set nextExecution of non-scheduled job to be far in the future so that query results can sort correctly
             scheduledExecution.nextExecution = new Date(ScheduledExecutionService.TWO_HUNDRED_YEARS)
         }
-        if(!scheduledExecution.serverNodeUUID && frameworkService.isClusterModeEnabled()){
-            scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+        if(frameworkService.isClusterModeEnabled()){
+            if (originalCron != scheduledExecution.generateCrontabExression() ||
+                originalSchedule != scheduledExecution.scheduleEnabled ||
+                originalExecution != scheduledExecution.executionEnabled ||
+                originalTz != scheduledExecution.timeZone ||
+                oldsched != scheduledExecution.scheduled
+            ) {
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }
+            if (!scheduledExecution.serverNodeUUID) {
+                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            }
         }
 
         def boolean renamed = oldjobname != scheduledExecution.generateJobScheduledName() || oldjobgroup != scheduledExecution.generateJobGroupName()
