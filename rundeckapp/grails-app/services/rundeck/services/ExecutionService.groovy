@@ -44,6 +44,8 @@ import com.dtolabs.rundeck.plugins.ServiceNameConstants
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.events.EventPublisher
+import grails.events.annotation.Subscriber
 import grails.events.annotation.gorm.Listener
 import grails.web.mapping.LinkGenerator
 import groovy.transform.ToString
@@ -82,7 +84,7 @@ import java.util.regex.Pattern
 /**
  * Coordinates Command executions via Ant Project objects
  */
-class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor {
+class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor, EventPublisher {
     static Logger executionStatusLogger = Logger.getLogger("org.rundeck.execution.status")
     static transactional = true
     def FrameworkService frameworkService
@@ -107,7 +109,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def nodeService
     def grailsApplication
     def configurationService
-    def grailsEvents
     def executionUtilService
     def fileUploadService
     def pluginService
@@ -1489,9 +1490,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         if (frameworkService.isClusterModeEnabled() && !forceIncomplete) {
             def serverUUID = frameworkService.serverUUID
             if (e.serverNodeUUID != serverUUID) {
-                def ereply = grailsEvents?.event(
-                        'cluster',
-                        'abortExecution',
+                sendAndReceive(
+                        'cluster.abortExecution',
                         [
                                 jobId      : se?.extid,
                                 executionId: e.id,
@@ -1501,18 +1501,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                 uuidSource : serverUUID,
                                 uuidTarget : e.serverNodeUUID
                         ]
-                )
-                Map abortresult = [
-                        abortstate: ABORT_FAILED,
-                        jobstate  : getExecutionState(e),
-                        status    : getExecutionState(e),
-                        reason    : "Execution is running on a different cluster server: " + e.serverNodeUUID
-                ]
-                def resp = ereply?.value
-                if (resp && resp instanceof Map) {
-                    return new AbortResult(abortresult + resp)
-                } else {
-                    return new AbortResult(abortresult)
+                ) {
+                    //recieve reply from event
+                    Map abortresult = [
+                            abortstate: ABORT_FAILED,
+                            jobstate  : getExecutionState(e),
+                            status    : getExecutionState(e),
+                            reason    : "Execution is running on a different cluster server: " + e.serverNodeUUID
+                    ]
+                    def resp = ereply?.value
+                    if (resp && resp instanceof Map) {
+                        return new AbortResult(abortresult + resp)
+                    } else {
+                        return new AbortResult(abortresult)
+                    }
                 }
             }
         }
@@ -2228,7 +2230,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         multijobflag.putIfAbsent(id, object) ?: object
     }
 
-//    @Listener
+    @Subscriber
     def jobChanged(StoredJobChangeEvent e) {
         if (e.eventType == JobChangeEvent.JobChangeEventType.DELETE) {
             //clear multijob sync object
@@ -2668,9 +2670,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                 context: context
                         ]
                 )
-                grailsEvents?.event(
-                        null,
-                        'executionComplete',
+                notify('executionComplete',
                         new ExecutionCompleteEvent(
                                 state: execution.executionState,
                                 execution:execution,
@@ -2683,6 +2683,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
     }
+
     public String summarizeJob(ScheduledExecution job=null,Execution exec){
 //        if(job){
 //            return job.groupPath?job.generateFullName():job.jobName

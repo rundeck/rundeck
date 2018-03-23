@@ -49,6 +49,7 @@ class ProjectSelectInterceptor {
 
 
     boolean before() {
+        if(InterceptorHelper.matchesStaticAssets(controllerName)) return true
         if (request.is_allowed_api_request || request.api_version || request.is_api_req) {
             //only default the project if not an api request
             return true
@@ -57,9 +58,6 @@ class ProjectSelectInterceptor {
             return true
         }
         if(controllerName=='menu' && ( actionName in ['home'] )){
-            return true
-        }
-        if(controllerName=='assets'){
             return true
         }
         if (session && session.user && session.subject) {

@@ -73,9 +73,6 @@ environments {
 }
 
 grails.config.locations = [
-        "classpath:ClusterEvents.groovy",
-        "classpath:ExecutionCompleteEvents.groovy",
-        "classpath:JobChangeEvents.groovy",
         "classpath:QuartzConfig.groovy"
 ]
 
@@ -83,11 +80,7 @@ if(environment=="development"){
     grails.config.locations << "file:${userHome}/.grails/${appName}-config.properties"
 }
 
-if(System.properties["${appName}.config.location"]) {
-    grails.config.locations << "file:" + System.properties["${appName}.config.location"]
-}else{
-    grails.config.locations << "classpath:${appName}-config.properties"
-}
+grails.config.locations << "classpath:${appName}-config.properties"
 
 grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"
 

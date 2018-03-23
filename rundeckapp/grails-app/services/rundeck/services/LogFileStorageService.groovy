@@ -32,6 +32,7 @@ import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.services.ExecutionFileStoragePluginProviderService
+import grails.events.EventPublisher
 import org.hibernate.sql.JoinType
 import org.springframework.beans.factory.InitializingBean
 import org.springframework.context.ApplicationContext
@@ -71,7 +72,7 @@ import java.nio.file.StandardCopyOption
  * "storageRequests" blocking queue for storage requests
  * "retrievalRequests" blocking queue for retrieval requests
  */
-class LogFileStorageService implements InitializingBean,ApplicationContextAware{
+class LogFileStorageService implements InitializingBean,ApplicationContextAware,EventPublisher {
 
     static transactional = false
     static final RundeckLogFormat rundeckLogFormat = new RundeckLogFormat()
@@ -87,7 +88,6 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
     ApplicationContext applicationContext
     def metricService
     def configurationService
-    def grailsEvents
 
     /**
      * Queue of log storage requests ids, for incomplet requests being resumed
@@ -519,9 +519,7 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                     thresholdBehavior: PeriodicFileChecker.Behavior.OR,
                     action: { long fileSizeChange, long timediff ->
                         log.debug("Partial log file storage trigger for ${execid}")
-                        grailsEvents?.event(
-                                null,
-                                'executionCheckpoint',
+                        notify('executionCheckpoint',
                                 new ExecutionCompleteEvent(
                                         state: 'partial',
                                         execution: execution,
