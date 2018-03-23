@@ -761,17 +761,6 @@ class ScmController extends ControllerBase {
         List<ScmExportActionItem> exportActionItems = null
         if (isExport) {
             exportActionItems = getViewExportActionItems(project, jobId ? [jobId] : null)
-            exportActionItems?.each { item ->
-                if(item.job){
-                    if(item.job.jobId){
-                        def se = ScheduledExecution.findByUuid(item.job.jobId)
-                        if(se){
-                            def status = scmService.exportStatusForJob(se)
-                            item.status = status?.get(item.job.jobId)?.synchState
-                        }
-                    }
-                }
-            }
         }
 
         /**
@@ -815,7 +804,7 @@ class ScmController extends ControllerBase {
     }
 
     private ArrayList<ScmExportActionItem> getViewExportActionItems(String project, List<String> jobids = null) {
-        Map scmJobStatus
+        Map<String, JobState> scmJobStatus
         List<ScmExportActionItem> exportActionItems = []
         Map deletedPaths = scmService.deletedExportFilesForProject(project)
         Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(project)
@@ -831,7 +820,7 @@ class ScmController extends ControllerBase {
         } else {
             jobs = ScheduledExecution.findAllByProject(project)
         }
-        //todo: job scm status
+
         scmJobStatus = scmService.exportStatusForJobs(jobs).findAll {
             it.value.synchState != SynchState.CLEAN
         }
@@ -846,6 +835,7 @@ class ScmController extends ControllerBase {
             item.itemId = scmFiles[job.extid]
             item.originalId = renamedJobPaths[job.extid]
             item.renamed = null != item.originalId
+            item.status = scmJobStatus.get(job.extid)?.synchState
             exportActionItems << item
         }
         deletedPaths.each { String path, Map jobInfo ->
