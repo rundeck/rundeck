@@ -55,6 +55,12 @@ View the [Index](#index) listing API paths.
 
 Changes introduced by API Version number:
 
+**Version 22**:
+
+* Updated Endpoints.
+    - [`GET /api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input] - Include Job `status`, and `deleted` whether the job file was deleted for Import integration
+    - [`POST /api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]`][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]] - Can include `deletedJobs` to delete jobs for Import integration.
+
 **Version 21**:
 
 * Removed Endpoints.
