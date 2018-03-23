@@ -761,17 +761,6 @@ class ScmController extends ControllerBase {
         List<ScmExportActionItem> exportActionItems = null
         if (isExport) {
             exportActionItems = getViewExportActionItems(project, jobId ? [jobId] : null)
-            exportActionItems?.each { item ->
-                if(item.job){
-                    if(item.job.jobId){
-                        def se = ScheduledExecution.findByUuid(item.job.jobId)
-                        if(se){
-                            def status = scmService.exportStatusForJob(se)
-                            item.status = status?.get(item.job.jobId)?.synchState
-                        }
-                    }
-                }
-            }
         }
 
         /**
@@ -815,7 +804,7 @@ class ScmController extends ControllerBase {
     }
 
     private ArrayList<ScmExportActionItem> getViewExportActionItems(String project, List<String> jobids = null) {
-        Map scmJobStatus
+        Map<String, JobState> scmJobStatus
         List<ScmExportActionItem> exportActionItems = []
         Map deletedPaths = scmService.deletedExportFilesForProject(project)
         Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(project)
@@ -831,7 +820,7 @@ class ScmController extends ControllerBase {
         } else {
             jobs = ScheduledExecution.findAllByProject(project)
         }
-        //todo: job scm status
+
         scmJobStatus = scmService.exportStatusForJobs(jobs).findAll {
             it.value.synchState != SynchState.CLEAN
         }
@@ -846,6 +835,7 @@ class ScmController extends ControllerBase {
             item.itemId = scmFiles[job.extid]
             item.originalId = renamedJobPaths[job.extid]
             item.renamed = null != item.originalId
+            item.status = scmJobStatus.get(job.extid)?.synchState
             exportActionItems << item
         }
         deletedPaths.each { String path, Map jobInfo ->
@@ -1014,7 +1004,7 @@ class ScmController extends ControllerBase {
             Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(project)
             //add deleted paths from renamed jobs
             renamedJobPaths.each { k, v ->
-                if (actionInput.jobIds.contains(k)) {
+                if (exportJobIds.contains(k)) {
                     actionInput.deletedItems << v
                 }
             }
@@ -1045,7 +1035,7 @@ class ScmController extends ControllerBase {
                 )
                 trackingItems.findAll { it.jobId in actionInput.jobIds }.each {
                     if(it.deleted){
-                        actionInput.deletedItems << it.jobId
+                        actionInput.deletedJobs << it.jobId
                     }else {
                         actionInput.selectedItems << it.id
                     }
@@ -1057,7 +1047,7 @@ class ScmController extends ControllerBase {
                     project,
                     actionInput.input,
                     actionInput.selectedItems,
-                actionInput.deletedItems
+                    actionInput.deletedJobs
             )
         }
         [result, messages]
@@ -1252,7 +1242,7 @@ class ScmController extends ControllerBase {
         }
 
         List<String> chosenTrackedItems = [params.chosenTrackedItem].flatten().findAll { it }
-        List<String> toDeleteItems = [params.chosenDeleteItem].flatten().findAll { it }
+        List<String> jobIdsToDelete = [params.chosenDeleteItem].flatten().findAll { it }
 
         def deletePathsToJobIds = deletePaths.collectEntries { [it, scmService.deletedJobForPath(project, it)?.id] }
         def result
@@ -1272,7 +1262,7 @@ class ScmController extends ControllerBase {
                     project,
                     params.pluginProperties,
                     chosenTrackedItems,
-                    toDeleteItems
+                    jobIdsToDelete
             )
         }
         if (!result.valid || result.error) {

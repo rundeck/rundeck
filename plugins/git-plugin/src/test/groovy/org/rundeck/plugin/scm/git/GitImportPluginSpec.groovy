@@ -192,10 +192,15 @@ class GitImportPluginSpec extends Specification {
         plugin.jobStateMap['0001'] = ['synch':'DELETE_NEEDED','path':'job/xy-0001.xml']
 
         when:
-        def ret = plugin.getTrackedItemsForAction('import-all')
+        def ret = plugin.getTrackedItemsForAction(actionId)
 
         then:
         ret
         ret.size()==1
+
+        where:
+        actionId      | _
+        'import-all'  | _
+        'import-jobs' | _
     }
 }

@@ -39,7 +39,11 @@ import org.rundeck.plugin.scm.git.imp.actions.SetupTracking
 class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     static final Logger log = Logger.getLogger(GitImportPlugin)
     public static final String ACTION_INITIALIZE_TRACKING = 'initialize-tracking'
+    /**
+     * @deprecated use {@link #ACTION_IMPORT_JOBS}
+     */
     public static final String ACTION_IMPORT_ALL = 'import-all'
+    public static final String ACTION_IMPORT_JOBS = 'import-jobs'
     public static final String ACTION_PULL = 'remote-pull'
     public static final String ACTION_FETCH = 'remote-fetch'
     boolean inited
@@ -81,11 +85,18 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         final Map<String, String> input
     ) throws ScmPluginException
     {
-        if(actionId == ACTION_IMPORT_ALL){
+        if (actionId in [ACTION_IMPORT_ALL, ACTION_IMPORT_JOBS]) {
             deletedJobs.each { jobid ->
                 jobStateMap.remove(jobid)
             }
-            return ((ImportJobs)actions[ACTION_IMPORT_ALL]).performAction(context, this, importer, selectedPaths, deletedJobs, input)
+            return ((ImportJobs) actions[ACTION_IMPORT_JOBS]).performAction(
+                context,
+                this,
+                importer,
+                selectedPaths,
+                deletedJobs,
+                input
+            )
         }else{
             log.debug("deletedJobs list to non import action, ignored")
             actions[actionId]?.performAction(context, this, importer, selectedPaths, input)
@@ -103,6 +114,14 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         "glyphicon-cog"
 
                 ),
+                (ACTION_IMPORT_JOBS)         : new ImportJobs(
+                    ACTION_IMPORT_JOBS,
+                        "Import Remote Changes",
+                        "Import Changes",
+                        null
+
+                ),
+                //preserve compatibility with action name 'import-all'
                 (ACTION_IMPORT_ALL)         : new ImportJobs(
                         ACTION_IMPORT_ALL,
                         "Import Remote Changes",
@@ -409,7 +428,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     List<Action> jobActionsForStatus(Map status) {
         if (status.synch == ImportSynchState.IMPORT_NEEDED || status.synch == ImportSynchState.DELETE_NEEDED) {
-            [actions[ACTION_IMPORT_ALL]]
+            [actions[ACTION_IMPORT_JOBS]]
         } else {
             []
         }
@@ -475,7 +494,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     avail << actions[ACTION_PULL]
                 }
                 if (status.state != ImportSynchState.CLEAN) {
-                    avail << actions[ACTION_IMPORT_ALL]
+                    avail << actions[ACTION_IMPORT_JOBS]
                 }
                 if(!config.shouldFetchAutomatically()){
                     avail << actions[ACTION_FETCH]
@@ -517,7 +536,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         temp.delete()
 
 
-        def availableActions = diffs > 0 ? [actions[ACTION_IMPORT_ALL]] : null
+        def availableActions = diffs > 0 ? [actions[ACTION_IMPORT_JOBS]] : null
         return new GitDiffResult(
                 content: baos.toString(),
                 modified: diffs > 0,
@@ -543,7 +562,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     trackPath(it, false, importTracker.trackedJob(it))
                 }
             }
-        } else if (actionId == ACTION_IMPORT_ALL) {
+        } else if (actionId in [ACTION_IMPORT_ALL, ACTION_IMPORT_JOBS]) {
 
             List<ScmImportTrackedItem> found = []
 

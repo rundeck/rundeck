@@ -1240,12 +1240,12 @@ class ScmService {
             String project,
             Map config,
             List<String> chosenTrackedItems,
-            List<String> toDeleteItems = null
+            List<String> jobIdsToDelete = null
     )
     {
         log.debug("performImportAction project: ${project}, items: ${chosenTrackedItems}")
-        if(toDeleteItems){
-            log.debug("to delete items: ${toDeleteItems}")
+        if(jobIdsToDelete){
+            log.debug("Job IDs to delete: ${jobIdsToDelete}")
         }
         //store config
         def plugin = getLoadedImportPluginFor project
@@ -1261,10 +1261,10 @@ class ScmService {
         def jobImporter = new ResolvedJobImporter(context, scmJobImporter)
 
         try {
-            if(!toDeleteItems){
+            if(!jobIdsToDelete){
                 result = plugin.scmImport(context, actionId, jobImporter, chosenTrackedItems, config)
             }else{
-                result = plugin.scmImport(context, actionId, jobImporter, chosenTrackedItems, toDeleteItems, config)
+                result = plugin.scmImport(context, actionId, jobImporter, chosenTrackedItems, jobIdsToDelete, config)
             }
         } catch (ScmPluginInvalidInput e) {
             return [valid: false, report: e.report]
