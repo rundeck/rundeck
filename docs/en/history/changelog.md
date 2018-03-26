@@ -1,6 +1,122 @@
 % Changelog
 % greg
-% 02/02/2018
+% 03/23/2018
+
+Release 2.10.8
+===========
+
+Date: 2018-03-23
+
+Name: <span style="color: DodgerBlue"><span class="glyphicon glyphicon-bell"></span> "cafe mocha dodgerblue bell"</span>
+
+## Upgrading from Earlier versions
+
+* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+
+## Notes
+
+Bug Fixes:
+
+* Fix an issue causing Vault key storage plugin to not work
+* Fix issue with cluster mode using MSSQL or Oracle DB field types. Note: If using those DBs see [#3125](https://github.com/rundeck/rundeck/issues/3125)
+
+Enhancements:
+
+* SCM git plugin enhancements [#3192](https://github.com/rundeck/rundeck/pull/3192):
+    * Import can delete jobs which were removed from git
+    * API updated to include synch status for jobs
+    * API updated to allow specifying list of jobs to delete during import action
+
+Other changes:
+
+* Ansible plugin upgraded to version 2.3.0
+* API version &rarr; 22
+
+## Contributors
+
+* Antoine-Auffret
+* Greg Schueler (gschueler)
+* Jaime Tobar (jtobard)
+* Luis Toledo (ltamaster)
+
+## Bug Reporters
+
+* Antoine-Auffret
+* gschueler
+* jplassnibatt
+* jtobard
+* komodo472
+* ltamaster
+* sebastianbello
+
+## Issues
+
+[Milestone 2.10.8](https://github.com/rundeck/rundeck/milestone/72)
+
+* [Update/apiv22 scm import](https://github.com/rundeck/rundeck/pull/3216)
+* [API: SCM Git plugin Import action 'import-all' should be renamed to 'import-jobs'](https://github.com/rundeck/rundeck/issues/3215)
+* [fix: update dependencies flagged by snyk](https://github.com/rundeck/rundeck/pull/3213)
+* [Upgrade ansible plugin to the 2.3.0 release](https://github.com/rundeck/rundeck/pull/3202)
+* [Fix: key storage data type not set automatically with Vault plugin](https://github.com/rundeck/rundeck/pull/3196)
+* [Scm Git Import can delete jobs when git file is removed](https://github.com/rundeck/rundeck/pull/3192)
+* [correct optional options when creating a project](https://github.com/rundeck/rundeck/pull/3191)
+* [Referenced job error handlers cannot be found when job is referenced from other projects](https://github.com/rundeck/rundeck/issues/3189)
+* [Fix: Matched Nodes list is not (Auto) Refreshed in Jobs](https://github.com/rundeck/rundeck/pull/3171)
+* [Can't abort a job, message is "Unable to modify the execution"](https://github.com/rundeck/rundeck/issues/3155)
+* [serverNodeUUID field to varchar ](https://github.com/rundeck/rundeck/pull/3126)
+* [Oracle+MSSQL DB error SqlExceptionHelper](https://github.com/rundeck/rundeck/issues/3125)
+* [Log File Storage exception: NullPointerException: Cannot get property 'filetype' on null object](https://github.com/rundeck/rundeck/issues/3089)
+* [Bug / Matched Nodes list is not (Auto) Refreshed in Jobs](https://github.com/rundeck/rundeck/issues/3075)
+* [API: Scm (export/import) action inputs should include item status](https://github.com/rundeck/rundeck/issues/2330)
+
+---
+
+Release 2.10.7
+===========
+
+Date: 2018-03-05
+
+Name: <span style="color: Crimson"><span class="glyphicon glyphicon-sunglasses"></span> "cafe mocha crimson sunglasses"</span>
+
+## Upgrading from Earlier versions
+
+* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+
+## Notes
+
+Some bugfixes, and some improvements to Git SCM plugin:
+
+* Export: Option to Synchronize automatically during fetch (default: false)
+* Import: Option to Pull automatically when fetching (default: true)
+* new Clean button in the GUI: allows removing local git repo 
+* Import: automatic Tracking init during Setup, if you use a regular expression
+	* API improvement: does not require a second step after setup to initialize Git Import
+* Export: Push Remotely is checked by default when making commits
+* (see full details [#PR3152](https://github.com/rundeck/rundeck/pull/3152))
+
+## Contributors
+
+* Greg Schueler (gschueler)
+* Jaime Tobar (jtobard)
+* Rene Fragoso (ctrlrsf)
+
+## Bug Reporters
+
+* SpencerMalone
+* ctrlrsf
+* gentunian
+* jtobard
+
+## Issues
+
+[Milestone 2.10.7](https://github.com/rundeck/rundeck/milestone/71)
+
+* [SCM usability enhancement](https://github.com/rundeck/rundeck/pull/3152)
+* [PUT Project Configuration API endpoint fails w/ text/plain input](https://github.com/rundeck/rundeck/issues/3127)
+* [Documentation: add job.executionType to context variables documentation](https://github.com/rundeck/rundeck/issues/1811)
+* [Profile firstName does not accepts accents](https://github.com/rundeck/rundeck/issues/1581)
+
+---
 
 Release 2.10.6
 ===========

@@ -172,4 +172,35 @@ class GitImportPluginSpec extends Specification {
 
     }
 
+    def "get status on deleted jobs"() {
+        given:
+        def projectName = 'GitImportPluginSpec'
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Import config = createTestConfig(gitdir, origindir)
+
+        Git git = GitExportPluginSpec.createGit(origindir)
+
+
+        git.close()
+
+        def plugin = new GitImportPlugin(config, [])
+        plugin.initialize(Mock(ScmOperationContext) {
+            getFrameworkProject() >> projectName
+        }
+        )
+        plugin.jobStateMap['0001'] = ['synch':'DELETE_NEEDED','path':'job/xy-0001.xml']
+
+        when:
+        def ret = plugin.getTrackedItemsForAction(actionId)
+
+        then:
+        ret
+        ret.size()==1
+
+        where:
+        actionId      | _
+        'import-all'  | _
+        'import-jobs' | _
+    }
 }

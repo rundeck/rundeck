@@ -17,10 +17,12 @@
 package com.dtolabs.rundeck.app.api.scm
 
 import com.dtolabs.rundeck.app.api.CDataString
+import com.dtolabs.rundeck.app.api.marshall.ApiResource
 
 /**
  * Action input data
  */
+@ApiResource
 class ScmActionInput {
     String actionId
     String integration

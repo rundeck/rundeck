@@ -246,7 +246,7 @@ You can also add configuration properties when you create the project.
 Here the default SSH key setting is declared via the `project.ssh-keypath`:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-rd projects create -p examples -- -project.ssh-keypath=/home/rundeck/.ssh/id_rsa
+rd projects create -p examples -- --project.ssh-keypath=/home/rundeck/.ssh/id_rsa
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can specify a resource model source using command options, too.
@@ -254,8 +254,8 @@ Here a "directory" model source is declared.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
 rd projects create -p examples -- \
-  -resources.source.2.type=directory \
-  -resources.source.2.config.directory=/path/to/my/resources.d
+  --resources.source.2.type=directory \
+  --resources.source.2.config.directory=/path/to/my/resources.d
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Administrators can place multiple resource model files in this directory.

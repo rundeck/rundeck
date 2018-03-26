@@ -86,6 +86,7 @@ function _jobVarData() {
         var jobdata = {
             'id': {title: 'Job ID'},
             'execid': {title: 'Execution ID'},
+            'executionType': {title: 'Execution Type'},
             'name': {title: 'Job Name'},
             'group': {title: 'Job Group'},
             'username': {title: 'Name of user executing the job'},
@@ -97,7 +98,7 @@ function _jobVarData() {
             'threadcount': {title: 'Job Threadcount'},
             'filter': {title: 'Job Node Filter Query'}
         };
-        ['id', 'execid', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry', 'threadcount', 'filter'].each(function (e) {
+        ['id', 'execid', 'executionType', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry', 'threadcount', 'filter'].each(function (e) {
             _VAR_DATA['job'].push({key: 'job.' + e, category: 'Job', title: jobdata[e].title, desc: jobdata[e].desc});
         });
     }

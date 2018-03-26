@@ -143,7 +143,7 @@ class ExecutionUtilService {
                 workflow.commands.collect {
                     itemForWFCmdItem(
                             it,
-                            it.errorHandler ? itemForWFCmdItem(it.errorHandler) : null,
+                            it.errorHandler ? itemForWFCmdItem(it.errorHandler,null,parentProject) : null,
                             parentProject
                     )
                 },

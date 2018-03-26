@@ -216,6 +216,8 @@ var FlowState = Class.create({
                 }
             }
         }
+        //retry if was a temp db error
+        this.timer = setTimeout(this.callUpdate.bind(this), this.reloadInterval);
     },
     update: function (json) {
         var data=json.state;

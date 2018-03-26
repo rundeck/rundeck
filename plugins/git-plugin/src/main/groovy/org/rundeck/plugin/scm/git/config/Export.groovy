@@ -67,6 +67,19 @@ Template".
     @SelectValues(values = ['preserve', 'original', 'remove'])
     String exportUuidBehavior
 
+    @PluginProperty(
+            title = "Synchronize Automatically",
+            description = "Automatically pull remote changes on automatic fetch. If false, you can perform it manually",
+            defaultValue = 'false',
+            required = false
+    )
+    @SelectValues(values = ['true', 'false'])
+    @RenderingOption(
+            key = StringRenderingConstants.GROUP_NAME,
+            value = "Git Repository"
+    )
+    String pullAutomatically
+
     boolean isExportPreserve() {
         exportUuidBehavior == 'preserve' || !exportUuidBehavior
     }
@@ -75,5 +88,9 @@ Template".
     }
     boolean isExportRemove() {
         exportUuidBehavior == 'remove'
+    }
+
+    boolean shouldPullAutomatically(){
+        return pullAutomatically in ['true']
     }
 }

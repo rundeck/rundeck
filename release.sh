@@ -8,6 +8,7 @@ set -euo pipefail
 IFS=$'\n\t'
 readonly ARGS=("$@")
 DRYRUN=1
+SIGN=0
 . rd_versions.sh
 
 die(){
@@ -46,10 +47,14 @@ commit_tag(){
     local MESSAGE=${FARGS[1]}
     local TAG=${FARGS[0]}
     echo "Create tag $TAG.."
-    do_dryrun git tag -a $TAG -m "$MESSAGE"
+    if [ "$SIGN" == "1" ] ; then
+        do_dryrun git tag -s $TAG -m "$MESSAGE"
+    else
+        do_dryrun git tag -a $TAG -m "$MESSAGE"
+    fi
 }
 check_args(){
-    if [ ${#ARGS[@]} -ne 1 ] ; then
+    if [ ${#ARGS[@]} -lt 1 ] ; then
         usage
         exit 2
     fi
@@ -64,6 +69,9 @@ check_args(){
     else
         usage
         exit 2
+    fi
+    if [ ${#ARGS[@]} -gt 1 ] && [ "${ARGS[1]}" == "--sign" ] ; then
+        SIGN=1
     fi
 }
 check_release_notes(){

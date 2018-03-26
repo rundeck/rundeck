@@ -36,6 +36,11 @@ public interface ScmExportPlugin {
 
 
     /**
+     * perform a total clean
+     */
+    default void totalClean(){}
+
+    /**
      * @param actionId action ID
      *
      * @return input view for the specified action
@@ -90,6 +95,19 @@ public interface ScmExportPlugin {
     JobState getJobStatus(JobExportReference job, String originalPath);
 
     /**
+     * Return the state of the given job, with optional original repo path
+     *
+     * @param job          job
+     * @param originalPath path of original job, e.g. if the file was renamed
+     * @param serialize false to avoid serialize twice a job
+     *
+     * @return state
+     */
+    default JobState getJobStatus(JobExportReference job, String originalPath, boolean serialize){
+        return getJobStatus(job, originalPath);
+    }
+
+    /**
      * Return a list of tracked files that have been deleted.
      */
     List<String> getDeletedFiles();
@@ -138,5 +156,7 @@ public interface ScmExportPlugin {
      * @param jobs rundeck jobs
      * @return map with information on the process
      */
-    Map clusterFixJobs(List<JobExportReference> jobs);
+    default Map clusterFixJobs(List<JobExportReference> jobs){
+        return null;
+    }
 }
