@@ -190,6 +190,8 @@ File: `rundeck-jasypt-encryption-plugin-${VERSION}.jar`
 
 ## Git Plugin
 
+* See [SCM Git Plugin](git-plugins.html)
+
 Provides SCM Export and SCM Import providers for Git.
 
 File: `rundeck-git-plugin-${VERSION}.jar`

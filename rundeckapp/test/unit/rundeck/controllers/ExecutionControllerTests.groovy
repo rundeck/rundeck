@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.ControllerUnitTestCase
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.quartz.JobExecutionContext
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
@@ -31,7 +32,10 @@ import rundeck.services.ApiService
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.LoggingService
+import rundeck.services.ScheduledExecutionService
+import rundeck.services.WorkflowService
 import rundeck.services.logging.ExecutionLogState
+import rundeck.services.logging.WorkflowStateFileLoader
 
 @TestFor(ExecutionController)
 @Mock([Workflow,ScheduledExecution,Execution,CommandExec])
@@ -136,6 +140,10 @@ class ExecutionControllerTests  {
         Execution e1 = new Execution( project: 'test1', user: 'bob', dateStarted: new Date())
         assert e1.validate(), e1.errors.allErrors.collect { it.toString() }.join(",")
         assert e1.save()
+        def jobexec = mockWith(JobExecutionContext){}
+        controller.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            findExecutingQuartzJob{id -> jobexec}
+        }
         controller.params.id=e1.id
         controller.frameworkService=mockWith(FrameworkService){
             getAuthContextForSubjectAndProject{ subj,proj-> null }
@@ -613,5 +621,32 @@ class ExecutionControllerTests  {
 
         assert 403 == controller.response.status
         assert null == controller.flash.errorCode
+    }
+
+    void testAjaxExecState_ok(){
+        Execution e1 = new Execution( project: 'test1', user: 'bob', dateStarted: new Date())
+        assert e1.validate(), e1.errors.allErrors.collect { it.toString() }.join(",")
+        assert e1.save()
+        def jobexec = mockWith(JobExecutionContext){}
+        controller.scheduledExecutionService = mockWith(ScheduledExecutionService){
+            findExecutingQuartzJob{id -> jobexec}
+        }
+        controller.params.id=e1.id
+        controller.frameworkService=mockWith(FrameworkService){
+            getAuthContextForSubjectAndProject{ subj,proj-> null }
+            authorizeProjectExecutionAll{ ctx, exec, actions-> true }
+            isClusterModeEnabled{->false}
+        }
+
+        controller.executionService = mockWith(ExecutionService){
+            getExecutionState{e -> ExecutionService.EXECUTION_ABORTED}
+        }
+        def loader = new WorkflowStateFileLoader()
+        loader.state = ExecutionLogState.AVAILABLE
+        controller.workflowService = mockWith(WorkflowService){
+            requestStateSummary{e,nodes,selectedOnly, perform,steps-> loader}
+        }
+        controller.ajaxExecState()
+        assertEquals(200,response.status)
     }
 }

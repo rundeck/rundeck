@@ -39,9 +39,6 @@ import java.util.regex.PatternSyntaxException
  */
 class SetupTracking extends BaseAction implements GitImportAction {
 
-    public static final String USE_FILE_PATTERN = "useFilePattern"
-    public static final String FILE_PATTERN = "filePattern"
-
     SetupTracking(final String id, final String title, final String description, final String iconName) {
         super(id, title, description, iconName)
     }
@@ -50,40 +47,12 @@ class SetupTracking extends BaseAction implements GitImportAction {
     BasicInputView getInputView(final ScmOperationContext context, GitImportPlugin plugin) {
         BuilderUtil.inputViewBuilder(id) {
             title "Setup Tracking"
-            description '''Enter a Regular expression to match potential new repo files that are added.
+            description '''Choose to select a static list of Files found in the Repository to be tracked for Job Import.
 
-Or, you can also choose to select a static list of Files found in the Repository to be tracked for Job Import.
-
-Note: If you select Files and do not choose to match via regular expression,
-then new files added to the repo *will not* be available for Job Import, and only those selected
+Note: New files added to the repo *will not* be available for Job Import, and only those selected
 files will be watched for changes.'''
             buttonTitle "Setup"
             properties([
-                    BuilderUtil.property {
-                        booleanType USE_FILE_PATTERN
-                        title "Match a Regular Expression?"
-                        description "Check to match all paths that match the regular expression."
-                        required false
-                        defaultValue 'true'
-                        build()
-                    },
-                    BuilderUtil.property {
-                        freeSelect FILE_PATTERN
-                        title "Regular Expression"
-                        description "Enter a regular expression. New paths in the repo matching this expression will also be imported."
-                        required false
-                        values '.*\\.xml', '.*\\.yaml'
-                        defaultValue '.*\\.xml'
-                        validator({ String pat ->
-                            try {
-                                Pattern.compile(pat)
-                                return true
-                            } catch (PatternSyntaxException e) {
-                                throw new ValidationException("Invalid regular expression: " + e.message)
-                            }
-                                  } as PropertyValidator
-                        )
-                    },
             ]
             )
         }
@@ -101,15 +70,11 @@ files will be watched for changes.'''
             final Map<String, String> input
     )
     {
-        if (input[USE_FILE_PATTERN] != null && selectedPaths != null) {
+        if (selectedPaths != null) {
             GitImportPlugin.log.debug("SetupTracking: ${selectedPaths}, ${input} (true)")
             plugin.trackedItems = selectedPaths
-            plugin.useTrackingRegex = 'true' == input[USE_FILE_PATTERN]
-            plugin.trackingRegex = plugin.useTrackingRegex ? input[FILE_PATTERN] : null
-            plugin.trackedItemsSelected = true
         } else {
             GitImportPlugin.log.debug("SetupTracking: ${selectedPaths}, ${input} (false)")
-            plugin.trackedItemsSelected = false
         }
     }
 
@@ -122,22 +87,7 @@ files will be watched for changes.'''
             final Map<String, String> input
     )
     {
-        if (input[USE_FILE_PATTERN] != 'true' && !selectedPaths) {
-            throw new ScmPluginInvalidInput(
-                    Validator.errorReport(
-                            USE_FILE_PATTERN,
-                            "If no static paths are selected, then you must enter a regular expression."
-                    )
-            )
-        }
-        if (input[USE_FILE_PATTERN] == 'true' && !input[FILE_PATTERN]) {
-            throw new ScmPluginInvalidInput(
-                    Validator.errorReport(
-                            FILE_PATTERN,
-                            "If no static paths are selected, then you must enter a regular expression."
-                    )
-            )
-        }
+
         setupWithInput(plugin, selectedPaths, input)
 
         def result = new ScmExportResultImpl()

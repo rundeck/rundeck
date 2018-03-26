@@ -36,6 +36,11 @@ public interface ScmExportPlugin {
 
 
     /**
+     * perform a total clean
+     */
+    default void totalClean(){}
+
+    /**
      * @param actionId action ID
      *
      * @return input view for the specified action
@@ -88,6 +93,19 @@ public interface ScmExportPlugin {
      * @return state
      */
     JobState getJobStatus(JobExportReference job, String originalPath);
+
+    /**
+     * Return the state of the given job, with optional original repo path
+     *
+     * @param job          job
+     * @param originalPath path of original job, e.g. if the file was renamed
+     * @param serialize false to avoid serialize twice a job
+     *
+     * @return state
+     */
+    default JobState getJobStatus(JobExportReference job, String originalPath, boolean serialize){
+        return getJobStatus(job, originalPath);
+    }
 
     /**
      * Return a list of tracked files that have been deleted.

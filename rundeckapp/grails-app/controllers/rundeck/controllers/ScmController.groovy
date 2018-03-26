@@ -45,6 +45,7 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
+import com.dtolabs.rundeck.plugins.scm.ImportSynchState
 import com.dtolabs.rundeck.plugins.scm.JobImportState
 import com.dtolabs.rundeck.plugins.scm.JobState
 import com.dtolabs.rundeck.plugins.scm.ScmCommitInfo
@@ -511,6 +512,42 @@ class ScmController extends ControllerBase {
         redirect(action: 'index', params: [project: project])
     }
 
+    def clean(String integration, String project, String type) {
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
+        if (unauthorizedResponse(
+                frameworkService.authorizeApplicationResourceAll(
+                        authContext,
+                        frameworkService.authResourceForProject(project),
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
+                ),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
+        )) {
+            return
+        }
+
+        boolean valid = false
+        //cancel modification
+        if (params.cancel == 'Cancel') {
+            return redirect(controller: 'scm', action: 'index', params: [project: project])
+        }
+
+        withForm {
+            valid = true
+        }.invalidToken {
+            request.errorCode = 'request.error.invalidtoken.message'
+            renderErrorView([:])
+        }
+        if (!valid) {
+            return
+        }
+
+        //require type param
+        scmService.cleanPlugin(integration, project, type,authContext)
+
+        flash.message = message(code: "scmController.action.clean.success.message", args: [integration, type])
+        redirect(action: 'index', params: [project: project])
+    }
+
     def enable(String integration, String project, String type) {
 
         UserAndRolesAuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(
@@ -733,8 +770,18 @@ class ScmController extends ControllerBase {
 
         if (!isExport) {
             importActionItems = getViewImportItems(project, actionId, jobId ? [jobId] : null)
-            //todo: job scm status
-            //scmJobStatus = scmService.importStatusForJobs(jobs)
+            importActionItems?.each { item ->
+                item.status = ImportSynchState.IMPORT_NEEDED
+                if(item.job){
+                    if(item.job.jobId){
+                        def se = ScheduledExecution.findByUuid(item.job.jobId)
+                        if(se){
+                            def status = scmService.importStatusForJob(se)
+                            item.status = status?.get(item.job.jobId).synchState
+                        }
+                    }
+                }
+            }
         }
 
         //todo: project scm status
@@ -757,7 +804,7 @@ class ScmController extends ControllerBase {
     }
 
     private ArrayList<ScmExportActionItem> getViewExportActionItems(String project, List<String> jobids = null) {
-        Map scmJobStatus
+        Map<String, JobState> scmJobStatus
         List<ScmExportActionItem> exportActionItems = []
         Map deletedPaths = scmService.deletedExportFilesForProject(project)
         Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(project)
@@ -773,7 +820,7 @@ class ScmController extends ControllerBase {
         } else {
             jobs = ScheduledExecution.findAllByProject(project)
         }
-        //todo: job scm status
+
         scmJobStatus = scmService.exportStatusForJobs(jobs).findAll {
             it.value.synchState != SynchState.CLEAN
         }
@@ -788,6 +835,7 @@ class ScmController extends ControllerBase {
             item.itemId = scmFiles[job.extid]
             item.originalId = renamedJobPaths[job.extid]
             item.renamed = null != item.originalId
+            item.status = scmJobStatus.get(job.extid)?.synchState
             exportActionItems << item
         }
         deletedPaths.each { String path, Map jobInfo ->
@@ -823,6 +871,7 @@ class ScmController extends ControllerBase {
                 item.job = new JobReference(jobId: job.extid, jobName: job.jobName, groupPath: job.groupPath)
             }
             item.tracked = null != item.job
+            item.deleted = it.isDeleted()
 
             importActionItems << item
         }
@@ -955,7 +1004,7 @@ class ScmController extends ControllerBase {
             Map<String, String> renamedJobPaths = scmService.getRenamedJobPathsForProject(project)
             //add deleted paths from renamed jobs
             renamedJobPaths.each { k, v ->
-                if (actionInput.jobIds.contains(k)) {
+                if (exportJobIds.contains(k)) {
                     actionInput.deletedItems << v
                 }
             }
@@ -985,7 +1034,11 @@ class ScmController extends ControllerBase {
                         scm.actionId
                 )
                 trackingItems.findAll { it.jobId in actionInput.jobIds }.each {
-                    actionInput.selectedItems << it.id
+                    if(it.deleted){
+                        actionInput.deletedJobs << it.jobId
+                    }else {
+                        actionInput.selectedItems << it.id
+                    }
                 }
             }
             result = scmService.performImportAction(
@@ -993,7 +1046,8 @@ class ScmController extends ControllerBase {
                     authContext,
                     project,
                     actionInput.input,
-                    actionInput.selectedItems
+                    actionInput.selectedItems,
+                    actionInput.deletedJobs
             )
         }
         [result, messages]
@@ -1083,6 +1137,7 @@ class ScmController extends ControllerBase {
         }
         def trackingItems = integration == 'import' ? scmService.getTrackingItemsForAction(project, actionId) : null
         List<ScheduledExecution> jobs = []
+        def toDeleteItems = []
         def jobMap = [:]
         def scmStatus = []
         if (integration == 'export') {
@@ -1106,7 +1161,18 @@ class ScmController extends ControllerBase {
         def scmProjectStatus = scmService.getPluginStatus(authContext, integration, project)
         def scmFiles = integration == 'export' ? scmService.exportFilePathsMapForJobs(jobs) : null
 
-
+        if(integration == 'import'){
+            //separate files to import and to delete
+            trackingItems.each { item ->
+                if(item.jobId){
+                    def tmpJob = jobMap[item.jobId]
+                    if(tmpJob && scmStatus.get(tmpJob.extid) && scmStatus.get(tmpJob.extid).synchState?.toString() == 'DELETE_NEEDED'){
+                        toDeleteItems.add(item)
+                    }
+                }
+            }
+            trackingItems.removeAll(toDeleteItems)
+        }
 
         [
                 pluginDescription: pluginDesc,
@@ -1117,6 +1183,7 @@ class ScmController extends ControllerBase {
                 selected        : params.id ? jobIds : [],
                 filesMap        : scmFiles,
                 trackingItems   : trackingItems,
+                toDeleteItems   : toDeleteItems,
                 deletedPaths    : deletedPaths,
                 selectedPaths   : selectedPaths,
                 renamedJobPaths : renamedJobPaths,
@@ -1175,6 +1242,7 @@ class ScmController extends ControllerBase {
         }
 
         List<String> chosenTrackedItems = [params.chosenTrackedItem].flatten().findAll { it }
+        List<String> jobIdsToDelete = [params.chosenDeleteItem].flatten().findAll { it }
 
         def deletePathsToJobIds = deletePaths.collectEntries { [it, scmService.deletedJobForPath(project, it)?.id] }
         def result
@@ -1193,7 +1261,8 @@ class ScmController extends ControllerBase {
                     authContext,
                     project,
                     params.pluginProperties,
-                    chosenTrackedItems
+                    chosenTrackedItems,
+                    jobIdsToDelete
             )
         }
         if (!result.valid || result.error) {
@@ -1565,8 +1634,8 @@ class ScmController extends ControllerBase {
             return
         }
         actionInput.jobIds = [scm.id]
-        actionInput.deletedItems = null
-        actionInput.selectedItems = null
+        actionInput.deletedItems = []
+        actionInput.selectedItems = []
 
         def (Map<String, Object> result, Map<String, String> messages) = performScmAction(
                 isExport,
