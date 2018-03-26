@@ -161,28 +161,27 @@ class ExecutionController extends ControllerBase{
             }
         }
 
-        render(contentType: 'application/json'){
-            executions=array{
-                execs.each{Execution exec->
-                    if(exec.workflow.commands.size()==1 && exec.workflow.commands[0].adhocRemoteString) {
-                        def href=createLink(
-                                controller: 'framework',
-                                action: 'adhoc',
-                                params: [project: project, fromExecId: exec.id]
-                        )
+        def elementList = execs.collect{Execution exec->
+            if(exec.workflow.commands.size()==1 && exec.workflow.commands[0].adhocRemoteString) {
+                def href=createLink(
+                        controller: 'framework',
+                        action: 'adhoc',
+                        params: [project: project, fromExecId: exec.id]
+                )
 
-                        def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
-                        element(
-                                status: exec.getExecutionState(),
-                                succeeded: exec.statusSucceeded(),
-                                href: href,
-                                execid: exec.id,
-                                title: exec.workflow.commands[0].adhocRemoteString,
-                                filter: appliedFilter
-                        )
-                    }
-                }
+                def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                return [
+                        status: exec.getExecutionState(),
+                        succeeded: exec.statusSucceeded(),
+                        href: href,
+                        execid: exec.id,
+                        title: exec.workflow.commands[0].adhocRemoteString,
+                        filter: appliedFilter
+                ]
             }
+        }
+        render(contentType: 'application/json'){
+            executions elementList
         }
     }
 
