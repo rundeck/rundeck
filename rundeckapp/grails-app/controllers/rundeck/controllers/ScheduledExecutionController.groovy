@@ -2358,10 +2358,10 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         return render(contentType:'text/json'){
             if(results.error){
-                delegate['error']=results.error
+                'error' results.error
             }else{
-                success='true'
-                id=results.id
+                success 'true'
+                id results.id
             }
         }
     }

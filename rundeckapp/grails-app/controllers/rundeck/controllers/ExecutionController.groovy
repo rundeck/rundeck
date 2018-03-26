@@ -160,28 +160,27 @@ class ExecutionController extends ControllerBase{
             }
         }
 
-        render(contentType: 'application/json'){
-            executions=array{
-                execs.each{Execution exec->
-                    if(exec.workflow.commands.size()==1 && exec.workflow.commands[0].adhocRemoteString) {
-                        def href=createLink(
-                                controller: 'framework',
-                                action: 'adhoc',
-                                params: [project: project, fromExecId: exec.id]
-                        )
+        def elementList = execs.collect{Execution exec->
+            if(exec.workflow.commands.size()==1 && exec.workflow.commands[0].adhocRemoteString) {
+                def href=createLink(
+                        controller: 'framework',
+                        action: 'adhoc',
+                        params: [project: project, fromExecId: exec.id]
+                )
 
-                        def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
-                        element(
-                                status: exec.getExecutionState(),
-                                succeeded: exec.statusSucceeded(),
-                                href: href,
-                                execid: exec.id,
-                                title: exec.workflow.commands[0].adhocRemoteString,
-                                filter: appliedFilter
-                        )
-                    }
-                }
+                def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                return [
+                        status: exec.getExecutionState(),
+                        succeeded: exec.statusSucceeded(),
+                        href: href,
+                        execid: exec.id,
+                        title: exec.workflow.commands[0].adhocRemoteString,
+                        filter: appliedFilter
+                ]
             }
+        }
+        render(contentType: 'application/json'){
+            executions elementList
         }
     }
 
@@ -924,7 +923,7 @@ class ExecutionController extends ControllerBase{
         ]
         def setProp={k,v->
             if(outf=='json'){
-                delegate[k]=v
+                delegate."${k}"(v)
             }else{
                 delegate."${k}"(v)
             }
@@ -953,6 +952,7 @@ class ExecutionController extends ControllerBase{
             compactedAttr = 'log'
         }
         def prev = [:]
+        List jsonDatamapList = []
         def dataClos= {
             outputData.each {
                 def datamap = stateoutput?(it + [
@@ -986,11 +986,7 @@ class ExecutionController extends ControllerBase{
                     }
                 }
                 if (outf == 'json') {
-                    if (datamap instanceof Map) {
-                        delegate.'entries'(datamap)
-                    } else {
-                        delegate.element(datamap)
-                    }
+                    jsonDatamapList.add(datamap)
                 } else {
                     if (datamap instanceof Map) {
                         if (compacted && removed) {
@@ -1012,7 +1008,8 @@ class ExecutionController extends ControllerBase{
             }
         }
         if(outf=='json'){
-            delegate.'entries' = delegate.array(dataClos)
+            dataClos()
+            delegate.entries(jsonDatamapList)
         }else{
             delegate.entries(dataClos)
         }
@@ -1459,7 +1456,7 @@ class ExecutionController extends ControllerBase{
             }
             json {
                 render(contentType: "application/json") {
-                    renderOutputFormat('json', resultData, entry, request.api_version, delegate, stateoutput)
+                    this.renderOutputFormat('json', resultData, entry, request.api_version, delegate, stateoutput)
                 }
             }
             text{
