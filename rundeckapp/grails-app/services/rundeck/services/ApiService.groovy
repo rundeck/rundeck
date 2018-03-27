@@ -317,7 +317,7 @@ class ApiService {
     def renderSuccessXml(HttpServletRequest request,HttpServletResponse response, String code, List args) {
         return renderSuccessXmlWrap(request,response) {
             success {
-                message(messageSource.getMessage(code, args as Object[], null))
+                message(messageSource.getMessage(code, args as Object[], code, null))
             }
         }
     }
