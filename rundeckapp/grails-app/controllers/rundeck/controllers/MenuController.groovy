@@ -2894,9 +2894,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //allow project='*' to indicate all projects
         def allProjects = request.api_version >= ApiRequestFilters.V9 && params.project == '*'
         if(!allProjects){
-            if(!frameworkService.existsFrameworkProject(params.project)){
-                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                        code: 'api.error.parameter.doesnotexist', args: ['project',params.project]])
+            if(!apiService.requireExists(response,frameworkService.existsFrameworkProject(params.project),['project',params.project])){
+                return
             }
         }
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
