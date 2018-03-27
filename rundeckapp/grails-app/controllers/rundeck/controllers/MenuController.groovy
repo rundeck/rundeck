@@ -329,10 +329,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         query.projFilter = params.project
         //test valid project
 
-        def exists=frameworkService.existsFrameworkProject(params.project)
-        if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                                                        code: 'api.error.item.doesnotexist', args: ['project',params.project]])
+        if (!apiService.requireExists(
+            response,
+            frameworkService.existsFrameworkProject(params.project),
+            ['project', params.project]
+        )) {
+            return
         }
         if(query.hasErrors()){
             return apiService.renderErrorFormat(response,
@@ -2562,11 +2564,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         query.projFilter = params.project
         //test valid project
 
-        def exists=frameworkService.existsFrameworkProject(params.project)
-        if(!exists){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['project', params.project]])
-
+        if (!apiService.requireExists(
+            response,
+            frameworkService.existsFrameworkProject(params.project),
+            ['project', params.project]
+        )) {
+            return
         }
         if(query.groupPathExact || query.jobExactFilter){
             //these query inputs require API version 2
@@ -2843,10 +2846,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //test valid project
         Framework framework = frameworkService.getRundeckFramework()
 
-        def exists=frameworkService.existsFrameworkProject(params.project)
-        if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['project',params.project]])
+
+        if (!apiService.requireExists(
+            response,
+            frameworkService.existsFrameworkProject(params.project),
+            ['project', params.project]
+        )) {
+            return
         }
         //don't load scm status for api response
         params['_no_scm']=true

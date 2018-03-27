@@ -241,6 +241,7 @@ class MenuControllerSpec extends Specification {
                                     action:AuthConstants.ACTION_READ,
                                     resource:[group:job1.groupPath,name:job1.jobName]] ]
         1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
+        1 * controller.apiService.requireExists(_,true,['project','AProject']) >> true
         1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist : [job1]]
         1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
                                                                         offset:0,
@@ -285,6 +286,7 @@ class MenuControllerSpec extends Specification {
                                     action:AuthConstants.ACTION_READ,
                                     resource:[group:job1.groupPath,name:job1.jobName]] ]
         1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
+        1 * controller.apiService.requireExists(_,true,['project','AProject']) >> true
         1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist : [job1]]
         1 * controller.scheduledExecutionService.finishquery(_,_,_) >> [max: 20,
                                                                         offset:0,
