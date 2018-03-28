@@ -153,10 +153,9 @@
 
     <div class="list-group-item ${g.hasErrors(bean: task, field: 'triggerType', 'has-error')}">
 
-        <h4 class="list-group-item-heading">
-
-            <g:message code="task.trigger.display.title"/>
-        </h4>
+        <h3 class="list-group-item-heading rd-task-section-title">
+            <g:message code="Task.domain.section.triggers.title" />
+        </h3>
 
         <div class="container">
             <div class=" ${enc(attr: labelColClass)}">
@@ -188,9 +187,9 @@
 
     <div class="list-group-item ${g.hasErrors(bean: task, field: 'conditionList', 'has-error')}">
 
-        <h4 class="list-group-item-heading">
-            <g:message code="Task.domain.conditions.title.plural"/>
-        </h4>
+        <h3 class="list-group-item-heading rd-task-section-title">
+            <g:message code="Task.domain.section.conditions.title" />
+        </h3>
 
         <div class="container">
             <plugin-list-editor params="listEditor: conditions, labelColumnCss: '${enc(attr:labelColClass)}', fieldColumnCss: '${enc(attr:fieldColSize)}', service: 'TaskCondition' "></plugin-list-editor>
@@ -199,10 +198,9 @@
 
     <div class="list-group-item ${g.hasErrors(bean: task, field: 'actionType', 'has-error')}">
 
-        <h4 class="list-group-item-heading">
-
-            <g:message code="task.action.display.title"/>
-        </h4>
+        <h3 class="list-group-item-heading rd-task-section-title">
+            <g:message code="Task.domain.section.actions.title" />
+        </h3>
 
         <div class="container">
             <div class=" ${enc(attr: labelColClass)}">
