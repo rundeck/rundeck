@@ -35,7 +35,7 @@ public interface TaskManager<T extends TaskContext> {
      * @param trigger       trigger
      * @return result of performing the action
      */
-    public Map performTaskAction(
+    Map performTaskAction(
         TaskAction action,
         T contextInfo,
         Map triggerMap,
@@ -43,4 +43,23 @@ public interface TaskManager<T extends TaskContext> {
         Map conditionData,
         TaskTrigger trigger
     ) throws ActionFailed;
+
+
+    /**
+     * Perform a condition check using the correct handler
+     *
+     * @param condition   condition
+     * @param contextInfo task context
+     * @param taskMap     task data map
+     * @param triggerMap  trigger data map
+     * @param taskTrigger trigger
+     * @return condition value
+     */
+    ConditionCheck checkCondition(
+        TaskCondition condition,
+        T contextInfo,
+        Map taskMap,
+        Map triggerMap,
+        TaskTrigger taskTrigger
+    ) throws TaskException;
 }

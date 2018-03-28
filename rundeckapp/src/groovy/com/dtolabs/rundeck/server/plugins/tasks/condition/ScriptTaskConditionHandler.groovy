@@ -48,7 +48,8 @@ class ScriptTaskConditionHandler implements TaskConditionHandler<RDTaskContext> 
         final Map taskMap,
         final Map triggerMap,
         final TaskTrigger taskTrigger,
-        final TaskCondition condition
+        final TaskCondition condition,
+        final TaskManager<RDTaskContext> manager
     ) {
         if (!(condition instanceof ScriptTaskCondition)) {
             throw new IllegalArgumentException("Not a ScriptTaskCondition: $condition")

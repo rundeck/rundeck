@@ -16,7 +16,7 @@
 
 package org.rundeck.core.tasks;
 
-public class TriggerException extends Exception {
+public class TriggerException extends TaskException {
     public TriggerException() {
     }
 

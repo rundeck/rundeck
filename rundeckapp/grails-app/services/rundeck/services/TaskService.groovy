@@ -503,22 +503,21 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
         Map conditionData = [:]
 
         for (TaskCondition condition : conditions) {
-            TaskConditionHandler handler = getConditionHandlerForCondition(task, condition, contextInfo)
-            if (!handler) {
-                log.error("(taskId: $task.uuid): Condition handler not found for condition: $condition")
-
+            ConditionCheck condition1 = null
+            try {
+                condition1 = checkCondition(condition, contextInfo, task.userData ?: [:], triggerMap, trigger)
+            } catch (TaskException e) {
+                log.error("(taskId: $task.uuid): $e.message", e)
                 createTaskEvent(
-                    [error: "Handler not found for condition[$index]: $condition".toString()],
+                    [error: "condition[$index]: $e.message".toString()],
                     task,
                     'error:condition:check',
                     null,
                     null,
                     event
                 )
-
                 return
             }
-            def condition1 = handler.checkCondition(contextInfo, task.userData?:[:], triggerMap, trigger, condition)
             log.error(
                 "(taskId: $task.uuid): Condition check met? ${condition1.conditionMet}: $condition1.conditionData"
             )
@@ -595,6 +594,21 @@ class TaskService implements ApplicationContextAware, TaskActionInvoker<RDTaskCo
             this
         )
         result
+    }
+
+    @Override
+    ConditionCheck checkCondition(
+        final TaskCondition condition,
+        final RDTaskContext contextInfo,
+        final Map taskMap,
+        final Map triggerMap,
+        final TaskTrigger taskTrigger
+    ) throws TaskException {
+        TaskConditionHandler handler = getConditionHandlerForCondition(task, condition, contextInfo)
+        if (!handler) {
+            throw new TaskException("Condition handler not found for condition: $condition")
+        }
+        handler.checkCondition(contextInfo, taskMap, triggerMap, taskTrigger, condition, this)
     }
 
     public TaskEvent createTaskEvent(

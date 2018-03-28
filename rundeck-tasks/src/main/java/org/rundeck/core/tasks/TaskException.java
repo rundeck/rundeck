@@ -16,23 +16,28 @@
 
 package org.rundeck.core.tasks;
 
-public class ActionFailed extends TaskException {
-    public ActionFailed() {
+public class TaskException extends Exception {
+    public TaskException() {
     }
 
-    public ActionFailed(String message) {
+    public TaskException(final String message) {
         super(message);
     }
 
-    public ActionFailed(String message, Throwable cause) {
+    public TaskException(final String message, final Throwable cause) {
         super(message, cause);
     }
 
-    public ActionFailed(Throwable cause) {
+    public TaskException(final Throwable cause) {
         super(cause);
     }
 
-    public ActionFailed(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
+    public TaskException(
+        final String message,
+        final Throwable cause,
+        final boolean enableSuppression,
+        final boolean writableStackTrace
+    ) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

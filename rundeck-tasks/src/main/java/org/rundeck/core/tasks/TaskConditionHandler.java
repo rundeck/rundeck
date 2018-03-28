@@ -32,6 +32,7 @@ public interface TaskConditionHandler<T extends TaskContext> {
         Map taskMap,
         Map triggerMap,
         TaskTrigger taskTrigger,
-        TaskCondition condition
-    );
+        TaskCondition condition,
+        TaskManager<T> manager
+    ) throws TaskException;
 }
