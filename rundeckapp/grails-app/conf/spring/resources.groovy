@@ -47,6 +47,8 @@ import com.dtolabs.rundeck.server.plugins.tasks.action.JobRunTaskAction
 import com.dtolabs.rundeck.server.plugins.tasks.action.MultiActionHandler
 import com.dtolabs.rundeck.server.plugins.tasks.action.MultipleTaskAction
 import com.dtolabs.rundeck.server.plugins.tasks.action.TestEmbedTaskAction
+import com.dtolabs.rundeck.server.plugins.tasks.condition.InvertTaskCondition
+import com.dtolabs.rundeck.server.plugins.tasks.condition.InvertTaskConditionHandler
 import com.dtolabs.rundeck.server.plugins.tasks.condition.ScriptTaskCondition
 import com.dtolabs.rundeck.server.plugins.tasks.condition.ScriptTaskConditionHandler
 import com.dtolabs.rundeck.server.plugins.tasks.trigger.CalendarIntervalTaskTrigger
@@ -342,8 +344,10 @@ beans={
         OneTimeTaskTrigger,
         //task conditions,
         ScriptTaskCondition,
+//        InvertTaskCondition,
         //task condition handlers,
         ScriptTaskConditionHandler,
+//        InvertTaskConditionHandler,
         MultiActionHandler,
         //task actions
         JobRunTaskAction,
