@@ -35,6 +35,9 @@
     <asset:javascript src="util/yellowfade.js"/>
 
     <asset:javascript src="task/edit.js"/>
+    <g:jsMessages
+        code="button.add.condition.title,Task.domain.conditions.title.singular,Task.domain.conditions.title.plural,Task.domain.conditions.label.condition.0"
+        id="condi18n"/>
     <g:jsMessages code="form.validation.failure.description,button.action.Delete,button.action.Save,select.noselection.choose.label,page.unsaved.changes,button.title.add.key.value.pair,key.value.key.title,loading.text,job.not.found.with.id.0"/>
     <g:jsMessages id="jobi18n1"
                   code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>

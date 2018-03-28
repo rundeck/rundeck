@@ -30,12 +30,13 @@ class ProviderDescription {
 
 class ProviderDescriptionSet {
 
-    constructor(service, data) {
+    constructor(service, data, labels) {
         const self = this;
         this.service = ko.observable(service);
         this.providers = ko.observableArray(
             data.map((plugin) => new ProviderDescription(Object.assign({service: service}, plugin)))
         );
+        this.labels = labels;
         this.providerByName = (name) => ko.utils.arrayFirst(self.providers(), (provider) => provider.name() === name);
     }
 }
@@ -44,7 +45,7 @@ class PluginServices {
     constructor(data) {
         const self = this;
         this.services = ko.observableArray(
-            data.map((service) => new ProviderDescriptionSet(service.name, service.providers))
+            data.map((service) => new ProviderDescriptionSet(service.name, service.providers, service.labels))
         );
         this.serviceByName = (name) => ko.utils.arrayFirst(self.services(), (service) => service.service() === name);
 

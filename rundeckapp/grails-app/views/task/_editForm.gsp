@@ -189,68 +189,12 @@
     <div class="list-group-item ${g.hasErrors(bean: task, field: 'conditionList', 'has-error')}">
 
         <h4 class="list-group-item-heading">
-
-            <g:message code="Task.domain.conditions.title"/>
+            <g:message code="Task.domain.conditions.title.plural"/>
         </h4>
 
         <div class="container">
-            <div data-bind="foreach: {data: conditions.items, as: 'cond'}">
-
-                <div class=" ${enc(attr: labelColClass)}">
-                    <label class="required " data-bind="visible: cond.isModeEdit">
-                        <span data-bind="messageTemplate: $index() + 1"><g:message code="Task.domain.conditions.label.condition.0"/></span>
-                    </label>
-                    <a href="#" class="btn btn-info-hollow btn-sm"
-                       data-bind="click: cond.setModeEdit, visible: cond.isModeView">
-                        <g:icon name="pencil"/>
-                        <span data-bind="messageTemplate: $index() + 1"><g:message code="Task.domain.conditions.label.condition.0"/></span>
-                    </a>
-                </div>
-
-                <div class="${fieldColSize}">
-
-                    <div>
-                        <input type="hidden"
-                               data-bind="attr: {name: $parent.conditions.inputPrefix+'_indexes' }, value: cond.uid"/>
-                    </div>
-
-                    <div>
-
-                        <plugin-editor
-                            params="editor: cond, typeField: $parent.conditions.inputPrefix+'entry[' + cond.uid() + '].type'"></plugin-editor>
-
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="col-sm-2 control-label">
-
-                <div class="btn-group">
-                    <button type="button" class="btn btn-sm btn-success-hollow dropdown-toggle"
-                            data-toggle="dropdown"
-                            aria-haspopup="true"
-                            aria-expanded="false">
-                        <g:icon name="plus"/>
-                        <g:message code="button.add.condition.title"/>
-                        <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu"
-                        data-bind="foreach: {data:pluginServices.serviceByName('TaskCondition').providers, as: 'provider'}">
-                        <li>
-                            <a href="#"
-                               data-bind="click: $root.conditions.addType,
-                                        attr:{'data-plugin-type': provider.name},
-                                        text: provider.title">
-
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-
-            </div>
+            <plugin-list-editor params="listEditor: conditions, labelColumnCss: '${enc(attr:labelColClass)}', fieldColumnCss: '${enc(attr:fieldColSize)}', service: 'TaskCondition' "></plugin-list-editor>
         </div>
-
     </div>
 
     <div class="list-group-item ${g.hasErrors(bean: task, field: 'actionType', 'has-error')}">

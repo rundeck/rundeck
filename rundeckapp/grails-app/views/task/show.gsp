@@ -121,7 +121,7 @@
 
             <div class="list-group-item">
                 <h4 class="list-group-item-heading">
-                    <g:message code="Task.domain.conditions.title" />
+                    <g:message code="Task.domain.conditions.title.plural" />
                 </h4>
 
                 <g:each in="${task.conditionList}" var="condition">

@@ -30,6 +30,7 @@
 //= require ko/component/map-editor
 //= require ko/component/busy-spinner
 //= require ko/component/plugin-editor
+//= require ko/component/plugin-list-editor
 //= require menu/joboptions
 //= require koBind
 //= require task/TaskEditor
@@ -54,7 +55,16 @@ jQuery(function (z) {
         [
             {name: 'TaskAction', providers: loadJsonData('actionPluginDescJson')},
             {name: 'TaskTrigger', providers: loadJsonData('triggerPluginDescJson')},
-            {name: 'TaskCondition', providers: loadJsonData('conditionPluginDescJson')}
+            {
+                name: 'TaskCondition',
+                providers: loadJsonData('conditionPluginDescJson'),
+                labels: {
+                    singular : message('Task.domain.conditions.title.singular'),
+                    plural   : message('Task.domain.conditions.title.plural'),
+                    indexed  : message('Task.domain.conditions.label.condition.0'),
+                    addButton: message('button.add.condition.title'),
+                }
+            }
         ]);
     window.taskEditor = new TaskEditor(
         {

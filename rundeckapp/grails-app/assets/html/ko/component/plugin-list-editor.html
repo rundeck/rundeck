@@ -1,0 +1,55 @@
+
+<div data-bind="foreach: {data: listEditor.items, as: 'item'}">
+
+    <div  data-bind="css: $component.labelColumnCss">
+        <label class="required " data-bind="visible: item.isModeEdit">
+            <span data-bind="messageTemplate: $index() + 1, message: $component.labels['indexed']"></span>
+        </label>
+        <a href="#" class="btn btn-info-hollow btn-sm"
+           data-bind="click: item.setModeEdit, visible: item.isModeView">
+            <i class="glyphicon glyphicon-pencil"></i>
+            <span data-bind="messageTemplate: $index() + 1, message: $component.labels['indexed']"></span>
+        </a>
+
+    </div>
+
+    <div  data-bind="css: $component.fieldColumnCss">
+        <div>
+            <input type="hidden"
+                   data-bind="attr: {name: $component.listEditor.inputPrefix+'_indexes' }, value: item.uid"/>
+        </div>
+        <div>
+            <plugin-editor
+                params="editor: item, typeField: $component.listEditor.inputPrefix+'entry[' + item.uid() + '].type'"></plugin-editor>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="control-label"  data-bind="css: labelColumnCss">
+
+    <div class="btn-group">
+        <button type="button" class="btn btn-sm btn-success-hollow dropdown-toggle"
+                data-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false">
+
+            <i class="glyphicon glyphicon-plus"></i>
+                <span data-bind="text: $component.labels['addButton']"></span>
+            <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu"
+            data-bind="foreach: {data: providers, as: 'provider'}">
+            <li>
+                <a href="#"
+                   data-bind="click: $component.listEditor.addType,
+                                        attr:{'data-plugin-type': provider.name},
+                                        text: provider.title">
+
+                </a>
+            </li>
+        </ul>
+    </div>
+
+</div>

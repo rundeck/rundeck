@@ -30,6 +30,11 @@ ko.bindingHandlers.messageTemplate = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
 
         var text=jQuery(element).text();
+        if (!text) {
+            if (allBindings.get('message') !== null) {
+                text = ko.utils.unwrapObservable(allBindings.get('message'));
+            }
+        }
         jQuery(element).data('ko-message-template',text);
         return { 'controlsDescendantBindings': true };
     },
@@ -46,6 +51,11 @@ ko.bindingHandlers.messageCodeTemplate = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
 
         var text=jQuery(element).text();
+        if (!text) {
+            if (allBindings.get('message') !== null) {
+                text = ko.utils.unwrapObservable(allBindings.get('message'));
+            }
+        }
         jQuery(element).data('ko-message-template-code',text);
         return { 'controlsDescendantBindings': true };
     },
@@ -63,6 +73,9 @@ ko.bindingHandlers.messageValue = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
 
         var text=jQuery(element).text();
+        if (!text) {
+            text = ko.utils.unwrapObservable(valueAccessor());
+        }
         jQuery(element).data('ko-message-value',text);
         return { 'controlsDescendantBindings': true };
     },
