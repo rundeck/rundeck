@@ -1841,8 +1841,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 return [success: false, scheduledExecution: scheduledExecution,
                         errorCode: 'api.error.job.toggleSchedule.notScheduled' ]
             }
-            if(!scheduledExecution.serverNodeUUID && frameworkService.isClusterModeEnabled()){
-                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            if(frameworkService.isClusterModeEnabled()) {
+                def data = [jobServerUUID: scheduledExecution.serverNodeUUID,
+                            serverUUID   : frameworkService.serverUUID,
+                            project      : scheduledExecution.project,
+                            jobid        : scheduledExecution.extid]
+                def modify = jobSchedulerService.updateScheduleOwner(
+                    scheduledExecution.jobName,
+                    scheduledExecution.groupPath, data
+                )
+
+                if (modify) {
+                    scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+                }
+            }else {
+                scheduledExecution.serverNodeUUID = null
             }
             scheduledExecution.properties.scheduleEnabled = params.scheduleEnabled
         }
@@ -1857,8 +1870,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         errorCode   : 'api.error.item.unauthorized',
                         unauthorized: true]
             }
-            if(!scheduledExecution.serverNodeUUID && frameworkService.isClusterModeEnabled()){
-                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+            if(frameworkService.isClusterModeEnabled()) {
+                def data = [jobServerUUID: scheduledExecution.serverNodeUUID,
+                            serverUUID   : frameworkService.serverUUID,
+                            project      : scheduledExecution.project,
+                            jobid        : scheduledExecution.extid]
+                def modify = jobSchedulerService.updateScheduleOwner(
+                    scheduledExecution.jobName,
+                    scheduledExecution.groupPath, data
+                )
+
+                if (modify) {
+                    scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+                }
+            } else {
+                scheduledExecution.serverNodeUUID = null
             }
             scheduledExecution.properties.executionEnabled = params.executionEnabled
         }
@@ -2035,7 +2061,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 originalTz != scheduledExecution.timeZone ||
                 oldsched != scheduledExecution.scheduled
             ) {
-                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+                def data = [jobServerUUID: scheduledExecution.serverNodeUUID,
+                            serverUUID   : frameworkService.serverUUID,
+                            project      : scheduledExecution.project,
+                            jobid        : scheduledExecution.extid]
+                def modify = jobSchedulerService.updateScheduleOwner(
+                    scheduledExecution.jobName,
+                    scheduledExecution.groupPath, data
+                )
+                if (modify) {
+                    scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+                }
             }
             if (!scheduledExecution.serverNodeUUID) {
                 scheduledExecution.serverNodeUUID = frameworkService.serverUUID
@@ -2719,7 +2755,17 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 originalTz != scheduledExecution.timeZone ||
                 oldsched != scheduledExecution.scheduled
             ) {
-                scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+                def data = [jobServerUUID: scheduledExecution.serverNodeUUID,
+                            serverUUID   : frameworkService.serverUUID,
+                            project      : scheduledExecution.project,
+                            jobid        : scheduledExecution.extid]
+                def modify = jobSchedulerService.updateScheduleOwner(
+                    scheduledExecution.jobName,
+                    scheduledExecution.groupPath, data
+                )
+                if (modify) {
+                    scheduledExecution.serverNodeUUID = frameworkService.serverUUID
+                }
             }
             if (!scheduledExecution.serverNodeUUID) {
                 scheduledExecution.serverNodeUUID = frameworkService.serverUUID

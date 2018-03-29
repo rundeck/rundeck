@@ -38,6 +38,11 @@ class JobSchedulerService implements JobScheduleManager {
     boolean scheduleJobNow(final String name, final String group, final Map data) throws JobScheduleFailure {
         return rundeckJobScheduleManager.scheduleJobNow(name, group, data)
     }
+
+    @Override
+    boolean updateScheduleOwner(final String name, final String group, final Map data) {
+        return rundeckJobScheduleManager.updateScheduleOwner(name, group, data)
+    }
 }
 
 /**
@@ -92,5 +97,10 @@ class QuartzJobScheduleManager implements JobScheduleManager {
         } catch (SchedulerException exc) {
             throw new JobScheduleFailure("caught exception while adding job: " + exc.getMessage(), exc)
         }
+    }
+
+    @Override
+    boolean updateScheduleOwner(final String name, final String group, final Map data) {
+        return true
     }
 }

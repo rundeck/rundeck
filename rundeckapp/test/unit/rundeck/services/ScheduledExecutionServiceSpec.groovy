@@ -2717,6 +2717,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         then:
         results.success
         results.scheduledExecution.serverNodeUUID == (shouldChange?serverUuid:jobOwnerUuid)
+        if(shouldChange) {
+            1 * service.jobSchedulerService.updateScheduleOwner(_, _, _) >> true
+        }
 
         where:
         inparams                                        | shouldChange
@@ -2756,6 +2759,9 @@ class ScheduledExecutionServiceSpec extends Specification {
         then:
         results.success
         results.scheduledExecution.serverNodeUUID == (shouldChange?serverUUID:currentOwner)
+        if(shouldChange) {
+            1 * service.jobSchedulerService.updateScheduleOwner(_, _, _) >> true
+        }
 
         where:
         inparams                                        | shouldChange
