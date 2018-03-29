@@ -58,4 +58,14 @@ public interface JobScheduleManager {
      */
     boolean scheduleJobNow(String name, String group, Map data) throws JobScheduleFailure;
 
+    /**
+     * In cluster mode, return true if the scheduleOWner should change to current node.
+     *
+     * @param name job name
+     * @param group job group
+     * @param data map with job information, jobid and current schedule owner.
+     * @return true if the scheduleOWner should change to current node.
+     */
+    boolean updateScheduleOwner(String name, String group, Map data);
+
 }
