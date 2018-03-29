@@ -17,8 +17,10 @@
 package rundeck
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import grails.gorm.dirty.checking.DirtyCheck
 
-class WorkflowStep {
+@DirtyCheck
+abstract class WorkflowStep {
     WorkflowStep errorHandler
     Boolean keepgoingOnSuccess
     String description
@@ -34,6 +36,7 @@ class WorkflowStep {
     static transients = ['pluginConfig']
     static mapping = {
         pluginConfigData(type: 'text')
+        errorHandler lazy: false
     }
 
     public String summarize() {
@@ -84,4 +87,7 @@ class WorkflowStep {
         }
     }
 
+    abstract WorkflowStep createClone()
+
+    abstract Map toMap()
 }

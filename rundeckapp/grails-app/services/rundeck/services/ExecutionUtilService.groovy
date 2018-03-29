@@ -159,7 +159,7 @@ class ExecutionUtilService {
 
     public StepExecutionItem itemForWFCmdItem(final WorkflowStep step, final StepExecutionItem handler=null,final parentProject=null) throws FileNotFoundException {
         if(step instanceof CommandExec || step.instanceOf(CommandExec)){
-            CommandExec cmd=step.asType(CommandExec)
+            CommandExec cmd= step as CommandExec
             if (null != cmd.getAdhocRemoteString()) {
 
                 final List<String> strings = OptsUtil.burst(cmd.getAdhocRemoteString());

@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageLayer
+import grails.converters.JSON
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
@@ -88,27 +89,27 @@ class StorageController extends ControllerBase{
         return meta_
     }
 
-    private def jsonRenderResource(builder, Resource res, dirlist=[]){
-        builder {
-            path res.path.toString()
-            type (res.directory ? 'directory' : 'file')
-            name !res.directory ? res.path.name : null
-            url pathUrl(res.path)
-            meta this.getMeta(res)
+    private def jsonRenderResource(Resource res, dirlist=[]){
+        def json = [
+            path: res.path.toString(),
+            type: (res.directory ? 'directory' : 'file'),
+            name: !res.directory ? res.path.name : null,
+            url: pathUrl(res.path),
+            meta: this.getMeta(res) ]
 
-            if(dirlist){
-                resources dirlist.collect { diritem ->
+        if(dirlist){
+            json.resources = dirlist.collect { diritem ->
 
-                    [
-                            path: diritem.path.toString(),
-                            type: (diritem.directory ? 'directory' : 'file'),
-                            name: !diritem.directory ? diritem.path.name : null,
-                            url: pathUrl(diritem.path),
-                            meta: this.getMeta(diritem)
-                    ]
-                }
+                [
+                        path: diritem.path.toString(),
+                        type: (diritem.directory ? 'directory' : 'file'),
+                        name: !diritem.directory ? diritem.path.name : null,
+                        url: pathUrl(diritem.path),
+                        meta: this.getMeta(diritem)
+                ]
             }
         }
+        return json
     }
     private def xmlRenderResource(builder,Resource res,dirlist=[]){
         def map=[path: res.path.toString(),
@@ -144,9 +145,7 @@ class StorageController extends ControllerBase{
                                 Set<Resource<ResourceMeta>> dirlist) {
         withFormat {
             json {
-                render(contentType: 'application/json') {
-                    this.jsonRenderResource(delegate, resource,dirlist)
-                }
+                render jsonRenderResource(resource,dirlist) as JSON
             }
             xml {
                 render {
@@ -208,9 +207,7 @@ class StorageController extends ControllerBase{
             case 'json':
                 ///fallthrough json response by default
             default:
-                render(contentType: 'application/json') {
-                    jsonRenderResource(delegate, resource)
-                }
+                render jsonRenderResource(resource) as JSON
         }
     }
 

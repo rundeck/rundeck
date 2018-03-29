@@ -36,6 +36,7 @@ import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.util.PropertyBuilder
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import grails.events.EventPublisher
 import grails.plugins.quartz.listeners.SessionBinderJobListener
 import grails.gorm.transactions.Transactional
 import org.apache.log4j.Logger
@@ -68,7 +69,8 @@ import java.util.concurrent.TimeUnit
 /**
  *  ScheduledExecutionService manages scheduling jobs with the Quartz scheduler
  */
-class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, RundeckProjectConfigurable {
+@Transactional
+class ScheduledExecutionService implements ApplicationContextAware, InitializingBean, RundeckProjectConfigurable, EventPublisher {
     static transactional = true
     public static final String CONF_GROUP_EXPAND_LEVEL = 'project.jobs.gui.groupExpandLevel'
     public static final String CONF_PROJECT_DISABLE_EXECUTION = 'project.disable.executions'
@@ -106,7 +108,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             disableExecution: CONF_PROJECT_DISABLE_EXECUTION,
             disableSchedule: CONF_PROJECT_DISABLE_SCHEDULE,
     ]
-//    boolean transactional = true
 
     def FrameworkService frameworkService
     def NotificationService notificationService
@@ -121,7 +122,6 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     ApplicationContext applicationContext
 
     def MessageSource messageSource
-    def grailsEvents
     def pluginService
     def executionUtilService
     def fileUploadService
@@ -922,7 +922,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def event = createJobChangeEvent(JobChangeEvent.JobChangeEventType.DELETE, originalRef)
 
             //issue event directly
-            grailsEvents?.event(null, 'jobChanged', event)
+            notify('jobChanged', event)
         }
         return [success:success,error:errmsg]
     }
@@ -1708,7 +1708,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     def void issueJobChangeEvent(JobChangeEvent event) {
         if (event) {
-            grailsEvents?.event(null, 'jobChanged', event)
+            notify('jobChanged', event)
         }
     }
     static def parseNotificationsFromParams(params){
@@ -1896,7 +1896,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         errorCode: 'api.error.job.toggleSchedule.notScheduled' ]
             }
             scheduledExecution.serverNodeUUID = frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null
-            scheduledExecution.properties.scheduleEnabled = params.scheduleEnabled
+            scheduledExecution.scheduleEnabled = params.scheduleEnabled
         }
 
         if (null != params.executionEnabled) {
@@ -1910,14 +1910,14 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         unauthorized: true]
             }
             scheduledExecution.serverNodeUUID = frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null
-            scheduledExecution.properties.executionEnabled = params.executionEnabled
+            scheduledExecution.executionEnabled = params.executionEnabled
         }
 
         if (!scheduledExecution.validate()) {
             return [success: false]
         }
 
-        if (scheduledExecution.save(true)) {
+        if (scheduledExecution.save(flush: true)) {
             rescheduleJob(scheduledExecution, oldSched, oldJobName, oldJobGroup)
             return [success: true, scheduledExecution: scheduledExecution]
         } else {

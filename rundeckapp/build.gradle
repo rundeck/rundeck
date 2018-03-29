@@ -85,9 +85,8 @@ dependencies {
 
     // From BuildConfig.groovy.
     compile 'org.quartz-scheduler:quartz:2.3.0'
-    compile 'org.grails.plugins:quartz:2.0.12'
+    compile 'org.grails.plugins:quartz:2.0.13'
     compile 'org.grails.plugins:mail:2.0.0'
-
     compile 'org.yaml:snakeyaml:1.14'
     compile 'com.codahale.metrics:metrics-core:3.0.2'
     compile 'com.atlassian.commonmark:commonmark:0.10.0'

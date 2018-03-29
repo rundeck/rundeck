@@ -38,7 +38,6 @@ import java.text.SimpleDateFormat
 import java.time.Clock
 
 class ApiService {
-    static transactional = false
     public static final String TEXT_XML_CONTENT_TYPE = 'text/xml'
     public static final String APPLICATION_XML_CONTENT_TYPE = 'application/xml'
     public static final String JSON_CONTENT_TYPE = 'application/json'
@@ -963,7 +962,7 @@ class ApiService {
                 def href=execdata.href
                 def status=execdata.status
                 def summary=execdata.summary
-                def Execution e = Execution.get(execdata.execution.id)
+                Execution e = execdata.execution
                 execution(
                         /** attributes   **/
                         id: e.id,

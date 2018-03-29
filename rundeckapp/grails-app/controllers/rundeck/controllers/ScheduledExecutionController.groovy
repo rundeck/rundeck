@@ -593,7 +593,7 @@ class ScheduledExecutionController  extends ControllerBase{
         withFormat {
             json {
                 render(contentType: 'application/json') {
-                    workflow= wfdata
+                    workflow wfdata
                 }
             }
         }

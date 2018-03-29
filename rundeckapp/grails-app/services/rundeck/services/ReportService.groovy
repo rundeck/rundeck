@@ -17,9 +17,10 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ExecQuery
+import grails.gorm.transactions.Transactional
 import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
-
+@Transactional
 class ReportService  {
 
     def grailsApplication
@@ -170,8 +171,6 @@ class ReportService  {
         model.putAll(tmod)
         return model
     }
-
-    boolean transactional = true
 
     private def getStartsWithFilters() {
         return [

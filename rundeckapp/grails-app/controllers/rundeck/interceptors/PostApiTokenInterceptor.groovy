@@ -13,7 +13,6 @@ class PostApiTokenInterceptor {
 
     boolean after() {
         if(request?.authenticatedToken && session && session?.user){
-            println "setting user to null"
             session.user=null
             request.subject=null
             session.subject=null

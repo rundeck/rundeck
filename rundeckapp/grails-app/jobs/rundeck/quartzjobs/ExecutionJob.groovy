@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
 import grails.core.GrailsApplication
+import grails.gorm.transactions.Transactional
 import org.quartz.JobExecutionContext
 import com.dtolabs.rundeck.core.common.Framework
 import org.quartz.InterruptableJob
@@ -570,6 +571,7 @@ class ExecutionJob implements InterruptableJob {
                                                                 "Execution ${execution.id} save result status:", action
             )
             if (!saveStateComplete) {
+                execution.refresh()
                 log.error("ExecutionJob: Failed to save execution state for ${execution.id}, after retrying ${finalizeRetryMax} times: ${saveStateException}")
             }
         }else{

@@ -364,7 +364,7 @@ class ExecutionController extends ControllerBase{
         }
 
         def jobcomplete = e.dateCompleted != null
-        def execState = executionService.getExecutionState(e)
+        def execState = e.executionState
         def execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
         def jobAverage=-1L
         if (e.scheduledExecution && e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
@@ -390,7 +390,7 @@ class ExecutionController extends ControllerBase{
             data['retryExecutionId']=e.retryExecution.id
             data['retryExecutionUrl']=createLink(controller: 'execution',action: 'show',id: e.retryExecution.id,
                     params:[project:e.project])
-            data['retryExecutionState']=ExecutionService.getExecutionState(e.retryExecution).toUpperCase()
+            data['retryExecutionState']=e.retryExecution.executionState.toUpperCase()
             data['retryExecutionAttempt']= e.retryExecution.retryAttempt
         }
         def selectedNodes=[]
@@ -502,7 +502,7 @@ class ExecutionController extends ControllerBase{
         if (file.exists()) {
             filesize = file.length()
         }
-        final state = ExecutionService.getExecutionState(e)
+        final state = e.executionState
         if(e.scheduledExecution){
             def ScheduledExecution se = e.scheduledExecution //ScheduledExecution.get(e.scheduledExecutionId)
             return render(
@@ -1609,20 +1609,6 @@ class ExecutionController extends ControllerBase{
     public String createServerUrl() {
         return g.createLink(controller: 'menu', action: 'index', absolute: true)
     }
-    /**
-     * Render execution list xml given a List of executions, and a builder delegate
-     */
-    private def renderApiExecutions(LinkGenerator grailsLinkGenerator, List execlist, paging, delegate) {
-        apiService.renderExecutionsXml(execlist.collect{ Execution e->
-            [
-                execution:e,
-                href: grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true,
-                        params: [project: e.project]),
-                status: executionService.getExecutionState(e),
-                summary: executionService.summarizeJob(e.scheduledExecution, e)
-            ]
-        },paging,delegate)
-    }
 
     /**
      * API: /api/execution/{id} , version 1
@@ -2143,7 +2129,7 @@ class ExecutionController extends ControllerBase{
         withFormat{
             json {
                 render(contentType: "application/json") {
-                    delegate.executionMode=active?'active':'passive'
+                    executionMode (active?'active':'passive')
                 }
             }
             xml {
