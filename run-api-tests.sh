@@ -119,8 +119,8 @@ copy_jar(){
 	local FARGS=("$@")
 	local DIR=${FARGS[0]}
 	local -a VERS=( $( rd_get_version ) )
-	local JAR=rundeck-launcher-${VERS[0]}-${VERS[2]}.jar
-	local buildJar=$PWD/rundeck-launcher/launcher/build/libs/$JAR
+	local JAR=rundeck-${VERS[0]}-${VERS[2]}.war
+	local buildJar=$PWD/rundeckapp/build/libs/$JAR
 	test -f $buildJar || die "Jar file not found $buildJar"
 	mkdir -p $DIR
 	cp $buildJar $DIR/
@@ -163,11 +163,11 @@ run_ci_test(){
 		trap "{ kill -9 $RDPID ; echo '---Rundeck Killed---' ; cat $DIR/rundeck.out ; exit 255; }" EXIT SIGINT SIGTERM ERR
 
 		echo "Rundeck process PID: $RDPID"
+
+		wait_for $DIR/rundeck.out 'Grails application running'
+
+		echo "Rundeck started."
 	fi
-
-	wait_for $DIR/rundeck.out 'Started ServerConnector@'
-
-	echo "Rundeck started."
 
 	if [ $TESTS == "yes" ] ; then
 		echo "Start tests"

@@ -47,6 +47,7 @@ import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.events.EventPublisher
 import grails.events.annotation.Subscriber
 import grails.events.annotation.gorm.Listener
+import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
 import groovy.transform.ToString
 import org.apache.commons.io.FileUtils
@@ -84,9 +85,10 @@ import java.util.regex.Pattern
 /**
  * Coordinates Command executions via Ant Project objects
  */
+@Transactional
 class ExecutionService implements ApplicationContextAware, StepExecutor, NodeStepExecutor, EventPublisher {
     static Logger executionStatusLogger = Logger.getLogger("org.rundeck.execution.status")
-    static transactional = true
+
     def FrameworkService frameworkService
     def notificationService
     def ScheduledExecutionService scheduledExecutionService
@@ -1253,7 +1255,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public static String ABORT_ABORTED = "aborted"
     public static String ABORT_FAILED = "failed"
 
-    public static String getExecutionState(Execution e) {
+    public String getExecutionState(Execution e) {
         e.executionState
     }
 
@@ -1530,7 +1532,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             //set abortedBy on the execution
             while (!success && repeat > 0) {
                 try {
-                    Execution.withNewSession {
+                    Execution.withTransaction {
                         Execution e2 = Execution.get(eid)
                         if (!e2.abortedby) {
                             e2.abortedby = userIdent
@@ -2011,7 +2013,6 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if(!allowedOptions['executionType']){
                 allowedOptions['executionType'] = 'user-scheduled'
             }
-
             def Execution e = createExecution(scheduledExecution, authContext, user, allowedOptions)
             // Update execution
             e.dateStarted       = startTime
@@ -2554,7 +2555,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def ScheduledExecution scheduledExecution
         def boolean execSaved = false
         def Execution execution
-        Execution.withNewSession {
+        Execution.withNewTransaction {
             execution = Execution.get(exId)
             execution.properties = props
             if (props.failedNodes) {
