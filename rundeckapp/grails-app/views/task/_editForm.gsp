@@ -23,39 +23,6 @@
 <g:set var="fieldColShortSize" value="col-sm-4"/>
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
-<g:embedJSON data="${
-    actionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }.collect {
-        [name : it.name,
-         title: stepplugin.message(
-             service: org.rundeck.core.tasks.TaskPluginTypes.TaskAction,
-             name: it.name,
-             code: 'plugin.title',
-             default: it.title ?: it.name
-         )]
-    }
-}" id="actionPluginDescJson"/>
-<g:embedJSON data="${
-    triggerPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }.collect {
-        [name : it.name,
-         title: stepplugin.message(
-             service: org.rundeck.core.tasks.TaskPluginTypes.TaskTrigger,
-             name: it.name,
-             code: 'plugin.title',
-             default: it.title ?: it.name
-         )]
-    }
-}" id="triggerPluginDescJson"/>
-<g:embedJSON data="${
-    conditionPlugins.values()?.description?.sort { a, b -> a.name <=> b.name }.collect {
-        [name : it.name,
-         title: stepplugin.message(
-             service: org.rundeck.core.tasks.TaskPluginTypes.TaskCondition,
-             name: it.name,
-             code: 'plugin.title',
-             default: it.title ?: it.name
-         )]
-    }
-}" id="conditionPluginDescJson"/>
 %{--<g:embedJSON data="${}" id="pluginDescriptions"/>--}%
 <g:embedJSON
     data="${task?.triggerConfig != null ? [data: true, type: task?.triggerType, config: task?.triggerConfig, report: [errors: validation?.
@@ -192,7 +159,7 @@
         </h3>
 
         <div class="container">
-            <plugin-list-editor params="listEditor: conditions, labelColumnCss: '${enc(attr:labelColClass)}', fieldColumnCss: '${enc(attr:fieldColSize)}', service: 'TaskCondition' "></plugin-list-editor>
+            <plugin-list-editor params="listEditor: conditions, labelColumnCss: '${enc(attr:labelColClass)}', fieldColumnCss: '${enc(attr:fieldColSize)}' "></plugin-list-editor>
         </div>
     </div>
 
@@ -205,12 +172,12 @@
         <div class="container">
             <div class=" ${enc(attr: labelColClass)}">
                 <label class="required " data-bind="visible: taskEditor.action.isModeEdit">
-                    <g:message code="task.action.display.title"/>
+                    <g:message code="framework.service.TaskAction.label"/>
                 </label>
                 <a href="#" class="btn btn-info-hollow btn-sm"
                    data-bind="click: taskEditor.action.setModeEdit, visible: taskEditor.action.isModeView">
                     <g:icon name="pencil"/>
-                    <g:message code="task.action.display.title"/>
+                    <g:message code="framework.service.TaskAction.label"/>
                 </a>
             </div>
 
