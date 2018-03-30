@@ -210,6 +210,42 @@ class PluginController extends ControllerBase {
         }
     }
 
+    def pluginServiceDescriptions(String project, String service) {
+        if (requireAjax(controller: 'menu', action: 'index')) {
+            return
+        }
+        if (requireParams(['project', 'service'])) {
+            return
+        }
+        def descriptions = pluginService.listPlugins(pluginService.getPluginTypeByService(service))
+        def data = descriptions.values()?.description?.sort { a, b -> a.name <=> b.name }.collect {
+            [
+                name : it.name,
+                title: stepplugin.message(
+                    service: service,
+                    name: it.name,
+                    code: 'plugin.title',
+                    default: it.title ?: it.name
+                )
+            ]
+        }
+        def singularMessage = message(code: "framework.service.${service}.label", default: service)
+        render(contentType: 'application/json') {
+            delegate.service = service
+            delegate.project = project
+            delegate.descriptions = data
+            labels = [
+                singular : singularMessage,
+                indexed  : message(
+                    code: "framework.service.${service}.label.indexed",
+                    default: singularMessage + ' {0}'
+                ),
+                plural   : message(code: "framework.service.${service}.label.plural", default: singularMessage),
+                addButton: message(code: "framework.service.${service}.add.title", default: 'Add ' + singularMessage),
+            ]
+        }
+    }
+
     private Map<String, String> decomposeMap(final HashMap<String, String> map) {
         Map<String, String> result = [:]
         map.keySet().each { key ->
