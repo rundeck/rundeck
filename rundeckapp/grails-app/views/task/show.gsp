@@ -28,7 +28,7 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="triggers"/>
     <asset:javascript src="task/show.js"/>
-    <g:jsMessages code="job.not.found.with.id.0"/>
+    <g:jsMessages code="job.not.found.with.id.0,loading.text"/>
     <title><g:appTitle/> - <g:message code="Task.domain.title" /> - ${task.name ?: task.uuid}</title>
     <g:javascript>"use strict";
     jQuery(function () {
@@ -105,9 +105,8 @@
     <div class="col-sm-6">
         <div class="list-group">
             <div class="list-group-item">
-                <h4 class="list-group-item-heading">
-
-                    <g:message code="task.trigger.display.title" />
+                <h4 class="list-group-item-heading rd-task-section-title">
+                    <g:message code="Task.domain.section.triggers.title" />
                 </h4>
 
                 <g:render template="/framework/renderPluginConfig"
@@ -119,9 +118,10 @@
 
             </div>
 
+            <g:if test="${task.conditionList}">
             <div class="list-group-item">
-                <h4 class="list-group-item-heading">
-                    <g:message code="Task.domain.conditions.title.plural" />
+                <h4 class="list-group-item-heading rd-task-section-title">
+                    <g:message code="Task.domain.section.conditions.title" />
                 </h4>
 
                 <g:each in="${task.conditionList}" var="condition">
@@ -134,9 +134,12 @@
                 </g:each>
 
             </div>
+            </g:if>
 
             <div class="list-group-item">
-                <h4 class="list-group-item-heading"><g:message code="task.action.display.title" /></h4>
+                <h4 class="list-group-item-heading rd-task-section-title">
+                    <g:message code="Task.domain.section.actions.title" />
+                </h4>
                 <g:render template="/framework/renderPluginConfig"
                           model="${[serviceName   : org.rundeck.core.tasks.TaskPluginTypes.TaskAction,
                                     showPluginIcon: true,

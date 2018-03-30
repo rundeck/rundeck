@@ -18,10 +18,12 @@
 
 //= require ui/toggle
 //= require pluginPropKO
+//= require ko/binding-message-template
 //= require ko/component/job-link
 //= require ko/component/map-editor
 //= require ko/component/busy-spinner
 //= require ko/component/plugin-editor
+//= require ko/component/plugin-list-editor
 //= require koBind
 
 jQuery(() => window.pluginServices = new PluginServices([]));
