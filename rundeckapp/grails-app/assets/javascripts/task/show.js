@@ -23,3 +23,5 @@
 //= require ko/component/busy-spinner
 //= require ko/component/plugin-editor
 //= require koBind
+
+jQuery(() => window.pluginServices = new PluginServices([]));

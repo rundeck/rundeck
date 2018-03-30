@@ -51,21 +51,7 @@ jQuery(function (z) {
     }
 
     postLoadEditor(jQuery('body'));
-    window.pluginServices = new PluginServices(
-        [
-            {name: 'TaskAction', providers: loadJsonData('actionPluginDescJson')},
-            {name: 'TaskTrigger', providers: loadJsonData('triggerPluginDescJson')},
-            {
-                name: 'TaskCondition',
-                providers: loadJsonData('conditionPluginDescJson'),
-                labels: {
-                    singular : message('Task.domain.conditions.title.singular'),
-                    plural   : message('Task.domain.conditions.title.plural'),
-                    indexed  : message('Task.domain.conditions.label.condition.0'),
-                    addButton: message('button.add.condition.title'),
-                }
-            }
-        ]);
+    window.pluginServices = new PluginServices([]);
     window.taskEditor = new TaskEditor(
         {
             postLoadEditor       : postLoadEditor,

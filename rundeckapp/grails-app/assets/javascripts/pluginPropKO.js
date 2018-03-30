@@ -28,16 +28,29 @@ class ProviderDescription {
     }
 }
 
-class ProviderDescriptionSet {
+class ServiceDescriptionSet {
 
     constructor(service, data, labels) {
         const self = this;
+        this.loaded = ko.observable(false);
+        this.error = false;
         this.service = ko.observable(service);
         this.providers = ko.observableArray(
             data.map((plugin) => new ProviderDescription(Object.assign({service: service}, plugin)))
         );
-        this.labels = labels;
+        this.labels = ko.observable(labels);
         this.providerByName = (name) => ko.utils.arrayFirst(self.providers(), (provider) => provider.name() === name);
+    }
+
+    addProviders(providers) {
+        let service = this.service();
+        providers.forEach((plugin) => {
+            this.providers.push(
+                new ProviderDescription(Object.assign(
+                    {service: service},
+                    plugin
+                )))
+        });
     }
 }
 
@@ -45,9 +58,50 @@ class PluginServices {
     constructor(data) {
         const self = this;
         this.services = ko.observableArray(
-            data.map((service) => new ProviderDescriptionSet(service.name, service.providers, service.labels))
+            data.map((service) => new ServiceDescriptionSet(service.name, service.providers, service.labels))
         );
-        this.serviceByName = (name) => ko.utils.arrayFirst(self.services(), (service) => service.service() === name);
+        this.serviceByName = (name) => {
+            if (!name) {
+                return null;
+            }
+            let found = ko.utils.arrayFirst(this.services(), (service) => service.service() === name);
+            if (!found) {
+                found = new ServiceDescriptionSet(name, [], {});
+                this.services.push(found);
+                this.serviceByNameAsync(name);
+            }
+            return found;
+        };
+        this.serviceByNameAsync = (name) => {
+            let cached = this.serviceByName(name);
+            let dfd = jQuery.Deferred();
+            if (cached && cached.loaded()) {
+                dfd.resolve(cached);
+            } else {
+                jQuery.ajax(
+                    {
+                        url     : _genUrl(appLinks.pluginServiceDescriptions, {service: name}),
+                        dataType: 'json',
+                        success : (data) => {
+                            let value = cached;
+                            if (!value) {
+                                value = new ServiceDescriptionSet(name, [], {});
+                                this.services.push(value);
+                            }
+                            value.addProviders(data.descriptions);
+                            value.labels(data.labels);
+                            value.loaded(true);
+
+                            dfd.resolve(value);
+                        },
+                        error   : (err) => {
+                            dfd.reject(err);
+                        }
+                    }
+                );
+            }
+            return dfd.promise();
+        }
 
     }
 }
