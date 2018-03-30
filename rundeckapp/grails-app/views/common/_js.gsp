@@ -54,6 +54,7 @@
         pluginPropertiesForm:'${createLink(controller:'plugin',action:'pluginPropertiesForm',params:params.project?[project:params.project]:[:])}',
         pluginPropertiesPreview:'${createLink(controller:'plugin',action:'pluginPropertiesPreview',params:params.project?[project:params.project]:[:])}',
         pluginPropertiesValidateAjax:'${createLink(controller:'plugin',action:'pluginPropertiesValidateAjax',params:params.project?[project:params.project]:[:])}',
+        pluginServiceDescriptions:'${createLink(controller:'plugin',action:'pluginServiceDescriptions',params:params.project?[project:params.project]:[:])}',
         scheduledExecutionRunAdhocInline: "${createLink(controller:'scheduledExecution',action:'runAdhocInline',params:projParams)}",
         scheduledExecutionCreate: "${createLink(controller:'scheduledExecution',action:'create',params:projParams)}",
         scheduledExecutionExecuteFragment: '${createLink(controller:"scheduledExecution",action:"executeFragment",params:projParams)}',
