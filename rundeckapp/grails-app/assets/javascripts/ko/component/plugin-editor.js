@@ -23,6 +23,13 @@ function PluginEditorContent(params) {
     self.editor = params.editor;
     self.typeField = params.typeField;
     self.embeddedTypeField = params.embeddedTypeField;
+    self.stylePanel = ko.pureComputed(() => {
+        let edit = self.editor.isModeEdit();
+        let mode = self.editor.embeddedMode();
+        let embed = self.editor.embedded();
+
+        return edit && (mode === 'plugin' || !embed);
+    });
 }
 
 ko.components.register('plugin-editor', {

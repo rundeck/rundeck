@@ -145,7 +145,7 @@
                     default="${prop.title ?: prop.name}"/>:</span>
 
                 <plugin-editor
-                    params="editor: editor, typeField: fieldname()+'._type', embeddedTypeField: fieldname()+'.type', propname:name"></plugin-editor>
+                    params="editor: editor, typeField: fieldname()+'.type', embeddedTypeField: fieldname()+'._type', propname:name"></plugin-editor>
             </div>
 
         </g:if>
@@ -166,6 +166,17 @@
             <g:if test="${prop.type.toString() in ['Select', 'FreeSelect']}">
                 <span class="text-success">${propSelectLabels[defval] ?: defval}</span>
             </g:if>
+            <g:elseif test="${prop.embeddedType != null}">
+
+                ${prop.embeddedType?.toString()}
+            </g:elseif>
+            <g:elseif test="${prop.embeddedPluginType != null}">
+                <div data-ko-controller="pluginProperty">
+
+                    <plugin-list-editor
+                        params="listEditor: listEditor,  propname:name, labelColumnCss: '', fieldColumnCss: ''"></plugin-list-editor>
+                </div>
+            </g:elseif>
             <g:else>
                 <g:set var="defvalset" value="${defval && defval instanceof String ? defval.split(', *') :
                                                 defval && defval instanceof Collection ? defval : []}"/>

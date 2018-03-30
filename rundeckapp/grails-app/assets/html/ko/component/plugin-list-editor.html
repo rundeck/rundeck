@@ -1,16 +1,17 @@
 
+<input type="hidden"
+       data-bind="attr: {name: $component.listEditor.inputPrefix+'_type' }" value="list"/>
 <div data-bind="foreach: {data: listEditor.items, as: 'item'}">
 
     <div  data-bind="css: $component.labelColumnCss">
-        <label class="required " data-bind="visible: item.isModeEdit">
-            <span data-bind="messageTemplate: $index() + 1, message: $component.labels['indexed']"></span>
+        <label class="required " data-bind="visible: item.isModeEdit() || !$component.listEditor.isModeEdit() ">
+            <span data-bind="messageTemplate: $index() + 1, message: $component.listEditor.serviceDescription.labels()['indexed']"></span>
         </label>
         <a href="#" class="btn btn-info-hollow btn-sm"
-           data-bind="click: item.setModeEdit, visible: item.isModeView">
+           data-bind="click: item.setModeEdit, visible: item.isModeView() && $component.listEditor.isModeEdit()">
             <i class="glyphicon glyphicon-pencil"></i>
-            <span data-bind="messageTemplate: $index() + 1, message: $component.labels['indexed']"></span>
+            <span data-bind="messageTemplate: $index() + 1, message: $component.listEditor.serviceDescription.labels()['indexed']"></span>
         </a>
-
     </div>
 
     <div  data-bind="css: $component.fieldColumnCss">
@@ -19,15 +20,18 @@
                    data-bind="attr: {name: $component.listEditor.inputPrefix+'_indexes' }, value: item.uid"/>
         </div>
         <div>
+
             <plugin-editor
-                params="editor: item, typeField: $component.listEditor.inputPrefix+'entry[' + item.uid() + '].type'"></plugin-editor>
+                params="editor: item, typeField: $component.listEditor.inputPrefix+'entry[' + item.uid() + '].type',
+                embeddedTypeField:  $component.listEditor.inputPrefix+'entry[' + item.uid() +']._type',"></plugin-editor>
+
 
         </div>
     </div>
 
 </div>
 
-<div class="control-label"  data-bind="css: labelColumnCss">
+<div class="control-label"  data-bind="css: labelColumnCss, if: listEditor.isModeEdit">
 
     <div class="btn-group">
         <button type="button" class="btn btn-sm btn-success-hollow dropdown-toggle"
@@ -36,11 +40,11 @@
                 aria-expanded="false">
 
             <i class="glyphicon glyphicon-plus"></i>
-                <span data-bind="text: $component.labels['addButton']"></span>
+                <span data-bind="text: $component.listEditor.serviceDescription.labels()['addButton']"></span>
             <span class="caret"></span>
         </button>
         <ul class="dropdown-menu"
-            data-bind="foreach: {data: providers, as: 'provider'}">
+            data-bind="foreach: {data: listEditor.serviceDescription.providers, as: 'provider'}">
             <li>
                 <a href="#"
                    data-bind="click: $component.listEditor.addType,

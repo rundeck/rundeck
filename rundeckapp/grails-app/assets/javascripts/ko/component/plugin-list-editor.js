@@ -21,9 +21,7 @@
 function PluginListEditorContent(params) {
     const self = this;
     self.listEditor = params.listEditor;
-    self.service = params.service;
-    self.labels = pluginServices.serviceByName(params.service).labels;
-    self.providers = pluginServices.serviceByName(params.service).providers;
+
     self.labelColumnCss = params.labelColumnCss || '';
     self.fieldColumnCss = params.fieldColumnCss || '';
 }

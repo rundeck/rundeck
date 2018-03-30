@@ -175,9 +175,6 @@
         </g:else>
     </g:elseif>
     <g:elseif test="${prop.type.toString() == 'Options'}">
-        <g:if test="${prop.embeddedType != null || prop.embeddedPluginType != null}">
-            ${prop.embeddedType?.toString()}
-        </g:if>
 
         <label class="${labelColType}   ${prop.required ? 'required' : ''}"
                for="${enc(attr: fieldid)}"><stepplugin:message
@@ -200,22 +197,35 @@
                                         []}"/>
 
         <div class="${valueColType} ">
-            <div class=" grid">
+            <g:if test="${prop.embeddedType != null}">
 
-                <g:each in="${propSelectValues}" var="propval">
-                    <div class="optionvaluemulti ">
-                        <label class="grid-row optionvaluemulti">
-                            <span class="grid-cell grid-front">
-                                <g:checkBox name="${fieldname}" checked="${propval.value in defvalset}"
-                                            value="${propval.value}"/>
-                            </span>
-                            <span class="grid-cell grid-rest">
-                                ${propval.label}
-                            </span>
-                        </label>
-                    </div>
-                </g:each>
-            </div>
+                ${prop.embeddedType?.toString()}
+            </g:if>
+            <g:elseif test="${prop.embeddedPluginType != null}">
+                <div data-ko-controller="pluginProperty">
+
+                    <plugin-list-editor
+                        params="listEditor: listEditor,  propname:name,labelColumnCss: '${enc(attr:labelColType)}', fieldColumnCss: '${enc(attr:valueColType)}'"></plugin-list-editor>
+                </div>
+            </g:elseif>
+            <g:else>
+                <div class=" grid">
+
+                    <g:each in="${propSelectValues}" var="propval">
+                        <div class="optionvaluemulti ">
+                            <label class="grid-row optionvaluemulti">
+                                <span class="grid-cell grid-front">
+                                    <g:checkBox name="${fieldname}" checked="${propval.value in defvalset}"
+                                                value="${propval.value}"/>
+                                </span>
+                                <span class="grid-cell grid-rest">
+                                    ${propval.label}
+                                </span>
+                            </label>
+                        </div>
+                    </g:each>
+                </div>
+            </g:else>
         </div>
     </g:elseif>
         <g:elseif test="${prop.type.toString() == 'Map'}">
@@ -246,7 +256,7 @@
             <div class="${hasSelector ? valueColTypeSplit80 : valueColType} " data-ko-controller="pluginProperty">
 
                 <plugin-editor
-                        params="editor: editor, typeField: fieldname()+'._type', embeddedTypeField: fieldname()+'.type', propname:name"></plugin-editor>
+                        params="editor: editor, typeField: fieldname()+'.type', embeddedTypeField: fieldname()+'._type', propname:name"></plugin-editor>
             </div>
 
         </g:elseif>
