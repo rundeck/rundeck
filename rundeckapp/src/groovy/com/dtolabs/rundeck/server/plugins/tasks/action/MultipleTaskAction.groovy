@@ -34,12 +34,9 @@ class MultipleTaskAction implements TaskAction, PluginBaseMetaTrait {
     static final String PROVIDER_NAME = "multiple"
 
 
-//    @PluginProperty(required = true, title = 'Actions(TODO)', description = 'Actions to run.')
-//    @EmbeddedPluginProperty(type = TaskAction)
-//    List<TaskAction> actions
-
-    @PluginProperty(required = true, title = 'Action 1', description = 'Test action')
+    @PluginProperty(required = true, title = 'Actions', description = 'Actions to run.')
     @EmbeddedPluginProperty(type = TaskAction)
-    TaskAction stubAction
+    List<TaskAction> actions
+
 
 }
