@@ -34,16 +34,22 @@ ko.bindingHandlers.messageTemplate = {
             if (allBindings.get('message') !== null) {
                 text = ko.utils.unwrapObservable(allBindings.get('message'));
             }
+        } else {
+            jQuery(element).data('ko-message-template', text);
         }
-        jQuery(element).data('ko-message-template',text);
         return { 'controlsDescendantBindings': true };
     },
     update:function(element, valueAccessor, allBindings, viewModel, bindingContext){
         var pluralize=allBindings.get('messageTemplatePluralize');
         var data=ko.utils.unwrapObservable(valueAccessor());
-        var template=jQuery(element).data('ko-message-template');
-        
-        var text = messageTemplate(template,data,pluralize);
+        var template;
+        if (allBindings.get('message') !== null) {
+            template = ko.utils.unwrapObservable(allBindings.get('message'));
+        } else {
+            template = jQuery(element).data('ko-message-template');
+        }
+
+        var text = messageTemplate(template, data, pluralize, '...');
         ko.utils.setTextContent(element, text);
     }
 };

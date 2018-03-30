@@ -1296,8 +1296,11 @@ function _loadMessages(id){
  *
  * @returns {*|string|XML|void}
  */
-function messageTemplate(template, data, pluralize) {
+function messageTemplate(template, data, pluralize,defval) {
     "use strict";
+    if(!template){
+        return defval;
+    }
     var pluralTemplate = null;
     if (pluralize) {
         var arr = template.split('|');
