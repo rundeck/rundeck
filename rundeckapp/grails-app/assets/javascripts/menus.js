@@ -14,15 +14,17 @@
  * limitations under the License.
  */
 
-var MenuController = Class.create({
-    menuStart : new Hash(),
-    menuHideTimeout: new Hash(),
+class MenuController {
+    constructor() {
+        this.menuStart = {};
+        this.menuHideTimeout = {};
+    }
 
 
     /**
      * Position and show the aux element below the target, optionally at a specific offset from the top left corner.
      */
-    showRelativeTo: function(target,aux,offx,offy){
+    showRelativeTo(target, aux, offx, offy) {
         var menu = $(aux);
         var menuLink = $(target);
         Element.hide(menu);
@@ -51,11 +53,10 @@ var MenuController = Class.create({
         }
         Element.clonePosition(menu, menuLink, { setWidth:   false, setHeight:  false,offsetTop:h,offsetLeft:cw});
         Try.these(Element.show.curry(menu));
-    },
+    }
 
 
-
-    _mouseoverMenuRestore: function(e, menuname) {
+    _mouseoverMenuRestore(e, menuname) {
         var target = Event.element(e);
         var reltarget = Event.relatedTarget(e);
         if (e.relatedTarget) {
@@ -69,4 +70,4 @@ var MenuController = Class.create({
             }
         }
     }
-});
+}
