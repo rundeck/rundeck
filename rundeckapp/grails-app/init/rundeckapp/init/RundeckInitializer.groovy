@@ -103,7 +103,7 @@ class RundeckInitializer {
             extractBin(bindir, coreJar);
             copyToolLibs(toolslibdir, coreJar);
             if(thisJar.isDirectory()) {
-                File sourceTemplateDir = Environment.isDevelopmentMode() ?
+                File sourceTemplateDir = Environment.isDevelopmentEnvironmentAvailable() ?
                                          new File(System.getProperty("user.dir"),"templates") :
                                          new File(thisJar.parentFile.parentFile,"templates")
 
@@ -255,7 +255,7 @@ class RundeckInitializer {
      */
     private static File thisJarFile() {
         ProtectionDomain protectionDomain
-        if(Environment.current == Environment.DEVELOPMENT) {
+        if(Environment.isDevelopmentEnvironmentAvailable()) {
             protectionDomain = Application.class.getProtectionDomain();
         } else {
             Class baseClass = tryToLoadCorrectBaseClass()
