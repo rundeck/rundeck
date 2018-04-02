@@ -24,7 +24,9 @@ configuration files in the database.
 
 The storage type can be changed by a configuration flag in the `rundeck-config.properties` file:
 
-    rundeck.projectsStorageType=db/filesystem
+    rundeck.projectsStorageType=db
+    or
+    rundeck.projectsStorageType=file
 
 If you wish to use db storage you must add this configuration entry.
 
@@ -38,7 +40,7 @@ configured to use an Encryption plugin.  See [Storage Facility - Using Encryptio
 
 ### Configuration file
 
-When using *filesystem* storage type, each Project has a configuration file called
+When using *file* storage type, each Project has a configuration file called
 [project.properties](configuration-file-reference.html#project.properties),
 located at this path:
 

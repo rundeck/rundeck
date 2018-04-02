@@ -317,7 +317,7 @@ class ApiService {
     def renderSuccessXml(HttpServletRequest request,HttpServletResponse response, String code, List args) {
         return renderSuccessXmlWrap(request,response) {
             success {
-                message(messageSource.getMessage(code, args as Object[], null))
+                message(messageSource.getMessage(code, args as Object[], code, null))
             }
         }
     }
@@ -728,14 +728,19 @@ class ApiService {
 
     def renderErrorText(messages, String code=null){
         if (!messages) {
-            return messageSource.getMessage("api.error.unknown", null, null)
+            return messageSource.getMessage("api.error.unknown", null, "api.error.unknown", null)
         }
         if (messages instanceof List) {
             return messages.join("\r\n")
         }else if (messages instanceof Map && messages.message) {
             return messages.message
         } else if (messages instanceof Map && messages.code) {
-            return messageSource.getMessage(messages.code, messages.args ? messages.args as Object[] : null, null)
+            return messageSource.getMessage(
+                messages.code,
+                messages.args ? messages.args as Object[] : null,
+                messages.code,
+                null
+            )
         }
         return messages.toString()
     }
@@ -746,12 +751,20 @@ class ApiService {
         ]
         result.errorCode = code ?: 'api.error.unknown'
         if (!messages) {
-            result.'message'=messageSource.getMessage("api.error.unknown", null, null)
+            result.'message' = messageSource.getMessage("api.error.unknown", null, "api.error.unknown", null)
         }
         if (messages instanceof List) {
             result.messages=messages
         } else if (messages instanceof Map && messages.code) {
-            result.message=(messages.message ?: messageSource.getMessage(messages.code, messages.args ? messages.args as Object[] : null, null))
+            result.message = (
+                messages.message ?:
+                messageSource.getMessage(
+                    messages.code,
+                    messages.args ? messages.args as Object[] : null,
+                    messages.code,
+                    null
+                )
+            )
         }else if (messages instanceof Map && messages.message) {
             result.message=messages.message
         }
@@ -770,7 +783,9 @@ class ApiService {
                 def errorprops = [code: code ?: 'api.error.unknown']
                 delegate.'error'(errorprops) {
                     if (!messages) {
-                        delegate.'message'(messageSource.getMessage("api.error.unknown",null,null))
+                        delegate.'message'(
+                            messageSource.getMessage("api.error.unknown", null, "api.error.unknown", null)
+                        )
                     }
                     if (messages instanceof List) {
                         delegate.'messages' {
@@ -779,7 +794,15 @@ class ApiService {
                             }
                         }
                     }else if(messages instanceof Map && messages.code){
-                        delegate.'message'(messages.message?:messageSource.getMessage(messages.code, messages.args?messages.args as Object[]:null, null))
+                        delegate.'message'(
+                            messages.message ?:
+                            messageSource.getMessage(
+                                messages.code,
+                                messages.args ? messages.args as Object[] : null,
+                                messages.code,
+                                null
+                            )
+                        )
                     }else if(messages instanceof Map && messages.message){
                         delegate.'message'(messages.message)
                     }

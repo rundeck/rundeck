@@ -583,7 +583,7 @@ class ApiServiceSpec extends Specification {
     def "render error json"() {
         given:
         service.messageSource = Mock(MessageSource) {
-            getMessage(_, _, _) >> { it[0] + (it[1] ?: '') }
+            getMessage(_, _,_, _) >> { it[0] + (it[1] ?: '') }
         }
         when:
         def result = service.renderErrorJson(data, code)
@@ -614,7 +614,7 @@ class ApiServiceSpec extends Specification {
     def "render error xml"() {
         given:
         service.messageSource = Mock(MessageSource) {
-            getMessage(_, _, _) >> { it[0] + (it[1] ?: '') }
+            getMessage(_, _,_, _) >> { it[0] + (it[1] ?: '') }
         }
         when:
         def result = service.renderErrorXml(data, code)
