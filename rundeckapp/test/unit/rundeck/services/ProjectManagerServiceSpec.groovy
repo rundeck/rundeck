@@ -109,7 +109,8 @@ class ProjectManagerServiceSpec extends Specification {
     }
     void "get project exists with props"(){
         setup:
-        def p = new Project(name:'test1')
+        def description = 'blah'
+        def p = new Project(name:'test1', description: description)
         p.save(flush: true)
         def modDate= new Date(123)
 
@@ -117,7 +118,7 @@ class ProjectManagerServiceSpec extends Specification {
             hasResource("projects/test1/etc/project.properties") >> true
             getResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval\nproject.description=blah').bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval\nproject.description='+description).bytes)
                     getModificationTime() >> modDate
                 }
             }
@@ -144,7 +145,7 @@ class ProjectManagerServiceSpec extends Specification {
         'projval'==result.getProperty('projkey')
         3==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
-        'blah'==result.getProjectProperties().get('project.description')
+        description==result.getProjectProperties().get('project.description')
         'projval'==result.getProjectProperties().get('projkey')
         modDate==result.getConfigLastModifiedTime()
         'blah'==result.info.description
@@ -153,7 +154,8 @@ class ProjectManagerServiceSpec extends Specification {
     }
     void "get project exists with readme/motd"(){
         setup:
-        def p = new Project(name:'test1')
+        def description = 'blah'
+        def p = new Project(name:'test1', description: description)
         p.save(flush: true)
         def modDate= new Date(123)
 
@@ -163,7 +165,7 @@ class ProjectManagerServiceSpec extends Specification {
             1*hasResource("projects/test1/motd.md") >> true
             getResource("projects/test1/etc/project.properties") >> Stub(Resource){
                 getContents() >> Stub(ResourceMeta){
-                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval\nproject.description=blah').bytes)
+                    getInputStream() >> new ByteArrayInputStream(('#'+ProjectManagerService.MIME_TYPE_PROJECT_PROPERTIES+'\nprojkey=projval\nproject.description='+description).bytes)
                     getModificationTime() >> modDate
                 }
             }
@@ -202,7 +204,7 @@ class ProjectManagerServiceSpec extends Specification {
         'projval'==result.getProperty('projkey')
         3==result.getProjectProperties().size()
         'test1'==result.getProjectProperties().get('project.name')
-        'blah'==result.getProjectProperties().get('project.description')
+        description==result.getProjectProperties().get('project.description')
         'projval'==result.getProjectProperties().get('projkey')
         modDate==result.getConfigLastModifiedTime()
         'blah'==result.info.description
@@ -453,7 +455,7 @@ class ProjectManagerServiceSpec extends Specification {
         setup:
         Properties props1 = new Properties()
         props1['def']='ghi'
-        new Project(name:'test1').save()
+        new Project(name:'test1').save(flush: true)
         service.storage=Stub(StorageTree){
             hasResource("projects/test1/etc/project.properties") >> true
             getResource("projects/test1/etc/project.properties") >> Stub(Resource){
@@ -493,7 +495,7 @@ class ProjectManagerServiceSpec extends Specification {
         Properties props1 = new Properties()
         props1['def']='ghi'
         props1['project.name']='not-right'
-        new Project(name:'test1').save()
+        new Project(name:'test1').save(flush: true)
         service.storage=Mock(StorageTree){
             1 * hasResource("projects/test1/etc/project.properties") >> true
             1 * updateResource("projects/test1/etc/project.properties",{ResourceMeta rm->

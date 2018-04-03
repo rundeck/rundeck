@@ -19,9 +19,11 @@ package rundeck.controllers
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.IRundeckProject
+import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.plugins.testing.GrailsMockMultipartFile
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
+import rundeck.Project
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import rundeck.services.AuthorizationService
@@ -45,6 +47,7 @@ import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_UPDA
  * Created by greg on 2/26/15.
  */
 @TestFor(ProjectController)
+@Mock([Project])
 class ProjectControllerSpec extends Specification{
     def setup(){
 
