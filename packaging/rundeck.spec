@@ -33,8 +33,8 @@ Rundeck provides a single console for dispatching commands across many resources
 	- Run the service as the rundeck user.
 
 %pre
-getent group rundeck >/dev/null || groupadd rundeck
-getent passwd rundeck >/dev/null || useradd -d /var/lib/rundeck -m -g rundeck rundeck
+getent group rundeck >/dev/null || groupadd -r rundeck
+getent passwd rundeck >/dev/null || useradd -r -d /var/lib/rundeck -m -g rundeck rundeck
 
 %post
 if [ ! -e ~rundeck/.ssh/id_rsa ]; then
