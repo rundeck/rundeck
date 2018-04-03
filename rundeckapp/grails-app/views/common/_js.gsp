@@ -27,6 +27,7 @@
         iconTinyRemoveX: '${resource(dir:"images",file:"icon-tiny-removex.png")}',
         iconSpinner: '${resource(dir:"images",file:"icon-tiny-disclosure-waiting.gif")}',
         executionCancelExecution: '${createLink(controller:"execution",action:"cancelExecution",params:[format:'json'])}',
+        executionMarkExecutionIncomplete: '${createLink(controller:"execution",action:"incompleteExecution",params:[format:'json'])}',
         tailExecutionOutput: '${createLink(controller: "execution", action: "tailExecutionOutput",params:[format:'json'])}',
         reportsEventsFragment:"${createLink(controller:'reports',action:'eventsFragment',params:projParams)}",
         executionAjaxExecState: "${createLink(action: 'ajaxExecState', controller: 'execution')}",
@@ -101,7 +102,10 @@
         storageKeysApi: '${createLink(uri:'/storage/access/keys')}',
         storageKeysDownload: '${createLink(uri:'/storage/download/keys')}',
         storageKeysDelete: '${createLink(uri:'/storage/delete/keys')}',
-        apiExecutionsBulkDelete: '${createLink(controller:'execution',action: 'deleteBulkApi')}'
+        apiExecutionsBulkDelete: '${createLink(controller:'execution',action: 'deleteBulkApi')}',
+
+        scmjobs: '${createLink(controller:'menu',action:'listExport',params: projParams)}',
+        togglescm: '${createLink(controller:'menu',action:'projectToggleSCM',params: projParams)}'
     } ;
     <g:if test="${Environment.current==Environment.DEVELOPMENT}" >
     function _messageMissingError(code){

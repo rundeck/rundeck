@@ -109,6 +109,37 @@ public class ScheduledExecutionServiceTests {
                         (ScheduledExecutionController.NOTIFY_FAILURE_URL): 'http://blah.com']
         )
     }
+
+    public void testParseParamNotificationsRetryableFailure() {
+        assertParseParamNotifications(
+                [[eventTrigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME,
+                        type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                        configuration: [recipients:'c@example.com,d@example.com']]],
+                [(ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL): 'true',
+                        (ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS): 'c@example.com,d@example.com']
+        )
+    }
+    public void testParseParamNotificationsRetryableFailure_subject() {
+        assertParseParamNotifications(
+                [[eventTrigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME,
+                        type: ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE,
+                        configuration: [recipients: 'c@example.com,d@example.com', subject:
+                                'elf']]],
+                [(ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL): 'true',
+                        (ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS): 'c@example.com,d@example.com',
+                        (ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_SUBJECT): 'elf']
+        )
+    }
+
+    public void testParseParamNotificationsRetryableFailureUrl() {
+        assertParseParamNotifications(
+                [[eventTrigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME,
+                        type: ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE,
+                        content: 'http://blah.com']],
+                [(ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL): 'true',
+                        (ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL): 'http://blah.com']
+        )
+    }
     public void testParseParamNotificationsStart() {
         assertParseParamNotifications(
                 [[eventTrigger: ScheduledExecutionController.ONFAILURE_TRIGGER_NAME,
@@ -164,6 +195,24 @@ public class ScheduledExecutionServiceTests {
                 [
                         notifyPlugin: [
                                 (ScheduledExecutionController.ONFAILURE_TRIGGER_NAME): [
+                                        type: 'plugin1',
+                                        enabled: [
+                                                'plugin1': 'true'
+                                        ],
+                                        'plugin1': [
+                                                config: [:]
+                                        ]
+                                ]
+                        ],
+                ]
+        )
+    }
+    public void testParseParamNotificationsRetryableFailurePluginEnabled() {
+        assertParseParamNotifications(
+                [[eventTrigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME, type: 'plugin1', configuration: [:]]],
+                [
+                        notifyPlugin: [
+                                (ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME): [
                                         type: 'plugin1',
                                         enabled: [
                                                 'plugin1': 'true'

@@ -12,6 +12,7 @@ Currently there are three conditions that can trigger notifications:
 * `onsuccess` - the Job completed without error
 * `onfailure` - the Job failed or was aborted
 * `onavgduration` - The Execution exceed the average duration of the Job
+* `onretryablefailure` - the Job failed but will be retried
 
 Rundeck has two built-in notification types that can be configured for Jobs:
 
@@ -289,7 +290,7 @@ The user is presented with any `Instance` scoped properties in the Rundeck GUI w
 
 ### Notification handlers
 
-For a `NotificationPlugin`, you can define custom handlers for each of the notification triggers (`onsuccess`, `onfailure`, `onstart` and `onavgduration`).
+For a `NotificationPlugin`, you can define custom handlers for each of the notification triggers (`onsuccess`, `onfailure`, `onstart`, `onavgduration`, and `onretryablefailure`).
 
 Simply define a closure with the given trigger name, and return a true value if your action was successful:
 
@@ -311,7 +312,12 @@ onfailure{ Map execution, Map configuration ->
 }
 onavgduration{ Map execution, Map configuration ->
     //perform an action using the execution and configuration
-    println "Job ${execution.job.name} exceeded Average Duration!."
+    println "Job ${execution.job.name} exceeded Average Duration!"
+    return true
+}
+onretryablefailure{ Map execution, Map configuration ->
+    //perform an action using the execution and configuration
+    println "Job ${execution.job.name} failed but will be retried."
     return true
 }
 ~~~~~~~~
@@ -344,6 +350,10 @@ rundeckPlugin(NotificationPlugin){
     }
     onavgduration{
         println("exceeded average duration: data ${execution}")
+        true
+    }
+    onretryablefailure{
+        println("retryable failure: data ${execution}")
         true
     }
 }
@@ -414,6 +424,11 @@ rundeckPlugin(NotificationPlugin) {
 
     onavgduration { Map executionData,Map config ->
         println("script, exceeded average duration: data ${executionData}, config: ${config}")
+        true
+    }
+
+    onretryablefailure { Map executionData,Map config ->
+        println("script, retryable failure: data ${executionData}, config: ${config}")
         true
     }
 }

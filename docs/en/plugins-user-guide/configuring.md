@@ -200,6 +200,7 @@ currently available triggers:
 * `onsuccess` - the Job succeeded
 * `onfailure` - the Job failed
 * `onavgduration` - the Execution exceed the average duration of the Job
+* `onretryablefailure` - the Job failed but will be retried
 
 When you define the Job in the GUI or via [XML](../man5/job-v20.html#notification) or
 [Yaml](../man5/job-yaml-v12.html#notification), you can add any of the available Notification plugin types to happen for

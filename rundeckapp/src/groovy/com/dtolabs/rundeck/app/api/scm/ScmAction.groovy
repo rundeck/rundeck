@@ -42,6 +42,10 @@ class ScmAction {
      * items to delete
      */
     List<String> deletedItems
+    /**
+     * Jobs to delete for import
+     */
+    List<String> deletedJobs
 
 
     @Override
@@ -51,6 +55,7 @@ class ScmAction {
                 ", jobIds=" + jobIds +
                 ", selectedItems=" + selectedItems +
                 ", deletedItems=" + deletedItems +
+                ", deletedJobs=" + deletedJobs +
                 '}';
     }
 
@@ -91,6 +96,10 @@ class ScmAction {
         scmAction.deletedItems = xml?.deleted?.item?.collect {
             it.'@itemId'.text()
         }
+        //deleted
+        scmAction.deletedJobs = xml?.deletedJobs?.job?.collect {
+            it.'@jobId'.text()
+        }
         return scmAction
     }
     static Closure validateJson = { data, boolean inputOnly=false ->
@@ -108,6 +117,9 @@ class ScmAction {
             if (JsonUtil.jsonNull(data.deleted) != null && !(data.deleted instanceof Collection)) {
                 errormsg += " json: expected 'deleted' to be a list"
             }
+            if (JsonUtil.jsonNull(data.deletedJobs) != null && !(data.deletedJobs instanceof Collection)) {
+                errormsg += " json: expected 'deletedJobs' to be a list"
+            }
         }
         errormsg ?: null
     }
@@ -120,6 +132,7 @@ class ScmAction {
         scmAction.jobIds = stringList(data.jobs)
         scmAction.selectedItems = stringList(data.items)
         scmAction.deletedItems = stringList(data.deleted)
+        scmAction.deletedJobs = stringList(data.deletedJobs)
         return scmAction
     }
 

@@ -16,9 +16,12 @@
 
 package com.dtolabs.rundeck.plugins.util;
 
-import java.util.*;
-
 import com.dtolabs.rundeck.core.plugins.configuration.*;
+
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 
 /**
@@ -36,6 +39,7 @@ public class PropertyBuilder {
     private PropertyValidator validator;
     private PropertyScope scope;
     private Map<String, Object> renderingOptions = new HashMap<String, Object>();
+    private boolean dynamicValues;
 
     private PropertyBuilder() {
 
@@ -285,6 +289,11 @@ public class PropertyBuilder {
         this.renderingOptions.putAll(renderingOptions);
         return this;
     }
+
+    public PropertyBuilder dynamicValues(final boolean dynamicValues) {
+        this.dynamicValues = dynamicValues;
+        return this;
+    }
     
     /**
      * Adds the given renderingOption
@@ -346,7 +355,8 @@ public class PropertyBuilder {
                 labels,
                 validator,
                 scope,
-                renderingOptions
+                renderingOptions,
+                dynamicValues
         );
     }
 

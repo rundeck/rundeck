@@ -8,40 +8,13 @@
       <span class="icon-bar"></span>
       <span class="icon-bar"></span>
     </button>
-    <a class="navbar-brand" href="http://rundeck.org/index.html">
+    <a class="navbar-brand" href="https://www.rundeck.com/open-source">
       Rundeck
-      <p class="small rd_version">Job Scheduler and Runbook Automation</p>
+      <p class="small rd_version">← Return to Rundeck Project</p>
     </a>
   </div>
   <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
-    <ul class="nav navbar-nav">
-    
-    <li class="item about selected">
-      <a href="http://rundeck.org/about.html">
-        About
-        <p class="small">News, Videos, Docs</p>
-      </a>
-    </li>
-    <li class="item help">
-      <a href="http://rundeck.org/help.html">
-        Get Help
-        <p class="small">IRC List Tracker</p>
-      </a>
-    </li>
-    <li class="item plugins ">
-      <a href="http://rundeck.org/plugins/index.html">
-        Plugins
-        <p class="small">Integrate Rundeck</p>
-      </a>
-    </li>
-    <li class="item downloads  omega">
-    <a href="http://rundeck.org/downloads.html">
-      Download
-      <p class="small rd_version">${VERSION}</p>
-      </a>
-    </li>
-    </ul>
-    <form class="navbar-form navbar-left" role="search"  action="http://rundeck.org/search/">
+    <form class="navbar-form navbar-right" role="search"  action="http://rundeck.org/search/">
       <div class="form-group">
         <input type="text" class="form-control" name="q" placeholder="Search">
       </div>

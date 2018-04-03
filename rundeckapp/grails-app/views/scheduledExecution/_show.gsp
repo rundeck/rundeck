@@ -99,7 +99,7 @@
     <div class="col-sm-12">
         <h4 class="text-muted"><g:message code="page.section.Activity.for.this.job" /></h4>
 
-        <g:render template="/reports/activityLinks" model="[scheduledExecution: scheduledExecution, knockoutBinding:true]"/>
+        <g:render template="/reports/activityLinks" model="[scheduledExecution: scheduledExecution, knockoutBinding:true, includeJobRef:(scheduledExecution.refExecCount?true:false)]"/>
     </div>
 </div>
 

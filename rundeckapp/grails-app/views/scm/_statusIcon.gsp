@@ -60,6 +60,10 @@
         <g:set var="textColor" value="text-muted"/>
         <g:set var="iconName" value="glyphicon-ok"/>
     </g:elseif>
+    <g:elseif test="${showStatus.toString() == 'DELETE_NEEDED'}">
+        <g:set var="textColor" value="text-danger"/>
+        <g:set var="iconName" value="glyphicon-minus-sign"/>
+    </g:elseif>
 </g:else>
 
 <span class="${textColor}">

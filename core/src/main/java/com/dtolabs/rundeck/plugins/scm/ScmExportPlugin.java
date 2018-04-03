@@ -95,6 +95,19 @@ public interface ScmExportPlugin {
     JobState getJobStatus(JobExportReference job, String originalPath);
 
     /**
+     * Return the state of the given job, with optional original repo path
+     *
+     * @param job          job
+     * @param originalPath path of original job, e.g. if the file was renamed
+     * @param serialize false to avoid serialize twice a job
+     *
+     * @return state
+     */
+    default JobState getJobStatus(JobExportReference job, String originalPath, boolean serialize){
+        return getJobStatus(job, originalPath);
+    }
+
+    /**
      * Return a list of tracked files that have been deleted.
      */
     List<String> getDeletedFiles();
@@ -134,4 +147,16 @@ public interface ScmExportPlugin {
      * @param originalPath original path
      */
     ScmDiffResult getFileDiff(JobExportReference job, String originalPath);
+
+
+    /**
+     * Function to fix status of the jobs on cluster environment.
+     * To automatically match the job status on every node.
+     *
+     * @param jobs rundeck jobs
+     * @return map with information on the process
+     */
+    default Map clusterFixJobs(List<JobExportReference> jobs){
+        return null;
+    }
 }

@@ -252,7 +252,31 @@ jQuery(function(){
                                     </div>
                                 </div>
                             </auth:resourceAllowed>
+                            <br/>
+                            <g:if test="${parentList}">
+                                <div class="form-group">
+                                    <div class="col-sm-10 warn note">
+                                        <g:message code="delete.referenced.job"/>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                   <div class="col-sm-10">
+                                       <ul>
 
+                                    <g:each var="job" in="${parentList}">
+                                        <li>
+                                        <span class=" wfitem jobtype" title="">
+                                        <g:link controller="scheduledExecution" action="show" id="${job.extid}">
+                                            <i class="glyphicon glyphicon-book"></i>
+                                            ${(job.groupPath?job.groupPath+'/':'')+job.jobName+(scheduledExecution.project!=job.project?' ('+job.project+')':'')}
+                                        </g:link>
+                                        </span>
+                                        </li>
+                                    </g:each>
+                                       </ul>
+                                   </div>
+                                </div>
+                            </g:if>
                         </div>
 
                         <div class="modal-footer">

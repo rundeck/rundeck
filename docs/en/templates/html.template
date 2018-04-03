@@ -21,7 +21,10 @@ $endif$
 <!-- Latest compiled and minified JavaScript -->
 <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 <script type="text/javascript">
-jQuery(function(){ jQuery('table').addClass('table table-condensed table-responsive'); });
+jQuery(function(){
+  jQuery('table').addClass('table table-condensed table-responsive'); 
+  jQuery('[data-toggle="popover"]').popover();
+});
 </script>
 $if(highlighting-css)$
   <style type="text/css">
