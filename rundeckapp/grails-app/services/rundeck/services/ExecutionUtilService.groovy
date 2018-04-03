@@ -260,7 +260,7 @@ class ExecutionUtilService {
                     jobcmditem.nodeIntersect,
                     jobcmditem.jobProject,
                     jobcmditem.failOnDisable,
-                    jobcmditem.importOptions
+                    jobcmditem.importOptions,
                     jobcmditem.uuid
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
