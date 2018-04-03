@@ -1,9 +1,9 @@
-Release 2.10.2
+Release 2.10.8
 ===========
 
-Date: 2017-12-18
+Date: 2018-03-23
 
-Name: <span style="color: Violet"><span class="glyphicon glyphicon-tent"></span> "cafe mocha violet tent"</span>
+Name: <span style="color: DodgerBlue"><span class="glyphicon glyphicon-bell"></span> "cafe mocha dodgerblue bell"</span>
 
 ## Upgrading from Earlier versions
 
@@ -11,46 +11,56 @@ Name: <span style="color: Violet"><span class="glyphicon glyphicon-tent"></span>
 
 ## Notes
 
-This is a bug fix release.
+Bug Fixes:
+
+* Fix an issue causing Vault key storage plugin to not work
+* Fix issue with cluster mode using MSSQL or Oracle DB field types. Note: If using those DBs see [#3125](https://github.com/rundeck/rundeck/issues/3125)
+
+Enhancements:
+
+* SCM git plugin enhancements [#3192](https://github.com/rundeck/rundeck/pull/3192):
+    * Import can delete jobs which were removed from git
+    * API updated to include synch status for jobs
+    * API updated to allow specifying list of jobs to delete during import action
+
+Other changes:
+
+* Ansible plugin upgraded to version 2.3.0
+* API version &rarr; 22
 
 ## Contributors
 
-* Adam Brett (adambrett)
+* Antoine-Auffret
 * Greg Schueler (gschueler)
-* OmriShiv
-* jtobard
-* scollector65
+* Jaime Tobar (jtobard)
+* Luis Toledo (ltamaster)
 
 ## Bug Reporters
 
-* OmriShiv
-* adambrett
-* bzlowrance
+* Antoine-Auffret
 * gschueler
+* jplassnibatt
 * jtobard
-* rasebo
-* scollector65
+* komodo472
+* ltamaster
 * sebastianbello
 
 ## Issues
 
-[Milestone 2.10.2](https://github.com/rundeck/rundeck/milestone/67)
+[Milestone 2.10.8](https://github.com/rundeck/rundeck/milestone/72)
 
-* [Fix starting rundeck in /var/log/rundeck for debian](https://github.com/rundeck/rundeck/pull/3006)
-* [Missing plugin icon for provider with name containing ':'](https://github.com/rundeck/rundeck/issues/3001)
-* [API: xml error response if project delete fails is missing `code` value](https://github.com/rundeck/rundeck/issues/2999)
-* [Update of project configuration overwrites cache settings.](https://github.com/rundeck/rundeck/issues/2993)
-* [Use HttpOnly for session cookie](https://github.com/rundeck/rundeck/issues/2986)
-* [Improvement to reduce MSSQL deadlocks](https://github.com/rundeck/rundeck/pull/2985)
-* [fix: plugin resource file path validation regex slowness](https://github.com/rundeck/rundeck/pull/2983)
-* [Project does not exist: message is shown when not relevant](https://github.com/rundeck/rundeck/issues/2981)
-* [Email notification:  "Orchestrator: Plugin not found: subset" message in email body](https://github.com/rundeck/rundeck/issues/2980)
-* [Job import: some xml attributes are ignored](https://github.com/rundeck/rundeck/issues/2979)
-* [Documentation: UI Plugin development](https://github.com/rundeck/rundeck/issues/2977)
-* [Add: Job filter as a context variable](https://github.com/rundeck/rundeck/pull/2974)
-* [Documentation: document the rundeck.fileUploadService.tempfile.maxsize](https://github.com/rundeck/rundeck/issues/2971)
-* [Disable jetty session ID url parameter](https://github.com/rundeck/rundeck/issues/2970)
-* [Job import API multipleExecutions error](https://github.com/rundeck/rundeck/issues/2961)
-* [Job import API successOnEmptyNodeFilter error](https://github.com/rundeck/rundeck/issues/2931)
-* [addSupplementalRoles if No user roles found](https://github.com/rundeck/rundeck/pull/2767)
-* [commands and jobs running in /var/log/rundeck instead of /var/lib/rundeck](https://github.com/rundeck/rundeck/issues/1649)
+* [Update/apiv22 scm import](https://github.com/rundeck/rundeck/pull/3216)
+* [API: SCM Git plugin Import action 'import-all' should be renamed to 'import-jobs'](https://github.com/rundeck/rundeck/issues/3215)
+* [fix: update dependencies flagged by snyk](https://github.com/rundeck/rundeck/pull/3213)
+* [Upgrade ansible plugin to the 2.3.0 release](https://github.com/rundeck/rundeck/pull/3202)
+* [Fix: key storage data type not set automatically with Vault plugin](https://github.com/rundeck/rundeck/pull/3196)
+* [Scm Git Import can delete jobs when git file is removed](https://github.com/rundeck/rundeck/pull/3192)
+* [correct optional options when creating a project](https://github.com/rundeck/rundeck/pull/3191)
+* [Referenced job error handlers cannot be found when job is referenced from other projects](https://github.com/rundeck/rundeck/issues/3189)
+* [Fix: Matched Nodes list is not (Auto) Refreshed in Jobs](https://github.com/rundeck/rundeck/pull/3171)
+* [Can't abort a job, message is "Unable to modify the execution"](https://github.com/rundeck/rundeck/issues/3155)
+* [serverNodeUUID field to varchar ](https://github.com/rundeck/rundeck/pull/3126)
+* [Oracle+MSSQL DB error SqlExceptionHelper](https://github.com/rundeck/rundeck/issues/3125)
+* [Log File Storage exception: NullPointerException: Cannot get property 'filetype' on null object](https://github.com/rundeck/rundeck/issues/3089)
+* [Bug / Matched Nodes list is not (Auto) Refreshed in Jobs](https://github.com/rundeck/rundeck/issues/3075)
+* [API: Scm (export/import) action inputs should include item status](https://github.com/rundeck/rundeck/issues/2330)

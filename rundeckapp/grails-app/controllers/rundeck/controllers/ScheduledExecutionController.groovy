@@ -294,7 +294,9 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def total = -1
         if (keys.contains('total') || !keys) {
-            total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+            def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+            def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+            total = Execution.withTransaction([isolationLevel: isolationLevel]) {
                 Execution.countByScheduledExecution(scheduledExecution)
             }
         }
@@ -409,7 +411,9 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def total = Execution.withTransaction([isolationLevel: isolationLevel]) {
             Execution.countByScheduledExecution(scheduledExecution)
         }
         def reftotal = 0
@@ -423,8 +427,13 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
 
+       def isReferenced= JobExec.hasAnyReference(scheduledExecution)
+        def parentList = JobExec.parentList(scheduledExecution,10)
+
         def dataMap= [
                 scheduledExecution: scheduledExecution,
+                isReferenced: isReferenced,
+                parentList: parentList,
                 crontab: crontab,
                 params: params,
                 total: total,
@@ -448,7 +457,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
             if(scmService.projectHasConfiguredExportPlugin(params.project)){
                 dataMap.scmExportEnabled = true
-                dataMap.scmExportStatus = scmService.exportStatusForJobs([scheduledExecution])
+                dataMap.scmExportStatus = scmService.exportStatusForJob(scheduledExecution)
                 dataMap.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
             }
         }
@@ -528,7 +537,9 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.withTransaction([isolationLevel: TransactionDefinition.ISOLATION_READ_UNCOMMITTED]) {
+        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def total = Execution.withTransaction([isolationLevel: isolationLevel]) {
             Execution.countByScheduledExecution(scheduledExecution)
         }
 
@@ -1347,6 +1358,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         if(request.method=='POST') {
+            def isReferenced = JobExec.hasAnyReference(scheduledExecution)
             withForm {
                 def result = scheduledExecutionService.deleteScheduledExecutionById(
                         jobid,
@@ -1360,6 +1372,14 @@ class ScheduledExecutionController  extends ControllerBase{
                 } else {
                     def project = result.success.job ? result.success.job.project : params.project
                     flash.bulkJobResult = [success: [result.success]]
+                    if(isReferenced){
+                        def err = [
+                                message: g.message(code: 'deleted.referenced.job'),
+                                errorCode: 'jobref',
+                                id: jobid
+                        ]
+                        flash.bulkJobResult+=[errors:[err]]
+                    }
                     redirect(controller: 'menu', action: 'jobs', params: [project: project])
                 }
             }.invalidToken {

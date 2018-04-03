@@ -245,7 +245,8 @@ public class ExecutionItemFactory {
                 false,
                 null,
                 false,
-                false
+                false,
+                null
         );
     }
 
@@ -275,7 +276,8 @@ public class ExecutionItemFactory {
             final Boolean nodeIntersect,
             final String project,
             final Boolean failOnDisable,
-            final Boolean importOptions
+            final Boolean importOptions,
+            final String uuid
     )
     {
 
@@ -294,7 +296,8 @@ public class ExecutionItemFactory {
                 nodeIntersect,
                 project,
                 failOnDisable,
-                importOptions
+                importOptions,
+                uuid
         );
     }
 
@@ -622,6 +625,7 @@ public class ExecutionItemFactory {
         private final String project;
         private final Boolean failOnDisable;
         private final Boolean importOptions;
+        private final String uuid;
 
         public JobReferenceItem(
                 final String label,
@@ -638,7 +642,8 @@ public class ExecutionItemFactory {
                 final Boolean nodeIntersect,
                 final String project,
                 final Boolean failOnDisable,
-                final Boolean importOptions
+                final Boolean importOptions,
+                final String uuid
         )
         {
             this.label = label;
@@ -656,6 +661,7 @@ public class ExecutionItemFactory {
             this.project=project;
             this.failOnDisable = failOnDisable;
             this.importOptions = importOptions;
+            this.uuid = uuid;
         }
 
         @Override
@@ -724,7 +730,11 @@ public class ExecutionItemFactory {
 
         public Boolean isFailOnDisable(){return failOnDisable;}
 
+
         public Boolean isImportOptions(){return importOptions;}
+
+        public String getUuid(){return uuid;}
+
 
         @Override
         public String toString() {

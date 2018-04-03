@@ -34,6 +34,7 @@ import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
 import org.springframework.context.ApplicationContext
+import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.ScheduledExecution
@@ -86,49 +87,41 @@ class LogFileStorageServiceTests  {
         }
         assertEquals("test1", service.getConfiguredPluginName())
     }
-    void testConfiguredRetry() {
+    void testConfiguredStorageRetryCount() {
 
-        grailsApplication.config.clear()
-        assertEquals(60,service.getConfiguredStorageRetryDelay())
+        service.configurationService=mockWith(ConfigurationService){
+            getInteger{String x, int defval->defval}
+        }
         assertEquals(1, service.getConfiguredStorageRetryCount())
 
-
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
-
-        assertEquals(30, service.getConfiguredStorageRetryDelay())
-        assertEquals(1, service.getConfiguredStorageRetryCount())
-
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStorage.storageRetryDelay = 30
-        grailsApplication.config.rundeck.execution.logs.fileStorage.storageRetryCount = 10
-
-        assertEquals(30, service.getConfiguredStorageRetryDelay())
-        assertEquals(10, service.getConfiguredStorageRetryCount())
     }
-    void testConfiguredRetrievalRetry() {
+    void testConfiguredStorageRetryDelay() {
 
-        grailsApplication.config.clear()
-        assertEquals(60,service.getConfiguredRetrievalRetryDelay())
+        service.configurationService=mockWith(ConfigurationService){
+            getInteger{String x, int defval->defval}
+        }
+        assertEquals(60,service.getConfiguredStorageRetryDelay())
+    }
+    void testConfiguredRetrievalCount() {
+
+        service.configurationService=mockWith(ConfigurationService){
+            getInteger{String x, int defval->defval}
+        }
         assertEquals(3,service.getConfiguredRetrievalRetryCount())
 
-
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
-
-        assertEquals(30, service.getConfiguredRetrievalRetryDelay())
-        assertEquals(3, service.getConfiguredRetrievalRetryCount())
-
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
-        grailsApplication.config.rundeck.execution.logs.fileStorage.retrievalRetryCount = 10
-
-        assertEquals(30, service.getConfiguredRetrievalRetryDelay())
-        assertEquals(10, service.getConfiguredRetrievalRetryCount())
+    }
+    void testConfiguredRetrievalDelay() {
+        service.configurationService=mockWith(ConfigurationService){
+            getInteger{String x, int defval->defval}
+        }
+        assertEquals(60,service.getConfiguredRetrievalRetryDelay())
     }
     void testIsCachedItemFresh() {
 
-        grailsApplication.config.clear()
+
+        service.configurationService=mockWith(ConfigurationService){
+            getInteger(4..4){String prop,int defval->defval}
+        }
         assertTrue(service.isResultCacheItemFresh([time: new Date(), count: 0]))
         assertTrue(service.isResultCacheItemAllowedRetry([time: new Date(), count: 0]))
 
@@ -136,17 +129,22 @@ class LogFileStorageServiceTests  {
         assertFalse(service.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
 
 
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
+        def vals=[:]
+        service.configurationService=mockWith(ConfigurationService){
+            getInteger(3..3){String prop,int defval->vals[prop]?:defval}
+        }
+        vals['execution.logs.fileStorage.retrievalRetryDelay'] = 30
 
         assertTrue(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0]))
         assertFalse(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0]))
         assertFalse(service.isResultCacheItemAllowedRetry([time: new Date(), count: 3]))
 
 
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStorage.retrievalRetryDelay = 30
-        grailsApplication.config.rundeck.execution.logs.fileStorage.retrievalRetryCount = 10
+        service.configurationService=mockWith(ConfigurationService){
+            getInteger(4..4){String prop,int defval->vals[prop]?:defval}
+        }
+        vals['execution.logs.fileStorage.retrievalRetryDelay'] = 30
+        vals['execution.logs.fileStorage.retrievalRetryCount'] = 10
 
         assertTrue(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (25 * 1000)), count: 0]))
         assertFalse(service.isResultCacheItemFresh([time: new Date(System.currentTimeMillis() - (31 * 1000)), count: 0]))
@@ -182,6 +180,7 @@ class LogFileStorageServiceTests  {
 
         service.configurationService=mockWith(ConfigurationService){
             getString{String prop,String defval->'test1'}
+            getInteger(1..2){String prop,int defval->defval}
         }
         def result = service.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error','errorCode',['errorData'])
         assertNotNull(result)
@@ -202,6 +201,8 @@ class LogFileStorageServiceTests  {
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = "test1"
         service.configurationService=mockWith(ConfigurationService){
             getString{String prop,String defval->'test1'}
+
+            getInteger(1..2){String prop,int defval->defval}
         }
         def result = service.cacheRetrievalState("1", LogFileState.NOT_FOUND, 0, 'error', null, null)
         assertNotNull(result)
@@ -447,7 +448,7 @@ class LogFileStorageServiceTests  {
 
         assertEquals(1,task.count)
         assertTrue(svc.executorService.executeCalled)
-        assertEquals(1,svc.getCurrentRequests().size())
+        assertFalse(svc.failedRequestIds.contains(task.requestId))
     }
     void testRunStorageRequestMultiSuccessMultiType(){
         grailsApplication.config.clear()
@@ -469,7 +470,7 @@ class LogFileStorageServiceTests  {
 
         assertEquals(1,task.count)
         assertTrue(svc.executorService.executeCalled)
-        assertEquals(1,svc.getCurrentRequests().size())
+        assertTrue(!svc.failedRequestIds.contains(task.requestId))
     }
     void testRunStorageRequestMultiSuccessStarGlob(){
         grailsApplication.config.clear()
@@ -491,7 +492,7 @@ class LogFileStorageServiceTests  {
 
         assertEquals(1,task.count)
         assertTrue(svc.executorService.executeCalled)
-        assertEquals(1,svc.getCurrentRequests().size())
+        assertTrue(!svc.failedRequestIds.contains(task.requestId))
     }
     void testRunStorageRequestMultiFailureSingleType(){
         grailsApplication.config.clear()
@@ -515,6 +516,16 @@ class LogFileStorageServiceTests  {
         assertEquals(1,task.count)
         assertFalse(svc.executorService.executeCalled)
         assertEquals(0,svc.getCurrentRequests().size())
+
+        def request
+        LogFileStorageRequest.withSession { session ->
+            session.flush()
+            request=LogFileStorageRequest.get(task.requestId)
+            request.refresh()
+        }
+
+        assertEquals(false, request.completed)
+        assertEquals('rdlog', request.filetype)
     }
     /**
      * failure of one filetype should set request filetype to the failed type(s)
@@ -681,7 +692,17 @@ class LogFileStorageServiceTests  {
 
         assertEquals(1,task.count)
         assertTrue(svc.executorService.executeCalled)
-        assertEquals(1,svc.getCurrentRequests().size())
+        assertTrue(!svc.failedRequestIds.contains(task.requestId))
+
+        LogFileStorageRequest request
+        LogFileStorageRequest.withSession { session ->
+            session.flush()
+            request=LogFileStorageRequest.get(task.requestId)
+            request.refresh()
+        }
+
+        assertNotNull(request)
+        assertTrue(request.completed)
     }
     void testRunStorageRequestFailure(){
         grailsApplication.config.clear()
@@ -717,6 +738,7 @@ class LogFileStorageServiceTests  {
         Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
             //default to true fo cancelOnStorageFailure
             service.configurationService=mockWith(ConfigurationService){
+                getInteger(2..2){String prop,int defval->defval}
                 getBoolean{String prop,boolean defval->true}
                 getString{String prop,String defval->'test1'}
             }
@@ -732,7 +754,16 @@ class LogFileStorageServiceTests  {
 
         assertEquals(1,task.count)
         assertTrue(svc.executorService.executeCalled)
-        assertEquals(1, svc.getCurrentRequests().size())
+
+        def request
+        LogFileStorageRequest.withSession { session ->
+            session.flush()
+            request=LogFileStorageRequest.get(task.requestId)
+            request?.refresh()
+        }
+
+        assertNull(request)
+
     }
     void testRunStorageRequestFailureWithRetry(){
         grailsApplication.config.clear()
@@ -745,13 +776,14 @@ class LogFileStorageServiceTests  {
         test.storeLogFileSuccess=false
         LogFileStorageService svc
         boolean queued=false
-        def sched = mockFor(ScheduledExecutorService)
-        sched.demand.schedule() { Closure clos, long delay, TimeUnit unit ->
+        def sched = mockFor(TaskScheduler)
+        sched.demand.schedule() { Closure clos, Date when ->
             queued=true
-            assertEquals(30,delay)
+            assert when > new Date()
         }
-        service.scheduledExecutor = sched.createMock()
-        Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
+        service.logFileStorageTaskScheduler = sched.createMock()
+        Map task = performRunStorage(test, "rdlog", createExecution(), testLogFile1, ['execution.logs.fileStorage.storageRetryDelay': 30,
+                                                                                      'execution.logs.fileStorage.storageRetryCount': 2]) { LogFileStorageService service ->
             svc = service
             assertFalse(test.storeLogFileCalled)
             assertNull(test.storeFiletype)
@@ -784,6 +816,10 @@ class LogFileStorageServiceTests  {
     }
 
     private Map performRunStorage(testStoragePlugin test, String filetype, Execution e, File testfile, Closure clos = null) {
+        performRunStorage(test, filetype, e, testfile, [:], clos)
+    }
+
+    private Map performRunStorage(testStoragePlugin test, String filetype, Execution e, File testfile, Map<String, Integer> intvals, Closure clos = null) {
         assertNotNull(e.save())
         def fmock = mockFor(FrameworkService)
         fmock.demand.getFrameworkPropertyResolver() { project ->
@@ -800,6 +836,7 @@ class LogFileStorageServiceTests  {
         emock.execute={Closure cls->
             emock.executeCalled=true
             assertNotNull(cls)
+            cls.call()
         }
         service.frameworkService = fmock.createMock()
         service.pluginService = pmock.createMock()
@@ -820,6 +857,7 @@ class LogFileStorageServiceTests  {
         }
         service.applicationContext=appmock.createMock()
         service.configurationService=mockWith(ConfigurationService){
+            getInteger(1..3) { String prop, int defval -> intvals[prop] ?: defval }
             getBoolean{String prop,boolean defval->false}
             getString{String prop,String defval->'test1'}
         }
@@ -1309,7 +1347,9 @@ class LogFileStorageServiceTests  {
         }
 
         service.configurationService=mockWith(ConfigurationService){
-            getString(1..3){String prop,String defval->'test1'}
+            getString(1..4){String prop,String defval->'test1'}
+            getInteger(){String prop, int defval->defval}
+            getString(1..4){String prop,String defval->'test1'}
         }
         if(null!= svcClosure){
             service.with(svcClosure)

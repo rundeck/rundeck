@@ -24,7 +24,9 @@ configuration files in the database.
 
 The storage type can be changed by a configuration flag in the `rundeck-config.properties` file:
 
-    rundeck.projectsStorageType=db/filesystem
+    rundeck.projectsStorageType=db
+    or
+    rundeck.projectsStorageType=file
 
 If you wish to use db storage you must add this configuration entry.
 
@@ -38,7 +40,7 @@ configured to use an Encryption plugin.  See [Storage Facility - Using Encryptio
 
 ### Configuration file
 
-When using *filesystem* storage type, each Project has a configuration file called
+When using *file* storage type, each Project has a configuration file called
 [project.properties](configuration-file-reference.html#project.properties),
 located at this path:
 
@@ -246,7 +248,7 @@ You can also add configuration properties when you create the project.
 Here the default SSH key setting is declared via the `project.ssh-keypath`:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
-rd projects create -p examples -- -project.ssh-keypath=/home/rundeck/.ssh/id_rsa
+rd projects create -p examples -- --project.ssh-keypath=/home/rundeck/.ssh/id_rsa
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can specify a resource model source using command options, too.
@@ -254,8 +256,8 @@ Here a "directory" model source is declared.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ {.bash}
 rd projects create -p examples -- \
-  -resources.source.2.type=directory \
-  -resources.source.2.config.directory=/path/to/my/resources.d
+  --resources.source.2.type=directory \
+  --resources.source.2.config.directory=/path/to/my/resources.d
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Administrators can place multiple resource model files in this directory.

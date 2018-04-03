@@ -330,10 +330,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         query.projFilter = params.project
         //test valid project
 
-        def exists=frameworkService.existsFrameworkProject(params.project)
-        if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                                                        code: 'api.error.item.doesnotexist', args: ['project',params.project]])
+        if (!apiService.requireExists(
+            response,
+            frameworkService.existsFrameworkProject(params.project),
+            ['project', params.project]
+        )) {
+            return
         }
         if(query.hasErrors()){
             return apiService.renderErrorFormat(response,
@@ -429,15 +431,27 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                                  ),
                                                                  [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
             )) {
+                if(frameworkService.isClusterModeEnabled()){
+                    if (!scmService.projectHasConfiguredExportPlugin(params.project)) {
+                        //initialize if in another node
+                        scmService.initProject(params.project, 'export')
+                    }
+                    if(minScm){
+                        scmService.fixExportStatus(params.project, results.nextScheduled)
+                    }
+                }
                 def pluginData = [:]
                 try {
                     if (scmService.projectHasConfiguredExportPlugin(params.project)) {
-                        pluginData.scmExportEnabled = true
-                        pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
-                        if(!minScm){
-                            pluginData.scmStatus = scmService.exportStatusForJobs(results.nextScheduled)
-                            pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
-                            pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
+                        pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export').enabled
+                        if(pluginData.scmExportEnabled){
+
+                            if(!minScm){
+                                pluginData.scmStatus = scmService.exportStatusForJobs(results.nextScheduled)
+                                pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
+                                pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
+                            }
+                            pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
                         }
                         results.putAll(pluginData)
                     }
@@ -451,15 +465,27 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                                                                  ),
                                                                  [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]
             )) {
-
+                if(frameworkService.isClusterModeEnabled()){
+                    if (!scmService.projectHasConfiguredImportPlugin(params.project)) {
+                        //initialize if in another node
+                        scmService.initProject(params.project, 'import')
+                    }
+                    if(minScm){
+                        scmService.fixImportStatus(params.project, results.nextScheduled)
+                        scmService.importPluginStatus(authContext, params.project)
+                    }
+                }
                 def pluginData = [:]
                 try {
                     if (scmService.projectHasConfiguredImportPlugin(params.project)) {
-                        pluginData.scmImportEnabled = true
-                        pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
-                        if(!minScm){
-                            pluginData.scmImportJobStatus = scmService.importStatusForJobs(results.nextScheduled)
-                            pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
+                        pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import').enabled
+                        if(pluginData.scmImportEnabled){
+
+                            if(!minScm){
+                                pluginData.scmImportJobStatus = scmService.importStatusForJobs(results.nextScheduled)
+                                pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
+                            }
+                            pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
                         }
                         results.putAll(pluginData)
                     }
@@ -1009,7 +1035,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 frameworkService.serverUUID,
                 [max: query.max, offset: query.offset]
         )
-        def queuedIds=logFileStorageService.getQueuedIncompleteRequestIds()
+        def queuedIncompleteIds=logFileStorageService.getQueuedIncompleteRequestIds()
+        def retryIds=logFileStorageService.getQueuedRetryRequestIds()
+        def queuedIds=logFileStorageService.getQueuedRequestIds()
         def failedIds=logFileStorageService.getFailedRequestIds()
         withFormat{
             json{
@@ -1021,7 +1049,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                         contents = list.collect { LogFileStorageRequest req ->
                             exportRequestMap(
                                     req,
-                                    queuedIds.contains(req.id),
+                                    retryIds.contains(req.id) || queuedIds.contains(req.id) || queuedIncompleteIds.contains(req.id),
                                     failedIds.contains(req.id),
                                     failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
                             )
@@ -1307,7 +1335,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if (input.hasErrors()) {
             request.errors = input.errors
-            return renderErrorView()
+            return renderErrorView([:])
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
 
@@ -1741,7 +1769,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         if (input.hasErrors()) {
             request.errors = input.errors
-            return renderErrorView()
+            return renderErrorView([:])
         }
 
         if (input.fileType == 'fs' && isClusterModeAclsLocalFileEditDisabled()) {
@@ -2467,7 +2495,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 frameworkService.serverUUID,
                 [max: query.max?:20, offset: query.offset?:0]
         )
-        def queuedIds=logFileStorageService.getQueuedIncompleteRequestIds()
+        def queuedIncompleteIds=logFileStorageService.getQueuedIncompleteRequestIds()
+        def retryIds=logFileStorageService.getQueuedRetryRequestIds()
+        def queuedIds=logFileStorageService.getQueuedRequestIds()
         def failedIds=logFileStorageService.getFailedRequestIds()
         withFormat{
             json{
@@ -2478,7 +2508,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     executions = list.collect { LogFileStorageRequest req ->
                         def data=exportRequestMap(
                                 req,
-                                queuedIds.contains(req.id),
+                                retryIds.contains(req.id) || queuedIds.contains(req.id) || queuedIncompleteIds.contains(req.id),
                                 failedIds.contains(req.id),
                                 failedIds.contains(req.id) ? logFileStorageService.getFailures(req.id) : null
                         )
@@ -2586,11 +2616,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         query.projFilter = params.project
         //test valid project
 
-        def exists=frameworkService.existsFrameworkProject(params.project)
-        if(!exists){
-            return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['project', params.project]])
-
+        if (!apiService.requireExists(
+            response,
+            frameworkService.existsFrameworkProject(params.project),
+            ['project', params.project]
+        )) {
+            return
         }
         if(query.groupPathExact || query.jobExactFilter){
             //these query inputs require API version 2
@@ -2867,10 +2898,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //test valid project
         Framework framework = frameworkService.getRundeckFramework()
 
-        def exists=frameworkService.existsFrameworkProject(params.project)
-        if(!exists){
-            return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                    code: 'api.error.item.doesnotexist', args: ['project',params.project]])
+
+        if (!apiService.requireExists(
+            response,
+            frameworkService.existsFrameworkProject(params.project),
+            ['project', params.project]
+        )) {
+            return
         }
         //don't load scm status for api response
         params['_no_scm']=true
@@ -2918,9 +2952,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         //allow project='*' to indicate all projects
         def allProjects = request.api_version >= ApiRequestFilters.V9 && params.project == '*'
         if(!allProjects){
-            if(!frameworkService.existsFrameworkProject(params.project)){
-                return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_NOT_FOUND,
-                        code: 'api.error.parameter.doesnotexist', args: ['project',params.project]])
+            if(!apiService.requireExists(response,frameworkService.existsFrameworkProject(params.project),['project',params.project])){
+                return
             }
         }
         if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
@@ -2986,13 +3019,19 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT]
         )) {
             def pluginData = [:]
+            if(frameworkService.isClusterModeEnabled()){
+                //initialize if in another node
+                scmService.initProject(params.project,'export')
+            }
             try {
                 if (scmService.projectHasConfiguredExportPlugin(params.project)) {
-                    pluginData.scmExportEnabled = true
-                    pluginData.scmStatus = scmService.exportStatusForJobs(result.nextScheduled)
-                    pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
-                    pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
-                    pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
+                    pluginData.scmExportEnabled = scmService.loadScmConfig(params.project, 'export')?.enabled
+                    if(pluginData.scmExportEnabled){
+                        pluginData.scmStatus = scmService.exportStatusForJobs(result.nextScheduled)
+                        pluginData.scmExportStatus = scmService.exportPluginStatus(authContext, params.project)
+                        pluginData.scmExportActions = scmService.exportPluginActions(authContext, params.project)
+                        pluginData.scmExportRenamed = scmService.getRenamedJobPathsForProject(params.project)
+                    }
                     results.putAll(pluginData)
                 }
             } catch (ScmPluginException e) {
@@ -3005,14 +3044,19 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 ),
                 [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_IMPORT]
         )) {
-
+            if(frameworkService.isClusterModeEnabled()){
+                //initialize if in another node
+                scmService.initProject(params.project,'import')
+            }
             def pluginData = [:]
             try {
                 if (scmService.projectHasConfiguredImportPlugin(params.project)) {
-                    pluginData.scmImportEnabled = true
-                    pluginData.scmImportJobStatus = scmService.importStatusForJobs(result.nextScheduled)
-                    pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
-                    pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
+                    pluginData.scmImportEnabled = scmService.loadScmConfig(params.project, 'import')?.enabled
+                    if(pluginData.scmImportEnabled){
+                        pluginData.scmImportJobStatus = scmService.importStatusForJobs(result.nextScheduled)
+                        pluginData.scmImportStatus = scmService.importPluginStatus(authContext, params.project)
+                        pluginData.scmImportActions = scmService.importPluginActions(authContext, params.project)
+                    }
                     results.putAll(pluginData)
                 }
 

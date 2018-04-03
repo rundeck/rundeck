@@ -24,6 +24,8 @@ import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
 import org.eclipse.jgit.api.Status
+import org.eclipse.jgit.api.errors.GitAPIException
+import org.eclipse.jgit.api.errors.JGitInternalException
 import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.revwalk.RevCommit
 import org.rundeck.plugin.scm.git.config.Export
@@ -126,6 +128,12 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         git?.close()
     }
 
+    @Override
+    void totalClean(){
+        File base = new File(config.dir)
+        base?.deleteDir()
+    }
+
 
     @Override
     BasicInputView getInputViewForAction(final ScmOperationContext context, String actionId) {
@@ -203,6 +211,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (performFetch) {
             try {
                 fetchFromRemote(context)
+                if(config.shouldPullAutomatically()){
+                    actions[PROJECT_SYNCH_ACTION_ID].perform(this,null,null,context,[refresh:'rebase',resolution:'ours'])
+                }
             } catch (Exception e) {
                 fetchError=true
                 msgs<<"Fetch from the repository failed: ${e.message}"
@@ -320,13 +331,9 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         def jobstat = Collections.synchronizedMap([:])
         def commit = lastCommitForPath(path)
 
-
-
         if (job instanceof JobExportReference && doSerialize) {
             serialize(job, format, config.exportPreserve, config.exportOriginal)
         }
-
-
 
         def statusb = git.status().addPath(path)
         if (originalPath) {
@@ -419,6 +426,20 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
         if (!status) {
             status = refreshJobStatus(job, originalPath)
         }
+
+        return createJobStatus(status, jobActionsForStatus(status))
+    }
+
+    @Override
+    JobState getJobStatus(final JobExportReference job, final String originalPath, final boolean serialize) {
+        log.debug("getJobStatus(${job.id},${originalPath}): ${job}, serialize ${serialize}")
+        if (!inited) {
+            return null
+        }
+        def status = hasJobStatusCached(job, originalPath)
+        if (!status) {
+            status = refreshJobStatus(job, originalPath,serialize)
+        }
         return createJobStatus(status, jobActionsForStatus(status))
     }
 
@@ -460,6 +481,59 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
                                  modified: diffs > 0,
                                  actions: availableActions
         )
+    }
+
+
+    Map clusterFixJobs(final List<JobExportReference> jobs){
+        def retSt = [:]
+        retSt.deleted = []
+        retSt.restored = []
+        def toPull = false
+        jobs.each { job ->
+            def storedCommitId = ((JobScmReference)job).scmImportMetadata?.commitId
+            def commitId = lastCommitForPath(getRelativePathForJob(job))
+            def path = getRelativePathForJob(job)
+            if(storedCommitId != null && commitId == null){
+                //file to delete-pull
+                git.rm().addFilepattern(path).call()
+                toPull = true
+                retSt.deleted.add(path)
+            }else if(storedCommitId != null && commitId?.name != storedCommitId){
+                git.checkout().addPath(path).call()
+                toPull = true
+                retSt.restored.add(job)
+            }
+        }
+        Status status = git.status().call()
+        if (status.isClean()) {
+            //behind branch on deleted job
+            def bstat = BranchTrackingStatus.of(repo, branch)
+            if (bstat && bstat.behindCount > 0) {
+                toPull = true
+                retSt.behind = true
+            }
+        }
+        if(toPull){
+            retSt.pull = true
+            try{
+                git.pull().call()
+            }catch (JGitInternalException e){
+                retSt.error=e
+            }catch(GitAPIException e){
+                retSt.error = e
+                log.info(e)
+            }
+        }
+
+        try{
+            jobs.each{job ->
+                refreshJobStatus(job,null)
+            }
+        }catch (ScmPluginException e){
+            retSt.error = e
+        }
+
+        retSt
     }
 
 

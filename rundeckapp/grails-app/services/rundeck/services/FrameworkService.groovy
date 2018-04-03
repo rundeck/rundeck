@@ -59,6 +59,7 @@ class FrameworkService implements ApplicationContextAware {
     def metricService
     def Framework rundeckFramework
     def rundeckPluginRegistry
+    def PluginControlService pluginControlService
 
     def getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath;
@@ -641,6 +642,13 @@ class FrameworkService implements ApplicationContextAware {
         return rundeckFramework;
     }
 
+    def PluginControlService getPluginControlService(String project) {
+        if(!pluginControlService){
+            pluginControlService = PluginControlServiceImpl.forProject(getRundeckFramework(), project)
+        }
+        return pluginControlService
+    }
+
     public UserAndRolesAuthContext getAuthContextForSubject(Subject subject) {
         if (!subject) {
             throw new RuntimeException("getAuthContextForSubject: Cannot get AuthContext without subject")
@@ -790,7 +798,9 @@ class FrameworkService implements ApplicationContextAware {
      * @param type, projectAndFrameworkValues
      * @return
      */
-    def Map<String, Object> getDynamicPropertiesStepPlugin(String type, Map<String, Object> projectAndFrameworkValues){
+    def Map<String, Object> getDynamicPropertiesStepPlugin(
+            String type, Map<String, Object> projectAndFrameworkValues) throws MissingProviderException{
+
         def plugin = getStepPlugin(type)
         getDynamicProperties(plugin, projectAndFrameworkValues)
     }
@@ -800,7 +810,9 @@ class FrameworkService implements ApplicationContextAware {
      * @param type, projectAndFrameworkValues
      * @return
      */
-    def Map<String, Object> getDynamicPropertiesNodeStepPlugin(String type, Map<String, Object> projectAndFrameworkValues){
+    def Map<String, Object> getDynamicPropertiesNodeStepPlugin(
+            String type, Map<String, Object> projectAndFrameworkValues) throws MissingProviderException{
+
         def plugin = getNodeStepPlugin(type)
         getDynamicProperties(plugin, projectAndFrameworkValues)
     }

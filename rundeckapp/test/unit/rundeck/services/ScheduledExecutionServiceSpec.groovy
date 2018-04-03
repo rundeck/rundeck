@@ -2710,4 +2710,85 @@ class ScheduledExecutionServiceSpec extends Specification {
         false           | false            | true        | false
     }
 
+    @Unroll
+    def "do save job with dynamic threadcount"(){
+        given:
+        setupDoUpdate()
+
+        def job = new ScheduledExecution(createJobParams(doNodedispatch: true,
+                nodeInclude: "hostname",
+                nodeThreadcountDynamic: "\${option.threadcount}",
+                retry: null,
+                timeout: null,
+                options:[new Option(name: 'threadcount', defaultValue: '30', enforced: true)]
+                ))
+
+        when:
+        job.save()
+        then:
+        job.nodeThreadcount == 30
+    }
+
+    @Unroll
+    def "do update job dynamic nodethreadcount"(){
+        given:
+        setupDoUpdate()
+
+        def se = new ScheduledExecution(createJobParams(doNodedispatch: true, nodeInclude: "hostname",
+                nodeThreadcountDynamic: "\${option.threadcount}",
+                options:[new Option(name: 'threadcount', defaultValue: '30', enforced: true)]
+        )).save()
+        def newJob = new ScheduledExecution(createJobParams(
+                doNodedispatch: true, nodeInclude: "hostname",
+                nodeThreadcount: null,
+                nodeThreadcountDynamic: null
+        ))
+
+
+
+        when:
+        def results = service._doupdateJob(se.id,newJob, mockAuth())
+
+        then:
+        results.success
+
+        results.scheduledExecution.nodeThreadcountDynamic=="\${option.threadcount}"
+    }
+
+    def "do update job options with label field"(){
+        given:
+        setupDoUpdate()
+
+        def se = new ScheduledExecution(createJobParams(options:[
+                new Option(name: 'test1', defaultValue: 'val1', enforced: true, values: ['a', 'b', 'c']),
+                new Option(name: 'test2', enforced: false, valuesUrl: "http://test.com/test2")
+        ])).save()
+        def newJob = new ScheduledExecution(createJobParams(
+                options: input
+        ))
+        service.fileUploadService = Mock(FileUploadService)
+
+        when:
+        def results = service._doupdateJob(se.id,newJob, mockAuth())
+
+
+        then:
+        results.success
+
+        results.scheduledExecution.options?.size() == input?.size()
+
+        for(def i=0;i<input?.size();i++){
+            for(def prop:['name','label']){
+                results.scheduledExecution.options[0]."$prop"==input[i]."$prop"
+            }
+        }
+
+        where:
+        input|_
+        [new Option(name: 'test1', label: 'label1', defaultValue: 'val3', enforced: false, valuesUrl: "http://test.com/test3"),
+         new Option(name: 'test3', label: 'label2', defaultValue: 'd', enforced: true, values: ['a', 'b', 'c', 'd']),
+        ] |  _
+        null |  _
+
+    }
 }

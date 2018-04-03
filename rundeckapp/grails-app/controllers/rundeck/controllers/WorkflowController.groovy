@@ -1125,8 +1125,14 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
      */
     public static boolean _validateCommandExec(WorkflowStep exec, String type = null, List authProjects = null) {
         if (exec instanceof JobExec) {
-            if (!exec.jobName) {
+            if (!exec.jobName && !exec.uuid) {
                 exec.errors.rejectValue('jobName', 'commandExec.jobName.blank.message')
+            }
+            if(exec.uuid && !exec.jobName){
+                def refSe = ScheduledExecution.findScheduledExecution(null,null,null,exec.uuid);
+                if(refSe){
+                    exec.jobProject = refSe.project
+                }
             }
             if(exec.jobProject){
                 if(authProjects && !authProjects.contains(exec.jobProject)){
@@ -1203,11 +1209,15 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
      * @param newItemType new item type
      */
     private Map<String, Object> getDynamicProperties(String project, String newItemType, boolean isNodeStep){
-        if(isNodeStep){
-            frameworkService.getDynamicPropertiesNodeStepPlugin(newItemType, frameworkService.getProjectProperties(project));
-        } else {
-            frameworkService.getDynamicPropertiesStepPlugin(newItemType, frameworkService.getProjectProperties(project))
+        if (newItemType && !(newItemType in ['command', 'script', 'scriptfile', 'job'])) {
+            try {
+                return isNodeStep ? frameworkService.getDynamicPropertiesNodeStepPlugin(newItemType, frameworkService.getProjectProperties(project)) :
+                        frameworkService.getDynamicPropertiesStepPlugin(newItemType, frameworkService.getProjectProperties(project))
+            } catch (MissingProviderException e) {
+                log.warn("step provider not found: ${newItemType}: ${e.message}", e)
+            }
         }
+        return null
     }
 
     /**

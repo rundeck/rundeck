@@ -419,6 +419,7 @@ dataSource.driverClassName = com.microsoft.sqlserver.jdbc.SQLServerDriver
 dataSource.url = jdbc:sqlserver://myserver;DatabaseName=RUNDECK
 dataSource.username = myusername
 dataSource.password = mypassword
+rundeck.min.isolation.level=UNCOMMITTED
 ...
 ~~~~~~~
 

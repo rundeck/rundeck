@@ -52,6 +52,7 @@ import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
@@ -186,8 +187,16 @@ beans={
         rundeckServerServiceProviderLoader = ref('rundeckServerServiceProviderLoader')
 //        pluginRegistry=ref("rundeckPluginRegistry")
     }
-    logFileTaskExecutor(SimpleAsyncTaskExecutor,"LogFileStorage"){
-        concurrencyLimit= 2 + (application.config.rundeck?.execution?.logs?.fileStorage?.concurrencyLimit ?: 5)
+    logFileTaskExecutor(SimpleAsyncTaskExecutor, "LogFileTask") {
+        concurrencyLimit = 1 + (application.config.rundeck?.execution?.logs?.fileStorage?.retrievalTasks?.concurrencyLimit ?: 5)
+    }
+    logFileStorageTaskExecutor(SimpleAsyncTaskExecutor, "LogFileStorageTask") {
+        concurrencyLimit = 1 + (application.config.rundeck?.execution?.logs?.fileStorage?.storageTasks?.concurrencyLimit ?: 10)
+    }
+    logFileStorageTaskScheduler(ThreadPoolTaskScheduler) {
+        threadNamePrefix="LogFileStorageScheduledTask"
+        poolSize= (application.config.rundeck?.execution?.logs?.fileStorage?.scheduledTasks?.poolSize ?: 5)
+
     }
     nodeTaskExecutor(SimpleAsyncTaskExecutor,"NodeService-SourceLoader") {
         concurrencyLimit = (application.config.rundeck?.nodeService?.concurrencyLimit ?: 25) //-1 for unbounded

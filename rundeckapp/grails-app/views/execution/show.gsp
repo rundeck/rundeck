@@ -341,6 +341,13 @@
                                             <!-- /ko -->
                                             <span class="loading" data-bind="text: killStatusText"></span>
                                             <!-- /ko -->
+                                            <!-- ko if: killedbutNotSaved() -->
+                                            <span class="btn btn-danger btn-sm"
+                                                  data-bind="click: markExecAction">
+                                                <g:message code="button.action.incomplete.job" default="Mark as Incomplete"/>
+                                                <i class="glyphicon glyphicon-remove"></i>
+                                            </span>
+                                            <!-- /ko -->
                                         </span>
                                         </div>
                                 </g:if>

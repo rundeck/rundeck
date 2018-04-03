@@ -123,4 +123,23 @@ class ScmJobImporter implements ContextJobImporter {
         }
         importJob(context, jobset[0], importMetadata, preserveUuid)
     }
+
+    @Override
+    ImportResult deleteJob(
+        final ScmOperationContext context,
+        final String project,
+        final String jobid
+    )
+    {
+        def res = scheduledExecutionService.deleteScheduledExecutionById(jobid, 'git-import-deleteJob')
+        def result = new ImporterResult()
+        if(res?.success){
+            result.successful = true
+        }else{
+            result.successful = false
+            result.errorMessage = res.error?.message
+        }
+        result
+    }
+
 }

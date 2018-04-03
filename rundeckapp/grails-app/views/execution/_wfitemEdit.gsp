@@ -60,11 +60,11 @@
                     <div class="col-sm-2">
                         <g:javascript>
                         fireWhenReady('jobProjectField${rkey}',function(){
-                            _initJobPickerAutocomplete('jobNameField${rkey}','jobGroupField${rkey}','jobProjectField${rkey}');
+                            _initJobPickerAutocomplete('jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}','jobProjectField${rkey}');
                         });
                         </g:javascript>
 
-                        <span class="btn  btn-default act_choose_job" onclick="loadJobChooserModal(this, 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}','jobrefpicker${rkey}','jobrefpicker${rkey}_content');"
+                        <span class="btn  btn-default act_choose_job" onclick="loadJobChooserModal(this,'jobUuidField${rkey}', 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}','jobrefpicker${rkey}','jobrefpicker${rkey}_content');"
                               id="jobChooseBtn${rkey}"
                               title="${message(code:"select.an.existing.job.to.use")}"
                               data-loading-text="Loading...">
@@ -73,6 +73,15 @@
                         </span>
                         <span id="jobChooseSpinner"></span>
                         <g:render template="/common/modal" model="${[modalid:'jobrefpicker'+rkey,modalsize:'modal-lg',title:message(code:"choose.a.job..."),buttons:[]]}"/>
+                    </div>
+                </div>
+                <div class="form-group" >
+                    <label class="col-sm-2 control-label"><g:message code="Workflow.Step.uuid.label" /></label>
+                    <div class="col-sm-10">
+                        <input type='text' name="uuid" value="${enc(attr:item?.uuid)}" size="100"
+                               placeholder="${message(code:"Workflow.Step.jobreference.uuid.placeholder")}"
+                               id="jobUuidField${rkey}"
+                               class="form-control context_var_autocomplete"/>
                     </div>
                 </div>
                 <div class="form-group" >

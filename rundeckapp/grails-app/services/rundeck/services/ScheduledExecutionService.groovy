@@ -795,11 +795,21 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         cmdData={x,WorkflowStep step->
             def map=step.toMap()
             if(step instanceof JobExec) {
-                ScheduledExecution refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
-                        step.jobProject?step.jobProject:project,
-                        step.jobName,
-                        step.jobGroup
-                )
+                ScheduledExecution refjob
+                if(step.uuid){
+                    refjob = ScheduledExecution.findByUuid(step.uuid)
+                    if(refjob) {
+                        map.jobref.name = refjob.jobName
+                        map.jobref.group = refjob.groupPath
+                    }
+                }else{
+                    refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
+                            step.jobProject?step.jobProject:project,
+                            step.jobName,
+                            step.jobGroup
+                    )
+                }
+
                 if(refjob){
                     map.jobId=refjob.extid
                     boolean doload=(null==jobids[map.jobId])
@@ -815,11 +825,16 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
             def eh = step.errorHandler
 
             if(eh instanceof JobExec) {
-                ScheduledExecution refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
-                        eh.jobProject?eh.jobProject:project,
-                        eh.jobName,
-                        eh.jobGroup
-                )
+                ScheduledExecution refjob
+                if(eh.uuid){
+                    refjob = ScheduledExecution.findByUuid(eh.uuid)
+                }else{
+                    refjob = ScheduledExecution.findByProjectAndJobNameAndGroupPath(
+                            eh.jobProject?eh.jobProject:project,
+                            eh.jobName,
+                            eh.jobGroup
+                    )
+                }
                 if(refjob){
                     map.ehJobId=refjob.extid
                     boolean doload=(null==jobids[map.ehJobId])
@@ -1142,6 +1157,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 if (job instanceof ExecutionJob && e.id == job.executionId) {
                     found = jexec.fireInstanceId
                 }
+            }
+        }
+
+        return found
+    }
+
+    /**
+     *
+     * @param id execution id
+     * @return quartz scheduler JobExecutionContext
+     */
+    def JobExecutionContext findExecutingQuartzJob(Long id) {
+        JobExecutionContext found = null
+        quartzScheduler.getCurrentlyExecutingJobs().each {def JobExecutionContext jexec ->
+            def job = jexec.getJobInstance()
+            if (job instanceof ExecutionJob && id == job.executionId) {
+                found = jexec
             }
         }
 
@@ -3599,4 +3631,11 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         return isProjectExecutionEnabled(project) && isProjectScheduledEnabled(project)
     }
 
+    def deleteScheduledExecutionById(jobid, String callingAction){
+        def session = getSession()
+        def user = session.user
+        AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
+
+        deleteScheduledExecutionById(jobid, authContext, false, user, callingAction)
+    }
 }

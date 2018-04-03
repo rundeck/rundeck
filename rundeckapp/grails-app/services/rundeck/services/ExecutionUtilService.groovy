@@ -143,7 +143,7 @@ class ExecutionUtilService {
                 workflow.commands.collect {
                     itemForWFCmdItem(
                             it,
-                            it.errorHandler ? itemForWFCmdItem(it.errorHandler) : null,
+                            it.errorHandler ? itemForWFCmdItem(it.errorHandler,null,parentProject) : null,
                             parentProject
                     )
                 },
@@ -261,6 +261,7 @@ class ExecutionUtilService {
                     jobcmditem.jobProject,
                     jobcmditem.failOnDisable,
                     jobcmditem.importOptions
+                    jobcmditem.uuid
             )
         }else if(step instanceof PluginStep || step.instanceOf(PluginStep)){
             final PluginStep stepitem = step as PluginStep

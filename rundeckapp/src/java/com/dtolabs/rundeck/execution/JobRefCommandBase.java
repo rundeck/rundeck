@@ -37,6 +37,10 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
         return null;
     }
 
+    public String getUuid() {
+        return null;
+    }
+
     public String[] getArgs() {
         return new String[0];
     }

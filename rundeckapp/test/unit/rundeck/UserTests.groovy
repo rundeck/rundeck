@@ -62,6 +62,11 @@ class UserTests {
         user.validate()
         assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
     }
+    void testValidationFirstnameWithAccentedChars() {
+        def user = new User(login: 'firstname',firstName: 'áéíóúÁÉÍÓÚÃ')
+        user.validate()
+        assertFalse(user.errors.allErrors.collect { it.toString() }.join("; "),user.hasErrors())
+    }
 	void testMessageForDefaultLocale() {
 		StaticMessageSource messageSource = getMessageSource()
 		messageSource.addMessage("gui.menu.Workflows", Locale.default, "Jobs")
