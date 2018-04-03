@@ -925,12 +925,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                         authContext,
                         frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN]
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
-                AuthConstants.ACTION_ADMIN, 'Project',project
+                AuthConstants.ACTION_CONFIGURE, 'Project',project
         )) {
             return
         }
@@ -1115,9 +1115,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(authContext,
-                        frameworkService.authResourceForProject(project), [AuthConstants.ACTION_ADMIN]),
-                AuthConstants.ACTION_ADMIN, 'Project',project)) {
+                frameworkService.authorizeApplicationResourceAny(authContext,
+                        frameworkService.authResourceForProject(project), [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]),
+                AuthConstants.ACTION_CONFIGURE, 'Project',project)) {
             return
         }
 
@@ -1381,12 +1381,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                         authContext,
                         frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN]
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
-                AuthConstants.ACTION_ADMIN, 'Project', project
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
         )) {
             return
         }
@@ -1507,7 +1507,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         def project = params.project
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                         frameworkService.getAuthContextForSubject(session.subject),
                         frameworkService.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -1568,7 +1568,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                         frameworkService.getAuthContextForSubject(session.subject),
                         frameworkService.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -1634,12 +1634,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def index = params.index.toInteger()
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                         frameworkService.getAuthContextForSubject(session.subject),
                         frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN]
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
                 ),
-                AuthConstants.ACTION_ADMIN, 'Project', project
+                AuthConstants.ACTION_CONFIGURE, 'Project', project
         )) {
             return
         }
@@ -1710,7 +1710,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                         frameworkService.getAuthContextForSubject(session.subject),
                         frameworkService.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -1772,7 +1772,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                         frameworkService.getAuthContextForSubject(session.subject),
                         frameworkService.authResourceForProject(project),
                         [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]
@@ -1827,11 +1827,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-                frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                         frameworkService.getAuthContextForSubject(session.subject),
                         frameworkService.authResourceForProject(project),
-                        [AuthConstants.ACTION_ADMIN]),
-                AuthConstants.ACTION_ADMIN, 'Project', project)) {
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project)) {
             return
         }
 
@@ -1865,11 +1865,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def project = params.project
 
         if (unauthorizedResponse(
-            frameworkService.authorizeApplicationResourceAll(
+                frameworkService.authorizeApplicationResourceAny(
                 frameworkService.getAuthContextForSubject(session.subject),
                 frameworkService.authResourceForProject(project),
-                [AuthConstants.ACTION_ADMIN]),
-            AuthConstants.ACTION_ADMIN, 'Project', project)) {
+                        [AuthConstants.ACTION_CONFIGURE, AuthConstants.ACTION_ADMIN]),
+                AuthConstants.ACTION_CONFIGURE, 'Project', project)) {
             return
         }
 

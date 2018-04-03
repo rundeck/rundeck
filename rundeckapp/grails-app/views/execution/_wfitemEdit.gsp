@@ -98,6 +98,22 @@
                     <div class="col-sm-10">
                         <div class="checkbox">
                             <label>
+                                <g:checkBox name="importOptions"
+                                            checked="${item?.importOptions}"
+                                            id="importOptionsCheck" value="true"
+                                />
+                                <g:message code="Workflow.Step.jobreference.import.options.label" />
+                            </label>
+                            <span class="text-muted"><g:message code="Workflow.Step.jobreference.import.options.help" /></span>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="form-group" >
+                    <label class="col-sm-2 control-label"></label>
+                    <div class="col-sm-10">
+                        <div class="checkbox">
+                            <label>
                                 <g:checkBox name="failOnDisable"
                                             checked="${item?.failOnDisable}"
                                             id="failOnDisableCheck" value="true"
