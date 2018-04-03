@@ -26,8 +26,9 @@ addons:
     - fakeroot
 branches:
   only:
-  - master
-  - prerelease-2.10.0
+    - master
+    - prerelease-2.11.0
+
 notifications:
   irc:
   - irc.freenode.org#rundeck

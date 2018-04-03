@@ -243,6 +243,8 @@ public class ExecutionItemFactory {
                 null,
                 label,
                 false,
+                null,
+                false,
                 null
         );
     }
@@ -271,7 +273,9 @@ public class ExecutionItemFactory {
             final Boolean nodeRankOrderAscending,
             final String label,
             final Boolean nodeIntersect,
-            final String project
+            final String project,
+            final Boolean failOnDisable,
+            final String uuid
     )
     {
 
@@ -288,7 +292,9 @@ public class ExecutionItemFactory {
                 nodeRankAttribute,
                 nodeRankOrderAscending,
                 nodeIntersect,
-                project
+                project,
+                failOnDisable,
+                uuid
         );
     }
 
@@ -614,6 +620,8 @@ public class ExecutionItemFactory {
         private final Boolean nodeRankOrderAscending;
         private final Boolean nodeIntersect;
         private final String project;
+        private final Boolean failOnDisable;
+        private final String uuid;
 
         public JobReferenceItem(
                 final String label,
@@ -628,7 +636,9 @@ public class ExecutionItemFactory {
                 final String nodeRankAttribute,
                 final Boolean nodeRankOrderAscending,
                 final Boolean nodeIntersect,
-                final String project
+                final String project,
+                final Boolean failOnDisable,
+                final String uuid
         )
         {
             this.label = label;
@@ -644,6 +654,8 @@ public class ExecutionItemFactory {
             this.nodeRankOrderAscending = nodeRankOrderAscending;
             this.nodeIntersect = nodeIntersect;
             this.project=project;
+            this.failOnDisable = failOnDisable;
+            this.uuid = uuid;
         }
 
         @Override
@@ -709,6 +721,10 @@ public class ExecutionItemFactory {
         public String getProject() {
             return project;
         }
+
+        public Boolean isFailOnDisable(){return failOnDisable;}
+
+        public String getUuid(){return uuid;}
 
         @Override
         public String toString() {

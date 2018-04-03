@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.execution.HasLoggingFilterConfiguration;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.plugins.PluginConfiguration;
 import com.dtolabs.rundeck.core.plugins.SimplePluginProviderLoader;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin;
 
 import java.util.List;
@@ -76,12 +77,13 @@ public class LoggingManagerImpl implements LoggingManager {
                         directLogger
                 )
         );
-        installPlugins(myPluginLoggingManager, globalPluginConfigs);
+
+        installPlugins(myPluginLoggingManager, globalPluginConfigs, context);
 
         if(step!=null) {
             HasLoggingFilterConfiguration.of(step).ifPresent(filtered -> {
                 if (null != filtered.getFilterConfigurations()) {
-                    installPlugins(myPluginLoggingManager, filtered.getFilterConfigurations());
+                    installPlugins(myPluginLoggingManager, filtered.getFilterConfigurations(), context);
                 }
             });
         }
@@ -91,10 +93,24 @@ public class LoggingManagerImpl implements LoggingManager {
 
     private void installPlugins(
             final MyPluginLoggingManager myPluginLoggingManager,
-            final List<PluginConfiguration> filterConfigurations
+            final List<PluginConfiguration> filterConfigurations,
+            ExecutionContext context
     )
     {
         for (PluginConfiguration pluginConfiguration : filterConfigurations) {
+
+            boolean disabled = context
+                .getPluginControlService()
+                .isDisabledPlugin(
+                    pluginConfiguration.getProvider(),
+                    pluginConfiguration.getService()
+                );
+            if (disabled) {
+                throw new RuntimeException(String.format(
+                    "Could not configure log filter plugin, it is disabled via project configuration: %s",
+                    pluginConfiguration.getProvider()
+                ));
+            }
             LogFilterPlugin load = pluginLoader.load(
                     pluginConfiguration.getProvider(),
                     pluginConfiguration.getConfiguration()

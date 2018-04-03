@@ -138,7 +138,8 @@ public class PropertyUtil {
                 null,
                 validator,
                 scope,
-                renderingOptions
+                renderingOptions,
+                false
         );
     }
     /**
@@ -164,7 +165,8 @@ public class PropertyUtil {
                                    final Map<String, String> labels,
                                    final PropertyValidator validator,
                                    final PropertyScope scope,
-                                   final Map<String, Object> renderingOptions
+                                   final Map<String, Object> renderingOptions,
+                                   final boolean dynamicValues
     ) {
         switch (type) {
             case Integer:
@@ -183,7 +185,8 @@ public class PropertyUtil {
                         values,
                         labels,
                         scope,
-                        renderingOptions
+                        renderingOptions,
+                        dynamicValues
                 );
             case FreeSelect:
                 return PropertyUtil.freeSelect(name,
@@ -547,7 +550,8 @@ public class PropertyUtil {
                 selectValues,
                 null,
                 scope,
-                renderingOptions
+                renderingOptions,
+                false
         );
     }
 
@@ -567,7 +571,7 @@ public class PropertyUtil {
             final String name, final String title, final String description,
             final boolean required, final String defaultValue, final List<String> selectValues,
             final Map<String, String> selectLabels,
-            final PropertyScope scope, final Map<String, Object> renderingOptions
+            final PropertyScope scope, final Map<String, Object> renderingOptions, final boolean dynamicValues
     )
     {
 
@@ -580,7 +584,8 @@ public class PropertyUtil {
                 selectValues,
                 selectLabels,
                 scope,
-                renderingOptions
+                renderingOptions,
+                dynamicValues
         );
     }
     /**
@@ -630,7 +635,7 @@ public class PropertyUtil {
             strings.add(selectValue.name());
         }
         return new SelectProperty(name, title, description, required, defaultValue, strings, selectLabels, scope,
-                                  renderingOptions
+                                  renderingOptions, false
         );
     }
 
@@ -865,7 +870,8 @@ public class PropertyUtil {
                 final List<String> selectValues,
                 final Map<String, String> selectLabels,
                 final PropertyScope scope,
-                final Map<String, Object> renderingOptions
+                final Map<String, Object> renderingOptions,
+                final boolean dynamicValues
         )
         {
             super(
@@ -876,7 +882,7 @@ public class PropertyUtil {
                     defaultValue,
                     selectValues,
                     selectLabels,
-                    new SelectValidator(selectValues),
+                    new SelectValidator(selectValues, dynamicValues),
                     scope,
                     renderingOptions
             );
@@ -923,13 +929,16 @@ public class PropertyUtil {
     static final class SelectValidator implements PropertyValidator {
 
         final List<String> selectValues;
+        final boolean dynamicValues;
 
-        SelectValidator(final List<String> selectValues) {
+        SelectValidator(final List<String> selectValues, final boolean dynamicValues) {
             this.selectValues = selectValues;
+            this.dynamicValues = dynamicValues;
         }
 
         public boolean isValid(final String value) throws ValidationException {
-            return selectValues.contains(value);
+            //TODO: How validate this if is remote values?
+            return dynamicValues || selectValues.contains(value);
         }
     }
 

@@ -40,6 +40,7 @@ import com.dtolabs.rundeck.app.api.scm.ScmPluginTypeRequest
 import com.dtolabs.rundeck.app.api.scm.ScmActionInput
 import com.dtolabs.rundeck.app.api.scm.ScmProjectPluginConfig
 import com.dtolabs.rundeck.app.api.scm.ScmProjectStatus
+import com.dtolabs.rundeck.app.support.ScheduledExecutionQuery
 import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.plugins.configuration.Property
@@ -67,6 +68,7 @@ class ScmController extends ControllerBase {
     def scmService
     def frameworkService
     def apiService
+    def scheduledExecutionService
 
     def static allowedMethods = [
             disable                : ['POST'],
@@ -624,6 +626,18 @@ class ScmController extends ControllerBase {
         def authContext = apiAuthorize(scm.project, action)
         if (!authContext) {
             return
+        }
+
+        if(frameworkService.isClusterModeEnabled()){
+            //initialize if in another node
+            scmService.initProject(params.project,scm.integration)
+            if(isExport){
+                def query=new ScheduledExecutionQuery()
+                query.projFilter = params.project
+                def jobs = scheduledExecutionService.listWorkflows(query)
+                //relaod all jobs to get project status
+                scmService.exportStatusForJobs(jobs.schedlist)
+            }
         }
 
         if (!apiService.requireExists(response,
@@ -1380,6 +1394,10 @@ class ScmController extends ControllerBase {
         )
         if (!authContext) {
             return
+        }
+        if(frameworkService.isClusterModeEnabled()){
+            //initialize if in another node
+            scmService.initProject(scheduledExecution.project,scm.integration)
         }
 
         if (!apiService.requireExists(response,

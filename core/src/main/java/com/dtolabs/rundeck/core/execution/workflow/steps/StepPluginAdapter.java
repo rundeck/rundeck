@@ -24,8 +24,8 @@
 package com.dtolabs.rundeck.core.execution.workflow.steps;
 
 import com.dtolabs.rundeck.core.Constants;
-import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem;
 import com.dtolabs.rundeck.core.execution.StepExecutionItem;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
@@ -38,7 +38,7 @@ import com.dtolabs.rundeck.plugins.util.DescriptionBuilder;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.*;
+import java.util.Map;
 
 
 /**
@@ -46,7 +46,7 @@ import java.util.*;
  *
  * @author Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
  */
-class StepPluginAdapter implements StepExecutor, Describable {
+class StepPluginAdapter implements StepExecutor, Describable, DynamicProperties{
     public static final Convert CONVERTER = new Convert();
     private StepPlugin plugin;
 
@@ -59,6 +59,15 @@ class StepPluginAdapter implements StepExecutor, Describable {
         public StepExecutor convert(final StepPlugin plugin) {
             return new StepPluginAdapter(plugin);
         }
+    }
+
+    @Override
+    public Map<String, Object> dynamicProperties(Map<String, Object> projectAndFrameworkValues){
+        if(plugin instanceof DynamicProperties){
+            return ((DynamicProperties)plugin).dynamicProperties(projectAndFrameworkValues);
+        }
+
+        return null;
     }
 
     @Override

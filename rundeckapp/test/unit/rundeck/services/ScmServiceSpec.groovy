@@ -584,4 +584,29 @@ class ScmServiceSpec extends Specification {
         info.lastName == 'b'
         info.email == 'test@test.com'
     }
+
+
+    def "lookup config on cluster mode"() {
+        given:
+        service.frameworkService = Mock(FrameworkService){
+            getServerUUID() >> uuid
+        }
+
+        when:
+        def result = service.pathForConfigFile(integration)
+
+        then:
+        1 * service.frameworkService.isClusterModeEnabled() >> clusterMode
+        path == result
+
+        where:
+        integration         | uuid      | clusterMode   | path
+        ScmService.EXPORT   | 'abcd'    |false          | 'abcd/etc/scm-export.properties'
+        ScmService.IMPORT   | 'efgh'    |false          | 'efgh/etc/scm-import.properties'
+        ScmService.EXPORT   | 'ijkl'    |null           | 'ijkl/etc/scm-export.properties'
+        ScmService.IMPORT   | 'mnop'    |null           | 'mnop/etc/scm-import.properties'
+        ScmService.EXPORT   | 'qrst'    |true           | 'etc/scm-export.properties'
+        ScmService.IMPORT   | 'uvwx'    |true           | 'etc/scm-import.properties'
+
+    }
 }

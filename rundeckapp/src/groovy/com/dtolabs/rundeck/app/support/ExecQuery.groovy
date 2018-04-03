@@ -31,6 +31,7 @@ class ExecQuery extends ReportQuery{
     String cmdFilter
     String groupPathFilter
     String groupPathExactFilter
+    List execIdFilter
 
     static constraints = {
         abortedByFilter(nullable: true)
@@ -59,6 +60,7 @@ class ExecQuery extends ReportQuery{
         excludeJobListFilter(nullable: true)
         statFilter(nullable:true,inList:["succeed","fail",'cancel'])
         execnodeFilter(nullable: true)
+        execIdFilter(nullable:true)
         sortBy(nullable:true,inList:[
             "jobFilter",
             "jobIdFilter",
