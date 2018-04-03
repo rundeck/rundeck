@@ -528,7 +528,7 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 context,
                 ['-test1', '${option.test1}', '-test2', '${option.test2}'] as String[],
-                null, null, null, null, null, null, false, true
+                null, null, null, null, null, null, false, false, true
         )
 
         then:
@@ -583,8 +583,7 @@ class ExecutionServiceSpec extends Specification {
                 se,
                 null,
                 context,
-                [] as String[],
-                null, null, null, null, null, null, false, true
+                [] as String[],null,false,null,null,false,null,false,false,true
         )
 
         then:
@@ -647,7 +646,7 @@ class ExecutionServiceSpec extends Specification {
                 exec,
                 context,
                 args as String[],
-                null, null, null, null, null, null, false, true
+                null, null, null, null, null, null, false, false, true
         )
 
         then:
@@ -725,7 +724,7 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 context,
                 [] as String[],//null values for the input options
-                null, null, null, null, null, null, false, true
+                null, null, null, null, null, null, false, false, true
         )
 
         then:
@@ -798,7 +797,7 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 context,
                 ['-test1', '${option.zilch}', '-test2', '${option.test2}'] as String[],
-                null, null, null, null, null, null, false, true
+                null, null, null, null, null, null, false, false, true
         )
 
         then:
@@ -871,7 +870,7 @@ class ExecutionServiceSpec extends Specification {
                 ['-test3', '${rarity.globular}', '-test1', '${option.zilch}', '-test2', '${option.test2}'] as String[],
                 null, null, null, null, null,
                 contextNode,
-                false, true
+                false, false, true
         )
 
         then:
@@ -2583,6 +2582,7 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 project,
                 false,
+                false,
                 null
         )
 
@@ -2680,6 +2680,7 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 null,
                 project,
+                false,
                 false,
                 null
         )
@@ -2791,6 +2792,7 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 project,
                 failOnDisable,
+                false,
                 null
         )
 
@@ -2866,7 +2868,6 @@ class ExecutionServiceSpec extends Specification {
     }
 
     void "create execution dynamic threadcount from value"() {
-
         given:
         ScheduledExecution job = new ScheduledExecution(
                 jobName: 'blue',
@@ -3027,9 +3028,10 @@ class ExecutionServiceSpec extends Specification {
                 null,
                 null,
                 null,
+            null,
                 false,
-                'bd80d431-b70a-42ad-8ea8-37ad4885ea0d'
-        )
+                'bd80d431-b70a-42ad-8ea8-37ad4885ea0d',
+                )
 
 
         service.notificationService = Mock(NotificationService)
@@ -3056,5 +3058,66 @@ class ExecutionServiceSpec extends Specification {
         then:
         0 * executionListener.log(_)
         ret.success
+    }
+    def "createJobReferenceContext import options"() {
+        given:
+        def context = ExecutionContextImpl.builder().
+            threadCount(1).
+            keepgoing(false).
+            dataContext(['option': ['monkey': 'wakeful'], 'secureOption': [:], 'job': ['execid': '123']]).
+            privateDataContext(['option': [:],]).
+            user('aUser').
+            build()
+        ScheduledExecution se = new ScheduledExecution(
+            jobName: 'blue',
+            project: 'AProject',
+            groupPath: 'some/where',
+            description: 'a job',
+            workflow: new Workflow(
+                keepgoing: true,
+                commands: [new CommandExec(
+                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                )]
+            ),
+            )
+        null != se
+        def opt1 = new Option(name: 'monkey', enforced: false, required: false)
+        def opt2 = new Option(name: 'delay', enforced: false, required: false)
+        assertTrue(opt1.validate())
+        assertTrue(opt2.validate())
+        se.addToOptions(opt1)
+        se.addToOptions(opt2)
+        null != se.save()
+
+        service.frameworkService = Mock(FrameworkService) {
+            1 * filterNodeSet(null, 'AProject')
+            1 * filterAuthorizedNodes(*_)
+            1 * getProjectGlobals(*_)
+            0 * _(*_)
+        }
+
+        service.storageService = Mock(StorageService)
+        service.jobStateService = Mock(JobStateService)
+
+        when:
+
+        def newCtxt = service.createJobReferenceContext(
+            se,
+            null,
+            context,
+            ['-test3', 'fix'] as String[],
+            null, null, null, null, null, null, false,
+            importOptions,
+            true
+        )
+
+        then:
+        newCtxt.dataContext.option
+        expectedSize == newCtxt.dataContext.option.size()
+
+        where:
+        importOptions | expectedSize
+        true          | 2
+        false         | 1
     }
 }
