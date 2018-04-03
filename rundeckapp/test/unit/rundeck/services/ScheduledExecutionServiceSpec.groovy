@@ -2842,6 +2842,12 @@ class ScheduledExecutionServiceSpec extends Specification {
         def newJob = new ScheduledExecution(createJobParams(inparams)).save()
         service.frameworkService.getNodeStepPluginDescription('asdf') >> Mock(Description)
         service.frameworkService.validateDescription(_, '', _, _, _, _) >> [valid: true]
+
+        when:
+        def results = service._doupdateJob(se.id,newJob, mockAuth())
+
+        then:
+        results.success
         results.scheduledExecution.serverNodeUUID == (shouldChange?serverUUID:currentOwner)
         if(shouldChange) {
             1 * service.jobSchedulerService.updateScheduleOwner(_, _, _) >> true
