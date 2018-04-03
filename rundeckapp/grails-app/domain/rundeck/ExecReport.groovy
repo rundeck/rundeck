@@ -40,6 +40,7 @@ class ExecReport extends BaseReport{
         DomainIndexHelper.generate(delegate) {
             index 'EXEC_REPORT_IDX_0', [/*'class', 'ctxProject', 'dateCompleted',*/ 'jcExecId', 'jcJobId']
             index 'EXEC_REPORT_IDX_1', [/*'ctxProject',*/ 'jcJobId']
+            index 'EXEC_REPORT_IDX_2', [/*'class',*/ 'jcExecId']
         }
     }
 
