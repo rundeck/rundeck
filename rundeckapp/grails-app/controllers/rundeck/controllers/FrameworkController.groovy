@@ -1141,7 +1141,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }else{
                 projProps['project.description']=''
             }
-
+            if(params.label){
+                projProps['project.label']=params.label
+            }else{
+                projProps['project.label']=''
+            }
 
 
             def Set<String> removePrefixes=[]
@@ -1756,6 +1760,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         [
             project: project,
             projectDescription:projectDescription,
+            projectLabel:fwkProject.getProjectProperties().get("project.label"),
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
             defaultNodeExec: defaultNodeExec,
@@ -2171,6 +2176,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }else{
             projects = frameworkService.projectNames(authContext)
             session.frameworkProjects=projects
+        }
+        if(!session.frameworkLabels){
+            def flabels = frameworkService.projectLabels(authContext)
+            session.frameworkLabels = flabels
         }
         [projects:projects,project:params.project] + (params.page?[selectParams:[page:params.page]]:[:])
     }

@@ -2106,7 +2106,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         long start = System.currentTimeMillis()
         def fprojects = frameworkService.projectNames(authContext)
+        def flabels = frameworkService.projectLabels(authContext)
         session.frameworkProjects = fprojects
+        session.frameworkLabels = flabels
         log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
         def stats=cachedSummaryProjectStats(fprojects)
 
@@ -2290,7 +2292,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         long start = System.currentTimeMillis()
         def fprojects = frameworkService.projectNames(authContext)
+        def flabels = frameworkService.projectLabels(authContext)
         session.frameworkProjects = fprojects
+        session.frameworkLabels = flabels
         log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
 
         render(contentType:'application/json',text:
@@ -2358,7 +2362,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     }
                 }
             }
-
+            summary[project.name].label= project.hasProperty("project.label")?project.getProperty("project.label"):''
             summary[project.name].description= description
             if(!params.refresh) {
                 summary[project.name].readmeDisplay = menuService.getReadmeDisplay(project)

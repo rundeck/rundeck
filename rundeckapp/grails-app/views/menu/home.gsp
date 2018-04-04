@@ -229,7 +229,12 @@
                                 data-bind="urlPathParam: project"
                                class="h3">
                                 <i class="glyphicon glyphicon-tasks"></i>
-                                <span data-bind="text: project"></span>
+                                <span data-bind="if: $root.projectForName(project) && $root.projectForName(project).label">
+                                    <span data-bind="text: $root.projectForName(project).label"></span>
+                                </span>
+                                <span data-bind="ifnot: $root.projectForName(project) && $root.projectForName(project).label">
+                                    <span data-bind="text: project"></span>
+                                </span>
                             </a>
 
                             <span data-bind="if: $root.projectForName(project)">

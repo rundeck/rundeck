@@ -34,7 +34,7 @@
         <g:each var="project" in="${projectSet}">
             <bs:menuitem controller="menu" action="index" params="${selectParams + [project: project]}"
                          icon="tasks">
-                ${project}
+                ${labels?labels[project]:project}
             </bs:menuitem>
         </g:each>
 </bs:dropdown>
