@@ -640,7 +640,7 @@ class FrameworkControllerSpec extends Specification {
         request.errors == null
         1 * fwkService.authResourceForProject(_)
         1 * fwkService.getAuthContextForSubject(_)
-        1 * fwkService.authorizeApplicationResourceAll(null,null,['admin']) >> true
+        1 * fwkService.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'
@@ -672,7 +672,7 @@ class FrameworkControllerSpec extends Specification {
         request.errors == null
         1 * fwkService.authResourceForProject(_)
         1 * fwkService.getAuthContextForSubject(_)
-        1 * fwkService.authorizeApplicationResourceAll(null,null,['admin']) >> true
+        1 * fwkService.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == ''
@@ -885,7 +885,7 @@ class FrameworkControllerSpec extends Specification {
         request.errors == null
         1 * fwkService.authResourceForProject(_)
         1 * fwkService.getAuthContextForSubject(_)
-        1 * fwkService.authorizeApplicationResourceAll(null,null,['admin']) >> true
+        1 * fwkService.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'

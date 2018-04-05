@@ -24,6 +24,7 @@ import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
+import rundeck.Project
 import rundeck.filters.ApiRequestFilters
 import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
@@ -520,10 +521,13 @@ class ProjectController extends ControllerBase{
     }
 
     private Map basicProjectDetails(def pject) {
+        final def projectDescription = Project.withNewSession {
+            Project.findByName(pject.name)?.description
+        }
         [
                 url:generateProjectApiUrl(pject.name),
                 name:pject.name,
-                description : pject.hasProperty('project.description') ? pject.getProperty('project.description') : ''
+                description : projectDescription ? projectDescription : ''
         ]
     }
 

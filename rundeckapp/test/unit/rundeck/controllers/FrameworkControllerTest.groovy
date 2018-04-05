@@ -31,6 +31,7 @@ import org.codehaus.groovy.grails.web.json.JSONObject
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.Project
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.WorkflowStep
@@ -47,7 +48,7 @@ import rundeck.services.UserService
  * Time: 5:19 PM
  */
 @TestFor(FrameworkController)
-@Mock([ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution])
+@Mock([ScheduledExecution, Workflow, WorkflowStep, CommandExec, Execution, Project])
 class FrameworkControllerTest {
     /**
      * utility method to mock a class
@@ -261,7 +262,7 @@ class FrameworkControllerTest {
         fwk.demand.getAuthContextForSubject { subject -> return null}
         fwk.demand.getAuthContextForSubjectAndProject { subject,proj -> return null}
         fwk.demand.authResourceForProject {project -> return null}
-        fwk.demand.authorizeApplicationResourceAll {ctx, e, actions -> true }
+        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
 
         fwk.demand.listResourceModelConfigurations { project ->
             [
@@ -382,7 +383,7 @@ class FrameworkControllerTest {
 
         fwk.demand.getAuthContextForSubject {subject -> return null}
         fwk.demand.authResourceForProject {project -> return null}
-        fwk.demand.authorizeApplicationResourceAll {ctx, e, actions -> true }
+        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
         fwk.demand.listDescriptions { -> [null, null, null] }
         fwk.demand.getRundeckFramework { -> null }
 

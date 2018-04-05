@@ -2361,6 +2361,20 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         return newmap
     }
 
+    /**
+     * Add only the options that exists on the child job
+     */
+    def Map<String,String> addImportedOptions(ScheduledExecution scheduledExecution, Map optparams, StepExecutionContext executionContext) throws ExecutionServiceException {
+        def newMap = new HashMap()
+        executionContext.dataContext.option.each {it ->
+            println(it.key)
+            if(scheduledExecution.findOption(it.key)){
+                newMap<<it
+            }
+        }
+        return newMap+optparams
+    }
+
 
     /**
      * evaluate the options in the input properties, and if any Options defined for the Job have regex constraints,
@@ -3020,6 +3034,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Boolean nodeRankOrderAscending,
             INodeEntry node,
             Boolean nodeIntersect,
+            Boolean importOptions,
             dovalidate
     )
     throws ExecutionServiceValidationException
@@ -3042,6 +3057,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         def jobOptsMap = frameworkService.parseOptsFromArray(newargs)
+        if(importOptions && executionContext.dataContext?.option) {
+            jobOptsMap = addImportedOptions(se,jobOptsMap, executionContext)
+        }
         jobOptsMap = addOptionDefaults(se, jobOptsMap)
 
         //select secureAuth and secure options from the args to pass
@@ -3255,6 +3273,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                             jitem.nodeRankOrderAscending,
                             node,
                             jitem.nodeIntersect,
+                            jitem.importOptions,
                             true
                     )
                 } catch (ExecutionServiceValidationException e) {

@@ -115,6 +115,8 @@ class ProjectServiceSpec extends Specification {
             origprops.store(it,'test')
         }
         tempfile.deleteOnExit()
+        def dbproj = new Project(name:  'myproject')
+        dbproj.save(flush: true)
         def project = Mock(IRundeckProject){
             getName()>>'myproject'
         }
