@@ -43,6 +43,7 @@ function Project(data) {
     self.failedCount = ko.observable(data.failedCount || 0);
     self.userCount = ko.observable(data.userCount || 0);
     self.description = ko.observable(data.description);
+    self.label = ko.observable(data.label);
     self.auth = ko.observable(new ProjectAuth());
     self.readme = ko.observable(new ProjectReadme());
     self.loaded = ko.observable(false);
