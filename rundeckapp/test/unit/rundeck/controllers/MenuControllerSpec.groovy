@@ -989,4 +989,30 @@ class MenuControllerSpec extends Specification {
 
         response.status == 302
     }
+
+    def "homeAjax get project label"() {
+        given:
+
+        controller.frameworkService = Mock(FrameworkService)
+        new Project(name: 'proj',description: 'desc').save(flush: true)
+        def iproj = Mock(IRundeckProject) {
+            getName() >> 'proj'
+        }
+        def projects = [iproj]
+        controller.configurationService = Mock(ConfigurationService)
+        controller.menuService = Mock(MenuService)
+
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        controller.homeAjax()
+
+        then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.projectNames(_) >> []
+        1 * controller.frameworkService.projects(_) >> projects
+        1 * iproj.hasProperty('project.label') >> true
+        1 * iproj.getProperty('project.label') >> 'label'
+        'label' == response.json.projects[0].label
+    }
 }
