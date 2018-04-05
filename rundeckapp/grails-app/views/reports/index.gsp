@@ -22,7 +22,9 @@
 <g:ifServletContextAttribute attribute="RSS_ENABLED" value="true">
     <link rel="alternate" type="application/rss+xml" title="RSS 2.0" href="${createLink(controller:"feed",action:"index",params:paginateParams?paginateParams:[:])}"/>
     </g:ifServletContextAttribute>
-    <title><g:message code="gui.menu.Events"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
+    <g:set var="projectName" value="${params.project ?: request.project}"></g:set>
+
+    <title><g:message code="gui.menu.Events"/> - <g:enc>${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}</g:enc></title>
 
     <asset:javascript src="util/yellowfade.js"/>
     <g:javascript library="pagehistory"/>
