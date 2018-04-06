@@ -29,7 +29,7 @@
 
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="projectHome"/>
-    <title><g:appTitle/> - ${project}</title>
+    <title><g:appTitle/> - ${session.frameworkLabels?session.frameworkLabels[project]:project}</title>
     <g:embedJSON data="${[project: project]}" id="projectData"/>
     <asset:javascript src="menu/projectHome.js"/>
 
