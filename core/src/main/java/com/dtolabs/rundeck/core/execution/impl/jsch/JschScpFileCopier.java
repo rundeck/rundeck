@@ -65,6 +65,7 @@ public class JschScpFileCopier extends BaseFileCopier implements MultiFileCopier
         .property(JschNodeExecutor.SSH_KEY_STORAGE_PROP)
         .property(JschNodeExecutor.SSH_PASSWORD_STORAGE_PROP)
         .property(JschNodeExecutor.SSH_AUTH_TYPE_PROP)
+        .property(JschNodeExecutor.SSH_PASSPHRASE_STORAGE_PROP)
         .mapping(JschNodeExecutor.CONFIG_KEYPATH, JschNodeExecutor.PROJ_PROP_SSH_KEYPATH)
         .mapping(JschNodeExecutor.CONFIG_AUTHENTICATION, JschNodeExecutor.PROJ_PROP_SSH_AUTHENTICATION)
         .mapping(JschNodeExecutor.CONFIG_KEYSTORE_PATH, JschNodeExecutor.PROJ_PROP_SSH_KEY_RESOURCE)
@@ -73,6 +74,8 @@ public class JschScpFileCopier extends BaseFileCopier implements MultiFileCopier
         .frameworkMapping(JschNodeExecutor.CONFIG_PASSSTORE_PATH, JschNodeExecutor.FWK_PROP_SSH_PASSWORD_STORAGE_PATH)
         .frameworkMapping(JschNodeExecutor.CONFIG_KEYPATH, JschNodeExecutor.FWK_PROP_SSH_KEYPATH)
         .frameworkMapping(JschNodeExecutor.CONFIG_AUTHENTICATION, JschNodeExecutor.FWK_PROP_SSH_AUTHENTICATION)
+        .mapping(JschNodeExecutor.CONFIG_PASSPHRASE_STORE_PATH, JschNodeExecutor.PROJ_PROP_SSH_KEY_PASSPHRASE_STORAGE_PATH)
+        .frameworkMapping(JschNodeExecutor.CONFIG_PASSPHRASE_STORE_PATH, JschNodeExecutor.FWK_PROP_SSH_KEY_PASSPHRASE_STORAGE_PATH)
         .build();
 
 
