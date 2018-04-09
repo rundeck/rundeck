@@ -118,6 +118,8 @@ class ScheduledExecutionController  extends ControllerBase{
             NOTIFY_ONRETRYABLEFAILURE_URL
     ]
 
+    public final String REMOTE_OPTION_DISABLE_JSON_CHECK = 'project.jobs.disableRemoteOptionJsonCheck'
+
     def Scheduler quartzScheduler
     def ExecutionService executionService
     def FrameworkService frameworkService
@@ -749,7 +751,11 @@ class ScheduledExecutionController  extends ControllerBase{
                     }
                 }
                 try {
-                    remoteResult = getRemoteJSON(srcUrl, timeout, contimeout, retryCount)
+                    def framework = frameworkService.getRundeckFramework()
+                    def projectConfig = framework.projectManager.loadProjectConfig(scheduledExecution.project)
+                    boolean disableRemoteOptionJsonCheck= projectConfig.hasProperty(REMOTE_OPTION_DISABLE_JSON_CHECK)
+
+                    remoteResult = getRemoteJSON(srcUrl, timeout, contimeout, retryCount,disableRemoteOptionJsonCheck)
                     result=remoteResult.json
                     if(remoteResult.stats){
                         remoteStats.putAll(remoteResult.stats)
@@ -997,7 +1003,7 @@ class ScheduledExecutionController  extends ControllerBase{
      * @return Map of data, [json: parsed json or null, stats: stats data, error: error message]
      *
      */
-    private Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5){
+    private Object getRemoteJSON(String url, int timeout, int contimeout, int retry=5,boolean disableRemoteOptionJsonCheck=false){
         log.debug("getRemoteJSON: "+url+", timeout: "+timeout+", retry: "+retry)
         //attempt to get the URL JSON data
         def stats=[:]
@@ -1067,7 +1073,14 @@ class ScheduledExecutionController  extends ControllerBase{
                         type = type.substring(0, type.indexOf(";")).trim();
                     }
 
-                    if (expectedContentType.equals(type)) {
+                    boolean continueRendering=true
+
+                    if(!disableRemoteOptionJsonCheck &&
+                       !expectedContentType.equals(type)){
+                        continueRendering=false
+                    }
+
+                    if (continueRendering) {
                         final stream = method.getResponseBodyAsStream()
                         final writer = new StringWriter()
                         int len=copyToWriter(new BufferedReader(new InputStreamReader(stream, method.getResponseCharSet())),writer)

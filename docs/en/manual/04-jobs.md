@@ -1092,6 +1092,8 @@ Option model providers are configured on a per-Option basis (where a Job may hav
 3. It must be in one of two JSON structures, *either*:
     * An array of string values
     * OR, an array of Maps, each with two entries, `name` and `value`.
+4. By default, the HTTP(S) response must include the `application/json` content type in the header. 
+   In case this cannot be controlled, the attribute `project.jobs.disableRemoteOptionJsonCheck` can be set to `true` in the project settings.
 
 ### Configuration ###
 
