@@ -100,6 +100,10 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String NODE_ATTR_SSH_KEY_PASSPHRASE_STORAGE_PATH = "ssh-key-passphrase-storage-path";
     public static final String DEFAULT_SSH_KEY_PASSPHRASE_OPTION = "option.sshKeyPassphrase";
 
+    public static final String FWK_PROP_SSH_KEY_PASSPHRASE_STORAGE_PATH= FWK_PROP_PREFIX + NODE_ATTR_SSH_KEY_PASSPHRASE_STORAGE_PATH;
+    public static final String PROJ_PROP_SSH_KEY_PASSPHRASE_STORAGE_PATH = PROJ_PROP_PREFIX + NODE_ATTR_SSH_KEY_PASSPHRASE_STORAGE_PATH;
+
+
     public static final String NODE_ATTR_ALWAYS_SET_PTY = "always-set-pty";
     public static final String FWK_PROP_SET_PTY = FWK_PROP_PREFIX + NODE_ATTR_ALWAYS_SET_PTY;
     public static final String PROJ_PROP_SET_PTY = PROJ_PROP_PREFIX + NODE_ATTR_ALWAYS_SET_PTY;
@@ -165,6 +169,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
     public static final String CONFIG_KEYPATH = "keypath";
     public static final String CONFIG_KEYSTORE_PATH = "keystoragepath";
     public static final String CONFIG_PASSSTORE_PATH = "passwordstoragepath";
+    public static final String CONFIG_PASSPHRASE_STORE_PATH = "passphrasestoragepath";
     public static final String CONFIG_SUDO_PASSSTORE_PATH = "sudopasswordstoragepath";
     public static final String CONFIG_AUTHENTICATION = "authentication";
     public static final String CONFIG_SET_PTY = "always-set-pty";
@@ -197,6 +202,18 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             .renderingOption(StringRenderingConstants.STORAGE_PATH_ROOT_KEY, "keys")
             .renderingOption(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY, "Rundeck-data-type=password")
             .build();
+
+
+    static final Property SSH_PASSPHRASE_STORAGE_PROP = PropertyBuilder.builder()
+             .string(CONFIG_PASSPHRASE_STORE_PATH)
+             .required(false)
+             .title("SSH Key Passphrase Storage Path")
+             .description("Path to the key's Passphrase to use within Rundeck Storage. E.g. \"keys/path/my.password\". Can be overridden by a Node attribute named 'ssh-key-passphrase-storage-path'.")
+             .renderingOption(StringRenderingConstants.SELECTION_ACCESSOR_KEY,
+                              StringRenderingConstants.SelectionAccessor.STORAGE_PATH)
+             .renderingOption(StringRenderingConstants.STORAGE_PATH_ROOT_KEY, "keys")
+             .renderingOption(StringRenderingConstants.STORAGE_FILE_META_FILTER_KEY, "Rundeck-data-type=password")
+             .build();
 
     public static final Property SSH_AUTH_TYPE_PROP = PropertyUtil.select(CONFIG_AUTHENTICATION, "SSH Authentication",
             "Type of SSH Authentication to use",
@@ -232,6 +249,7 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         builder.property(SSH_KEY_FILE_PROP);
         builder.property(SSH_KEY_STORAGE_PROP);
         builder.property(SSH_PASSWORD_STORAGE_PROP);
+        builder.property(SSH_PASSPHRASE_STORAGE_PROP);
         builder.property(SSH_AUTH_TYPE_PROP);
         builder.property(ALWAYS_SET_PTY);
         builder.property(PROP_CON_TIMEOUT);
@@ -243,6 +261,8 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         builder.frameworkMapping(CONFIG_KEYSTORE_PATH, FWK_PROP_SSH_KEY_RESOURCE);
         builder.mapping(CONFIG_PASSSTORE_PATH, PROJ_PROP_SSH_PASSWORD_STORAGE_PATH);
         builder.frameworkMapping(CONFIG_PASSSTORE_PATH, FWK_PROP_SSH_PASSWORD_STORAGE_PATH);
+        builder.mapping(CONFIG_PASSPHRASE_STORE_PATH, PROJ_PROP_SSH_KEY_PASSPHRASE_STORAGE_PATH);
+        builder.frameworkMapping(CONFIG_PASSPHRASE_STORE_PATH, FWK_PROP_SSH_KEY_PASSPHRASE_STORAGE_PATH);
         builder.mapping(CONFIG_AUTHENTICATION, PROJ_PROP_SSH_AUTHENTICATION);
         builder.frameworkMapping(CONFIG_AUTHENTICATION, FWK_PROP_SSH_AUTHENTICATION);
 
