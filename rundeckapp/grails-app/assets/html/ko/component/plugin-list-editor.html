@@ -1,20 +1,42 @@
 
 <input type="hidden"
        data-bind="attr: {name: $component.listEditor.inputPrefix+'_type' }" value="list"/>
-<div data-bind="foreach: {data: listEditor.items, as: 'item'}">
+<div data-bind="foreach: {data: listEditor.items, as: 'item'}, css: wrapperStyle">
+    <div data-bind=" css: {'grid-row':!$component.styleEdit()}">
+    <div  data-bind="css: {'grid-cell grid-col-3':!$component.styleEdit()}">
 
-    <div  data-bind="css: $component.labelColumnCss">
+
         <label class="required " data-bind="visible: item.isModeEdit() || !$component.listEditor.isModeEdit() ">
+            <!-- ko if: !$component.listEditor.hasEmbeddedType() -->
             <span data-bind="messageTemplate: $index() + 1, message: $component.listEditor.serviceDescription.labels()['indexed']"></span>
+            <!-- /ko -->
+
+            <!-- ko if: $component.listEditor.hasEmbeddedType() -->
+            <span
+                data-bind="messageCodeTemplate: [$component.listEditor.property.title,$index() + 1],code: 'Generic.label.indexed'"></span>
+            <!-- /ko -->
         </label>
+        <!-- ko if: $component.listEditor.hasEmbeddedType() && item.isModeEdit() -->
+
+        <a href="#" class="btn btn-danger-hollow btn-sm" data-bind="click: item.delete">
+            <i class="glyphicon glyphicon-remove"></i>
+        </a>
+        <!-- /ko -->
         <a href="#" class="btn btn-info-hollow btn-sm"
            data-bind="click: item.setModeEdit, visible: item.isModeView() && $component.listEditor.isModeEdit()">
             <i class="glyphicon glyphicon-pencil"></i>
+            <!-- ko if: !$component.listEditor.hasEmbeddedType() -->
             <span data-bind="messageTemplate: $index() + 1, message: $component.listEditor.serviceDescription.labels()['indexed']"></span>
+            <!-- /ko -->
+
+            <!-- ko if: $component.listEditor.hasEmbeddedType() -->
+            <span
+                data-bind="messageCodeTemplate: [$component.listEditor.property.title,$index() + 1],code: 'Generic.label.indexed'"></span>
+            <!-- /ko -->
         </a>
     </div>
 
-    <div  data-bind="css: $component.fieldColumnCss">
+    <div  data-bind="css: {'grid-cell grid-rest':!$component.styleEdit()}">
         <div>
             <input type="hidden"
                    data-bind="attr: {name: $component.listEditor.inputPrefix+'_indexes' }, value: item.uid"/>
@@ -28,12 +50,21 @@
 
         </div>
     </div>
-
+    </div>
 </div>
 
 <div class="control-label"  data-bind="css: labelColumnCss, if: listEditor.isModeEdit">
 
-    <div class="btn-group">
+    <div class="btn-group" data-bind="if: listEditor.hasEmbeddedType()">
+        <button type="button" class="btn btn-sm btn-success-hollow "
+                data-bind="click: $component.listEditor.addItem">
+
+            <i class="glyphicon glyphicon-plus"></i>
+            <span data-bind="text: $component.listEditor.property.title"></span>
+
+        </button>
+    </div>
+    <div class="btn-group" data-bind="if: !listEditor.hasEmbeddedType()">
         <button type="button" class="btn btn-sm btn-success-hollow dropdown-toggle"
                 data-toggle="dropdown"
                 aria-haspopup="true"

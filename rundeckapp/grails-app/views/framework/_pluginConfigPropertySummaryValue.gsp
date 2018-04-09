@@ -30,6 +30,12 @@
     origfieldname        : (origfieldnamePrefix ?: '') + prop.name,
     fieldname            : (fieldnamePrefix ?: '') + prop.name,
     type                 : prop.type.toString(),
+    title                : stepplugin.message(
+        service: service,
+        name: provider,
+        code: "${messagePrefix}property.${prop.name}.title",
+        default: prop.title ?: prop.name
+    ),
     project              : project ?: params.project ?: request.project,
     renderingOptions     : prop.renderingOptions,
     hasEmbeddedType      : prop.embeddedType != null,
@@ -166,15 +172,16 @@
             <g:if test="${prop.type.toString() in ['Select', 'FreeSelect']}">
                 <span class="text-success">${propSelectLabels[defval] ?: defval}</span>
             </g:if>
-            <g:elseif test="${prop.embeddedType != null}">
-
-                ${prop.embeddedType?.toString()}
-            </g:elseif>
-            <g:elseif test="${prop.embeddedPluginType != null}">
-                <div data-ko-controller="pluginProperty">
-
+            <g:elseif test="${prop.embeddedType != null || prop.embeddedPluginType != null}">
+                <div data-ko-controller="pluginProperty" >
                     <plugin-list-editor
-                        params="listEditor: listEditor,  propname:name, labelColumnCss: '', fieldColumnCss: ''"></plugin-list-editor>
+                        params="
+                        listEditor: listEditor,
+                        propname:name,
+                        wrapperCss:'grid',
+                        labelColumnCss: 'grid-cell grid-col-3',
+                        fieldColumnCss: 'grid-cell grid-rest',
+                        rowCss:'grid-row'"></plugin-list-editor>
                 </div>
             </g:elseif>
             <g:else>

@@ -24,6 +24,20 @@ function PluginListEditorContent(params) {
 
     self.labelColumnCss = params.labelColumnCss || '';
     self.fieldColumnCss = params.fieldColumnCss || '';
+    self.wrapperCss = params.wrapperCss || '';
+    self.rowCss = params.rowCss || '';
+    self.styleEdit = ko.pureComputed(() => {
+        let edit = self.listEditor.isModeEdit();
+        let embed = self.listEditor.hasEmbeddedType();
+
+        return edit || embed;
+    });
+    self.wrapperStyle = ko.pureComputed(() => {
+        return {'grid': !self.styleEdit(), 'row': self.styleEdit()};
+    });
+    self.labelStyle = ko.pureComputed(() => {
+        return {'grid': !self.styleEdit(), 'row': self.styleEdit()};
+    });
 }
 
 ko.components.register('plugin-list-editor', {

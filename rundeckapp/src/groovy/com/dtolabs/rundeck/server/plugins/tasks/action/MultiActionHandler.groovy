@@ -66,11 +66,14 @@ class MultiActionHandler implements TaskActionHandler<RDTaskContext> {
         } else if (action instanceof TestEmbedTaskAction) {
             TestEmbedTaskAction test = (TestEmbedTaskAction) action
             return [result: test.actions.stringvalue]
+        } else if (action instanceof TestEmbed2TaskAction) {
+            TestEmbed2TaskAction test = (TestEmbed2TaskAction) action
+            return [result: test.embedList*.stringvalue]
         }
     }
 
     @Override
     boolean handlesAction(final TaskAction action, final RDTaskContext contextInfo) {
-        action instanceof MultipleTaskAction || action instanceof TestEmbedTaskAction
+        action instanceof MultipleTaskAction || action instanceof TestEmbedTaskAction || action instanceof TestEmbed2TaskAction
     }
 }

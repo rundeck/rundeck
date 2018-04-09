@@ -46,6 +46,7 @@ import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.plugins.tasks.action.JobRunTaskAction
 import com.dtolabs.rundeck.server.plugins.tasks.action.MultiActionHandler
 import com.dtolabs.rundeck.server.plugins.tasks.action.MultipleTaskAction
+import com.dtolabs.rundeck.server.plugins.tasks.action.TestEmbed2TaskAction
 import com.dtolabs.rundeck.server.plugins.tasks.action.TestEmbedTaskAction
 import com.dtolabs.rundeck.server.plugins.tasks.condition.InvertTaskCondition
 import com.dtolabs.rundeck.server.plugins.tasks.condition.InvertTaskConditionHandler
@@ -352,7 +353,8 @@ beans={
         //task actions
         JobRunTaskAction,
         MultipleTaskAction,
-        TestEmbedTaskAction
+        TestEmbedTaskAction,
+        TestEmbed2TaskAction,
     ].each {
         "rundeckAppPlugin_${it.simpleName}"(PluginFactoryBean, it)
     }

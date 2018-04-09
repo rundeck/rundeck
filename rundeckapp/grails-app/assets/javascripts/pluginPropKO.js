@@ -279,7 +279,6 @@ function PluginEditor(data) {
         }
     });
 
-    // self.provider.subscribe(self.loadActionSelect);
     self.init = () => {
         let initMode;
         if (data.previewMode) {
@@ -293,13 +292,7 @@ function PluginEditor(data) {
         self.mode.subscribe((mode) => {
             self.loadModeView(mode);
         });
-        if (!self.embedded()) {
-            self.provider.subscribe((val) => {
-                if (val && self.mode()) {
-                    self.loadModeView(self.mode());
-                }
-            });
-        } else if (self.embedded() && self.embeddedMode() === 'plugin') {
+        if (!self.embedded() ||  self.embeddedMode() === 'plugin') {
             self.provider.subscribe((val) => {
                 if (val && self.mode()) {
                     self.loadModeView(self.mode());
@@ -321,6 +314,7 @@ function PluginProperty(data) {
     self.name = ko.observable(data.name);
     self.service = ko.observable(data.service);
     self.provider = ko.observable(data.provider);
+    self.title = ko.observable(data.title);
     self.fieldname = ko.observable(data.fieldname);
     self.fieldid = ko.observable(data.fieldid);
     self.fieldtype = ko.observable(data.fieldtype);
@@ -396,7 +390,6 @@ function PluginProperty(data) {
             const eid = self.idkey();
             let configVal = {data: false};
             let embeddedType = null;
-            console.log("Options:hasEmbeddedPluginType, data value:", data.value);
             if (data.value && jQuery.isArray(data.value)) {
                 configVal = {data: true, list: data.value};
             }
@@ -407,15 +400,48 @@ function PluginProperty(data) {
             self.listEditor = new PluginListEditor(
                 Object.assign(
                     {
-                        idkey         : eid,
-                        postLoadEditor: data.postLoadEditor,
-                        service       : self.embeddedServiceName(),
-                        propname      : self.name(),
-                        property      : self,
-                        formId        : `form_eprop_${eid}`,
-                        formPrefixes  : [`${self.fieldname()}.`, `orig.${self.fieldname()}.`],
-                        inputPrefix   : `${self.fieldname()}.`,
-                        previewMode:data.previewMode
+                        idkey          : eid,
+                        postLoadEditor : data.postLoadEditor,
+                        service        : self.embeddedServiceName(),
+                        propname       : self.name(),
+                        property       : self,
+                        formId         : `form_eprop_${eid}`,
+                        formPrefixes   : [`${self.fieldname()}.`, `orig.${self.fieldname()}.`],
+                        inputPrefix    : `${self.fieldname()}.`,
+                        previewMode    : data.previewMode,
+                        hasEmbeddedType: false
+                        // postLoadEditor  : self.postLoadEditor, //TODO:
+                        // deleteCallback  : self.removeItem // TODO
+                    },
+                    configVal
+                )
+            );
+        } else if (self.type() === 'Options' && self.hasEmbeddedType()) {
+            const eid = self.idkey();
+            let configVal = {data: false};
+            let embeddedType = null;
+            console.log("Options:hasEmbeddedType, data value:", data.value);
+            if (data.value && jQuery.isArray(data.value)) {
+                configVal = {data: true, list: data.value};
+            }
+            if (data.error && jQuery.isArray(data.error)) {
+                configVal['data'] = true;
+                configVal['errors'] = data.error;
+            }
+            self.listEditor = new PluginListEditor(
+                Object.assign(
+                    {
+                        idkey          : eid,
+                        postLoadEditor : data.postLoadEditor,
+                        service        : self.service(),
+                        provider       : self.provider(),
+                        propname       : self.name(),
+                        property       : self,
+                        formId         : `form_eprop_${eid}`,
+                        formPrefixes   : [`${self.fieldname()}.`, `orig.${self.fieldname()}.`],
+                        inputPrefix    : `${self.fieldname()}.`,
+                        previewMode    : data.previewMode,
+                        hasEmbeddedType: true
                         // postLoadEditor  : self.postLoadEditor, //TODO:
                         // deleteCallback  : self.removeItem // TODO
                     },
@@ -444,6 +470,11 @@ class PluginListEditor {
                 inputPrefix       : data.inputPrefix,
                 postLoadEditor    : data.postLoadEditor,
                 service           : data.service,
+                provider          : data.provider,
+                propname          : data.propname,
+                property          : data.property,
+                previewMode       : data.previewMode,
+                hasEmbeddedType   : ko.observable(data.hasEmbeddedType),
                 serviceDescription: pluginServices.serviceByName(data.service),
                 mode              : ko.observable(data.previewMode ? 'view' : 'edit'),
                 isModeEdit        : ko.pureComputed(() => self.mode() === 'edit'),
@@ -460,6 +491,7 @@ class PluginListEditor {
                             uid             : `${this.idkey}_${id}`,
                             service         : self.service,
                             provider        : type,
+                            propname        : self.propname,
                             config          : config,
                             formId          : `${this.formId}_item_${id}`,
                             formPrefixes    : self.formPrefixes.map((val) => `${val}entry[${this.idkey}_${id}].config.`),
@@ -467,12 +499,16 @@ class PluginListEditor {
                             postLoadEditor  : self.postLoadEditor,
                             deleteCallback  : self.removeItem,
                             embedded        : true,
-                            embeddedListItem: true,
-                            embeddedMode    : 'plugin',//self.hasEmbeddedType() ? 'type' : 'plugin',
+                            embeddedMode    : self.hasEmbeddedType() ? 'type' : 'plugin',
                             previewMode     : !isNew
                         });
                 },
 
+                /**
+                 * Add an item with a selected provider type, for plugin types
+                 * @param obj
+                 * @param evt
+                 */
                 addType(obj, evt) {
                     const id = (++self.privInc);
                     let data = jQuery(evt.target).data();
@@ -481,6 +517,24 @@ class PluginListEditor {
                         return;
                     }
                     const pluginEditor = self.createItem(id, type, {data: false, type: type, config: {}}, true);
+                    self.items.push(pluginEditor);
+                    pluginEditor.init();
+                },
+
+                /**
+                 * Add an item, for embedded types
+                 * @param obj
+                 * @param evt
+                 */
+                addItem(obj, evt) {
+                    const id = (++self.privInc);
+                    let data = jQuery(evt.target).data();
+                    const pluginEditor = self.createItem(
+                        id,
+                        self.provider,
+                        {data: false, type: self.provider, config: {}},
+                        true
+                    );
                     self.items.push(pluginEditor);
                     pluginEditor.init();
                 },
@@ -496,11 +550,14 @@ class PluginListEditor {
             data.list.forEach(function (val, n) {
                 let id = (++self.privInc);
                 let error = errors && errors.length > n ? errors[n] : null;
+                let type = self.hasEmbeddedType() ? self.provider : val.type;
+                let config = self.hasEmbeddedType() ? val : val.config;
                 let pluginEditor = self.createItem(
                     id,
-                    val.type,
+                    type,
                     {
-                        config: val.config,
+                        config: config,
+                        type  : type,
                         data  : true,
                         report: {errors: error}
                     }

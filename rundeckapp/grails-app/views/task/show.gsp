@@ -28,14 +28,12 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="triggers"/>
     <asset:javascript src="task/show.js"/>
-    <g:jsMessages code="job.not.found.with.id.0,loading.text"/>
+    <g:jsMessages code="Generic.label.indexed,job.not.found.with.id.0,loading.text"/>
     <title><g:appTitle/> - <g:message code="Task.domain.title" /> - ${task.name ?: task.uuid}</title>
     <g:javascript>"use strict";
     jQuery(function () {
         initKoBind(null, {});
     });
-
-
     </g:javascript>
 </head>
 

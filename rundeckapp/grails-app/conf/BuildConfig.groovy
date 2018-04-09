@@ -59,6 +59,7 @@ if(System.properties['disable.grails.central']) {
 grails.plugin.location.webrealms = 'webrealms'
 grails.plugin.location.metricsweb = 'metricsweb'
 grails.plugin.location.authfilter = 'authfilter'
+grails.plugin.location.calendars = '../../rundeckpro/plugins/rundeckpro-calendars'
 grails.servlet.version = "3.0"
 grails.project.dependency.resolution = {
     inherits 'global' // inherit Grails' default dependencies

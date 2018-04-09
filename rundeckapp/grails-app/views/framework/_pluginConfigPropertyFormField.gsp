@@ -45,6 +45,12 @@
         provider             : provider,
         name                 : prop.name,
         type                 : prop.type.toString(),
+        title                : stepplugin.message(
+            service: service,
+            name: provider,
+            code: "${messagePrefix}property.${prop.name}.title",
+            default: prop.title ?: prop.name
+        ),
         origfieldname        : origfieldname,
         fieldname            : fieldname,
         fieldid              : fieldid,
@@ -197,17 +203,16 @@
                                         []}"/>
 
         <div class="${valueColType} ">
-            <g:if test="${prop.embeddedType != null}">
-
-                ${prop.embeddedType?.toString()}
-            </g:if>
-            <g:elseif test="${prop.embeddedPluginType != null}">
+            <g:if test="${prop.embeddedType != null || prop.embeddedPluginType != null}">
                 <div data-ko-controller="pluginProperty">
-
                     <plugin-list-editor
-                        params="listEditor: listEditor,  propname:name,labelColumnCss: '${enc(attr:labelColType)}', fieldColumnCss: '${enc(attr:valueColType)}'"></plugin-list-editor>
+                        params="
+                        listEditor: listEditor,
+                        propname:name,
+                        labelColumnCss: '${enc(attr: labelColType)}',
+                        fieldColumnCss: '${enc(attr: valueColType)}'"></plugin-list-editor>
                 </div>
-            </g:elseif>
+            </g:if>
             <g:else>
                 <div class=" grid">
 
