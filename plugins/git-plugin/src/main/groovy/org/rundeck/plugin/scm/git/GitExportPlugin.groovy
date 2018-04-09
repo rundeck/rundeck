@@ -212,7 +212,10 @@ class GitExportPlugin extends BaseGitPlugin implements ScmExportPlugin {
             try {
                 fetchFromRemote(context)
                 if(config.shouldPullAutomatically()){
-                    actions[PROJECT_SYNCH_ACTION_ID].perform(this,null,null,context,[refresh:'rebase',resolution:'ours'])
+                    def pullResult = gitPull(context)
+                    if(pullResult.successful){
+                        logger.debug(pullResult.mergeResult?.toString())
+                    }
                 }
             } catch (Exception e) {
                 fetchError=true
