@@ -32,7 +32,7 @@ class Export extends Common {
             title = 'Committer Name',
             description = '''Name of committer/author of changes.
 
-Can be set to `${user.firstName} ${user.lastName}` or
+Can be set to `${user.login}` (login name), or `${user.firstName} ${user.lastName}` or
 `${user.fullName}` to expand as the name
 of the committing user.''',
             defaultValue = '${user.fullName}',
