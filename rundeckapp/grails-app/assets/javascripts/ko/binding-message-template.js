@@ -56,19 +56,25 @@ ko.bindingHandlers.messageTemplate = {
 ko.bindingHandlers.messageCodeTemplate = {
     init: function (element, valueAccessor, allBindings, viewModel, bindingContext) {
 
-        var text=jQuery(element).text();
-        if (!text) {
-            if (allBindings.get('message') !== null) {
-                text = ko.utils.unwrapObservable(allBindings.get('message'));
-            }
+        var code;
+        if (allBindings.get('code')) {
+            code = ko.utils.unwrapObservable(allBindings.get('code'));
+        } else {
+            code = jQuery(element).text();
+            jQuery(element).data('ko-message-template-code', code);
         }
-        jQuery(element).data('ko-message-template-code',text);
+
         return { 'controlsDescendantBindings': true };
     },
     update:function(element, valueAccessor, allBindings, viewModel, bindingContext){
         var pluralize=allBindings.get('messageTemplatePluralize');
         var data=ko.utils.unwrapObservable(valueAccessor());
-        var code=jQuery(element).data('ko-message-template-code');
+        var code;
+        if (allBindings.get('code')) {
+            code = ko.utils.unwrapObservable(allBindings.get('code'));
+        } else {
+            code = jQuery(element).data('ko-message-template-code');
+        }
 
         var text = messageTemplate(message(code),data,pluralize);
         ko.utils.setTextContent(element, text);
