@@ -31,7 +31,7 @@ ko.bindingHandlers.messageTemplate = {
 
         var text=jQuery(element).text();
         if (!text) {
-            if (allBindings.get('message') !== null) {
+            if (allBindings.get('message')) {
                 text = ko.utils.unwrapObservable(allBindings.get('message'));
             }
         } else {
@@ -43,7 +43,7 @@ ko.bindingHandlers.messageTemplate = {
         var pluralize=allBindings.get('messageTemplatePluralize');
         var data=ko.utils.unwrapObservable(valueAccessor());
         var template;
-        if (allBindings.get('message') !== null) {
+        if (allBindings.get('message')) {
             template = ko.utils.unwrapObservable(allBindings.get('message'));
         } else {
             template = jQuery(element).data('ko-message-template');
