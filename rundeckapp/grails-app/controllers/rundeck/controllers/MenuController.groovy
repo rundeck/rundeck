@@ -2357,8 +2357,11 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 if(description){
                     Project.withNewSession{
                         def proj = Project.findByName(project.name)
-                        proj?.description = description
-                        proj.save(flush: true)
+                        if(proj){
+                            proj.description = description
+                            proj.save(flush: true)
+                        }
+
                     }
                 }
             }
