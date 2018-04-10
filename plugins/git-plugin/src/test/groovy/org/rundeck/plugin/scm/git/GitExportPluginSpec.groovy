@@ -1615,7 +1615,8 @@ class GitExportPluginSpec extends Specification {
 
         then:
         status!=null
-        status.state==SynchState.REFRESH_NEEDED
-        status.message=='Fetch from the repository failed: Could not get advertised Ref for branch master'
+        println(status.message)
+        status.state==SynchState.CLEAN
+        status.message=='Automatic pull from the repository failed: Could not get advertised Ref for branch master'
     }
 }
