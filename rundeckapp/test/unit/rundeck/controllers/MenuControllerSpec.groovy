@@ -241,11 +241,54 @@ class MenuControllerSpec extends Specification {
         def result = controller.jobsAjax()
 
         then:
+        1 * controller.frameworkService.authResourceForJob(_) >>
+        [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
+        1 * controller.frameworkService.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                   action    : AuthConstants.ACTION_READ,
+                                                                                   resource  : [group: job1.groupPath, name: job1.jobName]]]
+        1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
+        1 * controller.apiService.requireExists(_, true, ['project', 'AProject']) >> true
+        1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist: [job1]]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max           : 20,
+                                                                          offset        : 0,
+                                                                          paginateParams: [:],
+                                                                          displayParams : [:]]
+        1 * controller.scheduledExecutionService.nextExecutionTimes(_) >> [(job1.id): new Date()]
+        response.json != null
+        response.json.count == 1
+        response.json.jobs
+        response.json.jobs[0].nextScheduledExecution
+        !response.json.jobs[0].futureScheduledExecutions
+    }
+
+    def "api jobsAjax with invalid daysAhead param"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid: testUUID))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime = 200 * 1000
+        job1.execCount = 100
+        job1.save()
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        params.id = testUUID
+        params.project = 'AProject'
+        params.daysAhead = daysAhead
+        response.format = 'json'
+        def result = controller.jobsAjax()
+
+        then:
         1 * controller.frameworkService.authResourceForJob(_) >> [authorized:true, action:AuthConstants.ACTION_READ,resource:job1]
         1 * controller.frameworkService.authorizeProjectResource(_,_,_,_) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_,_,_,_) >> [ [authorized:true, 
-                                    action:AuthConstants.ACTION_READ,
-                                    resource:[group:job1.groupPath,name:job1.jobName]] ]
+        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                   action    :AuthConstants.ACTION_READ,
+                                                                                   resource  :[group:job1.groupPath,name:job1.jobName]] ]
         1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
         1 * controller.apiService.requireExists(_,true,['project','AProject']) >> true
         1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist : [job1]]
@@ -259,6 +302,11 @@ class MenuControllerSpec extends Specification {
         response.json.jobs
         response.json.jobs[0].nextScheduledExecution
         !response.json.jobs[0].futureScheduledExecutions
+
+        where:
+        daysAhead | _
+        '0'       | _
+        '-1'      | _
     }
 
     def "api jobsAjax with daysAhead param"() {
@@ -304,6 +352,59 @@ class MenuControllerSpec extends Specification {
         response.json.jobs
         response.json.jobs[0].nextScheduledExecution
         response.json.jobs[0].futureScheduledExecutions
+    }
+
+    @Unroll
+    def "api jobsAjax with future param"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid: testUUID))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime = 200 * 1000
+        job1.execCount = 100
+        job1.save()
+        job1.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
+        }
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        params.id = testUUID
+        params.project = 'AProject'
+        params.future = futureParam
+        response.format = 'json'
+        def result = controller.jobsAjax()
+
+        then:
+        1 * controller.frameworkService.authResourceForJob(_) >>
+        [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
+        1 * controller.frameworkService.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                   action    : AuthConstants.ACTION_READ,
+                                                                                   resource  : [group: job1.groupPath, name: job1.jobName]]]
+        1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
+        1 * controller.apiService.requireExists(_, true, ['project', 'AProject']) >> true
+        1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist: [job1]]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max           : 20,
+                                                                          offset        : 0,
+                                                                          paginateParams: [:],
+                                                                          displayParams : [:]]
+        1 * controller.scheduledExecutionService.nextExecutionTimes(_) >> [(job1.id): new Date()]
+        response.json != null
+        response.json.count == 1
+        response.json.jobs
+        response.json.jobs[0].nextScheduledExecution
+        response.json.jobs[0].futureScheduledExecutions
+
+        where:
+        futureParam | _
+        '1h'        | _
+        '2d'        | _
+        '3w'        | _
     }
   
     protected void setupFormTokens(params) {
