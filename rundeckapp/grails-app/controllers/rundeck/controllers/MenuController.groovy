@@ -43,6 +43,7 @@ import com.dtolabs.rundeck.server.plugins.services.StoragePluginProviderService
 import grails.converters.JSON
 import groovy.xml.MarkupBuilder
 import org.grails.plugins.metricsweb.MetricService
+import org.rundeck.util.Sizes
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.web.multipart.MultipartHttpServletRequest
@@ -70,6 +71,7 @@ import rundeck.services.authorization.PoliciesValidation
 
 import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
+import java.util.concurrent.TimeUnit
 
 class MenuController extends ControllerBase implements ApplicationContextAware{
     FrameworkService frameworkService
@@ -352,6 +354,22 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         def results = jobsFragment(query)
         def clusterModeEnabled = frameworkService.isClusterModeEnabled()
         def serverNodeUUID = frameworkService.serverUUID
+
+        //future scheduled executions forecast
+        def futureDate = null
+        if (query.daysAhead && query.daysAhead >= 0) {
+            futureDate = new Date() + query.daysAhead
+        } else if (params.future && Sizes.validTimeDuration(params.future)) {
+            def period = Sizes.parseTimeDuration(params.future, TimeUnit.MILLISECONDS)
+            futureDate = new Date(System.currentTimeMillis() + period)
+        }
+        def maxFutures = null
+        if (params.maxFutures) {
+            maxFutures = params.int('maxFutures')
+            if (maxFutures <= 0) {
+                maxFutures = null
+            }
+        }
         def data = new JobInfoList(
                 results.nextScheduled.collect { ScheduledExecution se ->
                     Map data = [:]
@@ -363,13 +381,13 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                     }
                     if(results.nextExecutions?.get(se.id)){
                         data.nextScheduledExecution=results.nextExecutions?.get(se.id)
-                        if(query.daysAhead != null) {
-                            def maxSched = results.nextExecutions?.max{it.value}
-                            def to = new Date() + query.daysAhead
-                            if(to<maxSched.value){
-                                to = maxSched.value
+                        if (futureDate) {
+                            data.futureScheduledExecutions = se.nextExecutions(futureDate)
+                            if (maxFutures
+                                && data.futureScheduledExecutions
+                                && data.futureScheduledExecutions.size() > maxFutures) {
+                                data.futureScheduledExecutions = data.futureScheduledExecutions[0..<maxFutures]
                             }
-                            data.futureScheduledExecutions = se.nextExecutions(to)
                         }
                     }
                     if (se.totalTime >= 0 && se.execCount > 0) {
@@ -2371,6 +2389,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 summary[project.name].readmeDisplay = menuService.getReadmeDisplay(project)
                 summary[project.name].motdDisplay = menuService.getMotdDisplay(project)
                 summary[project.name].readme = frameworkService.getFrameworkProjectReadmeContents(project)
+                summary[project.name].executionEnabled =
+                    scheduledExecutionService.isRundeckProjectExecutionEnabled(project)
+                summary[project.name].scheduleEnabled =
+                    scheduledExecutionService.isRundeckProjectScheduleEnabled(project)
                 //authorization
                 summary[project.name].auth = [
                         jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,

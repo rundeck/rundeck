@@ -47,6 +47,8 @@ function Project(data) {
     self.auth = ko.observable(new ProjectAuth());
     self.readme = ko.observable(new ProjectReadme());
     self.loaded = ko.observable(false);
+    self.executionEnabled = ko.observable(true);
+    self.scheduleEnabled = ko.observable(true);
     self.readmeDisplay = ko.observable(data.readmeDisplay || []);
     self.motdDisplay = ko.observable(data.motdDisplay || []);
     self.page = ko.observable(data.page || []);
