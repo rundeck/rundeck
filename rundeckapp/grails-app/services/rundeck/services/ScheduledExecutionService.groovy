@@ -2073,7 +2073,7 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         if (scheduledExecution.scheduled) {
             scheduledExecution.populateTimeDateFields(params)
             scheduledExecution.user = authContext.username
-            scheduledExecution.userRoleList = authContext.roles.join(',')
+            scheduledExecution.setUserRoles(authContext.roles.toList())
 
             def genCron = params.crontabString ? params.crontabString : scheduledExecution.generateCrontabExression()
             if (!CronExpression.isValidExpression(genCron)) {
