@@ -21,6 +21,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRoles
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.IRundeckProjectConfig
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowStrategy
 import com.dtolabs.rundeck.core.jobs.JobReference
@@ -3692,15 +3693,23 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
         TimeZone.getAvailableIDs()
     }
     def isProjectExecutionEnabled(String project){
-        def fwProject = frameworkService.getFrameworkProject(project)
+        IRundeckProject fwProject = frameworkService.getFrameworkProject(project)
+        isRundeckProjectExecutionEnabled(fwProject)
+    }
+
+    public boolean isRundeckProjectExecutionEnabled(IRundeckProject fwProject) {
         def disableEx = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_EXECUTION)
-        ((!disableEx)||disableEx.toLowerCase()!='true')
+        ((!disableEx) || disableEx.toLowerCase() != 'true')
     }
 
     def isProjectScheduledEnabled(String project){
-        def fwProject = frameworkService.getFrameworkProject(project)
+        IRundeckProject fwProject = frameworkService.getFrameworkProject(project)
+        isRundeckProjectScheduleEnabled(fwProject)
+    }
+
+    public boolean isRundeckProjectScheduleEnabled(IRundeckProject fwProject) {
         def disableSe = fwProject.getProjectProperties().get(CONF_PROJECT_DISABLE_SCHEDULE)
-        ((!disableSe)||disableSe.toLowerCase()!='true')
+        ((!disableSe) || disableSe.toLowerCase() != 'true')
     }
 
     def shouldScheduleInThisProject(String project){

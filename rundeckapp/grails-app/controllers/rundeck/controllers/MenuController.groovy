@@ -2389,6 +2389,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 summary[project.name].readmeDisplay = menuService.getReadmeDisplay(project)
                 summary[project.name].motdDisplay = menuService.getMotdDisplay(project)
                 summary[project.name].readme = frameworkService.getFrameworkProjectReadmeContents(project)
+                summary[project.name].executionEnabled =
+                    scheduledExecutionService.isRundeckProjectExecutionEnabled(project)
+                summary[project.name].scheduleEnabled =
+                    scheduledExecutionService.isRundeckProjectScheduleEnabled(project)
                 //authorization
                 summary[project.name].auth = [
                         jobCreate: frameworkService.authorizeProjectResource(authContext, AuthConstants.RESOURCE_TYPE_JOB,
