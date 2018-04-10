@@ -796,6 +796,33 @@ class MenuControllerSpec extends Specification {
         description == response.json.projects[0].description
     }
 
+    def "homeAjax dont fail on project not created yet"() {
+        given:
+
+        controller.frameworkService = Mock(FrameworkService)
+        def description = 'desc'
+        //new Project(name: 'proj', description: description).save(flush: true)
+        def iproj = Mock(IRundeckProject) {
+            getName() >> 'proj'
+        }
+        def projects = [iproj]
+        controller.configurationService = Mock(ConfigurationService)
+        controller.menuService = Mock(MenuService)
+
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        controller.homeAjax()
+
+        then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.projectNames(_) >> []
+        1 * controller.frameworkService.projects(_) >> projects
+        1 * iproj.hasProperty('project.description') >> true
+        1 * iproj.getProperty('project.description') >> description
+        description == response.json.projects[0].description
+    }
+
     def "homeAjax get description field on properties when is null on table"() {
         given:
         def description = 'desc'
