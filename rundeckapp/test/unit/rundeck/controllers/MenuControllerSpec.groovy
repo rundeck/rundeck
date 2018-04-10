@@ -883,6 +883,7 @@ class MenuControllerSpec extends Specification {
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
 
         request.addHeader('x-rundeck-ajax', 'true')
 
@@ -909,6 +910,7 @@ class MenuControllerSpec extends Specification {
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
 
         request.addHeader('x-rundeck-ajax', 'true')
 
@@ -935,6 +937,7 @@ class MenuControllerSpec extends Specification {
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
 
         request.addHeader('x-rundeck-ajax', 'true')
 
@@ -1129,6 +1132,7 @@ class MenuControllerSpec extends Specification {
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
 
         request.addHeader('x-rundeck-ajax', 'true')
 
