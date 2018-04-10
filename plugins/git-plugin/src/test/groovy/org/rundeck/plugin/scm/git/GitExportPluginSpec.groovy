@@ -1595,4 +1595,27 @@ class GitExportPluginSpec extends Specification {
         0 * serializer.serialize(*_)
 
     }
+
+    def "get status pull automatically"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [fetchAutomatically: 'true',
+                                                             pullAutomatically: 'true'])
+
+        //create a git dir
+        def git = createGit(origindir)
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        when:
+        def status = plugin.getStatus(Mock(ScmOperationContext))
+
+        then:
+        status!=null
+        status.state==SynchState.CLEAN
+        status.message=='Automatic pull from the repository failed: Could not get advertised Ref for branch master'
+    }
 }
