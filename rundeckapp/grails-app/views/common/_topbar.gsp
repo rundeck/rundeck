@@ -86,6 +86,7 @@
                     <g:render template="/framework/projectSelect"
                               model="${[
                                       projects    : session.frameworkProjects,
+                                      labels      : session.frameworkLabels,
                                       project     : params.project ?: request.project,
                                       selectParams: selectParams
                               ]}"/>
@@ -107,7 +108,14 @@
                             params: [project: project ?: params.project ?: request.project]
                     )}">
                         <i class="glyphicon glyphicon-tasks"></i>
-                        <g:enc>${project ?: params.project ?: request.project ?: 'Choose ...'}</g:enc>
+                        <g:if test="${session.frameworkLabels}">
+                            <g:enc>${project ?session.frameworkLabels[project]: params.project ?
+                                     session.frameworkLabels[params.project]: request.project ?
+                                     session.frameworkLabels[request.project]: 'Choose ...'}</g:enc>
+                        </g:if>
+                        <g:if test="${!session.frameworkLabels}">
+                            <g:enc>${project ?: params.project ?: request.project ?: 'Choose ...'}</g:enc>
+                        </g:if>
                     </a>
                 </li>
             </g:if>

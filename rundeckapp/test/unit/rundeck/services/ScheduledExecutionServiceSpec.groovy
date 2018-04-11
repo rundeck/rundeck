@@ -2621,6 +2621,25 @@ class ScheduledExecutionServiceSpec extends Specification {
         'true'     | false
         'false'    | true
     }
+    def "isRundeckProjectExecutionEnabled"() {
+        given:
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.executions':property]
+        }
+        when:
+        def result = service.isRundeckProjectExecutionEnabled(projectMock)
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        property   | expect
+        null       | true
+        ''         | true
+        'true'     | false
+        'false'    | true
+    }
 
     def "project passive mode schedule"() {
         given:
@@ -2632,6 +2651,26 @@ class ScheduledExecutionServiceSpec extends Specification {
         }
         when:
         def result = service.isProjectScheduledEnabled(null)
+
+        then:
+        null != result
+        result == expect
+
+        where:
+        property   | expect
+        null       | true
+        ''         | true
+        'true'     | false
+        'false'    | true
+    }
+
+    def "isRundeckProjectScheduleEnabled"() {
+        given:
+        def projectMock = Mock(IRundeckProject) {
+            getProjectProperties() >> ['project.disable.schedule':property]
+        }
+        when:
+        def result = service.isRundeckProjectScheduleEnabled(projectMock)
 
         then:
         null != result

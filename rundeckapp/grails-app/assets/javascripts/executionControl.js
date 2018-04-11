@@ -1407,9 +1407,21 @@ var FollowControl = Class.create({
                     $(icon).addClassName(status);
                 }
             }
-            if (this.updatepagetitle && !/^\[/.test(document.title)) {
-                document.title =
-                (result == 'succeeded' ? '[OK] ' : result == 'aborted' ? '[KILLED] ' : '[FAILED] ') + document.title;
+            if (this.updatepagetitle) {
+                var prefix = (
+                    result == 'succeeded' ?
+                        '✅ [OK] ' :
+                        result == 'aborted' ?
+                            '✖︎ [KILLED] ' :
+                            result == 'timedout' ?
+                                '⏱︎ [TIMEOUT] ' :
+                                result == 'failed' ?
+                                    '⛔︎ [FAILED] ' :
+                                    ('✴️ [' + (result) + '] ')//🔶
+                );
+                if (!document.title.startsWith(prefix)) {
+                    document.title = prefix + document.title;
+                }
             }
             if($('cancelresult')){
                 $('cancelresult').hide();

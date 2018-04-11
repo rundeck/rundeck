@@ -241,11 +241,54 @@ class MenuControllerSpec extends Specification {
         def result = controller.jobsAjax()
 
         then:
+        1 * controller.frameworkService.authResourceForJob(_) >>
+        [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
+        1 * controller.frameworkService.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                   action    : AuthConstants.ACTION_READ,
+                                                                                   resource  : [group: job1.groupPath, name: job1.jobName]]]
+        1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
+        1 * controller.apiService.requireExists(_, true, ['project', 'AProject']) >> true
+        1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist: [job1]]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max           : 20,
+                                                                          offset        : 0,
+                                                                          paginateParams: [:],
+                                                                          displayParams : [:]]
+        1 * controller.scheduledExecutionService.nextExecutionTimes(_) >> [(job1.id): new Date()]
+        response.json != null
+        response.json.count == 1
+        response.json.jobs
+        response.json.jobs[0].nextScheduledExecution
+        !response.json.jobs[0].futureScheduledExecutions
+    }
+
+    def "api jobsAjax with invalid daysAhead param"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid: testUUID))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime = 200 * 1000
+        job1.execCount = 100
+        job1.save()
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        params.id = testUUID
+        params.project = 'AProject'
+        params.daysAhead = daysAhead
+        response.format = 'json'
+        def result = controller.jobsAjax()
+
+        then:
         1 * controller.frameworkService.authResourceForJob(_) >> [authorized:true, action:AuthConstants.ACTION_READ,resource:job1]
         1 * controller.frameworkService.authorizeProjectResource(_,_,_,_) >> true
-        1 * controller.frameworkService.authorizeProjectResources(_,_,_,_) >> [ [authorized:true, 
-                                    action:AuthConstants.ACTION_READ,
-                                    resource:[group:job1.groupPath,name:job1.jobName]] ]
+        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                   action    :AuthConstants.ACTION_READ,
+                                                                                   resource  :[group:job1.groupPath,name:job1.jobName]] ]
         1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
         1 * controller.apiService.requireExists(_,true,['project','AProject']) >> true
         1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist : [job1]]
@@ -259,6 +302,11 @@ class MenuControllerSpec extends Specification {
         response.json.jobs
         response.json.jobs[0].nextScheduledExecution
         !response.json.jobs[0].futureScheduledExecutions
+
+        where:
+        daysAhead | _
+        '0'       | _
+        '-1'      | _
     }
 
     def "api jobsAjax with daysAhead param"() {
@@ -304,6 +352,59 @@ class MenuControllerSpec extends Specification {
         response.json.jobs
         response.json.jobs[0].nextScheduledExecution
         response.json.jobs[0].futureScheduledExecutions
+    }
+
+    @Unroll
+    def "api jobsAjax with future param"() {
+        given:
+        def testUUID = UUID.randomUUID().toString()
+        def testUUID2 = UUID.randomUUID().toString()
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        ScheduledExecution job1 = new ScheduledExecution(createJobParams(jobName: 'job1', uuid: testUUID))
+        job1.serverNodeUUID = testUUID2
+        job1.totalTime = 200 * 1000
+        job1.execCount = 100
+        job1.save()
+        job1.scheduledExecutionService = Mock(ScheduledExecutionService) {
+            createTrigger(_) >> org.quartz.TriggerBuilder.newTrigger().build();
+        }
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        params.id = testUUID
+        params.project = 'AProject'
+        params.future = futureParam
+        response.format = 'json'
+        def result = controller.jobsAjax()
+
+        then:
+        1 * controller.frameworkService.authResourceForJob(_) >>
+        [authorized: true, action: AuthConstants.ACTION_READ, resource: job1]
+        1 * controller.frameworkService.authorizeProjectResource(_, _, _, _) >> true
+        1 * controller.frameworkService.authorizeProjectResources(_, _, _, _) >> [[authorized: true,
+                                                                                   action    : AuthConstants.ACTION_READ,
+                                                                                   resource  : [group: job1.groupPath, name: job1.jobName]]]
+        1 * controller.frameworkService.existsFrameworkProject('AProject') >> true
+        1 * controller.apiService.requireExists(_, true, ['project', 'AProject']) >> true
+        1 * controller.scheduledExecutionService.listWorkflows(_) >> [schedlist: [job1]]
+        1 * controller.scheduledExecutionService.finishquery(_, _, _) >> [max           : 20,
+                                                                          offset        : 0,
+                                                                          paginateParams: [:],
+                                                                          displayParams : [:]]
+        1 * controller.scheduledExecutionService.nextExecutionTimes(_) >> [(job1.id): new Date()]
+        response.json != null
+        response.json.count == 1
+        response.json.jobs
+        response.json.jobs[0].nextScheduledExecution
+        response.json.jobs[0].futureScheduledExecutions
+
+        where:
+        futureParam | _
+        '1h'        | _
+        '2d'        | _
+        '3w'        | _
     }
   
     protected void setupFormTokens(params) {
@@ -782,6 +883,7 @@ class MenuControllerSpec extends Specification {
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
 
         request.addHeader('x-rundeck-ajax', 'true')
 
@@ -796,6 +898,34 @@ class MenuControllerSpec extends Specification {
         description == response.json.projects[0].description
     }
 
+    def "homeAjax dont fail on project not created yet"() {
+        given:
+
+        controller.frameworkService = Mock(FrameworkService)
+        def description = 'desc'
+        //new Project(name: 'proj', description: description).save(flush: true)
+        def iproj = Mock(IRundeckProject) {
+            getName() >> 'proj'
+        }
+        def projects = [iproj]
+        controller.configurationService = Mock(ConfigurationService)
+        controller.menuService = Mock(MenuService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        controller.homeAjax()
+
+        then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.projectNames(_) >> []
+        1 * controller.frameworkService.projects(_) >> projects
+        1 * iproj.hasProperty('project.description') >> true
+        1 * iproj.getProperty('project.description') >> description
+        description == response.json.projects[0].description
+    }
+
     def "homeAjax get description field on properties when is null on table"() {
         given:
         def description = 'desc'
@@ -807,6 +937,7 @@ class MenuControllerSpec extends Specification {
         def projects = [iproj]
         controller.configurationService = Mock(ConfigurationService)
         controller.menuService = Mock(MenuService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
 
         request.addHeader('x-rundeck-ajax', 'true')
 
@@ -988,5 +1119,32 @@ class MenuControllerSpec extends Specification {
         0 * controller.scmService.enablePlugin(_, _, project, _)
 
         response.status == 302
+    }
+
+    def "homeAjax get project label"() {
+        given:
+
+        controller.frameworkService = Mock(FrameworkService)
+        new Project(name: 'proj',description: 'desc').save(flush: true)
+        def iproj = Mock(IRundeckProject) {
+            getName() >> 'proj'
+        }
+        def projects = [iproj]
+        controller.configurationService = Mock(ConfigurationService)
+        controller.menuService = Mock(MenuService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+
+        request.addHeader('x-rundeck-ajax', 'true')
+
+        when:
+        controller.homeAjax()
+
+        then:
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.projectNames(_) >> []
+        1 * controller.frameworkService.projects(_) >> projects
+        1 * iproj.hasProperty('project.label') >> true
+        1 * iproj.getProperty('project.label') >> 'label'
+        'label' == response.json.projects[0].label
     }
 }

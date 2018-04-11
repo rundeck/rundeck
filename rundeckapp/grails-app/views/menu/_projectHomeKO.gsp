@@ -27,7 +27,13 @@
                data-bind="urlPathParam: projectName"
                class="h1">
                 <i class="glyphicon glyphicon-tasks"></i>
-                <span data-bind="text: projectName"></span>
+                <span data-bind="if: project && project.label">
+                    <span data-bind="text: project.label"></span>
+                </span>
+                <span data-bind="ifnot: project && project.label">
+                    <span data-bind="text: projectName"></span>
+                </span>
+
             </a>
 
             <span data-bind="if: project">

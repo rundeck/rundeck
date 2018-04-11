@@ -734,6 +734,9 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if(params.description) {
             projProps['project.description'] = params.description
         }
+        if(params.label) {
+            projProps['project.label'] = params.label
+        }
         def errors = []
         def configs
         final defaultNodeExec = NodeExecutorService.DEFAULT_REMOTE_PROVIDER
@@ -1141,7 +1144,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }else{
                 projProps['project.description']=''
             }
-
+            if(params.label){
+                projProps['project.label']=params.label
+            }else{
+                projProps['project.label']=''
+            }
 
 
             def Set<String> removePrefixes=[]
@@ -1752,10 +1759,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 'extraConfig.',
                 fwkProject.projectProperties
         )
-
         [
             project: project,
-            projectDescription:projectDescription,
+            projectDescription:projectDescription?:fwkProject.getProjectProperties().get("project.description"),
+            projectLabel:fwkProject.getProjectProperties().get("project.label"),
             nodeexecconfig:nodeConfig,
             fcopyconfig:filecopyConfig,
             defaultNodeExec: defaultNodeExec,
@@ -2171,6 +2178,10 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         }else{
             projects = frameworkService.projectNames(authContext)
             session.frameworkProjects=projects
+        }
+        if(!session.frameworkLabels){
+            def flabels = frameworkService.projectLabels(authContext)
+            session.frameworkLabels = flabels
         }
         [projects:projects,project:params.project] + (params.page?[selectParams:[page:params.page]]:[:])
     }
