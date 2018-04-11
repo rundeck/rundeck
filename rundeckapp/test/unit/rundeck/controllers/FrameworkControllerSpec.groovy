@@ -18,13 +18,18 @@ package rundeck.controllers
 
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
+import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
+import com.dtolabs.rundeck.core.execution.service.FileCopierService
+import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.configuration.Property
+import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.grails.plugins.metricsweb.MetricService
 import rundeck.services.ApiService
 import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
@@ -38,10 +43,6 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_ADMIN
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CONFIGURE
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CONFIGURE
-import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CONFIGURE
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_CREATE
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_DELETE
 import static com.dtolabs.rundeck.server.authorization.AuthConstants.ACTION_READ
@@ -919,6 +920,39 @@ class FrameworkControllerSpec extends Specification {
         true                     | true                    | 'true'           | 'false'         | false            | true
         true                     | true                    | 'false'          | 'true'          | false            | true
         true                     | true                    | 'true'           | 'true'          | false            | false
+
+    }
+
+
+    def "create project invalid name"(){
+        setup:
+        controller.metricService = Mock(MetricService)
+        def rdframework=Mock(Framework){
+            1 * getNodeExecutorService() >> Mock(NodeExecutorService)
+            1 * getResourceModelSourceService() >> Mock(ResourceModelSourceService)
+            1 * getFileCopierService() >> Mock(FileCopierService)
+        }
+        controller.frameworkService=Mock(FrameworkService){
+            1 * getRundeckFramework() >> rdframework
+            1 * getAuthContextForSubject(_) >> null
+            1 * authorizeApplicationResourceTypeAll(null,'project',[AuthConstants.ACTION_CREATE])>>true
+            1 * validateProjectConfigurableInput(_,_,_)>>[props:[:]]
+        }
+
+
+        def description = 'Project Desc'
+        params.newproject = "Test SaveProject"
+        params.description=description
+
+        setupFormTokens(params)
+        when:
+        request.method = "POST"
+        controller.createProjectPost()
+
+        then:
+        response.status==200
+        request.errors == ['project.name.can.only.contain.these.characters']
+        model.projectDescription == description
 
     }
 }
