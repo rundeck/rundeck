@@ -462,12 +462,42 @@ class ScheduledExecutionTest  {
         def ScheduledExecution se = new ScheduledExecution()
         assertNull "should be null", se.userRoleList
         se.setUserRoles(["a", "b", "c"])
-        assertEquals "User roles not set correctly", "a,b,c", se.userRoleList
+        assertEquals "User roles not set correctly", "[\"a\",\"b\",\"c\"]", se.userRoleList
         def x = se.getUserRoles()
         assertEquals "incorrect number of roles found", 3, x.size()
         assertEquals "invalid role item", "a", x[0]
         assertEquals "invalid role item", "b", x[1]
         assertEquals "invalid role item", "c", x[2]
+
+        se.userRoleList = null
+        x = se.getUserRoles()
+        assertEquals "incorrect number of roles found", 0, x.size()
+    }
+
+    void testUserRolesADWithDN() {
+        def ScheduledExecution se = new ScheduledExecution()
+        assertNull "should be null", se.userRoleList
+        se.userRoleList='["CN=Admin,CN=Roles,DC=local","CN=Users,CN=Roles,DC=local","user"]'
+        def x = se.getUserRoles()
+        assertEquals "incorrect number of roles found", 3, x.size()
+        assertEquals "invalid role item", "CN=Admin,CN=Roles,DC=local", x[0]
+        assertEquals "invalid role item", "CN=Users,CN=Roles,DC=local", x[1]
+        assertEquals "invalid role item", "user", x[2]
+
+        se.userRoleList = null
+        x = se.getUserRoles()
+        assertEquals "incorrect number of roles found", 0, x.size()
+    }
+
+    void testUserRolesListComma() {
+        def ScheduledExecution se = new ScheduledExecution()
+        assertNull "should be null", se.userRoleList
+        se.userRoleList='admin,user,test'
+        def x = se.getUserRoles()
+        assertEquals "incorrect number of roles found", 3, x.size()
+        assertEquals "invalid role item", "admin", x[0]
+        assertEquals "invalid role item", "user", x[1]
+        assertEquals "invalid role item", "test", x[2]
 
         se.userRoleList = null
         x = se.getUserRoles()
