@@ -65,7 +65,7 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         File projectdir = new File(getFrameworkProjectsBase(), PROJ_NAME);
         FileUtils.deleteDir(projectdir);
     }
-
+/*
     public void testConfigureProperties() throws Exception {
         final FileResourceModelSource fileNodesProvider = new FileResourceModelSource(getFrameworkInstance());
         try {
@@ -531,6 +531,23 @@ public class TestFileResourceModelSource extends AbstractBaseTest {
         } catch (ResourceModelSourceException e) {
             assertTrue(e.getMessage().contains("File does not exist: " + dneFile.getAbsolutePath()));
         }
+    }*/
+
+    public void testGetNodesWritableEmpty() throws Exception {
+        System.out.println("testGetNodesWritableEmpty");
+        Properties props = new Properties();
+        props.setProperty("project", PROJ_NAME);
+        props.setProperty("file", "src/test/resources/com/dtolabs/rundeck/core/common/test-nodesX.xml");
+        props.setProperty("generateFileAutomatically", "true");
+        props.setProperty("includeServerNode", "false");
+        final FileResourceModelSource fileNodesProvider = new FileResourceModelSource(getFrameworkInstance());
+        fileNodesProvider.configure(props);
+
+        final InputStream is = fileNodesProvider.openFileDataInputStream();
+        //assertNotNull(is);
+        final INodeSet nodes = fileNodesProvider.getNodes();
+        assertNotNull(nodes);
+        assertEquals(0, nodes.getNodes().size());
     }
 
 }
