@@ -495,4 +495,54 @@ class ScmControllerSpec extends Specification {
         'application/xml'  | importXmlReqString2  | [message: 'blah'] | ['/a/path2'] | ['job1']
         integration = 'import'
     }
+
+
+    def 'perform import fetch without items'() {
+        given:
+        def projectName = 'testproj'
+        def actionName = 'testAction'
+        params.actionId = actionName
+        params.project = projectName
+        params.integration = integration
+
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * authResourceForProject(projectName)
+            1 * authorizeApplicationResourceAny(_, _, _) >> true
+            getAuthContextForSubjectAndProject(_, projectName) >> Mock(UserAndRolesAuthContext)
+            0 * _(*_)
+        }
+
+        controller.scmService = Mock(ScmService) {
+
+            1 * projectHasConfiguredPlugin(integration, projectName) >> true
+            1 * getInputView(_, integration, projectName, actionName) >> Mock(BasicInputView)
+            1 * getRenamedJobPathsForProject(projectName) >> [:]
+            1 * loadProjectPluginDescriptor(projectName, integration)
+            1 * getTrackingItemsForAction(projectName, actionName) >> null
+            1 * importStatusForJobs([])
+            1 * getPluginStatus(_,integration, projectName)
+            0 * _(*_)
+        }
+
+        response.format = 'json'
+        request.method = 'POST'
+        request.contentType = 'application/json'
+        request.content = '{"input":null}'.bytes
+
+        when:
+        controller.performAction(integration, projectName, actionName)
+
+        then:
+        /*response.json == [
+            success         : true,
+            validationErrors: null,
+            nextAction      : 'someAction',
+            message         : 'api.scm.action.integration.success.message'
+        ]*/
+        response.status == 200
+
+        where:
+        integration | _
+        'import'    | _
+    }
 }
