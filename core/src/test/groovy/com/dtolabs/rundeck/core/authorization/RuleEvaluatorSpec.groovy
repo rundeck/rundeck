@@ -138,6 +138,43 @@ class RuleEvaluatorSpec extends Specification {
         !result.isAuthorized()
         "EXECUTE"==result.action
     }
+    def "test reject null rule"(){
+        given:
+        def rulelist = [
+                new Rule(
+                        sourceIdentity: "test1",
+                        description: "bob job allow exec, deny delete for admin group",
+                        equalsResource: [
+                                jobName: null
+                        ],
+                        resourceType: 'job',
+                        regexMatch: false,
+                        containsMatch: false,
+                        equalsMatch: true,
+                        username: null,
+                        group: 'admin',
+                        allowActions: ['EXECUTE'] as Set,
+                        denyActions: ['DELETE'] as Set,
+                        environment: BasicEnvironmentalContext.staticContextFor("application", "rundeck")
+                ),
+        ] as Set
+        def rules=new AclRuleSetImpl(rulelist)
+        Authorization eval = new RuleEvaluator(rules)
+        when:
+        def result = eval.evaluate(
+                [
+                        type   : 'job',
+                        jobName: 'bob'
+                ],
+                basicSubject("bob","admin","user"),
+                "EXECUTE",
+                EnvironmentalContext.RUNDECK_APP_ENV
+        )
+        then:
+        result!=null
+        !result.isAuthorized()
+        "EXECUTE"==result.action
+    }
     def "test deny"(){
         given:
         Authorization eval = new RuleEvaluator(basicRules())

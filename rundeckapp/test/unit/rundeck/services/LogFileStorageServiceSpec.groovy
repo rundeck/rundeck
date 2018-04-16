@@ -23,6 +23,7 @@ import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
 import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
+import org.springframework.scheduling.TaskScheduler
 import rundeck.Execution
 import rundeck.LogFileStorageRequest
 import rundeck.services.logging.ExecutionLogState
@@ -106,7 +107,7 @@ class LogFileStorageServiceSpec extends Specification {
         ).save()
 
 
-        service.scheduledExecutor = Mock(ScheduledExecutorService)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
         when:
         service.resumeIncompleteLogStorage(serverUUID)
 
@@ -115,7 +116,7 @@ class LogFileStorageServiceSpec extends Specification {
         l != null
         e2 != null
         l2 != null
-        1 * service.scheduledExecutor.schedule(*_)
+        1 * service.logFileStorageTaskScheduler.schedule(*_)
 
         where:
         serverUUID                             | testuser
@@ -159,7 +160,7 @@ class LogFileStorageServiceSpec extends Specification {
         ).save()
 
 
-        service.scheduledExecutor = Mock(ScheduledExecutorService)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
         when:
         service.resumeIncompleteLogStorage(serverUUID)
 
@@ -168,7 +169,7 @@ class LogFileStorageServiceSpec extends Specification {
         l != null
         e2 != null
         l2 != null
-        0 * service.scheduledExecutor.schedule(*_)
+        0 * service.logFileStorageTaskScheduler.schedule(*_)
         1 == service.retryIncompleteRequests.size()
 
         where:
@@ -213,7 +214,7 @@ class LogFileStorageServiceSpec extends Specification {
         ).save()
 
 
-        service.scheduledExecutor = Mock(ScheduledExecutorService)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
         when:
         service.resumeIncompleteLogStorage('C9CA0A6D-3F85-4F53-A714-313EB57A4D1F',l2.id)
 
@@ -222,7 +223,7 @@ class LogFileStorageServiceSpec extends Specification {
         l != null
         e2 != null
         l2 != null
-        0 * service.scheduledExecutor.schedule(*_)
+        0 * service.logFileStorageTaskScheduler.schedule(*_)
         1 == service.retryIncompleteRequests.size()
         service.retryIncompleteRequests.contains(l2.id)
 
@@ -279,7 +280,7 @@ class LogFileStorageServiceSpec extends Specification {
         ).save()
 
 
-        service.scheduledExecutor = Mock(ScheduledExecutorService)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
         service.retryIncompleteRequests.add(l3.id)
         when:
         service.cleanupIncompleteLogStorage('C9CA0A6D-3F85-4F53-A714-313EB57A4D1F')
@@ -291,7 +292,7 @@ class LogFileStorageServiceSpec extends Specification {
         l2 != null
         e3 != null
         l3 != null
-        0 * service.scheduledExecutor.schedule(*_)
+        0 * service.logFileStorageTaskScheduler.schedule(*_)
         1 == service.retryIncompleteRequests.size()
         1 == LogFileStorageRequest.count()
 
@@ -347,7 +348,7 @@ class LogFileStorageServiceSpec extends Specification {
         ).save()
 
 
-        service.scheduledExecutor = Mock(ScheduledExecutorService)
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
         service.retryIncompleteRequests.add(l3.id)
         when:
         service.cleanupIncompleteLogStorage('C9CA0A6D-3F85-4F53-A714-313EB57A4D1F',l2.id)
@@ -359,7 +360,7 @@ class LogFileStorageServiceSpec extends Specification {
         l2 != null
         e3 != null
         l3 != null
-        0 * service.scheduledExecutor.schedule(*_)
+        0 * service.logFileStorageTaskScheduler.schedule(*_)
         1 == service.retryIncompleteRequests.size()
         2 == LogFileStorageRequest.count()
 
@@ -420,8 +421,6 @@ class LogFileStorageServiceSpec extends Specification {
     @Unroll
     def "getLogFileState"() {
         given:
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStorage.remotePendingDelay = pend
         def outFile = new File(tempDir, "rundeck/test/run/logs/1.rdlog")
         def outFilePart = new File(tempDir, "rundeck/test/run/logs/1.rdlog.part")
         if (loData) {
@@ -452,6 +451,7 @@ class LogFileStorageServiceSpec extends Specification {
         }
         service.configurationService = Mock(ConfigurationService) {
             getTimeDuration('execution.logs.fileStorage.checkpoint.time.interval', '30s', _) >> 30
+            getInteger('execution.logs.fileStorage.remotePendingDelay', _) >> pend
         }
         when:
         def result = service.getLogFileState(exec, filetype, plugin, getPart)

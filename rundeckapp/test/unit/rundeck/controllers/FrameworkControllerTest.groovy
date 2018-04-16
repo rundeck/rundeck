@@ -261,7 +261,7 @@ class FrameworkControllerTest {
         fwk.demand.getAuthContextForSubject { subject -> return null}
         fwk.demand.getAuthContextForSubjectAndProject { subject,proj -> return null}
         fwk.demand.authResourceForProject {project -> return null}
-        fwk.demand.authorizeApplicationResourceAll {ctx, e, actions -> true }
+        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
 
         fwk.demand.listResourceModelConfigurations { project ->
             [
@@ -382,7 +382,7 @@ class FrameworkControllerTest {
 
         fwk.demand.getAuthContextForSubject {subject -> return null}
         fwk.demand.authResourceForProject {project -> return null}
-        fwk.demand.authorizeApplicationResourceAll {ctx, e, actions -> true }
+        fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
         fwk.demand.listDescriptions { -> [null, null, null] }
         fwk.demand.getRundeckFramework { -> null }
 
@@ -393,7 +393,7 @@ class FrameworkControllerTest {
         fwk.demand.addProjectNodeExecutorPropertiesForType {type, props, config, remove ->
             props.setProperty("foobar", "barbaz")
         }
-        fwk.demand.validateProjectConfigurableInput {data,prefix -> [:] }
+        fwk.demand.validateProjectConfigurableInput {data,prefix,pred -> [:] }
 
         fwk.demand.updateFrameworkProjectConfig { project, Properties props, removePrefixes ->
             ["success":props.size() != 0]

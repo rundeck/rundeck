@@ -30,7 +30,7 @@ PIDFILE=/var/run/$prog.pid
 
 start() {
 	echo -n $"Starting $prog: "
-	cd /var/log/rundeck
+	cd /var/lib/rundeck
 	nohup su -s /bin/bash rundeck -c "$rundeckd" &>>/var/log/rundeck/service.log &
 
 	RETVAL=$?

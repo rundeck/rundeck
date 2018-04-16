@@ -135,7 +135,9 @@
                     </g:each>
                 </tr>
                 <tr>
-                    <td></td>
+                    <td class=" text-center">
+                        Running: <span data-bind="text: running, css: { 'text-info': running()>0 , 'text-muted': running()<1 } "></span>
+                    </td>
                     <td>
 
                         <div data-bind="if: queuedCount()>0">

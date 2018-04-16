@@ -11,6 +11,8 @@
 /bin/
 **/build
 **/*/build
+**/out
+**/*/out
 /cobertura.ser
 /gradle-cache
 /rundeckapp/stacktrace.log

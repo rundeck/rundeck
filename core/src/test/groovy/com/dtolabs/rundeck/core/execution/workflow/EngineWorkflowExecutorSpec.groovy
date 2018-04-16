@@ -60,6 +60,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             }
             getWorkflowExecutionListener() >> new NoopWorkflowExecutionListener()
             getFrameworkProject() >> PROJECT_NAME
+            getFramework() >> framework
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -120,6 +121,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             getExecutionListener() >> Stub(ExecutionListener)
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 1
+            getFramework() >> framework
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -170,6 +172,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             getExecutionListener() >> Stub(ExecutionListener)
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 1
+            getFramework() >> framework
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -235,6 +238,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             getExecutionListener() >> Stub(ExecutionListener)
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 1
+            getFramework() >> framework
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -291,6 +295,7 @@ class EngineWorkflowExecutorSpec extends Specification {
             getExecutionListener() >> Stub(ExecutionListener)
             getFrameworkProject() >> PROJECT_NAME
             getStepNumber() >> 1
+            getFramework() >> framework
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -344,6 +349,7 @@ class EngineWorkflowExecutorSpec extends Specification {
         def context = Mock(StepExecutionContext) {
             getExecutionListener() >> Stub(ExecutionListener)
             getFrameworkProject() >> PROJECT_NAME
+            getFramework() >> framework
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {
@@ -522,6 +528,7 @@ class EngineWorkflowExecutorSpec extends Specification {
                 workflowExecutionListener(new NoopWorkflowExecutionListener()).
                 frameworkProject(PROJECT_NAME).
                 stepNumber(1).
+                framework(framework).
                 build()
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {

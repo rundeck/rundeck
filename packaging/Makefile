@@ -91,7 +91,7 @@ deb:
 	@unzip -oq ../rundeckapp/target/rundeck-$(JVERS).war -d debdist/var/lib/rundeck/exp/webapp/
 	@ln -s /etc/rundeck/log4j.properties; mv log4j.properties debdist/var/lib/rundeck/exp/webapp/WEB-INF/classes
 	fakeroot dpkg-deb --build -Zgzip debdist
-	@mv debdist.deb rundeck-$(VERSION)-$(RELEASE)$(DEB_TAG).deb
+	@mv debdist.deb rundeck_$(VERSION)-$(RELEASE)$(DEB_TAG)_all.deb
 
 clean: rpmclean debclean
 
@@ -99,4 +99,4 @@ rpmclean:
 	rm -rf rpmdist
 
 debclean:
-	rm -rf debdist rundeck-*.deb
+	rm -rf debdist rundeck*.deb

@@ -19,6 +19,7 @@ package rundeck.quartzjobs
 import com.codahale.metrics.MetricRegistry
 import com.codahale.metrics.Timer
 import com.dtolabs.rundeck.core.authorization.AuthContext
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
 import com.dtolabs.rundeck.core.dispatcher.ExecutionState
 import com.dtolabs.rundeck.core.execution.ServiceThreadBase
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
@@ -27,6 +28,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import org.quartz.InterruptableJob
 
 import com.dtolabs.rundeck.core.execution.workflow.NodeRecorder
+import org.rundeck.util.Sizes
 import rundeck.Execution
 import rundeck.ScheduledExecution
 import rundeck.services.ExecutionService
@@ -35,6 +37,7 @@ import rundeck.services.FrameworkService
 import rundeck.services.execution.ThresholdValue
 import rundeck.services.logging.LoggingThreshold
 
+import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
 
 class ExecutionJob implements InterruptableJob {
@@ -371,6 +374,13 @@ class ExecutionJob implements InterruptableJob {
         def jobAverageDuration = execmap.scheduledExecution?execmap.scheduledExecution.averageDuration:0
         def boolean avgNotificationSent = false
         def boolean stop=false
+
+
+        def jobAverageDurationFinal = getNotifyAvgDurationThreshold(execmap.scheduledExecution?execmap.scheduledExecution.notifyAvgDurationThreshold:"0",
+                                                                    jobAverageDuration,
+                                                                    thread?.context?.dataContext
+                                    )
+
         boolean never=true
         while (thread.isAlive() || never) {
             never=false
@@ -380,8 +390,8 @@ class ExecutionJob implements InterruptableJob {
                 //do nada
             }
             def duration = System.currentTimeMillis() - startTime
-            if(!avgNotificationSent && jobAverageDuration>0){
-                if(duration > jobAverageDuration){
+            if(!avgNotificationSent && jobAverageDurationFinal>0){
+                if(duration > jobAverageDurationFinal){
                     def res = executionService.avgDurationExceeded(
                             execmap.scheduledExecution.id,
                             [
@@ -629,5 +639,47 @@ class ExecutionJob implements InterruptableJob {
             throw new RuntimeException("JobDataMap contained invalid FrameworkService type: " + es.getClass().getName())
         }
         return es
+    }
+
+    /**
+     * Return evaluated timeout duration, or -1 if not set
+     * @return
+     */
+    long getNotifyAvgDurationThreshold(String notifyAvgDurationThreshold, long averageDuration, Map<String, Map<String, String>> dataContext){
+
+        if(null==notifyAvgDurationThreshold){
+            return averageDuration
+        }
+
+        if (notifyAvgDurationThreshold.contains('${')) {
+            //replace data references
+            notifyAvgDurationThreshold = DataContextUtils.replaceDataReferencesInString(notifyAvgDurationThreshold,dataContext)
+        }
+
+        //add Threshold for avg notification
+        def jobAverageDurationFinal = averageDuration
+
+        if (notifyAvgDurationThreshold?.contains('%')) {
+            def numberList = notifyAvgDurationThreshold.findAll( /-?\d+\.\d*|-?\d*\.\d+|-?\d+/ )
+            def percentageValue = 0
+            if(numberList.size() == 1) {
+                percentageValue = numberList.get(0)?.toInteger()
+            }
+
+            jobAverageDurationFinal = averageDuration + (averageDuration * (percentageValue / 100))
+
+        }else {
+            if (notifyAvgDurationThreshold?.contains('+')) {
+                def avgDurationThresholdValue = Sizes.parseTimeDuration(notifyAvgDurationThreshold.replace("+", ""), TimeUnit.MILLISECONDS)
+                jobAverageDurationFinal = averageDuration + avgDurationThresholdValue
+            } else {
+                jobAverageDurationFinal = Sizes.parseTimeDuration(notifyAvgDurationThreshold, TimeUnit.MILLISECONDS)
+                if(jobAverageDurationFinal==0){
+                    jobAverageDurationFinal = averageDuration
+                }
+            }
+        }
+
+        return jobAverageDurationFinal
     }
 }

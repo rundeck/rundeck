@@ -20,11 +20,13 @@ import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.jaas.JAASLoginService;
 import org.eclipse.jetty.security.HashLoginService;
 import org.eclipse.jetty.server.*;
-import org.eclipse.jetty.server.handler.ContextHandlerCollection;
+import org.eclipse.jetty.server.session.AbstractSessionManager;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.webapp.WebAppContext;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
 import java.util.Properties;
 
 /**
@@ -111,7 +113,14 @@ public class RunServer {
         final WebAppContext context = createWebAppContext(new File(serverdir, "exp/webapp"));
 
         server.setHandler(context);
-        //context.getSessionHandler().getSessionManager().setHttpOnly(true);//TODO: upgrade jetty to support HttpOnly session cookies
+        SessionManager sessionManager = context.getSessionHandler().getSessionManager();
+
+        sessionManager.setSessionIdPathParameterName("none");
+
+        if(sessionManager instanceof AbstractSessionManager){
+            AbstractSessionManager asm = (AbstractSessionManager) sessionManager;
+            asm.setHttpOnly(true);
+        }
 
         configureRealms(server);
         try {

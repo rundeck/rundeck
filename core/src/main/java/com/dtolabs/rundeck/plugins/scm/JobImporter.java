@@ -66,4 +66,14 @@ public interface JobImporter {
      * @return result
      */
     ImportResult importFromStream(String format, InputStream input, Map importMetadata, boolean preserveUuid);
+
+    /**
+     * Deleted a job deleted remotely
+     *
+     * @param project       project of the file
+     * @param jobid         job id
+     *
+     * @return result
+     */
+    ImportResult deleteJob(String project, String jobid);
 }

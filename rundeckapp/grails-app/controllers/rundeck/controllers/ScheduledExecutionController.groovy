@@ -52,6 +52,7 @@ import org.codehaus.groovy.grails.web.json.JSONElement
 import org.quartz.CronExpression
 import org.quartz.Scheduler
 import org.rundeck.util.Toposort
+import org.springframework.transaction.TransactionDefinition
 import org.springframework.web.multipart.MultipartFile
 import org.springframework.web.multipart.MultipartHttpServletRequest
 import org.springframework.web.multipart.MultipartRequest
@@ -88,11 +89,19 @@ class ScheduledExecutionController  extends ControllerBase{
     public static final String ONFAILURE_TRIGGER_NAME = 'onfailure'
     public static final String ONSTART_TRIGGER_NAME = 'onstart'
     public static final String OVERAVGDURATION_TRIGGER_NAME = 'onavgduration'
+    public static final String ONRETRYABLEFAILURE_TRIGGER_NAME = 'onretryablefailure'
     public static final String NOTIFY_OVERAVGDURATION_EMAIL = 'notifyAvgDurationEmail'
     public static final String NOTIFY_OVERAVGDURATION_URL = 'notifyAvgDurationUrl'
     public static final String NOTIFY_ONOVERAVGDURATION_URL = 'notifyOnAvgDurationUrl'
     public static final String NOTIFY_OVERAVGDURATION_RECIPIENTS = 'notifyAvgDurationRecipients'
     public static final String NOTIFY_OVERAVGDURATION_SUBJECT = 'notifyAvgDurationSubject'
+    public static final String NOTIFY_ONRETRYABLEFAILURE_URL = 'notifyOnRetryableFailureUrl'
+    public static final String NOTIFY_ONRETRYABLEFAILURE_EMAIL = 'notifyOnRetryableFailureEmail'
+    public static final String NOTIFY_RETRYABLEFAILURE_EMAIL = 'notifyRetryableFailureEmail'
+    public static final String NOTIFY_RETRYABLEFAILURE_URL = 'notifyRetryableFailureUrl'
+    public static final String NOTIFY_RETRYABLEFAILURE_RECIPIENTS = 'notifyRetryableFailureRecipients'
+    public static final String NOTIFY_RETRYABLEFAILURE_SUBJECT = 'notifyRetryableFailureSubject'
+    public static final String NOTIFY_RETRYABLEFAILURE_ATTACH= 'notifyFailureAttach'
 
     public static final String EMAIL_NOTIFICATION_TYPE = 'email'
     public static final String WEBHOOK_NOTIFICATION_TYPE = 'url'
@@ -104,7 +113,9 @@ class ScheduledExecutionController  extends ControllerBase{
             NOTIFY_ONSTART_EMAIL,
             NOTIFY_ONSTART_URL,
             NOTIFY_OVERAVGDURATION_EMAIL,
-            NOTIFY_ONOVERAVGDURATION_URL
+            NOTIFY_ONOVERAVGDURATION_URL,
+            NOTIFY_ONRETRYABLEFAILURE_EMAIL,
+            NOTIFY_ONRETRYABLEFAILURE_URL
     ]
 
     def Scheduler quartzScheduler
@@ -283,7 +294,11 @@ class ScheduledExecutionController  extends ControllerBase{
 
         def total = -1
         if (keys.contains('total') || !keys) {
-            total = Execution.countByScheduledExecution(scheduledExecution)
+            def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+            def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+            total = Execution.withTransaction([isolationLevel: isolationLevel]) {
+                Execution.countByScheduledExecution(scheduledExecution)
+            }
         }
 
         def remoteClusterNodeUUID = null
@@ -298,7 +313,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def orchestratorPlugins = null
         if (keys.contains('orchestratorPlugins') || !keys) {
-            orchestratorPlugins = orchestratorPluginService.listOrchestratorPlugins()
+            orchestratorPlugins = orchestratorPluginService.getOrchestratorPlugins()
         }
         def nextExecution = null
         if (keys.contains('nextExecution') || !keys) {
@@ -396,7 +411,15 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.countByScheduledExecution(scheduledExecution)
+        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def total = Execution.withTransaction([isolationLevel: isolationLevel]) {
+            Execution.countByScheduledExecution(scheduledExecution)
+        }
+        def reftotal = 0
+        if(scheduledExecution.refExecCount) {
+            reftotal = scheduledExecution.refExecCount
+        }
 
         def remoteClusterNodeUUID=null
         if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
@@ -404,16 +427,22 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
 
+       def isReferenced= JobExec.hasAnyReference(scheduledExecution)
+        def parentList = JobExec.parentList(scheduledExecution,10)
+
         def dataMap= [
                 scheduledExecution: scheduledExecution,
+                isReferenced: isReferenced,
+                parentList: parentList,
                 crontab: crontab,
                 params: params,
                 total: total,
+                reftotal: reftotal,
                 nextExecution: scheduledExecutionService.nextExecutionTime(scheduledExecution),
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
+				orchestratorPlugins: orchestratorPluginService.getOrchestratorPlugins(),
                 strategyPlugins: scheduledExecutionService.getWorkflowStrategyPluginDescriptions(),
                 logFilterPlugins: pluginService.listPlugins(LogFilterPlugin),
                 max: params.int('max') ?: 10,
@@ -428,7 +457,7 @@ class ScheduledExecutionController  extends ControllerBase{
                                                              [AuthConstants.ACTION_ADMIN, AuthConstants.ACTION_EXPORT])) {
             if(scmService.projectHasConfiguredExportPlugin(params.project)){
                 dataMap.scmExportEnabled = true
-                dataMap.scmExportStatus = scmService.exportStatusForJobs([scheduledExecution])
+                dataMap.scmExportStatus = scmService.exportStatusForJob(scheduledExecution)
                 dataMap.scmExportRenamedPath=scmService.getRenamedJobPathsForProject(params.project)?.get(scheduledExecution.extid)
             }
         }
@@ -508,7 +537,11 @@ class ScheduledExecutionController  extends ControllerBase{
         crontab = scheduledExecution.timeAndDateAsBooleanMap()
         //list executions using query params and pagination params
 
-        def total = Execution.countByScheduledExecution(scheduledExecution)
+        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def total = Execution.withTransaction([isolationLevel: isolationLevel]) {
+            Execution.countByScheduledExecution(scheduledExecution)
+        }
 
         def remoteClusterNodeUUID=null
         if (scheduledExecution.scheduled && frameworkService.isClusterModeEnabled()) {
@@ -525,7 +558,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 remoteClusterNodeUUID: remoteClusterNodeUUID,
                 serverNodeUUID: frameworkService.isClusterModeEnabled()?frameworkService.serverUUID:null,
                 notificationPlugins: notificationService.listNotificationPlugins(),
-				orchestratorPlugins: orchestratorPluginService.listOrchestratorPlugins(),
+				orchestratorPlugins: orchestratorPluginService.getOrchestratorPlugins(),
                 max: params.int('max') ?: 10,
                 offset: params.int('offset') ?: 0] + _prepareExecute(scheduledExecution, framework,authContext)
 
@@ -1325,6 +1358,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         if(request.method=='POST') {
+            def isReferenced = JobExec.hasAnyReference(scheduledExecution)
             withForm {
                 def result = scheduledExecutionService.deleteScheduledExecutionById(
                         jobid,
@@ -1338,6 +1372,14 @@ class ScheduledExecutionController  extends ControllerBase{
                 } else {
                     def project = result.success.job ? result.success.job.project : params.project
                     flash.bulkJobResult = [success: [result.success]]
+                    if(isReferenced){
+                        def err = [
+                                message: g.message(code: 'deleted.referenced.job'),
+                                errorCode: 'jobref',
+                                id: jobid
+                        ]
+                        flash.bulkJobResult+=[errors:[err]]
+                    }
                     redirect(controller: 'menu', action: 'jobs', params: [project: project])
                 }
             }.invalidToken {

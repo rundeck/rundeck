@@ -16,7 +16,8 @@ RUN apt-get -y update && \
         iputils-ping \
         jq \
         zip \
-        apt-transport-https
+        apt-transport-https \
+        openjdk-8-jdk
 
 # add cli tool debian repo
 ARG CLI_DEB_URL
@@ -28,17 +29,6 @@ RUN echo "deb $CLI_DEB_URL /" | sudo tee -a /etc/apt/sources.list
 #RUN apt-key add - < /tmp/rundeck.gpg.key
 RUN curl "https://bintray.com/user/downloadSubjectPublicKey?username=bintray" > /tmp/bintray.gpg.key
 RUN apt-key add - < /tmp/bintray.gpg.key
-
-
-## Install Oracle JVM
-RUN \
-  echo "oracle-java8-installer shared/accepted-oracle-license-v1-1 select true" | debconf-set-selections && \
-  add-apt-repository -y ppa:webupd8team/java && \
-  apt-get update && \
-  apt-get install -y oracle-java8-installer
-
-## DEBUG ENV VARS AT THIS POINT
-#RUN echo "**** ENV VARS START ****" && printenv > /env_at_build_time && cat /env_at_build_time && echo "**** ENV VARS END ****"
 
 # RUNDECK
 

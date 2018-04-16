@@ -74,6 +74,36 @@ class ImportSpec extends Specification {
         'archive' | _
     }
 
+    def "automatic pull eval"() {
+
+        given:
+        Map<String, String> input = [
+                dir                  : 'notnull',
+                pathTemplate         : 'notnull',
+                branch               : 'notnull',
+                format               : 'xml',
+                strictHostKeyChecking: 'yes',
+                url                  : 'notnull',
+                useFilePattern       : 'true',
+                filePattern          : '.*\\.xml',
+                importUuidBehavior   : 'archive',
+                pullAutomatically    : eval
+
+        ]
+
+        when:
+        def config = Config.create(Import, input)
+        then:
+        println(eval)
+        config.shouldPullAutomatically() == expected
+
+        where:
+        eval        | expected
+        'true'      | true
+        'false'     | false
+        null        | true
+    }
+
     private LinkedHashMap<String, String> config(importUuidBehavior) {
         [
                 dir                  : 'notnull',

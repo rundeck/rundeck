@@ -37,6 +37,10 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
         return null;
     }
 
+    public String getUuid() {
+        return null;
+    }
+
     public String[] getArgs() {
         return new String[0];
     }
@@ -77,4 +81,12 @@ public class JobRefCommandBase extends JobRefCommand implements HasFailureHandle
     @Override public Boolean getNodeIntersect() {
         return null;
     }
+
+    public Boolean isFailOnDisable() {
+        return false;
+    }
+    public Boolean isImportOptions() {
+        return false;
+    }
+
 }

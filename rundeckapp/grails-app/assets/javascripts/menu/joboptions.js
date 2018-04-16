@@ -52,6 +52,7 @@ function Option(data) {
     var self = this;
     self.remoteLoadCallback = null;
     self.name = ko.observable(data.name);
+    self.label = ko.observable(data.label);
     self.uid = ko.observable(data.uid||(++_option_uid+'_opt'));
     self.description = ko.observable(data.description);
     self.descriptionHtml = ko.observable(data.descriptionHtml);

@@ -109,8 +109,8 @@ it_should_run_ansible_playbook_step(){
     grep   'ok: \[test-ansible-node\]' test.output || ( echo "Expected output not seen" && exit 2 )
     grep   "ok: \[$RUNDECK_NODE\]" test.output || ( echo "Expected output not seen" && exit 2 )
     grep   "TASK \[print the current date and time\]" test.output || ( echo "Expected output not seen" && exit 2 )
-    grep   "changed: \[$RUNDECK_NODE\] =>" test.output || ( echo "Expected output not seen" && exit 2 )
-    grep   "changed: \[test-ansible-node\] =>" test.output || ( echo "Expected output not seen" && exit 2 )
+    grep   "changed: \[$RUNDECK_NODE\]" test.output || ( echo "Expected output not seen" && exit 2 )
+    grep   "changed: \[test-ansible-node\]" test.output || ( echo "Expected output not seen" && exit 2 )
     
 }
 it_should_run_ansible_script_step(){

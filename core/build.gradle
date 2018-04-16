@@ -52,13 +52,14 @@ dependencies {
         'com.jcraft:jsch.agentproxy.usocket-nc:0.0.9',
         'com.jcraft:jsch.agentproxy.connector-factory:0.0.9',
         'com.jcraft:jsch.agentproxy.core:0.0.9',
-        'com.fasterxml.jackson.core:jackson-databind:2.8.10',
-        'com.fasterxml.jackson.core:jackson-core:2.8.10',
-        'com.fasterxml.jackson.core:jackson-annotations:2.8.10',
+        'com.fasterxml.jackson.core:jackson-databind:2.8.11.1',
+        'com.fasterxml.jackson.core:jackson-core:2.8.11',
+        'com.fasterxml.jackson.core:jackson-annotations:2.8.11',
         'org.yaml:snakeyaml:1.9',
         'com.google.guava:guava:15.0',
         'com.squareup.retrofit2:retrofit:2.2.0',
         'com.squareup.retrofit2:converter-jackson:2.2.0'
+
 
     compile ('commons-httpclient:commons-httpclient:3.0.1') {
         exclude group:'junit', module: 'junit'
@@ -104,7 +105,7 @@ task('expandTemplate').doLast {
         expand('version':version,'version_build':buildNum,'version_ident':version+'-'+buildNum,date:datestring)
         from "$projectDir/src/main/meta/com/dtolabs/rundeck/core/application.properties"
         into "$projectDir/src/main/resources/META-INF/com/dtolabs/rundeck/core/"
-    }   
+    }
 }
 
 compileJava.dependsOn expandTemplate

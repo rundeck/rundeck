@@ -72,7 +72,6 @@ class JobFileRecord {
     static mapping = {
         storageMeta(type: 'text')
         storageReference(type: 'text')
-        serverNodeUUID(type: 'text')
         user column: "rduser"
         size column: "`SIZE`"
     }

@@ -52,6 +52,39 @@ class ProjectControllerSpec extends Specification{
     def cleanup(){
 
     }
+
+    def "api project config PUT "() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.frameworkService = Mock(FrameworkService)
+        controller.apiService = Mock(ApiService)
+        params.project = 'aproject'
+        request.contentType = 'text/plain'
+        request.content = 'a=b\nz=d\n'.bytes
+        request.method = 'PUT'
+        when:
+        controller.apiProjectConfigPut()
+        then:
+        response.status == 200
+        response.contentType == 'text/plain'
+        response.text.split(/[\n\r]/).contains 'x=y'
+        1 * controller.apiService.requireVersion(_, _, 11) >> true
+        1 * controller.apiService.extractResponseFormat(*_) >> 'text'
+        1 * controller.frameworkService.getAuthContextForSubject(_)
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authResourceForProject('aproject')
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['configure', 'admin']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject) {
+            getProjectProperties() >> [
+                x: 'y'
+            ]
+        }
+        1 * controller.frameworkService.setFrameworkProjectConfig(_, [a: 'b', z: 'd']) >> [success: true]
+        0 * controller.frameworkService._(*_)
+        0 * controller.apiService._(*_)
+        0 * controller.projectService._(*_)
+
+    }
     @Unroll
     def "api project create description #inputDesc"(){
         given:
@@ -188,6 +221,33 @@ class ProjectControllerSpec extends Specification{
         where:
         all  | jobs  | execs | configs | readmes | acls
         true | false | false | false   | false   | false
+    }
+
+    def "api project delete error"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        params.project = 'aproject'
+
+        when:
+        request.method = 'DELETE'
+        def result = controller.apiProjectDelete()
+
+        then:
+        1 * controller.apiService.requireVersion(_, _, _) >> true
+        1 * controller.frameworkService.existsFrameworkProject('aproject') >> true
+        1 * controller.frameworkService.authorizeApplicationResourceAny(_, _, ['delete', 'admin']) >> true
+        1 * controller.frameworkService.getFrameworkProject(_) >> Mock(IRundeckProject)
+        1 * controller.projectService.deleteProject(_, _, _, _) >> [success: false, error: 'message']
+        1 * controller.apiService.renderErrorFormat(_, [
+                status : 500,
+                code   : 'api.error.unknown',
+                message: 'message'
+        ]
+        )
+
+
     }
 
     def "export prepare"() {

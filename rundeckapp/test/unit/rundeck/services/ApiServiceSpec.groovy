@@ -25,8 +25,11 @@ import grails.test.mixin.TestMixin
 import grails.test.mixin.web.ControllerUnitTestMixin
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
+import org.codehaus.groovy.grails.plugins.codecs.JSONCodec
+import org.springframework.context.MessageSource
 import rundeck.AuthToken
 import rundeck.User
+import rundeck.filters.ApiRequestFilters
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -41,6 +44,9 @@ import java.time.ZoneId
 @TestMixin(ControllerUnitTestMixin)
 @Mock([User, AuthToken])
 class ApiServiceSpec extends Specification {
+    void setup() {
+        mockCodec(JSONCodec)
+    }
     def "renderWrappedFileContents json"(){
         given:
         def builder = new JSONBuilder()
@@ -570,6 +576,69 @@ class ApiServiceSpec extends Specification {
         0 * service.frameworkService._(*_)
         Exception e = thrown()
         e.message =~ /Roles are required/
+
+    }
+
+    @Unroll
+    def "render error json"() {
+        given:
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _,_, _) >> { it[0] + (it[1] ?: '') }
+        }
+        when:
+        def result = service.renderErrorJson(data, code)
+
+        then:
+        println result
+        result == '{"error":true,"apiversion":' +
+                (ApiRequestFilters.API_CURRENT_VERSION) +
+                        (expectCode ? ',"errorCode":"' + (expectCode) +'"' : '') +
+                        (eMessage ? ',"message":"' + (eMessage) +'"' : '') +
+                        (eMessages ? ',"messages":' + (eMessages) : '') +
+                        '}'
+
+
+        where:
+        code   | data                                 | expectCode          | eMessage            | eMessages
+        null   | [:]                                  | 'api.error.unknown' | 'api.error.unknown' | null
+        'test' | [:]                                  | 'test'              | 'api.error.unknown' | null
+        'test' | ['a', 'b']                           | 'test'              | null                | '["a","b"]'
+        'test' | [code: 'acode']                      | 'test'              | 'acode'             | null
+        'test' | [code: 'acode', message: 'amessage'] | 'test'              | 'amessage'          | null
+        'test' | [code: 'acode', args: ['a', 'b']]    | 'test'              | 'acode[a, b]'       | null
+        'test' | [message: 'amessage']                | 'test'              | 'amessage'          | null
+
+    }
+
+    @Unroll
+    def "render error xml"() {
+        given:
+        service.messageSource = Mock(MessageSource) {
+            getMessage(_, _,_, _) >> { it[0] + (it[1] ?: '') }
+        }
+        when:
+        def result = service.renderErrorXml(data, code)
+        then:
+        result == """<result error='true' apiversion='${ApiRequestFilters.API_CURRENT_VERSION}'>
+  <error code='${
+            code
+        }'>
+    """+
+                (emessage?("<message>${emessage}</message>"):'')+
+                (elist?("""<messages>\n      ${elist}\n    </messages>"""):'')+
+        """
+  </error>
+</result>"""
+
+        where:
+        code    | data                                 | emessage            | elist
+        'acode' | null                                 | 'api.error.unknown' | null
+        'acode' | [code: 'acode']                      | 'acode'             | null
+        'acode' | [code: 'acode', args: ['a', 'b']]    | 'acode[a, b]'       | null
+        'acode' | [code: 'acode', message: 'zmessage'] | 'zmessage'          | null
+        'acode' | [message: 'amessage']                | 'amessage'          | null
+        'acode' | ['a', 'b']                           | null                | '''<message>a</message>\n      <message>b</message>'''
+
 
     }
 }

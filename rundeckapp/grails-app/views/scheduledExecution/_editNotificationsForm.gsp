@@ -39,6 +39,10 @@
 <g:set var="isAvgUrl"
        value="${'true' == params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL] || null == params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL] && defAvgUrl}"/>
 
+<g:set var="defRetryableFailure" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME, ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE)}"/>
+<g:set var="isRetryableFailure" value="${'true' == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL] || null == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL] &&defFailure}"/>
+<g:set var="defRetryableFailureUrl" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME, ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE)}"/>
+<g:set var="isRetryableFailureUrl" value="${'true' == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL] || null == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL] &&defFailureUrl}"/>
 
 
 <div class="form-group">
@@ -139,6 +143,25 @@
                   defEmail: defAvg,
                   defUrl: defAvgUrl,
                   definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME },
+                  adminauth: adminauth,
+                  serviceName: ServiceNameConstants.Notification
+          ]}"/>
+
+<g:render template="/scheduledExecution/editNotificationsTriggerForm"
+          model="${[
+                  isVisible: (notifications|| params.notified == 'true'),
+                  trigger: ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME,
+                  triggerEmailCheckboxName: ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL,
+                  triggerEmailRecipientsName: ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_RECIPIENTS,
+                  triggerEmailSubjectName: ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_SUBJECT,
+                  triggerEmailAttachName: ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_ATTACH,
+                  triggerUrlCheckboxName: ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL,
+                  triggerUrlFieldName: ScheduledExecutionController.NOTIFY_RETRYABLEFAILURE_URL,
+                  isEmail: isRetryableFailure,
+                  isUrl: isRetryableFailureUrl,
+                  defEmail: defRetryableFailure,
+                  defUrl: defRetryableFailureUrl,
+                  definedNotifications: scheduledExecution.notifications?.findAll { it.eventTrigger == ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME },
                   adminauth: adminauth,
                   serviceName: ServiceNameConstants.Notification
           ]}"/>

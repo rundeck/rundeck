@@ -322,6 +322,27 @@ for:
         validation.errors['test1[1]'] ==
                 ['Error parsing the policy document: Expected \'for: { blah: <...> }\' to be a Seqence, but was [mapping]']
     }
+    def "validate for value cannot be null"(){
+        when:
+        def validation = validationForString '''
+context:
+    project: test
+description: wat
+by:
+    username: elf
+for:
+    blah:
+        - equals:
+            name:
+          allow: 'any'
+'''
+
+        then:
+        !validation.valid
+        validation.errors.size()==1
+        validation.errors['test1[1]'] ==
+                ['Type rule \'for: { blah: [...] }\' entry at index [1] Section \'equals:\' value for key: \'name\' cannot be null']
+    }
     def "validate type entry requires non-empty"(){
         when:
         def validation = validationForString '''

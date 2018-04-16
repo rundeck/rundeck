@@ -37,13 +37,12 @@ import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
-import com.dtolabs.rundeck.core.utils.FileUtils;
+import com.dtolabs.rundeck.plugins.ServiceNameConstants;
 
 import java.io.File;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Function;
 
 /**
  * NewExecutionServiceImpl is ...
@@ -54,6 +53,7 @@ class ExecutionServiceImpl implements ExecutionService {
     private final Framework framework;
 
     public ExecutionServiceImpl(Framework framework) {
+
         this.framework = framework;
     }
 
@@ -94,6 +94,12 @@ class ExecutionServiceImpl implements ExecutionService {
                 pluginLogging.begin();
             }
             try {
+                context
+                    .getPluginControlService()
+                    .checkDisabledPlugin(
+                        item.getType(),
+                        ServiceNameConstants.WorkflowStep
+                    );
                 result = executor.executeWorkflowStep(context, item);
             } finally {
                 if (null != pluginLogging) {
@@ -142,6 +148,12 @@ class ExecutionServiceImpl implements ExecutionService {
                 pluginLogging.begin();
             }
             try {
+                context
+                    .getPluginControlService()
+                    .checkDisabledPlugin(
+                        item.getNodeStepType(),
+                        ServiceNameConstants.WorkflowNodeStep
+                    );
                 result = interpreter.executeNodeStep(nodeContext, item, node);
             } finally {
                 if (null != pluginLogging) {

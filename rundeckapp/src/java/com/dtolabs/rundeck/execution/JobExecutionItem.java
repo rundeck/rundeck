@@ -39,6 +39,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionI
 public interface JobExecutionItem extends HandlerExecutionItem, NodeStepExecutionItem {
     public final static String STEP_EXECUTION_TYPE = "rundeck-jobref";
     public String getJobIdentifier();
+    public String getUuid();
     public String[] getArgs();
     public boolean isNodeStep();
     public Boolean getNodeKeepgoing();
@@ -47,4 +48,6 @@ public interface JobExecutionItem extends HandlerExecutionItem, NodeStepExecutio
     public String getNodeRankAttribute();
     public Boolean getNodeRankOrderAscending();
     public Boolean getNodeIntersect();
+    public Boolean isFailOnDisable();
+    public Boolean isImportOptions();
 }

@@ -534,6 +534,35 @@ by:
   group: [restart_user]
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+## Prevent Local Execution on the Rundeck Server
+
+Below is an example  policy to prevent any user on the "remote" group to
+execute any command or job on the local rundeck server.
+
+If a job is tried to be executed locally, it will fail. Also, the local
+rundeck server will not appear on the node filter list.
+
+File listing: remote.aclpolicy
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~{.yaml .numberLines}
+description: Acess for users on remote group
+context:
+  project: '.*'
+for:
+  resource:
+    - allow: '*'
+  job: 
+    - allow: '*'
+  adhoc:
+    - allow: '*'
+  node:
+    - equals:
+        rundeck_server: 'false'
+      allow: [read, run]
+by:
+  group: remote
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 ## Troubleshooting access control policy
 
 After defining an aclpolicy file to grant access to a particular group

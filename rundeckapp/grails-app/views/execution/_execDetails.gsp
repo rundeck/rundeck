@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution" %>
+<%@ page import="com.dtolabs.rundeck.app.support.ExecutionContext; com.dtolabs.rundeck.server.authorization.AuthConstants; com.dtolabs.rundeck.core.plugins.configuration.Description; rundeck.ScheduledExecution; rundeck.controllers.ScheduledExecutionController" %>
 <g:set var="rkey" value="${g.rkey()}"/>
 <div class="row" >
 <div class="col-sm-12">
@@ -271,6 +271,13 @@
                 <div class="row">
                     <div class="col-sm-12" >
                         <span class=""><g:message code="notification.event.${trigger}"/>:</span>
+
+                        <g:if test="${trigger == ScheduledExecutionController.OVERAVGDURATION_TRIGGER_NAME}">
+                            <div class="">
+                                <g:message code="scheduledExecution.property.notifyAvgDurationThreshold.label" default="Threshold"/>:
+                                <code class="argstring optvalue"><g:enc>${scheduledExecution.notifyAvgDurationThreshold}</g:enc></code>
+                            </div>
+                        </g:if>
                 <g:if test="${bytrigger[trigger].size()>1}">
                 <ul class="overflowx">
                 <g:each var="notify" in="${bytrigger[trigger].sort{a,b->a.type.toLowerCase()<=>b.type.toLowerCase()}}" status="i">

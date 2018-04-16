@@ -28,7 +28,7 @@
             <g:if test="${'file' == optionsel.optionType}">
                 <g:icon name="file"></g:icon>
             </g:if>
-            <g:enc>${optionsel.name}</g:enc></span>
+            <g:enc>${optionsel.label?optionsel.label:optionsel.name} </g:enc></span>
     <g:if
         test="${optionsel.defaultValue}">: <code class="optvalue"><g:enc>${optionsel.secureInput?'*****':optionsel.defaultValue}</g:enc></code></g:if><g:if
         test="${i <options.size()-1}">,</g:if>

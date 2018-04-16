@@ -41,7 +41,7 @@ import javax.security.auth.Subject
  * Created by greg on 7/14/15.
  */
 @TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution])
+@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec])
 class ScheduledExecutionControllerSpec extends Specification {
     def setup() {
         mockCodec(URIComponentCodec)
@@ -909,7 +909,7 @@ class ScheduledExecutionControllerSpec extends Specification {
             1 * listNotificationPlugins() >> [:]
         }
         controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
-            1 * listOrchestratorPlugins()
+            1 * getOrchestratorPlugins()
         }
         controller.pluginService = Mock(PluginService)
         when:
@@ -1117,7 +1117,7 @@ class ScheduledExecutionControllerSpec extends Specification {
             1 * listNotificationPlugins() >> [:]
         }
         controller.orchestratorPluginService = Mock(OrchestratorPluginService) {
-            1 * listOrchestratorPlugins()
+            1 * getOrchestratorPlugins()
         }
         controller.pluginService = Mock(PluginService)
         when:
@@ -1131,5 +1131,242 @@ class ScheduledExecutionControllerSpec extends Specification {
         !model.success
         model.failed
         model.error == 'project.execution.disabled'
+    }
+
+
+    def "total and reftotal on show"(){
+        given:
+        def refTotal = 10
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                refExecCount: refTotal,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+        def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                status: 'FAILED',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList:'fwnode',
+                failedNodeList: 'nodec xyz,nodea',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: se
+        ).save()
+
+
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+        testNodeSet.putNode(new NodeEntryImpl("nodec xyz"))
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+        testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
+
+        controller.frameworkService=Mock(FrameworkService){
+            authorizeProjectJobAll(_,_,_,_)>>true
+            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            filterNodeSet({ NodesSelector selector->
+                selector.acceptNode(new NodeEntryImpl("nodea")) &&
+                        selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
+                        !selector.acceptNode(new NodeEntryImpl("nodeb"))
+
+            },_)>>testNodeSetB
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+            getByIDorUUID(_)>>se
+        }
+        controller.notificationService=Mock(NotificationService)
+        controller.orchestratorPluginService=Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        when:
+        request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
+
+        def model = controller.show()
+        then:
+        response.redirectedUrl==null
+        model != null
+        model.reftotal == refTotal
+
+    }
+
+    def "isReference on show searching by uuid"(){
+        given:
+        def refTotal = 10
+        def se = new ScheduledExecution(
+                uuid: jobuuid,
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                refExecCount: refTotal,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+        def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                status: 'FAILED',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList:'fwnode',
+                failedNodeList: 'nodec xyz,nodea',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: se
+        ).save()
+
+        def jobref = new JobExec(uuid: refuuid).save()
+
+
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+        testNodeSet.putNode(new NodeEntryImpl("nodec xyz"))
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+        testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
+
+        controller.frameworkService=Mock(FrameworkService){
+            authorizeProjectJobAll(_,_,_,_)>>true
+            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            filterNodeSet({ NodesSelector selector->
+                selector.acceptNode(new NodeEntryImpl("nodea")) &&
+                        selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
+                        !selector.acceptNode(new NodeEntryImpl("nodeb"))
+
+            },_)>>testNodeSetB
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+            getByIDorUUID(_)>>se
+        }
+        controller.notificationService=Mock(NotificationService)
+        controller.orchestratorPluginService=Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        when:
+        request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
+
+        def model = controller.show()
+        then:
+        response.redirectedUrl==null
+        model != null
+        model.isReferenced==expected
+
+        where:
+        jobuuid | refuuid   | expected
+        'a'     | 'b'       | false
+        'a'     | 'a'       | true
+
+    }
+
+    def "isReference on show searching by jobname/group"(){
+        given:
+        def refTotal = 10
+        def se = new ScheduledExecution(
+                uuid: 'uuid',
+                jobName: jobname,
+                project: 'project1',
+                groupPath: '',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                refExecCount: refTotal,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+        def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                status: 'FAILED',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList:'fwnode',
+                failedNodeList: 'nodec xyz,nodea',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: se
+        ).save()
+
+        def jobref = new JobExec(jobName: refname).save()
+
+
+
+        NodeSetImpl testNodeSet = new NodeSetImpl()
+        testNodeSet.putNode(new NodeEntryImpl("nodea"))
+        testNodeSet.putNode(new NodeEntryImpl("nodeb"))
+        testNodeSet.putNode(new NodeEntryImpl("nodec xyz"))
+        NodeSetImpl testNodeSetB = new NodeSetImpl()
+        testNodeSetB.putNode(new NodeEntryImpl("nodea"))
+        testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
+
+        controller.frameworkService=Mock(FrameworkService){
+            authorizeProjectJobAll(_,_,_,_)>>true
+            filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
+            filterNodeSet({ NodesSelector selector->
+                selector.acceptNode(new NodeEntryImpl("nodea")) &&
+                        selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
+                        !selector.acceptNode(new NodeEntryImpl("nodeb"))
+
+            },_)>>testNodeSetB
+            getRundeckFramework()>>Mock(Framework){
+                getFrameworkNodeName()>>'fwnode'
+            }
+        }
+        controller.scheduledExecutionService=Mock(ScheduledExecutionService){
+            getByIDorUUID(_)>>se
+        }
+        controller.notificationService=Mock(NotificationService)
+        controller.orchestratorPluginService=Mock(OrchestratorPluginService)
+        controller.pluginService = Mock(PluginService)
+        when:
+        request.parameters = [id: se.id.toString(),project:'project1',retryFailedExecId:exec.id.toString()]
+
+        def model = controller.show()
+        then:
+        response.redirectedUrl==null
+        model != null
+        model.isReferenced==expected
+
+        where:
+        jobname | refname   | expected
+        'a'     | 'b'       | false
+        'a'     | 'a'       | true
+
     }
 }

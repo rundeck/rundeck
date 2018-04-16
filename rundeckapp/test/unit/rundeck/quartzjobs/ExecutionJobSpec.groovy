@@ -23,6 +23,7 @@ import org.quartz.JobExecutionContext
 import org.quartz.JobKey
 import org.quartz.Scheduler
 import rundeck.CommandExec
+import rundeck.Option
 import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.Execution
@@ -244,6 +245,175 @@ class ExecutionJobSpec extends Specification {
         true        | false         | true
         true        | true          | false
 
+
+    }
+
+    def "average notification threshold from options"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                options:[
+                        new Option(name: 'threshold',  required: true)
+                ],
+                notifyAvgDurationThreshold:'${option.threshold}',
+                totalTime: 60000,
+                execCount: 2
+        )
+        se.save(flush:true)
+        def dataContext = [option: [threshold: '+30s']]
+        ExecutionJob executionJob = new ExecutionJob()
+
+
+        when:
+
+        def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
+                                                              se.averageDuration,dataContext)
+
+        then:
+
+        result == 60000
+
+
+    }
+
+    def "average notification threshold add time to avg"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                notifyAvgDurationThreshold:'+30s',
+                totalTime: 60000,
+                execCount: 2
+        )
+        se.save(flush:true)
+        def dataContext = [:]
+        ExecutionJob executionJob = new ExecutionJob()
+
+
+        when:
+
+        def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
+                se.averageDuration,dataContext)
+
+        then:
+
+        result == 60000
+
+    }
+
+    def "average notification threshold fixed time"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                notifyAvgDurationThreshold:'20s',
+                totalTime: 60000,
+                execCount: 2
+        )
+        se.save(flush:true)
+        def dataContext = [:]
+        ExecutionJob executionJob = new ExecutionJob()
+
+
+        when:
+
+        def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
+                se.averageDuration,dataContext)
+
+        then:
+
+        result == 20000
+
+    }
+
+    def "average notification threshold perc time"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                notifyAvgDurationThreshold:'10%',
+                totalTime: 60000,
+                execCount: 2
+        )
+        se.save(flush:true)
+        def dataContext = [:]
+        ExecutionJob executionJob = new ExecutionJob()
+
+
+        when:
+
+        def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
+                se.averageDuration,dataContext)
+
+        then:
+
+        result == 33000
+
+    }
+
+    def "average notification threshold bad value"() {
+        given:
+        ScheduledExecution se = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [new CommandExec(
+                                [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                        )]
+                ),
+                notifyAvgDurationThreshold:'somethingbad',
+                totalTime: 60000,
+                execCount: 2
+        )
+        se.save(flush:true)
+        def dataContext = [:]
+        ExecutionJob executionJob = new ExecutionJob()
+
+
+        when:
+
+        def result=executionJob.getNotifyAvgDurationThreshold(se.notifyAvgDurationThreshold,
+                se.averageDuration,dataContext)
+
+        then:
+
+        result == 30000
 
     }
 }

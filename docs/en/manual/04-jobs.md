@@ -1647,6 +1647,7 @@ Job context variables:
 * `job.group`: Group of the Job
 * `job.id`: ID of the Job
 * `job.execid`: ID of the current Execution
+* `job.executionType` : Execution type, can be `user`, `scheduled` or `user-scheduled` for `Run Job Later` executions
 * `job.username`: Username of the user executing the Job
 * `job.project`: Project name
 * `job.loglevel`: Logging level, one of: 'ERROR','WARN','INFO','VERBOSE','DEBUG'

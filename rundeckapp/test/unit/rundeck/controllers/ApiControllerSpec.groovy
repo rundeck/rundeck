@@ -133,4 +133,59 @@ class ApiControllerSpec extends Specification {
         19      | _
 
     }
+    def "api token create * roles"() {
+        given:
+        request.method = 'POST'
+        request.api_version = apivers
+        request.addHeader('accept', 'application/json')
+        def requestJson = [
+                user : 'bob',
+                roles: ['*']
+        ]
+
+        controller.apiService = Mock(ApiService)
+        controller.frameworkService = Mock(FrameworkService)
+        AuthToken createdToken = new AuthToken(
+                user: new User(login: 'bob'),
+                token: 'abc',
+                authRoles: 'a,b',
+                uuid: '123uuid',
+                creator: 'elf',
+                expiration: new Date(123)
+                )
+        def roles = AuthToken.parseAuthRoles('a,b')
+        XML.use('v' + request.api_version)
+        JSON.use('v' + request.api_version)
+        when:
+        controller.apiTokenCreate()
+
+        then:
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.frameworkService.getAuthContextForSubject(_) >> Mock(UserAndRolesAuthContext) {
+            getUsername() >> 'bob'
+            getRoles() >> (['a', 'z'] as Set)
+        }
+        1 * controller.apiService.parseJsonXmlWith(_, _, _) >> {
+            it[2].json(requestJson)
+            true
+        }
+        1 * controller.apiService.generateUserToken(_, null, 'bob', null) >> createdToken
+        0 * controller.apiService._(*_)
+
+        response.status == 201
+        response.json == [
+                creator   : 'elf',
+                expired   : true,
+                roles     : ['a', 'b'],
+                expiration: '1970-01-01T00:00:00Z',
+                id        : '123uuid',
+                user      : 'bob',
+                token     : 'abc'
+        ]
+
+        where:
+        apivers | _
+        19      | _
+
+    }
 }

@@ -394,6 +394,7 @@ public class JettyCachingLdapLoginModule extends AbstractLoginModule {
                                                           && _roleUsernameMemberAttribute == null)
                 || _roleObjectClass == null) {
             LOG.warn("JettyCachingLdapLoginModule: No user roles found: roleBaseDn, roleObjectClass and roleMemberAttribute or roleUsernameMemberAttribute must be specified.");
+            addSupplementalRoles(roleList);
             return roleList;
         }
 

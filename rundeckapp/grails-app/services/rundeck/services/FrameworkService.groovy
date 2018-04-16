@@ -19,12 +19,7 @@ package rundeck.services
 import com.dtolabs.rundeck.app.support.ExecutionQuery
 import com.dtolabs.rundeck.core.authentication.Group
 import com.dtolabs.rundeck.core.authentication.Username
-import com.dtolabs.rundeck.core.authorization.Attribute
-import com.dtolabs.rundeck.core.authorization.AuthContext
-import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
-import com.dtolabs.rundeck.core.authorization.MultiAuthorization
-import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
-import com.dtolabs.rundeck.core.authorization.SubjectAuthContext
+import com.dtolabs.rundeck.core.authorization.*
 import com.dtolabs.rundeck.core.authorization.providers.EnvironmentalContext
 import com.dtolabs.rundeck.core.common.*
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException
@@ -32,12 +27,7 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.MissingProviderException
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.PluggableProviderRegistryService
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
-import com.dtolabs.rundeck.core.plugins.configuration.Describable
-import com.dtolabs.rundeck.core.plugins.configuration.Description
-import com.dtolabs.rundeck.core.plugins.configuration.Property
-import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
-import com.dtolabs.rundeck.core.plugins.configuration.Validator
+import com.dtolabs.rundeck.core.plugins.configuration.*
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.loader.ApplicationContextPluginFileSource
 import org.codehaus.groovy.grails.commons.GrailsApplication
@@ -49,6 +39,7 @@ import rundeck.ScheduledExecution
 import rundeck.services.framework.RundeckProjectConfigurable
 
 import javax.security.auth.Subject
+import java.util.function.Predicate
 
 /**
  * Interfaces with the core Framework object
@@ -68,6 +59,7 @@ class FrameworkService implements ApplicationContextAware {
     def metricService
     def Framework rundeckFramework
     def rundeckPluginRegistry
+    def PluginControlService pluginControlService
 
     def getRundeckBase(){
         return rundeckFramework.baseDir.absolutePath;
@@ -650,6 +642,13 @@ class FrameworkService implements ApplicationContextAware {
         return rundeckFramework;
     }
 
+    def PluginControlService getPluginControlService(String project) {
+        if(!pluginControlService){
+            pluginControlService = PluginControlServiceImpl.forProject(getRundeckFramework(), project)
+        }
+        return pluginControlService
+    }
+
     public UserAndRolesAuthContext getAuthContextForSubject(Subject subject) {
         if (!subject) {
             throw new RuntimeException("getAuthContextForSubject: Cannot get AuthContext without subject")
@@ -773,6 +772,57 @@ class FrameworkService implements ApplicationContextAware {
      */
     def Description getStepPluginDescription(String type) throws MissingProviderException{
         rundeckFramework.getStepExecutionService().providerOfType(type).description
+    }
+
+    /**
+     * Return step plugin of a certain type
+     * @param type
+     * @return
+     */
+    def getStepPlugin(String type) throws MissingProviderException{
+        rundeckFramework.getStepExecutionService().providerOfType(type)
+    }
+
+    /**
+     * Return node step plugin of a certain type
+     * @param type
+     * @return
+     */
+    def getNodeStepPlugin(String type){
+        rundeckFramework.getNodeStepExecutorService().providerOfType(type)
+    }
+
+
+    /**
+     * Return dynamic properties values from step plugin
+     * @param type, projectAndFrameworkValues
+     * @return
+     */
+    def Map<String, Object> getDynamicPropertiesStepPlugin(
+            String type, Map<String, Object> projectAndFrameworkValues) throws MissingProviderException{
+
+        def plugin = getStepPlugin(type)
+        getDynamicProperties(plugin, projectAndFrameworkValues)
+    }
+
+    /**
+     * Return dynamic properties values from node step plugin
+     * @param type, projectAndFrameworkValues
+     * @return
+     */
+    def Map<String, Object> getDynamicPropertiesNodeStepPlugin(
+            String type, Map<String, Object> projectAndFrameworkValues) throws MissingProviderException{
+
+        def plugin = getNodeStepPlugin(type)
+        getDynamicProperties(plugin, projectAndFrameworkValues)
+    }
+
+    def Map<String, Object> getDynamicProperties(plugin, Map<String, Object> projectAndFrameworkValues){
+        if(plugin instanceof DynamicProperties){
+            return plugin.dynamicProperties(projectAndFrameworkValues)
+        }
+
+        return null
     }
     /**
      * Return the list of NodeStepPlugin descriptions
@@ -1094,6 +1144,10 @@ class FrameworkService implements ApplicationContextAware {
         rundeckFramework.getProjectGlobals(project)
     }
 
+    Map<String, String> getProjectProperties(final String project) {
+        rundeckFramework.getFrameworkProjectMgr().getFrameworkProject(project).getProperties()
+    }
+
     String getDefaultInputCharsetForProject(final String project) {
         def config = rundeckFramework.getFrameworkProjectMgr().loadProjectConfig(project)
         String charsetname
@@ -1182,7 +1236,7 @@ class FrameworkService implements ApplicationContextAware {
      * @param category optional category to limit validation/output
      * @return map [errors:List, config: Map, props: Map, remove: List]
      */
-    Map validateProjectConfigurableInput(Map<String, Map> inputMap, String prefix, String category = null) {
+    Map validateProjectConfigurableInput(Map<String, Map> inputMap, String prefix, Predicate<String> categoryPredicate = null) {
         Map<String, RundeckProjectConfigurable> projectConfigurableBeans = applicationContext.getBeansOfType(
                 RundeckProjectConfigurable
         )
@@ -1198,8 +1252,8 @@ class FrameworkService implements ApplicationContextAware {
             }
             def categoriesMap = v.categories
             def valid = []
-            if (category) {
-                valid = categoriesMap.keySet().findAll { k2 -> categoriesMap[k2] == category }
+            if (categoryPredicate) {
+                valid = categoriesMap.keySet().findAll { k2 -> categoryPredicate.test(categoriesMap[k2])}
                 if (!valid) {
                     return
                 }
@@ -1238,7 +1292,7 @@ class FrameworkService implements ApplicationContextAware {
                 errors << ("Some configuration was invalid: " + report)
             } else {
                 Map<String, String> mapping = v.getPropertiesMapping()
-                if (category) {
+                if (categoryPredicate) {
                     mapping = mapping.subMap(valid)
                 }
                 def projvalues = Validator.performMapping(input, mapping, true)

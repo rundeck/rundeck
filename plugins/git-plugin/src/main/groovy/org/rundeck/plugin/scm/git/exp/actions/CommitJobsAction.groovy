@@ -68,6 +68,7 @@ class CommitJobsAction extends BaseAction implements GitExportAction {
                         title "Push Remotely?"
                         description "Check to push to the remote"
                         required false
+                        defaultValue'true'
                     },
             ]
             )

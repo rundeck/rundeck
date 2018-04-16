@@ -50,7 +50,7 @@
                                    data-job-name="${scheduledExecution.jobName}"
                                    data-job-group="${scheduledExecution.groupPath}"
                                    style="overflow:hidden; text-overflow: ellipsis; white-space: nowrap; overflow-x: hidden">
-                                       <g:set var="jstext" value="jobChosen('${enc(js: scheduledExecution.jobName)}','${enc(js: scheduledExecution.groupPath)}',this)"/>
+                                       <g:set var="jstext" value="jobChosen('${enc(js: scheduledExecution.extid)}','${enc(js: scheduledExecution.jobName)}','${enc(js: scheduledExecution.groupPath)}',this)"/>
                                        <span class="textbtn textbtn-success" title="Choose this job" onclick="${enc(attr:jstext)}">
                                            <i class="glyphicon glyphicon-book"></i>
                                            <g:enc>${scheduledExecution.jobName}</g:enc>
@@ -119,6 +119,16 @@
                                                       importCommit  : importStatus?.commit,
                                               ]"/>
                                 </g:if>
+
+                                <!-- ko if: displayBadge('${scheduledExecution.extid}') -->
+                                <span data-bind="attr: {'title': jobText('${scheduledExecution.extid}') }" class="has_tooltip">
+                                    <span data-bind="css: jobClass('${scheduledExecution.extid}')">
+                                        <i data-bind="css: jobIcon('${scheduledExecution.extid}')" class="glyphicon "></i>
+                                    </span>
+                                </span>
+                                <!-- /ko -->
+
+
                                     <g:link action="show"
                                             controller="scheduledExecution"
                                             id="${scheduledExecution.extid}"

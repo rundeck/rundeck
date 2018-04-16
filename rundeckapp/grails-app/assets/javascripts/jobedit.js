@@ -85,6 +85,7 @@ function _jobVarData() {
         var jobdata = {
             'id': {title: 'Job ID'},
             'execid': {title: 'Execution ID'},
+            'executionType': {title: 'Execution Type'},
             'name': {title: 'Job Name'},
             'group': {title: 'Job Group'},
             'username': {title: 'Name of user executing the job'},
@@ -96,7 +97,7 @@ function _jobVarData() {
             'threadcount': {title: 'Job Threadcount'},
             'filter': {title: 'Job Node Filter Query'}
         };
-        ['id', 'execid', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry', 'threadcount', 'filter'].each(function (e) {
+        ['id', 'execid', 'executionType', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry', 'threadcount', 'filter'].each(function (e) {
             _VAR_DATA['job'].push({key: 'job.' + e, category: 'Job', title: jobdata[e].title, desc: jobdata[e].desc});
         });
     }
@@ -248,6 +249,16 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
                     desc: 'For option: ' + _jobOptionData[x].name
                 }
             });
+            if(_jobOptionData[x].multivalued == true){
+                expvars.push({
+                    value: mkvar('option.' + _jobOptionData[x].name + '.delimiter' ),
+                    data: {
+                        category: 'Options',
+                        title: 'Option Delimeter value',
+                        desc: 'For option: ' + _jobOptionData[x].name
+                    }
+                });
+            }
             if (mode) {
                 expvars.push({
                     value: mkmodevar('option.' + _jobOptionData[x].name),
@@ -257,6 +268,17 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
                         desc: 'For option: ' + _jobOptionData[x].name
                     }
                 });
+
+                if(_jobOptionData[x].multivalued == true){
+                    expvars.push({
+                        value: mkmodevar('option.' + _jobOptionData[x].name + '.delimiter' ),
+                        data: {
+                            category: 'Options',
+                            title: 'Option value',
+                            desc: 'For option: ' + _jobOptionData[x].name
+                        }
+                    });
+                }
             }
             if (_jobOptionData[x].type == 'file') {
                 expvars.push({
@@ -361,7 +383,7 @@ function addWfAutocomplete(liitem, iseh, isnodestepfunc, istextareatemplatemode,
         })
     });
 }
-function _initJobPickerAutocomplete(nameid, groupid, projid) {
+function _initJobPickerAutocomplete(uuid,nameid, groupid, projid) {
     "use strict";
     var currentProject = jQuery('#schedEditFrameworkProject').val();
     jQuery("#" + nameid).devbridgeAutocomplete({
@@ -383,6 +405,8 @@ function _initJobPickerAutocomplete(nameid, groupid, projid) {
         onSelect: function (selected) {
             //set group from selected job
             jQuery('#' + groupid).val(selected.data.group);
+            //set uuid
+            jQuery('#' + uuid).val(selected.data.id);
         }
     });
 }
@@ -1087,13 +1111,16 @@ function _doRevertOptsAction() {
 }
 
 //job chooser
+var uuidField;
 var jobNameFieldId;
 var jobGroupFieldId;
-function jobChosen(name, group, elem) {
+function jobChosen(uuid, name, group, elem) {
     jobWasEdited();
-    if (jobNameFieldId && jobGroupFieldId) {
+    if (uuidField && jobNameFieldId && jobGroupFieldId) {
+        jQuery('#' + uuidField).val(uuid);
         jQuery('#' + jobNameFieldId).val(name);
         jQuery('#' + jobGroupFieldId).val(group);
+        doyftsuccess(uuidField);
         doyftsuccess(jobNameFieldId);
         doyftsuccess(jobGroupFieldId);
     }
@@ -1102,11 +1129,12 @@ function jobChosen(name, group, elem) {
     }
 }
 
-function loadJobChooserModal(elem, nameid, groupid, projectid, modalid, modalcontentid) {
+function loadJobChooserModal(elem, uuid, nameid, groupid, projectid, modalid, modalcontentid) {
     if (jQuery(elem).hasClass('active')) {
         jQuery('#' + modalid).modal('hide');
         return;
     }
+    uuidField = uuid;
     jobNameFieldId = nameid;
     jobGroupFieldId = groupid;
     var project = selFrameworkProject;

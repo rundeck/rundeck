@@ -50,10 +50,22 @@ class ImportJobs extends BaseAction implements GitImportAction {
 
     @Override
     ScmExportResult performAction(
+        final ScmOperationContext context,
+        final GitImportPlugin plugin,
+        final JobImporter importer,
+        final List<String> selectedPaths,
+        final Map<String, String> input
+    )
+    {
+        performAction(context, plugin, importer, selectedPaths,null,input)
+    }
+
+    ScmExportResult performAction(
             final ScmOperationContext context,
             final GitImportPlugin plugin,
             final JobImporter importer,
             final List<String> selectedPaths,
+            final List<String> deletedJobs,
             final Map<String, String> input
     )
     {
@@ -90,6 +102,20 @@ class ImportJobs extends BaseAction implements GitImportAction {
                 plugin.importTracker.trackJobAtPath(importResult.job,walk.getPathString())
                 sb << ("Succeeded importing ${walk.getPathString()}: ${importResult}")
             }
+        }
+
+        deletedJobs?.each { jobId ->
+            def importResult = importer.deleteJob(
+                context.frameworkProject,
+                jobId
+            )
+            if (!importResult.successful) {
+                success = false
+                sb << ("Failed deleting job with id: ${jobId}: " + importResult.errorMessage)
+            } else {
+                sb << ("Succeeded deleting job with id ${jobId} ")
+            }
+
         }
         def result = new ScmExportResultImpl()
         result.success = success

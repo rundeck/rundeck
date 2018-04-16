@@ -1187,6 +1187,10 @@ Defines email, webhook or plugin notifications for Job success and failure, with
 
 :    define notifications when exceed average duration
 
+[onretryablefailure][]
+
+:    define notifications when job fails but will be retried
+
 *Example*
 
 ~~~~~~~~ {.xml}
@@ -1209,6 +1213,9 @@ Defines email, webhook or plugin notifications for Job success and failure, with
         <email recipients='test@example.com' subject='Job Exceeded average duration' />
         <plugin type='MinimalNotificationPlugin' />
       </onavgduration>
+    <onfailure>
+        <email recipients="test@example.com,foo@example.com" subject='Job will be retried' />
+    </onfailure>
 </notification>      
 ~~~~~~~~ 
 
@@ -1257,9 +1264,20 @@ Embed an [webhook](#webhook) element to perform a HTTP POST to some URLs, within
 Embed an [plugin](#plugin) element to perform a custom action, within
 [notification](#notification).
 
+### onretryablefailure
+
+Embed an [email](#email) element to send email on failure with retries scheduled, within
+[notification](#notification).
+
+Embed an [webhook](#webhook) element to perform a HTTP POST to some URLs, within
+[notification](#notification).
+
+Embed an [plugin](#plugin) element to perform a custom action, within
+[notification](#notification).
+
 ### email 
 
-Define email recipients for Job execution result, within [onsuccess][], [onfailure][], [onstart][] or [onavgduration][].
+Define email recipients for Job execution result, within [onsuccess][], [onfailure][], [onstart][], [onavgduration][], or [onretryablefailure][].
 
 *Attributes*
 
@@ -1273,7 +1291,7 @@ recipients
 
 ### webhook
 
-Define URLs to submit a HTTP POST to containing the job execution result, within [onsuccess][], [onfailure][], [onstart][] or [onavgduration][].
+Define URLs to submit a HTTP POST to containing the job execution result, within [onsuccess][], [onfailure][], [onstart][], [onavgduration][], or [onretryablefailure][].
 
 
 *Attributes*
@@ -1293,7 +1311,7 @@ urls
 
 ### plugin
 
-Defines a configuration for a plugin to perform a Notification, within [onsuccess][], [onfailure][], [onstart][] or [onavgduration][].
+Defines a configuration for a plugin to perform a Notification, within [onsuccess][], [onfailure][], [onstart][], [onavgduration][], or [onretryablefailure][].
 
 *Attributes*
 
@@ -1358,3 +1376,4 @@ The Rundeck source code and all documentation may be downloaded from
 [onfailure]: #onfailure
 [onstart]: #onstart
 [onavgduration]: #onavgduration
+[onretryablefailure]: #onretryablefailure

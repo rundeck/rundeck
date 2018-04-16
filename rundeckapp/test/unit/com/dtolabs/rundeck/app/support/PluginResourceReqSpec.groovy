@@ -48,8 +48,41 @@ class PluginResourceReqSpec extends Specification {
     }
 
     @Unroll
-    def "path validation pass for #path"() {
-        def resrequest = new PluginResourceReq(service: 'UI', name: 'a-plugin', path: path)
+    def "name validation rejection for #name"() {
+        def resrequest = new PluginResourceReq(service: 'UI', name: plugin, path: path)
+
+        when:
+        resrequest.validate()
+        then:
+        resrequest.hasErrors()
+        resrequest.errors.hasFieldErrors('name')
+
+        where:
+        path              | plugin
+        'test/valid-path' | 'invalid/plugin'
+        'test/valid-path' | 'invalid plugin'
+    }
+
+    @Unroll
+    def "service validation rejection for #service"() {
+        def resrequest = new PluginResourceReq(service: service, name: 'valid', path: 'test/valid')
+
+        when:
+        resrequest.validate()
+        then:
+        resrequest.hasErrors()
+        resrequest.errors.hasFieldErrors('service')
+
+        where:
+        service    | _
+        'test.bad' | _
+        'test bad' | _
+        'test/bad' | _
+    }
+
+    @Unroll
+    def "path validation pass for #path and #plugin"() {
+        def resrequest = new PluginResourceReq(service: 'UI', name: plugin, path: path)
 
         when:
         resrequest.validate()
@@ -57,9 +90,11 @@ class PluginResourceReqSpec extends Specification {
         !resrequest.hasErrors()
 
         where:
-        path                                        | _
-        'test/valid-file'                           | _
-        'test/valid-file.html'                      | _
-        'test/valid-file/012359-+_ASDFZEDasdf.html' | _
+        path                                        | plugin
+        'test/valid-file'                           | 'a-plugin'
+        'test/valid-file'                           | 'a_plugin'
+        'test/valid-file'                           | 'a:plugin'
+        'test/valid-file.html'                      | 'a-plugin'
+        'test/valid-file/012359-+_ASDFZEDasdf.html' | 'a-plugin'
     }
 }

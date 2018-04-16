@@ -150,6 +150,7 @@ class JobsXMLCodec {
         map.scheduleEnabled = XmlParserUtil.stringToBool(map.scheduleEnabled, true)
         map.executionEnabled = XmlParserUtil.stringToBool(map.executionEnabled, true)
         map.nodeFilterEditable = XmlParserUtil.stringToBool(map.nodeFilterEditable, true)
+        map.multipleExecutions = XmlParserUtil.stringToBool(map.multipleExecutions, false)
 
         //perform structure conversions for expected input for populating ScheduledExecution
 
@@ -191,7 +192,7 @@ class JobsXMLCodec {
             }
             if (map.context?.options && map.context?.options?.option) {
                 final def opts = map.context.options.remove('option')
-                def ndx = map.context.options.preserveOrder ? 0 : -1;
+                def ndx = XmlParserUtil.stringToBool(map.context.options.preserveOrder, false) ? 0 : -1;
                 map.remove('context')
                 map.options = [:]
                 if (opts && opts instanceof Map) {
@@ -224,6 +225,21 @@ class JobsXMLCodec {
                         if (null != optm.required) {
                             optm.required = XmlParserUtil.stringToBool(optm.remove('required'), false)
                         }
+                        if (null != optm.multivalued) {
+                            optm.multivalued = XmlParserUtil.stringToBool(optm.remove('multivalued'), false)
+                        }
+                        if(optm.multivalued) {
+                            optm.multivaluedAllSelected = XmlParserUtil.stringToBool(
+                                    optm.remove('multivaluedAllSelected'),
+                                    false
+                            )
+                        }
+                        if(optm.isDate) {
+                            optm.isDate = XmlParserUtil.stringToBool(
+                                    optm.remove('isDate'),
+                                    false
+                            )
+                        }
                         if (ndx > -1) {
                             optm.sortIndex = ndx++;
                         }
@@ -243,15 +259,6 @@ class JobsXMLCodec {
             if(null!=map.nodefilters.excludeprecedence){
                 map.nodefilters.dispatch['excludePrecedence']=map.nodefilters.remove('excludeprecedence')
             }
-            if(null!=map.nodefilters.dispatch.threadcount && ""!= map.nodefilters.dispatch.threadcount){
-                //convert to integer
-                def value= map.nodefilters.dispatch.threadcount
-                try{
-                    map.nodefilters.dispatch.threadcount= XmlParserUtil.stringToInt(value,1)
-                }catch (NumberFormatException e){
-                    throw new JobXMLException("Not a valid threadcount: "+value)
-                }
-            }
             if(null!=map.nodefilters.dispatch.keepgoing){
                 //convert to boolean
                 def value= map.nodefilters.dispatch.keepgoing
@@ -261,6 +268,11 @@ class JobsXMLCodec {
                 //convert to boolean
                 def value= map.nodefilters.dispatch.excludePrecedence
                 map.nodefilters.dispatch.excludePrecedence= XmlParserUtil.stringToBool(value,false)
+            }
+            if(null!=map.nodefilters.dispatch.successOnEmptyNodeFilter){
+                //convert to boolean
+                def value= map.nodefilters.dispatch.successOnEmptyNodeFilter
+                map.nodefilters.dispatch.successOnEmptyNodeFilter= XmlParserUtil.stringToBool(value,false)
             }
             if(map.nodesSelectedByDefault){
                 map.nodesSelectedByDefault=XmlParserUtil.stringToBool(map.nodesSelectedByDefault,false)

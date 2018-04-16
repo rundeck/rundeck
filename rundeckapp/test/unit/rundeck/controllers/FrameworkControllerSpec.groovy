@@ -640,12 +640,12 @@ class FrameworkControllerSpec extends Specification {
         request.errors == null
         1 * fwkService.authResourceForProject(_)
         1 * fwkService.getAuthContextForSubject(_)
-        1 * fwkService.authorizeApplicationResourceAll(null,null,['admin']) >> true
+        1 * fwkService.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'
         },_) >> [success:true]
-        1 * fwkService.validateProjectConfigurableInput(_,_)>>[:]
+        1 * fwkService.validateProjectConfigurableInput(_,_,{!it.test('resourceModelSource')})>>[:]
 
     }
     def "save project with out description"(){
@@ -672,12 +672,12 @@ class FrameworkControllerSpec extends Specification {
         request.errors == null
         1 * fwkService.authResourceForProject(_)
         1 * fwkService.getAuthContextForSubject(_)
-        1 * fwkService.authorizeApplicationResourceAll(null,null,['admin']) >> true
+        1 * fwkService.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == ''
         },_) >> [success:true]
-        1 * fwkService.validateProjectConfigurableInput(_,_)>>[:]
+        1 * fwkService.validateProjectConfigurableInput(_,_,{!it.test('resourceModelSource')})>>[:]
 
     }
     def "get project resources, project dne"(){
@@ -847,7 +847,7 @@ class FrameworkControllerSpec extends Specification {
             }
         }
         def fwkService = Mock(FrameworkService) {
-            validateProjectConfigurableInput(_, _) >> [config: [testConfigurableBean: [
+            validateProjectConfigurableInput(_, _,_) >> [config: [testConfigurableBean: [
                     disableExecution: disableExecution,
                     disableSchedule : disableSchedule
             ]],props:[
@@ -885,7 +885,7 @@ class FrameworkControllerSpec extends Specification {
         request.errors == null
         1 * fwkService.authResourceForProject(_)
         1 * fwkService.getAuthContextForSubject(_)
-        1 * fwkService.authorizeApplicationResourceAll(null,null,['admin']) >> true
+        1 * fwkService.authorizeApplicationResourceAny(null,null,['configure','admin']) >> true
         1 * fwkService.listDescriptions() >> [null,null,null]
         1 * fwkService.updateFrameworkProjectConfig(_,{
             it['project.description'] == 'abc'

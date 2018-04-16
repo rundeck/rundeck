@@ -56,6 +56,11 @@ public class ScmImportTrackedItemBuilder {
         return this;
     }
 
+    public ScmImportTrackedItemBuilder deleted(final boolean deleted) {
+        proto.deleted = deleted;
+        return this;
+    }
+
     public ScmImportTrackedItem build() {
         return new Implementation(proto);
     }
@@ -69,6 +74,7 @@ public class ScmImportTrackedItemBuilder {
         private String iconName;
         private String jobId;
         private boolean selected;
+        private boolean deleted;
 
         public Implementation() {
         }
@@ -79,6 +85,7 @@ public class ScmImportTrackedItemBuilder {
             this.iconName = item.getIconName();
             this.jobId = item.getJobId();
             this.selected = item.isSelected();
+            this.deleted = item.isDeleted();
         }
 
 
@@ -109,6 +116,11 @@ public class ScmImportTrackedItemBuilder {
         @Override
         public String getJobId() {
             return jobId;
+        }
+
+        @Override
+        public boolean isDeleted(){
+            return deleted;
         }
 
     }

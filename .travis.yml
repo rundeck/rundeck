@@ -1,18 +1,19 @@
 language: java
-env: MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=192m" GRADLE_OPTS="-Xmx1024m -XX:MaxPermSize=192m" TERM="dumb"
+env: MAVEN_OPTS="-Xmx1024m -XX:MaxPermSize=192m" GRADLE_OPTS="-Xmx1024m -XX:MaxPermSize=192m"
+  TERM="dumb"
 jdk:
-  - oraclejdk8
-#sudo: false
-# can uncomment above after resolution of https://github.com/travis-ci/travis-ci/issues/3120
+- oraclejdk8
 sudo: required
 services:
-  - docker
+- docker
 before_install:
-  - sudo apt-get update -qq
-  - sudo apt-get install -y xmlstarlet jq
-  - sudo chsh --shell $(which bash)
+- sudo apt-get update -qq
+- sudo apt-get install -y xmlstarlet jq
+- sudo chsh --shell $(which bash)
 script:
-    - './gradlew clean build && groovy testbuild.groovy -gradle && make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER rpm deb && DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash run-docker-api-tests.sh && bash run-docker-tests.sh && bash run-docker-ssl-tests.sh && bash run-docker-ansible-tests.sh'
+- "./gradlew clean build && groovy testbuild.groovy -gradle && make TAG=SNAPSHOT BUILD_NUM=$TRAVIS_BUILD_NUMBER
+  rpm deb && DOCKER_COMPOSE_SPEC=docker-compose-api-mysql.yaml bash run-docker-api-tests.sh
+  && bash run-docker-tests.sh && bash run-docker-ssl-tests.sh && bash run-docker-ansible-tests.sh"
 addons:
   hostname: rdbuild
   apt:
@@ -23,17 +24,13 @@ addons:
     - zip
     - unzip
     - fakeroot
-    #- xmlstarlet #once added to whitelist
-    #- jq #once added to whitelist
-# whitelist
 branches:
   only:
     - master
-    - prerelease-2.10.0
+    - prerelease-2.11.0
 
 notifications:
   irc:
-    - "irc.freenode.org#rundeck"
-  #email: false
-
-
+  - irc.freenode.org#rundeck
+  slack:
+    secure: ep3APeVD6QwEkTJ8YR0f1eDzcFJ2uLUIci4Aob/5ILm+v8h0hOTAe1yFoKv+iR/4PCeZ+5PvVezOMHSkFNX7rCj06Mj/ivlnng569JLjOQAR0q25aeIH+wy4oDE33HaNbNOYLMe7bXDP4SelRi9SbRRe84j6OjDgZzyDC36cyAk=

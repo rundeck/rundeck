@@ -63,7 +63,14 @@ public class WorkflowExecutionServiceThread extends ServiceThreadBase<WorkflowEx
             throw new IllegalStateException("project or execution detail not instantiated");
         }
         if (loggingManager != null) {
-            PluginLoggingManager pluginLogging = loggingManager.createPluginLogging(context, null);
+            PluginLoggingManager pluginLogging = null;
+            try {
+                pluginLogging = loggingManager.createPluginLogging(context, null);
+            } catch (Throwable e) {
+                e.printStackTrace(System.err);
+                thrown = e;
+                return;
+            }
             resultObject = pluginLogging.runWith(this::runWorkflow);
         } else {
             resultObject = runWorkflow();

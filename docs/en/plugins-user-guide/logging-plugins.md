@@ -25,3 +25,7 @@ Streaming Log Readers
 
 To learn how to develop your own Logging plugin
 see [Plugin Developer Guide - Logging Plugin](../developer/logging-plugin.html).
+
+## Configuration
+
+See [Configuring - Logging](configuring.html#logging).

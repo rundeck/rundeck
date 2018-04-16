@@ -17,6 +17,7 @@
 package rundeck.services
 
 import com.dtolabs.rundeck.app.support.ExecQuery
+import org.springframework.transaction.TransactionDefinition
 import rundeck.ExecReport
 
 class ReportService  {
@@ -217,6 +218,8 @@ class ReportService  {
         def eqfilters = [
                 stat: 'status',
                 reportId: 'reportId',
+        ]
+        def jobfilters = [
                 jobId: 'jcJobId',
                 proj: 'ctxProject',
         ]
@@ -274,6 +277,68 @@ class ReportService  {
                         eq(val, query["${key}Filter"])
                     }
                 }
+
+                if (query.execIdFilter) {
+                    or {
+                        'in'('jcExecId', query.execIdFilter)
+                        and{
+                                    jobfilters.each { key, val ->
+                                        if (query["${key}Filter"] == 'null') {
+                                            or {
+                                                isNull(val)
+                                                eq(val, '')
+                                            }
+                                        } else if (query["${key}Filter"] == '!null') {
+                                            and {
+                                                isNotNull(val)
+                                                ne(val, '')
+                                            }
+                                        } else if (key == 'stat' && query["${key}Filter"] == 'succeed') {
+                                            or {
+                                                eq(val, 'succeed')
+                                                eq(val, 'succeeded')
+                                                eq(val, 'true')
+                                            }
+                                        } else if (key == 'stat' && query["${key}Filter"] == 'fail') {
+                                            or {
+                                                eq(val, 'fail')
+                                                eq(val, 'failed')
+                                            }
+                                        } else if (query["${key}Filter"]) {
+                                            eq(val, query["${key}Filter"])
+                                        }
+                                    }
+                        }
+                    }
+                }else{
+                    jobfilters.each { key, val ->
+                        if (query["${key}Filter"] == 'null') {
+                            or {
+                                isNull(val)
+                                eq(val, '')
+                            }
+                        } else if (query["${key}Filter"] == '!null') {
+                            and {
+                                isNotNull(val)
+                                ne(val, '')
+                            }
+                        } else if (key == 'stat' && query["${key}Filter"] == 'succeed') {
+                            or {
+                                eq(val, 'succeed')
+                                eq(val, 'succeeded')
+                                eq(val, 'true')
+                            }
+                        } else if (key == 'stat' && query["${key}Filter"] == 'fail') {
+                            or {
+                                eq(val, 'fail')
+                                eq(val, 'failed')
+                            }
+                        } else if (query["${key}Filter"]) {
+                            eq(val, query["${key}Filter"])
+                        }
+                    }
+                }
+
                 if (query.titleFilter) {
                     or {
                         eq('jcJobId', '')
@@ -400,11 +465,13 @@ class ReportService  {
                 lastDate = it.dateCompleted.time
             }
         }
-
-
-        def total = ExecReport.createCriteria().count{
-            applyExecutionCriteria(query, delegate,isJobs)
-        };
+        def minLevel = grailsApplication.config.rundeck.min?.isolation?.level
+        def isolationLevel = (minLevel && minLevel=='UNCOMMITTED')?TransactionDefinition.ISOLATION_READ_UNCOMMITTED:TransactionDefinition.ISOLATION_DEFAULT
+        def total = ExecReport.withTransaction([isolationLevel: isolationLevel]) {
+            ExecReport.createCriteria().count {
+                applyExecutionCriteria(query, delegate, isJobs)
+            }
+        }
         filters.putAll(specialfilters)
 
         return [

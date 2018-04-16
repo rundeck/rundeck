@@ -427,7 +427,7 @@ class UserController extends ControllerBase{
             )
             result = [result: true, /*apitoken: token.token, */ tokenid: token.uuid]
         } catch (Exception e) {
-            result = [result: false, error: e.getCause().message]
+            result = [result: false, error: e.getCause()?.message ?: e.message]
         }
         return renderTokenGenerateResult(result, params.login)
     }

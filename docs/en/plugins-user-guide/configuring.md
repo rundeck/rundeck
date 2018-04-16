@@ -200,6 +200,7 @@ currently available triggers:
 * `onsuccess` - the Job succeeded
 * `onfailure` - the Job failed
 * `onavgduration` - the Execution exceed the average duration of the Job
+* `onretryablefailure` - the Job failed but will be retried
 
 When you define the Job in the GUI or via [XML](../man5/job-v20.html#notification) or
 [Yaml](../man5/job-yaml-v12.html#notification), you can add any of the available Notification plugin types to happen for
@@ -264,6 +265,28 @@ that can be used to tune the behavior of the plugins:
 * `rundeck.execution.logs.fileStorage.remotePendingDelay`
     * Grace time to allow after an execution finishes. Clients will see a "pending" message within this period after an execution finishes, even if the storage plugin is unable to find the log file. After this time period, they will see a "not found" message if the plugin is unable to find the log file.
     * default value: `120` (seconds)
+* `rundeck.execution.logs.fileStorage.retrievalTasks.concurrencyLimit`
+    * concurrency for retrieval tasks
+    * default: 5
+* `rundeck.execution.logs.fileStorage.storageTasks.concurrencyLimit`
+    * concurrency for storage tasks
+    * default: 10
+* `rundeck.execution.logs.fileStorage.scheduledTasks.poolSize`
+    * threadpool size for log storage retry scheduling (retries)
+    * default: 5
+
+
+For plugins that support Partial/Checkpoint log storage, these additional configuration properties can be set:
+
+
+* `rundeck.execution.logs.fileStorage.checkpoint.time.interval` default: `30s` (30 seconds)
+    * This is the time interval between submitting a new partial log storage request
+* `rundeck.execution.logs.fileStorage.checkpoint.time.minimum` default: `30s` (30 seconds)
+    * This is the minimum time to wait until the first partial log storage request
+* `rundeck.execution.logs.fileStorage.checkpoint.fileSize.minimum`  default: `0` (no minimum)
+    * This is the minimum file size before the first partial log storage request
+* `rundeck.execution.logs.fileStorage.checkpoint.fileSize.increment` default: `0` (no minimum increment)
+    * this is the file size change increment required before submitting another partial log storage request
 
 #### Logging Plugin Configuration
 

@@ -167,6 +167,12 @@ function Report(data) {
         }
         }
     });
+
+    self.textJobRef = function (schedId) {
+        if(self.jobId() != schedId){
+            return '(Referenced)'
+        }
+    };
     ko.mapping.fromJS(data, {}, self);
 }
 function History(ajaxHistoryLink,ajaxNowRunningLink,ajaxBulkDeleteLink) {

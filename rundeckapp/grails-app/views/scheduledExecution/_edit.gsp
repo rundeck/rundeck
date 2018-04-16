@@ -173,6 +173,7 @@ function getCurSEID(){
             ko.applyBindings(nodeFilter,jQuery('#nodegroupitem')[0]);
             registerNodeFilters(nodeFilter, '#nodegroupitem');
             nodeSummary.reload();
+            nodeFilter.updateMatchedNodes();
             jQuery('body').on('click', '.nodefilterlink', function (evt) {
                 evt.preventDefault();
                 handleNodeFilterLink(this);
@@ -704,7 +705,7 @@ function getCurSEID(){
             </div>
         </div>
 
-        <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeThreadcount', 'has-error')}">
+        <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'nodeThreadcountDynamic', 'has-error')}">
             <label for="schedJobnodeThreadcount" class="${labelColClass}">
                 <g:message code="scheduledExecution.property.nodeThreadcount.label"/>
             </label>
@@ -712,16 +713,16 @@ function getCurSEID(){
             <div class="${fieldColSize}">
                 <div class="row">
                 <div class="col-sm-4">
-                <input type='number' name="nodeThreadcount"
-                       value="${enc(attr:scheduledExecution?.nodeThreadcount)}" id="schedJobnodeThreadcount"
+                <input type='text' name="nodeThreadcountDynamic"
+                       value="${enc(attr:scheduledExecution?.nodeThreadcountDynamic)}" id="schedJobnodeThreadcount"
                        size="3"
                        class="form-control input-sm"/>
                 </div>
                 </div>
-                <g:hasErrors bean="${scheduledExecution}" field="nodeThreadcount">
+                <g:hasErrors bean="${scheduledExecution}" field="nodeThreadcountDynamic">
                     <div class="text-warning">
                         <i class="glyphicon glyphicon-warning-sign"></i>
-                        <g:renderErrors bean="${scheduledExecution}" as="list" field="nodeThreadcount"/>
+                        <g:renderErrors bean="${scheduledExecution}" as="list" field="nodeThreadcountDynamic"/>
                     </div>
                 </g:hasErrors>
                 <span class="help-block">

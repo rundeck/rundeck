@@ -34,4 +34,42 @@ class ScmActionSpec extends Specification {
         ['a','123']==ScmAction.parseWithJson([jobs:['a',123]]).jobIds
         ['a','123','true']==ScmAction.parseWithJson([jobs:['a',123,true]]).jobIds
     }
+
+    def "delete jobs input xml"() {
+        given:
+        def slurp = new XmlSlurper().parseText(xml)
+
+        when:
+        def result = ScmAction.parseWithXml(slurp)
+
+        then:
+        result instanceof ScmAction
+        result.jobIds == ['job1']
+        result.selectedItems == ['item1']
+        result.deletedItems == ['delitem1', 'delitem2']
+        result.deletedJobs == ['deljob1', 'deljob2']
+        result.input == [message: 'blah']
+
+        where:
+        xml | _
+        '''<scmAction>
+    <input>
+        <entry key="message">blah</entry>
+    </input>
+    <jobs>
+        <job jobId="job1"/>
+    </jobs>
+    <items>
+        <item itemId="item1"/>
+    </items>
+    <deleted>
+        <item itemId="delitem1"/>
+        <item itemId="delitem2"/>
+    </deleted>
+    <deletedJobs>
+        <job jobId="deljob1"/>
+        <job jobId="deljob2"/>
+    </deletedJobs>
+</scmAction>''' | _
+    }
 }

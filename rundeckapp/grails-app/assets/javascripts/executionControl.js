@@ -1460,5 +1460,22 @@ var FollowControl = Class.create({
                 obj.updatecancel({error: "Failed to kill Job: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err)});
             }
         }).success(_ajaxReceiveTokens.curry('exec_cancel_token'));
-    }
+    },
+
+    doincomplete: function() {
+        var obj=this;
+        return jQuery.ajax({
+            type: 'POST',
+            url: this.appLinks.executionMarkExecutionIncomplete,
+            dataType:'json',
+            data: {id: this.executionId},
+            beforeSend: _ajaxSendTokens.curry('exec_cancel_token'),
+            success: function (data,status,jqxhr) {
+                obj.updatecancel(data);
+            },
+            error: function (jqxhr,status,err) {
+                obj.updatecancel({error: "Failed to mark Job as incomplete: " + (jqxhr.responseJSON && jqxhr.responseJSON.error? jqxhr.responseJSON.error: err)});
+            }
+        }).success(_ajaxReceiveTokens.curry('exec_cancel_token'));
+    },
 });

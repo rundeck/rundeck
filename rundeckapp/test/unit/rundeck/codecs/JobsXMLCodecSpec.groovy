@@ -1221,6 +1221,145 @@ inside]]></aproperty>
 
     }
 
+    @Unroll
+    def "decode option multivalued "() {
+        given:
+        def xml = """<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+    <context>
+        <options>
+            <option name="testopt1" type="atype" $text delimiter=",">
+            </option>
+        </options>
+    </context>
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+      </command>
+    </sequence>
+
+  </job>
+</joblist>
+"""
+        when:
+        def result = JobsXMLCodec.decode(xml.toString())
+
+        then:
+        result.size() == 1
+        result[0].jobName == 'test job 1'
+        result[0].options.size() == 1
+        result[0].options[0].name == 'testopt1'
+        result[0].options[0].multivalued == resval
+        result[0].options[0].delimiter == delim
+
+        where:
+        text                     || resval || delim
+        'multivalued="true"'     || true   || ','
+        'multivalued="false"'    || null   || null
+        'multivalued=""'         || null   || null
+        'multivalued="asdfasdf"' || null   || null
+        ''                       || null   || null
+
+    }
+
+    @Unroll
+    def "decode option isDate "() {
+        given:
+        def xml = """<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+    <context>
+        <options>
+            <option name="testopt1" type="atype" $text >
+            </option>
+        </options>
+    </context>
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+      </command>
+    </sequence>
+
+  </job>
+</joblist>
+"""
+        when:
+        def result = JobsXMLCodec.decode(xml.toString())
+
+        then:
+        result.size() == 1
+        result[0].jobName == 'test job 1'
+        result[0].options.size() == 1
+        result[0].options[0].name == 'testopt1'
+        result[0].options[0].isDate == resval
+
+        where:
+        text                || resval
+        'isDate="true"'     || true
+        'isDate="false"'    || false
+        'isDate=""'         || false
+        'isDate="asdfasdf"' || false
+        ''                  || false
+
+    }
+
+    @Unroll
+    def "decode option preserve order value"() {
+        given:
+        def xml = """<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+    <context>
+        <options $text>
+            <option name="z" type="atype" >
+            </option>
+            <option name="a" type="atype" >
+            </option>
+        </options>
+    </context>
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+      </command>
+    </sequence>
+
+  </job>
+</joblist>
+"""
+        when:
+        def result = JobsXMLCodec.decode(xml.toString())
+
+        then:
+        result.size() == 1
+        result[0].jobName == 'test job 1'
+        result[0].options.size() == 2
+        result[0].options[0].name == vals[0]
+        result[0].options[0].sortIndex == indicies[0]
+        result[0].options[1].name == vals[1]
+        result[0].options[1].sortIndex == indicies[1]
+
+        where:
+        text                            | vals       | indicies
+        'preserveOrder="true"'          | ['z', 'a'] | [0, 1]
+        'preserveOrder="false"'         | ['a', 'z'] | [null, null]
+        'preserveOrder="not a boolean"' | ['a', 'z'] | [null, null]
+        ''                              | ['a', 'z'] | [null, null]
+
+    }
+
 
     @Unroll
     def "decode retry"() {
@@ -1256,6 +1395,85 @@ inside]]></aproperty>
         '<retry>2</retry>'              | '2'      | null
         '<retry delay="1h">2</retry>'   | '2'      | '1h'
         ''                              | null     | null
+
+    }
+
+
+    @Unroll
+    def "decode multiple executions"() {
+        given:
+        def xml = """<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+    """ + text + """
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+      </command>
+    </sequence>
+
+  </job>
+</joblist>
+"""
+        when:
+        def result = JobsXMLCodec.decode(xml.toString())
+
+        then:
+        result.size() == 1
+        result[0].jobName == 'test job 1'
+        result[0].multipleExecutions == expect
+
+        where:
+        text                                                     || expect
+        '<multipleExecutions>false</multipleExecutions>'         || false
+        ''                                                       || false
+        '<multipleExecutions>not a boolean</multipleExecutions>' || false
+        '<multipleExecutions>true</multipleExecutions>'          || true
+
+    }
+
+
+    @Unroll
+    def "decode successOnEmptyNodeFilter"() {
+        given:
+        def xml = """<joblist>
+  <job>
+    <description>ddddd</description>
+    <executionEnabled>true</executionEnabled>
+    
+    <loglevel>INFO</loglevel>
+    <name>test job 1</name>
+    <scheduleEnabled>true</scheduleEnabled>
+    <sequence keepgoing='false' strategy='teststrateg'>
+      <command>
+        <exec>echo hi</exec>
+      </command>
+    </sequence>
+        <dispatch>
+        """ + text + """
+        </dispatch>
+
+  </job>
+</joblist>
+"""
+        when:
+        def result = JobsXMLCodec.decode(xml.toString())
+
+        then:
+        result.size() == 1
+        result[0].jobName == 'test job 1'
+        result[0].successOnEmptyNodeFilter == expect
+
+        where:
+        text                                                                 || expect
+        '<successOnEmptyNodeFilter>false</successOnEmptyNodeFilter>'         || false
+        ''                                                                   || false
+        '<successOnEmptyNodeFilter>not a boolean</successOnEmptyNodeFilter>' || false
+        '<successOnEmptyNodeFilter>true</successOnEmptyNodeFilter>'          || true
 
     }
 

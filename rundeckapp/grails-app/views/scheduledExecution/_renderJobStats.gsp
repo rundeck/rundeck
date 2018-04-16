@@ -14,13 +14,19 @@
   - limitations under the License.
   --}%
 
-<%@ page import="rundeck.Execution" %>
+<%@ page import="rundeck.ReferencedExecution; rundeck.Execution" %>
 <g:set var="lastrun"
        value="${scheduledExecution.id ? Execution.findByScheduledExecutionAndDateCompletedIsNotNull(scheduledExecution, [max: 1, sort: 'dateStarted', order: 'desc']) : null}"/>
+<g:set var="reflastrun"
+       value="${scheduledExecution.id ? ReferencedExecution.findByScheduledExecution(scheduledExecution, [max: 1]) : null}"/>
 <g:set var="successcount"
        value="${scheduledExecution.id ? Execution.countByScheduledExecutionAndStatusInList(scheduledExecution, ['true','succeeded','scheduled']) : 0}"/>
+<g:set var="refsuccesscount"
+       value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecutionAndStatusInList(scheduledExecution, ['true','succeeded','scheduled']) : 0}"/>
 <g:set var="execCount"
        value="${scheduledExecution.id ? Execution.countByScheduledExecution(scheduledExecution) : 0}"/>
-<g:set var="successrate" value="${execCount > 0 ? (successcount / execCount) : 0}"/>
+<g:set var="refexecCount"
+       value="${scheduledExecution.id ? ReferencedExecution.countByScheduledExecution(scheduledExecution) : 0}"/>
+<g:set var="successrate" value="${(execCount + refexecCount) > 0 ? ((successcount+refsuccesscount) / (execCount+refexecCount)) : 0}"/>
 <g:render template="/scheduledExecution/showStats"
-          model="[scheduledExecution: scheduledExecution, lastrun: lastrun ? lastrun : null, successrate: successrate]"/>
+          model="[scheduledExecution: scheduledExecution, lastrun: lastrun ? lastrun : null, successrate: successrate,reflastrun: reflastrun ? reflastrun : null]"/>

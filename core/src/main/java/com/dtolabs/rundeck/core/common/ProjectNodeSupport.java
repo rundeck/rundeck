@@ -64,6 +64,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     private Set<Closeable> nodeSourceReferences = new HashSet<>();
     private ResourceFormatGeneratorService resourceFormatGeneratorService;
     private ResourceModelSourceService resourceModelSourceService;
+    private boolean sourcesOpened;
 
     public ProjectNodeSupport(
             final IRundeckProjectConfig projectConfig,
@@ -200,7 +201,10 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         final long lastMod = projectConfig.getConfigLastModifiedTime()!=null? projectConfig.getConfigLastModifiedTime().getTime():0;
         if (lastMod > nodesSourcesLastReload) {
             unloadSources();
+        }
+        if (!sourcesOpened) {
             loadResourceModelSources();
+            sourcesOpened = true;
         }
         return nodesSourceList;
     }
@@ -234,6 +238,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         nodesSourceList = new ArrayList<>();
         Closeables.closeQuietly(nodeSourceReferences);
         nodeSourceReferences = new HashSet<>();
+        sourcesOpened = false;
     }
 
     private void loadResourceModelSources() {

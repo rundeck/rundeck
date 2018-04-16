@@ -19,16 +19,29 @@ package com.dtolabs.rundeck.core.execution.workflow.steps.node
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkProject
 import com.dtolabs.rundeck.core.common.IFrameworkServices
+import com.dtolabs.rundeck.core.common.INodeEntry
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
+import com.dtolabs.rundeck.core.data.DataContext
+import com.dtolabs.rundeck.core.data.MultiDataContext
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils
+import com.dtolabs.rundeck.core.dispatcher.ContextView
+import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.dtolabs.rundeck.core.execution.ConfiguredStepExecutionItem
 import com.dtolabs.rundeck.core.execution.ExecArgList
+import com.dtolabs.rundeck.core.execution.ExecutionContext
 import com.dtolabs.rundeck.core.execution.ExecutionService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorResult
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.impl.ScriptFileNodeStepUtils
+import com.dtolabs.rundeck.core.plugins.configuration.Describable
+import com.dtolabs.rundeck.core.plugins.configuration.Description
 import com.dtolabs.rundeck.core.tools.AbstractBaseTest
 import com.dtolabs.rundeck.plugins.step.FileExtensionGeneratedScript
 import com.dtolabs.rundeck.plugins.step.GeneratedScript
+import com.dtolabs.rundeck.plugins.step.PluginStepContext
 import com.dtolabs.rundeck.plugins.step.RemoteScriptNodeStepPlugin
+import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -70,6 +83,77 @@ class RemoteScriptNodeStepPluginAdapterSpec extends Specification {
                 it instanceof ExecArgList && ((ExecArgList) it).asFlatStringList() == ['a', 'cmd']
             }, node
             )
+        }
+    }
+
+    static class TestExecItem implements NodeStepExecutionItem, ConfiguredStepExecutionItem {
+        Map<String, Object> stepConfiguration
+        String type
+        String label
+        String nodeStepType
+    }
+
+    static class TestPlugin implements Describable, RemoteScriptNodeStepPlugin {
+        //Description description =
+        @Override
+        Description getDescription() {
+            def builder = DescriptionBuilder.builder().name("testPlugin")
+            pluginPropNames.each {
+                builder.stringProperty(it, null, false, null, null)
+            }
+            builder.build()
+        }
+        List<String> pluginPropNames
+        GeneratedScript script
+
+        @Override
+        GeneratedScript generateScript(PluginStepContext context, Map<String, Object> configuration, INodeEntry entry) throws NodeStepException {
+            script
+        }
+    }
+
+    def "step config does not replace missing configs with blank"() {
+        given:
+        framework.frameworkServices = Mock(IFrameworkServices)
+        DataContext dataContext = DataContextUtils.context()
+        WFSharedContext sharedContext = SharedDataContextUtils.sharedContext()
+
+        StepExecutionContext context = Mock(StepExecutionContext) {
+            getFramework() >> framework
+            getFrameworkProject() >> PROJECT_NAME
+            getDataContextObject() >> dataContext
+            getSharedDataContext() >> sharedContext
+        }
+        def node = new NodeEntryImpl('node')
+        def script = Mock(FileExtensionGeneratedScript) {
+            getArgs() >> ['someargs'].toArray()
+        }
+        def plugin = new TestPlugin(script: script, pluginPropNames: ['abc', 'def', 'xyz'])
+        def adapter = new RemoteScriptNodeStepPluginAdapter(plugin)
+        adapter.scriptUtils = Mock(ScriptFileNodeStepUtils)
+
+        def instanceConfig = [
+                abc: 'buddy',
+                def: 'shampoo/${config.dne}/asdf',
+                xyz: 'test/${config.abc}',
+        ]
+        def item = new TestExecItem(stepConfiguration: instanceConfig)
+
+
+        when:
+        def result = adapter.executeNodeStep(context, item, node)
+
+        then:
+        _ * script.getScript() >> 'a script'
+        1 * adapter.scriptUtils.executeRemoteScript({ ExecutionContext ctx ->
+            ctx.getDataContext().get('config') == instanceConfig
+        }, _, node, ['someargs'].toArray(), _) >>
+                Mock(NodeStepResult) {
+                    isSuccess() >> true
+                }
+        _ * framework.frameworkServices.getExecutionService() >> Mock(ExecutionService) {
+            1 * fileCopyScriptContent(_, _, node, _) >> { args -> args[3] }
+
         }
     }
 

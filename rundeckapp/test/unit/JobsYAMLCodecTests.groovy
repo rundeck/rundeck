@@ -106,7 +106,7 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong option values[0]", "a", doc[0].options[0].values[0]
             assertEquals "wrong option values[1]", "b", doc[0].options[0].values[1]
 
-            assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
+            assertEquals "incorrect dispatch threadcount", "1", doc[0].nodefilters.dispatch.threadcount
             assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
             assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
             assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
@@ -200,7 +200,7 @@ public class JobsYAMLCodecTests  {
             assertEquals "wrong option values[0]", "a", doc[0].options[0].values[0]
             assertEquals "wrong option values[1]", "b", doc[0].options[0].values[1]
 
-            assertEquals "incorrect dispatch threadcount", 1, doc[0].nodefilters.dispatch.threadcount
+            assertEquals "incorrect dispatch threadcount", "1", doc[0].nodefilters.dispatch.threadcount
             assertTrue "incorrect dispatch keepgoing", doc[0].nodefilters.dispatch.keepgoing
             assertTrue "incorrect dispatch excludePrecedence", doc[0].nodefilters.dispatch.excludePrecedence
             assertNotNull "missing nodefilters include", doc[0].nodefilters.filter
@@ -2057,6 +2057,99 @@ public class JobsYAMLCodecTests  {
         //schedule
         assertTrue "wrong scheduled", se.scheduled
         assertEquals "wrong crontabstring", "0 0,5,10,35 8/2 * * ? 2001,2010,2012", se.crontabString
+
+    }
+  
+    void testNotificationThreshold() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution(
+                jobName:'test job 1',
+                description:'test descrip',
+                loglevel: 'INFO',
+                project:'test1',
+                timeout:'2h',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                options:[new Option([name:'threadCount',defaultValue:'30'])] as TreeSet,
+                nodeThreadcountDynamic: "15",
+                nodeKeepgoing:true,
+                doNodedispatch:true,
+                notifications: [
+                        new Notification(eventTrigger: 'avgduration', type: 'email', content: 'test2@example.com')
+                ],
+                notifyAvgDurationThreshold: '30s'
+        )
+
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertEquals "wrong name", "test job 1", doc[0].name
+        assertEquals "incorrect notification Threshold","30s",doc[0].notifyAvgDurationThreshold
+
+    }
+
+    void testEncodeThreadCountFromOption() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution(
+                jobName:'test job 1',
+                description:'test descrip',
+                loglevel: 'INFO',
+                project:'test1',
+                timeout:'2h',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                options:[new Option([name:'threadCount',defaultValue:'30'])] as TreeSet,
+                nodeThreadcountDynamic: "\${option.threadCount}",
+                nodeKeepgoing:true,
+                doNodedispatch:true
+        )
+
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertEquals "wrong name", "test job 1", doc[0].name
+        assertEquals "incorrect dispatch threadcount","\${option.threadCount}",doc[0].nodefilters.dispatch.threadcount
+
+
+    }
+
+    void testEncodeThreadCountFromValue() {
+        def Yaml yaml = new Yaml()
+        ScheduledExecution se = new ScheduledExecution(
+                jobName:'test job 1',
+                description:'test descrip',
+                loglevel: 'INFO',
+                project:'test1',
+                timeout:'2h',
+                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                options:[new Option([name:'threadCount',defaultValue:'30'])] as TreeSet,
+                nodeThreadcountDynamic: "15",
+                nodeKeepgoing:true,
+                doNodedispatch:true
+        )
+
+        def jobs1 = [se]
+        def  ymlstr = JobsYAMLCodec.encode(jobs1)
+        assertNotNull ymlstr
+        assertTrue ymlstr instanceof String
+
+
+        def doc = yaml.load(ymlstr)
+        assertNotNull doc
+        assertEquals "wrong number of jobs", 1, doc.size()
+        assertEquals "wrong name", "test job 1", doc[0].name
+        assertEquals "incorrect dispatch threadcount","15",doc[0].nodefilters.dispatch.threadcount
+
 
     }
 

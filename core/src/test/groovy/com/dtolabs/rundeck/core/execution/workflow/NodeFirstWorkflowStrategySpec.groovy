@@ -66,6 +66,7 @@ class NodeFirstWorkflowStrategySpec extends Specification {
             getFrameworkProject()>>TEST_PROJ
             getDataContext()>>dataContext
             getDataContextObject()>>dataContext
+            getFramework() >> framework
         }
         def successExecutor = Mock(StepExecutor) {
             isNodeDispatchStep(_) >> false
@@ -133,6 +134,7 @@ class NodeFirstWorkflowStrategySpec extends Specification {
             getNodes() >> nodeSet
             getFrameworkProject()>>TEST_PROJ
             getDataContext()>>new BaseDataContext(dataContext)
+            getFramework() >> framework
         }
         def item = Mock(WorkflowExecutionItem) {
             getWorkflow() >> Mock(IWorkflow) {

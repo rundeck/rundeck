@@ -1417,7 +1417,9 @@ void testDecodeBasic__no_group(){
   </job>
 </joblist>
 """
+        print filter1
         def jobs = JobsXMLCodec.decode(filter1)
+        print jobs
         assertNotNull jobs
         assertEquals "incorrect size", 1, jobs.size()
         assertTrue "incorrect nodefilter doNodedispatch", jobs[0].doNodedispatch
@@ -6456,4 +6458,96 @@ void testDecodeBasic__no_group(){
         assertEquals "incorrect notifications onsuccess email size", 1, doc.job[0].notification[0].onfailure[0].email.size()
         assertEquals "incorrect notifications onsuccess email size", "test2@example.com", doc.job[0].notification[0].onfailure[0].email[0]['@recipients'].text()
     }
+
+    void testNotificationThreshold(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        timeout:'2h',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        nodeThreadcountDynamic: "10",
+                        nodeKeepgoing:true,
+                        doNodedispatch:true,
+                        notifications: [
+                                new Notification(eventTrigger: 'avgduration', type: 'email', content: 'test2@example.com')
+                        ],
+                        notifyAvgDurationThreshold: '30s'
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+
+        println(jobs1)
+        println(xmlstr)
+        println(doc)
+
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "incorrect notification Threshold","30s",doc.job[0].notifyAvgDurationThreshold.text()
+    }
+  
+    void testEncodeThreadCountFromOption(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        timeout:'2h',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        options:[new Option([name:'threadCount',defaultValue:'30'])] as TreeSet,
+                        nodeThreadcountDynamic: "\${option.threadCount}",
+                        nodeKeepgoing:true,
+                        doNodedispatch:true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "wrong timeout value","\${option.threadCount}",doc.job[0].dispatch[0].threadcount.text()
+    }
+
+    void testEncodeThreadCountFromValue(){
+        def XmlSlurper parser = new XmlSlurper()
+        def jobs1 = [
+                new ScheduledExecution(
+                        jobName:'test job 1',
+                        description:'test descrip',
+                        loglevel: 'INFO',
+                        project:'test1',
+                        timeout:'2h',
+                        workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
+                        nodeThreadcountDynamic: "10",
+                        nodeKeepgoing:true,
+                        doNodedispatch:true
+                )
+        ]
+        def  xmlstr = JobsXMLCodec.encode(jobs1)
+        assertNotNull xmlstr
+        assertTrue xmlstr instanceof String
+
+        def doc = parser.parse(new StringReader(xmlstr))
+
+        assertNotNull doc
+        assertEquals "wrong root node name",'joblist',doc.name()
+        assertEquals "wrong number of jobs",1,doc.job.size()
+        assertEquals "wrong timeout value","10",doc.job[0].dispatch[0].threadcount.text()
+    }
+  
+  
 }

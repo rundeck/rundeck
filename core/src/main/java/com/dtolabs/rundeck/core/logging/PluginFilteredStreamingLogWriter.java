@@ -212,7 +212,6 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         EventControl eventControl = EventControl.with(orig);
 
         for (LogFilterPlugin plugin : plugins) {
-
             //reset state
             eventControl.emit();
             plugin.handleEvent(myLoggingContext, eventControl);

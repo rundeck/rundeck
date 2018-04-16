@@ -130,6 +130,24 @@
                         id="optname_${rkey}"/>
             </div>
         </div>
+        <div class="form-group">
+
+            <label for="optlabel_${rkey}"
+                   class="col-sm-2 control-label    ${hasErrors(bean: option, field: 'label', 'has-error')}"><g:message
+                    code="form.option.label.label"/></label>
+
+            <div class="col-sm-10">
+                <input type="text"
+                       class="form-control"
+                       name="label"
+                       id="opt_label"
+                       value="${enc(attr:option?.label)}"
+                       size="40"
+                       placeholder="Option Label"
+                />
+            </div>
+        </div>
+
         <div class="form-group ${hasErrors(bean: option, field: 'description', 'has-error')}">
 
             <label class="col-sm-2 control-label" for="optdesc_${rkey}" ><g:message code="form.option.description.label" /></label>

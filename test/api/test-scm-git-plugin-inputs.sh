@@ -26,17 +26,21 @@ format
 fetchAutomatically
 "
 props="importUuidBehavior
+pullAutomatically
+useFilePattern
+filePattern
 $commonprops
 "
-pcount=10
+pcount=13
 
 #/ additional props for export plugin
 exprops="committerName
 committerEmail
 exportUuidBehavior
+pullAutomatically
 $commonprops
 "
-expcount=12
+expcount=13
 
 test_git_plugin_input_xml(){
 	local integration=$1

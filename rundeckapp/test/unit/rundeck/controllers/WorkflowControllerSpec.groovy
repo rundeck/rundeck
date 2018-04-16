@@ -24,6 +24,7 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import rundeck.CommandExec
 import rundeck.JobExec
+import rundeck.ScheduledExecution
 import rundeck.Workflow
 import rundeck.services.FrameworkService
 import rundeck.services.PluginService
@@ -34,7 +35,7 @@ import spock.lang.Unroll
  * Created by greg on 2/16/16.
  */
 @TestFor(WorkflowController)
-@Mock([Workflow, CommandExec, JobExec])
+@Mock([Workflow, CommandExec, JobExec, ScheduledExecution])
 class WorkflowControllerSpec extends Specification {
     def "modify commandexec type empty validation"() {
         given:
@@ -437,6 +438,100 @@ class WorkflowControllerSpec extends Specification {
         'blah'      | null     | null       | null
         'blah'      | 'ble/ble'| 'proj'     | null
         'blah'      | null     | 'projx'    | 'jobProject'
+
+    }
+
+
+    def "insert jobexec using uuid"() {
+        given:
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        wf.commands = new ArrayList()
+        def inputparams = [jobName: 'blah', jobGroup: 'test/test']
+        //wf.commands << new JobExec( inputparams)
+        controller.frameworkService = Mock(FrameworkService)
+
+        when:
+        def result = controller._applyWFEditAction(
+                wf, [action: 'insert', num: 0,
+                     params: [jobName: jobName, jobGroup: jobGroup, jobProject: jobProject, uuid:jobUuid,
+                              description:'desc1',newitemtype: 'job']]
+        )
+
+        then:
+        //assertEquals(expectedError,result.error)
+        1 * controller.frameworkService.projectNames(_) >> ['proj','proj2']
+
+        if(!fieldname){
+            assertNull(result.error)
+        }else{
+            assertNotNull(result.error)
+            result.item.errors.hasFieldErrors(fieldname)
+        }
+
+
+
+        where:
+        jobName     |jobUuid    | jobGroup | jobProject | fieldname
+        'blah'      |null       | 'ble/ble'| null       | null
+        null        |null       | 'ble/ble'| null       | 'jobName'
+        null        |'as'       | 'ble/ble'| null       | null
+        'blah'      |null       | null     | null       | null
+        'blah'      |null       | 'ble/ble'| 'proj'     | null
+
+    }
+
+
+    def "insert jobexec by uuid project validation"() {
+        given:
+        Workflow wf = new Workflow(threadcount: 1, keepgoing: true)
+        wf.commands = new ArrayList()
+        def inputparams = [jobName: 'blah', jobGroup: 'test/test']
+        //wf.commands << new JobExec( inputparams)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def se = new ScheduledExecution(
+                uuid: jobUuid,
+                jobName: 'test',
+                project: jobproject,
+                groupPath: '',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+
+
+        when:
+        def result = controller._applyWFEditAction(
+                wf, [action: 'insert', num: 0,
+                     params: [uuid:jobUuid,
+                              description:'desc1',newitemtype: 'job']]
+        )
+
+        then:
+        //assertEquals(expectedError,result.error)
+        1 * controller.frameworkService.projectNames(_) >> ['proj','proj2']
+
+        if(!fieldname){
+            assertNull(result.error)
+        }else{
+            assertNotNull(result.error)
+            result.item.errors.hasFieldErrors(fieldname)
+        }
+
+
+
+        where:
+        jobUuid | jobproject   | fieldname
+        'blah'  | 'proj'       | null
+        'blah'  | 'projx'      | 'jobProject'
 
     }
 

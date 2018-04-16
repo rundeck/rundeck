@@ -21,6 +21,8 @@ import com.dtolabs.rundeck.core.plugins.views.Action
 import com.dtolabs.rundeck.core.plugins.views.BasicInputView
 import com.dtolabs.rundeck.plugins.scm.*
 import org.apache.log4j.Logger
+import org.eclipse.jgit.api.PullResult
+import org.eclipse.jgit.api.Status
 import org.eclipse.jgit.diff.DiffEntry
 import org.eclipse.jgit.lib.BranchTrackingStatus
 import org.eclipse.jgit.lib.ObjectId
@@ -39,13 +41,14 @@ import org.rundeck.plugin.scm.git.imp.actions.SetupTracking
 class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     static final Logger log = Logger.getLogger(GitImportPlugin)
     public static final String ACTION_INITIALIZE_TRACKING = 'initialize-tracking'
+    /**
+     * @deprecated use {@link #ACTION_IMPORT_JOBS}
+     */
     public static final String ACTION_IMPORT_ALL = 'import-all'
+    public static final String ACTION_IMPORT_JOBS = 'import-jobs'
     public static final String ACTION_PULL = 'remote-pull'
     public static final String ACTION_FETCH = 'remote-fetch'
     boolean inited
-    boolean trackedItemsSelected = false
-    boolean useTrackingRegex = false
-    String trackingRegex
     List<String> trackedItems = null
     Import config
     /**
@@ -74,6 +77,35 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         return actions[actionId]?.performAction(context, this, importer, selectedPaths, input)
     }
 
+    @Override
+    ScmExportResult scmImport(
+        final ScmOperationContext context,
+        final String actionId,
+        final JobImporter importer,
+        final List<String> selectedPaths,
+        final List<String> deletedJobs,
+        final Map<String, String> input
+    ) throws ScmPluginException
+    {
+        if (actionId in [ACTION_IMPORT_ALL, ACTION_IMPORT_JOBS]) {
+            deletedJobs.each { jobid ->
+                jobStateMap.remove(jobid)
+            }
+            return ((ImportJobs) actions[ACTION_IMPORT_JOBS]).performAction(
+                context,
+                this,
+                importer,
+                selectedPaths,
+                deletedJobs,
+                input
+            )
+        }else{
+            log.debug("deletedJobs list to non import action, ignored")
+            actions[actionId]?.performAction(context, this, importer, selectedPaths, input)
+        }
+
+    }
+
     void initialize(final ScmOperationContext context) {
         setup(context)
         actions = [
@@ -84,6 +116,14 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                         "glyphicon-cog"
 
                 ),
+                (ACTION_IMPORT_JOBS)         : new ImportJobs(
+                    ACTION_IMPORT_JOBS,
+                        "Import Remote Changes",
+                        "Import Changes",
+                        null
+
+                ),
+                //preserve compatibility with action name 'import-all'
                 (ACTION_IMPORT_ALL)         : new ImportJobs(
                         ACTION_IMPORT_ALL,
                         "Import Remote Changes",
@@ -133,6 +173,12 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         git.close()
     }
 
+    @Override
+    void totalClean(){
+        File base = new File(config.dir)
+        base?.deleteDir()
+    }
+
 
     @Override
     ScmImportSynchState getStatus(ScmOperationContext context) {
@@ -140,9 +186,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    GitImportSynchState getStatusInternal(ScmOperationContext context, boolean performFetch) {
+    GitImportSynchState   getStatusInternal(ScmOperationContext context, boolean performFetch) {
         //look for any unimported paths
-        if (!trackedItemsSelected) {
+        if (!config.shouldUseFilePattern() && !trackedItems) {
             return null
         }
 
@@ -150,6 +196,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         if (performFetch) {
             try {
                 fetchFromRemote(context)
+                if(config.shouldPullAutomatically()){
+                    actions[ACTION_PULL].performAction(context,this,null,null,null)
+                }
             } catch (Exception e) {
                 msgs<<"Fetch from the repository failed: ${e.message}"
                 logger.error("Failed fetch from the repository: ${e.message}")
@@ -195,8 +244,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         //compare to tracked branch
         def bstat = BranchTrackingStatus.of(repo, branch)
         state.branchTrackingStatus = bstat
-        if (bstat && bstat.behindCount > 0) {
-            state.state = ImportSynchState.REFRESH_NEEDED
+        if (bstat && bstat.behindCount > 0 && !config.shouldPullAutomatically()) {
+                state.state = ImportSynchState.REFRESH_NEEDED
         } else if (importNeeded || renamed || notFound) {
             state.state = ImportSynchState.IMPORT_NEEDED
         } else if (deleted) {
@@ -205,7 +254,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
             state.state = ImportSynchState.CLEAN
         }
 
-        if (bstat && bstat.behindCount > 0) {
+        if (bstat && bstat.behindCount > 0 && !config.shouldPullAutomatically()) {
             msgs << "${bstat.behindCount} changes from remote need to be pulled"
         }
         if (importNeeded) {
@@ -380,8 +429,8 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     List<Action> jobActionsForStatus(Map status) {
-        if (status.synch == ImportSynchState.IMPORT_NEEDED) {
-            [actions[ACTION_IMPORT_ALL]]
+        if (status.synch == ImportSynchState.IMPORT_NEEDED || status.synch == ImportSynchState.DELETE_NEEDED) {
+            [actions[ACTION_IMPORT_JOBS]]
         } else {
             []
         }
@@ -424,8 +473,11 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
 
     @Override
     Action getSetupAction(ScmOperationContext context) {
-        if (!trackedItemsSelected) {
+        if (!config.shouldUseFilePattern()) {
             return actions[ACTION_INITIALIZE_TRACKING]
+        }else{
+            log.debug("SetupTracking: ${input} (true)")
+            trackedItems = null
         }
         null
     }
@@ -434,7 +486,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     List<Action> actionsAvailableForContext(ScmOperationContext context) {
         if (context.frameworkProject) {
             //project-level actions
-            if (!trackedItemsSelected) {
+            if (!config.shouldUseFilePattern() && !trackedItems) {
                 return [actions[ACTION_INITIALIZE_TRACKING]]
             } else {
 
@@ -444,7 +496,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     avail << actions[ACTION_PULL]
                 }
                 if (status.state != ImportSynchState.CLEAN) {
-                    avail << actions[ACTION_IMPORT_ALL]
+                    avail << actions[ACTION_IMPORT_JOBS]
                 }
                 if(!config.shouldFetchAutomatically()){
                     avail << actions[ACTION_FETCH]
@@ -486,7 +538,7 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         temp.delete()
 
 
-        def availableActions = diffs > 0 ? [actions[ACTION_IMPORT_ALL]] : null
+        def availableActions = diffs > 0 ? [actions[ACTION_IMPORT_JOBS]] : null
         return new GitDiffResult(
                 content: baos.toString(),
                 modified: diffs > 0,
@@ -512,9 +564,22 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
                     trackPath(it, false, importTracker.trackedJob(it))
                 }
             }
-        } else if (actionId == ACTION_IMPORT_ALL) {
+        } else if (actionId in [ACTION_IMPORT_ALL, ACTION_IMPORT_JOBS]) {
 
             List<ScmImportTrackedItem> found = []
+
+            //files to delete
+            jobStateMap?.each {job->
+                String status = job.getValue()?.get("synch")
+                if (status?.equalsIgnoreCase('DELETE_NEEDED')){
+                    found << trackPath(
+                        job.getValue().get("path").toString(),
+                        true,
+                        job.key.toString(),
+                        true
+                    )
+                }
+            }
 
             //walk the repo files and look for possible candidates
             walkTreePaths('HEAD^{tree}', true) { TreeWalk walk ->
@@ -540,12 +605,13 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
 
-    ScmImportTrackedItem trackPath(final String path, final boolean selected = false, String jobId = null) {
+    ScmImportTrackedItem trackPath(final String path, final boolean selected = false, String jobId = null, final boolean deleted = false) {
         ScmImportTrackedItemBuilder.builder().
                 id(path).
                 iconName('glyphicon-file').
                 selected(selected).
                 jobId(jobId).
+                deleted(deleted).
                 build()
     }
 
@@ -558,9 +624,9 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
         tree.addTree(head)
         tree.setRecursive(true)
         if (useFilter) {
-            if (isUseTrackingRegex()) {
-                tree.setFilter(PathRegexFilter.create(trackingRegex))
-            } else {
+            if (config.shouldUseFilePattern()) {
+                tree.setFilter(PathRegexFilter.create(config.filePattern))
+            } else if(trackedItems) {
                 tree.setFilter(PathFilterGroup.createFromStrings(trackedItems))
             }
         }
@@ -572,6 +638,20 @@ class GitImportPlugin extends BaseGitPlugin implements ScmImportPlugin {
     }
 
     boolean isTrackedPath(final String path) {
-        return trackedItems?.contains(path) || isUseTrackingRegex() && trackingRegex && path.matches(trackingRegex)
+        return trackedItems?.contains(path) || config.shouldUseFilePattern() && config.filePattern && path.matches(config.filePattern)
+    }
+
+
+    Map clusterFixJobs(List<JobScmReference> jobs){
+        Status st = git.status().call()
+        def bstat = BranchTrackingStatus.of(repo, branch)
+        if(st.clean && bstat && bstat.behindCount>0){
+            PullResult result = git.pull().call()
+            jobs.each{job ->
+                refreshJobStatus(job,null)
+            }
+            return [updated:true]
+        }
+        [:]
     }
 }

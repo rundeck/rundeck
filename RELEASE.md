@@ -1,9 +1,9 @@
-Release 2.10.1
+Release 2.10.8
 ===========
 
-Date: 2017-11-20
+Date: 2018-03-23
 
-Name: <span style="color: Tomato"><span class="glyphicon glyphicon-knight"></span> "cafe mocha tomato knight"</span>
+Name: <span style="color: DodgerBlue"><span class="glyphicon glyphicon-bell"></span> "cafe mocha dodgerblue bell"</span>
 
 ## Upgrading from Earlier versions
 
@@ -11,56 +11,56 @@ Name: <span style="color: Tomato"><span class="glyphicon glyphicon-knight"></spa
 
 ## Notes
 
-Primarily Bug fixes.
+Bug Fixes:
+
+* Fix an issue causing Vault key storage plugin to not work
+* Fix issue with cluster mode using MSSQL or Oracle DB field types. Note: If using those DBs see [#3125](https://github.com/rundeck/rundeck/issues/3125)
 
 Enhancements:
 
-* New: Global Variable step plugin: copy captured data values into a global context in any variable group.  E.g. data from a node step to use it in a non-node-step.
-	* Within a job, copy data to the `export.*` group, to have it available in later steps if the job is included as a Job Reference.
+* SCM git plugin enhancements [#3192](https://github.com/rundeck/rundeck/pull/3192):
+    * Import can delete jobs which were removed from git
+    * API updated to include synch status for jobs
+    * API updated to allow specifying list of jobs to delete during import action
+
+Other changes:
+
+* Ansible plugin upgraded to version 2.3.0
+* API version &rarr; 22
 
 ## Contributors
 
+* Antoine-Auffret
 * Greg Schueler (gschueler)
+* Jaime Tobar (jtobard)
 * Luis Toledo (ltamaster)
-* Michihito Shigemura (shigemk2)
-* jtobard
-* morihaya
 
 ## Bug Reporters
 
-* JustRiedy
-* Morihaya
+* Antoine-Auffret
 * gschueler
+* jplassnibatt
 * jtobard
-* leonboot
+* komodo472
 * ltamaster
-* pchevallereau
-* shigemk2
-* vinillum
+* sebastianbello
 
 ## Issues
 
-[Milestone 2.10.1](https://github.com/rundeck/rundeck/milestone/64)
+[Milestone 2.10.8](https://github.com/rundeck/rundeck/milestone/72)
 
-* [Improvement on load jobs page](https://github.com/rundeck/rundeck/pull/2953)
-* [Uplift variables to global (2)](https://github.com/rundeck/rundeck/pull/2952)
-* [Update dependencies: jackson-databind, commons-beanutils](https://github.com/rundeck/rundeck/pull/2949)
-* [Change the JSCH authentication error message](https://github.com/rundeck/rundeck/pull/2934)
-* [Dependency cleanup](https://github.com/rundeck/rundeck/pull/2933)
-* [Bug: cluster mode is not enabled](https://github.com/rundeck/rundeck/issues/2932)
-* [Instance scope step plugin properties not shown in Plugin listing page](https://github.com/rundeck/rundeck/issues/2924)
-* [Key browser dialog is broken for new projects](https://github.com/rundeck/rundeck/issues/2919)
-* [java.lang.IllegalStateException: stack is empty](https://github.com/rundeck/rundeck/issues/2914)
-* [Add ui plugin support for ACL editor pages](https://github.com/rundeck/rundeck/pull/2906)
-* [2.10: Edit System ACL File: cannot save after submitting invalid file](https://github.com/rundeck/rundeck/issues/2904)
-* [fix typo. uploaded ot =\> uploaded to](https://github.com/rundeck/rundeck/pull/2897)
-* [IllegalStateException: output was closed and NullPointerException](https://github.com/rundeck/rundeck/issues/2887)
-* [RXSS vulnerability](https://github.com/rundeck/rundeck/issues/2883)
-* [Fix: model source plugin failure should log project name](https://github.com/rundeck/rundeck/pull/2869)
-* [API request for invalid path returns HTML response](https://github.com/rundeck/rundeck/issues/2867)
-* [Include aws resource model source plugin](https://github.com/rundeck/rundeck/pull/2857)
-* [Fix link in administration/managing-node-sources](https://github.com/rundeck/rundeck/pull/2856)
-* [single valued options with "selected=true" fetched from remote URL no longer works](https://github.com/rundeck/rundeck/issues/2854)
-* [Activity Log - Strange column widths](https://github.com/rundeck/rundeck/issues/2823)
-* [Cannot get AuthContext without subject (Invalid session?)](https://github.com/rundeck/rundeck/issues/2710)
-* [Download job definition yaml format shows inline](https://github.com/rundeck/rundeck/issues/824)
+* [Update/apiv22 scm import](https://github.com/rundeck/rundeck/pull/3216)
+* [API: SCM Git plugin Import action 'import-all' should be renamed to 'import-jobs'](https://github.com/rundeck/rundeck/issues/3215)
+* [fix: update dependencies flagged by snyk](https://github.com/rundeck/rundeck/pull/3213)
+* [Upgrade ansible plugin to the 2.3.0 release](https://github.com/rundeck/rundeck/pull/3202)
+* [Fix: key storage data type not set automatically with Vault plugin](https://github.com/rundeck/rundeck/pull/3196)
+* [Scm Git Import can delete jobs when git file is removed](https://github.com/rundeck/rundeck/pull/3192)
+* [correct optional options when creating a project](https://github.com/rundeck/rundeck/pull/3191)
+* [Referenced job error handlers cannot be found when job is referenced from other projects](https://github.com/rundeck/rundeck/issues/3189)
+* [Fix: Matched Nodes list is not (Auto) Refreshed in Jobs](https://github.com/rundeck/rundeck/pull/3171)
+* [Can't abort a job, message is "Unable to modify the execution"](https://github.com/rundeck/rundeck/issues/3155)
+* [serverNodeUUID field to varchar ](https://github.com/rundeck/rundeck/pull/3126)
+* [Oracle+MSSQL DB error SqlExceptionHelper](https://github.com/rundeck/rundeck/issues/3125)
+* [Log File Storage exception: NullPointerException: Cannot get property 'filetype' on null object](https://github.com/rundeck/rundeck/issues/3089)
+* [Bug / Matched Nodes list is not (Auto) Refreshed in Jobs](https://github.com/rundeck/rundeck/issues/3075)
+* [API: Scm (export/import) action inputs should include item status](https://github.com/rundeck/rundeck/issues/2330)

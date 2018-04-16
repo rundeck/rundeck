@@ -60,11 +60,11 @@
                     <div class="col-sm-2">
                         <g:javascript>
                         fireWhenReady('jobProjectField${rkey}',function(){
-                            _initJobPickerAutocomplete('jobNameField${rkey}','jobGroupField${rkey}','jobProjectField${rkey}');
+                            _initJobPickerAutocomplete('jobUuidField${rkey}','jobNameField${rkey}','jobGroupField${rkey}','jobProjectField${rkey}');
                         });
                         </g:javascript>
 
-                        <span class="btn  btn-default act_choose_job" onclick="loadJobChooserModal(this, 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}','jobrefpicker${rkey}','jobrefpicker${rkey}_content');"
+                        <span class="btn  btn-default act_choose_job" onclick="loadJobChooserModal(this,'jobUuidField${rkey}', 'jobNameField${rkey}','jobGroupField${rkey}', 'jobProjectField${rkey}','jobrefpicker${rkey}','jobrefpicker${rkey}_content');"
                               id="jobChooseBtn${rkey}"
                               title="${message(code:"select.an.existing.job.to.use")}"
                               data-loading-text="Loading...">
@@ -76,6 +76,15 @@
                     </div>
                 </div>
                 <div class="form-group" >
+                    <label class="col-sm-2 control-label"><g:message code="Workflow.Step.uuid.label" /></label>
+                    <div class="col-sm-10">
+                        <input type='text' name="uuid" value="${enc(attr:item?.uuid)}" size="100"
+                               placeholder="${message(code:"Workflow.Step.jobreference.uuid.placeholder")}"
+                               id="jobUuidField${rkey}"
+                               class="form-control context_var_autocomplete"/>
+                    </div>
+                </div>
+                <div class="form-group" >
                     <label class="col-sm-2 control-label"><g:message code="Workflow.Step.argString.label" /></label>
                     <div class="col-sm-10">
                         <input type='text' name="argString" value="${enc(attr:item?.argString)}" size="100"
@@ -83,6 +92,38 @@
                                id="jobArgStringField"
                                class="form-control context_var_autocomplete"/>
                     </div>
+                </div>
+                <div class="form-group" >
+                    <label class="col-sm-2 control-label"></label>
+                    <div class="col-sm-10">
+                        <div class="checkbox">
+                            <label>
+                                <g:checkBox name="importOptions"
+                                            checked="${item?.importOptions}"
+                                            id="importOptionsCheck" value="true"
+                                />
+                                <g:message code="Workflow.Step.jobreference.import.options.label" />
+                            </label>
+                            <span class="text-muted"><g:message code="Workflow.Step.jobreference.import.options.help" /></span>
+                        </div>
+                    </div>
+
+                </div>
+                <div class="form-group" >
+                    <label class="col-sm-2 control-label"></label>
+                    <div class="col-sm-10">
+                        <div class="checkbox">
+                            <label>
+                                <g:checkBox name="failOnDisable"
+                                            checked="${item?.failOnDisable}"
+                                            id="failOnDisableCheck" value="true"
+                                            />
+                                <g:message code="Workflow.Step.jobreference.fail.on.disabled.label" />
+                            </label>
+                            <span class="text-muted"><g:message code="Workflow.Step.jobreference.fail.on.disabled.help" /></span>
+                        </div>
+                    </div>
+
                 </div>
 
     <g:set var="nodeFilterOverrideExpanded" value="${item?.nodeFilter || item?.nodeIntersect}"/>
@@ -569,6 +610,7 @@
                     <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
                             extraInputCss: 'context_var_autocomplete',
                             service            : serviceName,
+                            dynamicProperties  : dynamicProperties,
                             provider           : newitemDescription.name,
                             properties         : newitemDescription.properties,
                             report             : report,

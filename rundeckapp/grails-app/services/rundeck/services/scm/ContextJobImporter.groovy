@@ -39,4 +39,10 @@ interface ContextJobImporter {
             final Map importMetadata,
             final boolean preserveUuid
     )
+
+    ImportResult deleteJob(
+        final ScmOperationContext context,
+        final String project,
+        final String jobid
+    )
 }

@@ -9,6 +9,11 @@ a.navbar-brand{
   background-position: 15px 18px;
   padding-left: 35px;
   height: 60px;
+  color: white;
+}
+a.navbar-brand p{
+
+  text-transform: none;
 }
 
 /* tweaks to base bootstrap */
@@ -84,4 +89,15 @@ a.navbar-brand{
 
 a > code{
   color: #337ab7;
+}
+
+.generated-date{
+  color: #88888888;
+}
+.generated-date:before{
+  content:"This page generated on: ";
+}
+.btn-try-rundeck-pro{
+  border-width: 4px;
+  border-color: blue;
 }

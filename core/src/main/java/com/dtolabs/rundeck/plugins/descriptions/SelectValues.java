@@ -49,6 +49,12 @@ public @interface SelectValues {
     boolean multiOption() default false;
 
     /**
+     *
+     * @return True if multiple values can be selected as checkboxes, cannot be used with {@link #freeSelect()}
+     */
+    boolean dynamicValues() default false;
+
+    /**
      * @return The set of values that can be selected
      */
     String[] values();

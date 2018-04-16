@@ -1424,4 +1424,175 @@ class GitExportPluginSpec extends Specification {
         theEventType                                    | _
         JobChangeEvent.JobChangeEventType.MODIFY_RENAME | _
     }
+
+
+    def "fix cluster status with new files behind"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
+
+        //create a git dir
+        def git = createGit(origindir)
+
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'abc'
+            getSourceId() >> 'xyz'
+            getScmImportMetadata() >> [commitId:'a']
+        }
+
+        when:
+        def status = plugin.clusterFixJobs([jobref])
+
+        then:
+        status != null
+        status.deleted
+        status.deleted.size() == 1
+        status.deleted[0]=='a/b/name-abc.xml'
+    }
+
+    def "fix cluster status with clean status"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
+
+        //create a git dir
+        def git = createGit(origindir)
+
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'abc'
+            getSourceId() >> 'xyz'
+            getScmImportMetadata() >> [:]
+        }
+
+        when:
+        def status = plugin.clusterFixJobs([jobref])
+
+        then:
+        status != null
+        status.deleted.size() == 0
+        status.restored.size() == 0
+
+    }
+    def "fix cluster status with modified status"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior: 'preserve'])
+
+        //create a git dir
+        def git = createGit(origindir)
+        def commit = addCommitFile(origindir, git, 'a/b/name-abc.xml', 'blah')
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        def jobref = Stub(JobScmReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'abc'
+            getSourceId() >> 'xyz'
+            getScmImportMetadata() >> [commitId:'a']
+        }
+
+        when:
+        def status = plugin.clusterFixJobs([jobref])
+
+        then:
+        status != null
+        status.deleted.size() == 0
+        status.restored.size() == 1
+
+    }
+
+
+    def "get job status, does not exist in repo, respect serialize true"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior:  'remove'])
+
+        //create a git dir
+        def git = createGit(origindir)
+
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobExportReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        when:
+        def status = plugin.getJobStatus(jobref, null, true)
+
+        then:
+        status != null
+        status.synchState == SynchState.CREATE_NEEDED
+        status.commit == null
+        1 * serializer.serialize('xml', _, (false), null) >> { args ->
+            args[1].write('data'.bytes)
+        }
+        0 * serializer.serialize(*_)
+
+    }
+
+    def "get job status, does not exist in repo, respect serialize false"() {
+        given:
+
+        def gitdir = new File(tempdir, 'scm')
+        def origindir = new File(tempdir, 'origin')
+        Export config = createTestConfig(gitdir, origindir, [exportUuidBehavior:  'remove'])
+
+        //create a git dir
+        def git = createGit(origindir)
+
+        git.close()
+        def plugin = new GitExportPlugin(config)
+        plugin.initialize(Mock(ScmOperationContext))
+
+        def serializer = Mock(JobSerializer)
+        def jobref = Stub(JobExportReference) {
+            getJobName() >> 'name'
+            getGroupPath() >> 'a/b'
+            getId() >> 'xyz'
+            getVersion() >> 1
+            getJobSerializer() >> serializer
+        }
+        when:
+        def status = plugin.getJobStatus(jobref, null, false)
+
+        then:
+        status != null
+        status.synchState == SynchState.CREATE_NEEDED
+        status.commit == null
+        0 * serializer.serialize('xml', _, (false), null) >> { args ->
+            args[1].write('data'.bytes)
+        }
+        0 * serializer.serialize(*_)
+
+    }
 }

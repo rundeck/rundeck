@@ -257,13 +257,14 @@ class ApiController extends ControllerBase{
             roles = 'api_token_group'
             tokenDuration = null
         }
+        Set<String> rolesSet=null
         if (roles instanceof String) {
-            roles = AuthToken.parseAuthRoles(roles)
+            rolesSet = AuthToken.parseAuthRoles(roles)
         } else if (roles instanceof Collection) {
-            roles = new HashSet(roles)
+            rolesSet = new HashSet(roles)
         }
-        if (roles == ['*']) {
-            roles = null
+        if (rolesSet.size() == 1 && rolesSet.contains('*')) {
+            rolesSet = null
         }
         AuthToken token
 
@@ -281,7 +282,7 @@ class ApiController extends ControllerBase{
                     authContext,
                     tokenDurationSeconds ?: null,
                     tokenuser,
-                    roles
+                    rolesSet
             )
         } catch (Exception e) {
             return apiService.renderErrorFormat(response, [
