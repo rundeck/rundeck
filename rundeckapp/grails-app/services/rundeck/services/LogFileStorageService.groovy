@@ -652,9 +652,19 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
             return
         }
         log.debug("dequeueIncompleteLogStorage, processing ${taskId}")
+        Long invalidId
+        String serverUuid
         LogFileStorageRequest.withNewSession {
             LogFileStorageRequest request = LogFileStorageRequest.get(taskId)
             Execution e = request.execution
+            if (!frameworkService.existsFrameworkProject(e.project)) {
+                log.error(
+                    "cannot re-queue incomplete log storage request for execution ${e.id}, project does not exist: " + e.project
+                )
+                invalidId = request.id
+                serverUuid = e.serverNodeUUID
+                return
+            }
             log.debug("re-queueing incomplete log storage request for execution ${e.id}")
             def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
             if (null != plugin && pluginSupportsStorage(plugin)) {
@@ -665,6 +675,9 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                         "cannot re-queue incomplete log storage request for execution ${e.id}, plugin was not available: ${getConfiguredPluginName()}"
                 )
             }
+        }
+        if (invalidId != null) {
+            cleanupIncompleteLogStorage(serverUuid, invalidId)
         }
     }
     /**
@@ -810,9 +823,18 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
         def delayInc = getConfiguredStorageRetryDelay()
         def delay = delayInc
         def count=0
+        List<Long> invalid = []
+
         incomplete.each{ LogFileStorageRequest request ->
             Execution e = request.execution
                 log.debug("re-queueing incomplete log storage request for execution ${e.id} delay ${delay}")
+            if (!frameworkService.existsFrameworkProject(e.project)) {
+                log.error(
+                    "cannot re-queue incomplete log storage request for execution ${e.id}, project does not exist: " + e.project
+                )
+                invalid << request.id
+                return
+            }
                 def plugin = getConfiguredPluginForExecution(e, frameworkService.getFrameworkPropertyResolver(e.project))
                 if(null!=plugin && pluginSupportsStorage(plugin)) {
                     //re-queue storage request
@@ -822,6 +844,10 @@ class LogFileStorageService implements InitializingBean,ApplicationContextAware{
                 }else{
                     log.error("cannot re-queue incomplete log storage request for execution ${e.id}, plugin was not available: ${getConfiguredPluginName()}")
                 }
+        }
+        //cleanup invalid
+        invalid.each { reqid ->
+            cleanupIncompleteLogStorage(serverUUID, reqid)
         }
         log.info("resumeIncompleteLogStorage: ${count} incomplete requests requeued for serverUUID: ${serverUUID}")
         count
