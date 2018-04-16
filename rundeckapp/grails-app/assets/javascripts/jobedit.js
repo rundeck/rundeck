@@ -452,6 +452,10 @@ function _wfisave(key,num, formelem,iseh) {
                 _showWFItemControls();
                 if (iseh) {
                     _hideWFItemControlsAddEH(num);
+                    if (litem.parent().closest('li').find('.wfitem.jobtype').size() > 0) {
+                        //disable the config button
+                        _disableWFItemControlsConfigButton(num)
+                    }
                 }
             }else{
                 postLoadItemEdit('#wfli_' + key, iseh);
@@ -578,7 +582,11 @@ function _showWFItemControls() {
 }
 function _hideWFItemControlsAddEH(num){
     var lielem=jQuery('#wfli_'+num);
-    lielem.find('.wfitem_add_errorhandler').hide();
+    lielem.find('.wfitem_add_errorhandler').parent().hide();
+}
+function _disableWFItemControlsConfigButton(num){
+    var lielem=jQuery('#wfli_'+num);
+    lielem.find('.wfitemcontrols .btn-group button.dropdown-toggle').attr('disabled','disabled');
 }
 
 function _evtNewEHChooseType(evt){
