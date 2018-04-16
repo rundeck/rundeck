@@ -45,6 +45,7 @@ class Execution extends ExecutionContext {
     Orchestrator orchestrator;
     String userRoleList
     Integer nodeThreadcount=1
+    Long retryOriginalId
   
     static hasMany = [refExec:ReferencedExecution]
     static hasOne = [logFileStorageRequest: LogFileStorageRequest]
@@ -106,6 +107,7 @@ class Execution extends ExecutionContext {
         retryDelay(nullable:true)
         successOnEmptyNodeFilter(nullable: true)
         refExec(nullable: true)
+        retryOriginalId(nullable: true)
     }
 
     static mapping = {
@@ -261,6 +263,9 @@ class Execution extends ExecutionContext {
         if(this.retryAttempt){
             map.retryAttempt=retryAttempt
         }
+        if(this.retryOriginalId){
+            map.retryOriginalId=retryOriginalId
+        }
         if(this.retry){
             map.retry=this.retry
         }
@@ -316,6 +321,9 @@ class Execution extends ExecutionContext {
         }
         if(data.retryAttempt){
             exec.retryAttempt= XmlParserUtil.stringToInt(data.retryAttempt, 0)
+        }
+        if(data.retryOriginalId){
+            exec.retryOriginalId= Long.valueOf(data.retryOriginalId)
         }
         if(data.retry){
             exec.retry=data.retry
