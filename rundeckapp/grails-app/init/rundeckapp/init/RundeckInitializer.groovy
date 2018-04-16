@@ -530,7 +530,7 @@ class RundeckInitializer {
             File test = new File(origName.getParentFile(), origName.getName() + "._" + i);
             while (test.exists()) {
                 //append to original
-                appendFile(test, origName);
+                FileUtils.appendFile(test, origName);
                 test.delete();
                 parts.add(test);
                 i++;
@@ -539,6 +539,8 @@ class RundeckInitializer {
         }
         return parts;
     }
+
+
 
     private static class propertyExpander implements ZipUtil.streamCopier {
         Properties properties;
