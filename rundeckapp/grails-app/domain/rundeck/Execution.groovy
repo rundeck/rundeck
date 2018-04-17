@@ -106,7 +106,6 @@ class Execution extends ExecutionContext {
         retryDelay(nullable:true)
         successOnEmptyNodeFilter(nullable: true)
         retryOriginalId(nullable: true)
-
     }
 
     static mapping = {
