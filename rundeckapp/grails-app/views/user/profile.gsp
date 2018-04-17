@@ -81,6 +81,7 @@
                     <select name="language" id="language" onchange="changeLanguage();">
                         <option value="">English</option>
                         <option value="es_419">Español</option>
+                        <option value="fr_FR">Français</option>
                         <option value="zh_cn">简体中文</option>
                     </select>
                 </span>
