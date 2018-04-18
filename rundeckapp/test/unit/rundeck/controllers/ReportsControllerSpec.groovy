@@ -36,7 +36,7 @@ import spock.lang.Unroll
 /**
  * Created by greg on 9/22/16.
  */
-@Mock([ExecReport, Execution, User])
+@Mock([ExecReport, Execution, User, ReferencedExecution])
 @TestFor(ReportsController)
 class ReportsControllerSpec extends Specification {
     @Unroll

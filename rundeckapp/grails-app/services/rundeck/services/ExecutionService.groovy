@@ -3308,9 +3308,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         ScheduledExecution.withTransaction { status ->
             ScheduledExecution se = ScheduledExecution.get(id)
             Execution exec = Execution.get(execid as Long)
-            refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING)
-            exec.addToRefExec(refExec)
-            exec.save()
+            refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING).save()
         }
         if (newContext.getNodes().getNodeNames().size() < 1) {
             String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
@@ -3398,7 +3396,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def savedJobState = false
             savedJobState = updateScheduledExecStatistics(id,'jobref', duration, true)
             if (!savedJobState) {
-                log.error("ExecutionJob: Failed to update job statistics for jobref")
+                log.info("ExecutionJob: Failed to update job statistics for jobref")
             }
             ReferencedExecution.withTransaction { status ->
                 refExec.status=wresult.result.success?EXECUTION_SUCCEEDED:EXECUTION_FAILED
