@@ -40,7 +40,7 @@
 <div class="row row-space">
     <div class="col-sm-3  ">
 
-    &copy; Copyright 2017 <a href="http://rundeck.com">Rundeck, Inc.</a>
+    &copy; Copyright 2018 <a href="http://rundeck.com">Rundeck, Inc.</a>
 
     All rights reserved.
     </div>
