@@ -128,6 +128,7 @@ dependencies {
     compile "org.grails.plugins:hibernate5"
     compile "org.hibernate:hibernate-core:5.1.5.Final"
     compile "org.grails.plugins:gsp"
+    compile "com.google.code.gson:gson:2.8.2"
 
     compile 'org.eclipse.jetty:jetty-jaas:9.4.7.v20170914'
     compile 'org.grails.plugins:spring-security-core:3.2.1'

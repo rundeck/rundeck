@@ -786,7 +786,7 @@ class LogFileStorageServiceTests  {
         boolean queued=false
         def sched = new MockFor(ScheduledExecutorService)
         sched.demand.schedule() { Closure clos, long delay, TimeUnit unit ->
-// REVIEW: Disabled at grails3 merge
+// REVIEW: Disabled by grails3 merge
 //        def sched = mockFor(TaskScheduler)
 //        sched.demand.schedule() { Closure clos, Date when ->
             queued=true
@@ -795,10 +795,10 @@ class LogFileStorageServiceTests  {
         service.scheduledExecutor = sched.proxyInstance()
         Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
 
-// REVIEW: Disabled at grails3 merge
+// REVIEW: Disabled by grails3 merge
 //        service.logFileStorageTaskScheduler = sched.createMock()
-//        Map task = performRunStorage(test, "rdlog", createExecution(), testLogFile1, ['execution.logs.fileStorage.storageRetryDelay': 30,
-                                                                                      'execution.logs.fileStorage.storageRetryCount': 2]) { LogFileStorageService service ->
+//        Map task = performRunStorage(test, "rdlog", createExecution(), testLogFile1, ['execution.logs.fileStorage.storageRetryDelay': 30, 'execution.logs.fileStorage.storageRetryCount': 2]) { LogFileStorageService service ->
+
             svc = service
             assertFalse(test.storeLogFileCalled)
             assertNull(test.storeFiletype)

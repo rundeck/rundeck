@@ -1770,7 +1770,7 @@ class ExecutionController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        ExecutionService.AbortResult abortresult
+//        ExecutionService.AbortResult abortresult
         def Execution e
         try {
             e = Execution.get(params.id)

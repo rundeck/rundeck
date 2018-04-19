@@ -54,8 +54,8 @@ import java.time.ZoneId
  * Created by greg on 2/17/15.
  */
 @TestFor(ExecutionService)
-@Mock([Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest,ReferencedExecution])
-class ExecutionServiceSpec extends Specification {
+@Mock([Execution, ScheduledExecution, Workflow, CommandExec, Option, ExecReport, LogFileStorageRequest])
+class ExecutionServiceSpec {
     private Map createJobParams(Map overrides = [:]) {
         [
                 jobName       : 'blue',
