@@ -19,10 +19,10 @@ package rundeck
 import com.dtolabs.rundeck.core.common.FrameworkResourceException
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolverFactory
 import grails.util.Environment
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
-import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
-import rundeck.filters.FormTokenFilters
+import rundeck.interceptors.FormTokenInterceptor
 import rundeck.services.FrameworkService
 
 import java.text.MessageFormat
@@ -833,7 +833,7 @@ class UtilityTagLib{
                 fragment='#'+split[1]
             }
         }
-        def rdversion = grailsApplication.metadata['app.version']
+        def rdversion = grailsApplication.metadata.getProperty('app.version', String)
         def helpBase='http://rundeck.org/' +( rdversion?.contains('SNAPSHOT')?'docs':rdversion)
         def helpUrl
         if(grailsApplication.config.rundeck?.gui?.helpLink){
@@ -1045,8 +1045,8 @@ class UtilityTagLib{
     def refreshFormTokensHeader = { attrs, body ->
         SynchronizerTokensHolder tokensHolder = tokensHolder()
         def uri = attrs.uri ?: params[SynchronizerTokensHolder.TOKEN_URI]
-        response.addHeader(FormTokenFilters.TOKEN_KEY_HEADER, tokensHolder.generateToken(uri))
-        response.addHeader(FormTokenFilters.TOKEN_URI_HEADER, uri)
+        response.addHeader(FormTokenInterceptor.TOKEN_KEY_HEADER, tokensHolder.generateToken(uri))
+        response.addHeader(FormTokenInterceptor.TOKEN_URI_HEADER, uri)
     }
 
 
@@ -1096,7 +1096,7 @@ class UtilityTagLib{
             def tokensHolder = HMacSynchronizerTokensHolder.store(session, hMacSynchronizerTokensManager, [session.user, request.remoteAddr])
         }
         //call original form tag
-        def applicationTagLib = grailsApplication.mainContext.getBean('org.codehaus.groovy.grails.plugins.web.taglib.FormTagLib')
+        def applicationTagLib = grailsApplication.mainContext.getBean('org.grails.plugins.web.taglib.FormTagLib')
         applicationTagLib.form.call(attrs,body)
     }
 

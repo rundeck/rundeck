@@ -570,6 +570,8 @@ echo "OK"
 runurl="${APIURL}/execution/${execid}/abort"
 params=""
 
+echo "Aborting job: ${runurl}"
+
 # get listing
 docurl -X POST ${runurl}?${params} > $DIR/curl.out || fail "failed request: ${runurl}"
 
@@ -584,7 +586,7 @@ sleep 3
 # Test result of /job/ID/executions?status=aborted is 1 list
 ###
 
-echo "TEST: job/id/executions?status=aborted with 1 results"
+echo "TEST: job/${jobid}/executions?status=aborted with 1 results"
 
 # now submit req
 runurl="${APIURL}/job/${jobid}/executions"

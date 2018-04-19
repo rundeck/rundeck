@@ -25,12 +25,12 @@ import grails.transaction.Transactional
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
 import org.apache.commons.lang.RandomStringUtils
-import org.codehaus.groovy.grails.web.converters.exceptions.ConverterException
+import org.grails.web.converters.exceptions.ConverterException
 import org.rundeck.util.Sizes
 import rundeck.AuthToken
 import rundeck.Execution
 import rundeck.User
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 
 import javax.servlet.http.HttpServletRequest
 import javax.servlet.http.HttpServletResponse
@@ -38,7 +38,6 @@ import java.text.SimpleDateFormat
 import java.time.Clock
 
 class ApiService {
-    static transactional = false
     public static final String TEXT_XML_CONTENT_TYPE = 'text/xml'
     public static final String APPLICATION_XML_CONTENT_TYPE = 'application/xml'
     public static final String JSON_CONTENT_TYPE = 'application/json'
@@ -286,7 +285,7 @@ class ApiService {
     def respondOutput(HttpServletResponse response, String contentType, String output) {
         response.setContentType(contentType)
         response.setCharacterEncoding('UTF-8')
-        response.setHeader("X-Rundeck-API-Version",ApiRequestFilters.API_CURRENT_VERSION.toString())
+        response.setHeader("X-Rundeck-API-Version",ApiVersions.API_CURRENT_VERSION.toString())
         def out = response.outputStream
         out << output
         out.flush()
@@ -333,7 +332,7 @@ class ApiService {
      * @return
      */
     public boolean doWrapXmlResponse(HttpServletRequest request) {
-        if(request.api_version < ApiRequestFilters.V11){
+        if(request.api_version < ApiVersions.V11){
             //require false to disable wrapper
             return !"false".equals(request.getHeader(XML_API_RESPONSE_WRAPPER_HEADER))
         } else{
@@ -401,7 +400,7 @@ class ApiService {
      */
     def renderSuccessXml(Closure recall){
         return renderSuccessXmlUnwrapped {
-            result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+            result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
                 recall.delegate = delegate
                 recall.resolveStrategy=Closure.DELEGATE_FIRST
                 recall()
@@ -747,7 +746,7 @@ class ApiService {
     def renderErrorJson(messages, String code=null){
         def result=[
                 error: true,
-                apiversion: ApiRequestFilters.API_CURRENT_VERSION,
+                apiversion: ApiVersions.API_CURRENT_VERSION,
         ]
         result.errorCode = code ?: 'api.error.unknown'
         if (!messages) {
@@ -768,7 +767,7 @@ class ApiService {
         }else if (messages instanceof Map && messages.message) {
             result.message=messages.message
         }
-        return result.encodeAsJSON().toString()
+        return (result as JSON).toString()
     }
     def renderErrorXml(messages, String code=null, builder=null){
         def writer = new StringWriter()
@@ -779,8 +778,13 @@ class ApiService {
             xml=builder
         }
         xml.with {
-            result(error: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+            result(error: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
+// REVIEW: disabled at merge
+//                def errorprops = [:]
                 def errorprops = [code: code ?: 'api.error.unknown']
+                if (code) {
+                    errorprops = [code: code]
+                }
                 delegate.'error'(errorprops) {
                     if (!messages) {
                         delegate.'message'(
@@ -830,7 +834,7 @@ class ApiService {
     )
     {
         if (respFormat=='json') {
-            delegate.contents = contentString
+            delegate contents: contentString
         }else{
             delegate.'contents' {
                 mkp.yieldUnescaped("<![CDATA[" + contentString.replaceAll(']]>', ']]]]><![CDATA[>') + "]]>")
@@ -958,7 +962,7 @@ class ApiService {
                 def href=execdata.href
                 def status=execdata.status
                 def summary=execdata.summary
-                def Execution e = Execution.get(execdata.execution.id)
+                Execution e = execdata.execution
                 execution(
                         /** attributes   **/
                         id: e.id,
@@ -1126,7 +1130,7 @@ class ApiService {
     String apiHrefForJob(def scheduledExecution) {
         return grailsLinkGenerator.link(controller: 'scheduledExecution',
                 id: scheduledExecution.extid,
-                params: [api_version:ApiRequestFilters.API_CURRENT_VERSION],
+                params: [api_version:ApiVersions.API_CURRENT_VERSION],
                 absolute: true)
     }
     String guiHrefForJob(def scheduledExecution) {
@@ -1138,7 +1142,7 @@ class ApiService {
     }
     String apiHrefForExecution(Execution execution) {
         return grailsLinkGenerator.link(controller: 'execution', id: execution.id,
-                params: [api_version: ApiRequestFilters.API_CURRENT_VERSION],
+                params: [api_version: ApiVersions.API_CURRENT_VERSION],
                 absolute: true)
     }
     String guiHrefForExecution(Execution execution) {

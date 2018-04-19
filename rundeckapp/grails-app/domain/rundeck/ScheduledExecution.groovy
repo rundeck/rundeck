@@ -71,6 +71,7 @@ class ScheduledExecution extends ExecutionContext {
     String notifyRetryableFailureUrl
     Boolean multipleExecutions = false
     Orchestrator orchestrator
+    String serverNodeUUID
 
     String notifyAvgDurationThreshold
 
@@ -194,7 +195,7 @@ class ScheduledExecution extends ExecutionContext {
     }
 
     static namedQueries = {
-		isScheduled {
+		scheduledJobs {
 			eq 'scheduled', true
 		}
 		withServerUUID { uuid ->

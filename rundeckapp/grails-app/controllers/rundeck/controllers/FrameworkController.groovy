@@ -33,6 +33,7 @@ import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
 import grails.converters.XML
+import grails.web.servlet.mvc.GrailsParameterMap
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import rundeck.Execution
@@ -57,7 +58,6 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorExceptio
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 
-import org.codehaus.groovy.grails.web.servlet.mvc.GrailsParameterMap
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -69,7 +69,7 @@ import rundeck.NodeFilter
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 
 class FrameworkController extends ControllerBase implements ApplicationContextAware {
     FrameworkService frameworkService
@@ -2214,7 +2214,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/14/project/PROJECT/resource/NAME, version 14
      */
     def apiResourcev14 () {
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
             return
         }
         return apiResource()
@@ -2267,7 +2267,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/2/project/NAME/resources, version 2
      */
     def apiResourcesv2(ExtNodeFilters query) {
-        if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
+        if (!apiService.requireVersion(request, response,ApiVersions.V2)) {
             return
         }
         return apiResources(query)
@@ -2307,7 +2307,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 response.format && !(response.format in ['all','html','xml','yaml'])) {
             //expected another content type
             def reqformat = params.format ?: response.format
-            if (!apiService.requireVersion(request, response,ApiRequestFilters.V3)) {
+            if (!apiService.requireVersion(request, response,ApiVersions.V3)) {
                 return
             }
         }
@@ -2340,7 +2340,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 response.format &&
                 !(response.format in ['all', 'html', 'xml', 'yaml'])) {
             //expected another content type
-            if (!apiService.requireVersion(request, response, ApiRequestFilters.V3)) {
+            if (!apiService.requireVersion(request, response, ApiVersions.V3)) {
                 return
             }
             def reqformat = params.format ?: response.format
@@ -2421,7 +2421,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * /api/14/system/acl/* endpoint
      */
     def apiSystemAcls(){
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -2470,7 +2470,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     private def renderAclHref(String path) {
-        createLink(absolute: true, uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/system/acl/$path")
+        createLink(absolute: true, uri: "/api/${ApiVersions.API_CURRENT_VERSION}/system/acl/$path")
     }
     private def apiSystemAclsPutResource(String storagePath, boolean create) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)

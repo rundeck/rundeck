@@ -45,7 +45,7 @@ def versions=[
         servlet:'3.0.0.v201112011016'
 ]
 
-def warFile= "rundeckapp/target/rundeck-${version}.war"
+def warFile= "rundeckapp/${target}/rundeck-${version}.war"
 def coreJarFile = "core/${target}/rundeck-core-${version}.jar"
 def launcherJarFile = "rundeck-launcher/launcher/${target}/rundeck-launcher-${version}.jar"
 

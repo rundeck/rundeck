@@ -24,7 +24,7 @@ import org.owasp.encoder.Encode
  * @since 2014-08-13
  */
 class JavaScript2Codec {
-    def encode = { str ->
+    static def encode = { str ->
         Encode.forJavaScript(str)
     }
 }

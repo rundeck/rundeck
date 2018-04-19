@@ -22,10 +22,10 @@
     <meta name="layout" content="base"/>
     <meta name="tabpage" content="adhoc"/>
     <title><g:message code="gui.menu.Adhoc"/> - <g:enc>${params.project ?: request.project}</g:enc></title>
-    <g:javascript src="executionState.js"/>
+    <asset:javascript src="executionState.js"/>
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>
-    <g:javascript library="pagehistory"/>
+    <asset:javascript src="pagehistory.js"/>
     <asset:javascript src="framework/adhoc.js"/>
     <g:set var="defaultLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.default}"/>
     <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>

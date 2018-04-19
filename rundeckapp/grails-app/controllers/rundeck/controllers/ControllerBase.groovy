@@ -16,13 +16,12 @@
 
 package rundeck.controllers
 
-import com.dtolabs.rundeck.plugins.rundeck.UIPlugin
+import org.grails.plugins.web.servlet.mvc.InvalidResponseHandler
+import org.grails.plugins.web.servlet.mvc.ValidResponseHandler
+import org.grails.web.servlet.mvc.GrailsWebRequest
+import org.grails.web.servlet.mvc.TokenResponseHandler
 import org.rundeck.util.Toposort
 import org.rundeck.web.infosec.HMacSynchronizerTokensHolder
-import org.codehaus.groovy.grails.web.metaclass.InvalidResponseHandler
-import org.codehaus.groovy.grails.web.metaclass.ValidResponseHandler
-import org.codehaus.groovy.grails.web.servlet.mvc.GrailsWebRequest
-import org.codehaus.groovy.grails.web.servlet.mvc.TokenResponseHandler
 import org.springframework.web.context.request.RequestContextHolder
 import rundeck.services.UiPluginService
 

@@ -86,7 +86,7 @@ params=""
 ulopts="-F xmlBatch=@${DIR}/temp.out"
 
 # get listing
-docurl "${ulopts}"  "${runurl}?${params}" > "$DIR/curl.out"
+docurl $ulopts "${runurl}?${params}" > "$DIR/curl.out"
 if [ 0 != $? ] ; then
     errorMsg "ERROR: failed query request: ${runurl}?${params}"
     exit 2
@@ -102,7 +102,7 @@ jobid=$($XMLSTARLET sel -T -t -v "/result/succeeded/job/id" "$DIR/curl.out")
 
 if [ "1" != "$succount" ] || [ "" == "$jobid" ] ; then
     errorMsg  "Upload was not successful."
-    exit
+    exit 2
 fi
 
 

@@ -176,7 +176,7 @@ public class Workflow {
         }
         return newwf
     }
-    public static WorkflowStep createItem(WorkflowStep item){
+    WorkflowStep createItem(WorkflowStep item){
         return item.createClone()
     }
 

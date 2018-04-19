@@ -31,19 +31,20 @@
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
+    <asset:stylesheet src="bootstrap-less.css"/>
     <asset:stylesheet href="rundeck.css"/>
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="github-markdown.css"/>
 
     <asset:stylesheet href="jquery-ui.css"/>
     <!--[if lt IE 9]>
-    <g:javascript library="respond.min"/>
+    <asset:javascript src="respond.min.js"/>
     <![endif]-->
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="jquery-ui.js"/>
     <asset:javascript src="jquery-ui-timepicker-addon.js"/>
-    <asset:javascript src="bootstrap.js"/>
-    <asset:javascript src="prototype.min.js"/>
+    <asset:javascript src="bootstrap-all.js"/>
+    <asset:javascript src="prototype-bundle.js"/>
     <asset:javascript src="application.js"/>
     <g:render template="/common/js"/>
     <g:render template="/common/css"/>
@@ -127,7 +128,8 @@
 <g:render template="/common/footer"/>
 </div>
 <!--
-<g:profilerOutput />
+disable for now because profiler plugin is not compatible with grails 3.x
+ < g:profilerOutput />
 -->
 <miniprofiler:javascript/>
 

@@ -38,9 +38,9 @@
 <g:set var="offsetColSize" value="col-sm-10 col-sm-offset-2"/>
 
 <g:set var="editSchedExecId" value="${scheduledExecution?.id? scheduledExecution.extid:null}"/>
-<g:javascript library="prototype/scriptaculous"/>
-<g:javascript library="prototype/effects"/>
-<g:javascript library="prototype/dragdrop"/>
+<asset:javascript src="prototype/scriptaculous"/>
+<asset:javascript src="prototype/effects"/>
+<asset:javascript src="prototype/dragdrop"/>
 <g:set var="project" value="${scheduledExecution?.project ?: params.project?:request.project?: projects?.size() == 1 ? projects[0].name : ''}"/>
 <script type="text/javascript">
 //<!CDATA[
@@ -1181,8 +1181,8 @@ function getCurSEID(){
         _initPopoverContentRef();
     }
 </g:javascript>
-<!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
-<!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ext-language_tools"/><!--<![endif]-->
+<!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
+<!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace/ext-language_tools.js"/><!--<![endif]-->
 <div id="msg"></div>
 
     <g:render template="/framework/storageBrowseModalKO"/>

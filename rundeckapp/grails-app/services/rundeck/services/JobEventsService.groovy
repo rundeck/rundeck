@@ -19,11 +19,10 @@ package rundeck.services
 import com.dtolabs.rundeck.plugins.jobs.JobChangeListener
 import com.dtolabs.rundeck.plugins.scm.JobChangeEvent
 import com.dtolabs.rundeck.plugins.scm.JobSerializer
-import grails.events.Listener
-import grails.transaction.Transactional
+import grails.events.annotation.Subscriber
+import grails.events.annotation.gorm.Listener
+import grails.gorm.transactions.Transactional
 import rundeck.ScheduledExecution
-import rundeck.codecs.JobsXMLCodec
-import rundeck.codecs.JobsYAMLCodec
 import rundeck.services.scm.ProjectJobChangeListener
 
 @Transactional
@@ -50,7 +49,7 @@ class JobEventsService {
         listeners.remove(plugin)
     }
 
-    @Listener
+    @Subscriber
     def jobChanged(StoredJobChangeEvent e) {
         if (!listeners) {
             return
