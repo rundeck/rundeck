@@ -40,9 +40,9 @@
        value="${'true' == params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL] || null == params[ScheduledExecutionController.NOTIFY_OVERAVGDURATION_URL] && defAvgUrl}"/>
 
 <g:set var="defRetryableFailure" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME, ScheduledExecutionController.EMAIL_NOTIFICATION_TYPE)}"/>
-<g:set var="isRetryableFailure" value="${'true' == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL] || null == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL] &&defFailure}"/>
+<g:set var="isRetryableFailure" value="${'true' == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL] || null == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_EMAIL] &&defRetryableFailure}"/>
 <g:set var="defRetryableFailureUrl" value="${scheduledExecution.findNotification(ScheduledExecutionController.ONRETRYABLEFAILURE_TRIGGER_NAME, ScheduledExecutionController.WEBHOOK_NOTIFICATION_TYPE)}"/>
-<g:set var="isRetryableFailureUrl" value="${'true' == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL] || null == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL] &&defFailureUrl}"/>
+<g:set var="isRetryableFailureUrl" value="${'true' == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL] || null == params[ScheduledExecutionController.NOTIFY_ONRETRYABLEFAILURE_URL] &&defRetryableFailureUrl}"/>
 
 
 <div class="form-group">
