@@ -979,6 +979,7 @@ function _optsavenew(formelem,tokendataid) {
     var params = jQuery('#'+formelem+' :input').serialize();
     var optname = jQuery('#' + formelem + ' :input[name=name]').val();
     var opttype = jQuery('#' + formelem + ' :input[name=type]').val();
+    var multivalued = jQuery('#' + formelem + ' :input[name=multivalued]:checked').val() == "true" ? true : false
     $('optsload').loading();
     jQuery.ajax({
         type: "POST",
@@ -987,7 +988,7 @@ function _optsavenew(formelem,tokendataid) {
         beforeSend: _ajaxSendTokens.curry(tokendataid),
         success: function (data, status, xhr) {
             jQuery(newoptli).html(data);
-            _addOption({name: optname, type: opttype});
+            _addOption({name: optname, type: opttype, multivalued: multivalued});
             if (!newoptli.down('div.optEditForm')) {
                 $(newoptli).highlight();
                 newoptli = null;
