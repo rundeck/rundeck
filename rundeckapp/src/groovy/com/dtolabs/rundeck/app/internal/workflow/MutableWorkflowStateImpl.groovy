@@ -395,6 +395,10 @@ class MutableWorkflowStateImpl implements MutableWorkflowState {
      */
     private finishNodeStepIfNodesFinished(MutableWorkflowStepState currentStep,Date timestamp){
         def nodes = currentStep.nodeStepTargets?:currentStep.mutableNodeStateMap?currentStep.mutableNodeStateMap.keySet() : [serverNode]
+        if(currentStep.nodeStateMap.keySet().size()>nodes.size()) {
+            nodes = currentStep.nodeStateMap.keySet().
+                findAll { currentStep.nodeStateMap[it].executionState != ExecutionState.WAITING }
+        }
         boolean finished = nodes.every { node -> currentStep.nodeStateMap[node]?.executionState?.isCompletedState() }
         if (finished) {
             boolean aborted = currentStep.nodeStateMap.values()*.executionState.any { it == ExecutionState.ABORTED }
