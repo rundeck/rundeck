@@ -5,7 +5,7 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.mixin.TestMixin
 import grails.test.mixin.web.GroovyPageUnitTestMixin
-import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
+import org.grails.web.servlet.mvc.SynchronizerTokensHolder
 import rundeck.AuthToken
 import rundeck.User
 import rundeck.UtilityTagLib

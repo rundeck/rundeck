@@ -16,6 +16,7 @@
 
 package rundeck.services
 
+import com.dtolabs.rundeck.app.api.ApiVersions
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import grails.converters.JSON
@@ -25,11 +26,10 @@ import grails.test.mixin.TestMixin
 import grails.test.mixin.web.ControllerUnitTestMixin
 import grails.web.JSONBuilder
 import groovy.xml.MarkupBuilder
-import org.codehaus.groovy.grails.plugins.codecs.JSONCodec
+import org.grails.plugins.codecs.JSONCodec
 import org.springframework.context.MessageSource
 import rundeck.AuthToken
 import rundeck.User
-import rundeck.filters.ApiRequestFilters
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -591,7 +591,7 @@ class ApiServiceSpec extends Specification {
         then:
         println result
         result == '{"error":true,"apiversion":' +
-                (ApiRequestFilters.API_CURRENT_VERSION) +
+                (ApiVersions.API_CURRENT_VERSION) +
                         (expectCode ? ',"errorCode":"' + (expectCode) +'"' : '') +
                         (eMessage ? ',"message":"' + (eMessage) +'"' : '') +
                         (eMessages ? ',"messages":' + (eMessages) : '') +
@@ -619,7 +619,7 @@ class ApiServiceSpec extends Specification {
         when:
         def result = service.renderErrorXml(data, code)
         then:
-        result == """<result error='true' apiversion='${ApiRequestFilters.API_CURRENT_VERSION}'>
+        result == """<result error='true' apiversion='${ApiVersions.API_CURRENT_VERSION}'>
   <error code='${
             code
         }'>

@@ -796,8 +796,7 @@ class LogFileStorageServiceTests  {
         Map task=performRunStorage(test, "rdlog", createExecution(), testLogFile1) { LogFileStorageService service ->
 //        REVIEW: Disabled at merging
 //        service.logFileStorageTaskScheduler = sched.createMock()
-//        Map task = performRunStorage(test, "rdlog", createExecution(), testLogFile1, ['execution.logs.fileStorage.storageRetryDelay': 30,
-                                                                                      'execution.logs.fileStorage.storageRetryCount': 2]) { LogFileStorageService service ->
+//        Map task = performRunStorage(test, "rdlog", createExecution(), testLogFile1, ['execution.logs.fileStorage.storageRetryDelay': 30, 'execution.logs.fileStorage.storageRetryCount': 2]) { LogFileStorageService service ->
             svc = service
             assertFalse(test.storeLogFileCalled)
             assertNull(test.storeFiletype)
