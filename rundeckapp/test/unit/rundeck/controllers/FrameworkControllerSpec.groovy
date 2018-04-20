@@ -19,6 +19,7 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -26,6 +27,9 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
+import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
+import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
 import org.codehaus.groovy.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -715,7 +719,11 @@ class FrameworkControllerSpec extends Specification {
         authedNodes.putNode(new NodeEntryImpl('monkey1'))
         def projectName = 'testproj'
         controller.frameworkService = Mock(FrameworkService) {
-            1 * getRundeckFramework()
+            1 * getRundeckFramework() >> Mock(IFramework) {
+                1 * getResourceFormatGeneratorService() >> Mock(ResourceFormatGeneratorService) {
+                    getGeneratorForFormat('resourcexml') >> new ResourceXMLFormatGenerator()
+                }
+            }
             1 * existsFrameworkProject(projectName) >> true
 
             1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
@@ -737,7 +745,7 @@ class FrameworkControllerSpec extends Specification {
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
         when:
-
+        response.format = 'xml'
         def result = controller.apiResources(query)
 
         then:
@@ -754,7 +762,11 @@ class FrameworkControllerSpec extends Specification {
         authedNodes.putNode(new NodeEntryImpl('monkey1'))
         def projectName = 'testproj'
         controller.frameworkService = Mock(FrameworkService) {
-            1 * getRundeckFramework()
+            1 * getRundeckFramework() >> Mock(IFramework) {
+                1 * getResourceFormatGeneratorService() >> Mock(ResourceFormatGeneratorService) {
+                    getGeneratorForFormat('resourcexml') >> new ResourceXMLFormatGenerator()
+                }
+            }
             1 * existsFrameworkProject(projectName) >> true
 
             1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
@@ -776,7 +788,7 @@ class FrameworkControllerSpec extends Specification {
         params.project = projectName
         params.name = 'monkey1'
         when:
-
+        response.format = 'xml'
         def result = controller.apiResource()
 
         then:

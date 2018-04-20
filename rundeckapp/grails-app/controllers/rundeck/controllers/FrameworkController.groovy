@@ -2585,7 +2585,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (!apiService.requireApi(request, response)) {
             return
         }
-        Framework framework = frameworkService.getRundeckFramework()
+        IFramework framework = frameworkService.getRundeckFramework()
         if(!params.project){
             return apiService.renderErrorXml(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
@@ -2642,7 +2642,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.invalid.request', args: [query.errors.allErrors.collect { g.message(error: it) }.join("; ")]])
         }
-        Framework framework = frameworkService.getRundeckFramework()
+        IFramework framework = frameworkService.getRundeckFramework()
         if(!params.project){
             return apiService.renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
                     code: 'api.error.parameter.required', args: ['project']])
@@ -2712,11 +2712,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     ]
 
     protected def apiRenderNodeResult(INodeSet nodes, IFramework framework, String project) {
-
-        //expected another content type
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V3)) {
-            return
-        }
         def reqformat = params.format ?: response.format
         if (reqformat in ['all', 'html']) {
             reqformat = 'json'
