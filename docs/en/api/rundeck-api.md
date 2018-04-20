@@ -62,6 +62,9 @@ Changes introduced by API Version number:
     - [`GET /api/V/project/[PROJECT]/source/[INDEX]`][/api/V/project/[PROJECT]/source/[INDEX]] - Get a specific project resource model source by index
     - [`GET /api/V/project/[PROJECT]/source/[INDEX]/resources`][GET /api/V/project/[PROJECT]/source/[INDEX]/resources] - Get Nodes content from a specific resource model source by index
     - [`POST /api/V/project/[PROJECT]/source/[INDEX]/resources`][POST /api/V/project/[PROJECT]/source/[INDEX]/resources] - Update Nodes content for a specific Writeable resource model source by index
+* Updated Endpoints.
+    - [`GET /api/V/project/[PROJECT]/resources`][/api/V/project/[PROJECT]/resources] - Default response format is `application/json` for API v23 and later
+    - [`GET /api/V/project/[PROJECT]/resource/[NAME]`][/api/V/project/[PROJECT]/resource/[NAME]] - Default response format is `application/json` for API v23 and later
     
 **Version 22**:
 
@@ -5414,7 +5417,9 @@ List or query the resources for a project.
 
 Optional Parameters:
 
-* `format` : Result format. Default is "xml", can use "yaml" or "json", or an installed ResourceFormat plugin name.  
+* `format` : Result format. Can use "xml", "yaml" or "json", or an installed ResourceFormat plugin name.  
+    * Default is 'json' (API v23 and later)
+    * Default is 'xml' (API v22 and earlier)
 * Node Filter parameters: You can select resources to include and exclude in the result set, see [Using Node Filters](#using-node-filters) below.
 
 Accept header: 
@@ -5439,7 +5444,9 @@ Get a specific resource within a project.
 
 Optional Parameters:
 
-* `format` : Result format.  Default is "xml", can use "yaml" or "json", or an installed ResourceFormat plugin name.
+* `format` : Result format. Can use "xml", "yaml" or "json", or an installed ResourceFormat plugin name.  
+    * Default is 'json' (API v23 and later)
+    * Default is 'xml' (API v22 and earlier)
 
 **Response:**
 

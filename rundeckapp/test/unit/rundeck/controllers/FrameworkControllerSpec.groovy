@@ -753,6 +753,56 @@ class FrameworkControllerSpec extends Specification {
         response.contentType == 'text/xml;charset=UTF-8'
     }
 
+    @Unroll
+    def "get project resources default #mime for api_version #api_version"() {
+        setup:
+        def authCtx = Mock(UserAndRolesAuthContext)
+        def nodeSet = new NodeSetImpl()
+        nodeSet.putNode(new NodeEntryImpl('monkey1'))
+        nodeSet.putNode(new NodeEntryImpl('monkey2'))
+        def authedNodes = new NodeSetImpl()
+        authedNodes.putNode(new NodeEntryImpl('monkey1'))
+        def projectName = 'testproj'
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getRundeckFramework() >> Mock(IFramework) {
+                1 * getResourceFormatGeneratorService() >> Mock(ResourceFormatGeneratorService) {
+                    getGeneratorForFormat('resourcexml') >> new ResourceXMLFormatGenerator()
+                    getGeneratorForFormat('resourcejson') >> new ResourceJsonFormatGenerator()
+                }
+            }
+            1 * existsFrameworkProject(projectName) >> true
+
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+
+            1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+
+            1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
+                1 * getNodeSet() >> nodeSet
+            }
+            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _) >> true
+
+            0 * _(*_)
+        }
+        def query = new ExtNodeFilters(project: projectName)
+        params.project = projectName
+        request.api_version = api_version
+        when:
+        response.format = 'all'
+        def result = controller.apiResources(query)
+
+        then:
+        response.contentType == "$mime;charset=UTF-8"
+
+        where:
+        api_version | mime
+        22          | 'text/xml'
+        23          | 'application/json'
+    }
+
     def "get single resource filters checks acl"() {
         setup:
         def authCtx = Mock(UserAndRolesAuthContext)
@@ -795,6 +845,57 @@ class FrameworkControllerSpec extends Specification {
         then:
         response.contentType == 'text/xml;charset=UTF-8'
         response.status == 200
+    }
+
+    @Unroll
+    def "get single resource default #mime for api_version #api_version"() {
+        setup:
+        def authCtx = Mock(UserAndRolesAuthContext)
+        def nodeSet = new NodeSetImpl()
+        nodeSet.putNode(new NodeEntryImpl('monkey1'))
+        nodeSet.putNode(new NodeEntryImpl('monkey2'))
+        def authedNodes = new NodeSetImpl()
+        authedNodes.putNode(new NodeEntryImpl('monkey1'))
+        def projectName = 'testproj'
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getRundeckFramework() >> Mock(IFramework) {
+                1 * getResourceFormatGeneratorService() >> Mock(ResourceFormatGeneratorService) {
+                    getGeneratorForFormat('resourcexml') >> new ResourceXMLFormatGenerator()
+                    getGeneratorForFormat('resourcejson') >> new ResourceJsonFormatGenerator()
+                }
+            }
+            1 * existsFrameworkProject(projectName) >> true
+
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+
+            1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+
+            1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
+                1 * getNodeSet() >> nodeSet
+            }
+            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _) >> true
+
+            0 * _(*_)
+        }
+        def query = new ExtNodeFilters(project: projectName)
+        params.project = projectName
+        params.name = 'monkey1'
+        request.api_version = api_version
+        when:
+        response.format = 'all'
+        def result = controller.apiResource()
+
+        then:
+        response.contentType == "$mime;charset=UTF-8"
+        response.status == 200
+        where:
+        api_version | mime
+        22          | 'text/xml'
+        23          | 'application/json'
     }
 
     def "get single resource filters unauthorized"() {

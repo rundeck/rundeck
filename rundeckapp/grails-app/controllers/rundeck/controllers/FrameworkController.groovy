@@ -2715,7 +2715,11 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     protected def apiRenderNodeResult(INodeSet nodes, IFramework framework, String project) {
         def reqformat = params.format ?: response.format
         if (reqformat in ['all', 'html']) {
-            reqformat = 'json'
+            if (request.api_version < ApiRequestFilters.V23) {
+                reqformat = 'xml'
+            } else {
+                reqformat = 'json'
+            }
         }
         reqformat = resourceFormatBuiltinTypes[reqformat] ?: reqformat
         //render specified format

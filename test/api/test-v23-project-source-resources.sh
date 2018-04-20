@@ -108,4 +108,4 @@ ENDPOINT="${APIURL}/project/$test_proj"
 METHOD='DELETE'
 EXPECT_STATUS=204
 api_request $ENDPOINT $file
-rm $file $res_file1 $res_file2
+rm $file $res_file1 $res_file2 || echo "files not present"
