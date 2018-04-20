@@ -133,6 +133,7 @@ fi
 /var/lib/rundeck/cli/okhttp-3.6.0.jar
 /var/lib/rundeck/cli/okio-1.11.0.jar
 /var/lib/rundeck/cli/retrofit-2.2.0.jar
+/var/lib/rundeck/cli/protobuf-java-3.5.1.jar
 
 
 
