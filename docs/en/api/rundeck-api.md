@@ -55,6 +55,14 @@ View the [Index](#index) listing API paths.
 
 Changes introduced by API Version number:
 
+**Version 23**:
+
+* New Endpoints. (replacing removed `POST /api/2/project/[PROJECT]/resources` endpoint)
+    - [`GET /api/V/project/[PROJECT]/sources`][/api/V/project/[PROJECT]/sources] - List project resource model sources
+    - [`GET /api/V/project/[PROJECT]/source/[INDEX]`][/api/V/project/[PROJECT]/source/[INDEX]] - Get a specific project resource model source by index
+    - [`GET /api/V/project/[PROJECT]/source/[INDEX]/resources`][GET /api/V/project/[PROJECT]/source/[INDEX]/resources] - Get Nodes content from a specific resource model source by index
+    - [`POST /api/V/project/[PROJECT]/source/[INDEX]/resources`][POST /api/V/project/[PROJECT]/source/[INDEX]/resources] - Update Nodes content for a specific Writeable resource model source by index
+    
 **Version 22**:
 
 * Updated Endpoints.
@@ -5042,16 +5050,121 @@ Response will indicate whether the imported contents had any errors:
 
 ### Updating and Listing Resources for a Project
 
-Update or retrieve the Resources for a project.  A GET request returns the resources
-for the project, and a POST request will update the resources. (**API version 2** required.)
+Update or retrieve the Resources or Sources for a project. 
+
+Each Project can have multiple resource Sources.  Sources can be read-only, or writeable.
+
+Use [/api/V/project/[PROJECT]/resources][] to get all resources from a project.
+
+Use [/api/V/project/[PROJECT]/sources][] to get all Sources from a project.  Individual Sources
+can be retrieved, or their Resources
 
 #### List Resources for a Project
+
+A GET request returns all the resources for the project.
 
 **Request:**
 
     GET /api/2/project/[PROJECT]/resources
 
 See [Listing Resources](#listing-resources).
+
+#### List Resource Model Sources for a Project
+
+**Request:**
+
+    GET /api/23/project/[PROJECT]/sources
+
+**Response:**
+
+The response contains a set of source objects, each describes the index, the type, and details about the resources.
+
+Resources data includes any `description` provided by the source, whether it is `empty`, and
+whether it is `writeable`.  The `href` indicates the URL for [Listing and Updating the resources for the source][/api/V/project/[PROJECT]/source/[INDEX]/resources].
+
+`application/json`
+
+~~~ {.json}
+[
+    {
+        "errors": null,
+        "index": 1,
+        "resources": {
+            "description": "/Users/greg/rundeck2.11/projects/atest/etc/resources.xml",
+            "empty": false,
+            "href": "http://ecto1.local:4440/api/23/project/atest/source/1/resources",
+            "writeable": true
+        },
+        "type": "file"
+    },
+    {
+        "errors": null,
+        "index": 2,
+        "resources": {
+            "href": "http://ecto1.local:4440/api/23/project/atest/source/2/resources",
+            "writeable": false
+        },
+        "type": "stub"
+    }
+]
+~~~
+
+`application/xml`
+
+~~~ {.xml}
+<?xml version="1.0" encoding="utf-8"?>
+<sources project="atest">
+  <source index="1" type="file">
+    <resources href="http://ecto1.local:4440/api/23/project/atest/source/1/resources"
+    writeable="true" empty="false">
+      <description>
+      /Users/greg/rundeck2.11/projects/atest/etc/resources.xml</description>
+    </resources>
+    <errors />
+  </source>
+  <source index="2" type="stub">
+    <resources href="http://ecto1.local:4440/api/23/project/atest/source/2/resources"
+    writeable="false" />
+    <errors />
+  </source>
+</sources>
+~~~
+
+#### Get a Resource Model Source for a Project
+
+**Request:**
+
+    GET /api/23/project/[PROJECT]/source/[INDEX]
+
+**Response:**
+
+A single `source` for the given index, as described in [List Resource Model Sources For a Project][/api/V/project/[PROJECT]/sources].
+
+#### List Resources of a Resource Model Source
+
+**Request:**
+
+    GET /api/23/project/[PROJECT]/source/[INDEX]/resources
+
+**Response:**
+
+Based on the `Accept:` header, the resource model data for the source.
+
+#### Update Resources of a Resource Model Source
+
+**Request:**
+
+    POST /api/23/project/[PROJECT]/source/[INDEX]/resources
+    Content-Type: [TYPE]
+
+    [RESOURCE MODEL DATA]
+
+Specify the `Content-Type` header, with a value such as `application/json` or `application/xml` or any supported resource model format.
+
+**Response:**
+
+The resource model data in the format requested via the `Accept:` header.
+
 
 ### Project Readme File
 
@@ -6451,6 +6564,19 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `GET` [Get Project SCM Action Input Fields.][/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input]
 
+[/api/V/project/[PROJECT]/sources][]
+
+* `GET` [List Resource Model Sources for a Project][/api/V/project/[PROJECT]/sources]
+
+[/api/V/project/[PROJECT]/source/[INDEX]][]
+
+* `GET` [Get a Resource Model Source for a Project][GET /api/V/project/[PROJECT]/source/[INDEX]]
+
+[/api/V/project/[PROJECT]/source/[INDEX]/resources][]
+
+* `GET` [List Resources for a Resource Model Source][GET /api/V/project/[PROJECT]/source/[INDEX]/resources]
+* `POST` [Update Resources for a Resource Model Source][POST /api/V/project/[PROJECT]/source/[INDEX]/resources]
+
 [/api/V/projects][]
 
 * `GET` [Listing Projects](#listing-projects)
@@ -6548,6 +6674,13 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 [/api/V/project/[PROJECT]/scm/[INTEGRATION]/config]:#get-project-scm-config
 [/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]]:#perform-project-scm-action
 [/api/V/project/[PROJECT]/scm/[INTEGRATION]/action/[ACTION_ID]/input]:#get-project-scm-action-input-fields
+
+[/api/V/project/[PROJECT]/sources]:#list-resource-model-sources-for-a-project
+[/api/V/project/[PROJECT]/source/[INDEX]]:#get-a-resource-model-source-for-a-project
+[/api/V/project/[PROJECT]/source/[INDEX]/resources]:#list-resources-of-a-resource-model-source
+[GET /api/V/project/[PROJECT]/source/[INDEX]/resources]:#list-resources-of-a-resource-model-source
+[POST /api/V/project/[PROJECT]/source/[INDEX]/resources]:#update-resources-of-a-resource-model-source
+
 [/api/V/job/[ID]/scm/[INTEGRATION]/status]:#get-job-scm-status
 [/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]]:#perform-job-scm-action
 [/api/V/job/[ID]/scm/[INTEGRATION]/action/[ACTION_ID]/input]:#get-job-scm-action-input-fields
