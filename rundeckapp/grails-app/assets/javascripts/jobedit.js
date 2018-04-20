@@ -54,7 +54,7 @@ function _removeOptionName(name) {
     var findname = function (e) {
         return e.name === name;
     };
-    var found = _jobOptionData.find(findname);
+    var found = _jobOptionData.findIndex(findname);
     if (found >= 0) {
         _jobOptionData.splice(found, 1);
     }
@@ -891,12 +891,17 @@ function _optview(name, target) {
 function _optsave(formelem, tokendataid, target) {
     jobWasEdited();
     $('optsload').loading();
+    var optname = jQuery('#' + formelem + ' :input[name=name]').val();
+    var opttype = jQuery('#' + formelem + ' :input[name=type]').val();
+    var multivalued = jQuery('#' + formelem + ' :input[name=multivalued]:checked').val() == "true" ? true : false
     jQuery.ajax({
         type: "POST",
         url:_genUrl(appLinks.editOptsSave,{jobWasScheduled:_isjobScheduled()}),
         data: jQuery('#'+formelem+" :input").serialize(),
         beforeSend: _ajaxSendTokens.curry(tokendataid),
         success:function(data,status,xhr){
+            _removeOptionName(optname);
+            _addOption({name: optname, type: opttype, multivalued: multivalued});
             jQuery(target).html(data);
             if (jQuery(target).find('div.optEditForm').length<1) {
                 _showOptControls();
@@ -979,6 +984,7 @@ function _optsavenew(formelem,tokendataid) {
     var params = jQuery('#'+formelem+' :input').serialize();
     var optname = jQuery('#' + formelem + ' :input[name=name]').val();
     var opttype = jQuery('#' + formelem + ' :input[name=type]').val();
+    var multivalued = jQuery('#' + formelem + ' :input[name=multivalued]:checked').val() == "true" ? true : false
     $('optsload').loading();
     jQuery.ajax({
         type: "POST",
@@ -987,7 +993,7 @@ function _optsavenew(formelem,tokendataid) {
         beforeSend: _ajaxSendTokens.curry(tokendataid),
         success: function (data, status, xhr) {
             jQuery(newoptli).html(data);
-            _addOption({name: optname, type: opttype});
+            _addOption({name: optname, type: opttype, multivalued: multivalued});
             if (!newoptli.down('div.optEditForm')) {
                 $(newoptli).highlight();
                 newoptli = null;
