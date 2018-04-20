@@ -5077,7 +5077,8 @@ See [Listing Resources](#listing-resources).
 
 **Response:**
 
-The response contains a set of source objects, each describes the index, the type, and details about the resources.
+The response contains a set of `source` objects, each describes the `index`, the `type`, and details about the `resources`. If the
+source had any error, that is included as `errors`.
 
 Resources data includes any `description` provided by the source, whether it is `empty`, and
 whether it is `writeable`.  The `href` indicates the URL for [Listing and Updating the resources for the source][/api/V/project/[PROJECT]/source/[INDEX]/resources].
@@ -5087,7 +5088,6 @@ whether it is `writeable`.  The `href` indicates the URL for [Listing and Updati
 ~~~ {.json}
 [
     {
-        "errors": null,
         "index": 1,
         "resources": {
             "description": "/Users/greg/rundeck2.11/projects/atest/etc/resources.xml",
@@ -5098,7 +5098,7 @@ whether it is `writeable`.  The `href` indicates the URL for [Listing and Updati
         "type": "file"
     },
     {
-        "errors": null,
+        "errors": "File does not exist: /Users/greg/rundeck2.11/projects/atest/etc/resources2.xml",
         "index": 2,
         "resources": {
             "href": "http://ecto1.local:4440/api/23/project/atest/source/2/resources",
@@ -5113,19 +5113,19 @@ whether it is `writeable`.  The `href` indicates the URL for [Listing and Updati
 
 ~~~ {.xml}
 <?xml version="1.0" encoding="utf-8"?>
-<sources project="atest">
+<sources project="atest" count="2">
   <source index="1" type="file">
     <resources href="http://ecto1.local:4440/api/23/project/atest/source/1/resources"
     writeable="true" empty="false">
       <description>
       /Users/greg/rundeck2.11/projects/atest/etc/resources.xml</description>
     </resources>
-    <errors />
   </source>
   <source index="2" type="stub">
     <resources href="http://ecto1.local:4440/api/23/project/atest/source/2/resources"
     writeable="false" />
-    <errors />
+     <errors>File does not exist:
+    /Users/greg/rundeck2.11/projects/atest/etc/resources2.xml</errors>
   </source>
 </sources>
 ~~~
@@ -5150,6 +5150,8 @@ A single `source` for the given index, as described in [List Resource Model Sour
 
 Based on the `Accept:` header, the resource model data for the source.
 
+* See [Listing Resources](#listing-resources).
+
 #### Update Resources of a Resource Model Source
 
 **Request:**
@@ -5165,6 +5167,7 @@ Specify the `Content-Type` header, with a value such as `application/json` or `a
 
 The resource model data in the format requested via the `Accept:` header.
 
+* See [Listing Resources](#listing-resources).
 
 ### Project Readme File
 
@@ -5412,8 +5415,11 @@ List or query the resources for a project.
 Optional Parameters:
 
 * `format` : Result format. Default is "xml", can use "yaml" or "json", or an installed ResourceFormat plugin name.  
-
 * Node Filter parameters: You can select resources to include and exclude in the result set, see [Using Node Filters](#using-node-filters) below.
+
+Accept header: 
+
+Specify a MIME type via the `Accept:` header to specify the requested format.
 
 **Note:** If no query parameters are included, the result set will include all Node resources for the project.
 
