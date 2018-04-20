@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # common header for test scripts
+API_CURRENT_VERSION=23
 
 SRC_DIR=$(cd `dirname $0` && pwd)
 DIR=${TMP_DIR:-$SRC_DIR}
@@ -40,8 +41,6 @@ xmlsel(){
     shift
     $XMLSTARLET sel -T -t -v "$xpath" $*
 }
-
-API_CURRENT_VERSION=22
 
 API_VERSION=${API_VERSION:-$API_CURRENT_VERSION}
 
