@@ -442,9 +442,9 @@ class ExecutionController extends ControllerBase{
         }
         def limit=grailsApplication.config.rundeck?.ajax?.executionState?.compression?.nodeThreshold?:500
         if (selectedNodes || data.state?.allNodes?.size() > limit) {
-            return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
+            renderCompressed(request, response, 'application/json', data as JSON)
         }else{
-            return render(contentType: 'application/json', text: data.encodeAsJSON())
+            render data as JSON
         }
     }
     def ajaxExecNodeState(){
@@ -1772,6 +1772,7 @@ class ExecutionController extends ControllerBase{
         }
 //        ExecutionService.AbortResult abortresult
         def Execution e
+        ExecutionService.AbortResult abortresult
         try {
             e = Execution.get(params.id)
             if (!apiService.requireExists(response, e, ['Execution ID', params.id])) {
@@ -1793,7 +1794,7 @@ class ExecutionController extends ControllerBase{
             //authorized within service call
             killas= params.asUser
         }
-        ExecutionService.AbortResult abortresult = executionService.abortExecution(
+        abortresult = executionService.abortExecution(
                 se,
                 e,
                 user,

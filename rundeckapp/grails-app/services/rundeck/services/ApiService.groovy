@@ -819,7 +819,7 @@ class ApiService {
     }
 
     /**
-     * in Json or XML, render a file as a wrapped strings specified by a 'contents' entry/element
+     * in XML, render a file as a wrapped strings specified by a 'contents' entry/element
      * @param contentString
      * @param request
      * @param response
@@ -827,18 +827,14 @@ class ApiService {
      * @param delegate
      * @return
      */
-    void renderWrappedFileContents(
+    void renderWrappedFileContentsXml(
             String contentString,
             String respFormat,
             delegate
     )
     {
-        if (respFormat=='json') {
-            delegate contents: contentString
-        }else{
-            delegate.'contents' {
-                mkp.yieldUnescaped("<![CDATA[" + contentString.replaceAll(']]>', ']]]]><![CDATA[>') + "]]>")
-            }
+        delegate.'contents' {
+            mkp.yieldUnescaped("<![CDATA[" + contentString.replaceAll(']]>', ']]]]><![CDATA[>') + "]]>")
         }
     }
 
@@ -850,26 +846,21 @@ class ApiService {
      * @param builder builder
      * @return
      */
-     void jsonRenderDirlist(String path,Closure genpath,Closure genhref,List<String>dirlist,builder){
-        builder.with{
-            delegate.'path'=genpath(path)
-            delegate.'type'='directory'
-            //delegate.'name'= pathName(path)
-            delegate.'href'= genhref(path)
-            delegate.'resources'=array{
-                def builder2=delegate
-                dirlist.each{dirpath->
-                    builder2.element {
-                        delegate.'path'=genpath(dirpath)
-                        delegate.'type'=dirpath.endsWith('/')?'directory':'file'
-                        if(!dirpath.endsWith('/')) {
-                            delegate.'name' = pathName(genpath(dirpath))
-                        }
-                        delegate.'href'= genhref(dirpath)
-                    }
-                }
-            }
-        }
+     Map jsonRenderDirlist(String path,Closure genpath,Closure genhref,List<String>dirlist){
+         def json = [:]
+         json.path = genpath(path)
+         json.type = 'directory'
+         json.href = genhref(path)
+         json.resources = dirlist.collect {dirpath->
+             def e = ['path':genpath(dirpath),
+                      'type':dirpath.endsWith('/')?'directory':'file',
+                      'href': genhref(dirpath)]
+             if(!dirpath.endsWith('/')) {
+                 e.name = pathName(genpath(dirpath))
+             }
+             return e
+         }
+         return json
     }
     /**
      * Render xml response for dir listing
@@ -909,16 +900,15 @@ class ApiService {
         path.lastIndexOf('/')>=0?path.substring(path.lastIndexOf('/') + 1):path
     }
 
-    public void renderJsonAclpolicyValidation(Validation validation, builder){
-        builder.valid = validation.valid
+    Map renderJsonAclpolicyValidation(Validation validation){
+        def json = [:]
+        json.valid = validation.valid
         if(!validation.valid) {
-            builder.'policies' = builder.array {
-                def d=delegate
-                validation.errors.keySet().sort().each { ident ->
-                    builder.'element'(policy: ident, errors: validation.errors[ident])
-                }
+            json.policies = validation.errors.keySet().sort().collect { ident ->
+                [policy: ident, errors: validation.errors[ident]]
             }
         }
+        return json
     }
     public void renderXmlAclpolicyValidation(Validation validation, builder){
         builder.'validation'(valid:validation.valid){

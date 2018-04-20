@@ -398,6 +398,7 @@ class FileUploadServiceSpec extends Specification {
 
     def "execution complete event"() {
         given:
+        JobFileRecord.metaClass.static.withNewSession = {Closure c -> c.call() }
         String jobid = 'ajobid'
         String user = 'auser'
         String origName = 'afile'

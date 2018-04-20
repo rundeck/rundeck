@@ -1004,9 +1004,7 @@ class ProjectController extends ControllerBase{
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return withFormat{
                 def j={
-                    render(contentType:'application/json'){
-                        apiService.renderJsonAclpolicyValidation(validation,delegate)
-                    }
+                    render apiService.renderJsonAclpolicyValidation(validation) as JSON
                 }
                 xml{
                     render(contentType: 'application/xml'){
@@ -1031,13 +1029,12 @@ class ProjectController extends ControllerBase{
             project.loadFileResource(projectFilePath,baos)
             withFormat{
                 json{
-                    render(contentType:'application/json'){
-                        apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
-                    }
+                    def content = [contents: baos.toString()]
+                    render content as JSON
                 }
                 xml{
                     render(contentType: 'application/xml'){
-                        apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                        apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
                     }
 
                 }
@@ -1072,13 +1069,12 @@ class ProjectController extends ControllerBase{
                 project.loadFileResource(projectFilePath,baos)
                 withFormat{
                     json{
-                        render(contentType:'application/json'){
-                            apiService.renderWrappedFileContents(baos.toString(),'json',delegate)
-                        }
+                        def content = [contents: baos.toString()]
+                        render content as JSON
                     }
                     xml{
                         render(contentType: 'application/xml'){
-                            apiService.renderWrappedFileContents(baos.toString(),'xml',delegate)
+                            apiService.renderWrappedFileContentsXml(baos.toString(),'xml',delegate)
                         }
 
                     }
@@ -1097,15 +1093,12 @@ class ProjectController extends ControllerBase{
             }
             withFormat{
                 json{
-                    render(contentType:'application/json'){
-                        apiService.jsonRenderDirlist(
+                    render apiService.jsonRenderDirlist(
                                 projectFilePath,
                                 {p->apiService.pathRmPrefix(p,rmprefix)},
                                 {p->renderProjectAclHref(project.getName(),apiService.pathRmPrefix(p,rmprefix))},
-                                list,
-                                delegate
-                        )
-                    }
+                                list
+                        ) as JSON
                 }
                 xml{
                     render(contentType: 'application/xml'){
@@ -1237,9 +1230,8 @@ class ProjectController extends ControllerBase{
     )
     {
         if (respFormat=='json') {
-            render(contentType: 'application/json') {
-                delegate contents: contentString //Changes for tests correction
-            }
+            def jsonContent = [contents: contentString]
+            render jsonContent as JSON
         }else{
             apiService.renderSuccessXml(request, response) {
                 delegate.'contents' {

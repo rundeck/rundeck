@@ -47,24 +47,13 @@ class ApiServiceSpec extends Specification {
     void setup() {
         mockCodec(JSONCodec)
     }
-    def "renderWrappedFileContents json"(){
-        given:
-        def builder = new JSONBuilder()
-        when:
-        def result=builder.build {
-            service.renderWrappedFileContents('x','json',delegate)
-        }
 
-        then:
-        result.toString()=='{"call":{"contents":"x"}}'
-
-    }
     def "renderWrappedFileContents xml"(){
         given:
         def sw = new StringWriter()
         def builder = new MarkupBuilder(sw)
         when:
-        service.renderWrappedFileContents('x','xml',builder)
+        service.renderWrappedFileContentsXml('x','xml',builder)
 
         then:
         sw.toString()=='<contents><![CDATA[x]]></contents>'
@@ -79,8 +68,7 @@ class ApiServiceSpec extends Specification {
                     '',
                     {it},
                     {"http://localhost:8080/api/14/project/test/acl/${it}"},
-                    ['blah.aclpolicy','adir/'],
-                    delegate
+                    ['blah.aclpolicy','adir/']
             )
         }
         def parsed=JSON.parse(result.toString())
@@ -145,8 +133,7 @@ class ApiServiceSpec extends Specification {
         }
         def result=builder.build {
             service.renderJsonAclpolicyValidation(
-                    validation,
-                    delegate
+                    validation
             )
         }
         def parsed=JSON.parse(result.toString())

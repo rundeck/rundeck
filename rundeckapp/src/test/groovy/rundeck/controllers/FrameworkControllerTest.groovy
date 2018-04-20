@@ -593,18 +593,18 @@ class FrameworkControllerTest {
     }
 
     public void testSaveProjectLabel() {
-        def fwk = mockFor(FrameworkService, true)
+        def fwk = new MockFor(FrameworkService, true)
 
         fwk.demand.getAuthContextForSubject {subject -> return null}
         fwk.demand.authResourceForProject {project -> return null}
         fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
-        fwk.demand.listDescriptions { -> [null, null, null] }
         fwk.demand.getRundeckFramework { -> null }
+        fwk.demand.listDescriptions { -> [null, null, null] }
 
-        fwk.demand.getFrameworkProject { project -> [name:project] }
+        //fwk.demand.getFrameworkProject { project -> [name:project] }
         fwk.demand.getNodeExecutorService { -> null }
         fwk.demand.validateServiceConfig { a, b, c, d -> [valid:true] }
-        fwk.demand.getNodeExecutorService { -> null }
+        //fwk.demand.getNodeExecutorService { -> null }
         fwk.demand.addProjectNodeExecutorPropertiesForType {type, props, config, remove ->
             props.setProperty("foobar", "barbaz")
         }
@@ -615,11 +615,7 @@ class FrameworkControllerTest {
             ["success":props.size() != 0]
         }
 
-        controller.frameworkService = fwk.createMock()
-
-        def execPFmck = mockFor(PasswordFieldsService)
-        def fcopyPFmck = mockFor(PasswordFieldsService)
-
+        controller.frameworkService = fwk.proxyInstance()
 
         controller.execPasswordFieldsService = mockWith(PasswordFieldsService){
             untrack{a, b -> return null}
@@ -633,11 +629,11 @@ class FrameworkControllerTest {
             storeFilterPref { -> true }
         }
 
-        def seServiceControl = mockFor(ScheduledExecutionService)
+        def seServiceControl = new MockFor(ScheduledExecutionService, true)
         seServiceControl.demand.isProjectExecutionEnabled{ project -> true
         }
         seServiceControl.demand.isProjectScheduledEnabled{ project -> true}
-        controller.scheduledExecutionService = seServiceControl.createMock()
+        controller.scheduledExecutionService = seServiceControl.proxyInstance()
 
         request.method = "POST"
 
@@ -660,45 +656,34 @@ class FrameworkControllerTest {
 
         assertNull(view)
         assertNull(request.error)
-        assertEquals("Project TestSaveProject saved", flash.message)
+        assertEquals("Project TestSaveProject saved", flash.message.toString())
 
     }
 
     public void testEditProjectLabel() {
         given:
         def label = "Label for project"
-        def fwk = mockFor(FrameworkService, true)
+        def fwk = new MockFor(FrameworkService, true)
 
         fwk.demand.getAuthContextForSubject { subject -> return null}
-        fwk.demand.getAuthContextForSubjectAndProject { subject,proj -> return null}
         fwk.demand.authResourceForProject {project -> return null}
         fwk.demand.authorizeApplicationResourceAny {ctx, e, actions -> true }
 
-        fwk.demand.listResourceModelConfigurations { project ->
-            [
-                [
-                    "type": "withPasswordDescription",
-                    "props": PasswordFieldsServiceTests.props("simple=text", "password=secret", "textField=a test field")
-                ],
-            ]
-        }
-        fwk.demand.listWriteableResourceModelSources { project -> [] }
-        fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
-        fwk.demand.getDefaultNodeExecutorService { -> null }
-        fwk.demand.getDefaultFileCopyService { -> null }
-        fwk.demand.getNodeExecConfigurationForType { -> null }
-        fwk.demand.getFileCopyConfigurationForType { -> null }
-        fwk.demand.loadProjectConfigurableInput {prefix,props -> [:] }
-
-        def proj = mockFor(IRundeckProject,true)
+        def proj = new MockFor(IRundeckProject)
         proj.demand.getProjectProperties(1..3){-> ["project.label":label]}
 
-        fwk.demand.getFrameworkProject { name-> proj.createMock() }
+        fwk.demand.getFrameworkProject { name-> proj.proxyInstance() }
+        fwk.demand.listDescriptions { -> [[withPasswordFieldDescription], null, null] }
+        fwk.demand.getDefaultNodeExecutorService { prj -> null }
+        fwk.demand.getDefaultFileCopyService { prj -> null }
+        fwk.demand.getNodeExecConfigurationForType { nodeExec,prj -> null }
+        fwk.demand.getFileCopyConfigurationForType { fcpy,prj -> null }
+        fwk.demand.loadProjectConfigurableInput {prefix,props -> [:] }
 
-        controller.frameworkService = fwk.createMock()
+        controller.frameworkService = fwk.proxyInstance()
 
-        def execPFmck = mockFor(PasswordFieldsService)
-        def fcopyPFmck = mockFor(PasswordFieldsService)
+        def execPFmck = new MockFor(PasswordFieldsService,true)
+        def fcopyPFmck = new MockFor(PasswordFieldsService,true)
 
         execPFmck.demand.reset{ -> return null}
         execPFmck.demand.track{a, b -> return null}
@@ -706,8 +691,8 @@ class FrameworkControllerTest {
         fcopyPFmck.demand.track{a, b -> return null}
 
 
-        controller.execPasswordFieldsService = execPFmck.createMock()
-        controller.fcopyPasswordFieldsService = fcopyPFmck.createMock()
+        controller.execPasswordFieldsService = execPFmck.proxyInstance()
+        controller.fcopyPasswordFieldsService = fcopyPFmck.proxyInstance()
 
 
         def passwordFieldsService = new PasswordFieldsService()

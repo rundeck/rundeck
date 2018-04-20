@@ -2559,9 +2559,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return withFormat{
                 def j={
-                    render(contentType:'application/json'){
-                        apiService.renderJsonAclpolicyValidation(validation,delegate)
-                    }
+                    render apiService.renderJsonAclpolicyValidation(validation) as JSON
                 }
                 xml{
                     render(contentType: 'application/xml'){
@@ -2586,14 +2584,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             withFormat{
                 xml{
                     render(contentType: 'application/xml'){
-                        apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                        apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
                     }
 
                 }
                 def j={
-                    render(contentType:'application/json'){
-                        apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
-                    }
+                    def content = [contents: baos.toString()]
+                    render content as JSON
                 }
                 json j
                 '*' j
@@ -2621,13 +2618,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 configStorageService.loadFileResource(projectFilePath,baos)
                 withFormat{
                     def j={
-                        render(contentType:'application/json'){
-                            apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
-                        }
+                        def content = [contents:baos.toString()]
+                        render content as JSON
                     }
                     xml{
                         render(contentType: 'application/xml'){
-                            apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                            apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
                         }
 
                     }
@@ -2652,15 +2648,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
                 }
                 def j ={
-                    render(contentType:'application/json') {
-                        apiService.jsonRenderDirlist(
+                    render apiService.jsonRenderDirlist(
                                 projectFilePath,
                                 { String p -> apiService.pathRmPrefix(p, rmprefix) },
                                 { String p -> renderAclHref(apiService.pathRmPrefix(p, rmprefix)) },
-                                list,
-                                delegate
-                        )
-                    }
+                                list
+                        ) as JSON
                 }
                 json j
                 '*' j

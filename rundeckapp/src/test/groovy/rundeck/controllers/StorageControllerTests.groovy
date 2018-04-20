@@ -132,13 +132,13 @@ class StorageControllerTests {
         def result=controller.apiGetResource()
         assertEquals(200,response.status)
         assertEquals('application/json;charset=UTF-8',response.contentType)
-        assertEquals('abc', response.json.call.path)
-        assertEquals('directory', response.json.call.type)
-        assertNotNull(response.json.call.url)
-        assertEquals(2, response.json.call.resources.size())
-        assertEquals('abc/test1', response.json.call.resources[0].path)
-        assertEquals('file', response.json.call.resources[0].type)
-        assertEquals('test1', response.json.call.resources[0].name)
+        assertEquals('abc', response.json.path)
+        assertEquals('directory', response.json.type)
+        assertNotNull(response.json.url)
+        assertEquals(2, response.json.resources.size())
+        assertEquals('abc/test1', response.json.resources[0].path)
+        assertEquals('file', response.json.resources[0].type)
+        assertEquals('test1', response.json.resources[0].name)
 
     }
     @Test
@@ -194,10 +194,10 @@ class StorageControllerTests {
         def result=controller.apiPostResource()
         assertEquals(201,response.status)
         assertEquals('application/json;charset=UTF-8',response.contentType)
-        assertEquals('file',response.json.call.type)
-        assertEquals('abc/test2',response.json.call.path)
-        assertEquals('test2',response.json.call.name)
-        assertEquals('test/data',response.json.call.meta['Rundeck-content-type'])
+        assertEquals('file',response.json.type)
+        assertEquals('abc/test2',response.json.path)
+        assertEquals('test2',response.json.name)
+        assertEquals('test/data',response.json.meta['Rundeck-content-type'])
     }
     @Test
     void apiPostResource_exception(){
@@ -260,10 +260,10 @@ class StorageControllerTests {
         def result=controller.apiPutResource()
         assertEquals(200,response.status)
         assertEquals('application/json;charset=UTF-8',response.contentType)
-        assertEquals('file',response.json.call.type)
-        assertEquals('abc/test2',response.json.call.path)
-        assertEquals('test2',response.json.call.name)
-        assertEquals('test/data',response.json.call.meta['Rundeck-content-type'])
+        assertEquals('file',response.json.type)
+        assertEquals('abc/test2',response.json.path)
+        assertEquals('test2',response.json.name)
+        assertEquals('test/data',response.json.meta['Rundeck-content-type'])
     }
     @Test
     void apiPutResource_exception(){

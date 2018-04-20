@@ -546,7 +546,7 @@ class ProjectControllerSpec extends Specification{
 
         then:
         response.contentType==~/^application\/json(;.+)?$/
-        response.json.delegate==[contents:text]
+        response.json==[contents:text]
 
         where:
         filename    | text
@@ -898,7 +898,6 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * renderWrappedFileContents('blah','json',_) >> {args-> args[2] success: true}
         }
         when:
         params.path='blah.aclpolicy'
@@ -909,6 +908,7 @@ class ProjectControllerSpec extends Specification{
         then:
         response.status==200
         response.contentType.split(';').contains('application/json')
+        response.json==[contents:"blah"]
     }
     def "project acls GET unsupported format"(){
         setup:
@@ -960,7 +960,6 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> {it[3]}
-            1 * renderWrappedFileContents('blah','json',_) >> {args-> args[2] success: true}
             0 * _(*_)
         }
         when:
@@ -971,7 +970,7 @@ class ProjectControllerSpec extends Specification{
         then:
         response.status==200
         response.contentType.split(';').contains('application/json')
-        response.json.call.success==true
+        response.json==[contents:"blah"]
     }
     def "project acls GET xml"(){
         setup:
@@ -992,7 +991,7 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'xml'
-            1 * renderWrappedFileContents('blah','xml',_) >> {args-> args[2]}
+            1 * renderWrappedFileContentsXml('blah','xml',_) >> {args-> args[2]}
         }
         when:
         params.path='blah.aclpolicy'
@@ -1059,8 +1058,8 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy'],_) >> {args->
-                args[4] success: true
+            1 * jsonRenderDirlist('acls/',_,_,['acls/blah.aclpolicy']) >> {args->
+                [success: true]
             }
             pathRmPrefix(_,_)>>'x'
         }
@@ -1131,9 +1130,6 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * renderWrappedFileContents('blah','json',_)>>{args->
-                args[2] contents: args[0]
-            }
         }
 
         controller.authorizationService=Stub(AuthorizationService){
@@ -1156,7 +1152,7 @@ class ProjectControllerSpec extends Specification{
         then:
         response.status==201
         response.contentType.split(';').contains('application/json')
-        response.json.call==[contents:'blah'] //TODO: is needed to correct jsons that use StreamingJsonBuilder
+        response.json==[contents:'blah']
 
 
     }
@@ -1177,7 +1173,7 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * renderJsonAclpolicyValidation(_,_)>>{args->args[1] contents: 'blah'}
+            1 * renderJsonAclpolicyValidation(_)>>{args-> [contents: 'blah']}
         }
 
         controller.authorizationService=Stub(AuthorizationService){
@@ -1200,7 +1196,7 @@ class ProjectControllerSpec extends Specification{
         then:
         response.status==400
         response.contentType.split(';').contains('application/json')
-        response.json.call==[contents:'blah']
+        response.json==[contents:'blah']
 
 
     }
@@ -1322,7 +1318,6 @@ class ProjectControllerSpec extends Specification{
             1 * requireVersion(_,_,14) >> true
             1 * requireVersion(_,_,11) >> true
             1 * extractResponseFormat(_,_,_,_) >> 'json'
-            1 * renderWrappedFileContents('blah','json',_)>>{args->args[2] contents: args[0]}
         }
 
         controller.authorizationService=Stub(AuthorizationService){
@@ -1345,7 +1340,7 @@ class ProjectControllerSpec extends Specification{
         then:
         response.status==200
         response.contentType.split(';').contains('application/json')
-        response.json.call==[contents:'blah']
+        response.json==[contents:'blah']
 
 
     }

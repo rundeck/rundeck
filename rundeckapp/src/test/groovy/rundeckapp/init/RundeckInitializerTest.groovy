@@ -15,22 +15,14 @@
  */
 package rundeckapp.init
 
-import org.springframework.core.io.ClassPathResource
 import spock.lang.Specification
 
-import java.nio.file.Path
-
-
 class RundeckInitializerTest extends Specification {
-    def "Initialize"() {
-    }
-
-    def "CreateDirectories"() {
-    }
 
     def "ExpandTemplates"() {
         given:
-        File destination = new File(File.createTempFile("test-et","zzz").parentFile,"expandTest")
+        File sourceTemplates = new File(System.getProperty("user.dir"),"templates")
+        File destination = new File(File.createTempFile("test-et","zzz").parentFile,"expandTest-"+UUID.randomUUID().toString().substring(0,8))
 
         Properties testTemplateProperties = new Properties()
 
@@ -38,37 +30,17 @@ class RundeckInitializerTest extends Specification {
         cfg.runtimeConfiguration = testTemplateProperties
         RundeckInitializer initializer = new RundeckInitializer(cfg)
 
+        int sourceFileCount = 0
+        sourceTemplates.traverse(type: groovy.io.FileType.FILES) { sourceFileCount++ }
+
         when:
-        initializer.expandTemplates(testTemplateProperties,destination,false)
+        initializer.expandTemplatesNonJarMode(sourceTemplates,testTemplateProperties,destination,false)
 
         then:
         assert destination.exists()
         int filecount
         destination.traverse(type: groovy.io.FileType.FILES) { filecount++ }
-        assert filecount == 6
+        assert filecount == sourceFileCount
     }
 
-    def "TemplateResourceTest"() {
-        def expectedTemplates = [
-                "config/realm.properties.template",
-                "config/jaas-loginmodule.conf.template",
-                "config/rundeck-config.properties.template",
-                "config/ssl.properties.template",
-                "exp/webapp/WEB-INF/classes/log4j.properties.template",
-                "sbin/rundeckd.template"
-        ]
-        def foundTemplates = []
-        when:
-        def templateDir = new ClassPathResource("templates")
-
-        Path dirPath = templateDir.file.toPath()
-        templateDir.file.traverse(type: groovy.io.FileType.FILES, nameFilter: ~/.*\.template/) {
-            foundTemplates.add(dirPath.relativize(it.toPath()).toString())
-        }
-
-        then:
-        assert templateDir != null
-        assert expectedTemplates.size() == foundTemplates.size()
-        expectedTemplates.each { assert foundTemplates.contains(it) }
-    }
 }

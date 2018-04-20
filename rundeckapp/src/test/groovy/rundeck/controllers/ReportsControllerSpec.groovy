@@ -36,7 +36,7 @@ import spock.lang.Unroll
 /**
  * Created by greg on 9/22/16.
  */
-@Mock([ExecReport, Execution, User, ReferencedExecution])
+@Mock([ExecReport, Execution, User, ReferencedExecution, ScheduledExecution])
 @TestFor(ReportsController)
 class ReportsControllerSpec extends Specification {
     static doWithConfig(c) {
@@ -155,7 +155,7 @@ class ReportsControllerSpec extends Specification {
         result
         1 * controller.metricService.withTimer(_,_,_)>> [reports: []]
         1 * controller.reportService.finishquery(_, _, _) >> { ExecQuery query,def params, Map model ->
-            assertEquals(1,query.execIdFilter?.size())
+            1 == query.execIdFilter?.size()
             model
         }
         where:

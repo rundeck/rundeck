@@ -428,8 +428,8 @@ class ProjectControllerTest {
         def project = response.json
 
         //test project element
-        assertEquals 'test1', project.call.name
-        assertEquals '', project.call.description
+        assertEquals 'test1', project.name
+        assertEquals '', project.description
         assertEquals null, project.config
     }
     @Test
@@ -449,8 +449,8 @@ class ProjectControllerTest {
         def project = response.json
 
         //test project element
-        assertEquals 'test1', project.call.name
-        assertEquals '', project.call.description
+        assertEquals 'test1', project.name
+        assertEquals '', project.description
         assertEquals(['test.property': 'value1', 'test.property2': 'value2'], project.config)
     }
     @Test
@@ -739,7 +739,7 @@ class ProjectControllerTest {
         //test project element
         assertEquals null,result.error
         def project =result
-        assertEquals "test1",project.call.name
+        assertEquals "test1",project.name
         assertEquals 2, project.config.size()
         assertEquals 'value1', project.config['prop1']
         assertEquals 'value2', project.config['prop2']
@@ -802,7 +802,7 @@ class ProjectControllerTest {
         //test project element
         assertEquals null, result.error
         def project = result
-        assertEquals "test1", project.call.name
+        assertEquals "test1", project.name
         assertEquals 2, project.config.size()
         assertEquals 'value1', project.config['prop1']
         assertEquals 'value2', project.config['prop2']
@@ -1417,8 +1417,8 @@ class ProjectControllerTest {
         response.format='json'
         controller.apiProjectConfigGet()
         assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals "value1",response.json.call.prop1
-        assertEquals "value2",response.json.call.prop2
+        assertEquals "value1",response.json.prop1
+        assertEquals "value2",response.json.prop2
     }
     @Test
     void apiProjectConfigGet_text_success(){
@@ -1467,8 +1467,8 @@ class ProjectControllerTest {
         request.method='PUT'
         controller.apiProjectConfigPut()
         assertEquals HttpServletResponse.SC_OK, response.status
-        assertEquals 'value1', response.json.call.prop1
-        assertEquals 'value2', response.json.call.prop2
+        assertEquals 'value1', response.json.prop1
+        assertEquals 'value2', response.json.prop2
     }
 
 
