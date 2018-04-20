@@ -44,6 +44,8 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
+import grails.plugin.springsecurity.SecurityFilterPosition
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
 import groovy.io.FileType
 
@@ -55,6 +57,7 @@ import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
+import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
@@ -384,24 +387,31 @@ beans={
 
     apiMarshallerRegistrar(ApiMarshallerRegistrar)
 
-    //spring security preauth filter configuration
     rundeckUserDetailsService(RundeckUserDetailsService)
+    rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter)
 
-    rundeckPreauthFilter(RundeckPreauthenticationRequestHeaderFilter) {
-        enabled = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.enabled in [true,'true']
-        userNameHeader = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.userNameHeader
-        rolesHeader = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.userRolesHeader
-        rolesAttribute = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.attributeName
-        authenticationManager = ref('authenticationManager')
-    }
-    preAuthenticatedAuthProvider(PreAuthenticatedAuthenticationProvider) {
-        preAuthenticatedUserDetailsService = ref('rundeckUserDetailsService')
+    //spring security preauth filter configuration
+    if(grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in [true,'true']) {
+        rundeckPreauthFilter(RundeckPreauthenticationRequestHeaderFilter) {
+            enabled = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.enabled in [true, 'true']
+            userNameHeader = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.userNameHeader
+            rolesHeader = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.userRolesHeader
+            rolesAttribute = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.attributeName
+            authenticationManager = ref('authenticationManager')
+        }
+        rundeckPreauthFilterDeReg(FilterRegistrationBean) {
+            filter = ref("rundeckPreauthFilter")
+            enabled = false
+        }
+        preAuthenticatedAuthProvider(PreAuthenticatedAuthenticationProvider) {
+            preAuthenticatedUserDetailsService = ref('rundeckUserDetailsService')
+        }
+
     }
 
     if(grailsApplication.config.rundeck.useJaas in [true,'true']) {
         //spring security jaas configuration
         jaasApiIntegrationFilter(JaasApiIntegrationFilter)
-        rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter)
 
         jaasAuthProvider(DefaultJaasAuthenticationProvider) {
             configuration = Configuration.getConfiguration()

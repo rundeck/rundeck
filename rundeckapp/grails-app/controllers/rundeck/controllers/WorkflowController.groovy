@@ -29,7 +29,7 @@ import rundeck.services.PluginService
 
 import javax.servlet.http.HttpServletResponse
 
-class WorkflowController extends ControllerBase implements PluginListRequired {
+class WorkflowController extends ControllerBase {
     def frameworkService
     PluginService pluginService
     static allowedMethods = [
@@ -43,8 +43,6 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
     def index = {
         return redirect(controller: 'menu', action: 'index')
     }
-
-    Map<String, Class> requiredPluginTypes = [logFilterPlugins: LogFilterPlugin]
 
     /**
      * Render the edit form for a workflow item
@@ -264,7 +262,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         }
 
         if (valid) {
-            return respond((Object) results, [formats: ['json']])
+            return respond(results, formats: ['json'])
         }
     }
 
@@ -288,7 +286,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
                     config: validation.props
             ]
         }
-        return respond([formats: ['json']], results)
+        return respond(results, formats: ['json'])
     }
 
     def removeStepFilter() {
@@ -339,7 +337,7 @@ class WorkflowController extends ControllerBase implements PluginListRequired {
         }
 
         if (valid) {
-            return respond([formats: ['json']], results)
+            return respond(results,formats: ['json'])
         }
     }
     /**

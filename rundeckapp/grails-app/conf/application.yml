@@ -40,14 +40,6 @@ endpoints:
 ---
 grails:
     mime:
-        disable:
-            accept:
-                header:
-                    userAgents:
-                        - Gecko
-                        - WebKit
-                        - Presto
-                        - Trident
         file:
             extensions: true
         types:

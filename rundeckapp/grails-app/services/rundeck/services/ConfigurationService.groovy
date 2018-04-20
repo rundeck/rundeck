@@ -29,11 +29,11 @@ class ConfigurationService {
         getAppConfig()?.executionMode == 'active'
     }
 
-    public ConfigObject getAppConfig() {
+    public org.grails.config.NavigableMap getAppConfig() {
         grailsApplication.config?.rundeck
     }
 
-    public ConfigObject getConfig(String path){
+    public org.grails.config.NavigableMap getConfig(String path){
         def strings = path.split('\\.')
         def val = appConfig
         strings.each {

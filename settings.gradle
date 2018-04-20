@@ -35,8 +35,5 @@ include	'rundeck-storage',
 	'plugins:upvar-plugin',
     'rundeckapp',
     'rundeckapp:metricsweb'
-//	'rundeck-launcher',
-//	'rundeck-launcher:launcher',
-//	'rundeck-launcher:rundeck-jetty-server'
 
 project(":rundeckapp").name = "rundeck"

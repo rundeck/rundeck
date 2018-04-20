@@ -14,7 +14,7 @@ class ApiAccessInterceptor {
 
     def allowed_pre_api_reqs=[
             'user':['login','loggedout'],
-            'menu':['index','home','homeAjax'],
+            'menu':['index','home'],
     ]
 
     ApiAccessInterceptor() {

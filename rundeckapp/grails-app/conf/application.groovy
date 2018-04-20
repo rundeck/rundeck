@@ -28,7 +28,7 @@ environments {
     }
     development{
         grails.serverURL="http://localhost:9090/rundeck"
-        plugin.refreshDelay=5000
+        application.refreshDelay=5000
         grails.profiler.disable=false
         feature.incubator.'*'=true
         rundeck.feature.'*'.enabled=true
@@ -87,7 +87,7 @@ grails.plugin.springsecurity.securityConfigType = "InterceptUrlMap"
 grails.plugin.springsecurity.interceptUrlMap = [
         [pattern: '/user/j_security_check', access: ['permitAll']],
         [pattern: '/error',          access: ['permitAll']],
-        [pattern: '/error.gsp',      access: ['permitAll']],
+        [pattern: '/common/error',   access: ['permitAll']],
         [pattern: '/404',            access: ['permitAll']],
         [pattern: '/404.gsp',        access: ['permitAll']],
         [pattern: '/static/**',      access: ['permitAll']],
@@ -107,11 +107,16 @@ grails.plugin.springsecurity.interceptUrlMap = [
 ]
 
 grails.plugin.springsecurity.filterChain.chainMap = [
+        [pattern: '/user/login',     filters: 'none'],
+        [pattern: '/error',          filters: 'none'],
+        [pattern: '/user/error',     filters: 'none'],
+        [pattern: '/common/error',   filters: 'none'],
         [pattern: '/static/**',      filters: 'none'],
         [pattern: '/assets/**',      filters: 'none'],
         [pattern: '/feed/**',        filters: 'none'],
         [pattern: '/test/**',        filters: 'none'],
         [pattern: '/api/**',         filters: 'JOINED_FILTERS'],
+        [pattern: '/plugin/**',      filters: 'JOINED_FILTERS'],
         [pattern: '/404',            filters: 'none'],
         [pattern: '/404.gsp',        filters: 'none'],
         [pattern: '/**/js/**',       filters: 'none'],
@@ -119,15 +124,6 @@ grails.plugin.springsecurity.filterChain.chainMap = [
         [pattern: '/**/images/**',   filters: 'none'],
         [pattern: '/**/favicon.ico', filters: 'none'],
         [pattern: '/**',             filters: 'JOINED_FILTERS']
-]
-
-grails.plugin.springsecurity.filterChain.filterNames = [
-        'securityContextPersistenceFilter', 'logoutFilter',
-        'rundeckPreauthFilter',
-        'authenticationProcessingFilter',
-        'securityContextHolderAwareRequestFilter',
-        'rememberMeAuthenticationFilter', 'anonymousAuthenticationFilter',
-        'exceptionTranslationFilter', 'filterInvocationInterceptor'
 ]
 
 grails.plugin.springsecurity.apf.filterProcessesUrl = "/user/j_security_check"
@@ -139,18 +135,9 @@ grails.plugin.springsecurity.logout.afterLogoutUrl = '/user/loggedout'
 grails.plugin.springsecurity.failureHandler.defaultFailureUrl = "/user/error"
 
 grails.plugin.springsecurity.providerNames = [
-        'preAuthenticatedAuthProvider',
         'anonymousAuthenticationProvider',
         'rememberMeAuthenticationProvider']
 
-boolean useJaas = (null != System.getProperty("rundeck.jaaslogin") || Boolean.getBoolean("rundeck.jaaslogin"))
-if(useJaas) {
-    grails.plugin.springsecurity.providerNames.add(1,'jaasAuthProvider')
-    grails.plugin.springsecurity.filterChain.filterNames.add(4,'jaasApiIntegrationFilter')
-
-} else {
-    grails.plugin.springsecurity.providerNames.add(1,'realmAuthProvider')
-}
 log4j={
     // Example of changing the log pattern for the default console
     // appender:

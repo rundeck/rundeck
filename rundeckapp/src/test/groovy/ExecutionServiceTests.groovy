@@ -1372,16 +1372,16 @@ class ExecutionServiceTests  {
         assertNull(exec2.status)
 
         testService.cleanupRunningJobs(uuid)
-        Execution.withSession { session ->
-            session.flush()
+        Execution.withNewTransaction {
+
             exec1.refresh()
             exec2.refresh()
+            assertNull(exec1.dateCompleted)
+            assertNull(exec1.status)
+            assertNotNull(exec2.dateCompleted)
+            assertEquals("false", exec2.status)
         }
 
-        assertNull(exec1.dateCompleted)
-        assertNull(exec1.status)
-        assertNotNull(exec2.dateCompleted)
-        assertEquals("false", exec2.status)
     }
 
     void testCleanupRunningJobsLeavesScheduled() {

@@ -93,6 +93,12 @@
                 <button type="submit" class="btn btn-primary">Login</button>
             </div>
 
+            <g:if test="${grailsApplication.config.rundeck.sso.loginButton.enabled?.asBoolean()}">
+                <div class='form-group'>
+                    <a class='btn btn-default' href='${grailsApplication.config.rundeck.sso.loginButton.url}'>${grailsApplication.config.rundeck.sso.loginButton.title}</a>
+                </div>
+            </g:if>
+
             <g:set var="footermessagehtml" value="${grailsApplication.config.rundeck?.gui?.login?.footerMessageHtml ?: ''}"/>
             <g:if test="${footermessagehtml}">
                 <div class="row">

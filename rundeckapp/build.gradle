@@ -202,12 +202,6 @@ buildProperties.doLast {
     }
 }
 
-task('listPluginLibs') {
-    configurations.pluginFiles.files.each { pluginFile ->
-        println pluginFile.name
-    }
-}
-
 task('copyPluginLibs').dependsOn(configurations.pluginFiles).doLast {
     println "copying plugin libs"
     File libextDir = new File(buildDir, "WEB-INF/rundeck/plugins")

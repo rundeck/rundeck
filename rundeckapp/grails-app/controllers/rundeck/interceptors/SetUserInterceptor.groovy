@@ -34,7 +34,10 @@ class SetUserInterceptor {
 
     boolean before() {
         if(InterceptorHelper.matchesStaticAssets(controllerName)) return true
-
+        if(request.servletPath == "/error") {
+            response.status = 200
+            return true
+        }
         if (request.api_version && request.remoteUser && !(grailsApplication.config.rundeck?.security?.apiCookieAccess?.enabled in ['true',true])){
             //disallow api access via normal login
             request.invalidApiAuthentication=true

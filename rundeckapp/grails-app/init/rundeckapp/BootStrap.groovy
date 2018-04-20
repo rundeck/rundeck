@@ -25,6 +25,8 @@ import com.dtolabs.rundeck.core.Constants
 import com.dtolabs.rundeck.core.VersionConstants
 import com.dtolabs.rundeck.core.utils.ThreadBoundOutputStream
 import com.dtolabs.rundeck.util.quartz.MetricsSchedulerListener
+import grails.plugin.springsecurity.SecurityFilterPosition
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
 import org.grails.plugins.metricsweb.CallableGauge
 import org.quartz.Scheduler
@@ -55,7 +57,7 @@ class BootStrap {
     HealthCheckRegistry healthCheckRegistry
     def dataSource
     ApiMarshallerRegistrar apiMarshallerRegistrar
-    //def authenticationManager
+    def authenticationManager
 
     def timer(String name,Closure clos){
         long bstart=System.currentTimeMillis()
@@ -67,9 +69,6 @@ class BootStrap {
 
      def init = { ServletContext servletContext ->
          //setup profiler logging
-//        authenticationManager.providers.each {
-//            println it.class.name
-//        }
          if(!(grailsApplication.config?.grails?.profiler?.disable) && grailsApplication.mainContext.profilerLog) {
              //re-enable log output for profiler info, which is disabled by miniprofiler
              grailsApplication.mainContext.profilerLog.appenderNames = ["loggingAppender", 'miniProfilerAppender']
@@ -258,7 +257,19 @@ class BootStrap {
              log.info("RSS feeds disabled")
          }
 
+         //Setup the correct authentication provider for the configured authentication mechanism
+         if(grailsApplication.config.rundeck.useJaas in [true,'true']) {
+             log.info("Using jaas authentication")
+             SpringSecurityUtils.clientRegisterFilter("jaasApiIntegrationFilter", SecurityFilterPosition.OPENID_FILTER.order + 150)
+             authenticationManager.providers.add(grailsApplication.mainContext.getBean("jaasAuthProvider"))
+         } else {
+             log.info("Using builtin realm authentication")
+             authenticationManager.providers.add(grailsApplication.mainContext.getBean("realmAuthProvider"))
+         }
+
          if('true' == grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled){
+             SpringSecurityUtils.clientRegisterFilter("rundeckPreauthFilter", SecurityFilterPosition.PRE_AUTH_FILTER.order - 10)
+             authenticationManager.providers.add(grailsApplication.mainContext.getBean("preAuthenticatedAuthProvider"))
              log.info("Preauthentication is enabled")
          } else {
              log.info("Preauthentication is disabled")
