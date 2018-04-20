@@ -29,6 +29,7 @@ class Source {
     int index
     @XmlAttribute
     String type
+    @Ignore(onlyIfNull = true)
     String errors
     Resources resources
 }

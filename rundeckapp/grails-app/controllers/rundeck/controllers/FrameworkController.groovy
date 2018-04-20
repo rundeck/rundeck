@@ -2279,8 +2279,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         int index = 0
         respond(
             new Sources(
-                project: project,
-                sources: resourceConfig.collect { Map config ->
+                project,
+                resourceConfig.collect { Map config ->
                     index++
                     def ident = index + '.source'
                     def writeableSource = writeableModelSourcesMap[index]

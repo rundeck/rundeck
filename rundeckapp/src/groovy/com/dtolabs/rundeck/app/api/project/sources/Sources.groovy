@@ -24,6 +24,14 @@ import com.dtolabs.rundeck.app.api.marshall.XmlAttribute
 class Sources {
     @XmlAttribute
     String project
+    @XmlAttribute
+    int count
     @SubElement
     List<Source> sources;
+
+    Sources(final String project, final List<Source> sources) {
+        this.project = project
+        this.sources = sources
+        this.count = sources != null ? sources.size() : 0
+    }
 }
