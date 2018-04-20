@@ -20,6 +20,7 @@ import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -835,6 +836,48 @@ class FrameworkControllerSpec extends Specification {
         response.status == 404
     }
 
+    def "POST project source resources, not writeable, should result in 405 response"() {
+        setup:
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * existsFrameworkProject('test') >> true
+            1 * getFrameworkProject('test')>>Mock(IRundeckProject){
+                1 * getProjectNodes()>>Mock(IProjectNodes){
+                    1 * getWriteableResourceModelSources()>>[]
+                }
+            }
+            1 * getAuthContextForSubjectAndProject(_,'test')
+            1 * authResourceForProject('test')
+            1 * authorizeApplicationResourceAll(_,_,['configure','admin']) >> true
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireVersion(_, _, 23) >> true
+            1 * requireParameters(_, _, ['project', 'index']) >> true
+            1 * requireExists(_, _, ['project', 'test']) >> true
+            1 * requireExists(_, 1, ['source index', '1']) >> true
+
+            1 * requireAuthorized(_,_,['configure','Project','test']) >> true
+            1 * renderErrorFormat(_, _) >> { it[0].status = it[1].status }
+            0 * _(*_)
+        }
+
+        params.project = "test"
+        params.index = "1"
+        request.method = 'POST'
+        request.json = [
+            "testnode": [
+                hostname: "testnode",
+                nodename: "testnode",
+                tags    : "test",
+            ]
+        ]
+        when:
+
+        def result = controller.apiSourceWriteContent()
+
+        then:
+        response.status == 405
+    }
     protected void setupFormTokens(params) {
         def token = SynchronizerTokensHolder.store(session)
         params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')

@@ -2315,14 +2315,14 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             return
         }
 
-        if (!apiService.requireParameters(params, response, ['project'])) {
+        if (!apiService.requireParameters(params, response, ['project','index'])) {
             return
         }
         def project = params.project
-        final IRundeckProject fwkProject = frameworkService.getFrameworkProject(project)
-        if (!apiService.requireExists(response, fwkProject, ['project', project])) {
+        if (!apiService.requireExists(response, frameworkService.existsFrameworkProject(project), ['project', project])) {
             return
         }
+        final IRundeckProject fwkProject = frameworkService.getFrameworkProject(project)
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, project)
         if (!apiService.requireAuthorized(
             frameworkService.authorizeApplicationResourceAll(
@@ -2338,7 +2338,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
         final contentType = request.contentType
 
-
         def index = params.int('index')
         if (!apiService.requireExists(response, index, ['source index', params.index])) {
             return
@@ -2348,10 +2347,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         final source = writableSources.find { it.index == index }
 
         if (!source) {
-            //invalid
-            flash.errors = ['Invalid index: ' + index]
-            log.error(flash.errors)
-            return redirect(action: 'projectNodeSources', params: [project: project])
+            return apiService.renderErrorFormat(
+                response,
+                [status: HttpServletResponse.SC_METHOD_NOT_ALLOWED,
+                 code  : 'api.error.invalid.request',
+                 args  : ["POST to readonly project source index $index"]]
+            )
         }
         def format = source.writeableSource.syntaxMimeType
         def inputStream = request.getInputStream()
