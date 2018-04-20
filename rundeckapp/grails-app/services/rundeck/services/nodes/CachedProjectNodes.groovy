@@ -32,7 +32,9 @@ class CachedProjectNodes implements IProjectNodes {
     boolean doCache
     Date cacheTime
 
-
+    List<ReadableProjectNodes> getResourceModelSources() {
+        nodeSupport.resourceModelSources
+    }
     @Override
     INodeSet getNodeSet() {
         return doCache?nodes:reloadNodeSet()

@@ -16,6 +16,7 @@
 
 package com.dtolabs.rundeck.core.common;
 
+import com.dtolabs.rundeck.core.resources.ResourceModelSource;
 import com.dtolabs.rundeck.core.resources.WriteableModelSource;
 
 import java.util.*;
@@ -32,10 +33,37 @@ public interface IProjectNodes {
     INodeSet getNodeSet();
 
     /**
+     * @return all sources
+     */
+    public List<ReadableProjectNodes> getResourceModelSources();
+    /**
      * @return writeable sources
      */
     public Collection<WriteableProjectNodes> getWriteableResourceModelSources();
 
+    /**
+     * Contains and identifies a model source entry for the project
+     */
+    static interface ReadableProjectNodes {
+        /**
+         * @return The source
+         */
+        ResourceModelSource getSource();
+
+        /**
+         * @return config index
+         */
+        int getIndex();
+
+        /**
+         * @return provider type
+         */
+        String getType();
+    }
+
+    /**
+     * Contains and identifies a writeable model source entry for the project
+     */
     static interface WriteableProjectNodes {
         /**
          * @return the writeable source
