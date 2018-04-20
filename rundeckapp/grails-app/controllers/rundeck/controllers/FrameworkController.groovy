@@ -2740,7 +2740,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             //try accept header
             List<MediaType> mimes = []
             try {
-                mimes = MediaType.parseMediaTypes(header)
+                mimes = MediaType.parseMediaTypes(request.getHeader('accept'))
                 MediaType.sortBySpecificityAndQuality(mimes)
             } catch (RuntimeException e) {
                 return apiService.renderErrorFormat(
@@ -2754,7 +2754,6 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             }
             for (MediaType mime : mimes) {
                 try {
-                    log.error("test: $mime")
                     generator = service.getGeneratorForMIMEType(mime.toString())
                     break
                 } catch (UnsupportedFormatException e) {
