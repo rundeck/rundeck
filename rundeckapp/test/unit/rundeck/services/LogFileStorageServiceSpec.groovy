@@ -18,6 +18,7 @@ package rundeck.services
 
 import asset.pipeline.grails.LinkGenerator
 import com.dtolabs.rundeck.core.logging.ExecutionFileStorageOptions
+import com.dtolabs.rundeck.core.plugins.configuration.PropertyResolver
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
 import com.dtolabs.rundeck.server.plugins.ConfiguredPlugin
@@ -117,13 +118,157 @@ class LogFileStorageServiceSpec extends Specification {
         e2 != null
         l2 != null
         1 * service.logFileStorageTaskScheduler.schedule(*_)
+        1 * service.frameworkService.existsFrameworkProject('test') >> true
 
         where:
         serverUUID                             | testuser
         null                                   | 'user1'
         'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F' | 'user2'
     }
-    def "resume incomplete periodic"() {
+
+    def "resume incomplete delayed project does not exist"() {
+        given:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = 'blah'
+        grailsApplication.config.rundeck.logFileStorageService.resumeIncomplete.strategy = 'delayed'
+        service.configurationService = Mock(ConfigurationService) {
+            getString('logFileStorageService.resumeIncomplete.strategy', _) >> 'delayed'
+            getString('execution.logs.fileStoragePlugin', _) >> 'blah'
+        }
+        service.pluginService = Mock(PluginService) {
+            0 * configurePlugin('blah', _, _, PropertyScope.Instance)
+        }
+        service.frameworkService = Mock(FrameworkService) {
+            getFrameworkPropertyResolver('test') >> {
+                throw new Exception("Project does not exist")
+            }
+        }
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+        def e1 = new Execution(
+            dateStarted: new Date(),
+            dateCompleted: null,
+            user: 'user1',
+            project: 'test',
+            serverNodeUUID: null
+        ).save()
+
+        def l = new LogFileStorageRequest(
+            execution: e1,
+            pluginName: 'blah',
+            filetype: '*',
+            completed: false
+        ).save()
+
+        def e2 = new Execution(
+            dateStarted: new Date(),
+            dateCompleted: null,
+            user: 'user2',
+            project: 'test',
+            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        ).save()
+        def l2 = new LogFileStorageRequest(
+            execution: e2,
+            pluginName: 'blah',
+            filetype: '*',
+            completed: false
+        ).save()
+
+
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+        when:
+        service.resumeIncompleteLogStorage(serverUUID)
+
+        then:
+        e1 != null
+        l != null
+        e2 != null
+        l2 != null
+        0 * service.logFileStorageTaskScheduler.schedule(*_)
+        1 * service.frameworkService.existsFrameworkProject('test') >> false
+
+        where:
+        serverUUID                             | testuser
+        null                                   | 'user1'
+        'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F' | 'user2'
+    }
+
+    def "resume incomplete delayed mixed project exist/does not exist"() {
+        given:
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = 'blah'
+        grailsApplication.config.rundeck.logFileStorageService.resumeIncomplete.strategy = 'delayed'
+        service.configurationService = Mock(ConfigurationService) {
+            getString('logFileStorageService.resumeIncomplete.strategy', _) >> 'delayed'
+            getString('execution.logs.fileStoragePlugin', _) >> 'blah'
+        }
+        def mockPlugin = Mock(ExecutionFileStoragePlugin) {
+            1 * initialize(
+                { args ->
+                    args.username == 'user2'
+                }
+            )
+        }
+        def test2PropertyResolver = Mock(PropertyResolver)
+        service.frameworkService = Mock(FrameworkService) {
+            1 * getFrameworkPropertyResolver('test2') >> test2PropertyResolver
+        }
+        service.pluginService = Mock(PluginService) {
+            1 * configurePlugin('blah', _, test2PropertyResolver, PropertyScope.Instance) >> new ConfiguredPlugin(
+                mockPlugin,
+                [:]
+            )
+        }
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+        def e1 = new Execution(
+            dateStarted: new Date(),
+            dateCompleted: null,
+            user: 'user1',
+            project: 'test',
+            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        ).save()
+
+        def l = new LogFileStorageRequest(
+            execution: e1,
+            pluginName: 'blah',
+            filetype: '*',
+            completed: false
+        ).save()
+
+        def e2 = new Execution(
+            dateStarted: new Date(),
+            dateCompleted: null,
+            user: 'user2',
+            project: 'test2',
+            serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        ).save()
+        def l2 = new LogFileStorageRequest(
+            execution: e2,
+            pluginName: 'blah',
+            filetype: '*',
+            completed: false
+        ).save()
+
+
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+        when:
+        service.resumeIncompleteLogStorage(serverUUID)
+
+        then:
+        e1 != null
+        l != null
+        e2 != null
+        l2 != null
+        1 * service.logFileStorageTaskScheduler.schedule(*_)
+        1 * service.frameworkService.existsFrameworkProject('test') >> false
+        1 * service.frameworkService.existsFrameworkProject('test2') >> true
+
+        where:
+        serverUUID                             | _
+        'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F' | _
+    }
+
+    @Unroll
+    def "resume incomplete periodic using serverUuid #serverUUID"() {
         given:
         grailsApplication.config.clear()
         grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = 'blah'
@@ -177,27 +322,40 @@ class LogFileStorageServiceSpec extends Specification {
         null                                   | 'user1'
         'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F' | 'user2'
     }
-    def "resume incomplete periodic single"() {
+
+    @Unroll
+    def "dequeueIncompleteLogStorage"() {
         given:
-        grailsApplication.config.clear()
-        grailsApplication.config.rundeck.execution.logs.fileStoragePlugin = 'blah'
-        service.configurationService=Mock(ConfigurationService){
-            getString('logFileStorageService.resumeIncomplete.strategy',_)>>'periodic'
-        }
         service.frameworkService = Mock(FrameworkService)
         service.grailsLinkGenerator = Mock(LinkGenerator)
+        service.configurationService = Mock(ConfigurationService) {
+            getString('execution.logs.fileStoragePlugin', _) >> 'blah'
+        }
+        def mockPlugin = Mock(ExecutionFileStoragePlugin) {
+            1 * initialize(_)
+        }
+        def test2PropertyResolver = Mock(PropertyResolver)
+        service.frameworkService = Mock(FrameworkService) {
+            1 * getFrameworkPropertyResolver('test') >> test2PropertyResolver
+        }
+        service.pluginService = Mock(PluginService) {
+            1 * configurePlugin('blah', _, test2PropertyResolver, PropertyScope.Instance) >> new ConfiguredPlugin(
+                mockPlugin,
+                [:]
+            )
+        }
         def e1 = new Execution(dateStarted: new Date(),
                                dateCompleted: null,
                                user: 'user1',
                                project: 'test',
-                               serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+                               serverNodeUUID: null
         ).save()
 
         def l = new LogFileStorageRequest(
-                execution: e1,
-                pluginName: 'blah',
-                filetype: '*',
-                completed: false
+            execution: e1,
+            pluginName: 'blah',
+            filetype: '*',
+            completed: false
         ).save()
 
         def e2 = new Execution(dateStarted: new Date(),
@@ -207,26 +365,98 @@ class LogFileStorageServiceSpec extends Specification {
                                serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
         ).save()
         def l2 = new LogFileStorageRequest(
-                execution: e2,
-                pluginName: 'blah',
-                filetype: '*',
-                completed: false
+            execution: e2,
+            pluginName: 'blah',
+            filetype: '*',
+            completed: false
         ).save()
-
+        def reqs = [l, l2]
+        def keys = reqs.collect { it.execution.id + ':' + it.filetype }
+        def toStore = queue.collect { keys[it] }
 
         service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+
+        service.retryIncompleteRequests.addAll(queue.collect { reqs[it].id })
         when:
-        service.resumeIncompleteLogStorage('C9CA0A6D-3F85-4F53-A714-313EB57A4D1F',l2.id)
 
+        LogFileStorageRequest.withSession { session ->
+            session.flush()
+
+        }
+        service.dequeueIncompleteLogStorage()
         then:
-        e1 != null
-        l != null
-        e2 != null
-        l2 != null
-        0 * service.logFileStorageTaskScheduler.schedule(*_)
-        1 == service.retryIncompleteRequests.size()
-        service.retryIncompleteRequests.contains(l2.id)
+        1 * service.frameworkService.existsFrameworkProject('test') >> true
+        service.retryIncompleteRequests.size() == 0
+        service.storageRequests*.id == toStore
 
+        where:
+        queue | _
+        [0]   | _
+        [1]   | _
+    }
+    @Unroll
+    def "dequeueIncompleteLogStorage project not found"() {
+        given:
+        service.frameworkService = Mock(FrameworkService)
+        service.grailsLinkGenerator = Mock(LinkGenerator)
+        service.configurationService = Mock(ConfigurationService) {
+            getString('execution.logs.fileStoragePlugin', _) >> 'blah'
+        }
+        def test2PropertyResolver = Mock(PropertyResolver)
+        service.frameworkService = Mock(FrameworkService) {
+            0 * getFrameworkPropertyResolver('test') >> test2PropertyResolver
+        }
+        service.pluginService = Mock(PluginService) {
+            0 * configurePlugin('blah', _, test2PropertyResolver, PropertyScope.Instance)
+        }
+        def e1 = new Execution(dateStarted: new Date(),
+                               dateCompleted: null,
+                               user: 'user1',
+                               project: 'test',
+                               serverNodeUUID: null
+        ).save()
+
+        def l = new LogFileStorageRequest(
+            execution: e1,
+            pluginName: 'blah',
+            filetype: '*',
+            completed: false
+        ).save()
+
+        def e2 = new Execution(dateStarted: new Date(),
+                               dateCompleted: null,
+                               user: 'user2',
+                               project: 'test',
+                               serverNodeUUID: 'C9CA0A6D-3F85-4F53-A714-313EB57A4D1F'
+        ).save()
+        def l2 = new LogFileStorageRequest(
+            execution: e2,
+            pluginName: 'blah',
+            filetype: '*',
+            completed: false
+        ).save()
+        def reqs = [l, l2]
+
+        service.logFileStorageTaskScheduler = Mock(TaskScheduler)
+
+        service.retryIncompleteRequests.addAll(queue.collect { reqs[it].id })
+        when:
+
+        LogFileStorageRequest.withSession { session ->
+            session.flush()
+
+        }
+        service.dequeueIncompleteLogStorage()
+        then:
+        1 * service.frameworkService.existsFrameworkProject('test') >> false
+        service.retryIncompleteRequests.size() == 0
+        service.storageRequests*.id == []
+
+        where:
+        queue | _
+//        []    | _
+        [0]   | _
+        [1]   | _
     }
 
 

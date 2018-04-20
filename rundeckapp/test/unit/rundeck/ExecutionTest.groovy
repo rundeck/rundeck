@@ -527,6 +527,7 @@ class ExecutionTest {
                 willRetry: 'true',
                 retryAttempt: 12,
                 retryExecutionId: exec1.id,
+                retryOriginalId: exec1.id,
                 status: 'true',
                 dateStarted: new Date(),
                 dateCompleted: new Date(),
@@ -546,6 +547,7 @@ class ExecutionTest {
         assertEquals('123',exec.retry)
         assertEquals(12,exec.retryAttempt)
         assertEquals(exec1,exec.retryExecution)
+        assertEquals(exec1.id,exec.retryOriginalId)
         assertEquals(true,exec.willRetry)
     }
     void testToMapRetry(){

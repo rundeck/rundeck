@@ -911,6 +911,11 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         jobcontext.project = execution.project
         jobcontext.loglevel = textLogLevels[execution.loglevel] ?: execution.loglevel
         jobcontext.retryAttempt=Integer.toString(execution.retryAttempt?:0)
+        if(execution.retryAttempt>0 && execution.retryOriginalId!=null){
+            jobcontext.retryInitialExecId=Long.toString(execution.retryOriginalId)
+        }else{
+            jobcontext.retryInitialExecId="0"
+        }
         jobcontext.wasRetry=Boolean.toString(execution.retryAttempt?true:false)
         jobcontext.threadcount=Integer.toString(execution.nodeThreadcount?:1)
         jobcontext
@@ -1763,6 +1768,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                       executionType: params.executionType ?: 'scheduled',
                                       timeout:params.timeout?:null,
                                       retryAttempt:params.retryAttempt?:0,
+                                      retryOriginalId:params.retryOriginalId?:null,
                                       retry:params.retry?:null,
                                       retryDelay: params.retryDelay?:null,
                                       serverNodeUUID: frameworkService.getServerUUID()
@@ -1865,7 +1871,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     public Map executeJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext, String user, Map input) {
         def secureOpts = selectSecureOptionInput(scheduledExecution, input)
         def secureOptsExposed = selectSecureOptionInput(scheduledExecution, input, true)
-        return retryExecuteJob(scheduledExecution, authContext, user, input, secureOpts, secureOptsExposed, 0,-1)
+        return retryExecuteJob(scheduledExecution, authContext, user, input, secureOpts, secureOptsExposed, 0,-1, -1)
     }
     /**
      * retry a job execution
@@ -1882,7 +1888,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
      */
     public Map retryExecuteJob(ScheduledExecution scheduledExecution, UserAndRolesAuthContext authContext,
                                String user, Map input, Map secureOpts=[:], Map secureOptsExposed = [:], int attempt,
-                               long prevId) {
+                               long prevId, long originalId) {
         if (!frameworkService.authorizeProjectJobAll(authContext, scheduledExecution, [AuthConstants.ACTION_RUN],
                 scheduledExecution.project)) {
             return [success: false, error: 'unauthorized', message: "Unauthorized: Execute Job ${scheduledExecution.extid}"]
@@ -1901,13 +1907,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
 
         input.retryAttempt = attempt
+        if(originalId>0){
+            input.retryOriginalId = originalId
+        }
         def Execution e = null
         boolean success = false
         try {
 
             Map allowedOptions = input.subMap(
                     ['loglevel', 'argString', 'option', '_replaceNodeFilters', 'filter', 'executionType',
-                     'retryAttempt', 'nodeoverride', 'nodefilter']
+                     'retryAttempt', 'nodeoverride', 'nodefilter','retryOriginalId']
             ).findAll { it.value != null }
             allowedOptions.putAll(input.findAll { it.key.startsWith('option.') || it.key.startsWith('nodeInclude') || it.key.startsWith('nodeExclude') }.findAll { it.value != null })
             e = createExecution(scheduledExecution, authContext, user, allowedOptions, attempt > 0, prevId)
@@ -2127,7 +2136,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             }
         }
         if (input) {
-            props.putAll(input.subMap(['argString','filter','loglevel','retryAttempt','doNodedispatch']).findAll{it.value!=null})
+            props.putAll(input.subMap(['argString','filter','loglevel','retryAttempt','doNodedispatch','retryOriginalId']).findAll{it.value!=null})
             props.putAll(input.findAll{it.key.startsWith('option.') && it.value!=null})
         }
 
@@ -2573,6 +2582,15 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     }
                 }
                 if (maxRetries > count) {
+
+                    //geting the original exec id
+                    long originalId=-1
+                    if(execution.retryAttempt==0){
+                        originalId = execution.id
+                    }else{
+                        originalId = execution.retryOriginalId
+                    }
+
                     execution.willRetry = true
                     def input = [
                             argString    : execution.argString,
@@ -2582,7 +2600,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ]
                     def result = retryExecuteJob(scheduledExecution, retryContext.authContext,
                             retryContext.user, input, retryContext.secureOpts,
-                            retryContext.secureOptsExposed, count + 1,execution.id)
+                            retryContext.secureOptsExposed, count + 1,execution.id,originalId)
                     if (result.success) {
                         execution.retryExecution = result.execution
                     }
@@ -3290,9 +3308,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         ScheduledExecution.withTransaction { status ->
             ScheduledExecution se = ScheduledExecution.get(id)
             Execution exec = Execution.get(execid as Long)
-            refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING)
-            exec.addToRefExec(refExec)
-            exec.save()
+            refExec = new ReferencedExecution(scheduledExecution: se, execution: exec, status: EXECUTION_RUNNING).save()
         }
         if (newContext.getNodes().getNodeNames().size() < 1) {
             String msg = "No nodes matched for the filters: " + newContext.getNodeSelector()
@@ -3380,7 +3396,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             def savedJobState = false
             savedJobState = updateScheduledExecStatistics(id,'jobref', duration, true)
             if (!savedJobState) {
-                log.error("ExecutionJob: Failed to update job statistics for jobref")
+                log.info("ExecutionJob: Failed to update job statistics for jobref")
             }
             ReferencedExecution.withTransaction { status ->
                 refExec.status=wresult.result.success?EXECUTION_SUCCEEDED:EXECUTION_FAILED

@@ -105,7 +105,7 @@
 
                 <div class="filter">
 
-                            <g:hiddenField name="max" value="${max}"/>
+                            <g:hiddenField name="max" value="-1"/>
                             <g:hiddenField name="offset" value="${offset}"/>
                             <g:if test="${params.idlist}">
                                 <div class="form-group">

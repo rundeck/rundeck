@@ -93,11 +93,12 @@ function _jobVarData() {
             'loglevel': {title: 'Execution log level', desc: 'Logging level, one of: INFO, DEBUG'},
             'user.email': {title: 'Email of user executing the job'},
             'retryAttempt': {title: 'Retry attempt number'},
+            'retryInitialExecId': {title: 'Retry Original Execution ID'},
             'wasRetry': {title: 'True if execution is a retry'},
             'threadcount': {title: 'Job Threadcount'},
             'filter': {title: 'Job Node Filter Query'}
         };
-        ['id', 'execid', 'executionType', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry', 'threadcount', 'filter'].each(function (e) {
+        ['id', 'execid', 'executionType', 'name', 'group', 'username', 'project', 'loglevel', 'user.email', 'retryAttempt', 'wasRetry', 'threadcount', 'filter','retryInitialExecId'].each(function (e) {
             _VAR_DATA['job'].push({key: 'job.' + e, category: 'Job', title: jobdata[e].title, desc: jobdata[e].desc});
         });
     }
@@ -452,6 +453,10 @@ function _wfisave(key,num, formelem,iseh) {
                 _showWFItemControls();
                 if (iseh) {
                     _hideWFItemControlsAddEH(num);
+                    if (litem.parent().closest('li').find('.wfitem.jobtype').size() > 0) {
+                        //disable the config button
+                        _disableWFItemControlsConfigButton(num)
+                    }
                 }
             }else{
                 postLoadItemEdit('#wfli_' + key, iseh);
@@ -578,7 +583,11 @@ function _showWFItemControls() {
 }
 function _hideWFItemControlsAddEH(num){
     var lielem=jQuery('#wfli_'+num);
-    lielem.find('.wfitem_add_errorhandler').hide();
+    lielem.find('.wfitem_add_errorhandler').parent().hide();
+}
+function _disableWFItemControlsConfigButton(num){
+    var lielem=jQuery('#wfli_'+num);
+    lielem.find('.wfitemcontrols .btn-group button.dropdown-toggle').attr('disabled','disabled');
 }
 
 function _evtNewEHChooseType(evt){
