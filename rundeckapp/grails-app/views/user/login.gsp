@@ -80,17 +80,17 @@
             </div>
             </g:if>
             <div class="form-group">
-                <label for="login">Username</label>
+                <label for="login"><g:message code="user.login.username.label"/></label>
                 <input type="text" name="j_username" id="login" class="form-control" autofocus="true"/>
             </div>
 
             <div class="form-group">
-                <label for="password">Password</label>
+                <label for="password"><g:message code="user.login.password.label"/></label>
                 <input type="password" name="j_password" id="password" class="form-control"/>
             </div>
 
             <div class="form-group">
-                <button type="submit" class="btn btn-primary">Login</button>
+                <button type="submit" class="btn btn-primary"><g:message code="user.login.login.button"/></button>
             </div>
 
             <g:set var="footermessagehtml" value="${grailsApplication.config.rundeck?.gui?.login?.footerMessageHtml ?: ''}"/>
