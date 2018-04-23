@@ -139,7 +139,8 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
             return new FileInputStream(configuration.nodesFile);
         } else if (configuration.requireFileExists) {
             throw new ResourceModelSourceException("File does not exist: " + configuration.nodesFile);
-        } else {
+        }
+        else {
             return null;
         }
     }
@@ -259,33 +260,36 @@ public class FileResourceModelSource extends BaseFileResourceModelSource impleme
             } catch (UnsupportedFormatException e) {
                 throw new ResourceModelSourceException(e);
             }
-        } else {
+        }
+        else {
             try {
                 generator = framework.getResourceFormatGeneratorService().getGeneratorForFileExtension(resfile);
             } catch (UnsupportedFormatException e) {
                 throw new ResourceModelSourceException(e);
             }
         }
+
+        NodeSetImpl nodes = new NodeSetImpl();
         if (configuration.includeServerNode) {
-            NodeSetImpl nodes = new NodeSetImpl();
             nodes.putNode(node);
+        }
 
-            if (!resfile.getParentFile().exists()) {
-                if (!resfile.getParentFile().mkdirs()) {
-                    throw new ResourceModelSourceException(
-                            "Parent dir for resource file does not exists, and could not be created: " + resfile
-                    );
-                }
-            }
-
-            try {
-                try (FileOutputStream stream = new FileOutputStream(resfile)) {
-                    generator.generateDocument(nodes, stream);
-                }
-            } catch (IOException | ResourceFormatGeneratorException e) {
-                throw new ResourceModelSourceException(e);
+        if (!resfile.getParentFile().exists()) {
+            if (!resfile.getParentFile().mkdirs()) {
+                throw new ResourceModelSourceException(
+                    "Parent dir for resource file does not exists, and could not be created: " + resfile
+                );
             }
         }
+
+        try {
+            try (FileOutputStream stream = new FileOutputStream(resfile)) {
+                generator.generateDocument(nodes, stream);
+            }
+        } catch (IOException | ResourceFormatGeneratorException e) {
+            throw new ResourceModelSourceException(e);
+        }
+
     }
 
 

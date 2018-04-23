@@ -831,6 +831,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         return render(view:'createProject',
                 model: [
                 newproject: params.newproject,
+                projectDescription: params.description,
+                projectLabel: params.label,
                 projectNameError: projectNameError,
                 resourcesUrl: resourcesUrl,
                 resourceModelConfigDescriptions: descriptions,

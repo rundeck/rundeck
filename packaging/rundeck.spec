@@ -108,7 +108,7 @@ fi
 /var/lib/rundeck/cli/commons-lang-2.6.jar
 /var/lib/rundeck/cli/commons-logging-1.2.jar
 /var/lib/rundeck/cli/dom4j-2.1.0.jar
-/var/lib/rundeck/cli/guava-15.0.jar
+/var/lib/rundeck/cli/guava-24.1-jre.jar
 /var/lib/rundeck/cli/jaxen-1.1.6.jar
 /var/lib/rundeck/cli/jna-4.1.0.jar
 /var/lib/rundeck/cli/jna-platform-4.1.0.jar
@@ -133,6 +133,7 @@ fi
 /var/lib/rundeck/cli/okhttp-3.6.0.jar
 /var/lib/rundeck/cli/okio-1.11.0.jar
 /var/lib/rundeck/cli/retrofit-2.2.0.jar
+/var/lib/rundeck/cli/protobuf-java-3.5.1.jar
 
 
 

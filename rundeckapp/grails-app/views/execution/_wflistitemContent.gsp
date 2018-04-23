@@ -21,7 +21,10 @@
     $Id$
 
 
- --%><div id="wfivis_${enc(attr:i)}" style="${i==highlight?'opacity: 0':''}">
+ --%>
+
+<g:set var="jobitem" value="${item.instanceOf(JobExec)|| (item instanceof java.util.Map && (item.jobName || item.uuid))}"/>
+<div id="wfivis_${enc(attr:i)}" style="${i==highlight?'opacity: 0':''}">
     <div class="pflowitem wfctrlholder">
         <span class="pflow item " id="wfitem_${enc(attr:i)}" >
         <g:if test="${isErrorHandler}">
@@ -47,7 +50,9 @@
                 <g:if test="${!isErrorHandler}">
             <div class="btn-group">
 
-                <button type="button" class="btn btn-sm btn-default dropdown-toggle" data-toggle="dropdown"
+                <button type="button" class="btn btn-sm btn-default dropdown-toggle"
+                    ${item.errorHandler && jobitem ? 'disabled="disabled"':''}
+                        data-toggle="dropdown"
                         aria-haspopup="true" aria-expanded="false">
                     <g:icon name="cog"/> <span class="caret"></span>
                 </button>
@@ -62,6 +67,7 @@
                     </li>
                 </g:if>
 
+                    <g:if test="${!jobitem}">
                 <li>
                     <a class=""
                       data-bind="click: addFilterPopup"
@@ -70,6 +76,7 @@
                     Add Log Filter
                     </a>
                 </li>
+                    </g:if>
                 </ul>
             </div>
             </g:if>

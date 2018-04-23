@@ -19,6 +19,8 @@ package rundeck
 import com.dtolabs.rundeck.app.support.ExecutionContext
 import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils
+import com.google.gson.Gson
+import groovy.json.JsonOutput
 import org.quartz.Calendar
 import org.quartz.TriggerUtils
 import org.quartz.impl.calendar.BaseCalendar
@@ -586,11 +588,20 @@ class ScheduledExecution extends ExecutionContext {
     }
 
     public setUserRoles(List l){
-        setUserRoleList(l.join(","))
+        def json = JsonOutput.toJson(l)
+        setUserRoleList(json)
     }
+
     public List getUserRoles(){
         if(userRoleList){
-            return Arrays.asList(userRoleList.split(/,/))
+            //check if the string is a valid JSON
+            try {
+                Gson gson = new Gson()
+                return gson.fromJson(userRoleList, List.class)
+            } catch(com.google.gson.JsonSyntaxException ex) {
+                return Arrays.asList(userRoleList.split(/,/))
+            }
+
         }else{
             return []
         }

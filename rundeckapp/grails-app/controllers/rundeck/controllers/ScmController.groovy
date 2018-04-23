@@ -1185,7 +1185,7 @@ class ScmController extends ControllerBase {
                     }
                 }
             }
-            trackingItems.removeAll(toDeleteItems)
+            trackingItems?.removeAll(toDeleteItems)
         }
 
         [
