@@ -3,6 +3,8 @@
 #test /api/resources output.
 
 DIR=$(cd `dirname $0` && pwd)
+#use api_version<23 ; default response is xml
+export API_VERSION=22 
 source $DIR/include.sh
 
 file=$DIR/curl.out

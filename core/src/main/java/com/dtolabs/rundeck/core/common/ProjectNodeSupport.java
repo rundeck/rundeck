@@ -16,7 +16,6 @@
 
 package com.dtolabs.rundeck.core.common;
 
-import com.dtolabs.rundeck.core.common.impl.URLFileUpdater;
 import com.dtolabs.rundeck.core.execution.service.ExecutionServiceException;
 import com.dtolabs.rundeck.core.plugins.CloseableProvider;
 import com.dtolabs.rundeck.core.plugins.Closeables;
@@ -30,15 +29,9 @@ import org.apache.log4j.Logger;
 
 import java.io.Closeable;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * Manage node source loading for a project
@@ -114,7 +107,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         Map<String,Exception> exceptions = Collections.synchronizedMap(new HashMap<String, Exception>());
         int index=1;
         Set<String> validSources = new HashSet<>();
-        for (final ResourceModelSource nodesSource : getResourceModelSources()) {
+        for (final ResourceModelSource nodesSource : getResourceModelSourcesInternal()) {
             try {
                 INodeSet nodes = nodesSource.getNodes();
                 if (null == nodes) {
@@ -196,7 +189,15 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         }
     }
 
-    private synchronized List<LoadedResourceModelSource> getResourceModelSources() {
+    public List<ReadableProjectNodes> getResourceModelSources() {
+        List<LoadedResourceModelSource> resourceModelSources = getResourceModelSourcesInternal();
+        return
+            resourceModelSources.stream()
+                                .map(i -> (ReadableProjectNodes) i)
+                                .collect(Collectors.toList());
+    }
+
+    private synchronized List<LoadedResourceModelSource> getResourceModelSourcesInternal() {
         //determine if sources need to be reloaded
         final long lastMod = projectConfig.getConfigLastModifiedTime()!=null? projectConfig.getConfigLastModifiedTime().getTime():0;
         if (lastMod > nodesSourcesLastReload) {
@@ -210,7 +211,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
     }
 
     @Data @RequiredArgsConstructor
-    public static final class ProjectNodes implements WriteableProjectNodes {
+    public static final class ProjectWriteableNodes implements WriteableProjectNodes {
         final WriteableModelSource writeableSource;
         final int index;
         final String type;
@@ -218,11 +219,11 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
 
     public Collection<WriteableProjectNodes> getWriteableResourceModelSources() {
         //determine if sources need to be reloaded
-        List<LoadedResourceModelSource> resourceModelSources = getResourceModelSources();
+        List<LoadedResourceModelSource> resourceModelSources = getResourceModelSourcesInternal();
         return
                 resourceModelSources.stream()
                                     .filter(i -> i.getSourceType() == SourceType.READ_WRITE)
-                                    .map(i -> new ProjectNodes(i.getWriteable(), i.getIndex(), i.getType()))
+                                    .map(i -> new ProjectWriteableNodes(i.getWriteable(), i.getIndex(), i.getType()))
                                     .collect(Collectors.toList());
     }
 
@@ -416,7 +417,7 @@ public class ProjectNodeSupport implements IProjectNodes, Closeable {
         return resourceModelSourceService;
     }
 
-    static interface LoadedResourceModelSource extends ResourceModelSource {
+    static interface LoadedResourceModelSource extends ResourceModelSource, ReadableProjectNodes {
         int getIndex();
 
         String getType();

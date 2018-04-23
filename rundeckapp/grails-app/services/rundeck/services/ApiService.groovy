@@ -594,22 +594,6 @@ class ApiService {
      * @param params list of parameters of which all must be present
      * @return false if requirement is not met, response will already have been made
      */
-    def requireParametersFormat(Map reqparams,HttpServletResponse response,List<String> params){
-        def notfound=params.find{!reqparams[it]}
-        if(notfound){
-            renderErrorFormat(response, [status: HttpServletResponse.SC_BAD_REQUEST,
-                    code: 'api.error.parameter.required', args: [notfound]])
-            return false
-        }
-        return true
-    }
-    /**
-     * Require all specified parameters in the request
-     * @param request
-     * @param response
-     * @param params list of parameters of which all must be present
-     * @return false if requirement is not met, response will already have been made
-     */
     def requireParameters(Map reqparams,HttpServletResponse response,List<String> params){
         def notfound=params.find{!reqparams[it]}
         if(notfound){

@@ -645,7 +645,7 @@ class FrameworkService implements ApplicationContextAware {
         }
         return session['_Framework:AuthContext']
     }
-    def Framework getRundeckFramework(){
+    def IFramework getRundeckFramework(){
         if (!initialized) {
             initialize()
         }
@@ -981,7 +981,7 @@ class FrameworkService implements ApplicationContextAware {
         pject.getProjectProperties()
     }
 
-    public def listResourceModelConfigurations(String project) {
+    public List<Map<String,Object>> listResourceModelConfigurations(String project) {
         def fproject = getFrameworkProject(project)
         fproject.projectNodes.listResourceModelConfigurations()
     }
