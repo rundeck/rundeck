@@ -1397,22 +1397,23 @@ public class AclTool extends BaseTool {
 
     private Validation validatePolicies() throws CLIToolOptionsException {
         final Validation validation;
+        ValidationSet validationSet = new ValidationSet();
         if (null != argFile) {
             if(!argFile.isFile()) {
                 throw new CLIToolOptionsException("File: " + argFile + ", does not exist or is not a file");
             }
-            validation = YamlProvider.validate(YamlProvider.sourceFromFile(argFile));
+            validation = YamlProvider.validate(YamlProvider.sourceFromFile(argFile, validationSet), validationSet);
         } else if (null != argDir) {
             if(!argDir.isDirectory()) {
                 throw new CLIToolOptionsException("File: " + argDir + ", does not exist or is not a directory");
             }
-            validation = YamlProvider.validate(YamlProvider.asSources(argDir));
+            validation = YamlProvider.validate(YamlProvider.asSources(argDir), validationSet);
         } else if (null != configDir) {
             File directory = new File(configDir);
             if(!directory.isDirectory()) {
                 throw new CLIToolOptionsException("File: " + directory + ", does not exist or is not a directory");
             }
-            validation = YamlProvider.validate(YamlProvider.asSources(directory));
+            validation = YamlProvider.validate(YamlProvider.asSources(directory), validationSet);
         } else {
             throw new CLIToolOptionsException("-f or -d are required");
         }

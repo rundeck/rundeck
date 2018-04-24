@@ -2129,7 +2129,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         session.frameworkLabels = flabels
         log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
         def stats=cachedSummaryProjectStats(fprojects)
-
+        
+        //isFirstRun = true //as
         render(view: 'home', model: [
                 isFirstRun:isFirstRun,
                 projectNames: fprojects,
