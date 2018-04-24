@@ -46,3 +46,4 @@ rundeckapp/env.bash
 /grails/
 /out/
 /scratch/
+/rundeckapp/grails-app/assets/node_modules
