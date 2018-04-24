@@ -224,7 +224,11 @@ class ExecutionController extends ControllerBase{
             return
         }
         if(!params.project || params.project!=e.project) {
-            return redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project])
+            def extraParams = [:]
+            if(params?.outdetails == 'true'){
+                extraParams = [outdetails: true]
+            }
+            return redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project]+extraParams)
         }
         params.project=e.project
         request.project=e.project
