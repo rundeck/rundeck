@@ -2873,7 +2873,11 @@ class ScheduledExecutionController  extends ControllerBase{
             }else{
                 delegate.success=true
                 delegate.id=results.id
-                delegate.href=createLink(controller: "execution",action: "follow",id: results.id, params:[outdetails: params.followdetail?'true':'false'])
+                if(params.followdetail){
+                    delegate.href=createLink(controller: "execution",action: "follow",id: results.id, fragment: 'output')
+                }else{
+                    delegate.href=createLink(controller: "execution",action: "follow",id: results.id)
+                }
                 delegate.follow=(params.follow == 'true')
             }
         }

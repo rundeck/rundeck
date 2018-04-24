@@ -668,7 +668,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         response.status == 200
         response.contentType.contains 'application/json'
         response.json == [
-                href   : "/execution/follow/${exec.id}?outdetails=false",
+                href   : "/execution/follow/${exec.id}",
                 success: true,
                 id     : exec.id,
                 follow : false
@@ -733,7 +733,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         response.status == 200
         response.contentType.contains 'application/json'
         response.json == [
-                href   : "/execution/follow/${exec.id}?outdetails=true",
+                href   : "/execution/follow/${exec.id}#output",
                 success: true,
                 id     : exec.id,
                 follow : false
