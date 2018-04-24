@@ -187,6 +187,13 @@
                 jQuery('#jobid').val(el.data('jobId'));
                 jQuery('#selectProject').modal();
             });
+
+            var outDetails = ${enc(js:params.boolean('outdetails') ?: false)};
+            if(outDetails){
+                nodeflowvm.activeTab("output");
+                followOutput();
+                showTab('tab_link_output');
+            }
         }
         jQuery(init);
       </g:javascript>

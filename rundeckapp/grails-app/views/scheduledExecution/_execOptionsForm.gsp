@@ -528,6 +528,12 @@
                             value="true"/>
                 <g:message code="job.run.watch.output"/>
             </label>
+            <label class="control-label">
+                <g:checkBox id="followoutputdetailcheck" name="followdetail"
+                            checked="${params.followdetail == 'true'}"
+                            value="true"/>
+                <g:message code="job.run.watch.output.detail" default="Follow Output tab"/>
+            </label>
         </div>
     </div>
 </div>
@@ -590,6 +596,12 @@
                                 checked="${defaultFollow || params.follow == 'true'}"
                                 value="true"/>
                     <g:message code="job.run.watch.output"/>
+                </label>
+                <label style="margin-left: 30px;">
+                    <g:checkBox id="followoutputdetailcheck" name="followdetail"
+                                checked="${params.followdetail == 'true'}"
+                                value="true"/>
+                    <g:message code="job.run.watch.output.detail" default="Follow Output tab"/>
                 </label>
             </div>
         </div>
