@@ -188,8 +188,8 @@
                 jQuery('#selectProject').modal();
             });
 
-            var outDetails = ${enc(js:params.boolean('outdetails') ?: false)};
-            if(outDetails){
+            var outDetails = window.location.hash;
+            if(outDetails == '#output'){
                 nodeflowvm.activeTab("output");
                 followOutput();
                 showTab('tab_link_output');
