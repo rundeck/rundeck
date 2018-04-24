@@ -119,7 +119,7 @@
 </head>
 <body>
 <g:render template="/common/topbar"/>
-<div class="container">
+<div class="container app-content">
     <g:layoutBody/>
 </div>
 

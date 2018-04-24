@@ -38,7 +38,7 @@
 
 
 <div class="row row-space">
-    <div class="col-sm-3  ">
+    <div class="col-sm-4">
 
     &copy; Copyright 2018 <a href="http://rundeck.com">Rundeck, Inc.</a>
 
@@ -55,7 +55,7 @@
               data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
               data-app-id="${enc(attr: appId)}"></span>
     </div>
-    <div class="col-sm-3 text-right">
+    <div class="col-sm-2 text-right">
 
     <g:link controller="menu" action="licenses"><g:message code="licenses"/></g:link>
         &bull;

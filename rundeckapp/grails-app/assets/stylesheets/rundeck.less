@@ -2,6 +2,8 @@
 *= require_self
 *= require rundeck1
 */
+  @import "bootstrap";
+  //@import "bootswatch";
   @import "markdeep";
   @import "nav-links";
 
@@ -70,13 +72,19 @@
     max-width: none !important;
     width: auto;
   }
+  .container.app-content{
+    margin-bottom:50px;
+  }
   .footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    background-color: #e5e5e5;
     margin-top: @navbar-margin-bottom;
     font-size: @font-size-small;
     color: @gray-light;
-    position: relative;
-    clear: both;
-    padding: 10px 20px;
+    // clear: both;
+    padding: 10px 20px 15px;
   }
   .auto-caret-open{
     .glyphicon();
