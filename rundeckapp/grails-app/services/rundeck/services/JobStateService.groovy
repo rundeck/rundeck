@@ -54,10 +54,29 @@ class JobStateService implements AuthorizingJobService {
         if (null == job || job.project != project) {
             throw new JobNotFound("Not found", uuid, project)
         }
-        if (!frameworkService.authorizeProjectJobAll(auth, job, [AuthConstants.ACTION_READ], job.project)) {
+        checkJobView(auth, job, uuid, project)
+        return new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath, project: job.project)
+    }
+
+    public void checkJobView(AuthContext auth, ScheduledExecution job, String uuid, String project) {
+        if (!authCheckJob(auth, job)) {
             throw new JobNotFound("Not found", uuid, project)
         }
-        return new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath, project: job.project)
+    }
+
+    public void checkJobView(AuthContext auth, ScheduledExecution job, String name, String group, String project) {
+        if (!authCheckJob(auth, job)) {
+            throw new JobNotFound("Not found", name, group, project)
+        }
+    }
+
+    public boolean authCheckJob(AuthContext auth, ScheduledExecution job) {
+        frameworkService.authorizeProjectJobAny(
+            auth,
+            job,
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+            job.project
+        )
     }
 
     @Override
@@ -76,9 +95,8 @@ class JobStateService implements AuthorizingJobService {
         if (null == job) {
             throw new JobNotFound("Not found", name, group, project)
         }
-        if (!frameworkService.authorizeProjectJobAll(auth, job, [AuthConstants.ACTION_READ], job.project)) {
-            throw new JobNotFound("Not found", name, group, project)
-        }
+        checkJobView(auth, job, name, group, project)
+
         return new JobReferenceImpl(id: job.extid, jobName: job.jobName, groupPath: job.groupPath, project: job.project)
     }
 
@@ -88,9 +106,7 @@ class JobStateService implements AuthorizingJobService {
         if (null == job) {
             throw new JobNotFound("Not found", jobReference.id, jobReference.project)
         }
-        if (!frameworkService.authorizeProjectJobAll(auth, job, [AuthConstants.ACTION_READ], job.project)) {
-            throw new JobNotFound("Not found", jobReference.id, jobReference.project)
-        }
+        checkJobView(auth, job, jobReference.id, jobReference.project)
 
         List<Execution> running = Execution.findAllByScheduledExecutionAndDateCompletedIsNull(job)
         List<Execution> lastExec = Execution.findAllByScheduledExecutionAndDateCompletedIsNotNull(
@@ -220,7 +236,12 @@ class JobStateService implements AuthorizingJobService {
         ScheduledExecution se = exec.scheduledExecution
         def isAuth = null
         if(se){
-            isAuth=frameworkService.authorizeProjectJobAll(auth, se, [AuthConstants.ACTION_READ], se.project)
+            isAuth = frameworkService.authorizeProjectJobAny(
+                auth,
+                se,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                se.project
+            )
         }else if(!se){
             isAuth=frameworkService.authorizeProjectResourceAll(auth, AuthConstants.RESOURCE_ADHOC, [AuthConstants.ACTION_READ],
                     exec.project)
@@ -261,7 +282,12 @@ class JobStateService implements AuthorizingJobService {
         String resultExecution = "";
 
         def se = ScheduledExecution.findByUuidAndProject(jobReference.id, jobReference.project)
-        if (!se || !frameworkService.authorizeProjectJobAll(auth, se, [AuthConstants.ACTION_READ], se.project)) {
+        if (!se || !frameworkService.authorizeProjectJobAny(
+            auth,
+            se,
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+            se.project
+        )) {
             throw new JobNotFound("Not found", jobReference.id, jobReference.project)
         }
         if(auth instanceof UserAndRolesAuthContext) {

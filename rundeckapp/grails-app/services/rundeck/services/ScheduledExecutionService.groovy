@@ -788,13 +788,18 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
      *
      * @param maxDepth
      * @param workflow
+     * @param readAuth if true, includes contents of each step, if false only includes only basic step details
      * @return List of maps for each step, descend up to maxDepth following job references
      */
-    def getWorkflowDescriptionTree(String project,Workflow workflow,maxDepth=3){
+    def getWorkflowDescriptionTree(String project,Workflow workflow,readAuth,maxDepth=3){
         def jobids=[:]
         def cmdData={}
         cmdData={x,WorkflowStep step->
-            def map=step.toMap()
+            def map=readAuth?step.toMap():step.toDescriptionMap()
+            map.remove('plugins')
+            if(map.type){
+                map.remove('configuration')
+            }
             if(step instanceof JobExec) {
                 ScheduledExecution refjob
                 if(step.uuid){

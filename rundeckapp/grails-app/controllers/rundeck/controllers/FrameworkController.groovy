@@ -221,8 +221,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         if (params.fromExecId || params.retryFailedExecId) {
             Execution e = Execution.get(params.fromExecId ?: params.retryFailedExecId)
             if (e && unauthorizedResponse(
-                    frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ]),
-                    AuthConstants.ACTION_READ, 'Execution', params.fromExecId ?: params.retryFailedExecId)) {
+                    frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
+                    AuthConstants.ACTION_VIEW, 'Execution', params.fromExecId ?: params.retryFailedExecId)) {
                 return
             }
 

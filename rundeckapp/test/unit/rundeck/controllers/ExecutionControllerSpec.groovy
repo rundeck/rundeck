@@ -315,7 +315,7 @@ class ExecutionControllerSpec extends Specification {
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
-            authorizeProjectExecutionAll(*_) >> true
+            authorizeProjectExecutionAny(*_) >> true
             1 * getAuthContextForSubjectAndProject(*_)
             1 * isClusterModeEnabled()
             _ * getServerUUID()
@@ -420,7 +420,7 @@ class ExecutionControllerSpec extends Specification {
         controller.loggingService = Mock(LoggingService)
         controller.configurationService = Mock(ConfigurationService)
         controller.frameworkService = Mock(FrameworkService) {
-            authorizeProjectExecutionAll(*_) >> true
+            authorizeProjectExecutionAny(*_) >> true
             1 * getAuthContextForSubjectAndProject(*_)
             1 * isClusterModeEnabled()
             _ * getServerUUID()
