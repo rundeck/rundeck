@@ -27,7 +27,6 @@ import com.dtolabs.rundeck.core.authentication.Group;
 import com.dtolabs.rundeck.core.authentication.Username;
 import com.dtolabs.rundeck.core.authorization.Attribute;
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil;
-import com.dtolabs.rundeck.core.authorization.Validation;
 import com.dtolabs.rundeck.core.authorization.ValidationSet;
 import junit.framework.TestCase;
 
@@ -62,7 +61,7 @@ public class TestYamlPolicyCollection extends TestCase {
 
     public void testCountPolicies() throws Exception {
         ValidationSet validationSet = new ValidationSet();
-        YamlPolicyCollection policies = makeTestPolicies(YamlProvider.sourceFromFile(test1), validationSet);
+        YamlPolicyCollection policies = makeTestPolicies(YamlProvider.sourceFromFile(test1, null), validationSet);
         validationSet.complete();
         assertTrue("invalid: " + validationSet, validationSet.isValid());
         assertEquals(6, policies.countPolicies());
@@ -141,7 +140,7 @@ public class TestYamlPolicyCollection extends TestCase {
 
     public void testGroupNames() throws Exception {
         ValidationSet validationSet = new ValidationSet();
-        YamlPolicyCollection policies = makeTestPolicies(YamlProvider.sourceFromFile(test1), validationSet);
+        YamlPolicyCollection policies = makeTestPolicies(YamlProvider.sourceFromFile(test1, null), validationSet);
         validationSet.complete();
         assertTrue("invalid: " + validationSet, validationSet.isValid());
         final Collection<String> strings = policies.groupNames();

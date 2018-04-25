@@ -135,6 +135,16 @@ class UrlMappings {
         )
         "/api/$api_version/project/$project/import"(controller: 'project',action: 'apiProjectImport')
 //        "/api/$api_version/project/$project/resources/refresh"(controller: 'framework', action: 'apiProjectResourcesRefresh')
+        "/api/$api_version/project/$project/sources"(controller: 'framework') {
+            action = [GET: "apiSourcesList"]
+        }
+        "/api/$api_version/project/$project/source/$index"(controller: 'framework') {
+            action = [GET: "apiSourceGet"]
+        }
+        name apiProjectSourceResources: "/api/$api_version/project/$project/source/$index/resources" {
+            controller= 'framework'
+            action = [GET: "apiSourceGetContent", POST: 'apiSourceWriteContent']
+        }
         "/api/$api_version/project/$project/resources"(controller: 'framework') {
             action = [GET: "apiResourcesv2",/* PUT: "update", DELETE: "delete", POST: "apiProjectResourcesPost"*/]
         }

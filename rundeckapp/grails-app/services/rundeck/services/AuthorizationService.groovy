@@ -98,8 +98,8 @@ class AuthorizationService implements InitializingBean{
      * @return validation
      */
     public PoliciesValidation validateYamlPolicy(String project, String ident, String text) {
-        def source = YamlProvider.sourceFromString(ident, text, new Date())
         ValidationSet validation = new ValidationSet()
+        def source = YamlProvider.sourceFromString(ident, text, new Date(),validation)
         def policies = YamlProvider.policiesFromSource(
                 source,
                 project ? AuthorizationUtil.projectContext(project) : null,
@@ -119,7 +119,7 @@ class AuthorizationService implements InitializingBean{
         ValidationSet validation = new ValidationSet()
         PolicyCollection policies=null
         source.withInputStream {stream->
-            def streamSource = YamlProvider.sourceFromStream(ident, stream, new Date())
+            def streamSource = YamlProvider.sourceFromStream(ident, stream, new Date(),validation)
             policies = YamlProvider.policiesFromSource(
                     streamSource,
                     project ? AuthorizationUtil.projectContext(project) : null,
@@ -132,7 +132,7 @@ class AuthorizationService implements InitializingBean{
 
     public PoliciesValidation validateYamlPolicy(File file) {
         ValidationSet validation = new ValidationSet()
-        def policies = YamlProvider.policiesFromSource(YamlProvider.sourceFromFile(file), null, validation)
+        def policies = YamlProvider.policiesFromSource(YamlProvider.sourceFromFile(file,validation), null, validation)
         validation.complete();
         new PoliciesValidation(validation: validation, policies: policies)
     }
@@ -243,7 +243,7 @@ class AuthorizationService implements InitializingBean{
         def resource = configStorageService.getFileResource(path)
         def file = resource.contents
         def text =file.inputStream.getText()
-        YamlProvider.sourceFromString("[system:config]${path}", text, file.modificationTime)
+        YamlProvider.sourceFromString("[system:config]${path}", text, file.modificationTime,new ValidationSet())
     }
 
 
