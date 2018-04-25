@@ -162,6 +162,28 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         }
         return map
     }
+    /**
+    * Return map representation without details
+     */
+    public Map toDescriptionMap(){
+        final Map map = [jobref: [group: jobGroup ? jobGroup : '', name: jobName]]
+        if(jobProject){
+            map.jobref.project = jobProject
+        }
+        if(uuid){
+        	map.jobref.uuid = uuid
+        }
+        if(nodeStep){
+            map.jobref.nodeStep="true"
+        }
+        if (errorHandler) {
+            map.errorhandler = errorHandler.toDescriptionMap()
+        }
+        if (description) {
+            map.description = description
+        }
+        return map
+    }
 
     static JobExec jobExecFromMap(Map map){
         JobExec exec = new JobExec()

@@ -365,8 +365,9 @@ class JobStateServiceSpec extends Specification {
                     project: projectName
             ).save()
 
-        service.frameworkService=Stub(FrameworkService){
-            authorizeProjectJobAll(null,job,[AuthConstants.ACTION_READ],projectName) >> false
+        service.frameworkService=Mock(FrameworkService){
+            1 * authorizeProjectJobAny(null,job,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],projectName) >> false
+            0 * _(*_)
         }
 
         when:
@@ -401,8 +402,9 @@ class JobStateServiceSpec extends Specification {
                     project: projectName
             ).save()
 
-        service.frameworkService=Stub(FrameworkService){
-            authorizeProjectJobAll(null,job,[AuthConstants.ACTION_READ],projectName) >>> [true,false]
+        service.frameworkService=Mock(FrameworkService){
+            authorizeProjectJobAny(null,job,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],projectName) >>> [true,false]
+            0 * _(*_)
         }
 
         when:
@@ -483,8 +485,8 @@ class JobStateServiceSpec extends Specification {
         JobReference job = new JobReferenceImpl()
         job.project=projectName
         job.id=jobUuid
-        service.frameworkService=Stub(FrameworkService){
-            authorizeProjectJobAll(null,!null,!null,!null) >>> [false,false]
+        service.frameworkService=Mock(FrameworkService){
+            authorizeProjectJobAny(null,!null,!null,!null) >>> [false,false]
         }
         given:
         setTestExecutions(projectName,jobUuid)

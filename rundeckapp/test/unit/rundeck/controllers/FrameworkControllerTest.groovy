@@ -161,9 +161,9 @@ class FrameworkControllerTest {
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
-        fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
+        fwkControl.demand.authorizeProjectExecutionAny {ctx,e,actions->
             assertEquals(exec,e)
-            assertEquals([AuthConstants.ACTION_READ],actions)
+            assertEquals([AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],actions)
             true
         }
         fwkControl.demand.projects { return [] }
@@ -199,9 +199,9 @@ class FrameworkControllerTest {
         def fwkControl = mockFor(FrameworkService, true)
         fwkControl.demand.getRundeckFramework {-> return null }
         fwkControl.demand.getAuthContextForSubjectAndProject { subject,proj -> return null }
-        fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
+        fwkControl.demand.authorizeProjectExecutionAny {ctx,e,actions->
             assertEquals(exec,e)
-            assertEquals([AuthConstants.ACTION_READ],actions)
+            assertEquals([AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],actions)
             true
         }
         fwkControl.demand.projects { return [] }
@@ -240,9 +240,9 @@ class FrameworkControllerTest {
             assertEquals('run', action)
             true
         }
-        fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
+        fwkControl.demand.authorizeProjectExecutionAny {ctx,e,actions->
             assertEquals(exec,e)
-            assertEquals([AuthConstants.ACTION_READ],actions)
+            assertEquals([AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],actions)
             true
         }
         fwkControl.demand.getFrameworkNodeName { -> return "monkey1" }
