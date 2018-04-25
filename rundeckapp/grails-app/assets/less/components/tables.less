@@ -1,3 +1,9 @@
+th.table-header {
+  .text-header();
+  .text-center();
+  .text-muted();
+}
+
 .table.table-embed {
   margin-bottom: 0;
 }
@@ -62,4 +68,24 @@ tr.link:hover a._defaultAction {
 
 tr.activity_row.highlight td {
   background: @table-bg-accent;
+}
+
+td {
+  &.ellipsis {
+    position: relative;
+  }
+
+  &.ellipsis:before {
+    content: '&nbsp;';
+    visibility: hidden;
+  }
+
+  &.ellipsis span {
+    position: absolute;
+    left: 0;
+    right: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 }

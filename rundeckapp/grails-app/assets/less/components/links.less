@@ -8,3 +8,29 @@ a {
     color: @link-hover-color;
   }
 }
+
+//link color variants
+a {
+  &.secondary {
+    color: lighten(@link-color, 20%);
+
+    &.active,
+    &:hover {
+      color: @link-hover-color;
+    }
+  }
+  //link color for secondary links
+  &.primary {
+    color: darken(@link-color, 15%);
+
+    &.active,
+    &:hover {
+      color: @link-hover-color;
+    }
+  }
+}
+
+//link variant
+.link-bare {
+  text-decoration: none;
+}

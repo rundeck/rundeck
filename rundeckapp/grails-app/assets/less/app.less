@@ -7,6 +7,7 @@
 @import "components/footer";
 @import "components/keyframes";
 @import "components/buttons";
+@import "components/text";
 @import "components/tables";
 @import "components/execution-output-table";
 @import "components/grid";
@@ -15,7 +16,17 @@
 @import "components/tabs";
 @import "components/links";
 @import "components/badges";
-
+@import "components/events-table";
+@import "components/forms";
+@import "components/icons";
+@import "components/version";
+@import "components/exec-status";
+@import "components/flash";
+@import "components/autocomplete";
+@import "components/alerts";
+@import "components/modals";
+@import "components/panels";
+@import "components/textual-query";
 
 @popover-wide-max-width: 500px;
 @base-item-padding-vertical: 8px;
@@ -355,48 +366,7 @@ a {
   max-height: 100px;
   overflow: auto;
 }
-//represent textual query
-/* query output showing */
-a.query,
-span.query {
-  &.textbtn {
-    padding: 3px;
-    -moz-border-radius: 3px;
-    -webkit-border-radius: 3px;
-    border-radius: 3px;
-    margin-right: 5px;
-    border: 1px solid #ddd;
-  }
 
-  & span.querykey {
-    color: #555;
-  }
-
-  & span.queryvalue.date {
-    font-weight: bold;
-  }
-
-  & span.querykey {
-    color: #555;
-  }
-
-  & span.queryvalue {
-    color: blue;
-  }
-
-  &.textbtn:hover span.queryvalue {
-    color: blue;
-  }
-
-  & span.querykey.exclude {
-    color: #555;
-    text-decoration: line-through;
-  }
-
-  & span.querykey.include {
-    //      color: blue;
-  }
-}
 //div or other block that has a bound action
 .action:hover {
   background: @table-bg-hover;
@@ -535,173 +505,7 @@ span.tag.active {
   background: @label-primary-bg;
 }
 
-//execution status text
-.exec-status {
-  &.other,
-  &[data-execstate=OTHER] {
-    color: @brand-warning;
 
-    &.icon {
-      .glyphicon();
-      .glyphicon-asterisk();
-    }
-  }
-
-  &[data-execstate=OTHER][data-statusstring=incomplete] {
-    color: orange;
-
-    &.icon {
-      .glyphicon();
-      .glyphicon-exclamation-sign();
-    }
-  }
-
-  &.fail,
-  &[data-execstate=FAILED] {
-    color: @brand-danger;
-
-    &.icon {
-      .glyphicon();
-      .glyphicon-minus-sign();
-    }
-  }
-
-  &.running,
-  &[data-execstate=RUNNING] {
-    color: @brand-info;
-
-    &.icon {
-      .glyphicon();
-      .glyphicon-play-circle();
-    }
-  }
-
-  &.succeed,
-  &[data-execstate=SUCCEEDED] {
-    color: @brand-success;
-
-    &.icon {
-      .glyphicon();
-      .glyphicon-ok-circle();
-    }
-  }
-
-  &.aborted,
-  &[data-execstate=ABORTED] {
-    color: @gray-light;
-
-    &.icon {
-      .glyphicon();
-      .glyphicon-remove-circle();
-    }
-  }
-
-  &.timedout,
-  &[data-execstate=TIMEDOUT] {
-    color: @brand-warning;
-
-    &.icon {
-      .glyphicon();
-      .glyphicon-time();
-    }
-  }
-
-  &.failedretry,
-  &[data-execstate=FAILED-WITH-RETRY] {
-    color: @brand-warning;
-
-    &.icon {
-      .glyphicon();
-      .glyphicon-repeat();
-    }
-  }
-
-  &.scheduled,
-  &[data-execstate=SCHEDULED] {
-    color: @brand-info;
-
-    &.icon {
-      .glyphicon();
-      .glyphicon-time();
-    }
-  }
-}
-
-.exec-status-text.custom-status {
-  font-style: italic;
-}
-
-.exec-status-text.custom-status:before {
-  content: '“';
-}
-
-.exec-status-text.custom-status:after {
-  content: '”';
-}
-//link color variants
-a {
-  &.secondary {
-    color: lighten(@link-color, 20%);
-
-    &.active,
-    &:hover {
-      color: @link-hover-color;
-    }
-  }
-  //link color for secondary links
-  &.primary {
-    color: darken(@link-color, 15%);
-
-    &.active,
-    &:hover {
-      color: @link-hover-color;
-    }
-  }
-}
-
-.modal-content {
-  .panel.panel-modal-content {
-    margin-bottom: 0;
-  }
-}
-
-.panel-body.panel-content-embed {
-  padding: 0;
-}
-//padding between sequential buttons in a form group
-.form-group .panel-footer,
-.panel-footer .buttons,
-.panel-footer.buttons {
-  .btn + .btn {
-    margin-left: 5px;
-  }
-
-  .btn.pull-right {
-    margin-left: 5px;
-  }
-}
-//resize control-label to match the input-sm vertical padding
-.form-horizontal .control-label.input-sm {
-  padding: @padding-small-vertical @padding-small-horizontal;
-}
-
-.form-control-static {
-  display: inline-block;
-  vertical-align: middle;
-}
-//style text like a form label
-.text-form-label {
-  margin-bottom: 5px;
-  font-weight: bold;
-}
-//embed a form-inline within another form
-.form,
-.form-horizontal {
-  .form-inline .form-group {
-    margin-left: 0;
-    margin-right: 0;
-  }
-}
 /**
    * Nodes page
    */
@@ -855,31 +659,7 @@ span.autoedit:hover {
 .optkey {
   color: @brand-primary;
 }
-//emphasis within text-muted
-.text-muted {
-  &.text-em strong {
-    color: @brand-primary;
-    font-weight: normal;
-  }
-}
 
-.text-header {
-  text-transform: uppercase;
-}
-
-.text-small {
-  font-size: @font-size-small;
-}
-
-.table-footer {
-  background: @panel-footer-bg;
-}
-
-th.table-header {
-  .text-header();
-  .text-center();
-  .text-muted();
-}
 //node detail
 /** node detail */
 .nodedetail {
@@ -944,13 +724,6 @@ th.table-header {
   padding-left: 18px;
 }
 
-.text-parenthetical:before {
-  content: '(';
-}
-
-.text-parenthetical:after {
-  content: ')';
-}
 //search icons
 .hover-action-holder {
   .hover-action {
@@ -966,102 +739,16 @@ th.table-header {
   padding: @list-group-item-padding-vertical @list-group-item-padding-horizontal;
 }
 
-.form-group {
-  margin-bottom: @base-item-padding-vertical;
-}
-
-.panel-footer,
-.panel-heading {
-  padding: @base-item-padding-vertical @base-item-padding-horizontal;
-}
-
 input.placeholder {
   color: gray;
 }
-//events list
-.table.events-table {
-  table-layout: fixed;
 
-  td.eventargs {
-    width: auto;
-    overflow: auto;
-    text-overflow: ellipsis;
-  }
-
-  td.eventicon {
-    width: 24px;
-  }
-
-  td.eventtitle {
-    width: auto;
-  }
-
-  td.eventtitle.adhoc {
-    width: auto;
-  }
-
-  td.date {
-    width: 20%;
-  }
-
-  td.user {
-    width: 10%;
-  }
-
-  td.nodecount {
-    white-space: nowrap;
-    text-align: right;
-    width: 5%;
-  }
-
-  &.events-table-embed {
-    tr.adhoc {
-      td.eventtitle {
-        width: auto;
-      }
-
-      td.eventargs {
-        width: 0;
-      }
-    }
-
-    td.user {
-      //nodecount is not shown
-      width: 15%;
-    }
-  }
-}
-
-.table.events-table td.eventtitle.adhoc {
-  font-style: italic;
-  color: #888;
-}
 //pre formatted regex syntax error for node filters
 pre.filtererror {
   background-color: transparent;
   border: none;
   color: @brand-info;
   padding: 0;
-}
-
-td {
-  &.ellipsis {
-    position: relative;
-  }
-
-  &.ellipsis:before {
-    content: '&nbsp;';
-    visibility: hidden;
-  }
-
-  &.ellipsis span {
-    position: absolute;
-    left: 0;
-    right: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
 }
 
 .overflowx {
@@ -1077,150 +764,7 @@ td {
   max-height: 300px;
   overflow-y: auto;
 }
-//rundeck icons
-.rdicon {
-  display: inline-block;
-  vertical-align: middle;
-  background-repeat: no-repeat;
 
-  &.icon-small {
-    width: 16px;
-    height: 16px;
-
-    &.command,
-    &.shell {
-      background-image: url("icon-small-shell.png");
-    }
-
-    &.script {
-      background-image: url("icon-small-script.png");
-    }
-
-    &.scriptfile,
-    &.scripturl {
-      background-image: url("icon-small-scriptfile.png");
-    }
-
-    &.plugin {
-      background-image: url("icon-small-plugin.png");
-    }
-
-    &.node {
-      height: 10px;
-      background-image: url("icon-small-Node.png");
-    }
-
-    &.node.node-runnable {
-      background-image: url("icon-small-Node-run.png");
-    }
-  }
-
-  &.icon {
-    width: 32px;
-    height: 32px;
-
-    &.command,
-    &.shell {
-      background-image: url("icon-shell.png");
-    }
-
-    &.script {
-      background-image: url("icon-script.png");
-    }
-
-    &.scriptfile {
-      background-image: url("icon-scriptfile.png");
-    }
-  }
-
-  &.icon-med {
-    width: 24px;
-    height: 24px;
-
-    &.command,
-    &.shell {
-      background-image: url("icon-med-shell.png");
-    }
-
-    &.script {
-      background-image: url("icon-med-script.png");
-    }
-
-    &.scriptfile {
-      background-image: url("icon-med-scriptfile.png");
-    }
-  }
-
-  &.app-logo.middle {
-    vertical-align: middle;
-  }
-  //retina/@2x images
-  @media only screen and (-webkit-min-device-pixel-ratio: 2), only screen and (min--moz-device-pixel-ratio: 2), only screen and (-o-min-device-pixel-ratio: 2/1), only screen and (min-device-pixel-ratio: 2), only screen and (min-resolution: 192dpi), only screen and (min-resolution: 2dppx) {
-    &.icon-small {
-      background-size: 16px 16px;
-
-      &.node {
-        background-size: 16px 10px;
-        background-image: url("icon-small-Node@2x.png");
-      }
-
-      &.node.node-runnable {
-        background-image: url("icon-small-Node-run@2x.png");
-      }
-
-      &.command,
-      &.shell {
-        background-image: url("icon-small-shell@2x.png");
-      }
-
-      &.script {
-        background-image: url("icon-small-script@2x.png");
-      }
-
-      &.scriptfile {
-        background-image: url("icon-small-scriptfile@2x.png");
-      }
-
-      &.plugin {
-        background-image: url("icon-small-plugin@2x.png");
-      }
-    }
-
-    &.icon {
-      background-size: 32px 32px;
-
-      &.command,
-      &.shell {
-        background-image: url("icon-shell@2x.png");
-      }
-
-      &.script {
-        background-image: url("icon-script@2x.png");
-      }
-
-      &.scriptfile {
-        background-image: url("icon-scriptfile@2x.png");
-      }
-    }
-
-    &.icon-med {
-      background-size: 24px 24px;
-
-      &.command,
-      &.shell {
-        background-image: url("icon-med-shell@2x.png");
-      }
-
-      &.script {
-        background-image: url("icon-med-script@2x.png");
-      }
-
-      &.scriptfile {
-        background-image: url("icon-med-scriptfile@2x.png");
-      }
-    }
-  }
-}
 //help tooltip
 .helptooltip {
   position: absolute;
@@ -1232,49 +776,7 @@ td {
 .btn.active {
   .box-shadow(none);
 }
-//version identity
-.rundeck-server-uuid,
-.rundeck-version-identity {
-  text-wrap: none;
-  white-space: nowrap;
 
-  .version-icon {
-    .badge();
-    background-color: transparent;
-    font-weight: normal;
-  }
-}
-
-.rundeck-version-block {
-  display: inline-block;
-  padding: @padding-base-horizontal @padding-base-vertical;
-  .border-bottom-radius(@border-radius-base);
-  .border-top-radius(@border-radius-base);
-}
-
-.rundeck-version-name {
-  &:before {
-    content: ' "';
-  }
-
-  &:after {
-    content: '" ';
-  }
-}
-
-.rundeck-version-date {
-  font-style: italic;
-}
-/////
-//navbar-text variations
-
-.navbar-default {
-  .navbar-text {
-    &.navbar-text-warning {
-      .text-warning();
-    }
-  }
-}
 //popover variation
 .popover {
   &.popover-wide {
@@ -1282,64 +784,10 @@ td {
   }
 }
 
-//alert in jumbotron style
-.alert-welcome {
-  .alert-variant(@jumbotron-bg; @jumbotron-bg; @text-color);
-}
-//link variant
-.link-bare {
-  text-decoration: none;
-}
-
-
-
 .autohide {
   visibility: hidden;
 }
 
 .autoshow:hover .autohide {
   visibility: visible;
-}
-
-.autocomplete-suggestions {
-  border: 1px solid #999;
-  background: #FFF;
-  overflow: auto;
-}
-
-.autocomplete-suggestion {
-  padding: 2px 5px;
-  white-space: nowrap;
-  overflow: hidden;
-}
-
-.autocomplete-selected {
-  background: #F0F0F0;
-}
-
-.autocomplete-suggestions strong {
-  font-weight: normal;
-  color: #3399FF;
-}
-
-.autocomplete-group {
-  padding: 2px 5px;
-}
-
-.autocomplete-group strong {
-  display: block;
-  border-bottom: 1px solid #000;
-}
-
-.flash_undo {
-  animation: pulse 0.75s ease 1 normal;
-}
-
-.flash_info {
-  animation: pulse 1.5s ease 1 normal;
-  //animation-iteration-count: 2;
-}
-//gray alert variant
-.alert-default {
-  .alert-variant(@well-bg; @well-bg; @brand-primary);
 }
