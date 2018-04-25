@@ -527,6 +527,20 @@
                             checked="${defaultFollow || params.follow == 'true'}"
                             value="true"/>
                 <g:message code="job.run.watch.output"/>
+                <select name="followdetail">
+                    <option value="summary" ${(!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary')?'selected="selected"':''}>
+                        <g:message code="execution.page.show.tab.Summary.title"/>
+                    </option>
+                    <option value="monitor" ${scheduledExecution.defaultTab=='monitor'?'selected="selected"':''}>
+                        <g:message code="report"/>
+                    </option>
+                    <option value="output" ${scheduledExecution.defaultTab=='output'?'selected="selected"':''}>
+                        <g:message code="execution.show.mode.Log.title"/>
+                    </option>
+                    <option value="definition" ${scheduledExecution.defaultTab=='definition'?'selected="selected"':''}>
+                        <g:message code="definition"/>
+                    </option>
+                </select>
             </label>
         </div>
     </div>
@@ -590,6 +604,20 @@
                                 checked="${defaultFollow || params.follow == 'true'}"
                                 value="true"/>
                     <g:message code="job.run.watch.output"/>
+                    <select name="followdetail">
+                        <option value="summary" ${(!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary')?'selected="selected"':''}>
+                            <g:message code="execution.page.show.tab.Summary.title"/>
+                        </option>
+                        <option value="monitor" ${scheduledExecution.defaultTab=='monitor'?'selected="selected"':''}>
+                            <g:message code="report"/>
+                        </option>
+                        <option value="output" ${scheduledExecution.defaultTab=='output'?'selected="selected"':''}>
+                            <g:message code="execution.show.mode.Log.title"/>
+                        </option>
+                        <option value="definition" ${scheduledExecution.defaultTab=='definition'?'selected="selected"':''}>
+                            <g:message code="definition"/>
+                        </option>
+                    </select>
                 </label>
             </div>
         </div>
