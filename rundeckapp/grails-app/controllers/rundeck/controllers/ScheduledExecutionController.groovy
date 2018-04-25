@@ -2874,7 +2874,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 delegate.success=true
                 delegate.id=results.id
                 if(params.followdetail){
-                    delegate.href=createLink(controller: "execution",action: "follow",id: results.id, fragment: 'output')
+                    delegate.href=createLink(controller: "execution",action: "follow",id: results.id, fragment: params.followdetail)
                 }else{
                     delegate.href=createLink(controller: "execution",action: "follow",id: results.id)
                 }
@@ -2913,7 +2913,11 @@ class ScheduledExecutionController  extends ControllerBase{
             } else {
                 delegate.success = true
                 delegate.id = results.id
-                delegate.href = createLink(controller: "execution", action: "follow", id: results.id)
+                if(params.followdetail){
+                    delegate.href=createLink(controller: "execution",action: "follow",id: results.id, fragment: params.followdetail)
+                }else{
+                    delegate.href = createLink(controller: "execution", action: "follow", id: results.id)
+                }
                 delegate.follow = (params.follow == 'true')
             }
         }
@@ -2957,7 +2961,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             return renderErrorView(results)
         } else if (params.follow == 'true') {
-            redirect(controller: "execution", action: "follow", id: results.id, params:[outdetails: params.followdetail?'true':'false'])
+            redirect(controller: "execution", action: "follow", id: results.id, params:[outdetails: params.followdetail])
         } else {
             redirect(controller: "scheduledExecution", action: "show", id: params.id)
         }

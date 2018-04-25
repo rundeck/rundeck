@@ -193,6 +193,11 @@
                 nodeflowvm.activeTab("output");
                 followOutput();
                 showTab('tab_link_output');
+            }else if(outDetails == '#monitor'){
+                nodeflowvm.activeTab("flow");
+                showTab('tab_link_flow');
+            }else if(outDetails== '#definition'){
+                showTab('tab_link_definition');
             }
         }
         jQuery(init);
@@ -628,7 +633,7 @@
                         <li id="tab_link_output">
                             <a href="#output" data-toggle="tab"><g:message code="execution.show.mode.Log.title" /></a>
                         </li>
-                        <li>
+                        <li id ="tab_link_definition">
                             <a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab"><g:message code="definition" /></a>
                         </li>
                     </ul>
