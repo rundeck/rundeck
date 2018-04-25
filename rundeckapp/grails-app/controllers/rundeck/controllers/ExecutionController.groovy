@@ -224,11 +224,8 @@ class ExecutionController extends ControllerBase{
             return
         }
         if(!params.project || params.project!=e.project) {
-            def fragment
-            if(params?.outdetails == 'true'){
-                fragment = 'output'
-            }
-            return redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project], fragment: fragment)
+            return redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project], fragment: params?.outdetails)
+
         }
         params.project=e.project
         request.project=e.project
