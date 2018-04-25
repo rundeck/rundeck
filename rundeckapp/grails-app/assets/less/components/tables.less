@@ -39,3 +39,27 @@ tr.alternateRow {
     border: 1px solid #999;
   }
 }
+
+table.table-data-embed {
+  font-size: @font-size-base;
+  white-space: normal;
+
+  &.invert {
+    background-color: @well-bg;
+    border: 1px solid white;
+
+    td,
+    th {
+      border: 1px solid white;
+    }
+  }
+}
+//history rows with default action link
+tr.link:hover a._defaultAction {
+  color: @link-hover-color;
+  text-decoration: underline;
+}
+
+tr.activity_row.highlight td {
+  background: @table-bg-accent;
+}

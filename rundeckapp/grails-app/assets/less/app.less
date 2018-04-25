@@ -2,16 +2,19 @@
 @import "not-variables";
 @import "library/bootswatch";
 @import "library/markdeep";
-@import "custom/bootstrap-overrides";
-@import "custom/nav";
-@import "custom/footer";
-@import "custom/keyframes";
-@import "custom/buttons";
-@import "custom/tables";
-@import "custom/execution-output-table";
-@import "custom/grid";
-@import "custom/tabs";
-@import "custom/carets";
+@import "components/bootstrap-overrides";
+@import "components/nav";
+@import "components/footer";
+@import "components/keyframes";
+@import "components/buttons";
+@import "components/tables";
+@import "components/execution-output-table";
+@import "components/grid";
+@import "components/tabs";
+@import "components/carets";
+@import "components/tabs";
+@import "components/links";
+@import "components/badges";
 
 
 @popover-wide-max-width: 500px;
@@ -532,30 +535,6 @@ span.tag.active {
   background: @label-primary-bg;
 }
 
-//content with padding like nav-tabs links
-ul.nav.nav-tabs > li {
-  .tabs-sibling {
-    float: left;
-    position: relative;
-    display: block;
-    border: 1px solid transparent;
-    margin-right: 5px;
-    margin-left: 3px;
-    padding: 10px 15px;
-
-    label {
-      margin-bottom: 0;
-    }
-
-    &.tabs-sibling-compact {
-      padding: 0;
-
-      &.form-inline .input-group .form-control {
-        width: 400px;
-      }
-    }
-  }
-}
 //execution status text
 .exec-status {
   &.other,
@@ -678,23 +657,6 @@ a {
       color: @link-hover-color;
     }
   }
-}
-
-.tab-content {
-  .list-group.list-group-tab-content .list-group-item:first-child,
-  .panel.panel-tab-content,
-  .panel.panel-tab-content > .panel-heading,
-  .panel.panel-tab-content > .table + .panel-body {
-    border-top: 0;
-    .border-top-radius(0);
-  }
-}
-
-.nav.nav-tabs + .panel.panel-tab-content,
-.nav.nav-tabs + .panel.panel-tab-content > .table,
-.nav.nav-tabs + .panel.panel-tab-content > .table + .panel-body {
-  border-top: 0;
-  .border-top-radius(0);
 }
 
 .modal-content {
@@ -845,34 +807,13 @@ a {
   }
 }
 
-table.table-data-embed {
-  font-size: @font-size-base;
-  white-space: normal;
 
-  &.invert {
-    background-color: @well-bg;
-    border: 1px solid white;
-
-    td,
-    th {
-      border: 1px solid white;
-    }
-  }
-}
 
 .stepident,
 .stepnum {
   //    color: @brand-light;
 }
-//history rows with default action link
-tr.link:hover a._defaultAction {
-  color: @link-hover-color;
-  text-decoration: underline;
-}
 
-tr.activity_row.highlight td {
-  background: @table-bg-accent;
-}
 //workflow editor, option editor, autohilite:
 btn.autohilite:hover,
 span.autohilite:hover {
@@ -1340,47 +1281,7 @@ td {
     max-width: @popover-wide-max-width;
   }
 }
-//badge variation
-.badge-variant(@background-color; @color) {
-  color: @color;
-  background-color: @background-color;
-}
 
-.badge-default {
-  .badge-variant(lighten(@brand-primary, 30%),@badge-color);
-}
-
-.badge-secondary {
-  .badge-variant(desaturate(@link-color, 100%),@badge-color);
-}
-
-.badge-muted {
-  .badge-variant(@text-muted,@badge-color);
-}
-
-.badge-primary {
-  .badge-variant(@brand-primary,@badge-color);
-}
-// Warning appears as orange
-
-.badge-warning {
-  .badge-variant(@brand-warning,@badge-color);
-}
-// Danger and error appear as red
-
-.badge-danger {
-  .badge-variant(@brand-danger,@badge-color);
-}
-// Success appears as green
-
-.badge-success {
-  .badge-variant(@brand-success,@badge-color);
-}
-// Info appears as blue-green
-
-.badge-info {
-  .badge-variant(@brand-info,@badge-color);
-}
 //alert in jumbotron style
 .alert-welcome {
   .alert-variant(@jumbotron-bg; @jumbotron-bg; @text-color);
@@ -1390,16 +1291,7 @@ td {
   text-decoration: none;
 }
 
-//links with text-color style
-a {
-  &.text-danger:hover,
-  &.text-info:hover,
-  &.text-primary:hover,
-  &.text-success:hover,
-  &.text-warning:hover {
-    color: @link-hover-color;
-  }
-}
+
 
 .autohide {
   visibility: hidden;
