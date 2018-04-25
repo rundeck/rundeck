@@ -102,16 +102,28 @@ class PluginTagLib {
         def plugin = attrs.name
         def code = attrs.code
         def defaultmsg = attrs.default
+        def messagesType = attrs.messagesType
         def messages = [:]
-        if (service && plugin) {
-            messages = uiPluginService.getMessagesFor(service, plugin, RequestContextUtils.getLocale(request))
-        }
-        def foundcode = [
+        if (!messagesType || messagesType in ['plugin']) {
+            if (service && plugin) {
+                messages = uiPluginService.getMessagesFor(service, plugin, RequestContextUtils.getLocale(request))
+            }
+            def foundcode = [
                 service + '.' + plugin + '.' + code,
                 plugin + '.' + code,
                 service + '.' + code,
                 code,
-        ].find { messages[it] }
-        return (foundcode != null ? messages[foundcode] : defaultmsg)
+            ].find { messages[it] }
+            return (foundcode != null ? messages[foundcode] : defaultmsg)
+        } else if (messagesType) {
+            def testCodes = [messagesType + '.' + code, code]
+            for (def c : testCodes) {
+                def msg = g.message(code: c, default: c)
+                if(msg!=c){
+                    return msg
+                }
+            }
+            return defaultmsg
+        }
     }
 }

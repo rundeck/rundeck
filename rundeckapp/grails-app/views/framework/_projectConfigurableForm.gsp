@@ -29,13 +29,15 @@
             <g:set var="pluginprefix" value="${configdata.get('prefix')}"/>
             <g:set var="categoryProps" value="${configurable.projectConfigProperties.findAll{configdata.configurable.categories[it.name]==category}}"/>
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                    properties         : categoryProps,
-                    report             : configdata.get('report'),
-                    prefix             : pluginprefix,
-                    values             : configdata.get('values') ?: [:],
-                    fieldnamePrefix    : pluginprefix,
-                    origfieldnamePrefix: 'orig.' + pluginprefix,
-                    allowedScope       : PropertyScope.Project
+                properties         : categoryProps,
+                report             : configdata.get('report'),
+                prefix             : pluginprefix,
+                values             : configdata.get('values') ?: [:],
+                fieldnamePrefix    : pluginprefix,
+                origfieldnamePrefix: 'orig.' + pluginprefix,
+                allowedScope       : PropertyScope.Project,
+                messagePrefix       : categoryPrefix?:'',
+                messagesType       : 'project.configuration'
             ]}"/>
 
         </g:each>
