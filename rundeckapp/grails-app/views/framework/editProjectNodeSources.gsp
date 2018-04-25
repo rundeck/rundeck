@@ -82,6 +82,7 @@
                     <g:render template="projectConfigurableForm"
                               model="${[extraConfigSet: extraConfig?.values(),
                                         category      : 'resourceModelSource',
+                                        categoryPrefix     : 'extra.category.resourceModelSource.',
                                         titleCode     : 'project.configuration.extra.category.resourceModelSource.title',
                                         helpCode      : 'project.configuration.extra.category.resourceModelSource.description'
                               ]}"/>
