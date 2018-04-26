@@ -76,6 +76,21 @@ class PluginStep extends WorkflowStep{
         map
     }
 
+    /**
+     *
+     * @return map representation without details
+     */
+    public Map toDescriptionMap() {
+        def map=[type: type, nodeStep:nodeStep]
+        if (description) {
+            map.description = description
+        }
+        if (errorHandler) {
+            map.errorhandler = errorHandler.toDescriptionMap()
+        }
+        map
+    }
+
     static PluginStep fromMap(Map data) {
         PluginStep ce = new PluginStep()
         ce.nodeStep=data.nodeStep

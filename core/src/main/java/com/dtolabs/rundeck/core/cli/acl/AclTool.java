@@ -933,6 +933,7 @@ public class AclTool extends BaseTool {
     static final List<String> projectJobActions =
             Arrays.asList(
                     ACLConstants.ACTION_READ,
+                    ACLConstants.ACTION_VIEW,
                     ACLConstants.ACTION_UPDATE,
                     ACLConstants.ACTION_DELETE,
                     ACLConstants.ACTION_RUN,
@@ -951,6 +952,7 @@ public class AclTool extends BaseTool {
     static final List<String> projectAdhocActions =
             Arrays.asList(
                     ACLConstants.ACTION_READ,
+                    ACLConstants.ACTION_VIEW,
                     ACLConstants.ACTION_RUN,
                     ACLConstants.ACTION_RUNAS,
                     ACLConstants.ACTION_KILL,
@@ -1922,6 +1924,7 @@ public class AclTool extends BaseTool {
     class ACLConstants {
         public static final String ACTION_CREATE = "create";
         public static final String ACTION_READ = "read";
+        public static final String ACTION_VIEW = "view";
         public static final String ACTION_UPDATE = "update";
         public static final String ACTION_DELETE = "delete";
         public static final String ACTION_RUN = "run";

@@ -459,7 +459,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
 
         controller.frameworkService=Mock(FrameworkService){
-            authorizeProjectJobAll(_,_,_,_)>>true
+            authorizeProjectJobAny(_,_,_,_)>>true
             filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&
@@ -532,7 +532,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
 
         controller.frameworkService = Mock(FrameworkService) {
-            authorizeProjectJobAll(_, _, _, _) >> true
+            authorizeProjectJobAny(_, _, ['read'], _) >> true
             filterAuthorizedNodes(_, _, _, _) >> { args -> args[2] }
             filterNodeSet(_, _) >> testNodeSetB
             getRundeckFramework() >> Mock(Framework) {
@@ -1027,10 +1027,12 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         controller.frameworkService = Mock(FrameworkService) {
             getAuthContextForSubjectAndProject(*_) >> testcontext
-            authorizeProjectJobAll(*_) >> true
+            authorizeProjectJobAll(_,_,['run'],'testProject') >> true
+            authorizeProjectJobAny(*_) >> true
             getRundeckFramework() >> Mock(Framework) {
                 getFrameworkNodeName() >> 'fwnode'
             }
+            //0 * _(*_)
         }
 
         controller.scheduledExecutionService = Mock(ScheduledExecutionService) {
@@ -1041,6 +1043,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.executionService = Mock(ExecutionService) {
             1 * getExecutionsAreActive() >> executionModeActive
             0 * executeJob(se, testcontext, _, _) >> [executionId: exec.id]
+            0 * _(*_)
         }
         controller.fileUploadService = Mock(FileUploadService)
 
@@ -1192,7 +1195,7 @@ class ScheduledExecutionControllerSpec extends Specification {
                 getUsername() >> 'bob'
             }
             authorizeProjectResourceAll(_, _, _, _) >> true
-            authorizeProjectExecutionAll(_, exec, _) >> true
+            authorizeProjectExecutionAny(_, exec, _) >> true
             getProjectGlobals(_) >> [:]
         }
         controller.scheduledExecutionService = Mock(ScheduledExecutionService)
@@ -1234,7 +1237,8 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         controller.frameworkService = Mock(FrameworkService) {
             getAuthContextForSubjectAndProject(*_) >> testcontext
-            authorizeProjectJobAll(*_) >> true
+            authorizeProjectJobAll(_,_,['run'],'testProject') >> true
+            authorizeProjectJobAny(*_) >> true
             getRundeckFramework() >> Mock(Framework) {
                 getFrameworkNodeName() >> 'fwnode'
             }
@@ -1326,7 +1330,8 @@ class ScheduledExecutionControllerSpec extends Specification {
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
 
         controller.frameworkService=Mock(FrameworkService){
-            authorizeProjectJobAll(_,_,_,_)>>true
+            authorizeProjectJobAll(_,_,['run'],'testProject') >> true
+            authorizeProjectJobAny(_,_,_,_)>>true
             filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&
@@ -1402,7 +1407,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
 
         controller.frameworkService=Mock(FrameworkService){
-            authorizeProjectJobAll(_,_,_,_)>>true
+            authorizeProjectJobAny(_,_,_,_)>>true
             filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&
@@ -1483,7 +1488,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         testNodeSetB.putNode(new NodeEntryImpl("nodec xyz"))
 
         controller.frameworkService=Mock(FrameworkService){
-            authorizeProjectJobAll(_,_,_,_)>>true
+            authorizeProjectJobAny(_,_,_,_)>>true
             filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
             filterNodeSet({ NodesSelector selector->
                 selector.acceptNode(new NodeEntryImpl("nodea")) &&

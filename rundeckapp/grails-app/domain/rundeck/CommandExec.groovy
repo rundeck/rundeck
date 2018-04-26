@@ -138,6 +138,30 @@ public class CommandExec extends WorkflowStep  {
         }
         return map
     }
+    /**
+    * Return map representation without content details
+     */
+    public Map toDescriptionMap(){
+        def map=[:]
+        if(adhocRemoteString){
+            map.exec='exec'
+        }else if(adhocLocalString){
+            map.script='script'
+        }else {
+            if(adhocFilepath==~/^(?i:https?|file):.*$/){
+                map.scripturl = 'scripturl'
+            }else{
+                map.scriptfile='scriptfile'
+            }
+        }
+        if(errorHandler){
+            map.errorhandler=errorHandler.toDescriptionMap()
+        }
+        if(description){
+            map.description=description
+        }
+        return map
+    }
 
     static CommandExec fromMap(Map data){
         CommandExec ce = new CommandExec()
