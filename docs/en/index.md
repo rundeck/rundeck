@@ -7,9 +7,6 @@ Published: **${HRDATE}**
 If you are new to Rundeck, start with the **[User Guide](manual/index.html)**.
 More information about Rundeck at: [rundeck.org](http://rundeck.org).
 
-
-* (**Out of date translation**: [Japanese](https://github.com/rundeck/rundeck/tree/master/docs/jp))
-
 ## Release Notes
 
 * [Version ${VERSION}](history/version-${VERSION}.html)
