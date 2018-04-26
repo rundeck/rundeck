@@ -1,0 +1,147 @@
+.wrapper{
+    position: relative;
+    top: 0;
+    height: 100vh;
+
+    &.wrapper-full-page{
+        height: auto;
+        min-height: 100vh;
+    }
+}
+
+.full-page{
+
+    &:after,
+    &:before{
+        display: block;
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        z-index: 2;
+    }
+    &:after{
+       background: $color-black;
+       z-index: 3;
+       opacity: 1;
+    }
+
+    > .content,
+    > .footer{
+        position: relative;
+        z-index: 4;
+    }
+
+    > .content{
+        min-height: calc(100vh - 70px);
+    }
+
+    .full-page-background{
+        position: absolute;
+        z-index: 1;
+        height: 100%;
+        width: 100%;
+        display: block;
+        top: 0;
+        left: 0;
+        background-size: cover;
+        background-position: center center;
+
+    }
+
+    &[data-image]:after,
+    &.has-image:after{
+        opacity: .7;
+    }
+
+    &[data-color="blue"]:after{
+        background-color: rgba($filter-blue, 0.7);
+    }
+    &[data-color="azure"]:after{
+        background-color: rgba($filter-azure, 0.7);
+    }
+    &[data-color="green"]:after{
+       background-color: rgba($filter-green, 0.7);
+    }
+    &[data-color="orange"]:after{
+        background-color: rgba($filter-orange, 0.7);
+    }
+    &[data-color="red"]:after{
+        background-color: rgba($filter-red, 0.7);
+    }
+
+    .footer nav > ul a:not(.btn),
+    .footer .copyright,
+    .footer .copyright a{
+        color: $white-color;
+        font-size: $font-size-base;
+    }
+
+}
+
+.login-page,
+.lock-page{
+    > .content{
+        padding-top: 20vh;
+    }
+}
+
+.lock-page{
+    .card-lock{
+        text-align: center;
+        width: 300px;
+        margin: 30px auto 0;
+        padding: 30px;
+        position: absolute;
+        left: 50%;
+        margin-left: -150px;
+        display: block;
+    }
+}
+.register-page{
+
+    .header-text{
+        text-align: center;
+        padding: ($padding-default-horizontal * 3) 0 ($padding-default-horizontal * 2);
+
+        h4{
+            margin-top: 10px;
+        }
+
+        hr{
+            opacity: .3;
+            margin-top: ($margin-base * 2);
+        }
+    }
+
+    .media{
+/*         color: $white-color; */
+        margin-bottom: ($margin-base * 3);
+
+        .icon{
+            float: left;
+            margin-right: 5px;
+        }
+
+        i{
+            font-size: $font-size-h2;
+        }
+
+        h4{
+            margin: 0 0 5px 0;
+        }
+    }
+
+    .form-group{
+        margin-bottom: ($margin-base + 10px);
+    }
+
+    .card{
+        .content{
+            padding-top: 0;
+            padding-bottom: 0;
+        }
+    }
+}

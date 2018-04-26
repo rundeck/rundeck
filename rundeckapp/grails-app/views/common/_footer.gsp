@@ -37,30 +37,25 @@
 <g:set var="appId" value="${g.appTitle()}"/>
 
 
-<div class="row row-space">
-    <div class="col-sm-4">
+<footer class="footer">
+  <div class="container-fluid">
+    <div class="copyright pull-left">
+        &copy; Copyright 2018 <a href="http://rundeck.com">Rundeck, Inc.</a>
 
-    &copy; Copyright 2018 <a href="http://rundeck.com">Rundeck, Inc.</a>
-
-    All rights reserved.
+        All rights reserved.
     </div>
-    <div class="col-sm-6 text-center ">
+    <nav class="pull-right">
+        <ul>
 
-        <g:link controller="menu" action="welcome" class="version link-bare">
-            <g:appTitle/> ${buildIdent}
-        </g:link>
-
-        <span class="rundeck-version-identity"
-              data-version-string="${enc(attr: buildIdent)}"
-              data-version-date="${enc(attr: servletContextAttribute(attribute: 'version.date_short'))}"
-              data-app-id="${enc(attr: appId)}"></span>
-    </div>
-    <div class="col-sm-2 text-right">
-
-    <g:link controller="menu" action="licenses"><g:message code="licenses"/></g:link>
-        &bull;
-        <a href="${enc(attr: g.helpLinkUrl())}" class="help ">
-            <g:message code="help"/>
-        </a>
-    </div>
-</div>
+            <li>
+                <g:link controller="menu" action="licenses"><g:message code="licenses"/></g:link>
+            </li>
+            <li>
+                <a href="${enc(attr: g.helpLinkUrl())}" class="help ">
+                    <g:message code="help"/>
+                </a>
+            </li>
+        </ul>
+    </nav>
+  </div>
+</footer>

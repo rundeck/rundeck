@@ -31,7 +31,16 @@
     <link rel="favicon" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <link rel="shortcut icon" href="${g.resource(dir: 'images', file: 'favicon.ico')}"/>
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
-    <asset:stylesheet href="app.css"/>
+    <!-- fontawesome -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.0.10/css/all.css" integrity="sha384-+d0P83n9kaQMCwj8F4RJB66tzIwOKmrdb46+porD/OvrJ+37WqIM7UoBtwHO6Nlg" crossorigin="anonymous">
+    <!-- /fontawesome -->
+    <!-- themify icons -->
+    <!-- <asset:stylesheet  href="themify.css" /> -->
+    <!-- /themify icons -->
+    <asset:stylesheet href="bootstrap.min.css"/>
+    <asset:stylesheet href="app.scss.css"/>
+    <asset:stylesheet href="custom.less.css"/>
+    <!-- <asset:stylesheet href="app.less.css"/> -->
     <asset:stylesheet href="rundeck1.css"/>
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="github-markdown.css"/>
@@ -118,14 +127,22 @@
     <g:layoutHead/>
 </head>
 <body>
-<g:render template="/common/topbar"/>
-<div class="container app-content">
-    <g:layoutBody/>
-</div>
-
-<div class="container footer">
-<g:render template="/common/footer"/>
-</div>
+  <div class="wrapper">
+    <div class="sidebar" data-background-color="black" data-active-color="danger">
+      <div class="sidebar-wrapper">
+          <g:render template="/common/sidebar"/>
+      </div>
+    </div>
+    <div class="main-panel">
+      <div>
+        <g:render template="/common/mainbar"/>
+      </div>
+      <div class="content">
+          <g:layoutBody/>
+      </div>
+      <g:render template="/common/footer"/>
+    </div>
+  </div>
 <!--
 <g:profilerOutput />
 -->

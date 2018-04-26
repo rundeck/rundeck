@@ -1,0 +1,173 @@
+.btn,
+.navbar .navbar-nav > li > a.btn{
+    border-radius: $border-radius-btn-base;
+    box-sizing: border-box;
+    border-width: $border-thick;
+    background-color: $transparent-bg;
+    font-size: $font-size-base;
+    font-weight: $font-weight-bold;
+
+    padding: $padding-base-vertical $padding-base-horizontal;
+
+    @include btn-styles($default-color, $default-states-color);
+    @include transition($fast-transition-time, linear);
+
+    &:hover,
+    &:focus{
+        outline: 0 !important;
+    }
+    &:active,
+    &.active,
+    .open > &.dropdown-toggle {
+         @include box-shadow(none);
+         outline: 0 !important;
+    }
+
+    &.btn-icon{
+        border-radius: 25px;
+        padding: 7px 10px;
+        i{
+          margin-right: 0px;
+        }
+    }
+
+    [class*="ti-"]{
+        vertical-align: middle;
+    }
+
+}
+
+.btn-group .btn + .btn,
+.btn-group .btn + .btn-group,
+.btn-group .btn-group + .btn,
+.btn-group .btn-group + .btn-group{
+    margin-left: -2px;
+
+}
+
+// Apply the mixin to the buttons
+//.btn-default { @include btn-styles($default-color, $default-states-color); }
+.navbar .navbar-nav > li > a.btn.btn-primary, .btn-primary { @include btn-styles($primary-color, $primary-states-color); }
+.navbar .navbar-nav > li > a.btn.btn-success, .btn-success { @include btn-styles($success-color, $success-states-color); }
+.navbar .navbar-nav > li > a.btn.btn-info, .btn-info    { @include btn-styles($info-color, $info-states-color); }
+.navbar .navbar-nav > li > a.btn.btn-warning, .btn-warning { @include btn-styles($warning-color, $warning-states-color); }
+.navbar .navbar-nav > li > a.btn.btn-danger, .btn-danger  { @include btn-styles($danger-color, $danger-states-color); }
+
+.btn-neutral {
+    @include btn-styles($white-color, $white-color);
+
+    &:hover,
+    &:focus{
+        color: $default-color;
+        i{
+            color: $default-color;
+            opacity: 1;
+        }
+    }
+
+    &:active,
+    &.active,
+    .open > &.dropdown-toggle{
+        background-color: $white-color;
+        color: $default-color;
+        i{
+            color: $default-color;
+            opacity: 1;
+        }
+    }
+
+    &.btn-fill{
+        color: $default-color;
+        i{
+            color: $default-color;
+            opacity: 1;
+        }
+    }
+    &.btn-fill:hover,
+    &.btn-fill:focus{
+        color: $default-states-color;
+        i{
+            color: $default-states-color;
+            opacity: 1;
+        }
+    }
+
+    &.btn-simple:active,
+    &.btn-simple.active{
+        background-color: transparent;
+    }
+}
+
+.btn{
+     &:disabled,
+     &[disabled],
+     &.disabled,
+     &.btn-disabled{
+        @include opacity(.5);
+    }
+}
+.btn-disabled{
+    cursor: default;
+}
+.btn-simple{
+    border: $none;
+    padding: $padding-base-vertical $padding-base-horizontal;
+
+}
+
+.navbar .navbar-nav > li > a.btn.btn-lg,
+.btn-lg{
+   @include btn-size($padding-large-vertical, $padding-large-horizontal, $font-size-large, $border-radius-btn-large, $line-height-small);
+   font-weight: $font-weight-normal;
+    &.btn-icon{
+        border-radius: 30px;
+        padding: 9px 16px;
+    }
+}
+.navbar .navbar-nav > li > a.btn.btn-sm,
+.btn-sm{
+    @include btn-size($padding-small-vertical, $padding-small-horizontal, $font-size-small, $border-radius-btn-small, $line-height-small);
+    &.btn-icon{
+        padding: 3px 6px;
+        .fa{
+            line-height: 1.6;
+            width: 15px;
+        }
+    }
+}
+.navbar .navbar-nav > li > a.btn.btn-xs,
+.btn-xs{
+    @include btn-size($padding-xs-vertical, $padding-xs-horizontal, $font-size-xs, $border-radius-btn-small, $line-height-small);
+    &.btn-icon{
+        padding: 1px 5px;
+        .fa{
+            width: 10px;
+        }
+    }
+}
+.navbar .navbar-nav > li > a.btn.btn-wd,
+.btn-wd{
+    min-width: 140px;
+}
+
+.btn-group.select{
+    width: 100%;
+}
+.btn-group.select .btn{
+    text-align: left;
+}
+.btn-group.select .caret{
+    position: absolute;
+    top: 50%;
+    margin-top: -1px;
+    right: 8px;
+}
+.btn-tooltip{
+    white-space: nowrap;
+}
+
+.buttons-with-margin{
+    .btn {
+        margin-bottom: 5px;
+    }
+}

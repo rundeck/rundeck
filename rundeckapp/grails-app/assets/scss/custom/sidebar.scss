@@ -1,0 +1,23 @@
+.sidebar .logo{
+  background-color: #000000;
+  a{
+    font-family: 'Futura';
+    text-transform: uppercase;
+    color: #ffffff;
+    // float: left;
+    padding: 15px 15px;
+    font-size: 18px;
+    line-height: 20px;
+    height: 50px;
+  }
+}
+.sidebar .nav > li.snapshot-version{
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+}
+.sidebar .nav > li.snapshot-version a{
+  background: rgba(255, 255, 255, 0.14);
+  opacity: 1;
+  color: #FFFFFF;
+}

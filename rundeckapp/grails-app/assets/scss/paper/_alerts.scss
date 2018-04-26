@@ -1,0 +1,68 @@
+.alert {
+  border: 0;
+  border-radius: 0;
+  color: #FFFFFF;
+  padding: 10px 15px;
+  font-size: 14px;
+
+  .container & {
+    border-radius: 4px;
+
+  }
+  .navbar & {
+    border-radius: 0;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 85px;
+    width: 100%;
+    z-index: 3;
+  }
+  .navbar:not(.navbar-transparent) & {
+    top: 70px;
+  }
+
+  span[data-notify="icon"] {
+    font-size: 30px;
+    display: block;
+    left: 15px;
+    position: absolute;
+    top: 50%;
+    margin-top: -20px;
+  }
+
+  .close ~ span {
+    display: block;
+    max-width: 89%;
+  }
+
+  &[data-notify="container"] {
+    padding: 10px 10px 10px 20px;
+    border-radius: $border-radius-base;
+  }
+
+  &.alert-with-icon {
+    padding-left: 65px;
+  }
+}
+
+.alert-info {
+  background-color: $bg-info;
+  color: $info-states-color;
+}
+
+.alert-success {
+  background-color: $bg-success;
+  color: $success-states-color;
+}
+
+.alert-warning {
+  background-color: $bg-warning;
+  color: $warning-states-color;
+}
+
+.alert-danger {
+  background-color: $bg-danger;
+  color: $danger-states-color;
+}
+

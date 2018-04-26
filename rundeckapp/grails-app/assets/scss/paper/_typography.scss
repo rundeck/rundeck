@@ -1,0 +1,140 @@
+h1, .h1, h2, .h2, h3, .h3, h4, .h4, h5, .h5, h6, .h6, p, .navbar, .brand, a, .td-name, td {
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-font-smoothing: antialiased;
+  font-family: 'Muli', "Helvetica", Arial, sans-serif;
+}
+
+h1, .h1, h2, .h2, h3, .h3, h4, .h4 {
+  font-weight: $font-weight-normal;
+  margin: $margin-large-vertical 0 $margin-base-vertical;
+}
+
+h1, .h1 {
+  font-size: $font-size-h1;
+}
+
+h2, .h2 {
+  font-size: $font-size-h2;
+}
+
+h3, .h3 {
+  font-size: $font-size-h3;
+  line-height: 1.4;
+  margin: 20px 0 10px;
+}
+
+h4, .h4 {
+  font-size: $font-size-h4;
+  font-weight: $font-weight-bold;
+  line-height: 1.2em;
+}
+
+h5, .h5 {
+  font-size: $font-size-h5;
+  font-weight: $font-weight-normal;
+  line-height: 1.4em;
+  margin-bottom: 15px;
+}
+
+h6, .h6 {
+  font-size: $font-size-h6;
+  font-weight: $font-weight-bold;
+  text-transform: uppercase;
+}
+
+p {
+  font-size: $font-paragraph;
+  line-height: $line-height-general;
+}
+
+h1 small, h2 small, h3 small, h4 small, h5 small, h6 small, .h1 small, .h2 small, .h3 small, .h4 small, .h5 small, .h6 small, h1 .small, h2 .small, h3 .small, h4 .small, h5 .small, h6 .small, .h1 .small, .h2 .small, .h3 .small, .h4 .small, .h5 .small, .h6 .small {
+  color: $dark-gray;
+  font-weight: $font-weight-light;
+  line-height: $line-height-general;
+}
+
+h1 small, h2 small, h3 small, h1 .small, h2 .small, h3 .small {
+  font-size: 60%;
+}
+
+.title-uppercase {
+  text-transform: uppercase;
+}
+
+blockquote {
+  font-style: italic;
+}
+
+blockquote small {
+  font-style: normal;
+}
+
+.text-muted {
+  color: $medium-gray;
+}
+
+.text-primary, .text-primary:hover {
+  color: $primary-states-color;
+}
+
+.text-info, .text-info:hover {
+  color: $info-states-color;
+}
+
+.text-success, .text-success:hover {
+  color: $success-states-color;
+}
+
+.text-warning, .text-warning:hover {
+  color: $warning-states-color;
+}
+
+.text-danger, .text-danger:hover {
+  color: $danger-states-color;
+}
+
+.glyphicon {
+  line-height: 1;
+}
+
+strong {
+  color: $default-states-color;
+}
+
+.icon-primary {
+  color: $primary-color;
+}
+
+.icon-info {
+  color: $info-color;
+}
+
+.icon-success {
+  color: $success-color;
+}
+
+.icon-warning {
+  color: $warning-color;
+}
+
+.icon-danger {
+  color: $danger-color;
+}
+
+.chart-legend {
+  .text-primary, .text-primary:hover {
+    color: $primary-color;
+  }
+  .text-info, .text-info:hover {
+    color: $info-color;
+  }
+  .text-success, .text-success:hover {
+    color: $success-color;
+  }
+  .text-warning, .text-warning:hover {
+    color: $warning-color;
+  }
+  .text-danger, .text-danger:hover {
+    color: $danger-color;
+  }
+}

@@ -7375,6 +7375,14 @@ pre {
 .nav-pills > li > span.nav-text {
   border-radius: 5px;
 }
+.navbar-default .navbar-text.navbar-text-warning {
+  color: #fff;
+  color: #E38C02;
+}
+a.navbar-default .navbar-text.navbar-text-warning:hover,
+a.navbar-default .navbar-text.navbar-text-warning:focus {
+  color: #e6e6e6;
+}
 .footer {
   position: fixed;
   bottom: 0;
@@ -8195,6 +8203,15 @@ fieldset[disabled] .btn-info-hollow.focus {
 }
 .table-footer {
   background: #eeeeee;
+}
+th.table-header {
+  text-transform: uppercase;
+  text-align: center;
+  color: #999999;
+}
+th.table-header.text-em strong {
+  color: #3C3C3C;
+  font-weight: normal;
 }
 .table.table-embed {
   margin-bottom: 0;
@@ -9203,6 +9220,10 @@ a.rundeck-version-identity .version-icon:focus {
 }
 .panel-body.panel-content-embed {
   padding: 0;
+}
+.panel-footer,
+.panel-heading {
+  padding: 8px 10px;
 }
 /* query output showing */
 a.query.textbtn,

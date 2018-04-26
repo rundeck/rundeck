@@ -1,0 +1,413 @@
+.dropdown-menu{
+  background-color: $white-color;
+  border: 0 none;
+  border-radius: $border-radius-extreme;
+  margin-top: 5px;
+  padding: 0px;
+  @include box-shadow($dropdown-shadow);
+
+  .dropdown &,
+  &.bootstrap-datetimepicker-widget,
+  .bootstrap-table .btn-group &,
+  .btn-group &,
+  .dropup &{
+    @include transform-translate-y(-30px);
+    @include transition($fast-transition-time, $transition-linear);
+    @include opacity(0);
+    visibility: hidden;
+    display: block;
+  }
+
+  .dropdown.open &,
+  &.bootstrap-datetimepicker-widget.open,
+  .bootstrap-table .btn-group.open &,
+  .btn-group.open &{
+    @include transform-translate-y(0);
+    @include opacity(1);
+    visibility: visible;
+  }
+
+  .dropup &,
+  &.bootstrap-datetimepicker-widget.top{
+    @include transform-translate-y(30px);
+    @include transition($fast-transition-time, $transition-linear);
+    @include opacity(0);
+    visibility: hidden;
+    display: block;
+  }
+
+  .dropup.open &,
+  &.bootstrap-datetimepicker-widget.top.open{
+    @include transform-translate-y(0);
+    @include opacity(1);
+    visibility: visible;
+  }
+
+  .dropup &{
+    margin-bottom: 5px;
+
+    >.active > a,
+    >.active > a:hover,
+    >.active > a:focus{
+      background-color: $pale-bg;
+      color: $font-color;
+    }
+
+    > li > a:hover,
+    > li > a:focus {
+      background-color: $default-color;
+      color: $fill-font-color;
+      opacity: 1;
+      text-decoration: none;
+    }
+  }
+
+
+
+  &:before{
+    border-bottom: 11px solid $medium-pale-bg;
+    border-left: 11px solid rgba(0, 0, 0, 0);
+    border-right: 11px solid rgba(0, 0, 0, 0);
+    content: "";
+    display: inline-block;
+    position: absolute;
+    right: 12px;
+    top: -12px;
+  }
+
+  &:after{
+    border-bottom: 11px solid $white-color;
+    border-left: 11px solid rgba(0, 0, 0, 0);
+    border-right: 11px solid rgba(0, 0, 0, 0);
+    content: "";
+    display: inline-block;
+    position: absolute;
+    right: 12px;
+    top: -11px;
+  }
+
+
+  .dropup &,
+  &.bootstrap-datetimepicker-widget.top{
+    &:before{
+      border-top: 11px solid $medium-pale-bg;
+      border-left: 11px solid rgba(0, 0, 0, 0);
+      border-right: 11px solid rgba(0, 0, 0, 0);
+      border-bottom: none;
+      content: "";
+      display: inline-block;
+      position: absolute;
+      left: 12px;
+      right: auto;
+      top: auto;
+      bottom: -12px;
+    }
+
+    &:after{
+      border-top: 11px solid $white-color;
+      border-left: 11px solid rgba(0, 0, 0, 0);
+      border-right: 11px solid rgba(0, 0, 0, 0);
+      border-bottom: none;
+      content: "";
+      display: inline-block;
+      position: absolute;
+      left: 12px;
+      right: auto;
+      bottom: -11px;
+      top: auto;
+    }
+  }
+
+  &.dropdown-menu-left{
+    &:after{
+      left: 12px;
+      right: auto;
+    }
+    &:before{
+      left: 12px;
+      right: auto;
+    }
+  }
+
+  .divider{
+    background-color: $medium-pale-bg;
+    margin: 0px;
+  }
+
+  .dropdown-header{
+    color: $dark-gray;
+    font-size: $font-size-small;
+    padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
+  }
+
+  > li > a {
+    color: $font-color;
+    font-size: $font-size-base;
+    padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
+    @include transition-none();
+
+    img{
+      margin-top: -3px;
+    }
+  }
+  > li > a:focus{
+    outline: 0 !important;
+  }
+
+  .btn-group.select &{
+    min-width: 100%;
+  }
+
+  > li:first-child > a{
+    border-top-left-radius: $border-radius-extreme;
+    border-top-right-radius: $border-radius-extreme;
+  }
+
+  > li:last-child > a{
+    border-bottom-left-radius: $border-radius-extreme;
+    border-bottom-right-radius: $border-radius-extreme;
+  }
+
+  > li > a:hover,
+  > li > a:focus {
+    background-color: $default-color;
+    color: $fill-font-color;
+    opacity: 1;
+    text-decoration: none;
+  }
+
+  &.dropdown-primary > li:not(.disabled)
+  {
+    > a:hover,
+    > a:focus{
+      background-color: $primary-color;
+    }
+  }
+  &.dropdown-info > li:not(.disabled)
+  {
+    > a:hover,
+    > a:focus{
+      background-color: $info-color;
+    }
+  }
+
+  &.dropdown-success > li:not(.disabled)
+  {
+    > a:hover,
+    > a:focus{
+      background-color: $success-color;
+    }
+  }
+  &.dropdown-warning > li:not(.disabled)
+  {
+    > a:hover,
+    > a:focus{
+      background-color: $warning-color;
+    }
+  }
+  &.dropdown-danger > li:not(.disabled)
+  {
+    > a:hover,
+    > a:focus{
+      background-color: $danger-color;
+    }
+  }
+
+  //     Styles for the dropdown footer
+  > li.dropdown-footer{
+    background-color: $background-light-grey;
+    border-radius: 0 0 $border-radius-extreme $border-radius-extreme;
+
+    > ul{
+      list-style: outside none none;
+      padding: 0px 5px;
+      > li{
+        display: inline-block;
+        text-align: left;
+        padding: 0 10px;
+
+        >a {
+          color: $font-background-light-grey;
+          font-size: 0.9em;
+          line-height: 35px;
+        }
+      }
+      > li:hover a{
+        color: $font-hover-background-light-grey;
+      }
+    }
+  }
+
+}
+
+.select{
+  .no-style:hover,
+  .no-style:active,
+  .no-style:focus{
+    background-color: $white-color;
+    color: $font-color;
+
+    .caret{
+      border-top-color: $font-color;
+    }
+  }
+}
+.open {
+  .no-style{
+    background-color: $white-color !important;
+    color: $font-color !important;
+    .caret{
+      border-top-color: $font-color !important;
+    }
+  }
+}
+
+//fix bug for the select items in btn-group
+.btn-group.select{
+  overflow: hidden;
+}
+.btn-group.select.open{
+  overflow: visible;
+}
+
+// Style for notifications in dropdown
+.notification-bubble{
+  left: 25px;
+  position: absolute;
+  top: 13px;
+}
+.dropdown-notification{
+
+  .dropdown-header{
+    border-bottom: 1px solid $medium-pale-bg;
+  }
+
+  .no-notification{
+    color: $dark-gray;
+    font-size: 1.2em;
+    padding: 30px 30px;
+    text-align: center;
+  }
+
+}
+
+.dropdown-notification-list{
+
+  > li{
+    border-bottom: 1px solid $medium-pale-bg;
+    color: $font-color;
+    font-size: $font-size-base;
+    //        padding: $padding-dropdown-vertical $padding-dropdown-horizontal;
+    padding: 10px 5px;
+  }
+
+  > li > a{
+    color: $font-color;
+    white-space: normal;
+
+    .notification-text{
+      padding-left: 40px;
+      position: relative;
+    }
+    .label{
+      display: block;
+      position: absolute;
+      top: 50%;
+      margin-top: -12px;
+      left: 7px;
+    }
+    .message{
+      font-size: 0.9em;
+      line-height: 0.7;
+    }
+    .time{
+      color: $dark-gray;
+      font-size: 0.7em;
+    }
+    .read-notification{
+      font-size: 12px;
+      opacity: 0;
+      position: absolute;
+      right: 5px;
+      top: 50%;
+      margin-top: -12px;
+    }
+  }
+
+  > li:hover,
+  > li:focus {
+    background-color: $background-lighter-grey;
+    color: $font-color;
+    opacity: 1;
+    text-decoration: none;
+
+    .read-notification{
+      opacity: 1;
+    }
+  }
+
+}
+.scroll-area{
+  max-height: 310px;
+  overflow-y: scroll;
+  list-style: outside none none;
+  padding: 0px;
+}
+.dropdown-sharing{
+
+  li{
+    color: $font-color;
+    font-size: $font-size-base;
+
+    .social-line{
+      line-height: 28px;
+      padding: 10px 20px 5px 20px;
+
+      [class*="icon-"]{
+        font-size: 20px;
+      }
+    }
+  }
+
+  li:hover,
+  li:focus{
+    .social-line,
+    a,
+    .action-line{
+      background-color: $pale-bg;
+      color: $font-color;
+      opacity: 1;
+      text-decoration: none;
+    }
+  }
+}
+.dropdown-actions{
+  li{
+    .action-line{
+      line-height: 24px;
+      padding: 10px 20px;
+      font-weight: bold;
+      [class*="icon-"]{
+        font-size: 24px;
+      }
+      .col-xs-9{
+        line-height: 34px;
+      }
+    }
+    .link-danger{
+      color: $danger-color;
+      &:hover, &:active, &:focus{
+        color: $danger-color;
+      }
+    }
+  }
+  li:hover,
+  li:focus{
+    a{
+      background-color: $background-lighter-grey;
+      color: $font-color;
+      opacity: 1;
+      text-decoration: none;
+    }
+  }
+}

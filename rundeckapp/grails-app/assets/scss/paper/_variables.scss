@@ -1,0 +1,384 @@
+$white-background-color: #FFFFFF !default;
+$black-background-color: #212120 !default;
+$darkblue-background-color: #35495E !default; // this is the dark blue color from Vue.js branding
+
+$font-color:                 #66615b !default;
+$fill-font-color:            rgba(255, 255, 255, 0.85);
+
+$none:                       0   !default;
+$border-thin:                1px !default;
+$border-thick:               2px !default;
+
+$white-color:                #FFFFFF !default;
+$white-bg:                   #FFFFFF !default;
+
+$smoke-bg:                   #F5F5F5 !default;
+$pale-bg:                    #F9F7F3 !default;
+$medium-pale-bg:             #F1EAE0 !default;
+
+$table-line-color:           #CCC5B9 !default;
+$muted-color:                #a49e93 !default;
+
+$black-bg:                   rgba(30,30,30,.97) !default;
+
+$popover-color:              #FAE6A4 !default;
+
+
+$black-color:                #333333 !default;
+$black-hr:                   #444444 !default;
+
+$white-background-color:        #FFFFFF !default;
+$brown-background-color:        $font-color !default;
+
+$light-gray:                 #E3E3E3 !default;
+$medium-gray:                #cfcfca !default;
+$dark-gray:                  #9A9A9A !default;
+
+$gray-input-bg:              #F3F2EE !default;
+$gray-input-outline:         #e8e7e3 !default;
+$danger-input-bg:            #FFC0A4 !default;
+$success-input-bg:           #ABF3CB !default;
+$other-medium-gray:          #A49E93 !default;
+$transparent-bg:             transparent !default;
+
+$default-color:              #66615B !default;
+$default-bg:                 #66615B !default;
+$default-states-color:       darken($default-color,11%) !default;
+
+$primary-color:              #7A9E9F !default;
+$primary-bg:                 #7A9E9F !default;
+$primary-states-color:       darken($primary-color,11%) !default;
+
+$success-color:              #7AC29A !default;
+$success-bg:                 #7AC29A !default;
+$success-states-color:       darken($success-color,11%) !default;
+
+$info-color:                 #68B3C8 !default;
+$info-bg:                    #68B3C8 !default;
+$info-states-color:          darken($info-color,11%) !default;
+
+$warning-color:              #F3BB45 !default;
+$warning-bg:                 #F3BB45 !default;
+$warning-states-color:       darken($warning-color,11%) !default;
+
+
+$danger-color:               #EB5E28 !default;
+$danger-bg:                  #EB5E28 !default;
+$danger-states-color:        darken($danger-color,11%) !default;
+
+
+$link-disabled-color:        #666666 !default;
+
+// General Colors
+
+
+$color-azure:                #23CCEF;
+$color-purple:               #9368E9;
+$color-red:                  #FB404B;
+$color-green:                #7AC29A;
+$color-orange:               #FFA534;
+$color-blue:                 #447DF7;
+$color-black:                #5e5e5e;
+
+
+/*      light colors - used for select dropdown         */
+
+$light-blue:                 rgba($primary-color, .2);
+$light-azure:                rgba($info-color, .2);
+$light-green:                rgba($success-color, .2);
+$light-orange:               rgba($warning-color, .2);
+$light-red:                  rgba($danger-color, .2);
+$placeholder-gray:           #C3C3C3 !default;
+
+
+/*           Social buttons            */
+
+$social-facebook: 			#3b5998;
+$social-twitter: 			#55acee;
+$social-pinterest: 			#cc2127;
+$social-google: 			#dd4b39;
+$social-linkedin: 			#0976b4;
+$social-dribbble: 			#ea4c89;
+$social-github: 			#333333;
+$social-youtube: 			#e52d27;
+$social-instagram: 		    #125688;
+$social-reddit: 			#ff4500;
+$social-tumblr: 			#35465c;
+$social-stumbleupon: 		#eb4924;
+$social-behance: 			#1769ff;
+
+
+//== Components
+//
+
+$padding-default-vertical:     10px !default;
+$padding-default-horizontal:   20px !default;
+
+$padding-base-vertical:         7px !default;
+$padding-base-horizontal:       18px !default;
+
+$padding-round-vertical:        9px !default;
+$padding-round-horizontal:     18px !default;
+
+$padding-simple-vertical:      10px !default;
+$padding-simple-horizontal:    18px !default;
+
+$padding-large-vertical:       11px !default;
+$padding-large-horizontal:     30px !default;
+
+$padding-small-vertical:        4px !default;
+$padding-small-horizontal:     10px !default;
+
+$padding-xs-vertical:           2px !default;
+$padding-xs-horizontal:         5px !default;
+
+$padding-label-vertical:        2px !default;
+$padding-label-horizontal:     12px !default;
+
+$margin-base:                  15px !default;
+
+// padding for links inside dropdown menu
+$padding-dropdown-vertical:     10px !default;
+$padding-dropdown-horizontal:   15px !default;
+
+$margin-large-vertical:        30px !default;
+$margin-base-vertical:         15px !default;
+
+
+// Cristina: am schimbat aici si s-au modificat inputurile
+$margin-bottom:                0 0 10px 0 !default;
+$border-radius-small:           3px !default;
+$border-radius-base:            4px !default;
+$border-radius-large:           6px !default;
+$border-radius-extreme:        6px !default;
+
+$border-radius-large-top:      $border-radius-large $border-radius-large 0 0 !default;
+$border-radius-large-bottom:   0 0 $border-radius-large $border-radius-large !default;
+
+$btn-round-radius:             30px !default;
+
+$height-base:                  40px !default;
+
+$font-size-base:               14px !default;
+$font-size-xs:                 12px !default;
+$font-size-small:              12px !default;
+$font-size-medium:             16px !default;
+$font-size-large:              18px !default;
+$font-size-large-navbar:       20px !default;
+
+$font-size-h1:                 3.2em   !default;
+$font-size-h2:                 2.6em     !default;
+$font-size-h3:                 1.825em !default;
+$font-size-h4:                 1.5em   !default;
+$font-size-h5:                 1.25em  !default;
+$font-size-h6:                 0.9em   !default;
+$font-paragraph:               16px    !default;
+$font-size-navbar:             16px    !default;
+$font-size-small:              12px    !default;
+
+$font-weight-light:          300 !default;
+$font-weight-normal:         400 !default;
+$font-weight-semi:           500 !default;
+$font-weight-bold:           600 !default;
+
+$line-height-small:            20px !default;
+$line-height-general:          1.4em !default;
+$line-height:                 36px !default;
+$line-height-lg:              54px !default;
+
+
+$border-radius-top:        10px 10px 0 0 !default;
+$border-radius-bottom:     0 0 10px 10px !default;
+
+$dropdown-shadow:          0 2px rgba(17, 16, 15, 0.1), 0 2px 10px rgba(17, 16, 15, 0.1);
+
+$general-transition-time:  300ms !default;
+
+$slow-transition-time:           300ms !default;
+$dropdown-coordinates:      29px -50px !default;
+
+$fast-transition-time:           150ms !default;
+$select-coordinates:         50% -40px !default;
+
+$transition-linear:                                   linear !default;
+$transition-bezier:         cubic-bezier(0.34, 1.61, 0.7, 1) !default;
+$transition-ease:           ease 0s;
+
+$navbar-padding-a:               10px 15px;
+$navbar-margin-a:                16px  0px;
+
+$padding-social-a:               10px  5px;
+
+$navbar-margin-a-btn:            17px 3px;
+
+$navbar-padding-brand:           15px 15px;
+$navbar-margin-brand:             12px  0px;
+
+$navbar-margin-brand-icons:      12px auto;
+
+$navbar-margin-btn:              20px  3px;
+$navbar-margin-btn-vertical:     20px;
+
+$height-icon:					 64px !default;
+$width-icon:					 64px !default;
+$padding-icon:					 12px !default;
+$border-radius-icon:		     15px !default;
+
+
+$white-navbar:              rgba(#FFFFFF, .96);
+$blue-navbar:               rgba(#34ACDC, .98);
+$azure-navbar:              rgba(#5BCAFF, .98);
+$green-navbar:              rgba(#4CD964, .98);
+$orange-navbar:             rgba(#FF9500, .98);
+$red-navbar:                rgba(#FF4C40, .98);
+
+$bg-nude:               #f4f3ef !default;
+$bg-primary:            #8ECFD5 !default;
+$bg-info:               #7CE4FE !default;
+$bg-success:            #8EF3C5 !default;
+$bg-warning:            #FFE28C !default;
+$bg-danger:             #FF8F5E !default;
+
+$background-light-grey:     #E8E7E3 !default;
+$background-lighter-grey:   #F0EFEB !default;
+$font-background-light-grey: #9C9B99 !default;
+$font-hover-background-light-grey: #5E5E5C !default;
+
+$topbar-x:             topbar-x !default;
+$topbar-back:          topbar-back !default;
+$bottombar-x:          bottombar-x !default;
+$bottombar-back:       bottombar-back !default;
+
+$transition-linear:                                   linear !default;
+$transition-bezier:         cubic-bezier(0.34, 1.61, 0.7, 1) !default;
+$transition-ease:           ease 0s;
+$transition-ease-in:              ease-in !default;
+$transition-ease-out:             ease-out !default;
+
+$general-transition-time:  300ms !default;
+
+$slow-transition-time:           370ms !default;
+$dropdown-coordinates:      29px -50px !default;
+
+$fast-transition-time:           150ms !default;
+
+$ultra-fast-transition-time:     100ms  !default;
+
+$select-coordinates:         50% -40px !default;
+
+$padding-zero:                   0px !default;
+
+$sidebar-width:               calc(100% - 260px) !default;
+$sidebar-mini-width:          calc(100% - 80px) !default;
+
+$medium-dark-gray:           #AAAAAA !default;
+
+
+// border radius for buttons
+$border-radius-btn-small:      26px !default;
+$border-radius-btn-base:       20px !default;
+$border-radius-btn-large:      50px !default;
+$border-radius-none:            0px !default;
+$border-radius-none-top:      $border-radius-none $border-radius-none 0 0 !default;
+$border-radius-small-top:     $border-radius-small $border-radius-small 0 0 !default;
+
+
+//variables used in cards
+$card-black-color:          #252422 !default;
+$card-muted-color:          #ccc5b9 !default;
+
+$card-background-blue:      #b8d8d8 !default;
+$card-font-blue:            #506568 !default;
+$card-subtitle-blue:        #7a9e9f !default;
+
+$card-background-green:      #d5e5a3 !default;
+$card-font-green:            #60773d !default;
+$card-subtitle-green:        #92ac56 !default;
+
+$card-background-yellow:      #ffe28c !default;
+$card-font-yellow:            #b25825 !default;
+$card-subtitle-yellow:        #d88715 !default;
+
+$card-background-brown:      #d6c1ab !default;
+$card-font-brown:            #75442e !default;
+$card-subtitle-brown:        #a47e65 !default;
+
+$card-background-purple:      #baa9ba !default;
+$card-font-purple:            #3a283d !default;
+$card-subtitle-purple:        #5a283d !default;
+
+$card-background-orange:      #ff8f5e !default;
+$card-font-orange:            #772510 !default;
+$card-subtitle-orange:        #e95e37 !default;
+
+
+//variables used for sidebar
+$sidebar-background-dark-blue: #506367;
+
+$sidebar-background-blue:      #b8d8d8 !default;
+$sidebar-font-blue:            #506568 !default;
+$sidebar-subtitle-blue:        #7a9e9f !default;
+
+$sidebar-background-green:      #d5e5a3 !default;
+$sidebar-font-green:            #60773d !default;
+$sidebar-subtitle-green:        #92ac56 !default;
+
+$sidebar-background-yellow:      #ffe28c !default;
+$sidebar-font-yellow:            #b25825 !default;
+$sidebar-subtitle-yellow:        #d88715 !default;
+
+$sidebar-background-brown:      #d6c1ab !default;
+$sidebar-font-brown:            #75442e !default;
+$sidebar-subtitle-brown:        #a47e65 !default;
+
+$sidebar-background-purple:      #baa9ba !default;
+$sidebar-font-purple:            #3a283d !default;
+$sidebar-subtitle-purple:        #5a283d !default;
+
+$sidebar-background-orange:      #ff8f5e !default;
+$sidebar-font-orange:            #772510 !default;
+$sidebar-subtitle-orange:        #e95e37 !default;
+
+// Small screen / tablet
+//** Deprecated `$screen-sm` as of v3.0.1
+$screen-sm:                      768px !default;
+$screen-sm-min:                  $screen-sm !default;
+//** Deprecated `$screen-tablet` as of v3.0.1
+$screen-tablet:                  $screen-sm-min !default;
+
+// Medium screen / desktop
+//** Deprecated `$screen-md` as of v3.0.1
+$screen-md:                  992px !default;
+$screen-md-min:              $screen-md !default;
+//** Deprecated `$screen-desktop` as of v3.0.1
+$screen-desktop:             $screen-md-min !default;
+
+// Large screen / wide desktop
+//** Deprecated `$screen-lg` as of v3.0.1
+$screen-lg:                  1200px !default;
+$screen-lg-min:              $screen-lg !default;
+//** Deprecated `$screen-lg-desktop` as of v3.0.1
+$screen-lg-desktop:          $screen-lg-min !default;
+
+$filter-blue:         darken($primary-color, 10%);
+$filter-azure:        darken($info-color, 10%);
+$filter-green:        darken($success-color, 10%);
+$filter-orange:       darken($warning-color, 10%);
+$filter-red:          darken($danger-color, 10%);
+
+// variable used in footers
+$black-footer-bg:            #252422 !default;
+$brown-font-color:    #A49E9E !default;
+$brown-font-color-hover: #F1EAE0 !default;
+
+
+// variables for Bootstrap Select 1.12.1
+$color-red-error: rgb(185, 74, 72) !default;
+$color-grey-arrow: rgba(204, 204, 204, 0.2) !default;
+
+$width-default: 100% !default; // 3 960px-grid columns
+
+$zindex-select-dropdown: 1060 !default; // must be higher than a modal background (1050)
+
+//** Placeholder text color
+$input-color-placeholder: #999 !default;

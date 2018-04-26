@@ -1,0 +1,42 @@
+.footer {
+  background-attachment: fixed;
+  position: relative;
+  line-height: 20px;
+  nav {
+    ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      font-weight: normal;
+      li {
+        display: inline-block;
+        padding: 10px 15px;
+        margin: 15px 3px;
+        line-height: 20px;
+        text-align: center;
+      }
+      a:not(.btn) {
+        color: $font-color;
+        display: block;
+        margin-bottom: 3px;
+
+        &:focus,
+        &:hover {
+          color: $default-states-color;
+        }
+      }
+    }
+  }
+  .copyright {
+    color: $font-color;
+    padding: 10px 15px;
+    font-size: 14px;
+    white-space: nowrap;
+    margin: 15px 3px;
+    line-height: 20px;
+    text-align: center;
+  }
+  .heart {
+    color: $danger-color;
+  }
+}
