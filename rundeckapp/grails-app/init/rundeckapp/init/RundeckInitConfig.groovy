@@ -36,6 +36,7 @@ class RundeckInitConfig {
     static final String DEFAULT_WEB_APP_CONTEXT             = "/"
     static final String SERVER_DATASTORE_PATH               = "server.datastore.path";
     static final String LOG_DIR                             = "rundeck.log.dir"
+    static final String LAUNCHER_JAR_LOCATION               = "rundeck.launcher.jar.location"
 
     RundeckCliOptions cliOptions = new RundeckCliOptions()
     boolean useJaas

@@ -24,7 +24,7 @@
     <g:set var="projectName" value="${params.project ?: request.project}"></g:set>
     <g:set var="projectLabel" value="${session.frameworkLabels?session.frameworkLabels[projectName]:projectName}"/>
     <title><g:message code="gui.menu.Adhoc"/> - <g:enc>${projectLabel}</g:enc></title>
-    <g:javascript src="executionState.js"/>
+    <asset:javascript src="executionState.js"/>
     <asset:javascript src="executionControl.js"/>
     <asset:javascript src="util/yellowfade.js"/>
     <asset:javascript src="pagehistory.js"/>

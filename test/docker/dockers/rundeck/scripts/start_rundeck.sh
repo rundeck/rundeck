@@ -263,7 +263,7 @@ $HOME/server/sbin/rundeckd start
 echo "started rundeck"
 
 # Wait for server to start
-SUCCESS_MSG="Started ServerConnector@"
+SUCCESS_MSG="Grails application running"
 MAX_ATTEMPTS=30
 SLEEP=10
 echo "Waiting for $RUNDECK_NODE to start. This will take about 2 minutes... "

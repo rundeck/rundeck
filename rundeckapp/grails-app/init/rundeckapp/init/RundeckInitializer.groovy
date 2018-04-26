@@ -86,6 +86,7 @@ class RundeckInitializer {
     }
 
     void initialize() {
+        thisJar = thisJarFile();
         initConfigurations()
         setSystemProperties()
         initSsl()
@@ -93,7 +94,6 @@ class RundeckInitializer {
         File installCompleteMarker = new File(config.baseDir+"/.install_complete")
         if(!(config.isSkipInstall() || installCompleteMarker.exists())) {
             //installation tasks
-            thisJar = thisJarFile();
             createDirectories()
 
             coreJarName = "rundeck-core-" + config.appVersion + ".jar";
@@ -396,6 +396,7 @@ class RundeckInitializer {
         properties.put(RundeckInitConfig.SERVER_DATASTORE_PATH, forwardSlashPath(config.dataDir) + "/grailsdb");
         properties.put(RundeckInitConfig.LOG_DIR, forwardSlashPath(config.serverBaseDir) + "/logs");
         properties.put(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
+        properties.put(RundeckInitConfig.LAUNCHER_JAR_LOCATION, forwardSlashPath(thisJar.getAbsolutePath()));
         for (final String configProperty : configProperties) {
             if (null != System.getProperty(configProperty)) {
                 properties.put(configProperty, forwardSlashPath(System.getProperty(configProperty)));

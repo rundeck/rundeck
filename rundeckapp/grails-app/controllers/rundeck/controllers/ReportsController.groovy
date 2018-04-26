@@ -258,18 +258,16 @@ class ReportsController extends ControllerBase{
                 }
             }
             json{
-                render(contentType:"text/json"){
-                    if(errmsg){
-                        delegate.error={
-                            delegate.message= flash.error
-                        }
-                    }else{
-                        delegate.since={
-                            delegate.count=count
-                            delegate.time= time
-                        }
-                    }
+                def out = [:]
+                if(errmsg){
+                    out.error = [message:flash.erro]
+                }else{
+                    out.since = [
+                            count: count,
+                            time: time
+                    ]
                 }
+                render out as JSON
             }
             xml {
                 render(contentType:"text/xml"){
