@@ -55,7 +55,7 @@ The location of stored data can be either on the filesystem, the database, or so
 
 Rundeck provides these built-in implementations:
 
-* `file` - stores files locally on the filesystem
+* `filesystem` - stores files locally on the filesystem
 * `db` - stores file data as BLOBs in the database
 
 ### Configuring Storage Plugins
@@ -73,4 +73,3 @@ Converter plugins do not have to manage storing the data, that will be handled b
 ### Configuring Storage Converter Plugins
 
 See [Plugins User Guide - Configuring Storage Converter Plugins](../plugins-user-guide/configuring.html#storage-converter-plugins).
-
