@@ -133,6 +133,7 @@
         <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
 
         <g:set var="propSelectLabels" value="${prop.selectLabels ?: [:]}"/>
+        <g:set var="selectValues" value="${dynamicProperties ?: (prop.selectValues ?: [:])}"/>
         <g:set var="propSelectValues"
                value="${selectValues.collect { [value: it.encodeAsHTML(), label: stepplugin.messageText(
                    service: service,
