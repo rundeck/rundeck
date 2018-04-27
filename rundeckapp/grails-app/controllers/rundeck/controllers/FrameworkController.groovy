@@ -1707,7 +1707,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
         def desc = frameworkService.rundeckFramework.getResourceModelSourceService().
                 listDescriptions()?.find { it.name == providerType }
         return render(
-                view: 'editProjectResourceFile',
+                view: 'editProjectNodeSourceFile',
                 model: [
                         project     : project,
                         index       : index,
