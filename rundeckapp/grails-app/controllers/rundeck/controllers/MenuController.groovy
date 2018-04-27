@@ -34,6 +34,8 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
@@ -2024,6 +2026,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }.sort { a, b -> a.name <=> b.name }
 
         pluginDescs['FileUploadPluginService']=pluginService.listPlugins(FileUploadPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['LogFilter'] = pluginService.listPlugins(LogFilterPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['ContentConverter']=pluginService.listPlugins(ContentConverterPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
 
