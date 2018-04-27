@@ -2,6 +2,45 @@
 % Greg Schueler
 % April 15, 2015
 
+## Upgrading to Rundeck 2.11
+
+(If you are upgrading from a version earlier than 2.10.x, please peruse the rest of this document for any other issues regarding intermediate versions.)
+
+Potentially breaking changes:
+
+**RPM spec:**
+
+The `rundeck` user/group is now created within system UID ranges [#3195](https://github.com/rundeck/rundeck/pull/3195).
+
+**ACLs: Edit Project Configuration/Nodes GUI access level requirements changed:**
+
+Previously: GUI actions "Project > Edit Configuration" and "Project > Edit Nodes" required `admin` project access. Now: only `configure` level access is required.
+
+NOTE: API behavior was always this way, so this change simply aligns the access requirements.
+
+Potential security implications:
+
+* users/roles granted `configure` access to a project will now be able to modify Project Nodes or Configuration via the GUI
+* the same users/roles would already have this access if using the API
+
+See: [#3084](https://github.com/rundeck/rundeck/pull/3084)
+
+**ACLs: Job Definition visibility**
+
+A new ACL access level `view` is a subset of the `read` access level for jobs, and does not allow users to view the "Definition" tab of a Job, or download the XML/YAML definitions.
+
+ACLs which allow `read` to Jobs, will work as before. To disallow Job Definition viewing/downloading, you should change your ACLs to only allow `view` access.
+
+**Project Storage Type is now `db` by default:**
+
+If you want to continue using filesystem storage for project config/readme/motd files, you will need to set this in your `rundeck-config.properties` before upgrading:
+
+    rundeck.projectsStorageType=filesystem
+
+Upgrading an existing `filesystem` configuration to `db` is automatic, and project configs/readme/motd will be loaded into DB storage at system startup.
+
+To encrypt the DB storage, you will need to [enable encryption for the "Project Configuration" storage layer](http://rundeck.org/docs/plugins-user-guide/bundled-plugins.html#jasypt-encryption-plugin).
+
 ## Upgrading to Rundeck 2.8.1 from 2.8.0
 
 ### Important Note 
