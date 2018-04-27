@@ -193,11 +193,15 @@ public class ExampleNotificationPlugin implements NotificationPlugin{
 
 ## Groovy Plugin Type
 
-For Notifications, we introduce a new way to develop plugins, using a simple Groovy-based DSL.  This gives you a simpler way to develop plugins, but still provides the power of Java.
+Notification support the Groovy Plugin Type.
+
+To define metadata about your plugin, and configuration properties, see the [Plugin Development - Groovy Plugin Development](plugin-plugin.html#groovy-plugin-development) chapter.
 
 To create a Groovy based plugin, create a file named `MyNotificationPlugin.groovy` in the plugins directory for Rundeck.
 
 You must restart rundeck to make the plugin available the first time, but you can subsequently update the .groovy script without restarting Rundeck.
+
+[Groovy Plugin Development]: plugin-development.html#groovy-plugin-development
 
 ### Groovy DSL
 
@@ -211,82 +215,6 @@ rundeckPlugin(NotificationPlugin){
 ~~~~~~~~~~
 
 In this case we use the same `NotificationPlugin` interface used for Java plugins.
-
-#### Definition
-
-Within the definition section you can define your plugin's Description to be shown in the Rundeck GUI, as well as
-configuration properties to present to the user.
-
-*Properties*
-
-Set these properties to change the GUI display of your plugin:
-
-~~~~~ {.java}
-title='My Plugin'
-description='Does some action'
-~~~~~~~~~
-
-*Configuration*
-
-Use a `configuration` closure to define configuration properties:
-
-~~~~~ {.java}
-configuration{
-    //property definitions go here...
-}
-~~~~~~~~
-
-*Property Definitions*
-
-User configuration properties can be defined in a few ways. To define a property within the `configuration` section, you can use either of these forms:
-
-1. method call form, specifying the attributes of the property:
-
-~~~~~ {.java}
-myproperty (title: "My Property", description: "Something", type: 'Integer')
-~~~~~~~~~
-
-2. assignment form. This form guesses the data type and sets the defaultValue, but does not add any other attributes.
-
-~~~~~ {.java}
-myproperty2="default value"
-//the above is equivalent to:
-myproperty2(defaultValue:"default value", type: 'String')
-
-myproperty3=["value","another","text"]
-//the above is equivalent to:
-myproperty3(type:'FreeSelect',values:["value","another","text"])
-~~~~~~~~
-
-Each property has several attributes you can define, but only `name` and `type` are required:
-
-* `name` - the unique identifier for this property
-* `type` - the data type to use for the property, defaults to String.  Available types:
-    * `String` - user can enter text
-    * `Integer`, `Long` - user can enter a number
-    * `Boolean` - user is shown a checkbox
-    * `Select` or `FreeSelect` - user can choose from a list. With `FreeSelect`, the user can also type in any value
-* `title` - a user-readable string to describe the property
-* `description` - a string describing the property
-* `required` - whether the property is required to have a value
-* `defaultValue` - any default value for the property
-* `scope` - defines the scope for the property.  Allowed values are described under the chapter [Plugin Annotations - Property Scopes](plugin-annotations.html#property-scopes). You may also simply use a String matching the name of the scope, e.g. "Instance".  The default scope if unspecified is "Instance".
-
-In addition to these properties, for `Select` or `FreeSelect` type, you can define:
-
-* `values` - list of string values the user can select from
-
-To define a validation check for a property, use the first form and supply a closure. The implicit `it` variable will be the value of the property to check, and your closure should return `true` if the value is valid.
-
-~~~~~~ {.java}
-phone_number(title: "Phone number"){
-   it.replaceAll(/[^\d]/,'')==~/^\d{10}$/
-}
-~~~~~~~
-
-**A Note about Scopes and Validation**:
-
-The user is presented with any `Instance` scoped properties in the Rundeck GUI when defining a Job, and any invalid configuration values will present an error when saving the Job.  This includes failing to set a value for a "required" property.  However, if you have properties that are scoped for `Project` or lower, those properties will not be shown in the GUI. In that case, the validation will not be checked for the properties when saving the Job definition, and will only be performed when the Notification is triggered.
 
 ### Notification handlers
 

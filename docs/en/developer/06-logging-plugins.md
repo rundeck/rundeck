@@ -101,7 +101,7 @@ The simplest way to do this is to use [Plugin Annotations - Plugin Properties](p
 
 ### Groovy plugin type
 
-The Groovy plugin development method for Logging Plugins is similar to [Notification Plugin - Groovy Plugins](notification-plugin.html#groovy-plugin-type).
+For info about the Groovy plugin development method see the [Plugin Development - Groovy Plugin Development](plugin-plugin.html#groovy-plugin-development) chapter.
 
 Create a Groovy script, and define your plugin by calling the `rundeckPlugin` method, and pass it both the Class of the type of plugin, and a Closure used to build the plugin object.
 
@@ -202,7 +202,7 @@ rundeckPlugin(StreamingLogWriterPlugin){
 }
 ~~~~~~~~
 
-To define metadata about your plugin, and configuration properties, see the [Notification Plugin - Groovy Notification Plugins - DSL - Definition](notification-plugin.html#definition) chapter.
+To define metadata about your plugin, and configuration properties, see the [Plugin Development - Groovy Plugin Development](plugin-plugin.html#groovy-plugin-development) chapter.
 
 Define these closures inside your definition:
 
@@ -374,7 +374,7 @@ rundeckPlugin(StreamingLogReaderPlugin){
 }
 ~~~~~~
 
-To define metadata about your plugin, and configuration properties, see the [Notification Plugin - Groovy Notification Plugins - DSL - Definition](notification-plugin.html#definition) chapter.
+To define metadata about your plugin, and configuration properties, see the [Plugin Development - Groovy Plugin Development](plugin-plugin.html#groovy-plugin-development) chapter.
 
 Define these closures inside your definition:
 
@@ -646,7 +646,7 @@ rundeckPlugin(ExecutionFileStoragePlugin){
 }
 ~~~~~~
 
-To define metadata about your plugin, and configuration properties, see the [Notification Plugin - Groovy Notification Plugins - DSL - Definition](notification-plugin.html#definition) chapter.
+To define metadata about your plugin, and configuration properties, see the [Plugin Development - Groovy Plugin Development](plugin-plugin.html#groovy-plugin-development) chapter.
 
 Define these closures inside your definition:
 

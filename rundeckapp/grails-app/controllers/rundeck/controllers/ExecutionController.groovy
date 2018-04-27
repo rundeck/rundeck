@@ -1548,7 +1548,7 @@ class ExecutionController extends ControllerBase{
                         disabledException
                 )
             } catch (Throwable t) {
-                log.warn(
+                log.error(
                         "Failed converting data type ${input.getClass()}($inputDataType)  with plugins: ${chain*.name}",
                         t
                 )

@@ -38,6 +38,60 @@ It can also control how the log event is handled:
 [LogEventControl]: ../javadoc/com/dtolabs/rundeck/core/logging/LogEventControl.html
 [LogEvent]: ../javadoc/com/dtolabs/rundeck/core/logging/LogEvent.html
 
+### Groovy LogFilter
+
+Create a groovy script that calls the `rundeckPlugin` method and passes the `LogFilterPlugin` as the type of plugin:
+
+~~~~~ {.java}
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+rundeckPlugin(LogFilterPlugin){
+    //plugin definition
+}
+~~~~~~
+
+To define metadata about your plugin, and configuration properties, see the [Plugin Development - Groovy Plugin Development](plugin-plugin.html#groovy-plugin-development) chapter.
+
+The `LogFilterPlugin` Groovy DLS supports these closure definitions:
+
+* `init` initialization for the plugin (optional)
+* `handleEvent` handle a log event (required)
+* `complete` complete the log filter processing after all events have been handled (optional)
+
+Closure descriptions:
+
+`init`
+
+~~~~~ {.java}
+/**
+ * Called to initialization the plugin with the context
+ */
+init { PluginLoggingContext context, Map configuration ->
+    //perform initialization
+}
+~~~~~~
+
+`handleEvent`
+
+~~~~~ {.java}
+/**
+ * Called to initialization the plugin with the context
+ */
+handleEvent { PluginLoggingContext context, LogEventControl event, Map configuration ->
+    //handle the event
+}
+~~~~~~
+
+`complete`
+
+~~~~~ {.java}
+/**
+ * Called to complete the plugin processing
+ */
+complete { PluginLoggingContext context, Map configuration ->
+    //finish
+}
+~~~~~~
+
 ## Localization
 
 For the basics of plugin localization see: [Plugin Development - Plugin Localization][].

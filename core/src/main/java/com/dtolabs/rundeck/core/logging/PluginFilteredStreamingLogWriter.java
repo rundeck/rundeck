@@ -87,6 +87,9 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
             this.loglevel = loglevel;
             this.message = message;
             this.metadata = metadata;
+            if(this.metadata==null){
+                this.metadata = new HashMap<>();
+            }
         }
 
         @Override
@@ -150,6 +153,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         @Override
         public LogEventControl addMetadata(final String key, final String value) {
             this.metadata.put(key, value);
+            modified = true;
             return this;
         }
 
