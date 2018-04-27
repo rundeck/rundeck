@@ -26,12 +26,6 @@ class Application extends GrailsAutoConfiguration implements EnvironmentAware {
     }
 
     @Override
-    void onStartup(final Map<String, Object> event) {
-        super.onStartup(event)
-
-    }
-
-    @Override
     void setEnvironment(final Environment environment) {
         //initialization goes here
         if(rundeckConfig == null) {

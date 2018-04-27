@@ -52,8 +52,8 @@ fi
 for jar in $(find $RDECK_INSTALL/cli -name '*.jar') ; do
   CLI_CP=${CLI_CP:+$CLI_CP:}$jar
 done
-for jar in $(find $RDECK_INSTALL/bootstrap -name '*.jar') ; do
-  BOOTSTRAP_CP=${BOOTSTRAP_CP:+$BOOTSTRAP_CP:}$jar
+for war in $(find $RDECK_INSTALL/bootstrap -name '*.war') ; do
+  EXECUTABLE_WAR=$war
 done
 
 RDECK_JVM="-Djava.security.auth.login.config=$JAAS_CONF \
@@ -67,7 +67,8 @@ RDECK_JVM="-Djava.security.auth.login.config=$JAAS_CONF \
            -Drundeck.config.location=$RDECK_CONFIG_FILE \
            -Djava.io.tmpdir=$RUNDECK_TEMPDIR \
            -Drundeck.server.workDir=$RUNDECK_WORKDIR \
-           -Dserver.http.port=$RDECK_HTTP_PORT"
+           -Dserver.http.port=$RDECK_HTTP_PORT \
+           -Drdeck.base=$RDECK_BASE"
 #
 # Set min/max heap size
 #
@@ -84,4 +85,4 @@ unset JRE_HOME
 
 umask 002
 
-rundeckd="$JAVA_CMD $RDECK_JVM $RDECK_JVM_OPTS -cp $BOOTSTRAP_CP com.dtolabs.rundeck.RunServer $RDECK_BASE"
+rundeckd="$JAVA_CMD $RDECK_JVM $RDECK_JVM_OPTS -jar $EXECUTABLE_WAR"

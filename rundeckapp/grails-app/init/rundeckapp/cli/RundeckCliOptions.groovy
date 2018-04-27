@@ -15,7 +15,9 @@
  */
 package rundeckapp.cli
 
+import groovy.transform.ToString
 
+@ToString
 class RundeckCliOptions {
 
     boolean installOnly = false
