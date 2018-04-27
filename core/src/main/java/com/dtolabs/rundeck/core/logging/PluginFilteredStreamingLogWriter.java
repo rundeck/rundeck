@@ -153,6 +153,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         @Override
         public LogEventControl addMetadata(final String key, final String value) {
             this.metadata.put(key, value);
+            modified = true;
             return this;
         }
 

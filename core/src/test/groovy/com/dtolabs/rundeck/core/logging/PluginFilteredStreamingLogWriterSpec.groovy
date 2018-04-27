@@ -103,6 +103,38 @@ class PluginFilteredStreamingLogWriterSpec extends Specification {
     }
 
     @Unroll
+    def "event control emits modified event"() {
+        given:
+        def sink = Mock(StreamingLogWriter)
+        def context = Mock(ExecutionContext)
+        def logger = Mock(ExecutionLogger)
+        def writer = new PluginFilteredStreamingLogWriter(sink, context, logger)
+
+        def event = LogUtil.event('log', LogLevel.NORMAL, message, ['old': 'data'])
+
+        def plugin = new MessageFilterPlugin(
+            message: 'origmessage',
+            metadata: meta,
+            metakey: metakey,
+            metavalue: metavalue
+        )
+
+        writer.addPlugin(plugin)
+
+        when:
+        writer.addEvent(event)
+
+        then:
+        1 * sink.addEvent({ it != event })
+
+        where:
+        message       | meta     | metakey | metavalue
+        'newmessage'  | null     | null    | null
+        'origmessage' | [a: 'b'] | null    | null
+        'origmessage' | null     | 'a'     | 'b'
+    }
+
+    @Unroll
     def "event control with null orginal metadata"() {
         given:
         def sink = Mock(StreamingLogWriter)
