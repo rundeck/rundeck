@@ -17,10 +17,12 @@
 package com.dtolabs.rundeck.server.plugins.builder
 
 import com.dtolabs.rundeck.core.plugins.PluginMetadata
-import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
 import com.dtolabs.rundeck.plugins.logging.ExecutionFileStoragePlugin
+import com.dtolabs.rundeck.plugins.logging.LogFileStoragePlugin
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogReaderPlugin
 import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
+import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.plugins.util.DescriptionBuilder
 import com.dtolabs.rundeck.server.plugins.services.PluginBuilder
@@ -53,6 +55,8 @@ abstract class ScriptPluginBuilder implements GroovyObject, PluginBuilder, Plugi
             (StreamingLogWriterPlugin)  : StreamingLogWriterPluginBuilder,
             (StreamingLogReaderPlugin)  : StreamingLogReaderPluginBuilder,
             (ExecutionFileStoragePlugin): ExecutionFileStoragePluginBuilder,
+            (LogFilterPlugin)           : LogFilterPluginBuilder,
+            (ContentConverterPlugin)    : ContentConverterPluginBuilder,
     ]
     private static Map<Class, String> disabledPluginClasses = [
             (LogFileStoragePlugin): "The LogFileStoragePlugin interface is no longer supported, use a plugin that" +
