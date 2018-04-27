@@ -87,6 +87,9 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
             this.loglevel = loglevel;
             this.message = message;
             this.metadata = metadata;
+            if(this.metadata==null){
+                this.metadata = new HashMap<>();
+            }
         }
 
         @Override
