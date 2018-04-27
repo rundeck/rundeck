@@ -102,5 +102,8 @@ Several built-in plugins are listed here:
 
 * [`rundeckapp/src/groovy/com/dtolabs/rundeck/server/plugins/logging`](https://github.com/rundeck/rundeck/tree/master/rundeckapp/src/groovy/com/dtolabs/rundeck/server/plugins/logging)
 
+## Example Groovy plugins
+
+See <https://github.com/rundeck/rundeck/tree/master/examples/example-groovy-log-filter-plugins>.
 
 [Plugin Development - Plugin Localization]: plugin-development.html#plugin-localization

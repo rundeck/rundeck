@@ -160,5 +160,8 @@ See the [JsonConverterPlugin] for an example.
 [JsonConverterPlugin]: https://github.com/rundeck/rundeck/blob/master/rundeckapp/src/groovy/com/dtolabs/rundeck/server/plugins/logs/JsonConverterPlugin.groovy
 [HTMLTableViewConverterPlugin]: https://github.com/rundeck/rundeck/tree/master/rundeckapp/src/groovy/com/dtolabs/rundeck/server/plugins/logs/HTMLTableViewConverterPlugin.groovy
 
+## Example Groovy plugins
+
+See <https://github.com/rundeck/rundeck/tree/master/examples/example-groovy-content-converter-plugins>.
 
 [Plugin Development - Plugin Localization]: plugin-development.html#plugin-localization
