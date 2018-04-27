@@ -174,7 +174,8 @@ class ScheduledExecutionController  extends ControllerBase{
             apiRunCommandv14             : ['POST', 'GET'],
             apiJobDeleteBulk             : ['DELETE', 'POST'],
             apiJobClusterTakeoverSchedule: 'PUT',
-            apiJobUpdateSingle           : 'PUT'
+            apiJobUpdateSingle           : 'PUT',
+            apiJobRetry                  : 'POST'
     ]
 
     def cancel (){
@@ -3629,6 +3630,31 @@ class ScheduledExecutionController  extends ControllerBase{
         }
     }
 
+    def apiJobRetry() {
+        if (!apiService.requireApi(request, response)) {
+            return
+        }
+        String jobid = params.id
+        String execId = params.executionId
+
+        Execution e = Execution.get(execId)
+        if(e?.scheduledExecution?.extid != jobid){
+            e = null
+        }
+        if (!apiService.requireExists(response, e, ['Execution ID', execId])) {
+            return
+        }
+        if (!apiService.requireExists(response, e.failedNodeList, ['Failed node List for execution ID', execId])) {
+            return
+        }
+
+        params.name=e.failedNodeList
+        params.argString = e.argString
+        params.asUser=e.user
+        params.loglevel=e.loglevel
+
+        apiJobRun()
+    }
     /**
      * API v19, File upload input for job
      * @return
