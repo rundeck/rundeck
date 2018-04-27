@@ -52,6 +52,95 @@ Methods:
 
 [ContentConverterPlugin]: ../javadoc/com/dtolabs/rundeck/plugins/logs/ContentConverterPlugin.html
 
+
+### Groovy ContentConverter
+
+Create a groovy script that calls the `rundeckPlugin` method and passes the `ContentConverterPlugin` as the type of plugin:
+
+~~~~~ {.java}
+import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
+rundeckPlugin(ContentConverterPlugin){
+    //plugin definition
+}
+~~~~~~
+
+To define metadata about your plugin, see the [Plugin Development - Groovy Plugin Development](plugin-plugin.html#groovy-plugin-development) chapter.
+
+The `ContentConverterPlugin` Groovy DSL supports defining conversions between data types.
+
+Data types are represented with the `DataType` class (internal to the groovy plugin builder),
+and can be created by calling the `dataType(Class,String)` method with a Java Class, and a data type string.
+
+The built-in `convert(DataType input, Datatype output, Closure closure)` method allows you to define conversions from one
+Data Type to another.  Your closure will be called with the input data, and is expected to return the output data.
+Returning `null` will simply skip the conversion.
+
+#### convert declaration
+
+Call `convert` using explicit data types and a closure to define the conversion:
+
+~~~~~ {.java}
+/**
+ * Converts two data types
+ */
+convert(dataType(String,'application/x-my-data'), dataType(String,'text/html')) { 
+    //properties available via delegation:
+    // data: the input data
+    // metadata: input metadata map
+    // dataType: input DataType
+    
+    //return type must match the output Java class in the DataType:
+    return "hello ${data}, it seems you are ${metadata.mood?:'happy'}."
+}
+~~~~~~
+
+When the DataType uses a Java String as its class, you can omit calling `dataType`,
+and simply pass the dataType string:
+
+~~~~~ {.java}
+/**
+ * Called to convert two data types
+ */
+convert('application/x-my-data', 'text/html') { 
+	//data is a String, and we should return a String
+	return '<b>'+data+' more data</b>'
+}
+~~~~~~
+
+And if you are going to return `text/html` the output declaration can be skipped:
+
+~~~~~ {.java}
+/**
+ * Called to convert two data types
+ */
+convert('application/x-my-data') { 
+	//return type defaults to String and datatype 'text/html'
+	return '<b>'+data+' more data</b>'
+}
+~~~~~~
+
+Since Rundeck will chain together up to two ContentConverters to render `text/html` for a given
+input data type, you can define multiple conversion, if you want to use
+an intermediate type.
+
+~~~~~ {.java}
+/**
+ * Convert a string into an intermediate java type
+ */
+convert('application/x-my-data-type', dataType(SomeClass,'application/x-another-type')) { 
+	//use an intermediate object
+	return new SomeClass(data)
+}
+/**
+ * Expect the intermediate type as input, and default to HTML output
+ */
+convert(dataType(SomeClass,'application/x-another-type')) { 
+	//now `data` will be a SomeClass object
+	return data.generateHtml()
+}
+~~~~~~
+
+
 ## Localization
 
 For the basics of plugin localization see: [Plugin Development - Plugin Localization][].
