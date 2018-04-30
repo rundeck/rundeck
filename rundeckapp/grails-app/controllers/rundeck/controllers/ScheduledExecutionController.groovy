@@ -618,7 +618,12 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def maxDepth=3
 
-        def readAuth=frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ])
+        def readAuth = frameworkService.authorizeProjectJobAny(
+            authContext,
+            scheduledExecution,
+            [AuthConstants.ACTION_READ],
+            scheduledExecution.project
+        )
         def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,scheduledExecution.workflow,readAuth,maxDepth)
         withFormat {
             json {

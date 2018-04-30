@@ -63,6 +63,31 @@ class ScheduledExecutionControllerSpec extends Specification {
         ]+overrides
     }
 
+    def "workflow json"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+
+        when:
+        params.id = job.extid
+        def result = controller.workflowJson()
+
+        then:
+        1 * controller.frameworkService.authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
+        1 * controller.frameworkService.authorizeProjectJobAny(_, job, ['read'], 'AProject') >> readauth
+        1 * controller.scheduledExecutionService.getByIDorUUID(_) >> job
+        1 * controller.scheduledExecutionService.getWorkflowDescriptionTree('AProject', _, readauth, 3) >>
+        [test: 'data']
+        response.json == [workflow: [test: 'data']]
+
+        where:
+        readauth | _
+        true     | _
+        false    | _
+
+    }
+
     def "expandUrl with project globals"() {
         given:
         Option option = new Option()
