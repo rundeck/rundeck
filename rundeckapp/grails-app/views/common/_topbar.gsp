@@ -51,6 +51,15 @@
             ${appDefaultTitle}
         </g:else>
     </a>
+    <g:set var="badgeEnvironmentText"
+               value="${grailsApplication.config.rundeck.gui.badgeEnvironment.text}"/>
+    <g:set var="badgeEnvironmentBackground"
+               value="${grailsApplication.config.rundeck.gui.badgeEnvironment.background}"/>
+    <g:if test="${badgeEnvironmentText}">
+        <div id="block-environment">
+            <span class="badge-environment" style="background:${badgeEnvironmentBackground}"><span class="badge-environment-text">${badgeEnvironmentText}</span></span>   
+        </div>
+    </g:if>
     </div>
 
     <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
