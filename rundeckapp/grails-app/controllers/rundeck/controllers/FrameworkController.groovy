@@ -2238,7 +2238,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def apiSourcesList() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V23)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
             return
         }
 
@@ -2296,7 +2296,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                 absolute: true,
                                 mapping: 'apiProjectSourceResources',
                                 params: [
-                                    api_version: ApiRequestFilters.API_CURRENT_VERSION,
+                                    api_version: ApiVersions.API_CURRENT_VERSION,
                                     project    : project,
                                     index      : index
                                 ]
@@ -2429,7 +2429,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def apiSourceGet() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V23)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
             return
         }
 
@@ -2495,7 +2495,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 absolute: true,
                 mapping: 'apiProjectSourceResources',
                 params: [
-                    api_version: ApiRequestFilters.API_CURRENT_VERSION,
+                    api_version: ApiVersions.API_CURRENT_VERSION,
                     project    : project,
                     index      : index
                 ]
@@ -2519,7 +2519,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def apiSourceGetContent() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V23)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
             return
         }
 
