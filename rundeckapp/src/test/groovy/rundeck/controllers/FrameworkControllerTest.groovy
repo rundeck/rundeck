@@ -169,9 +169,9 @@ class FrameworkControllerTest {
             assertEquals('run',actions)
             return true
         }
-        fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
+        fwkControl.demand.authorizeProjectExecutionAny {ctx,e,actions->
             assertEquals(exec,e)
-            assertEquals([AuthConstants.ACTION_READ],actions)
+            assertEquals([AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],actions)
             true
         }
         fwkControl.demand.getRundeckFramework {-> return null }
@@ -207,9 +207,9 @@ class FrameworkControllerTest {
             assertEquals('run', actions)
             return true
         }
-        fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
+        fwkControl.demand.authorizeProjectExecutionAny {ctx,e,actions->
             assertEquals(exec,e)
-            assertEquals([AuthConstants.ACTION_READ],actions)
+            assertEquals([AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],actions)
             true
         }
         fwkControl.demand.getRundeckFramework {-> return null }
@@ -243,9 +243,9 @@ class FrameworkControllerTest {
             assertEquals('run', action)
             true
         }
-        fwkControl.demand.authorizeProjectExecutionAll {ctx,e,actions->
+        fwkControl.demand.authorizeProjectExecutionAny {ctx,e,actions->
             assertEquals(exec,e)
-            assertEquals([AuthConstants.ACTION_READ],actions)
+            assertEquals([AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],actions)
             true
         }
         fwkControl.demand.getFrameworkNodeName { -> return "monkey1" }

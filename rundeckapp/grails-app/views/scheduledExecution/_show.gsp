@@ -28,6 +28,7 @@
               ]"/>
 </div>
 <g:set var="runAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_RUN)}"/>
+<g:set var="readAccess" value="${auth.jobAllowedTest(job: scheduledExecution, action: AuthConstants.ACTION_READ)}"/>
 <g:set var="runEnabled" value="${g.executionMode(is:'active',project:scheduledExecution.project)}"/>
 <g:set var="canRunJob" value="${runAccess && runEnabled}"/>
 <g:set var="extendeddesc" value="${g.textRemainingLines(text: scheduledExecution.description)}"/>
@@ -49,10 +50,12 @@
                     </a>
                 </li>
             </g:else>
+            <g:if test="${readAccess}">
             <li class="${canRunJob ? '' : 'active'}"><a href="#definition"
                                                         data-toggle="tab"><g:message code="definition"/></a></li>
+            </g:if>
             <g:if test="${rundoctext}">
-                <li>
+                <li class="${(canRunJob||readAccess) ? '' : 'active'}">
                     <a href="#runbook" data-toggle="tab"><g:message code="runbook" /></a>
                 </li>
             </g:if>
@@ -68,6 +71,7 @@
                             defaultFollow="${true}"/>
                 </div>
             </g:if>
+            <g:if test="${readAccess}">
             <div id="definition"
                  class="tab-pane panel panel-default panel-tab-content  ${canRunJob ? '' : 'active'}">
                 <div class="panel-body">
@@ -75,8 +79,9 @@
 
                 </div>
             </div>
+            </g:if>
             <g:if test="${rundoctext}">
-                <div id="runbook" class="tab-pane panel panel-default panel-tab-content">
+                <div id="runbook" class="tab-pane panel panel-default panel-tab-content  ${(canRunJob || readAccess) ? '' : 'active'}">
                     <div class="panel-body">
                         <div class="markdeep">${rundoctext}</div>
                     </div>

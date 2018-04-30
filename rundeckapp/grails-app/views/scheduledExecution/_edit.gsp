@@ -1147,6 +1147,46 @@ function getCurSEID(){
         </div>
     </div>
 
+    %{--default exec tab--}%
+    <div class="form-group">
+        <div class="${labelColSize} control-label text-form-label">
+            <g:message code="scheduledExecution.property.defaultTab.label"/>
+        </div>
+
+        <div class="${fieldColSize}">
+            <label class="radio-inline">
+                <g:radio value="summary" name="defaultTab"
+                         checked="${!scheduledExecution.defaultTab || scheduledExecution.defaultTab=='summary'}"
+                         id="tabSummary"/>
+                <g:message code="execution.page.show.tab.Summary.title"/>
+            </label>
+
+            <label class="radio-inline">
+                <g:radio name="defaultTab" value="monitor"
+                         checked="${scheduledExecution.defaultTab=='monitor'}"
+                         id="tabMonitor"/>
+                <g:message code="report"/>
+            </label>
+
+            <label class="radio-inline">
+                <g:radio name="defaultTab" value="output"
+                         checked="${scheduledExecution.defaultTab=='output'}"
+                         id="tabOutput"/>
+                <g:message code="execution.show.mode.Log.title"/>
+            </label>
+
+            <label class="radio-inline">
+                <g:radio name="defaultTab" value="definition"
+                         checked="${scheduledExecution.defaultTab=='definition'}"
+                         id="tabDefinition"/>
+                <g:message code="definition"/>
+            </label>
+
+            <span class="help-block">
+                <g:message code="scheduledExecution.property.defaultTab.description"/>
+            </span>
+        </div>
+    </div>
 
     %{--uuid--}%
     <div class="form-group ${hasErrors(bean: scheduledExecution, field: 'uuid', 'has-error')}" id="schedJobUuidLabel">

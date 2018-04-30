@@ -1,6 +1,6 @@
 <%@ page import="com.dtolabs.rundeck.core.plugins.configuration.PropertyScope" %>
 %{--
-  - Copyright 2017 Rundeck, Inc. (http://rundeck.com)
+  - Copyright 2018 Rundeck, Inc. (http://rundeck.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -29,13 +29,15 @@
             <g:set var="pluginprefix" value="${configdata.get('prefix')}"/>
             <g:set var="categoryProps" value="${configurable.projectConfigProperties.findAll{configdata.configurable.categories[it.name]==category}}"/>
             <g:render template="/framework/pluginConfigPropertiesInputs" model="${[
-                    properties         : categoryProps,
-                    report             : configdata.get('report'),
-                    prefix             : pluginprefix,
-                    values             : configdata.get('values') ?: [:],
-                    fieldnamePrefix    : pluginprefix,
-                    origfieldnamePrefix: 'orig.' + pluginprefix,
-                    allowedScope       : PropertyScope.Project
+                properties         : categoryProps,
+                report             : configdata.get('report'),
+                prefix             : pluginprefix,
+                values             : configdata.get('values') ?: [:],
+                fieldnamePrefix    : pluginprefix,
+                origfieldnamePrefix: 'orig.' + pluginprefix,
+                allowedScope       : PropertyScope.Project,
+                messagePrefix       : categoryPrefix?:'',
+                messagesType       : 'project.configuration'
             ]}"/>
 
         </g:each>

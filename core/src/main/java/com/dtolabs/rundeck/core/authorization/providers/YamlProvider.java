@@ -67,20 +67,26 @@ public class YamlProvider {
         }
     };
 
-    public static Validation validate(final CacheableYamlSource source) {
-        return validate(source, null);
+    public static Validation validate(final CacheableYamlSource source, final ValidationSet validation) {
+        return validate(source, null, validation);
     }
 
-    public static Validation validate(final CacheableYamlSource source, final Set<Attribute> forcedContext) {
-        return validate(Collections.singletonList(source), forcedContext);
+    public static Validation validate(
+        final CacheableYamlSource source,
+        final Set<Attribute> forcedContext, final ValidationSet validation
+    ) {
+        return validate(Collections.singletonList(source), forcedContext, validation);
     }
 
-    public static Validation validate(final Iterable<CacheableYamlSource> sources, final Set<Attribute> forcedContext) {
-        return validate(new ValidationSet(), sources, forcedContext);
+    public static Validation validate(
+        final Iterable<CacheableYamlSource> sources,
+        final Set<Attribute> forcedContext, final ValidationSet validation
+    ) {
+        return validate(validation, sources, forcedContext);
     }
 
-    public static Validation validate(final Iterable<CacheableYamlSource> sources) {
-        return validate(sources, null);
+    public static Validation validate(final Iterable<CacheableYamlSource> sources, final ValidationSet validation) {
+        return validate(sources, null, validation);
     }
 
     private static Validation validate(
@@ -163,11 +169,11 @@ public class YamlProvider {
      * @throws IOException
      */
     public static PolicyCollection policiesFromFile(final File source) throws IOException {
-        return policiesFromSource(sourceFromFile(source));
+        return policiesFromSource(sourceFromFile(source, null));
     }
 
-    public static CacheableYamlSource sourceFromFile(final File file) {
-        return new CacheableYamlFileSource(file);
+    public static CacheableYamlSource sourceFromFile(final File file, final ValidationSet validationSet) {
+        return new CacheableYamlFileSource(file, validationSet);
     }
 
     public static Iterable<CacheableYamlSource> asSources(final File dir) {
@@ -181,7 +187,7 @@ public class YamlProvider {
         ArrayList<CacheableYamlSource> list = new ArrayList<>();
         if (null != files) {
             for (File file : files) {
-                list.add(YamlProvider.sourceFromFile(file));
+                list.add(YamlProvider.sourceFromFile(file, null));
             }
         }
         return list;
@@ -197,9 +203,10 @@ public class YamlProvider {
      * @return source
      */
     public static CacheableYamlSource sourceFromString(
-            final String identity,
-            final String content,
-            final Date modified
+        final String identity,
+        final String content,
+        final Date modified,
+        final ValidationSet validation
     )
     {
         return new CacheableYamlSource() {
@@ -220,7 +227,12 @@ public class YamlProvider {
 
             @Override
             public Iterable<ACLPolicyDoc> loadAll(final Yaml yaml) throws IOException {
-                return YamlParsePolicy.documentIterable(yaml.loadAll(content));
+                return YamlParsePolicy.documentIterable(yaml.loadAll(content).iterator(), validation, identity);
+            }
+
+            @Override
+            public ValidationSet getValidationSet() {
+                return validation;
             }
 
             @Override
@@ -237,15 +249,17 @@ public class YamlProvider {
      * @param stream   stream
      * @param modified date the content was last modified, for caching purposes
      *
+     * @param validationSet
      * @return source
      */
     public static CacheableYamlSource sourceFromStream(
-            final String identity,
-            final InputStream stream,
-            final Date modified
+        final String identity,
+        final InputStream stream,
+        final Date modified,
+        final ValidationSet validationSet
     )
     {
-        return new CacheableYamlStreamSource(stream, identity, modified);
+        return new CacheableYamlStreamSource(stream, identity, modified, validationSet);
     }
 
     public static SourceProvider getDirProvider(final File rootDir) {
@@ -259,9 +273,11 @@ public class YamlProvider {
     private static class CacheableYamlFileSource implements CacheableYamlSource {
         private final File file;
         FileInputStream fileInputStream;
+        private final ValidationSet validationSet;
 
-        public CacheableYamlFileSource(final File file) {
+        public CacheableYamlFileSource(final File file, final ValidationSet validationSet) {
             this.file = file;
+            this.validationSet = validationSet;
         }
 
         @Override
@@ -270,7 +286,11 @@ public class YamlProvider {
             if (null == fileInputStream) {
                 fileInputStream = new FileInputStream(file);
             }
-            return YamlParsePolicy.documentIterable(yaml.loadAll(fileInputStream));
+            return YamlParsePolicy.documentIterable(
+                yaml.loadAll(fileInputStream).iterator(),
+                validationSet,
+                file.getName()
+            );
         }
 
         @Override
@@ -314,22 +334,34 @@ public class YamlProvider {
         public int hashCode() {
             return file.hashCode();
         }
+
+        @Override
+        public ValidationSet getValidationSet() {
+            return validationSet;
+        }
     }
 
     private static class CacheableYamlStreamSource implements CacheableYamlSource {
-        private final InputStream stream;
-        private final String identity;
-        private final Date modified;
+        private final InputStream   stream;
+        private final String        identity;
+        private final Date          modified;
+        private final ValidationSet validationSet;
 
-        public CacheableYamlStreamSource(final InputStream stream, final String identity, final Date modified) {
+        public CacheableYamlStreamSource(
+            final InputStream stream,
+            final String identity,
+            final Date modified,
+            final ValidationSet validationSet
+        ) {
             this.stream = stream;
             this.identity = identity;
             this.modified = modified;
+            this.validationSet = validationSet;
         }
 
         @Override
         public Iterable<ACLPolicyDoc> loadAll(final Yaml yaml) throws IOException {
-            return YamlParsePolicy.documentIterable(yaml.loadAll(stream));
+            return YamlParsePolicy.documentIterable(yaml.loadAll(stream).iterator(), validationSet, identity);
         }
 
         @Override
@@ -374,6 +406,11 @@ public class YamlProvider {
         @Override
         public int hashCode() {
             return identity.hashCode();
+        }
+
+        @Override
+        public ValidationSet getValidationSet() {
+            return validationSet;
         }
     }
 

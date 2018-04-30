@@ -176,7 +176,7 @@ job.  Which means this corresponds to a generic resource with a "kind" called "j
 ## API Token Authorization Roles
 
 In Rundeck 2.8.x and later, Authentication Tokens are given a set of *Authorization Roles* at generation time,
-so the access levels for the Token depend on how it was generated. 
+so the access levels for the Token depend on how it was generated.
 
 See: [API Token](../api/index.html#token-authentication) usage instructions.
 
@@ -342,7 +342,7 @@ for:
     match:
       username: '(mysql|myservice)'
     subset:
-      roles: 
+      roles:
       - mysql_api_access
       - myservice_api_access
 context:
@@ -357,11 +357,11 @@ ACL Policy must specify any *extra* roles. When a Service Token is generated, an
 already allowed by `generate_user_token` will be checked against the ACL Policy. However,
 it is best to be explicit in the list of roles you want to allow.
 
-**Important:** 
+**Important:**
 
 The `subset:` match for `roles:` declares that *extra* roles for the Service Token may only
 come from this list, but doesn't require the token to have all of the roles.
-(If you used `contains:` it would be the inverse, and grant access only if 
+(If you used `contains:` it would be the inverse, and grant access only if
 the extra Service Token roles contained all of those in the `roles:` list, i.e. a superset vs. a subset.)
 
 ### Project Scope Resources and Actions
@@ -380,7 +380,7 @@ to users.
 Also note that to hide projects completely from users, you would need to grant
 or deny the "read" access to the project in the [Application Scope](#application-scope-resources-and-actions).
 
-These are the Application scope actions that can be allowed or denied via the
+These are the Project scope actions that can be allowed or denied via the
 aclpolicy:
 
 * Create Jobs ('create' action on a resource type with kind 'job')
@@ -417,7 +417,8 @@ Type      Properties                         Actions            Description
 "                                            `runAs`            Run an adhoc execution as another user
 "                                            `kill`             Kill an adhoc execution
 "                                            `killAs`           Kill an adhoc execution as another user
-`job`     "name","group"                     `read`             View a Job and its executions
+`job`     "name","group"                     `read`             View a Job, its executions, and read its definition
+"                                            `view`             View a Job and its executions
 "                                            `update`           Modify a job
 "                                            `delete`           Delete a job
 "                                            `run`              Run a job
@@ -492,6 +493,10 @@ to create limited access for a group of users.
 Users in the group "restart_user", are allowed to run three jobs in the "adm"
 group, Restart, stop and start. By allowing `run` but not `read`,
 the "stop" and "start" jobs will not be visible.
+Allowing `view` for the 'Restart' job, but not `read`,
+means that the users can view the job,
+but not its workflow definition,
+nor can they download the Job definition file.
 
 File listing: restart_user.aclpolicy example
 
@@ -504,7 +509,7 @@ for:
     - equals:
         group: 'adm'
         name: 'Restart'
-      allow: [run,read]
+      allow: [run,view]
     - equals:
         group: 'adm'
         name: 'stop'
@@ -551,7 +556,7 @@ context:
 for:
   resource:
     - allow: '*'
-  job: 
+  job:
     - allow: '*'
   adhoc:
     - allow: '*'

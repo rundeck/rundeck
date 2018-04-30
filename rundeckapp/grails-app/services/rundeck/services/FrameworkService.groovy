@@ -451,20 +451,56 @@ class FrameworkService implements ApplicationContextAware {
         }
         return !(decisions.find {!it.authorized})
     }
-
     /**
-     * Return true if the user is authorized for all actions for the execution in the project context
+     * Return true if any actions are authorized for the resource in the project context
      * @param framework
-     * @param exec
+     * @param resource
      * @param actions
      * @param project
+     * @return
+     */
+    def boolean authorizeProjectResourceAny(AuthContext authContext, Map resource, Collection actions, String project){
+        if(null==project){
+            throw new IllegalArgumentException("null project")
+        }
+        if (null == authContext) {
+            throw new IllegalArgumentException("null authContext")
+        }
+        def decisions= metricService.withTimer(this.class.name,'authorizeProjectResourceAll') {
+            authContext.evaluate(
+                    [resource] as Set,
+                    actions as Set,
+                    Collections.singleton(new Attribute(URI.create(EnvironmentalContext.URI_BASE + "project"), project)))
+        }
+        return (decisions.find {it.authorized})
+    }
+
+    /**
+     * Return true if the user is authorized for all actions for the execution
+     * @param authContext
+     * @param exec
+     * @param actions
      * @return true/false
      */
-    def authorizeProjectExecutionAll( AuthContext authContext, Execution exec, Collection actions){
+    boolean authorizeProjectExecutionAll( AuthContext authContext, Execution exec, Collection actions){
         def ScheduledExecution se = exec.scheduledExecution
         return se ?
                authorizeProjectJobAll(authContext, se, actions, se.project)  :
                authorizeProjectResourceAll(authContext, AuthConstants.RESOURCE_ADHOC, actions, exec.project)
+
+    }
+    /**
+     * Return true if the user is authorized for any actions for the execution
+     * @param authContext
+     * @param exec
+     * @param actions
+     * @return true/false
+     */
+    boolean authorizeProjectExecutionAny( AuthContext authContext, Execution exec, Collection actions){
+        def ScheduledExecution se = exec.scheduledExecution
+        return se ?
+               authorizeProjectJobAny(authContext, se, actions, se.project)  :
+               authorizeProjectResourceAny(authContext, AuthConstants.RESOURCE_ADHOC, actions, exec.project)
 
     }
     /**
@@ -493,6 +529,19 @@ class FrameworkService implements ApplicationContextAware {
             }
         }
         return results
+    }
+    /**
+     * Return true if the user is authorized for all actions for the job in the project context
+     * @param framework
+     * @param job
+     * @param actions
+     * @param project
+     * @return true/false
+     */
+    def authorizeProjectJobAny(AuthContext authContext, ScheduledExecution job, Collection actions, String project) {
+        actions.any {
+            authorizeProjectJobAll(authContext, job, [it], project)
+        }
     }
     /**
      * Return true if the user is authorized for all actions for the job in the project context
@@ -645,7 +694,7 @@ class FrameworkService implements ApplicationContextAware {
         }
         return session['_Framework:AuthContext']
     }
-    def Framework getRundeckFramework(){
+    def IFramework getRundeckFramework(){
         if (!initialized) {
             initialize()
         }
@@ -981,7 +1030,7 @@ class FrameworkService implements ApplicationContextAware {
         pject.getProjectProperties()
     }
 
-    public def listResourceModelConfigurations(String project) {
+    public List<Map<String,Object>> listResourceModelConfigurations(String project) {
         def fproject = getFrameworkProject(project)
         fproject.projectNodes.listResourceModelConfigurations()
     }

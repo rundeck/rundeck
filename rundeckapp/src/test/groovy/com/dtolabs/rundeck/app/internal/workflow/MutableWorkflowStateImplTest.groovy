@@ -725,7 +725,7 @@ class MutableWorkflowStateImplTest  {
 
     }
 
-    void processStateChanges(MutableWorkflowStateImpl mutableWorkflowState, List<Map> changes) {
+    static void processStateChanges(MutableWorkflowStateImpl mutableWorkflowState, List<Map> changes) {
         changes.eachWithIndex{Map change, int ndx->
             try{
                 processStateChange(mutableWorkflowState,change)
@@ -735,7 +735,7 @@ class MutableWorkflowStateImplTest  {
         }
     }
 
-    protected void processStateChange(MutableWorkflowStateImpl mutableWorkflowState,Map change) {
+    static protected void processStateChange(MutableWorkflowStateImpl mutableWorkflowState,Map change) {
         if (change.workflow) {
             mutableWorkflowState.updateWorkflowState(parseState(change.workflow.state),
                     parseDate(change.workflow.date), change.workflow.nodes?:null)
@@ -746,8 +746,7 @@ class MutableWorkflowStateImplTest  {
             def index = change.step.index ?: 0
             def date = parseDate(change.step.date)
 
-            mutableWorkflowState.updateStateForStep(ident, index, stepchange,
-                    date)
+            mutableWorkflowState.updateStateForStep(ident, index, stepchange, date)
         } else if (change.subworkflow) {
             mutableWorkflowState.updateSubWorkflowState(parseStepIdent(change.subworkflow.ident),
                     change.subworkflow.index, change.subworkflow.quell ? true : false,
@@ -1565,20 +1564,20 @@ class MutableWorkflowStateImplTest  {
 
     }
 
-    protected Date parseDate(date) {
+    static Date parseDate(date) {
         if(date instanceof Date){
             return date
         }
         def format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'")
         format.parse(date)
     }
-    protected ExecutionState parseState(state) {
+    static ExecutionState parseState(state) {
         if(state instanceof ExecutionState){
             return state
         }
         ExecutionState.valueOf(state)
     }
-    protected StepIdentifier parseStepIdent(ident) {
+    static StepIdentifier parseStepIdent(ident) {
         if(ident instanceof StepIdentifier){
             return ident
         }
@@ -1662,7 +1661,7 @@ class MutableWorkflowStateImplTest  {
         def step11 = subworkflow.stepStates[0]
         assertStepId(1, step11.stepIdentifier)
         println(step11.nodeStateMap)
-        assertEquals(ExecutionState.NODE_PARTIAL_SUCCEEDED, step11.stepState.executionState)
+        assertEquals(ExecutionState.NODE_MIXED, step11.stepState.executionState)
         assertEquals(['c'], step11.nodeStepTargets)
         assertNotNull(step11.nodeStateMap['a'])
         assertEquals(ExecutionState.SUCCEEDED, step11.nodeStateMap['a'].executionState)

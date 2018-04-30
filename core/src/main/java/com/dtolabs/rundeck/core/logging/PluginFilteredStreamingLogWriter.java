@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Rundeck, Inc. (http://rundeck.com)
+ * Copyright 2018 Rundeck, Inc. (http://rundeck.com)
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,9 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
             this.loglevel = loglevel;
             this.message = message;
             this.metadata = metadata;
+            if(this.metadata==null){
+                this.metadata = new HashMap<>();
+            }
         }
 
         @Override
@@ -150,6 +153,7 @@ public class PluginFilteredStreamingLogWriter extends FilterStreamingLogWriter {
         @Override
         public LogEventControl addMetadata(final String key, final String value) {
             this.metadata.put(key, value);
+            modified = true;
             return this;
         }
 

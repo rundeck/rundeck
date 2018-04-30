@@ -19,6 +19,8 @@ package rundeck.controllers
 import com.dtolabs.rundeck.app.support.ExtNodeFilters
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.IFramework
+import com.dtolabs.rundeck.core.common.IProjectNodes
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.common.NodeEntryImpl
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -26,6 +28,9 @@ import com.dtolabs.rundeck.core.execution.service.FileCopierService
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.plugins.configuration.Property
 import com.dtolabs.rundeck.core.resources.ResourceModelSourceService
+import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorService
+import com.dtolabs.rundeck.core.resources.format.ResourceXMLFormatGenerator
+import com.dtolabs.rundeck.core.resources.format.json.ResourceJsonFormatGenerator
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import grails.test.mixin.TestFor
 import org.grails.web.servlet.mvc.SynchronizerTokensHolder
@@ -705,7 +710,11 @@ class FrameworkControllerSpec extends Specification {
         authedNodes.putNode(new NodeEntryImpl('monkey1'))
         def projectName = 'testproj'
         controller.frameworkService = Mock(FrameworkService) {
-            1 * getRundeckFramework()
+            1 * getRundeckFramework() >> Mock(IFramework) {
+                1 * getResourceFormatGeneratorService() >> Mock(ResourceFormatGeneratorService) {
+                    getGeneratorForFormat('resourcexml') >> new ResourceXMLFormatGenerator()
+                }
+            }
             1 * existsFrameworkProject(projectName) >> true
 
             1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
@@ -727,11 +736,61 @@ class FrameworkControllerSpec extends Specification {
         def query = new ExtNodeFilters(project: projectName)
         params.project = projectName
         when:
-
+        response.format = 'xml'
         def result = controller.apiResources(query)
 
         then:
         response.contentType == 'text/xml;charset=UTF-8'
+    }
+
+    @Unroll
+    def "get project resources default #mime for api_version #api_version"() {
+        setup:
+        def authCtx = Mock(UserAndRolesAuthContext)
+        def nodeSet = new NodeSetImpl()
+        nodeSet.putNode(new NodeEntryImpl('monkey1'))
+        nodeSet.putNode(new NodeEntryImpl('monkey2'))
+        def authedNodes = new NodeSetImpl()
+        authedNodes.putNode(new NodeEntryImpl('monkey1'))
+        def projectName = 'testproj'
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getRundeckFramework() >> Mock(IFramework) {
+                1 * getResourceFormatGeneratorService() >> Mock(ResourceFormatGeneratorService) {
+                    getGeneratorForFormat('resourcexml') >> new ResourceXMLFormatGenerator()
+                    getGeneratorForFormat('resourcejson') >> new ResourceJsonFormatGenerator()
+                }
+            }
+            1 * existsFrameworkProject(projectName) >> true
+
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+
+            1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+
+            1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
+                1 * getNodeSet() >> nodeSet
+            }
+            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _) >> true
+
+            0 * _(*_)
+        }
+        def query = new ExtNodeFilters(project: projectName)
+        params.project = projectName
+        request.api_version = api_version
+        when:
+        response.format = 'all'
+        def result = controller.apiResources(query)
+
+        then:
+        response.contentType == "$mime;charset=UTF-8"
+
+        where:
+        api_version | mime
+        22          | 'text/xml'
+        23          | 'application/json'
     }
 
     def "get single resource filters checks acl"() {
@@ -744,7 +803,11 @@ class FrameworkControllerSpec extends Specification {
         authedNodes.putNode(new NodeEntryImpl('monkey1'))
         def projectName = 'testproj'
         controller.frameworkService = Mock(FrameworkService) {
-            1 * getRundeckFramework()
+            1 * getRundeckFramework() >> Mock(IFramework) {
+                1 * getResourceFormatGeneratorService() >> Mock(ResourceFormatGeneratorService) {
+                    getGeneratorForFormat('resourcexml') >> new ResourceXMLFormatGenerator()
+                }
+            }
             1 * existsFrameworkProject(projectName) >> true
 
             1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
@@ -766,12 +829,63 @@ class FrameworkControllerSpec extends Specification {
         params.project = projectName
         params.name = 'monkey1'
         when:
-
+        response.format = 'xml'
         def result = controller.apiResource()
 
         then:
         response.contentType == 'text/xml;charset=UTF-8'
         response.status == 200
+    }
+
+    @Unroll
+    def "get single resource default #mime for api_version #api_version"() {
+        setup:
+        def authCtx = Mock(UserAndRolesAuthContext)
+        def nodeSet = new NodeSetImpl()
+        nodeSet.putNode(new NodeEntryImpl('monkey1'))
+        nodeSet.putNode(new NodeEntryImpl('monkey2'))
+        def authedNodes = new NodeSetImpl()
+        authedNodes.putNode(new NodeEntryImpl('monkey1'))
+        def projectName = 'testproj'
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * getRundeckFramework() >> Mock(IFramework) {
+                1 * getResourceFormatGeneratorService() >> Mock(ResourceFormatGeneratorService) {
+                    getGeneratorForFormat('resourcexml') >> new ResourceXMLFormatGenerator()
+                    getGeneratorForFormat('resourcejson') >> new ResourceJsonFormatGenerator()
+                }
+            }
+            1 * existsFrameworkProject(projectName) >> true
+
+            1 * getAuthContextForSubjectAndProject(_, projectName) >> authCtx
+
+            1 * authorizeProjectResourceAll(authCtx, [type: 'resource', kind: 'node'], ['read'], projectName) >> true
+
+            1 * getFrameworkProject(projectName) >> Mock(IRundeckProject) {
+                1 * getNodeSet() >> nodeSet
+            }
+            1 * filterAuthorizedNodes(projectName, Collections.singleton('read'), !null, authCtx) >> authedNodes
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireApi(_, _) >> true
+
+            0 * _(*_)
+        }
+        def query = new ExtNodeFilters(project: projectName)
+        params.project = projectName
+        params.name = 'monkey1'
+        request.api_version = api_version
+        when:
+        response.format = 'all'
+        def result = controller.apiResource()
+
+        then:
+        response.contentType == "$mime;charset=UTF-8"
+        response.status == 200
+        where:
+        api_version | mime
+        22          | 'text/xml'
+        23          | 'application/json'
     }
 
     def "get single resource filters unauthorized"() {
@@ -813,6 +927,48 @@ class FrameworkControllerSpec extends Specification {
         response.status == 404
     }
 
+    def "POST project source resources, not writeable, should result in 405 response"() {
+        setup:
+        controller.frameworkService = Mock(FrameworkService) {
+            1 * existsFrameworkProject('test') >> true
+            1 * getFrameworkProject('test')>>Mock(IRundeckProject){
+                1 * getProjectNodes()>>Mock(IProjectNodes){
+                    1 * getWriteableResourceModelSources()>>[]
+                }
+            }
+            1 * getAuthContextForSubjectAndProject(_,'test')
+            1 * authResourceForProject('test')
+            1 * authorizeApplicationResourceAll(_,_,['configure','admin']) >> true
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            1 * requireVersion(_, _, 23) >> true
+            1 * requireParameters(_, _, ['project', 'index']) >> true
+            1 * requireExists(_, _, ['project', 'test']) >> true
+            1 * requireExists(_, 1, ['source index', '1']) >> true
+
+            1 * requireAuthorized(_,_,['configure','Project','test']) >> true
+            1 * renderErrorFormat(_, _) >> { it[0].status = it[1].status }
+            0 * _(*_)
+        }
+
+        params.project = "test"
+        params.index = "1"
+        request.method = 'POST'
+        request.json = [
+            "testnode": [
+                hostname: "testnode",
+                nodename: "testnode",
+                tags    : "test",
+            ]
+        ]
+        when:
+
+        def result = controller.apiSourceWriteContent()
+
+        then:
+        response.status == 405
+    }
     protected void setupFormTokens(params) {
         def token = SynchronizerTokensHolder.store(session)
         params[SynchronizerTokensHolder.TOKEN_KEY] = token.generateToken('/test')

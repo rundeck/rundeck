@@ -4,7 +4,8 @@
 
 DIR=$(cd `dirname $0` && pwd)
 set -- - 
-
+#use api_version<23 ; default response is xml
+export API_VERSION=22 
 source $DIR/include.sh
 
 

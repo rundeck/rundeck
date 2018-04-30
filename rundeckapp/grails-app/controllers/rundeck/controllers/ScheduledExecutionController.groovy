@@ -251,15 +251,15 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
         if (!unauthorizedResponse(
-                frameworkService.authorizeProjectJobAll(
-                        authContext,
-                        scheduledExecution,
-                        [AuthConstants.ACTION_READ],
-                        scheduledExecution.project
+            frameworkService.authorizeProjectJobAny(
+                authContext,
+                scheduledExecution,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                scheduledExecution.project
                 ),
-                AuthConstants.ACTION_READ,
-                'Job',
-                params.id
+            AuthConstants.ACTION_VIEW,
+            'Job',
+            params.id
             )
         ) {
 
@@ -344,8 +344,15 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if(unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
-                [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ,'Job',params.id)){
+        if (unauthorizedResponse(
+            frameworkService.authorizeProjectJobAny(
+                authContext, scheduledExecution,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                scheduledExecution.project
+            ),
+            AuthConstants.ACTION_VIEW,
+            'Job', params.id
+        )) {
             return
         }
         def model=jobDetailData()
@@ -359,8 +366,14 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if(unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
-                [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ,'Job',params.id)){
+        if (unauthorizedResponse(
+            frameworkService.authorizeProjectJobAny(
+                authContext, scheduledExecution,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                scheduledExecution.project
+            ),
+            AuthConstants.ACTION_VIEW, 'Job', params.id
+        )) {
             return
         }
         def model = jobDetailData(['total', 'nextExecution', 'max', 'scheduledExecution'])
@@ -401,8 +414,17 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
-                [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
+        def actions = [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]
+        if (response.format in ['xml', 'yaml']) {
+            actions = [AuthConstants.ACTION_READ]
+        }
+        if (unauthorizedResponse(
+            frameworkService.authorizeProjectJobAny(
+                authContext, scheduledExecution,
+                actions,
+                scheduledExecution.project
+            ), AuthConstants.ACTION_READ, 'Job', params.id
+        )) {
             return
         }
 
@@ -527,8 +549,13 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
-                [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
+        if (unauthorizedResponse(
+            frameworkService.authorizeProjectJobAny(
+                authContext, scheduledExecution,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                scheduledExecution.project
+            ), AuthConstants.ACTION_VIEW, 'Job', params.id
+        )) {
             return
         }
 
@@ -580,18 +607,20 @@ class ScheduledExecutionController  extends ControllerBase{
                 scheduledExecution.project
         )
         if (unauthorizedResponse(
-                frameworkService.authorizeProjectJobAll(
+                frameworkService.authorizeProjectJobAny(
                         authContext,
                         scheduledExecution,
-                        [AuthConstants.ACTION_READ],
+                        [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],
                         scheduledExecution.project
                 ),
-                AuthConstants.ACTION_READ, 'Job', params.id
+                AuthConstants.ACTION_VIEW, 'Job', params.id
         )) {
             return
         }
         def maxDepth=3
-        def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,scheduledExecution.workflow,maxDepth)
+
+        def readAuth=frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ])
+        def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,scheduledExecution.workflow,readAuth,maxDepth)
         withFormat {
             json {
                 render(contentType: 'application/json') {
@@ -648,8 +677,13 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
-        if (unauthorizedResponse(frameworkService.authorizeProjectJobAll(authContext, scheduledExecution,
-                [AuthConstants.ACTION_READ], scheduledExecution.project), AuthConstants.ACTION_READ, 'Job', params.id)) {
+        if (unauthorizedResponse(
+            frameworkService.authorizeProjectJobAny(
+                authContext, scheduledExecution,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+                scheduledExecution.project
+            ), AuthConstants.ACTION_VIEW, 'Job', params.id
+        )) {
             return
         }
         if(!params.option){
@@ -2195,9 +2229,12 @@ class ScheduledExecutionController  extends ControllerBase{
         )) {
             return
         }
-        if (unauthorizedResponse(frameworkService.authorizeProjectExecutionAll(authContext, execution,
-                [AuthConstants.ACTION_READ]), AuthConstants.ACTION_READ, 'Execution',
-                params.executionId)) {
+        if (unauthorizedResponse(
+            frameworkService.authorizeProjectExecutionAny(
+                authContext, execution,
+                [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW]
+            ), AuthConstants.ACTION_VIEW, 'Execution',
+            params.executionId)) {
             return
         }
         def props=[:]
@@ -2867,7 +2904,12 @@ class ScheduledExecutionController  extends ControllerBase{
             results.message=g.message(code:'request.error.invalidtoken.message')
         }
 
-        def link = createLink(controller: "execution",action: "follow",id: results.id)
+        def link
+        if(params.followdetail){
+            link =createLink(controller: "execution",action: "follow",id: results.id, fragment: params.followdetail)
+        } else {
+            link = createLink(controller: "execution", action: "follow", id: results.id)
+        }
         boolean follow_ = params.follow == 'true'
         return render(contentType:'application/json'){
             if (results.failed) {
@@ -2905,7 +2947,12 @@ class ScheduledExecutionController  extends ControllerBase{
             results.error = 'request.error.invalidtoken.message'
             results.message = g.message(code: 'request.error.invalidtoken.message')
         }
-        def link = createLink(controller: "execution", action: "follow", id: results.id)
+        def link
+        if(params.followdetail){
+            link =createLink(controller: "execution",action: "follow",id: results.id, fragment: params.followdetail)
+        }else {
+            link = createLink(controller: "execution", action: "follow", id: results.id)
+        }
         boolean follow_ = params.follow == 'true'
 
         return render(contentType: 'application/json') {
@@ -2959,7 +3006,7 @@ class ScheduledExecutionController  extends ControllerBase{
             }
             return renderErrorView(results)
         } else if (params.follow == 'true') {
-            redirect(controller: "execution", action: "follow", id: results.id)
+            redirect(controller: "execution", action: "follow", id: results.id, params:[outdetails: params.followdetail])
         } else {
             redirect(controller: "scheduledExecution", action: "show", id: params.id)
         }
@@ -3777,8 +3824,13 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, job.project)
-        if (!frameworkService.authorizeProjectJobAll(authContext, job, [AuthConstants.ACTION_READ], job.project)) {
-            return apiService.renderUnauthorized(response, ['Read', 'Job File Record', params.id])
+        if (!frameworkService.authorizeProjectJobAny(
+            authContext,
+            job,
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+            job.project
+        )) {
+            return apiService.renderUnauthorized(response, [AuthConstants.ACTION_VIEW, 'Job File Record', params.id])
         }
 
         respond(new JobFileInfo(jobFileRecord.exportMap()), [formats: ['xml', 'json']])
@@ -3805,8 +3857,13 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, job.project)
-        if (!frameworkService.authorizeProjectJobAll(authContext, job, [AuthConstants.ACTION_READ], job.project)) {
-            return apiService.renderUnauthorized(response, ['Read', 'Job ID', params.id])
+        if (!frameworkService.authorizeProjectJobAny(
+            authContext,
+            job,
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+            job.project
+        )) {
+            return apiService.renderUnauthorized(response, [AuthConstants.ACTION_VIEW, 'Job ID', params.id])
         }
 
         def paging = [offset: 0, max: 20, sort: 'dateCreated', order: 'desc']
@@ -4197,11 +4254,11 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,scheduledExecution.project)
 
-        if (!frameworkService.authorizeProjectJobAll(
-                authContext,
-                scheduledExecution,
-                [AuthConstants.ACTION_READ],
-                scheduledExecution.project
+        if (!frameworkService.authorizeProjectJobAny(
+            authContext,
+            scheduledExecution,
+            [AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW],
+            scheduledExecution.project
         )
         ) {
 

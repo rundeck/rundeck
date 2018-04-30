@@ -933,6 +933,7 @@ public class AclTool extends BaseTool {
     static final List<String> projectJobActions =
             Arrays.asList(
                     ACLConstants.ACTION_READ,
+                    ACLConstants.ACTION_VIEW,
                     ACLConstants.ACTION_UPDATE,
                     ACLConstants.ACTION_DELETE,
                     ACLConstants.ACTION_RUN,
@@ -951,6 +952,7 @@ public class AclTool extends BaseTool {
     static final List<String> projectAdhocActions =
             Arrays.asList(
                     ACLConstants.ACTION_READ,
+                    ACLConstants.ACTION_VIEW,
                     ACLConstants.ACTION_RUN,
                     ACLConstants.ACTION_RUNAS,
                     ACLConstants.ACTION_KILL,
@@ -1397,22 +1399,23 @@ public class AclTool extends BaseTool {
 
     private Validation validatePolicies() throws CLIToolOptionsException {
         final Validation validation;
+        ValidationSet validationSet = new ValidationSet();
         if (null != argFile) {
             if(!argFile.isFile()) {
                 throw new CLIToolOptionsException("File: " + argFile + ", does not exist or is not a file");
             }
-            validation = YamlProvider.validate(YamlProvider.sourceFromFile(argFile));
+            validation = YamlProvider.validate(YamlProvider.sourceFromFile(argFile, validationSet), validationSet);
         } else if (null != argDir) {
             if(!argDir.isDirectory()) {
                 throw new CLIToolOptionsException("File: " + argDir + ", does not exist or is not a directory");
             }
-            validation = YamlProvider.validate(YamlProvider.asSources(argDir));
+            validation = YamlProvider.validate(YamlProvider.asSources(argDir), validationSet);
         } else if (null != configDir) {
             File directory = new File(configDir);
             if(!directory.isDirectory()) {
                 throw new CLIToolOptionsException("File: " + directory + ", does not exist or is not a directory");
             }
-            validation = YamlProvider.validate(YamlProvider.asSources(directory));
+            validation = YamlProvider.validate(YamlProvider.asSources(directory), validationSet);
         } else {
             throw new CLIToolOptionsException("-f or -d are required");
         }
@@ -1921,6 +1924,7 @@ public class AclTool extends BaseTool {
     class ACLConstants {
         public static final String ACTION_CREATE = "create";
         public static final String ACTION_READ = "read";
+        public static final String ACTION_VIEW = "view";
         public static final String ACTION_UPDATE = "update";
         public static final String ACTION_DELETE = "delete";
         public static final String ACTION_RUN = "run";

@@ -22,13 +22,15 @@ on the filesystem.
 Starting in Rundeck 2.5, you have the option to store project definitions and
 configuration files in the database.
 
+Starting in Rundeck 2.11, the default storage mechanism is the database.
+
 The storage type can be changed by a configuration flag in the `rundeck-config.properties` file:
 
     rundeck.projectsStorageType=db
     or
-    rundeck.projectsStorageType=file
+    rundeck.projectsStorageType=filesystem
 
-If you wish to use db storage you must add this configuration entry.
+If you wish to use *filesystem* storage you must add this configuration entry.
 
 If you have existing filesystem-based projects, and you start Rundeck
 with the `db` storage type, those projects will be automatically imported to the Database.
@@ -40,7 +42,7 @@ configured to use an Encryption plugin.  See [Storage Facility - Using Encryptio
 
 ### Configuration file
 
-When using *file* storage type, each Project has a configuration file called
+When using *filesystem* storage type, each Project has a configuration file called
 [project.properties](configuration-file-reference.html#project.properties),
 located at this path:
 
@@ -74,23 +76,26 @@ The project setup process generates Project configuration in the server, and
 a bootstrap resource model containing information about the rundeck server node.
 
 
-### Project readme.md
+### Project readme.md and motd.md
 
 You can create a readme file that welcomes your users and provides an overview about the project.
 This readme file can contain markdown text letting you format or embed images.
+
+You can also create a `motd.md` (Message of the Day) with other information that
+may change more frequently.
 
 
 ![Project readme](../figures/fig0203.png)
 
 
-#### Filesystem based readme
+#### Filesystem based readme/motd
 
 If using the *filesystem* storage type only, you can create the file in the project base directory:
 
 * launcher: $RDECK_BASE/projects/{project}/readme.md
 * rpm/deb: /var/rundeck/projects/{project}/readme.md
 
-If using the *db* storage type, you must use the [API](#api-usage).
+If using the *db* storage type, you can use the GUI, or the [API](#api-usage).
 
 ### Project Nodes
 

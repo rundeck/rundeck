@@ -33,8 +33,16 @@ sourceSets {
     main { compileClasspath += configurations.provided }
 }
 dependencies {
+    compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.5.1'
     compile project(":rundeck-storage:rundeck-storage-api")
     compile project(":rundeck-storage:rundeck-storage-conf")
+    compile ('com.google.guava:guava:24.1-jre') {
+        exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
+        exclude group:'org.checkerframework', module: 'checker-compat-qual'
+        exclude group:'com.google.errorprone', module: 'error_prone_annotations'
+        exclude group:'com.google.j2objc', module: 'j2objc-annotations'
+        exclude group:'com.google.code.findbugs', module: 'jsr305'
+    }
     compile 'org.apache.ant:ant:1.8.3',
         'log4j:log4j:1.2.17',
         'commons-codec:commons-codec:1.10',
@@ -56,7 +64,7 @@ dependencies {
         'com.fasterxml.jackson.core:jackson-core:2.8.11',
         'com.fasterxml.jackson.core:jackson-annotations:2.8.0',
         'org.yaml:snakeyaml:1.14',
-        'com.google.guava:guava:19.0',
+        'com.google.guava:guava:24.1-jre',
         'com.squareup.retrofit2:retrofit:2.2.0',
         'com.squareup.retrofit2:converter-jackson:2.2.0'
 

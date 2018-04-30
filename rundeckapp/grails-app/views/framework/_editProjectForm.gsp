@@ -64,6 +64,7 @@
         <g:render template="projectConfigurableForm"
                   model="${[extraConfigSet: extraConfig?.values(),
                             category      : category,
+                            categoryPrefix     : 'extra.category.' + category + '.',
                             titleCode     : 'project.configuration.extra.category.' + category + '.title',
                             helpCode      : 'project.configuration.extra.category.' + category + '.description'
                   ]}"/>

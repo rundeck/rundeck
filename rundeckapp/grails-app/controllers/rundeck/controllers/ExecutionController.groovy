@@ -222,12 +222,12 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
 
-        if (unauthorizedResponse(frameworkService.authorizeProjectExecutionAll(authContext, e,
-                [AuthConstants.ACTION_READ]), AuthConstants.ACTION_READ,'Execution',params.id)) {
+        if (unauthorizedResponse(frameworkService.authorizeProjectExecutionAny(authContext, e,
+                [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]), AuthConstants.ACTION_VIEW,'Execution',params.id)) {
             return
         }
         if(!params.project || params.project!=e.project) {
-            redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project])
+            redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project], fragment: params?.outdetails)
             return
         }
         params.project=e.project
@@ -258,8 +258,8 @@ class ExecutionController extends ControllerBase{
             order('dateStarted', 'desc')
         }
         eprev = result ? result[0] : null
-
-        def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, 0)
+        def readAuth=frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ])
+        def workflowTree = scheduledExecutionService.getWorkflowDescriptionTree(e.project, e.workflow, readAuth,0)
         def inputFiles = fileUploadService.findRecords(e, FileUploadService.RECORD_TYPE_OPTION_INPUT)
         def inputFilesMap = inputFiles.collectEntries { [it.uuid, it] }
 
@@ -358,9 +358,9 @@ class ExecutionController extends ControllerBase{
 
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
 
-        if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
+        if (e && !frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])) {
             response.status=HttpServletResponse.SC_FORBIDDEN
-            return render(contentType: 'application/json',text:[error: "Unauthorized: Read Execution ${params.id}"] as JSON)
+            return render(contentType: 'application/json',text:[error: "Unauthorized: View Execution ${params.id}"] as JSON)
         }
 
         def jobcomplete = e.dateCompleted != null
@@ -457,9 +457,9 @@ class ExecutionController extends ControllerBase{
 
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
 
-        if (e && !frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ])) {
+        if (e && !frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])) {
             response.status=HttpServletResponse.SC_FORBIDDEN
-            return render(contentType: 'application/json',text:[error: "Unauthorized: Read Execution ${params.id}"] as JSON)
+            return render(contentType: 'application/json',text:[error: "Unauthorized: View Execution ${params.id}"] as JSON)
         }
 
 
@@ -1072,8 +1072,8 @@ class ExecutionController extends ControllerBase{
         if(!e){
             return apiError('api.error.item.doesnotexist', ['execution', params.id], HttpServletResponse.SC_NOT_FOUND);
         }
-        if(e && !frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_READ])){
-            return apiError('api.error.item.unauthorized', [AuthConstants.ACTION_READ, "Execution", params.id], HttpServletResponse.SC_FORBIDDEN);
+        if(e && !frameworkService.authorizeProjectExecutionAny(authContext,e,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW])){
+            return apiError('api.error.item.unauthorized', [AuthConstants.ACTION_VIEW, "Execution", params.id], HttpServletResponse.SC_FORBIDDEN);
         }
         if (params.stepctx && !(params.stepctx ==~ /^(\d+e?(@.+?)?\/?)+$/)) {
             return apiError("api.error.parameter.invalid",[params.stepctx,'stepctx',"Invalid stepctx filter"],HttpServletResponse.SC_BAD_REQUEST)
@@ -1550,7 +1550,7 @@ class ExecutionController extends ControllerBase{
                         disabledException
                 )
             } catch (Throwable t) {
-                log.warn(
+                log.error(
                         "Failed converting data type ${input.getClass()}($inputDataType)  with plugins: ${chain*.name}",
                         t
                 )
@@ -1623,9 +1623,9 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         if(!apiService.requireAuthorized(
-                frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_READ]),
+                frameworkService.authorizeProjectExecutionAny(authContext,e,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
                 response,
-                [AuthConstants.ACTION_READ, "Execution", params.id] as Object[])){
+                [AuthConstants.ACTION_VIEW, "Execution", params.id] as Object[])){
             return
         }
 
@@ -1659,9 +1659,9 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
         if(!apiService.requireAuthorized(
-                frameworkService.authorizeProjectExecutionAll(authContext,e,[AuthConstants.ACTION_READ]),
+                frameworkService.authorizeProjectExecutionAny(authContext,e,[AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
                 response,
-                [AuthConstants.ACTION_READ, "Execution", params.id] as Object[])){
+                [AuthConstants.ACTION_VIEW, "Execution", params.id] as Object[])){
             return
         }
 
@@ -2158,9 +2158,9 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject, e.project)
         if (!apiService.requireAuthorized(
-                frameworkService.authorizeProjectExecutionAll(authContext, e, [AuthConstants.ACTION_READ]),
+                frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW]),
                 response,
-                [AuthConstants.ACTION_READ, "Execution", params.id] as Object[]
+                [AuthConstants.ACTION_VIEW, "Execution", params.id] as Object[]
         )) {
             return
         }

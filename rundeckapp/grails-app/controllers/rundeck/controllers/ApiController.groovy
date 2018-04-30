@@ -127,7 +127,7 @@ class ApiController extends ControllerBase{
             return
         }
 
-        if (!apiService.requireParametersFormat(params, response, ['token'])) {
+        if (!apiService.requireParameters(params, response, ['token'])) {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)

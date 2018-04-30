@@ -21,6 +21,7 @@ import com.codahale.metrics.MetricRegistry
 import com.dtolabs.rundeck.core.authorization.AclsUtil
 import com.dtolabs.rundeck.core.authorization.Authorization
 import com.dtolabs.rundeck.core.authorization.AuthorizationUtil
+import com.dtolabs.rundeck.core.authorization.ValidationSet
 import com.dtolabs.rundeck.core.authorization.providers.CacheableYamlSource
 import com.dtolabs.rundeck.core.authorization.providers.Policies
 import com.dtolabs.rundeck.core.authorization.providers.PoliciesCache
@@ -632,7 +633,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def resource = getProjectFileResource(key.project,key.path)
         def file = resource.contents
         def text =file.inputStream.getText()
-        YamlProvider.sourceFromString("[project:${key.project}]${key.path}", text, file.modificationTime)
+        YamlProvider.sourceFromString("[project:${key.project}]${key.path}", text, file.modificationTime, new ValidationSet())
     }
     /**
      * Create Authorization using project-owned aclpolicies

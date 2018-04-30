@@ -83,7 +83,7 @@ class MenuControllerSpec extends Specification {
         1 * controller.apiService.requireExists(_, job1, _) >> true
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'AProject') >>
                 Mock(UserAndRolesAuthContext)
-        1 * controller.frameworkService.authorizeProjectJobAll(_, job1, ['read'], 'AProject') >> true
+        1 * controller.frameworkService.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
@@ -121,7 +121,7 @@ class MenuControllerSpec extends Specification {
         1 * controller.apiService.requireExists(_, job1, _) >> true
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, 'AProject') >>
                 Mock(UserAndRolesAuthContext)
-        1 * controller.frameworkService.authorizeProjectJobAll(_, job1, ['read'], 'AProject') >> true
+        1 * controller.frameworkService.authorizeProjectJobAny(_, job1, ['read','view'], 'AProject') >> true
         1 * controller.apiService.apiHrefForJob(job1) >> 'api/href'
         1 * controller.apiService.guiHrefForJob(job1) >> 'gui/href'
 
@@ -186,7 +186,7 @@ class MenuControllerSpec extends Specification {
         1 * controller.apiService.requireVersion(_, _, 17) >> true
         _ * controller.frameworkService.getServerUUID() >> testUUID
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,'AProject') >> Mock(UserAndRolesAuthContext)
-        1 * controller.frameworkService.authorizeProjectJobAll(_,job1,['read'],'AProject')>>true
+        1 * controller.frameworkService.authorizeProjectJobAny(_,job1,['read','view'],'AProject')>>true
         1 * controller.frameworkService.isClusterModeEnabled()>>true
         1 * controller.apiService.renderSuccessXml(_,_,_)
 
@@ -214,7 +214,7 @@ class MenuControllerSpec extends Specification {
         1 * controller.apiService.requireVersion(_, _, 17) >> true
         _ * controller.frameworkService.getServerUUID() >> testUUID
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,'AProject') >> Mock(UserAndRolesAuthContext)
-        1 * controller.frameworkService.authorizeProjectJobAll(_,job2,['read'],'AProject')>>true
+        1 * controller.frameworkService.authorizeProjectJobAny(_,job2,['read','view'],'AProject')>>true
         1 * controller.frameworkService.isClusterModeEnabled()>>true
         1 * controller.apiService.renderSuccessXml(_,_,_)
 

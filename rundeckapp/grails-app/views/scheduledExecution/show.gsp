@@ -53,7 +53,10 @@
             "use strict";
             var params = loadJsonData('jobParams');
             var jobNodeFilters = initJobNodeFilters(params);
-            ko.applyBindings(jobNodeFilters, document.getElementById('definition'));
+            var elementById = document.getElementById('definition');
+            if(elementById){
+                ko.applyBindings(jobNodeFilters, elementById);
+            }
 
             pagehistory = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
             ko.applyBindings(pagehistory, document.getElementById('activity_section'));

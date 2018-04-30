@@ -1572,10 +1572,10 @@ class ScmController extends ControllerBase {
                 scheduledExecution.project
         )
         if (!apiService.requireAuthorized(
-                frameworkService.authorizeProjectJobAll(
+                frameworkService.authorizeProjectJobAny(
                         authContext,
                         scheduledExecution,
-                        [AuthConstants.ACTION_READ],
+                        [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],
                         scheduledExecution.project
                 ),
                 response,

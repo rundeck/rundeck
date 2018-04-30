@@ -1145,12 +1145,6 @@ class ProjectService implements InitializingBean, ExecutionFileProducer{
         def newprops = new Properties()
         newprops.putAll(map)
         project.setProjectProperties(newprops)
-        def description = map['project.description']
-        Project.withNewSession{
-            def dbproj = Project.findByName(project.name)
-            dbproj.description = description?description:null
-            dbproj.save(flush: true)
-        }
     }
 
     /**

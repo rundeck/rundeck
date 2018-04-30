@@ -24,7 +24,7 @@
             code="now.running" /> - </g:if><g:if test="${scheduledExecution}"><g:enc>${scheduledExecution?.jobName}</g:enc> :  </g:if><g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/></title>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
       <g:set var="authKeys" value="${[AuthConstants.ACTION_KILL,
-              AuthConstants.ACTION_READ,AuthConstants.ACTION_CREATE,AuthConstants.ACTION_RUN]}"/>
+                                      AuthConstants.ACTION_READ, AuthConstants.ACTION_VIEW, AuthConstants.ACTION_CREATE, AuthConstants.ACTION_RUN]}"/>
       <g:set var="authChecks" value="${[:]}"/>
       <g:each in="${authKeys}" var="actionName">
       <g:if test="${execution.scheduledExecution}">
@@ -187,6 +187,18 @@
                 jQuery('#jobid').val(el.data('jobId'));
                 jQuery('#selectProject').modal();
             });
+
+            var outDetails = window.location.hash;
+            if(outDetails == '#output'){
+                nodeflowvm.activeTab("output");
+                followOutput();
+                showTab('tab_link_output');
+            }else if(outDetails == '#monitor'){
+                nodeflowvm.activeTab("flow");
+                showTab('tab_link_flow');
+            }else if(outDetails== '#definition'){
+                showTab('tab_link_definition');
+            }
         }
         jQuery(init);
       </g:javascript>
@@ -621,9 +633,11 @@
                         <li id="tab_link_output">
                             <a href="#output" data-toggle="tab"><g:message code="execution.show.mode.Log.title" /></a>
                         </li>
-                        <li>
+                    <g:if test="${authChecks[AuthConstants.ACTION_READ]}">                       
+                        <li id="tab_link_definition">
                             <a href="#schedExDetails${scheduledExecution?.id}" data-toggle="tab"><g:message code="definition" /></a>
                         </li>
+                    </g:if>
                     </ul>
                 </div>
             </div>
@@ -728,12 +742,14 @@
                     <g:render template="/execution/showFragment"
                               model="[execution: execution, scheduledExecution: scheduledExecution, inlineView: false, followmode: followmode]"/>
                 </div>
-                <div class="tab-pane" id="schedExDetails${scheduledExecution?.id}">
-                    <div class="presentation" >
-                        <g:render template="execDetails"
-                                  model="[execdata: execution, showArgString: false, hideAdhoc: isAdhoc]"/>
+                <g:if test="${authChecks[AuthConstants.ACTION_READ]}">
+                    <div class="tab-pane" id="schedExDetails${scheduledExecution?.id}">
+                        <div class="presentation" >
+                            <g:render template="execDetails"
+                                      model="[execdata: execution, showArgString: false, hideAdhoc: isAdhoc]"/>
+                        </div>
                     </div>
-                </div>
+                </g:if>
             </div>
         </div>
     </div>

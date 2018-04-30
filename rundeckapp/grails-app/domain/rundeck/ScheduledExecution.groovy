@@ -86,6 +86,8 @@ class ScheduledExecution extends ExecutionContext {
     String nodeThreadcountDynamic
     Long refExecCount=0
 
+    String defaultTab
+
     static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
                          'crontabString','averageDuration','notifyAvgDurationRecipients','notifyAvgDurationUrl',
@@ -164,6 +166,7 @@ class ScheduledExecution extends ExecutionContext {
         successOnEmptyNodeFilter(nullable: true)
         nodeThreadcountDynamic(nullable: true)
         notifyAvgDurationThreshold(nullable: true)
+        defaultTab(maxSize: 256, blank: true, nullable: true)
     }
 
     static mapping = {
@@ -279,6 +282,9 @@ class ScheduledExecution extends ExecutionContext {
         if(timeZone){
             map.timeZone=timeZone
         }
+        if(defaultTab){
+            map.defaultTab = defaultTab
+        }
 
         if(options){
             map.options = []
@@ -385,6 +391,7 @@ class ScheduledExecution extends ExecutionContext {
             se.retryDelay = data.retryDelay?.toString()
         }
         se.timeZone = data.timeZone?data.timeZone.toString():null
+        se.defaultTab = data.defaultTab?data.defaultTab.toString():null
         if(data.options){
             TreeSet options=new TreeSet()
             if(data.options instanceof Map) {

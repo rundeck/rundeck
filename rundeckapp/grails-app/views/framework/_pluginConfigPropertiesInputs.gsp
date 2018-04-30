@@ -69,17 +69,18 @@
 <g:each in="${ungrouped}" var="prop">
     <g:render
             template="/framework/pluginConfigPropertyFormField"
-            model="${[prop         : prop,
-                      dynamicProperties : dynamicProperties ? dynamicProperties[prop.name] : null,
-                      prefix       : prefix,
-                      error        : report?.errors ? report.errors[prop.name] : null,
-                      values       : values,
-                      fieldname    : (fieldnamePrefix ?: '') + prop.name,
-                      origfieldname: (origfieldnamePrefix ?: '') + prop.name,
-                      service      : service,
-                      provider     : provider,
-                      messagePrefix:messagePrefix,
-                      extraInputCss:extraInputCss
+            model="${[prop             : prop,
+                      dynamicProperties: dynamicProperties ? dynamicProperties[prop.name] : null,
+                      prefix           : prefix,
+                      error            : report?.errors ? report.errors[prop.name] : null,
+                      values           : values,
+                      fieldname        : (fieldnamePrefix ?: '') + prop.name,
+                      origfieldname    : (origfieldnamePrefix ?: '') + prop.name,
+                      service          : service,
+                      provider         : provider,
+                      messagePrefix    : messagePrefix,
+                      messagesType     : messagesType,
+                      extraInputCss    : extraInputCss
             ]}"/>
 </g:each>
 <g:set var="defaultGroupName" value="${g.message(code:'plugin.property.secondary.groupName',default:'More')}"/>
@@ -124,6 +125,7 @@
                               service      : service,
                               provider     : provider,
                               messagePrefix:messagePrefix,
+                              messagesType : messagesType,
                               extraInputCss:extraInputCss
                     ]}"/>
         </g:each>

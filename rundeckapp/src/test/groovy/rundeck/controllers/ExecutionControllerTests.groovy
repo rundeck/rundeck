@@ -150,11 +150,11 @@ class ExecutionControllerTests  {
         controller.params.id=e1.id
         controller.frameworkService=mockWith(FrameworkService){
             getAuthContextForSubjectAndProject{ subj,proj-> null }
-            authorizeProjectExecutionAll{ ctx, exec, actions-> false }
+            authorizeProjectExecutionAny{ ctx, exec, actions-> false }
         }
         controller.ajaxExecState()
         assertEquals(403,response.status)
-        assertEquals("Unauthorized: Read Execution ${e1.id}".toString(),response.json.error)
+        assertEquals("Unauthorized: View Execution ${e1.id}".toString(),response.json.error)
     }
     void testDownloadOutput(){
 
@@ -606,7 +606,7 @@ class ExecutionControllerTests  {
         def fwkControl = new MockFor(FrameworkService, false)
         def execControl = new MockFor(ExecutionService, false)
         fwkControl.demand.getAuthContextForSubjectAndProject{ subj,proj -> return null }
-        fwkControl.demand.authorizeProjectExecutionAll { framework, e, privs -> return false }
+        fwkControl.demand.authorizeProjectExecutionAny { framework, e, privs -> return false }
 
         controller.frameworkService = fwkControl.proxyInstance()
         controller.executionService = execControl.proxyInstance()
@@ -637,7 +637,7 @@ class ExecutionControllerTests  {
         controller.params.id=e1.id
         controller.frameworkService=mockWith(FrameworkService){
             getAuthContextForSubjectAndProject{ subj,proj-> null }
-            authorizeProjectExecutionAll{ ctx, exec, actions-> true }
+            authorizeProjectExecutionAny{ ctx, exec, actions-> true }
             isClusterModeEnabled{->false}
         }
 

@@ -34,6 +34,8 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.plugins.configuration.PropertyScope
 import com.dtolabs.rundeck.plugins.file.FileUploadPlugin
+import com.dtolabs.rundeck.plugins.logging.LogFilterPlugin
+import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.plugins.scm.ScmPluginException
 import com.dtolabs.rundeck.plugins.storage.StorageConverterPlugin
 import com.dtolabs.rundeck.plugins.storage.StoragePlugin
@@ -641,7 +643,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         // Filter the groups by what the user is authorized to see.
 
-        def decisions = frameworkService.authorizeProjectResources(authContext,res, new HashSet([AuthConstants.ACTION_READ, AuthConstants.ACTION_DELETE, AuthConstants.ACTION_RUN, AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_KILL]),query.projFilter)
+        def decisions = frameworkService.authorizeProjectResources(authContext,res, new HashSet([AuthConstants.ACTION_VIEW, AuthConstants.ACTION_READ, AuthConstants.ACTION_DELETE, AuthConstants.ACTION_RUN, AuthConstants.ACTION_UPDATE, AuthConstants.ACTION_KILL]),query.projFilter)
         log.debug("listWorkflows(evaluate): "+(System.currentTimeMillis()-preeval));
 
         long viewable=System.currentTimeMillis()
@@ -672,7 +674,7 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
          */
         def jobgroups=[:]
         schedlist.each{ ScheduledExecution se->
-            authorizemap[se.id.toString()]=jobauthorizations[AuthConstants.ACTION_READ]?.contains(se.id.toString())
+            authorizemap[se.id.toString()]=jobauthorizations[AuthConstants.ACTION_READ]?.contains(se.id.toString())||jobauthorizations[AuthConstants.ACTION_VIEW]?.contains(se.id.toString())
             if(authorizemap[se.id.toString()]){
                 newschedlist<<se
                 if(!jobgroups[se.groupPath?:'']){
@@ -2026,6 +2028,12 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         pluginDescs['FileUploadPluginService']=pluginService.listPlugins(FileUploadPlugin).collect {
             it.value.description
         }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['LogFilter'] = pluginService.listPlugins(LogFilterPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
+        pluginDescs['ContentConverter']=pluginService.listPlugins(ContentConverterPlugin).collect {
+            it.value.description
+        }.sort { a, b -> a.name <=> b.name }
 
 
         def uiPluginProfiles = [:]
@@ -2130,7 +2138,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         session.frameworkLabels = flabels
         log.debug("frameworkService.projectNames(context)... ${System.currentTimeMillis() - start}")
         def stats=cachedSummaryProjectStats(fprojects)
-
+        
+        //isFirstRun = true //as
         render(view: 'home', model: [
                 isFirstRun:isFirstRun,
                 projectNames: fprojects,
@@ -2725,10 +2734,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
                 session.subject,
                 scheduledExecution.project
         )
-        if (!frameworkService.authorizeProjectJobAll(
+        if (!frameworkService.authorizeProjectJobAny(
                 authContext,
                 scheduledExecution,
-                [AuthConstants.ACTION_READ],
+                [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],
                 scheduledExecution.project
         )) {
             return apiService.renderErrorXml(
@@ -2898,10 +2907,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             projectAuths[project]
         }
         def authorized = list.findAll { ScheduledExecution se ->
-            frameworkService.authorizeProjectJobAll(
+            frameworkService.authorizeProjectJobAny(
                     authForProject(se.project),
                     se,
-                    [AuthConstants.ACTION_READ],
+                    [AuthConstants.ACTION_READ,AuthConstants.ACTION_VIEW],
                     se.project
             )
         }
