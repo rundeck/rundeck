@@ -1,3 +1,7 @@
+% Version 2.11.0
+% greg
+% 04/27/2018
+
 Release 2.11.0
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: Olive"><span class="glyphicon glyphicon-music"></span>
 
 ## Upgrading from Earlier versions
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 
@@ -89,7 +93,7 @@ If you want to continue using filesystem storage for project config/readme/motd 
 
 Upgrading an existing `filesystem` configuration to `db` is automatic, and project configs/readme/motd will be loaded into DB storage at system startup.
 
-To encrypt the DB storage, you will need to [enable encryption for the "Project Configuration" storage layer](http://rundeck.org/docs/plugins-user-guide/bundled-plugins.html#jasypt-encryption-plugin).
+To encrypt the DB storage, you will need to [enable encryption for the "Project Configuration" storage layer](../plugins-user-guide/bundled-plugins.html#jasypt-encryption-plugin).
 
 ## Contributors
 

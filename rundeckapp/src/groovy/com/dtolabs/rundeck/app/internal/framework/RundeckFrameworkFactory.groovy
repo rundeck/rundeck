@@ -21,9 +21,7 @@ import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.FrameworkFactory
 import com.dtolabs.rundeck.core.common.FrameworkSupportService
 import com.dtolabs.rundeck.core.common.ProjectManager
-import com.dtolabs.rundeck.core.plugins.FilePluginCache
 import com.dtolabs.rundeck.core.plugins.PluginManagerService
-import com.dtolabs.rundeck.core.plugins.ServiceProviderLoader
 import com.dtolabs.rundeck.core.utils.IPropertyLookup
 import org.apache.log4j.Logger
 
@@ -31,9 +29,12 @@ import org.apache.log4j.Logger
  * Created by greg on 2/20/15.
  */
 class RundeckFrameworkFactory {
-    public static final String FILESYSTEM = 'filesystem'
-    public static final String DB = 'db'
-    public static final Set<String> STORAGE_TYPES = Collections.unmodifiableSet([FILESYSTEM, DB] as Set)
+    public static final String PROJ_STORAGE_TYPE_FILESYSTEM = 'filesystem'
+    public static final String PROJ_STORAGE_TYPE_FILE = 'file'
+    public static final String PROJ_STORAGE_TYPE_DB = 'db'
+    public static final Set<String> STORAGE_TYPES = Collections.unmodifiableSet(
+        [PROJ_STORAGE_TYPE_FILESYSTEM, PROJ_STORAGE_TYPE_DB] as Set
+    )
     public static final Logger logger = Logger.getLogger(RundeckFrameworkFactory)
     FilesystemFramework frameworkFilesystem
     String type
@@ -45,7 +46,7 @@ class RundeckFrameworkFactory {
     Framework createFramework() {
         Map<String, FrameworkSupportService> services = [(PluginManagerService.SERVICE_NAME): pluginManagerService]
 
-        if (type == FILESYSTEM) {
+        if (type in [PROJ_STORAGE_TYPE_FILESYSTEM, PROJ_STORAGE_TYPE_FILE]) {
             logger.info("Creating Filesystem project manager")
             return FrameworkFactory.createFramework(
                     propertyLookup,
@@ -53,11 +54,13 @@ class RundeckFrameworkFactory {
                     filesystemProjectManager,
                     services
             )
-        } else if (type == DB) {
+        } else if (type == PROJ_STORAGE_TYPE_DB) {
             logger.info("Creating DB project manager")
             return FrameworkFactory.createFramework(propertyLookup, frameworkFilesystem, dbProjectManager, services)
         } else {
-            throw new IllegalArgumentException("unsupported type: " + type + ", expected one of: " + STORAGE_TYPES)
+            throw new IllegalArgumentException(
+                "Invalid config value for: rundeck.projectsStorageType: $type, expected one of: $STORAGE_TYPES"
+            )
         }
     }
 }
