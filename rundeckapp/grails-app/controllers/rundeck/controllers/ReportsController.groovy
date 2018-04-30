@@ -260,7 +260,7 @@ class ReportsController extends ControllerBase{
             json{
                 def out = [:]
                 if(errmsg){
-                    out.error = [message:flash.erro]
+                    out.error = [message:flash.error]
                 }else{
                     out.since = [
                             count: count,
