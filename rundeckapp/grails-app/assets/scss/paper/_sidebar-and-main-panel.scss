@@ -348,7 +348,8 @@
 
   > .content{
     padding: 30px 15px 0 15px;
-    min-height: calc(100% - 150px);
+    min-height: calc(100% - 100px);
+    // min-height: calc(100% - 150px);
 
     .row .col-md-12 > .title{
       margin-top: 0;

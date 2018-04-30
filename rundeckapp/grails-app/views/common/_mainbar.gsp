@@ -3,8 +3,14 @@
 <g:if test="${pageScope._metaTabPage && pageScope._metaTabPage != 'configure'&& pageScope._metaTabPage != 'projectconfigure'}">
     <g:set var="selectParams" value="${[page: _metaTabPage,project:params.project?:request.project]}"/>
 </g:if>
-<nav class="navbar navbar-default">
+<nav class="navbar navbar-default mainbar">
   <div class="container-fluid">
+    <div class="navbar-minimize">
+      <button class="btn btn-fill btn-icon">
+        <i class="fas fa-ellipsis-v"></i>
+        <i class="fas fa-ellipsis-h"></i>
+      </button>
+    </div>
     <div class="navbar-header">
       <button type="button" class="navbar-toggle">
         <span class="sr-only">Toggle navigation</span>
@@ -39,7 +45,6 @@
                                   action: 'projectHome',
                                   params: [project: project ?: params.project ?: request.project]
                           )}">
-                              <i class="glyphicon glyphicon-tasks"></i>
                               <g:if test="${session.frameworkLabels}">
                                   <g:enc>${project ?session.frameworkLabels[project]: params.project ?
                                           session.frameworkLabels[params.project]: request.project ?
@@ -50,7 +55,7 @@
                               </g:if>
                           </a>
                       </li>
-                  </g:if>                  
+                  </g:if>
                   <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
                       <g:ifPageProperty name='meta.tabpage'>
                           <g:ifPageProperty name='meta.tabpage' equals='projectconfigure'>
@@ -70,7 +75,7 @@
                       </li>
                   </g:if>
                   <g:else>
-                      <li id="projectSelect" class="dropdown disabled">
+                      <li id="projectSelect" class="dropdown disabled not-jesse">
                           <a data-toggle="dropdown" href="#" class="disabled">
                               <i class="caret"></i>
                           </a>
@@ -108,11 +113,11 @@
         <g:if test="${session?.user && request.subject}">
             <li id="appAdmin">
                 <bs:dropdownToggle css="toptab ${projconfigselected}">
-                    <g:icon name="cog"/>
+                  <i class="fas fa-cog fa-2x"></i>
                 </bs:dropdownToggle>
                 <g:render template="/menu/sysConfigNavMenu"/>
             </li>
-            <li>
+            <li id="appUser">
                 <bs:dropdownToggle id="userLabel" >
                     ${session.user}
                 </bs:dropdownToggle>
@@ -133,3 +138,11 @@
     </div>
   </div>
 </nav>
+<g:javascript>
+  jQuery(function(){
+    jQuery('.navbar-minimize button').click(function(){
+      jQuery('body').toggleClass('sidebar-mini');
+    });
+
+  })
+</g:javascript>

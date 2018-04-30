@@ -41,7 +41,7 @@
     <asset:stylesheet href="app.scss.css"/>
     <asset:stylesheet href="custom.less.css"/>
     <!-- <asset:stylesheet href="app.less.css"/> -->
-    <asset:stylesheet href="rundeck1.css"/>
+    <!-- <asset:stylesheet href="rundeck1.css"/> -->
     <asset:stylesheet href="ansicolor.css"/>
     <asset:stylesheet href="github-markdown.css"/>
     <asset:stylesheet href="jquery-ui.css"/>
@@ -131,6 +131,7 @@
     <div class="sidebar" data-background-color="black" data-active-color="danger">
       <div class="sidebar-wrapper">
           <g:render template="/common/sidebar"/>
+          <div class="sidebar-modal-backdrop"></div>
       </div>
     </div>
     <div class="main-panel">

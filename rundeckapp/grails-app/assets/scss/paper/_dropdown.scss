@@ -63,28 +63,32 @@
   }
 
 
-
-  &:before{
-    border-bottom: 11px solid $medium-pale-bg;
-    border-left: 11px solid rgba(0, 0, 0, 0);
-    border-right: 11px solid rgba(0, 0, 0, 0);
-    content: "";
-    display: inline-block;
-    position: absolute;
-    right: 12px;
-    top: -12px;
-  }
-
-  &:after{
-    border-bottom: 11px solid $white-color;
-    border-left: 11px solid rgba(0, 0, 0, 0);
-    border-right: 11px solid rgba(0, 0, 0, 0);
-    content: "";
-    display: inline-block;
-    position: absolute;
-    right: 12px;
-    top: -11px;
-  }
+  // REMOVED
+  // Why: because I hate the triangle that points to the bottom.
+  // It means you have to align the dropup/down UI over a very particular part
+  // of the UI and that's not as easy as it sounds
+  // 
+  // &:before{
+  //   border-bottom: 11px solid $medium-pale-bg;
+  //   border-left: 11px solid rgba(0, 0, 0, 0);
+  //   border-right: 11px solid rgba(0, 0, 0, 0);
+  //   content: "";
+  //   display: inline-block;
+  //   position: absolute;
+  //   right: 12px;
+  //   top: -12px;
+  // }
+  //
+  // &:after{
+  //   border-bottom: 11px solid $white-color;
+  //   border-left: 11px solid rgba(0, 0, 0, 0);
+  //   border-right: 11px solid rgba(0, 0, 0, 0);
+  //   content: "";
+  //   display: inline-block;
+  //   position: absolute;
+  //   right: 12px;
+  //   top: -11px;
+  // }
 
 
   .dropup &,

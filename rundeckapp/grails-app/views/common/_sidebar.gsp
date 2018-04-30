@@ -33,18 +33,20 @@
         <g:set var="brandDefaultHtml"
                value="${g.message(code: 'main.app.brand.default.html',default:'')}"/>
         <i class="rdicon app-logo"></i>
-        <g:if test="${brandHtml}">
-            ${enc(sanitize:brandHtml)}
-        </g:if>
-        <g:elseif test="${appTitle}">
-            ${appTitle}
-        </g:elseif>
-        <g:elseif test="${brandDefaultHtml}">
-            ${enc(sanitize:brandDefaultHtml)}
-        </g:elseif>
-        <g:else>
-            ${appDefaultTitle}
-        </g:else>
+        <span class="appTitle">
+          <g:if test="${brandHtml}">
+              ${enc(sanitize:brandHtml)}
+          </g:if>
+          <g:elseif test="${appTitle}">
+              ${appTitle}
+          </g:elseif>
+          <g:elseif test="${brandDefaultHtml}">
+              ${enc(sanitize:brandDefaultHtml)}
+          </g:elseif>
+          <g:else>
+              ${appDefaultTitle}
+          </g:else>
+        </span>
     </a>
 </div>
 
@@ -80,6 +82,7 @@
 <g:if test="${params.project ?: request.project}">
     <li class="${enc(attr: wfselected)}">
         <g:link controller="menu" action="jobs" class=" toptab ${enc(attr: wfselected)}" params="[project: params.project ?: request.project]">
+            <i class="fas fa-tasks"></i>
             <p>
               <g:message code="gui.menu.Workflows"/>
             </p>
@@ -87,6 +90,7 @@
     </li>
     <li class="${enc(attr:resselected)}">
         <g:link controller="framework" action="nodes" class=" toptab ${enc(attr: resselected)}" params="[project: params.project ?: request.project]">
+            <i class="fas fa-sitemap"></i>
             <p>
               <g:message code="gui.menu.Nodes"/>
             </p>
@@ -95,6 +99,7 @@
     <g:if test="${auth.adhocAllowedTest(action: AuthConstants.ACTION_RUN, project: params.project ?: request.project)}">
         <li class="${enc(attr: adhocselected)}">
             <g:link controller="framework" action="adhoc" class=" toptab ${enc(attr: adhocselected)}" params="[project: params.project ?: request.project]">
+                <i class="fas fa-terminal"></i>
                 <p>
                   <g:message code="gui.menu.Adhoc"/>
                 </p>
@@ -103,6 +108,7 @@
     </g:if>
     <li class="${enc(attr: eventsselected)}">
       <g:link controller="reports" action="index" class=" toptab ${enc(attr: eventsselected)}" params="[project: params.project ?: request.project]">
+        <i class="fas fa-history"></i>
         <p>
           <g:message code="gui.menu.Events"/>
         </p>
@@ -131,19 +137,15 @@
            )}"/>
 
     <g:if test="${projConfigAuth||projACLAuth}">
-        <li class="dropdown ${enc(attr: projconfigselected)}" id="projectAdmin">
-            <bs:dropdownToggle css="toptab ${projconfigselected}">
-                <p>
-                  <g:message code="Project"/>
-                </p>
-                <g:if test="${request.getAttribute(RequestConstants.PAGE)}">
-                    <g:ifPageProperty name='meta.projtabtitle'>
-                        <g:icon name="menu-right"/>
-                        <g:pageProperty name='meta.projtabtitle'/>
-                    </g:ifPageProperty>
-                </g:if>
-            </bs:dropdownToggle>
-            <g:render template="/menu/projectConfigNavMenu"/>
+        <li class="${enc(attr: projconfigselected)}" id="projectAdmin">
+          <a href="#" data-toggle="collapse" href="javascript:void(0)">
+            <i class="fas fa-clipboard-list"></i>
+            <p>
+              <g:message code="Project"/>
+              <b class="caret"></b>
+            </p>
+          </a>
+          <g:render template="/menu/sidebarProjectMenu"/>
         </li>
     </g:if>
 </g:if>
@@ -195,3 +197,12 @@
         </auth:resourceAllowed>
     </g:ifExecutionMode>
 </g:if>
+<g:javascript>
+  jQuery(function(){
+    jQuery('.sidebar-wrapper a[data-toggle="collapse"]').click(function(){
+      jQuery(this).next().slideToggle();
+      jQuery(this).toggleClass('subnav-open');
+    });
+
+  })
+</g:javascript>
