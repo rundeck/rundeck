@@ -64,7 +64,6 @@ dependencies {
         'com.fasterxml.jackson.core:jackson-core:2.8.11',
         'com.fasterxml.jackson.core:jackson-annotations:2.8.0',
         'org.yaml:snakeyaml:1.14',
-        'com.google.guava:guava:24.1-jre',
         'com.squareup.retrofit2:retrofit:2.2.0',
         'com.squareup.retrofit2:converter-jackson:2.2.0'
 
