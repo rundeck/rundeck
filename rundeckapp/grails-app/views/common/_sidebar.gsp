@@ -166,8 +166,28 @@
             <li class="active">
                 <a href="">
                     <g:icon name="menu-right"/>
-                    <g:pageProperty name='meta.tabtitle'/>
+                    <p>
+                      <g:pageProperty name='meta.tabtitle'/>
+                    </p>
                 </a>
+            </li>
+            <li>
+              <a href="#" data-toggle="collapse" class="subnav-open">
+                <i class="fas fa-clipboard-list"></i>
+                <p>
+                  <g:message code="Projects"/>
+                  <b class="caret"></b>
+                </p>
+              </a>
+              <g:if test="${session.frameworkProjects}">
+                <g:render template="/menu/sidebarProjectsMenu"
+                    model="${[
+                            projects    : session.frameworkProjects,
+                            labels      : session.frameworkLabels,
+                            project     : params.project ?: request.project,
+                            selectParams: selectParams
+                    ]}"/>
+              </g:if>
             </li>
         </ul>
     </g:ifPageProperty>

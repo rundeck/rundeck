@@ -75,20 +75,19 @@
                       </li>
                   </g:if>
                   <g:else>
-                      <li id="projectSelect" class="dropdown disabled not-jesse">
+                      <li id="projectSelect" class="dropdown disabled">
                           <a data-toggle="dropdown" href="#" class="disabled">
                               <i class="caret"></i>
                           </a>
                       </li>
                   </g:else>
-
                   <g:unless test="${session.frameworkProjects}">
                       <g:javascript>
-                  jQuery(function(){
-                      jQuery('#projectSelect').load('${enc(js:createLink(controller: 'framework', action: 'projectSelect', params: selectParams))}',{},function(x,r){
-                          jQuery('#projectSelect').removeClass('disabled');
-                      });
-                  });
+                        jQuery(function(){
+                            jQuery('#projectSelect').load('${enc(js:createLink(controller: 'framework', action: 'projectSelect', params: selectParams))}',{},function(x,r){
+                                jQuery('#projectSelect').removeClass('disabled');
+                            });
+                        });
                       </g:javascript>
                   </g:unless>
               </g:if>
@@ -112,10 +111,12 @@
         </g:ifServletContextAttributeExists>
         <g:if test="${session?.user && request.subject}">
             <li id="appAdmin">
-                <bs:dropdownToggle css="toptab ${projconfigselected}">
+              <div class="dropdown">
+                <a data-toggle="dropdown" class="dropdown-toggle">
                   <i class="fas fa-cog fa-2x"></i>
-                </bs:dropdownToggle>
+                </a>
                 <g:render template="/menu/sysConfigNavMenu"/>
+              </div>
             </li>
             <li id="appUser">
                 <bs:dropdownToggle id="userLabel" >

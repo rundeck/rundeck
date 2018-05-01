@@ -51,7 +51,7 @@
 
 .checkbox input[type="checkbox"]:checked + label::after,
 .checkbox input[type="checkbox"]:not(:disabled):hover + label::after{
-  font-family: 'FontAwesome';
+  font-family: 'Font Awesome 5 Free';
   content: "\f00c";
 }
 
@@ -130,8 +130,9 @@
 }
 
 .radio label::before {
-  font-family: 'FontAwesome';
-  content: "\f10c";
+  font-family: 'Font Awesome 5 Free';
+  // content: "\f10c";
+  content: "\f111";
   font-size: 22px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -145,7 +146,7 @@
 }
 
 .radio input[type="radio"]:not(:disabled):hover + label::before{
-  font-family: 'FontAwesome';
+  font-family: 'Font Awesome 5 Free';
   content: "\f192";
   color: $font-color;
   opacity: .50;
@@ -154,7 +155,7 @@
 .radio label::after {
   display: inline-block;
   position: absolute;
-  font-family: 'FontAwesome';
+  font-family: 'Font Awesome 5 Free';
   content: "\f192";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

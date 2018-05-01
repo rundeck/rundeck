@@ -62,7 +62,7 @@
             action="projectAcls"
             params="[project: params.project]"
       >
-        <span class="sidebar-min"><i class="fas fa-unlock-alt"></i></span> <span class="sidebar-normal"><g:message code="gui.menu.AccessControl"/></span>
+        <span class="sidebar-mini"><i class="fas fa-unlock-alt"></i></span> <span class="sidebar-normal"><g:message code="gui.menu.AccessControl"/></span>
       </g:link>
     </li>
     <li>
@@ -73,7 +73,7 @@
             action="editProjectFile"
             params="[project: params.project, filename: 'readme.md']"
       >
-        <span class="sidebar-min"><i class="far fa-file-alt"></i></span> <span class="sidebar-normal"><g:message code="edit.readme.ellipsis"/></span>
+        <span class="sidebar-mini"><i class="far fa-file-alt"></i></span> <span class="sidebar-normal"><g:message code="edit.readme.ellipsis"/></span>
       </g:link>
     </li>
 
@@ -85,7 +85,7 @@
             action="editProjectFile"
             params="[project: params.project, filename: 'motd.md']"
       >
-        <span class="sidebar-min"><i class="fas fa-comment-alt"></i></span> <span class="sidebar-normal"><g:message code="edit.message.of.the.day"/></span>
+        <span class="sidebar-mini"><i class="fas fa-comment-alt"></i></span> <span class="sidebar-normal"><g:message code="edit.message.of.the.day"/></span>
       </g:link>
     </li>
     <li>
@@ -96,7 +96,7 @@
             action="index"
             params="[project: params.project]"
       >
-        <span class="sidebar-min"><i class="fas fa-cogs"></i></span> <span class="sidebar-normal"><g:message code="project.admin.menu.Scm.title"/></span>
+        <span class="sidebar-mini"><i class="fas fa-cogs"></i></span> <span class="sidebar-normal"><g:message code="project.admin.menu.Scm.title"/></span>
       </g:link>
     </li>
     <li>
@@ -107,7 +107,7 @@
             action="projectExport"
             params="[project: params.project]"
       >
-        <span class="sidebar-min"><i class="fas fa-download"></i></span> <span class="sidebar-normal"><g:message code="export.archive.ellipsis"/></span>
+        <span class="sidebar-mini"><i class="fas fa-download"></i></span> <span class="sidebar-normal"><g:message code="export.archive.ellipsis"/></span>
       </g:link>
     </li>
     <li>
@@ -118,7 +118,7 @@
             action="projectImport"
             params="[project: params.project]"
       >
-        <span class="sidebar-min"><i class="fas fa-upload"></i></span> <span class="sidebar-normal"><g:message code="import.archive.ellipsis"/></span>
+        <span class="sidebar-mini"><i class="fas fa-upload"></i></span> <span class="sidebar-normal"><g:message code="import.archive.ellipsis"/></span>
       </g:link>
     </li>
     <li>
@@ -130,7 +130,7 @@
             params="[project: params.project]"
             icon="remove"
       >
-        <span class="sidebar-min"><i class="fas fa-trash"></i></span> <span class="sidebar-normal"><g:message code="delete.project.ellipsis"/></span>
+        <span class="sidebar-mini"><i class="fas fa-trash"></i></span> <span class="sidebar-normal"><g:message code="delete.project.ellipsis"/></span>
       </g:link>
     </li>
   <ul>
