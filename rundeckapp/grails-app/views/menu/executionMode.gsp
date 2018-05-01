@@ -73,14 +73,18 @@
                 </p>
               </div>
               <g:ifExecutionMode>
-              <p class="col-sm-12 help-block text-info">
-                <g:message code="action.executionMode.set.passive.help"/>
-              </p>
+              <div class="col-xs-12">
+                <div class="alert alert-info">
+                  <span><g:message code="action.executionMode.set.passive.help"/></span>
+                </div>
+              </div>
               </g:ifExecutionMode>
               <g:ifExecutionMode passive="true">
-                <p class="col-sm-12 help-block text-info">
-                  <g:message code="action.executionMode.set.active.help"/>
-                </p>
+                <div class="col-xs-12">
+                  <div class="alert alert-info">
+                    <span><g:message code="action.executionMode.set.active.help"/></span>
+                  </div>
+                </div>                
               </g:ifExecutionMode>
             </div>
           </div>
