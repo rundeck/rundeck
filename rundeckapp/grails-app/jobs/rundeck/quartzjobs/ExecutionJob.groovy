@@ -436,9 +436,10 @@ class ExecutionJob implements InterruptableJob {
         def boolean retrysuccess
         def Throwable exc
         (retrysuccess, exc) = withRetry(
-                finalizeRetryMax,
-                finalizeRetryDelay,
-                "Execution ${execution.id} finishExecution:"
+            finalizeRetryMax,
+            finalizeRetryDelay,
+            "Execution ${execution.id} finishExecution:",
+            executionService.&isApplicationShutdown
         ) {
             executionUtilService.finishExecution(execmap)
             true
@@ -465,10 +466,11 @@ class ExecutionJob implements InterruptableJob {
      * @param max maximum times to retry, or -1 for no maximum
      * @param sleep millisecond sleep between retries
      * @param identity string identifying the action
+     * @param shortcircuit optional closure called each time, if it returns true the retry loop is halted
      * @param action action to retry
      * @return true if execution of action was accomplished without exception
      */
-    def List withRetry(int max, long sleep, String identity, Closure action){
+    def List withRetry(int max, long sleep, String identity, Closure shortcircuit = null, Closure action) {
         int count=0
         boolean complete=false
         def backoff=1.5
@@ -477,7 +479,8 @@ class ExecutionJob implements InterruptableJob {
         }
         long newsleep=sleep+jitter()
         Throwable caught=null
-        while(!complete && (max>count || max<0)){
+        def isshortcircuit = shortcircuit?.call()
+        while (!complete && (max > count || max < 0) && !(isshortcircuit)) {
             if(count>0){
                 log.warn(identity + " failed (attempts=${count}/${max}), retrying in " + newsleep + "ms")
                 try {
@@ -501,11 +504,14 @@ class ExecutionJob implements InterruptableJob {
                 caught=t
                 log.error(identity + " caught exception: ${caught.message}", caught)
             }
+            isshortcircuit = shortcircuit?.call()
         }
         if(!complete && caught){
             log.error(identity + " failed (attempts=${count}/${max}) with exception: ${caught.message}")
         }else if(complete && count>1){
             log.warn(identity + " completed after (attempts=${count}/${max})")
+        } else if (!complete && isshortcircuit) {
+            caught = new Exception("retry halted due to application shutdown")
         }
         return [complete,caught]
     }
@@ -566,7 +572,9 @@ class ExecutionJob implements InterruptableJob {
         //attempt to save execution state, with retry, in case DB connection fails
         if(finalizeRetryMax>1) {
             (saveStateComplete, saveStateException) = withRetry(finalizeRetryMax, finalizeRetryDelay,
-                                                                "Execution ${execution.id} save result status:", action
+                                                                "Execution ${execution.id} save result status:",
+                                                                executionService.&isApplicationShutdown,
+                                                                action
             )
             if (!saveStateComplete) {
                 log.error("ExecutionJob: Failed to save execution state for ${execution.id}, after retrying ${finalizeRetryMax} times: ${saveStateException}")
@@ -578,7 +586,12 @@ class ExecutionJob implements InterruptableJob {
             //update ScheduledExecution statistics for successful execution
             def time = dateCompleted.time - execution.dateStarted.time
             def savedJobState = false
-            withRetry(statsRetryMax, statsRetryDelay, "Execution ${execution.id} update job stats (${scheduledExecutionId}):") {
+            withRetry(
+                statsRetryMax,
+                statsRetryDelay,
+                "Execution ${execution.id} update job stats (${scheduledExecutionId}):",
+                executionService.&isApplicationShutdown
+            ) {
                 savedJobState = executionService.updateScheduledExecStatistics(scheduledExecutionId, execution.id, time)
                 savedJobState
             }

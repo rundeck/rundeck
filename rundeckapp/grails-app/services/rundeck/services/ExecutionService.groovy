@@ -164,6 +164,16 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         }
     }
 
+    private boolean applicationIsShutdown
+
+    public boolean isApplicationShutdown() {
+        return applicationIsShutdown
+    }
+
+    @PreDestroy
+    void cleanUp() {
+        applicationIsShutdown = true;
+    }
     /**
      * Render execution document for api response
      */
