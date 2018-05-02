@@ -1546,4 +1546,139 @@ class ScheduledExecutionControllerSpec extends Specification {
         'a'     | 'a'       | true
 
     }
+
+
+
+    def "api retry job option params"() {
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+        def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                status: 'FAILED',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList:'fwnode',
+                failedNodeList: 'nodec xyz,nodea',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: se
+        ).save()
+
+
+        when:
+        request.api_version=23
+        request.method='POST'
+        params.executionId = exec.id.toString()
+        params.id = se.extid.toString()
+        params.putAll(paramoptions)
+        def result=controller.apiJobRetry()
+
+        then:
+
+        1 * controller.apiService.requireVersion(_,_,23)>>true
+        1 * controller.apiService.requireApi(_,_)>>true
+        1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString())>>[:]
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,_)
+        1 * controller.frameworkService.authorizeProjectJobAll(_,_,['run'],_)>>true
+        3 * controller.apiService.requireExists(_,_,_)>>true
+        1 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+        ) >> [success: true]
+        1 * controller.executionService.respondExecutionsXml(_,_,_)
+        0 * controller.executionService._(*_)
+
+        where:
+
+        paramoptions                               | _
+        [option: [abc: 'tyz', def: 'xyz']]         | _
+        ['option.abc': 'tyz', 'option.def': 'xyz'] | _
+    }
+    def "api retry job option params json"() {
+        given:
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+        controller.apiService = Mock(ApiService)
+        controller.executionService = Mock(ExecutionService)
+        controller.frameworkService = Mock(FrameworkService)
+        def se = new ScheduledExecution(
+                uuid: 'testUUID',
+                jobName: 'test1',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
+        def exec = new Execution(
+                user: "testuser",
+                project: "project1",
+                loglevel: 'WARN',
+                status: 'FAILED',
+                doNodedispatch: true,
+                filter:'name: nodea',
+                succeededNodeList:'fwnode',
+                failedNodeList: 'nodec xyz,nodea',
+                workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
+                scheduledExecution: se
+        ).save()
+
+        when:
+        request.api_version = 23
+        request.method = 'POST'
+        params.executionId = exec.id.toString()
+        params.id = se.extid.toString()
+        request.json = [
+                options: [abc: 'tyz', def: 'xyz']
+        ]
+        def result = controller.apiJobRetry()
+
+        then:
+
+        1 * controller.apiService.requireVersion(_,_,23)>>true
+        1 * controller.apiService.requireApi(_, _) >> true
+        1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> [:]
+        1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)
+        1 * controller.frameworkService.authorizeProjectJobAll(_, _, ['run'], _) >> true
+        3 * controller.apiService.requireExists(_, _, _) >> true
+        1 * controller.executionService.executeJob(
+                _,
+                _,
+                _,
+                { it['option.abc'] == 'tyz' && it['option.def'] == 'xyz' }
+        ) >> [success: true]
+        1 * controller.executionService.respondExecutionsXml(_, _, _)
+        0 * controller.executionService._(*_)
+    }
 }
