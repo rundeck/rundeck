@@ -503,7 +503,10 @@ function getCurSEID(){
             <div class="${fieldColSize}">
 
                 <div  id="editoptssect" class="rounded">
-                    <g:render template="/scheduledExecution/detailsOptions" model="${[options:scheduledExecution?.options,edit:true]}"/>
+                    <%
+                        def options = ScheduledExecution.get(scheduledExecution.id)?.options
+                    %>
+                    <g:render template="/scheduledExecution/detailsOptions" model="${[options:options,edit:true]}"/>
                     <g:if test="${scheduledExecution && scheduledExecution.argString}">
                         <g:render template="/execution/execArgString" model="[argString: scheduledExecution.argString]"/>
                     </g:if>
