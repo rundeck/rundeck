@@ -3649,8 +3649,6 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         if (request.format == 'json') {
-            request.JSON.name = e.failedNodeList
-
             request.JSON.asUser = request.JSON.asUser?:e.user
             request.JSON.loglevel = request.JSON.loglevel?:e.loglevel
             if(request.JSON.options){
@@ -3664,8 +3662,6 @@ class ScheduledExecutionController  extends ControllerBase{
                 request.JSON.argString = request.JSON.argString?:e.argString
             }
         }else{
-            params.name=e.failedNodeList
-
             params.asUser=params.asUser?:e.user
             params.loglevel=params.loglevel?:e.loglevel
             if(params.option){
@@ -3679,6 +3675,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 params.argString = params.argString?:e.argString
             }
         }
+        params.name=e.failedNodeList
 
         apiJobRun()
     }
