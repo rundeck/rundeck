@@ -20,6 +20,7 @@
 . /lib/lsb/init-functions
 
 prog="rundeckd"
+USER="rundeck"
 
 [ -e /etc/default/$prog ] && . /etc/default/$prog
 
@@ -27,42 +28,46 @@ prog="rundeckd"
 
 RETVAL=0
 PIDFILE=/var/run/$prog.pid
+DAEMON="${JAVA_HOME:-/usr}/bin/java"
+DAEMON_ARGS="$RDECK_JVM $RDECK_JVM_OPTS -cp $BOOTSTRAP_CP com.dtolabs.rundeck.RunServer $RDECK_BASE"
+LOG="/var/log/rundeck/service.log"
+
 
 start() {
-	echo -n $"Starting $prog: "
-	cd /var/lib/rundeck
-	nohup su -s /bin/bash rundeck -c "$rundeckd" &>>/var/log/rundeck/service.log &
+	pid=$(pidofproc -p $PIDFILE rundeckd)
+	if [ -n "$pid" ] ; then
+		echo "$prog already running!"
+		exit 0
+	fi
+
+	cd /var/log/rundeck
+  start-stop-daemon --start --quiet --chuid $USER:$USER \
+                    --make-pidfile --pidfile $PIDFILE \
+                    --background --startas /bin/bash -- \
+                    -c "exec $DAEMON $DAEMON_ARGS >> $LOG 2>&1" 
 
 	RETVAL=$?
-	PID=$!
-	echo $PID > $PIDFILE
-	if [ $RETVAL -eq 0 ]; then 
-		touch /var/run/$prog
-		log_success_msg
+	if [ $RETVAL -eq 0 ]; then
+		log_success_msg "Starting $prog"
+    log_action_end_msg $RETVAL
 	else
 		log_failure_msg
 	fi
-	echo
 	return $RETVAL
 }
 
 stop() {
-	echo -n $"Stopping $prog: "
-	killproc -p $PIDFILE "$rundeckd"
+	start-stop-daemon --stop --quiet --oknodo --pidfile $PIDFILE
 	RETVAL=$?
-	echo
-	[ $RETVAL -eq 0 ] && rm -f /var/run/$prog
-	return $RETVAL
+        if [ $RETVAL -eq 0 ]; then
+                log_success_msg "Stoping $prog"
+                log_action_end_msg $RETVAL
+        else
+                log_failure_msg
+        fi
+        return $RETVAL
 }
 
-### NOT USED
-reload() {
-	echo -n $"Reloading $prog: "
-	killproc -p $PIDFILE "$rundeckd" -HUP
-	RETVAL=$?
-	echo
-	return $RETVAL
-}
 
 case "$1" in
 	start)
@@ -73,10 +78,12 @@ case "$1" in
 		;;
 	force-reload)
 		stop
+                sleep 5
 		start
 		;;
 	restart)
 		stop
+                sleep 5
 		start
 		;;
 	condrestart)
