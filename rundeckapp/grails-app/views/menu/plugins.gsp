@@ -38,17 +38,17 @@ To change this template use File | Settings | File Templates.
         <div class="card">
           <div class="card-content">
             <div class="row">
-              <div class="col-xs-10">
+              <div class="col-xs-9">
                 <div class="text-info">
                   <g:markdown><g:message code="page.Plugins.description2.md"/></g:markdown>
                 </div>
               </div>
-              <div class="col-xs-2">
+              <div class="col-xs-3">
                 <g:set var="pluginParams" value="${g.helpLinkParams(campaign: 'getpluginlink')}"/>
                 <g:set var="pluginUrl" value="http://rundeck.org/plugins/?${pluginParams}"/>
                 <g:set var="pluginLinkUrl"
                 value="${grailsApplication.config?.rundeck?.gui?.pluginLink ?: pluginUrl}"/>
-                <a href="${enc(attr:pluginLinkUrl)}" class="btn btn-success ">
+                <a href="${enc(attr:pluginLinkUrl)}" class="btn btn-success pull-right">
                   <g:message code="gui.admin.GetPlugins" default="Get Plugins"/>
                   <i class="glyphicon glyphicon-arrow-right"></i>
                 </a>

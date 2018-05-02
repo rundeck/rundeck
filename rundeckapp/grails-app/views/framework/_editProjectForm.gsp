@@ -80,15 +80,15 @@
             <g:set var="nkey" value="${g.rkey()}"/>
             <g:set var="isSelected" value="${defaultNodeExec == description.name}"/>
             <div class="radio">
-                <label>
-                    <g:radio
-                        name="defaultNodeExec"
-                        value="${nex}"
-                        class="nexec"
-                        id="${nkey+'_input'}"
-                        checked="${isSelected}"/>
-                    <b><g:enc>${description.title}</g:enc></b>
-                </label>
+                <g:radio
+                    name="defaultNodeExec"
+                    value="${nex}"
+                    class="nexec"
+                    id="${nkey+'_input'}"
+                    checked="${isSelected}"/>
+                  <label>
+                      <b><g:enc>${description.title}</g:enc></b>
+                  </label>
                 <span class="help-block"><g:enc>${description.description}</g:enc></span>
             </div>
                 <g:hiddenField name="nodeexec.${nex}.type" value="${description.name}"/>
@@ -130,13 +130,13 @@
             <g:set var="nkey" value="${g.rkey()}"/>
             <g:set var="isSelected" value="${defaultFileCopy == description.name}"/>
             <div class="radio">
+              <g:radio
+                  name="defaultFileCopy"
+                  value="${nex}"
+                  class="fcopy"
+                  id="${nkey+'_input'}"
+                  checked="${isSelected}"/>
                 <label>
-                    <g:radio
-                        name="defaultFileCopy"
-                        value="${nex}"
-                        class="fcopy"
-                        id="${nkey+'_input'}"
-                        checked="${isSelected}"/>
                     <b><g:enc>${description.title}</g:enc></b>
                 </label>
                 <span class="help-block"><g:enc>${description.description}</g:enc></span>

@@ -111,7 +111,7 @@
         </g:ifServletContextAttributeExists>
         <g:if test="${session?.user && request.subject}">
             <li id="appAdmin">
-              <div class="dropdown">
+              <div class="dropdown" style="margin-top:3px;">
                 <a data-toggle="dropdown" class="dropdown-toggle">
                   <i class="fas fa-cog fa-2x"></i>
                 </a>

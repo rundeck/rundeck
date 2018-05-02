@@ -30,6 +30,7 @@
 <g:set var="valueColTypeSplit80" value="col-sm-8"/>
 <g:set var="valueColTypeSplit20" value="col-sm-2"/>
 <g:set var="offsetColType" value="col-sm-10 col-sm-offset-2"/>
+<g:set var="fullWidthCol" value="col-xs-12"/>
 <g:set var="formControlType" value="form-control input-sm"/>
 <g:set var="formControlCodeType" value="form-control code apply_ace"/>
 <g:set var="hasError" value="${error ? 'has-error' : ''}"/>
@@ -49,20 +50,19 @@
 </g:if>
 <g:elseif test="${prop.type.toString()=='Boolean'}">
     <g:set var="fieldid" value="${g.rkey()}"/>
-    <div class="${offsetColType}">
+    <div class="${fullWidthCol}">
         <g:hiddenField name="${origfieldname}" value="${values && values[prop.name] ? values[prop.name] : ''}"/>
         <div class="checkbox">
-            <label
-                   for="${enc(attr:fieldid)}">
-                <g:checkBox name="${fieldname}" value="true"
-                            checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}"
-                            id="${fieldid}"/>
+          <g:checkBox name="${fieldname}" value="true"
+                      checked="${values&&values[prop.name]?values[prop.name]=='true':prop.defaultValue=='true'}"
+                      id="${fieldid}"/>
+          <label for="${enc(attr:fieldid)}">
                 <stepplugin:message
                         service="${service}"
                         name="${provider}"
                         code="${messagePrefix}property.${prop.name}.title"
                         default="${prop.title ?: prop.name}"/>
-            </label>
+          </label>
         </div>
     </div>
 </g:elseif>
@@ -135,16 +135,11 @@
         <div class=" grid">
 
             <g:each in="${propSelectValues}" var="propval">
-                <div class="optionvaluemulti ">
-                    <label class="grid-row optionvaluemulti">
-                        <span class="grid-cell grid-front">
-                            <g:checkBox name="${fieldname}" checked="${propval.value in defvalset}"
-                                   value="${propval.value}"/>
-                        </span>
-                        <span class="grid-cell grid-rest">
-                            ${propval.label}
-                        </span>
-                    </label>
+                <div class="optionvaluemulti checkbox">
+                  <g:checkBox name="${fieldname}" checked="${propval.value in defvalset}" value="${propval.value}"/>
+                  <label class="grid-row optionvaluemulti">
+                    ${propval.label}
+                  </label>
                 </div>
             </g:each>
         </div>

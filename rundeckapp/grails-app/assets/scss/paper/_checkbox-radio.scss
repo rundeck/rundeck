@@ -53,6 +53,7 @@
 .checkbox input[type="checkbox"]:not(:disabled):hover + label::after{
   font-family: 'Font Awesome 5 Free';
   content: "\f00c";
+  font-weight: 700;
 }
 
 .checkbox input[type="checkbox"]:checked + label::before{
