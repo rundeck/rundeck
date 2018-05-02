@@ -3631,14 +3631,14 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     def apiJobRetry() {
-        if (!apiService.requireApi(request, response)) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V23)) {
             return
         }
-        String jobid = params.id
+        String jobId = params.id
         String execId = params.executionId
 
         Execution e = Execution.get(execId)
-        if(e?.scheduledExecution?.extid != jobid){
+        if(e?.scheduledExecution?.extid != jobId){
             e = null
         }
         if (!apiService.requireExists(response, e, ['Execution ID', execId])) {
@@ -3648,10 +3648,37 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
 
-        params.name=e.failedNodeList
-        params.argString = e.argString
-        params.asUser=e.user
-        params.loglevel=e.loglevel
+        if (request.format == 'json') {
+            request.JSON.name = e.failedNodeList
+
+            request.JSON.asUser = request.JSON.asUser?:e.user
+            request.JSON.loglevel = request.JSON.loglevel?:e.loglevel
+            if(request.JSON.options){
+                def map = FrameworkService.parseOptsFromString(e.argString)
+                map.each{k,v ->
+                    if(!request.JSON.options.containsKey(k)){
+                        request.JSON.options.put(k,v)
+                    }
+                }
+            }else if(!request.JSON.argString){
+                request.JSON.argString = request.JSON.argString?:e.argString
+            }
+        }else{
+            params.name=e.failedNodeList
+
+            params.asUser=params.asUser?:e.user
+            params.loglevel=params.loglevel?:e.loglevel
+            if(params.option){
+                def map = FrameworkService.parseOptsFromString(e.argString)
+                map.each{k,v ->
+                    if(!params.option.containsKey(k)){
+                        params.option.put(k,v)
+                    }
+                }
+            }else if(!params.argString){
+                params.argString = params.argString?:e.argString
+            }
+        }
 
         apiJobRun()
     }
