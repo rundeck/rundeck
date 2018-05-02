@@ -2072,3 +2072,41 @@ span.apitoken.empty {
 .embed .node_entry.glow {
     background: #cfc;
 }
+
+/** Badge Environment **/
+ #block-environment{
+    left:50%;
+    right:50%;
+    transform: translate(-50%, -50%);
+    position:absolute;
+    top:50px;
+    width:180px;
+    z-index: 800;
+}
+
+.badge-environment {
+    background-color: #000;
+    z-index:800;
+    -webkit-transform:skew(30deg);
+    -moz-transform:skew(30deg);
+    -o-transform:skew(30deg);
+    tranform:skew(30deg);
+    border-radius:0;
+    display: block;
+}
+
+.badge-environment-text {
+    color: #fff;
+    display: block;
+    -webkit-transform: skew(-30deg);
+    -moz-transform: skew(-30deg);
+    -o-transform: skew(-30deg);
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 1px;
+    font-size: 12px;
+}
+
+.open{
+    z-index: 900;
+}
