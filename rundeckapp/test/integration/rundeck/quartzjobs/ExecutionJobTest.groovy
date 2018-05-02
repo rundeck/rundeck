@@ -496,7 +496,7 @@ class ExecutionJobTest extends GroovyTestCase{
     void testWithRetryFailure(){
         def job=new ExecutionJob()
         def retrySuccess,exc
-        (retrySuccess,exc)=job.withRetry(2,1,"test1",failedClos)
+        (retrySuccess,exc)=job.withRetry(2,1,"test1",null,failedClos)
         Assert.assertEquals(false,retrySuccess)
         Assert.assertNull(exc)
     }
@@ -513,7 +513,7 @@ class ExecutionJobTest extends GroovyTestCase{
     void testWithRetryXTimesWithFailure(){
         def job=new ExecutionJob()
         def retrySuccess,exc
-        (retrySuccess,exc)=job.withRetry(3,1,"test1",failXTimes(3))
+        (retrySuccess,exc)=job.withRetry(3,1,"test1",null,failXTimes(3))
         Assert.assertEquals(false,retrySuccess)
         Assert.assertNull(exc)
     }

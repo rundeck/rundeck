@@ -61,6 +61,7 @@ import rundeck.quartzjobs.ExecutionJob
 import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.framework.RundeckProjectConfigurable
 
+import javax.annotation.PreDestroy
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
