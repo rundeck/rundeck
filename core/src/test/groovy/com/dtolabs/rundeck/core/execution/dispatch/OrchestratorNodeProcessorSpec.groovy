@@ -59,7 +59,7 @@ class OrchestratorNodeProcessorSpec extends Specification {
         }
         Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<>()
 
-        def onp = new OrchestratorNodeProcessor(1, false, orchestrator, executions)
+        def onp = new OrchestratorNodeProcessor(1, false, orchestrator, executions, false)
 
         when:
         def result = onp.execute()
@@ -95,7 +95,7 @@ class OrchestratorNodeProcessorSpec extends Specification {
             executions.put(node, { -> new NodeStepResultImpl(node) })
         }
 
-        def onp = new OrchestratorNodeProcessor(1, false, orchestrator, executions)
+        def onp = new OrchestratorNodeProcessor(1, false, orchestrator, executions, false)
 
         when:
         def result = onp.execute()
@@ -132,7 +132,7 @@ class OrchestratorNodeProcessorSpec extends Specification {
         }
 
         when:
-        def onp = new OrchestratorNodeProcessor(-12, false, orchestrator, executions)
+        def onp = new OrchestratorNodeProcessor(-12, false, orchestrator, executions, false)
 
         then:
         IllegalArgumentException e = thrown()
@@ -166,7 +166,7 @@ class OrchestratorNodeProcessorSpec extends Specification {
             executions.put(node, { -> new NodeStepResultImpl(node) })
         }
 
-        def onp = new OrchestratorNodeProcessor(1, false, orchestrator, executions)
+        def onp = new OrchestratorNodeProcessor(1, false, orchestrator, executions, false)
 
         when:
         def result = onp.execute()
@@ -223,7 +223,7 @@ class OrchestratorNodeProcessorSpec extends Specification {
             })
         }
 
-        def onp = new OrchestratorNodeProcessor(1, false, orchestrator, executions)
+        def onp = new OrchestratorNodeProcessor(1, false, orchestrator, executions, false)
 
         expect:
         def result = false
@@ -295,7 +295,7 @@ class OrchestratorNodeProcessorSpec extends Specification {
             })
         }
 
-        def onp = new OrchestratorNodeProcessor(2, false, orchestrator, executions)
+        def onp = new OrchestratorNodeProcessor(2, false, orchestrator, executions, false)
 
         expect:
 
@@ -399,7 +399,7 @@ class OrchestratorNodeProcessorSpec extends Specification {
             })
         }
 
-        def onp = new OrchestratorNodeProcessor(3, false, orchestrator, executions)
+        def onp = new OrchestratorNodeProcessor(3, false, orchestrator, executions, false)
 
         expect:
 

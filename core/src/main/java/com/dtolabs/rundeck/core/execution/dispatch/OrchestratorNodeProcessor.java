@@ -24,6 +24,7 @@ import java.util.concurrent.*;
 import com.dtolabs.rundeck.core.common.INodeEntry;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult;
 import com.dtolabs.rundeck.plugins.orchestrator.Orchestrator;
+import lombok.Builder;
 
 /**
  * OrchestratorNodeProcessor is the class that deals with the concurrent processing of the jobs
@@ -44,11 +45,13 @@ public class OrchestratorNodeProcessor {
     private boolean               cancelOnInterrupt;
     private boolean               interrupted;
 
-    public OrchestratorNodeProcessor(
+    @Builder
+    private OrchestratorNodeProcessor(
         int threadCount,
         boolean keepgoing,
         Orchestrator orchestrator,
-        Map<INodeEntry, Callable<NodeStepResult>> executions
+        Map<INodeEntry, Callable<NodeStepResult>> executions,
+        final boolean cancelOnInterrupt
     ) {
         stop = false;
         if(threadCount<1) {
@@ -65,6 +68,8 @@ public class OrchestratorNodeProcessor {
 
         this.processedNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
         this.interrupted = false;
+
+        this.cancelOnInterrupt = cancelOnInterrupt;
     }
 
     public boolean execute() throws ExecutionException{
@@ -135,22 +140,11 @@ public class OrchestratorNodeProcessor {
 
         //stop indicates a node failed, but success might not
         return !stop && success;
-    }
 
-    public boolean isCancelOnInterrupt() {
-        return cancelOnInterrupt;
-    }
-
-    public void setCancelOnInterrupt(boolean cancelOnInterrupt) {
-        this.cancelOnInterrupt = cancelOnInterrupt;
     }
 
     public boolean isInterrupted() {
         return interrupted;
-    }
-
-    public void setInterrupted(boolean interrupted) {
-        this.interrupted = interrupted;
     }
 
     public class OrchestratorRunnable implements Callable<Boolean> {

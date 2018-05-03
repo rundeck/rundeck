@@ -32,7 +32,6 @@ import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.ExecutionContext;
 import com.dtolabs.rundeck.core.execution.FailedNodesListener;
 import com.dtolabs.rundeck.core.execution.orchestrator.OrchestratorService;
-import com.dtolabs.rundeck.core.execution.service.ProviderCreationException;
 import com.dtolabs.rundeck.core.execution.service.ProviderLoaderException;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepExecutionItem;
@@ -155,8 +154,16 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
         
         
         Orchestrator orchestrator = plugin.createOrchestrator(context, orderedNodes);
-        OrchestratorNodeProcessor processor = new OrchestratorNodeProcessor(context.getThreadCount(), keepgoing, orchestrator, executions);
-        processor.setCancelOnInterrupt(true);
+        OrchestratorNodeProcessor
+            processor =
+            OrchestratorNodeProcessor
+                .builder()
+                .threadCount(context.getThreadCount())
+                .keepgoing(keepgoing)
+                .orchestrator(orchestrator)
+                .executions(executions)
+                .cancelOnInterrupt(true)
+                .build();
         
         try {
             success = processor.execute();
