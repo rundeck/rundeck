@@ -41,7 +41,7 @@ import javax.security.auth.Subject
  * Created by greg on 7/14/15.
  */
 @TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec])
+@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution])
 class ScheduledExecutionControllerSpec extends Specification {
     def setup() {
         mockCodec(URIComponentCodec)

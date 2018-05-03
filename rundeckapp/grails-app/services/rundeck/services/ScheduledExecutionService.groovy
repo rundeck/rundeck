@@ -899,6 +899,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                         '" it is currently being executed: {{Execution ' + found.id + '}}'
                 return [success:false,error:errmsg]
             }
+            def refExec = ReferencedExecution.findAllByScheduledExecution(scheduledExecution)
+            if(refExec){
+                refExec.each { re ->
+                    re.delete()
+                }
+            }
             //unlink any Execution records
             def result = Execution.findAllByScheduledExecution(scheduledExecution)
             if(deleteExecutions){

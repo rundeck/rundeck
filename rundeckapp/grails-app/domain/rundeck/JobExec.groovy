@@ -269,45 +269,10 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
     }
 
     static List<ScheduledExecution> parentList(ScheduledExecution se, int max = 0){
-        def res = JobExec.withCriteria {
-            or{
-                eq('uuid',se.extid)
-                and{
-                    eq('jobName', se.jobName)
-                    eq('jobGroup',se.groupPath)
-                    or{
-                        eq('jobProject','')
-                        isNull('jobProject')
-                        eq('jobProject',se.project)
-                    }
-                }
-            }
-        }
+        def refExecs = ReferencedExecution.findAllByScheduledExecution(se)?.collect{ re ->
+            re.execution?.scheduledExecution
+        }?.unique()
+        refExecs.subList(0, (max!=0 && refExecs.size()>max)?max:refExecs.size())
 
-        if(res){
-            def workflows = Workflow.withCriteria {
-                commands {
-                    or {
-                        res.each {
-                            idEq(it.id)
-                        }
-                    }
-
-                }
-            }
-            if(workflows){
-                def list = ScheduledExecution.withCriteria{
-                    workflow{
-                        or{
-                            workflows.each {
-                                idEq(it.id)
-                            }
-                        }
-                    }
-                    maxResults max
-
-                }
-            }
-        }
     }
 }
