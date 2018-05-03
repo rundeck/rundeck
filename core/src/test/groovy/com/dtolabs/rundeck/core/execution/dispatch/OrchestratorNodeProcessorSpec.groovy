@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResult
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.NodeStepResultImpl
 import com.dtolabs.rundeck.plugins.orchestrator.Orchestrator
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.util.concurrent.Callable
 import java.util.concurrent.CountDownLatch
@@ -247,6 +248,93 @@ class OrchestratorNodeProcessorSpec extends Specification {
         result
         returned == [node1,node2]
         ran == [node1,node2]
+    }
+    /**
+     * interrupt processor while thread is running, with cancelOnInterrupt option
+     * @return
+     */
+    @Unroll
+    def "single thread abort where cancelOnInterrupt is #cancelOnInterrupt"() {
+        given:
+        def node1 = new NodeEntryImpl('node1')
+        def node2 = new NodeEntryImpl('node2')
+        def sent = [node1, node2]
+        def returned = []
+        def started = new CountDownLatch(1)
+        def proceed = new CountDownLatch(1)
+        def main = new CountDownLatch(1)
+
+        def callableNodesSucceeded = [];
+        def callableNodesInterrupted = [];
+
+        def orchestrator = new Orchestrator() {
+            @Override
+            INodeEntry nextNode() {
+                return sent.size() > 0 ? sent.remove(0) : null
+            }
+
+            @Override
+            void returnNode(final INodeEntry node, boolean success, NodeStepResult result) {
+                returned << node
+            }
+
+            @Override
+            boolean isComplete() {
+                return sent.size() == 0
+            }
+        }
+        Map<INodeEntry, Callable<NodeStepResult>> executions = new HashMap<>()
+        sent.each { node ->
+            executions.put(
+                node, { ->
+                //flag as started
+                started.countDown()
+                try {
+                    //wait for proceed
+                    proceed.await(1, TimeUnit.SECONDS)
+//                    System.err.println("callable is proceeding $node.nodename")
+                } catch (InterruptedException e) {
+//                    System.err.println("callable was interrupted $node.nodename")
+                    callableNodesInterrupted.add node.nodename.toString()
+                    throw e;
+                }
+                callableNodesSucceeded << node.nodename
+                new NodeStepResultImpl(node)
+            }
+            )
+        }
+
+        def onp = new OrchestratorNodeProcessor(1, false, orchestrator, executions, cancelOnInterrupt)
+
+        when:
+        boolean result
+        //start processor in other thread
+        def t = new Thread(
+            {
+                result = onp.execute()
+                //send finish
+                main.countDown()
+            }
+        )
+        t.start()
+        started.await()
+        Thread.sleep(500)
+        t.interrupt()
+//        proceed.countDown()
+        main.await()
+
+        then:
+
+        !result
+        callableNodesSucceeded.size() == susize
+        callableNodesInterrupted.size() == isize
+
+        onp.interrupted
+
+        where:
+        cancelOnInterrupt | isize | susize
+        true              | 1     | 0
+        false             | 0     | 1
     }
 
     /**
