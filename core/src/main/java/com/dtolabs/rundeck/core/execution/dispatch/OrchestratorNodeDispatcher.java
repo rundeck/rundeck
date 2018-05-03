@@ -140,7 +140,12 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
                 tocall = dispatchableCallable(context, toDispatch, resultMap, node, failureMap);
             }
             nodeNames.add(node.getNodename());
-            context.getExecutionListener().log(3, "Create task for node: " + node.getNodename());
+            context
+                .getExecutionListener()
+                .log(
+                    3,
+                    "Create " + (null != item ? "dispatched step" : "dispatchable workflow") + " for node: " + node.getNodename()
+                );
             executions.put(node, tocall);
         }
         if (null != failedListener) {
@@ -151,6 +156,7 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
         
         Orchestrator orchestrator = plugin.createOrchestrator(context, orderedNodes);
         OrchestratorNodeProcessor processor = new OrchestratorNodeProcessor(context.getThreadCount(), keepgoing, orchestrator, executions);
+        processor.setCancelOnInterrupt(true);
         
         try {
             success = processor.execute();
@@ -159,6 +165,12 @@ public class OrchestratorNodeDispatcher implements NodeDispatcher {
             if (!keepgoing) {
                 throw new DispatcherException(e);
             }
+        }
+        if (processor.isInterrupted()) {
+            if (!keepgoing) {
+                throw new DispatcherException("Node dispatcher cancelled on interrupt");
+            }
+            context.getExecutionListener().log(0, "Node dispatcher cancelled on interrupt");
         }
         //evaluate the failed nodes
         if (failureMap.size() > 0) {

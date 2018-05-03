@@ -334,7 +334,8 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 failure.toString()
         );
         failure.printStackTrace(System.out);//XXX
-        if (failure instanceof CancellationException) {
+
+        if (failure instanceof CancellationException || failure instanceof java.lang.InterruptedException) {
             reason = StepFailureReason.Interrupted;
 
             message = String.format(

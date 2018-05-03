@@ -538,6 +538,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         } else if (e.getMessage().contains("Remote command failed with exit status")) {
             errormsg = e.getMessage();
             failureReason = NodeStepFailureReason.NonZeroResultCode;
+        } else if (null != e.getCause() && e.getCause() instanceof InterruptedException) {
+            failureReason = StepFailureReason.Interrupted;
+            errormsg = "Connection was interrupted";
         } else {
             failureReason = StepFailureReason.Unknown;
             errormsg = e.getMessage();

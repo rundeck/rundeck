@@ -15,6 +15,7 @@
  */
 package com.dtolabs.rundeck.core.execution.dispatch;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -40,10 +41,15 @@ public class OrchestratorNodeProcessor {
     private Set<INodeEntry> processedNodes;
     private BlockingQueue<Result> resultqueue;
     private BlockingQueue<Entry> taskqueue ;
+    private boolean               cancelOnInterrupt;
+    private boolean               interrupted;
 
-    public OrchestratorNodeProcessor(int threadCount, boolean keepgoing,
-            Orchestrator orchestrator,
-            Map<INodeEntry, Callable<NodeStepResult>> executions) {
+    public OrchestratorNodeProcessor(
+        int threadCount,
+        boolean keepgoing,
+        Orchestrator orchestrator,
+        Map<INodeEntry, Callable<NodeStepResult>> executions
+    ) {
         stop = false;
         if(threadCount<1) {
             throw new IllegalArgumentException("threadCount must be greater than 0: " + threadCount);
@@ -57,13 +63,14 @@ public class OrchestratorNodeProcessor {
 
         this.threadPool = Executors.newFixedThreadPool(this.threadCount);
 
-        this.processedNodes = Collections.newSetFromMap(new ConcurrentHashMap<INodeEntry, Boolean>());
-
+        this.processedNodes = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        this.interrupted = false;
     }
 
     public boolean execute() throws ExecutionException{
+        ArrayList<Future<Boolean>> futures = new ArrayList<>();
         for (int i=0;i<threadCount;i++) {
-            threadPool.submit(new OrchestratorRunnable());
+            futures.add(threadPool.submit(new OrchestratorRunnable()));
         }
         boolean success=true;
         try {
@@ -90,6 +97,10 @@ public class OrchestratorNodeProcessor {
                             Thread.sleep(2000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
+                            interrupted = true;
+                            if (cancelOnInterrupt) {
+                                break;
+                            }
                         }
                     }else{
                         break;
@@ -99,23 +110,47 @@ public class OrchestratorNodeProcessor {
                 }
             }
         } catch (InterruptedException e) {
-
+            interrupted = true;
         }finally{
             //attempt to fill the queue to tell waiting threads to stop
             int x=threadCount;
+            if (interrupted && cancelOnInterrupt) {
+                futures.forEach(e -> e.cancel(true));
+            }
             while (x > 0 && taskqueue.offer(new Entry(true))) {
                 x--;
             }
             threadPool.shutdown();
         }
-        try {
-            threadPool.awaitTermination(60, TimeUnit.SECONDS);
-        } catch (InterruptedException e) {
+        if (interrupted && cancelOnInterrupt) {
+            success = false;
             threadPool.shutdownNow();
+        } else {
+            try {
+                threadPool.awaitTermination(60, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                threadPool.shutdownNow();
+            }
         }
 
         //stop indicates a node failed, but success might not
         return !stop && success;
+    }
+
+    public boolean isCancelOnInterrupt() {
+        return cancelOnInterrupt;
+    }
+
+    public void setCancelOnInterrupt(boolean cancelOnInterrupt) {
+        this.cancelOnInterrupt = cancelOnInterrupt;
+    }
+
+    public boolean isInterrupted() {
+        return interrupted;
+    }
+
+    public void setInterrupted(boolean interrupted) {
+        this.interrupted = interrupted;
     }
 
     public class OrchestratorRunnable implements Callable<Boolean> {
