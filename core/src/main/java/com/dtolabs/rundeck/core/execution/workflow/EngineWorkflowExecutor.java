@@ -31,6 +31,7 @@ import com.dtolabs.rundeck.core.execution.workflow.steps.StepExecutionResultImpl
 import com.dtolabs.rundeck.core.execution.workflow.steps.StepFailureReason;
 import com.dtolabs.rundeck.core.rules.*;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+import com.google.common.base.Throwables;
 import org.apache.log4j.Logger;
 
 import java.util.*;
@@ -333,15 +334,18 @@ public class EngineWorkflowExecutor extends BaseWorkflowExecutor {
                 operation.getStepNum(),
                 failure.toString()
         );
-        failure.printStackTrace(System.out);//XXX
 
         if (failure instanceof CancellationException || failure instanceof java.lang.InterruptedException) {
             reason = StepFailureReason.Interrupted;
 
             message = String.format(
-                    "Cancellation while running step [%d]",
-                    operation.getStepNum()
+                "Cancellation while running step [%d]",
+                operation.getStepNum()
             );
+        } else {
+            executionContext
+                .getExecutionListener()
+                .log(Constants.DEBUG_LEVEL, Throwables.getStackTraceAsString(failure));
         }
         executionContext.getExecutionListener().log(Constants.ERR_LEVEL, message);
         stepFailures.put(operation.getStepNum(), StepExecutionResultImpl.wrapStepException(
