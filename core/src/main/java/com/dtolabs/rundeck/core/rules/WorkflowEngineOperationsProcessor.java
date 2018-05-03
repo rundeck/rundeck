@@ -186,9 +186,7 @@ class WorkflowEngineOperationsProcessor<DAT, RES extends WorkflowSystem.Operatio
     }
 
     private void cancelFutures() {
-        for (ListenableFuture<RES> future : futures) {
-            future.cancel(true);
-        }
+        futures.forEach(future -> future.cancel(true));
     }
 
     public void initialize() {
