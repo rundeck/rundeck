@@ -1651,6 +1651,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             if (e.dateCompleted == null && e.dateStarted != null) {
                 return [error: 'running', message: "Failed to delete execution {{Execution ${e.id}}}: The execution is currently running", success: false]
             }
+            ReferencedExecution.findAllByExecution(e).each{ re ->
+                re.delete()
+            }
                 //delete all reports
             ExecReport.findAllByJcExecId(e.id.toString()).each { rpt ->
                 rpt.delete()
