@@ -57,7 +57,7 @@
                     title="Executions by you"
                     params="${linkParams+[ userFilter: session.user]}">
                 <i class="glyphicon glyphicon-user"></i>
-                by you
+                <g:message code="by.you", default="by you"/> 
             </g:link>
         </li>
     </g:if>
@@ -68,7 +68,7 @@
                     title="Executions by ${enc(attr:execution.user)}"
                     params="${linkParams+[ userFilter: execution.user]}">
                 <i class="glyphicon glyphicon-user"></i>
-                by <g:username user="${execution.user}"/>
+                <g:message code="by", default="by"/> <g:username user="${execution.user}"/>
             </g:link>
         </li>
     </g:if>
@@ -131,7 +131,7 @@
 
                     </span>
                     <span title="">
-                        <span class="text-muted">in</span>
+                        <span class="text-muted"><g:message code="in.of", default="in"/></span>
                         <span class="duration" data-bind="text: durationHumanize()"></span>
                     </span>
                 </span>
@@ -174,7 +174,7 @@
             </td>
 
             <td class="  user text-right autoclickable" style="white-space: nowrap;">
-                <em>by</em>
+                <em><g:message code="by", default="by"/></em>
                 <span data-bind="text: user"></span>
             </td>
 
