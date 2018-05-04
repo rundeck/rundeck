@@ -27,6 +27,7 @@ import com.dtolabs.rundeck.plugins.logging.StreamingLogWriterPlugin
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogReaderPluginProviderService
 import com.dtolabs.rundeck.server.plugins.services.StreamingLogWriterPluginProviderService
 import rundeck.Execution
+import rundeck.WorkflowStep
 import rundeck.services.logging.DisablingLogWriter
 import rundeck.services.logging.ExecutionFile
 import rundeck.services.logging.ExecutionFileDeletePolicy
@@ -40,6 +41,7 @@ import rundeck.services.logging.LoglevelThresholdLogWriter
 import rundeck.services.logging.MultiLogWriter
 import rundeck.services.logging.NodeCountingLogWriter
 import rundeck.services.logging.ProducedExecutionFile
+import rundeck.services.logging.StepLabellingStreamingLogWriter
 import rundeck.services.logging.ThresholdLogWriter
 
 import java.nio.charset.Charset
@@ -107,11 +109,19 @@ class LoggingService implements ExecutionFileProducer {
         List<StreamingLogWriter> plugins = []
         def names = listConfiguredStreamingWriterPluginNames()
         if (names) {
-            HashMap<String, String> jobcontext = ExecutionService.exportContextForExecution(
-                    execution,
-                    grailsLinkGenerator
+            Map<String, Object> jobcontext = new HashMap<>(
+                ExecutionService.exportContextForExecution(execution, grailsLinkGenerator)
             )
+            def labels = [:]
+            execution.workflow?.commands?.eachWithIndex { WorkflowStep entry, int index ->
+                if (entry.description) {
+                    labels["${index + 1}"] = entry.description
+                }
+            }
             log.debug("Configured log writer plugins: ${names}")
+            def confValue = grailsApplication.config?.rundeck?.execution?.logs?.plugins?.streamingWriterStepLabelsEnabled
+            boolean enableLabels = !(confValue in [false, 'false'])
+
             names.each { name ->
                 def result = pluginService.configurePlugin(
                         name,
@@ -126,7 +136,10 @@ class LoggingService implements ExecutionFileProducer {
                 def plugin = result.instance
                 try {
                     plugin.initialize(jobcontext)
-                    plugins << DisablingLogWriter.create(plugin, "StreamingLogWriter(${name})")
+                    plugins << DisablingLogWriter.create(
+                        enableLabels ? new StepLabellingStreamingLogWriter(plugin, labels) : plugin,
+                        "StreamingLogWriter(${name})"
+                    )
                 } catch (Throwable e) {
                     log.error("Failed to initialize plugin ${name}: " + e.message)
                     log.debug("Failed to initialize plugin ${name}: " + e.message, e)

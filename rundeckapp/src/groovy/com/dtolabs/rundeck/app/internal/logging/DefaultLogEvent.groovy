@@ -47,6 +47,10 @@ class DefaultLogEvent implements LogEvent{
         this.eventType = event.eventType
         this.metadata=defaultMetadata+(event.metadata?:[:])
     }
+
+    static DefaultLogEvent with(LogEvent event, Map metadata) {
+        new DefaultLogEvent(event, metadata)
+    }
     @Override
     public String toString() {
         return "DefaultLogEvent{" +

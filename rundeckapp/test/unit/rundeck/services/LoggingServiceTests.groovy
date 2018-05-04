@@ -31,7 +31,9 @@ import grails.test.mixin.Mock
 import grails.test.mixin.TestFor
 import grails.test.runtime.DirtiesRuntime
 import org.codehaus.groovy.grails.web.mapping.LinkGenerator
+import rundeck.CommandExec
 import rundeck.Execution
+import rundeck.Workflow
 import rundeck.services.logging.DisablingLogWriter
 import rundeck.services.logging.ExecutionLogReader
 import rundeck.services.logging.ExecutionLogState
@@ -40,10 +42,11 @@ import rundeck.services.logging.LoggingThreshold
 import rundeck.services.logging.LoglevelThresholdLogWriter
 import rundeck.services.logging.MultiLogWriter
 import rundeck.services.logging.NodeCountingLogWriter
+import rundeck.services.logging.StepLabellingStreamingLogWriter
 import rundeck.services.logging.ThresholdLogWriter
 
 @TestFor(LoggingService)
-@Mock([Execution,LogFileStorageService])
+@Mock([Execution, LogFileStorageService, Workflow, CommandExec])
 class LoggingServiceTests  {
 
     void testLocalFileStorageEnabled() {
@@ -106,10 +109,10 @@ class LoggingServiceTests  {
         }
     }
     class testPluginWriter extends testWriter implements StreamingLogWriterPlugin{
-
+        Map<String, ? extends Object> context
         @Override
         void initialize(Map<String, ? extends Object> context) {
-
+            this.context = context
         }
     }
 
@@ -182,16 +185,99 @@ class LoggingServiceTests  {
         assertEquals(LogLevel.NORMAL, filtered.threshold)
 
         assertTrue(filtered.writer instanceof MultiLogWriter)
-        MultiLogWriter multi= filtered.writer
+        MultiLogWriter multi = filtered.writer
         def multiWriters = multi.writers
         assertEquals(3, multiWriters.size())
         assertTrue(multiWriters[0] instanceof DisablingLogWriter)
+        assertTrue(multiWriters[0].writer instanceof StepLabellingStreamingLogWriter)
+        assertEquals(plugin1, multiWriters[0].writer.writer)
+        assertTrue(multiWriters[1] instanceof DisablingLogWriter)
+        assertTrue(multiWriters[1].writer instanceof StepLabellingStreamingLogWriter)
+        assertEquals(plugin2, multiWriters[1].writer.writer)
+        assertTrue(multiWriters[2] instanceof DisablingLogWriter)
+        assertEquals(writer, multiWriters[2].writer)
+    }
+    @DirtiesRuntime
+    void testOpenLogWriterWithPlugins_stepLabelsDisabled(){
+        Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
+        assertNotNull(e.save())
+
+        grailsApplication.config.clear()
+        grailsApplication.config.rundeck.execution.logs.streamingWriterPlugins = "plugin1,plugin2"
+        grailsApplication.config.rundeck.execution.logs.plugins.streamingWriterStepLabelsEnabled = "false"
+
+        def writer = new testWriter()
+        writer.name = "filewritertest1"
+
+
+        def lfmock = mockFor(LogFileStorageService)
+        lfmock.demand.getLogFileWriterForExecution(1..1) { Execution e2, defaultMeta, x ->
+            assertEquals(1, e2.id)
+            assertEquals([test: "blah"], defaultMeta)
+            writer
+        }
+        lfmock.demand.getFileForExecutionFiletype(1..1) {
+            Execution e2, String filetype, boolean stored, boolean partial ->
+            assertEquals(1, e2.id)
+            assertEquals("rdlog", filetype)
+            assertEquals(false, stored)
+            new File("/test/file/path")
+        }
+
+        def plugin1 = new testPluginWriter()
+        plugin1.name = "plugin1"
+        def plugin2 = new testPluginWriter()
+        plugin2.name = "plugin2"
+        def plugins = [plugin1: plugin1, plugin2: plugin2]
+
+        def pmock = mockFor(PluginService)
+        pmock.demand.configurePlugin(2..2) { String pname, PluggableProviderService svc, PropertyResolver resolv, PropertyScope scope ->
+            assertTrue (pname in ["plugin1","plugin2"])
+            assert scope==PropertyScope.Instance
+            [instance:plugins[pname],configuration:[:]]
+        }
+
+        def fmock = mockFor(FrameworkService)
+        fmock.demand.getFrameworkPropertyResolver(2..2) { project ->
+            assert project=="testproj"
+        }
+
+        ExecutionService.metaClass.static.exportContextForExecution = { Execution data ->
+            [:]
+        }
+        ExecutionService.metaClass.static.generateServerURL = { LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+        ExecutionService.metaClass.static.generateExecutionURL= { Execution execution, LinkGenerator grailsLinkGenerator ->
+            ''
+        }
+        service.logFileStorageService = lfmock.createMock()
+        service.pluginService=pmock.createMock()
+        service.frameworkService=fmock.createMock()
+
+        def execwriter = service.openLogWriter(e, LogLevel.NORMAL, [test:"blah"])
+        assertNotNull(execwriter)
+        assertEquals(new File("/test/file/path"), execwriter.filepath)
+        assertNotNull(execwriter.writer)
+
+        assertTrue(execwriter.writer instanceof LoglevelThresholdLogWriter)
+        LoglevelThresholdLogWriter filtered=execwriter.writer
+        assertEquals(LogLevel.NORMAL, filtered.threshold)
+
+        assertTrue(filtered.writer instanceof MultiLogWriter)
+        MultiLogWriter multi = filtered.writer
+        def multiWriters = multi.writers
+        assertEquals(3, multiWriters.size())
+        assertTrue(multiWriters[0] instanceof DisablingLogWriter)
+        assertFalse(multiWriters[0].writer instanceof StepLabellingStreamingLogWriter)
         assertEquals(plugin1, multiWriters[0].writer)
         assertTrue(multiWriters[1] instanceof DisablingLogWriter)
+        assertFalse(multiWriters[1].writer instanceof StepLabellingStreamingLogWriter)
         assertEquals(plugin2, multiWriters[1].writer)
         assertTrue(multiWriters[2] instanceof DisablingLogWriter)
         assertEquals(writer, multiWriters[2].writer)
     }
+
     void testOpenLogWriterNoPlugins(){
         Execution e = new Execution(argString: "-test args", user: "testuser", project: "testproj", loglevel: 'WARN', doNodedispatch: false)
         assertNotNull(e.save())
