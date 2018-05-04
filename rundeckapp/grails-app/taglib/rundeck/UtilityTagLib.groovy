@@ -876,7 +876,7 @@ class UtilityTagLib{
             if(attrs.youclass){
                 out<<"<span class=\"${enc(attr:attrs.youclass)}\">"
             }
-            out << "you"
+            out << g.message(code:'you',default:'you')
             if (attrs.youclass) {
                 out << "</span>"
             }
