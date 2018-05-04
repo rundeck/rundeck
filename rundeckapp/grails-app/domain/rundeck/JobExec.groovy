@@ -250,29 +250,4 @@ public class JobExec extends WorkflowStep implements IWorkflowJobItem{
         //nb: error handler is created inside Workflow.fromMap
         return exec
     }
-
-    static boolean hasAnyReference(ScheduledExecution se) {
-        if (!se) {
-            return false
-        }
-        def uuid = se.extid
-        def jobName = se.jobName
-        def jobGroup = se.groupPath
-
-        def res = findByUuid(uuid)
-        if (res) {
-            return true
-        }
-
-        res = findByJobNameAndJobGroup(jobName,jobGroup)
-        return res!=null
-    }
-
-    static List<ScheduledExecution> parentList(ScheduledExecution se, int max = 0){
-        def refExecs = ReferencedExecution.findAllByScheduledExecution(se)?.collect{ re ->
-            re.execution?.scheduledExecution
-        }?.unique()
-        refExecs.subList(0, (max!=0 && refExecs.size()>max)?max:refExecs.size())
-
-    }
 }
