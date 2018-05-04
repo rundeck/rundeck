@@ -190,7 +190,7 @@ class CommandLineSetup {
     private void printUsage() {
         // automatically generate the help statement
         final HelpFormatter formatter = new HelpFormatter();
-        formatter.printHelp( "java [JAVA_OPTIONS] -jar rundeck-launcher.jar ", "\nRun the rundeck server, installing the " +
+        formatter.printHelp( "java [JAVA_OPTIONS] -jar rundeck-launcher.war ", "\nRun the rundeck server, installing the " +
                                                                                "necessary components if they do not exist.\n", options,
                              "\nhttp://rundeck.org\n", true );
     }

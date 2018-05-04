@@ -30,7 +30,7 @@ copy_jar(){
     local buildJar=$PWD/rundeckapp/build/libs/$JAR
 	test -f $buildJar || die "Jar file not found $buildJar"
 	mkdir -p $DIR
-	cp $buildJar $DIR/rundeck-launcher.jar
+	cp $buildJar $DIR/rundeck-launcher.war
 	echo $DIR/$JAR
 }
 run_tests(){

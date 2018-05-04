@@ -28,6 +28,7 @@ import com.dtolabs.rundeck.plugins.notification.NotificationPlugin
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import com.dtolabs.rundeck.server.plugins.ValidatedPlugin
 import com.dtolabs.rundeck.server.plugins.services.NotificationPluginProviderService
+import grails.gorm.transactions.Transactional
 import grails.web.mapping.LinkGenerator
 import groovy.xml.MarkupBuilder
 import org.apache.commons.httpclient.Header
@@ -113,9 +114,10 @@ public class NotificationService implements ApplicationContextAware{
     def Map listNotificationPlugins(){
         return pluginService.listPlugins(NotificationPlugin,notificationPluginProviderService)
     }
-    def boolean triggerJobNotification(String trigger, schedId, Map content){
+    @Transactional
+    boolean triggerJobNotification(String trigger, schedId, Map content){
         if(trigger && schedId){
-            ScheduledExecution.withNewSession {
+            ScheduledExecution.withNewTransaction {
                 def ScheduledExecution sched = ScheduledExecution.get(schedId)
                 if(null!=sched){
                     return triggerJobNotification(trigger,sched,content)

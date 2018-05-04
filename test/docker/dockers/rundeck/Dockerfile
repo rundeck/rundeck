@@ -63,10 +63,10 @@ RUN test -f $HOME/data/rd.deb || apt-get -y install rundeck-cli=$CLI_VERS
 ARG LAUNCHER_URL
 ARG RUNDECK_NODE=rundeck1
 RUN echo "download rundeck launcher: ${LAUNCHER_URL}"
-RUN test -f $HOME/data/rundeck-launcher.jar && \
-     cp $HOME/data/rundeck-launcher.jar $HOME/rundeck-launcher.jar || \
+RUN test -f $HOME/data/rundeck-launcher.war && \
+     cp $HOME/data/rundeck-launcher.war $HOME/rundeck-launcher.war || \
      true
-RUN test -f $HOME/rundeck-launcher.jar || curl -sS -f -L -o $HOME/rundeck-launcher.jar ${LAUNCHER_URL}
+RUN test -f $HOME/rundeck-launcher.war || curl -sS -f -L -o $HOME/rundeck-launcher.war ${LAUNCHER_URL}
 
 # copy api test sources
 RUN mkdir $HOME/api_test
@@ -80,7 +80,7 @@ USER rundeck
 RUN java \
       -Dserver.http.port=4440 \
       -Dserver.hostname=$RUNDECK_NODE \
-      -jar $HOME/rundeck-launcher.jar --installonly 
+      -jar $HOME/rundeck-launcher.war --installonly
 
 #      --java-opts "-Djava.security.egd=file:/dev/./urandom" 
 

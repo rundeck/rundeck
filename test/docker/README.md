@@ -26,5 +26,5 @@ Override the download URL:
 
 Or use a local launcher jar file
 
-	cp /some/path/rundeck-launcher-x.y.z.jar ./rundeck-launcher.jar
+	cp /some/path/rundeck-launcher-x.y.z.jar ./rundeck-launcher.war
 	bash test.sh

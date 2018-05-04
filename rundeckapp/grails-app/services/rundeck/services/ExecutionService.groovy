@@ -2713,7 +2713,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
     def updateScheduledExecStatistics(Long schedId, eId, long time, boolean jobRef = false){
         def success = false
         try {
-            ScheduledExecution.withNewSession {
+            ScheduledExecution.withSession {
                 def scheduledExecution = ScheduledExecution.get(schedId)
 
                 if (scheduledExecution.scheduled) {
