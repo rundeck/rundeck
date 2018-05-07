@@ -1,5 +1,5 @@
 %{--
-  - Copyright 2016 SimplifyOps, Inc. (http://simplifyops.com)
+  - Copyright 2018 Rundeck, Inc. (http://rundeck.com)
   -
   - Licensed under the Apache License, Version 2.0 (the "License");
   - you may not use this file except in compliance with the License.
@@ -14,4 +14,15 @@
   - limitations under the License.
   --}%
 
-<g:render template="baseReport" model="['reports': reports, options: params.compact ? [tags: false, summary: false] : [summary: true], hiliteSince: params.hiliteSince]"/>
+<ul class="dropdown-menu">
+  <li>
+    <g:link controller="user" action="profile">    
+      <g:message code="profile"/>
+    </g:link>
+  </li>
+  <li>
+    <g:link controller="logout" action="user">
+      <g:message code="logout"/>
+    </g:link>
+  </li>
+</ul>

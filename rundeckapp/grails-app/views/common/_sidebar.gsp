@@ -80,6 +80,21 @@
     </g:ifPageProperty>
 </g:if>
 <g:if test="${params.project ?: request.project}">
+    <li>
+      <g:link controller="menu" action="projectHome" params="[project: project ?: params.project ?: request.project]">
+      <i class="fas fa-clipboard-list"></i>
+        <p>
+          Dashboard
+          <!--
+          <g:if test="${session.frameworkLabels}">
+              <g:enc>${project ?session.frameworkLabels[project]: params.project ?
+                      session.frameworkLabels[params.project]: request.project ?
+                      session.frameworkLabels[request.project]: 'Choose ...'}</g:enc>
+          </g:if>
+        -->
+        </p>
+      </g:link>
+    </li>
     <li class="${enc(attr: wfselected)}">
         <g:link controller="menu" action="jobs" class=" toptab ${enc(attr: wfselected)}" params="[project: params.project ?: request.project]">
             <i class="fas fa-tasks"></i>
@@ -139,7 +154,7 @@
     <g:if test="${projConfigAuth||projACLAuth}">
         <li class="${enc(attr: projconfigselected)}" id="projectAdmin">
           <a href="#" data-toggle="collapse" href="javascript:void(0)">
-            <i class="fas fa-clipboard-list"></i>
+            <i class="fas fa-cogs"></i>
             <p>
               <g:message code="Project"/>
               <b class="caret"></b>
@@ -173,7 +188,8 @@
             </li>
             <li>
               <a href="#" data-toggle="collapse" class="subnav-open">
-                <i class="fas fa-clipboard-list"></i>
+                <i class="fas fa-cogs"></i>
+                <!-- <i class="fas fa-clipboard-list"></i> -->
                 <p>
                   <g:message code="Projects"/>
                   <b class="caret"></b>

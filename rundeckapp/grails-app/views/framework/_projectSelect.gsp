@@ -16,25 +16,37 @@
 
 <g:set var="projectSet" value="${projects.sort()}"/>
 <g:set var="selectParams" value="${selectParams?:[:]}"/>
-<bs:dropdownToggle>
-        ${project && selectItemTitle ? selectItemTitle : emptyTitle}
-</bs:dropdownToggle>
-<bs:dropdown labelId="dLabel">
-    <bs:menuitem headerCode="Project.plural"/>
 
-<auth:resourceAllowed action="create" kind="project" context="application">
-        <g:if test="${!params.nocreate}">
-            <bs:menuitem controller="framework" action="createProject">
-                <g:message code="page.home.new.project.button.label"/>
-                <b class="glyphicon glyphicon-plus"></b>
-            </bs:menuitem>
-            <bs:menuitem/>
-        </g:if>
-</auth:resourceAllowed>
-        <g:each var="project" in="${projectSet}">
-            <bs:menuitem controller="menu" action="index" params="${selectParams + [project: project]}"
-                         icon="tasks">
-                ${labels?labels[project]:project}
-            </bs:menuitem>
-        </g:each>
-</bs:dropdown>
+<div class="dropdown" style="line-height: 3.5em;margin-left: .8em;">
+  <a data-toggle="dropdown" class="dropdown-toggle" id="userLabel" style="color: #65605a;">
+    <span class="fa-stack fa-2x" style="font-size:.75em;">
+      <i class="fas fa-circle fa-stack-2x"></i>
+      <i class="fas fa-caret-down fa-stack-1x fa-inverse"></i>
+    </span>
+
+    <!-- ${project && selectItemTitle ? selectItemTitle : emptyTitle} -->
+  </a>
+  <ul class="dropdown-menu">
+    <li class="dropdown-header">
+      <g:message code="Project.plural"/>
+    </li>
+    <auth:resourceAllowed action="create" kind="project" context="application">
+      <g:if test="${!params.nocreate}">
+        <li>
+          <g:link controller="framework" action="createProject">
+            <g:message code="page.home.new.project.button.label"/>
+            <b class="glyphicon glyphicon-plus"></b>
+          </g:link>
+        </li>
+      </g:if>
+    </auth:resourceAllowed>
+    <g:each var="project" in="${projectSet}">
+        <li>
+          <g:link controller="menu" action="index" params="${selectParams + [project: project]}">
+            <b class="glyphicon glyphicon-task"></b>
+            ${labels?labels[project]:project}
+          </g:link>
+        </li>
+    </g:each>
+  </ul>
+</div>

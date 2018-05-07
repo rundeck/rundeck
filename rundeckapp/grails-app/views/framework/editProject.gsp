@@ -50,45 +50,44 @@
 </head>
 
 <body>
-
-<div class="row">
-    <div class="col-sm-12">
-        <g:render template="/common/messages"/>
-    </div>
+<div class="container-fluid">
+  <div class="row">
+      <div class="col-sm-12">
+          <g:render template="/common/messages"/>
+      </div>
+  </div>
+  <div class="row">
+      <g:form action="saveProject" method="post"
+              useToken="true"
+              onsubmit="return configControl.checkForm();" class="form">
+      <div class="col-xs-12">
+          <div class="card"  id="createform">
+              <div class="card-header">
+                  <h3 class="card-title">
+                      <g:message code="domain.Project.edit.message" default="Configure Project"/>: <g:enc>${params.project ?: request.project}</g:enc>
+                      <g:link controller="framework" action="editProjectConfig"
+                              params="[project: params.project ?: request.project]"
+                              class="has_tooltip pull-right btn"
+                              data-placement="bottom"
+                              title="${message(
+                                      code: 'page.admin.EditProjectConfigFile.title',
+                                      default: 'Advanced: Edit config file directly'
+                              )}">
+                          <g:icon name="file"/>
+                          <g:message code="page.admin.EditProjectConfigFile.button" default="Edit Configuration File"/>
+                      </g:link>
+                  </h3>
+              </div>
+              <g:render template="editProjectForm" model="${[editOnly:true,project: params.project ?: request.project]}"/>
+              <div class="card-footer">
+                  <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>
+                  <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-primary reset_page_confirm"/>
+              </div>
+          </div>
+      </div>
+      </g:form>
+  </div>
+  <g:render template="storageBrowseModalKO"/>
 </div>
-    <div class="row">
-        <g:form action="saveProject" method="post"
-                useToken="true"
-                onsubmit="return configControl.checkForm();" class="form">
-        <div class="col-sm-10 col-sm-offset-1">
-            <div class="panel panel-primary"  id="createform">
-                <div class="panel-heading">
-                    <span class="panel-title">
-                            <g:message code="domain.Project.edit.message"
-                                       default="Configure Project"/>: <g:enc>${params.project ?: request.project}</g:enc>
-                    </span>
-                    <g:link controller="framework" action="editProjectConfig"
-                            params="[project: params.project ?: request.project]"
-                            class="has_tooltip pull-right panel-title"
-                            data-placement="bottom"
-                            title="${message(
-                                    code: 'page.admin.EditProjectConfigFile.title',
-                                    default: 'Advanced: Edit config file directly'
-                            )}">
-                        <g:icon name="file"/>
-                        <g:message code="page.admin.EditProjectConfigFile.button" default="Edit Configuration File"/>
-                    </g:link>
-                </div>
-                <g:render template="editProjectForm" model="${[editOnly:true,project: params.project ?: request.project]}"/>
-                <div class="panel-footer">
-                    <g:submitButton name="cancel" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default reset_page_confirm"/>
-                    <g:submitButton name="save" value="${g.message(code:'button.action.Save',default:'Save')}" class="btn btn-primary reset_page_confirm"/>
-                </div>
-            </div>
-        </div>
-        </g:form>
-    </div>
-
-    <g:render template="storageBrowseModalKO"/>
 </body>
 </html>

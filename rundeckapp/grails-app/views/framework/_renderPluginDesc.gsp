@@ -33,12 +33,12 @@
                       ),
                               service    : serviceName,
                               name       : description.name,
-                              markdownCss: 'small text-muted',
-                              textCss    : 'small text-muted',
+                              markdownCss: 'small text-primary',
+                              textCss    : 'small text-primary',
                               mode       : 'collapsed', rkey: g.rkey()]"/>
         </g:if>
         <g:else>
-            <small class="text-muted"><stepplugin:message
+            <small class="text-primary"><stepplugin:message
                     service="${serviceName}"
                     name="${description.name}"
                     code="plugin.description"

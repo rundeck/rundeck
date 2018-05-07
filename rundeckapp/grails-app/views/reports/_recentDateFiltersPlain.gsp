@@ -37,7 +37,7 @@
         <g:select name="recentFilter" from="${recentfilts}" value="${query.recentFilter?.encodeAsHTML()}"
                   noSelection="['': 'Any Time']" optionKey="value" optionValue="label"
                   onchange="if(this.value=='-'){Element.show('extDateFilters')}else{Element.hide('extDateFilters')};"
-            class="form-control input-sm"
+            class="form-control"
         />
 
     </span>

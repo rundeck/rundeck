@@ -21,7 +21,7 @@
     <g:set var="filterset" value="${User.findByLogin(session.user)?.reportfilters}"/>
 </g:if>
 <g:set var="isCompact" value="${params.compact?true:false}"/>
-    
+
 <div id="${enc(attr:rkey)}evtsForm">
     <g:if test="${params.createFilters}">
         <span class="note help">
@@ -29,7 +29,8 @@
         </span>
     </g:if>
     <g:set var="wasfiltered" value="${paginateParams}"/>
-    <div class="queryTable">
+    <div class="queryTable card">
+      <div class="card-content">
         <g:if test="${!params.nofilters}">
         <div id="${enc(attr:rkey)}filter" >
             <g:form action="index" class="form-inline" role="form" params="${[project: params.project ?: request.project]}" useToken="true">
@@ -54,11 +55,12 @@
                 <g:render template="advDateFiltersPlain" model="${[params:params,query:query]}"/>
 
                 <g:submitButton value="Filter" name="filterAll" class="btn btn-default btn-sm"/>
-                    <a class="btn btn-xs pull-right btn-success collapse ${filterName?'':'in'} obs_filter_is_deselected"
+                    <a class="btn btn-success ${filterName?'':'in'} obs_filter_is_deselected"
                             style="${wdgt.styleVisible(unless: params.saveFilter)}"
                             data-toggle="modal"
                             href="#saveFilterModal" title="Click to save this filter with a name">
-                        <i class="glyphicon glyphicon-plus"></i> save this filter&hellip;
+                            <i class="fas fa-save"></i>
+                        <!-- <i class="glyphicon glyphicon-plus"></i> save this filter&hellip; -->
                     </a>
                     <span class="form-group ">
                         <div class="filterdef saved  collapse ${filterName ? 'in' : ''} obs_filter_is_selected">
@@ -75,39 +77,48 @@
             </g:form>
         </div>
         </g:if>
+      </div>
     </div>
-            <div id="${enc(attr:rkey)}evtscontent">
+            <div id="${enc(attr:rkey)}evtscontent" class="card">
                 <g:if test="${!params.nofilters}">
-                <div class="queryresultsinfo">
-                        <g:if test="${!params.compact}">
-                            <span class="prompt"><span class="_obs_histtotal"><g:enc>${total}</g:enc></span> Results</span>
-                            matching ${filterName?'filter':'your query'}
-                        </g:if>
+                <div class="queryresultsinfo card-header">
+                  <div class="col-xs-6" style="padding-top:10px">
+                    <g:if test="${!params.compact}">
+                        <span class="prompt"><span class="_obs_histtotal"><g:enc>${total}</g:enc></span> Results</span>
+                        matching ${filterName?'filter':'your query'}
+                    </g:if>
 
-                        <g:if test="${ !filterName && filterset}">
-                            <span class="info note">or choose a saved filter:</span>
-                        </g:if>
-                        <g:render template="/common/selectFilter" model="[noSelection:'-Within 1 Day-',filterset:filterset,filterName:filterName,prefName:'events']"/>
-                        <g:if test="${includeBadge}">
+                    <g:if test="${ !filterName && filterset}">
+                        <span class="info note">or choose a saved filter:</span>
+                    </g:if>
+                    <g:render template="/common/selectFilter" model="[noSelection:'-Within 1 Day-',filterset:filterset,filterName:filterName,prefName:'events']"/>
+                    <g:if test="${includeBadge}">
 
-                            <span class="badgeholder" id="eventsCountBadge" style="display:none">
-                                <g:link action="index"
-                                        title="click to load new events"
-                                        params="${filterName ? [filterName: filterName] : params}"><span
-                                        class="badge newcontent active" id="eventsCountContent"
-                                        title="click to load new events"></span></g:link>
-                            </span>
-                        </g:if>
-                        <g:if test="${includeAutoRefresh}">
-                            <g:checkBox name="refresh" value="true" checked="${params.refresh=='true'}" class="autorefresh" id="autorefresh"/>
-                            <label for="autorefresh">
-                                Auto refresh
-                            </label>
-                        </g:if>
+                        <span class="badgeholder" id="eventsCountBadge" style="display:none">
+                            <g:link action="index"
+                                    title="click to load new events"
+                                    params="${filterName ? [filterName: filterName] : params}"><span
+                                    class="badge newcontent active" id="eventsCountContent"
+                                    title="click to load new events"></span></g:link>
+                        </span>
+                    </g:if>
+                  </div>
+                  <div class="col-xs-6">
+                    <g:if test="${includeAutoRefresh}">
+                      <div class="form-group pull-right" style="display:inline-block;">
+                        <div class="checkbox">
+                          <g:checkBox name="refresh" value="true" checked="${params.refresh=='true'}" class="autorefresh" id="autorefresh"/>
+                          <label for="autorefresh">
+                              Auto refresh
+                          </label>
+                        </div>
+                      </div>
+                    </g:if>
+                  </div>
                 </div>
                 </g:if>
 
-                <div class="jobsReport clear">
+                <div class="jobsReport clear card-content">
                     <g:if test="${reports}">
                         <g:form action="bulkDelete" controller="execution" method="POST" name="bulkDeleteForm" useToken="true">
                             <g:hiddenField name="project" value="${params.project}"/>

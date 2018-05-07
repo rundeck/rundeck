@@ -28,34 +28,34 @@
 %{--</span>--}%
 <div class="form-group">
     <label for="jobIdFilter" class="sr-only"><g:message code="jobquery.title.jobFilter"/></label>
-    <g:textField name="jobFilter" value="${query.jobFilter}" autofocus="true" class="form-control input-sm"
+    <g:textField name="jobFilter" value="${query.jobFilter}" autofocus="true" class="form-control"
                  placeholder="${g.message(code:'jobquery.title.jobFilter')}"/>
 </div>
 <g:if test="${query.jobIdFilter}">
     <div class="form-group">
         <label for="jobIdFilter" class="sr-only"><g:message code="jobquery.title.jobIdFilter"/></label>
-        <g:textField name="jobIdFilter" value="${query.jobIdFilter}" class="form-control input-sm"
+        <g:textField name="jobIdFilter" value="${query.jobIdFilter}" class="form-control"
                            placeholder="${g.message(code: 'jobquery.title.jobIdFilter')}"/>
     </div>
 </g:if>
 
 <div class="form-group">
     <label for="userFilter" class="sr-only"><g:message code="jobquery.title.userFilter"/></label>
-    <g:textField name="userFilter" value="${query.userFilter}" class="form-control input-sm"
+    <g:textField name="userFilter" value="${query.userFilter}" class="form-control"
                  placeholder="${g.message(code: 'jobquery.title.userFilter')}"/>
 </div>
 <div class="form-group">
     <label for="titleFilter" class="sr-only"><g:message code="jobquery.title.titleFilter"/></label>
-    <g:textField name="titleFilter" value="${query.titleFilter}" class="form-control input-sm"
+    <g:textField name="titleFilter" value="${query.titleFilter}" class="form-control"
                  placeholder="${g.message(code: 'jobquery.title.titleFilter')}"/>
 </div>
 <div class="form-group">
     <label for="execnodeFilter" class="sr-only"><g:message code="jobquery.title.filter"/></label>
-    <g:textField name="execnodeFilter" value="${query.execnodeFilter}" class="form-control input-sm"
+    <g:textField name="execnodeFilter" value="${query.execnodeFilter}" class="form-control"
                  placeholder="${g.message(code: 'jobquery.title.filter')}"/>
 </div>
 <div class="form-group">
     <label for="statFilter" class="sr-only"><g:message code="jobquery.title.statFilter"/></label>
     <g:select name="statFilter" from="${['succeed', 'fail', 'cancel']}" value="${query.statFilter}"
-              noSelection="['': 'Any']" valueMessagePrefix="status.label" class="form-control input-sm"/>
+              noSelection="['': 'Any']" valueMessagePrefix="status.label" class="form-control"/>
 </div>

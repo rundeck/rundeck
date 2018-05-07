@@ -64,7 +64,7 @@
                       </g:ifPageProperty>
                   </g:if>
                   <g:if test="${session.frameworkProjects}">
-                      <li class="dropdown" id="projectSelect">
+                      <li id="projectSelect">
                           <g:render template="/framework/projectSelect"
                                     model="${[
                                             projects    : session.frameworkProjects,
@@ -75,11 +75,7 @@
                       </li>
                   </g:if>
                   <g:else>
-                      <li id="projectSelect" class="dropdown disabled">
-                          <a data-toggle="dropdown" href="#" class="disabled">
-                              <i class="caret"></i>
-                          </a>
-                      </li>
+                      <!-- There's no reason for an empty dropdown -->
                   </g:else>
                   <g:unless test="${session.frameworkProjects}">
                       <g:javascript>
@@ -119,20 +115,12 @@
               </div>
             </li>
             <li id="appUser">
-                <bs:dropdownToggle id="userLabel" >
-                    ${session.user}
-                </bs:dropdownToggle>
-                <bs:dropdown labelId="userLabel">
-                    <bs:menuitem
-                            controller="user" action="profile"
-                            icon="user"
-                            code="profile"/>
-
-                    <bs:menuitem/>
-                    <bs:menuitem action="logout" controller="user"
-                                 icon="remove"
-                                 code="logout"/>
-                </bs:dropdown>
+              <div class="dropdown">
+                <a data-toggle="dropdown" class="dropdown-toggle" id="userLabel">
+                  ${session.user}
+                </a>
+                <g:render template="/menu/appUserMenu"/>
+              </div>
             </li>
         </g:if>
       </ul>

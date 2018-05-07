@@ -402,10 +402,10 @@ function _setupAceTextareaEditor(textarea, callback, autoCompleter) {
                 editor.getSession().setUseWrapMode(this.checked);
             });
         var _soft_label = jQuery('<label></label>')
-            .append(_soft)
             .append('Soft Wrap');
         var _ctrls = jQuery('<div></div>')
             .addClass('checkbox ace_text_controls')
+            .append(_soft)
             .append(_soft_label)
             .insertBefore(_shadow);
     }
