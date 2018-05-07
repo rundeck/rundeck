@@ -36,7 +36,7 @@ dependencies {
     compile group: 'com.google.protobuf', name: 'protobuf-java', version: '3.5.1'
     compile project(":rundeck-storage:rundeck-storage-api")
     compile project(":rundeck-storage:rundeck-storage-conf")
-    compile ('com.google.guava:guava:24.1-jre') {
+    compile ('com.google.guava:guava:24.1.1-jre') {
         exclude group:'org.codehaus.mojo', module: 'animal-sniffer-annotations'
         exclude group:'org.checkerframework', module: 'checker-compat-qual'
         exclude group:'com.google.errorprone', module: 'error_prone_annotations'

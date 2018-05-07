@@ -118,7 +118,7 @@ grails.project.dependency.resolution = {
                 'com.fasterxml.jackson.core:jackson-databind:2.8.11.1',
                 'com.fasterxml.jackson.core:jackson-annotations:2.8.11',
                 'com.codahale.metrics:metrics-core:3.0.1',
-                'com.google.guava:guava:24.1-jre',
+                'com.google.guava:guava:24.1.1-jre',
                 'org.owasp.encoder:encoder:1.2',
                 'org.quartz-scheduler:quartz:2.2.1',
                 'com.atlassian.commonmark:commonmark:0.9.0',
