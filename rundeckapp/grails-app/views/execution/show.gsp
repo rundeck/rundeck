@@ -45,10 +45,10 @@
       <g:set var="maxLastLines" value="${grailsApplication.config.rundeck.gui.execution.tail.lines.max}"/>
       <asset:javascript src="workflow.js"/>
       <asset:javascript src="executionControl.js"/>
-      <g:javascript src="executionState.js"/>
+      <asset:javascript src="executionState.js"/>
       <asset:javascript src="executionState_HistoryKO.js"/>
 
-      <g:javascript library="prototype/effects"/>
+      <asset:javascript src="prototype-bundle.js"/>
       <g:embedJSON id="execInfoJSON" data="${[jobId:scheduledExecution?.extid,execId:execution.id]}"/>
       <g:embedJSON id="jobDetail"
                    data="${[id: scheduledExecution?.extid, name: scheduledExecution?.jobName, group: scheduledExecution?.groupPath,
@@ -767,7 +767,7 @@
 <g:render template="/menu/copyModal"
           model="[projectNames: projectNames]"/>
 
-  <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
+  <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 
   </body>
 </html>

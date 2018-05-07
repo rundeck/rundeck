@@ -125,12 +125,12 @@ public class Option implements Comparable{
     static mapping = {
         table "rdoption"
         valuesUrlLong length:3000
-        values type: 'text'//, lazy: false
         description type: 'text'
         defaultValue type: 'text'
         regex type: 'text'
         optionType type: 'text'
         configData type: 'text'
+//        values type: 'string'//, lazy: false
     }
     /**
      * Return canonical map representation

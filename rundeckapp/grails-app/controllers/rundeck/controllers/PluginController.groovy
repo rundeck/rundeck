@@ -6,7 +6,7 @@ import org.springframework.web.servlet.support.RequestContextUtils
 import rundeck.services.UiPluginService
 
 class PluginController {
-    def UiPluginService uiPluginService
+    UiPluginService uiPluginService
 
     def pluginIcon(PluginResourceReq resourceReq) {
         if (resourceReq.hasErrors()) {

@@ -44,28 +44,44 @@ import com.dtolabs.rundeck.server.plugins.logstorage.TreeExecutionFileStoragePlu
 import com.dtolabs.rundeck.server.plugins.services.*
 import com.dtolabs.rundeck.server.plugins.storage.DbStoragePluginFactory
 import com.dtolabs.rundeck.server.storage.StorageTreeFactory
+import grails.plugin.springsecurity.SecurityFilterPosition
+import grails.plugin.springsecurity.SpringSecurityUtils
 import grails.util.Environment
 import groovy.io.FileType
+
+import org.rundeck.security.RundeckJaasAuthorityGranter
+import org.rundeck.security.RundeckPreauthenticationRequestHeaderFilter
+import org.rundeck.security.RundeckUserDetailsService
 import org.rundeck.web.infosec.ContainerPrincipalRoleSource
 import org.rundeck.web.infosec.ContainerRoleSource
 import org.rundeck.web.infosec.HMacSynchronizerTokensManager
 import org.rundeck.web.infosec.PreauthenticatedAttributeRoleSource
 import org.springframework.beans.factory.config.MapFactoryBean
+import org.springframework.boot.web.servlet.FilterRegistrationBean
 import org.springframework.core.task.SimpleAsyncTaskExecutor
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler
+import org.springframework.security.authentication.AuthenticationManager
+import org.springframework.security.authentication.jaas.DefaultJaasAuthenticationProvider
+import org.springframework.security.core.userdetails.UserDetailsService
+import org.springframework.security.provisioning.InMemoryUserDetailsManager
+import org.springframework.security.web.authentication.preauth.PreAuthenticatedAuthenticationProvider
+import org.springframework.security.web.jaasapi.JaasApiIntegrationFilter
 import rundeck.services.PasswordFieldsService
 import rundeck.services.QuartzJobScheduleManager
 import rundeck.services.scm.ScmJobImporter
 
+import javax.security.auth.login.Configuration
+
 beans={
     xmlns context: "http://www.springframework.org/schema/context"
-    if (Environment.PRODUCTION == Environment.current) {
-        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
-            targetClass = "org.springframework.util.Log4jConfigurer"
-            targetMethod = "initLogging"
-            arguments = ["classpath:log4j.properties"]
-        }
-    }
+//    if (Environment.PRODUCTION == Environment.current) {
+//        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
+//            targetClass = "org.springframework.util.Log4jConfigurer"
+//            targetMethod = "initLogging"
+//            arguments = ["classpath:log4j.properties"]
+//        }
+//    }
     defaultGrailsServiceInjectorJobListener(GrailsServiceInjectorJobListener){
         name= 'defaultGrailsServiceInjectorJobListener'
         services=[grailsApplication: ref('grailsApplication'),
@@ -86,6 +102,19 @@ beans={
         System.err.println("rdeck.base was not defined in application config or as a system property")
         return
     }
+
+    if (Environment.PRODUCTION == Environment.current) {
+        def cfgRundeckLogDir = application.config.rundeck?.log?.dir
+        if(cfgRundeckLogDir) { System.setProperty("rundeck.log.dir", cfgRundeckLogDir )}
+        String log4jPropFile = application.config.rundeck.log4j.config.file ?: "classpath:log4j.properties"
+        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
+            targetClass = "org.springframework.util.Log4jConfigurer"
+            targetMethod = "initLogging"
+            arguments = [log4jPropFile]
+        }
+    }
+
+
     def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${rdeckBase}/libext"
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
@@ -357,4 +386,47 @@ beans={
     /// XML/JSON custom marshaller support
 
     apiMarshallerRegistrar(ApiMarshallerRegistrar)
+
+    rundeckUserDetailsService(RundeckUserDetailsService)
+    rundeckJaasAuthorityGranter(RundeckJaasAuthorityGranter)
+
+    //spring security preauth filter configuration
+    if(grailsApplication.config.rundeck.security.authorization.preauthenticated.enabled in [true,'true']) {
+        rundeckPreauthFilter(RundeckPreauthenticationRequestHeaderFilter) {
+            enabled = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.enabled in [true, 'true']
+            userNameHeader = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.userNameHeader
+            rolesHeader = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.userRolesHeader
+            rolesAttribute = grailsApplication.config.rundeck?.security?.authorization?.preauthenticated?.attributeName
+            authenticationManager = ref('authenticationManager')
+        }
+        rundeckPreauthFilterDeReg(FilterRegistrationBean) {
+            filter = ref("rundeckPreauthFilter")
+            enabled = false
+        }
+        preAuthenticatedAuthProvider(PreAuthenticatedAuthenticationProvider) {
+            preAuthenticatedUserDetailsService = ref('rundeckUserDetailsService')
+        }
+
+    }
+
+    if(grailsApplication.config.rundeck.useJaas in [true,'true']) {
+        //spring security jaas configuration
+        jaasApiIntegrationFilter(JaasApiIntegrationFilter)
+
+        jaasAuthProvider(DefaultJaasAuthenticationProvider) {
+            configuration = Configuration.getConfiguration()
+            loginContextName = grailsApplication.config.rundeck.security.jaasLoginModuleName
+            authorityGranters = [
+                    ref('rundeckJaasAuthorityGranter')
+            ]
+        }
+    } else {
+        //if not using jaas for security provide a simple default
+        Properties realmProperties = new Properties()
+        realmProperties.load(new File(grailsApplication.config.rundeck.security.fileUserDataSource).newInputStream())
+        realmPropertyFileDataSource(InMemoryUserDetailsManager, realmProperties)
+        realmAuthProvider(DaoAuthenticationProvider) {
+            userDetailsService = ref('realmPropertyFileDataSource')
+        }
+    }
 }

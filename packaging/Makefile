@@ -57,15 +57,12 @@ rpm:
 	@cp -R root/* rpmdist/SOURCES
 	@cp -R ../core/build/tools/lib/*.jar rpmdist/SOURCES/var/lib/rundeck/cli
 	@cp ../core/build/libs/rundeck-core-$(JVERS).jar rpmdist/SOURCES/var/lib/rundeck/cli
-	@cp ../rundeck-launcher/rundeck-jetty-server/build/libs/rundeck-jetty-server-$(JVERS).jar rpmdist/SOURCES/var/lib/rundeck/bootstrap
-	cp ../rundeck-launcher/launcher/build/launcher-contents/lib/*.jar rpmdist/SOURCES/var/lib/rundeck/bootstrap/
+	@cp ../rundeckapp/build/libs/rundeck-$(JVERS).war rpmdist/SOURCES/var/lib/rundeck/bootstrap
 	@cp ../plugins/*-plugin/build/libs/*-plugin-$(JVERS).jar rpmdist/SOURCES/var/lib/rundeck/libext
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/admin.aclpolicy.template rpmdist/SOURCES/etc/rundeck/admin.aclpolicy
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/apitoken.aclpolicy.template rpmdist/SOURCES/etc/rundeck/apitoken.aclpolicy
 	@find ../core/src/main/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z rpmdist/SOURCES/usr/bin
-	@unzip -oq ../rundeckapp/target/rundeck-$(JVERS).war -d rpmdist/SOURCES/var/lib/rundeck/exp/webapp/
-	@ln -s /etc/rundeck/log4j.properties; mv log4j.properties rpmdist/SOURCES/var/lib/rundeck/exp/webapp/WEB-INF/classes
-	rpmbuild -bb --target=noarch-linux $(RPMBUILD_DEFINES) --buildroot ${PWD}/rpmdist/SOURCES rundeck.spec 
+	rpmbuild -bb --target=noarch-linux $(RPMBUILD_DEFINES) --buildroot ${PWD}/rpmdist/SOURCES rundeck.spec
 
 
 deb:
@@ -82,16 +79,13 @@ deb:
 	@cat debroot/DEBIAN/control | sed -e "s/%VERSION%/$(VERSION)/" > debdist/DEBIAN/control
 	@cp -R ../core/build/tools/lib/*.jar debdist/var/lib/rundeck/cli
 	@cp ../core/build/libs/rundeck-core-$(JVERS).jar debdist/var/lib/rundeck/cli
-	@cp ../rundeck-launcher/rundeck-jetty-server/build/libs/rundeck-jetty-server-$(JVERS).jar debdist/var/lib/rundeck/bootstrap
-	@cp ../rundeck-launcher/launcher/build/launcher-contents/lib/*.jar debdist/var/lib/rundeck/bootstrap/
+	@cp ../rundeckapp/build/libs/rundeck-$(JVERS).war debdist/var/lib/rundeck/bootstrap
 	@cp ../plugins/*-plugin/build/libs/*-plugin-$(JVERS).jar debdist/var/lib/rundeck/libext
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/admin.aclpolicy.template debdist/etc/rundeck/admin.aclpolicy
 	@cp ../core/src/main/resources/com/dtolabs/launcher/setup/templates/apitoken.aclpolicy.template debdist/etc/rundeck/apitoken.aclpolicy
 	@find ../core/src/main/resources/com/dtolabs/rundeck/core/cli/templates ! -regex ".*.bat$$" -and -type f | sed -e /rd-check/d -e /rd-setup/d | xargs -I Z cp Z debdist/usr/bin
-	@unzip -oq ../rundeckapp/target/rundeck-$(JVERS).war -d debdist/var/lib/rundeck/exp/webapp/
-	@ln -s /etc/rundeck/log4j.properties; mv log4j.properties debdist/var/lib/rundeck/exp/webapp/WEB-INF/classes
 	fakeroot dpkg-deb --build -Zgzip debdist
-	@mv debdist.deb rundeck_$(VERSION)-$(RELEASE)$(DEB_TAG)_all.deb
+	@mv debdist.deb debdist/rundeck_$(VERSION)-$(RELEASE)$(DEB_TAG)_all.deb
 
 clean: rpmclean debclean
 

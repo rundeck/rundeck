@@ -11,7 +11,7 @@ if [ "" == "$2" ] ; then
 fi
 
 createjob(){
-
+errorMsg "CREATE JOB: $1"
   jobname=$1
   shift
   jobkeepgoing=$1
@@ -104,7 +104,7 @@ runjob(){
   ###
   # Run the chosen id, expect success message
   ###
-
+errorMsg "RUN JOB $jobid"
   # now submit req
   runurl="${APIURL}/job/${jobid}/run"
   params=""

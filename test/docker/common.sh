@@ -6,8 +6,8 @@ export CLI_DEB_URL=${CLI_DEB_URL:-https://dl.bintray.com/rundeck/rundeck-deb}
 export CLI_VERS=${CLI_VERS:-1.0.15-1}
 
 build_rdtest_docker(){
-	if [ -f rundeck-launcher.jar ] ; then
-		mv rundeck-launcher.jar dockers/rundeck/data/
+	if [ -f rundeck-launcher.war ] ; then
+		mv rundeck-launcher.war dockers/rundeck/data/
 	fi
 
 	if [ -f rd.deb ] ; then

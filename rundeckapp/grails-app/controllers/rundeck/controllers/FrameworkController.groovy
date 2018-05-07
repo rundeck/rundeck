@@ -40,6 +40,7 @@ import com.dtolabs.shared.resources.ResourceXMLGenerator
 
 import grails.converters.JSON
 import grails.converters.XML
+import grails.web.servlet.mvc.GrailsParameterMap
 import org.springframework.context.ApplicationContext
 import org.springframework.context.ApplicationContextAware
 import org.springframework.http.MediaType
@@ -68,7 +69,6 @@ import com.dtolabs.rundeck.core.resources.format.ResourceFormatGeneratorExceptio
 import com.dtolabs.rundeck.core.execution.service.NodeExecutorService
 import com.dtolabs.rundeck.core.execution.service.FileCopierService
 
-import org.codehaus.groovy.grails.web.servlet.mvc.GrailsParameterMap
 import com.dtolabs.client.utils.Constants
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.core.common.NodeSetImpl
@@ -80,7 +80,7 @@ import rundeck.NodeFilter
 import rundeck.services.ExecutionService
 import rundeck.services.FrameworkService
 import rundeck.services.UserService
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 
 class FrameworkController extends ControllerBase implements ApplicationContextAware {
     FrameworkService frameworkService
@@ -2238,7 +2238,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def apiSourcesList() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V23)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
             return
         }
 
@@ -2296,7 +2296,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                                 absolute: true,
                                 mapping: 'apiProjectSourceResources',
                                 params: [
-                                    api_version: ApiRequestFilters.API_CURRENT_VERSION,
+                                    api_version: ApiVersions.API_CURRENT_VERSION,
                                     project    : project,
                                     index      : index
                                 ]
@@ -2311,7 +2311,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def apiSourceWriteContent() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V23)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
             return
         }
 
@@ -2429,7 +2429,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def apiSourceGet() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V23)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
             return
         }
 
@@ -2495,7 +2495,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 absolute: true,
                 mapping: 'apiProjectSourceResources',
                 params: [
-                    api_version: ApiRequestFilters.API_CURRENT_VERSION,
+                    api_version: ApiVersions.API_CURRENT_VERSION,
                     project    : project,
                     index      : index
                 ]
@@ -2519,7 +2519,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     def apiSourceGetContent() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V23)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V23)) {
             return
         }
 
@@ -2574,7 +2574,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/14/project/PROJECT/resource/NAME, version 14
      */
     def apiResourcev14 () {
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
             return
         }
         return apiResource()
@@ -2627,7 +2627,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * API: /api/2/project/NAME/resources, version 2
      */
     def apiResourcesv2(ExtNodeFilters query) {
-        if (!apiService.requireVersion(request, response,ApiRequestFilters.V2)) {
+        if (!apiService.requireVersion(request, response,ApiVersions.V2)) {
             return
         }
         return apiResources(query)
@@ -2667,7 +2667,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 response.format && !(response.format in ['all','html','xml','yaml'])) {
             //expected another content type
             def reqformat = params.format ?: response.format
-            if (!apiService.requireVersion(request, response,ApiRequestFilters.V3)) {
+            if (!apiService.requireVersion(request, response,ApiVersions.V3)) {
                 return
             }
         }
@@ -2715,7 +2715,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     protected def apiRenderNodeResult(INodeSet nodes, IFramework framework, String project) {
         def reqformat = params.format ?: response.format
         if (reqformat in ['all', 'html']) {
-            if (request.api_version < ApiRequestFilters.V23) {
+            if (request.api_version < ApiVersions.V23) {
                 reqformat = 'xml'
             } else {
                 reqformat = 'json'
@@ -2798,7 +2798,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
      * /api/14/system/acl/* endpoint
      */
     def apiSystemAcls(){
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -2847,7 +2847,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
     }
 
     private def renderAclHref(String path) {
-        createLink(absolute: true, uri: "/api/${ApiRequestFilters.API_CURRENT_VERSION}/system/acl/$path")
+        createLink(absolute: true, uri: "/api/${ApiVersions.API_CURRENT_VERSION}/system/acl/$path")
     }
     private def apiSystemAclsPutResource(String storagePath, boolean create) {
         def respFormat = apiService.extractResponseFormat(request, response, ['xml','json','yaml','text'],request.format)
@@ -2918,9 +2918,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             response.status = HttpServletResponse.SC_BAD_REQUEST
             return withFormat{
                 def j={
-                    render(contentType:'application/json'){
-                        apiService.renderJsonAclpolicyValidation(validation,delegate)
-                    }
+                    render apiService.renderJsonAclpolicyValidation(validation) as JSON
                 }
                 xml{
                     render(contentType: 'application/xml'){
@@ -2945,14 +2943,13 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
             withFormat{
                 xml{
                     render(contentType: 'application/xml'){
-                        apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                        apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
                     }
 
                 }
                 def j={
-                    render(contentType:'application/json'){
-                        apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
-                    }
+                    def content = [contents: baos.toString()]
+                    render content as JSON
                 }
                 json j
                 '*' j
@@ -2980,13 +2977,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 configStorageService.loadFileResource(projectFilePath,baos)
                 withFormat{
                     def j={
-                        render(contentType:'application/json'){
-                            apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
-                        }
+                        def content = [contents:baos.toString()]
+                        render content as JSON
                     }
                     xml{
                         render(contentType: 'application/xml'){
-                            apiService.renderWrappedFileContents(baos.toString(),respFormat,delegate)
+                            apiService.renderWrappedFileContentsXml(baos.toString(),respFormat,delegate)
                         }
 
                     }
@@ -3011,15 +3007,12 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 
                 }
                 def j ={
-                    render(contentType:'application/json') {
-                        apiService.jsonRenderDirlist(
+                    render apiService.jsonRenderDirlist(
                                 projectFilePath,
                                 { String p -> apiService.pathRmPrefix(p, rmprefix) },
                                 { String p -> renderAclHref(apiService.pathRmPrefix(p, rmprefix)) },
-                                list,
-                                delegate
-                        )
-                    }
+                                list
+                        ) as JSON
                 }
                 json j
                 '*' j

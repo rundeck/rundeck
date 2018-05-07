@@ -27,7 +27,7 @@ import javax.servlet.http.HttpServletResponse
 import java.lang.management.ManagementFactory
 
 import com.dtolabs.rundeck.server.authorization.AuthConstants
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 
 /**
  * Contains utility actions for API access and responses
@@ -133,7 +133,7 @@ class ApiController extends ControllerBase{
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
-        if (request.api_version < ApiRequestFilters.V19 && !adminAuth) {
+        if (request.api_version < ApiVersions.V19 && !adminAuth) {
             return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'Rundeck', 'User account'])
         }
 
@@ -170,7 +170,7 @@ class ApiController extends ControllerBase{
 
         def adminAuth = apiService.hasTokenAdminAuth(authContext)
 
-        if (request.api_version < ApiRequestFilters.V19 && !adminAuth) {
+        if (request.api_version < ApiVersions.V19 && !adminAuth) {
             return apiService.renderUnauthorized(response, [AuthConstants.ACTION_ADMIN, 'Rundeck', 'User account'])
         }
 
@@ -185,7 +185,7 @@ class ApiController extends ControllerBase{
         } else {
             tokenlist = AuthToken.list()
         }
-        def apiv19 = request.api_version >= ApiRequestFilters.V19
+        def apiv19 = request.api_version >= ApiVersions.V19
         def data = new ListTokens(params.user, !params.user, tokenlist.collect { new Token(it, apiv19) })
 
         respond(data, [formats: ['xml', 'json']])
@@ -205,7 +205,7 @@ class ApiController extends ControllerBase{
         def roles = null
         def tokenDuration = null
         def errors = []
-        boolean tokenRolesV19Enabled = request.api_version >= ApiRequestFilters.V19
+        boolean tokenRolesV19Enabled = request.api_version >= ApiVersions.V19
 
         if (tokenRolesV19Enabled || request.getHeader("Content-Type")) {
             def parsed = apiService.parseJsonXmlWith(request, response, [
@@ -300,7 +300,7 @@ class ApiController extends ControllerBase{
      * /api/19/tokens/$user?/removeExpired
      */
     def apiTokenRemoveExpired() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -367,7 +367,7 @@ class ApiController extends ControllerBase{
         def metricsJsonUrl = createLink(uri: '/metrics/metrics?pretty=true',absolute: true)
         def metricsThreadDumpUrl = createLink(uri: '/metrics/threads',absolute: true)
         def metricsHealthcheckUrl = createLink(uri: '/metrics/healthcheck',absolute: true)
-        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorXml(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',
@@ -391,7 +391,7 @@ class ApiController extends ControllerBase{
                             build(grailsApplication.metadata['build.ident'])
                             node(nodeName)
                             base(servletContext.getAttribute("RDECK_BASE"))
-                            apiversion(ApiRequestFilters.API_CURRENT_VERSION)
+                            apiversion(ApiVersions.API_CURRENT_VERSION)
                             serverUUID(sUUID)
                         }
                         executions(active:executionModeActive,executionMode:executionModeActive?'active':'passive')
@@ -452,7 +452,7 @@ class ApiController extends ControllerBase{
                             build=(grailsApplication.metadata['build.ident'])
                             node=(nodeName)
                             base=(servletContext.getAttribute("RDECK_BASE"))
-                            apiversion=(ApiRequestFilters.API_CURRENT_VERSION)
+                            apiversion=(ApiVersions.API_CURRENT_VERSION)
                             serverUUID=(sUUID)
                         }
                         executions={

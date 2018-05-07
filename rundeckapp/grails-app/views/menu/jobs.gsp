@@ -26,8 +26,8 @@
     <title><g:message code="gui.menu.Workflows"/> - <g:enc>${projectLabel}</g:enc></title>
 
     <asset:javascript src="util/yellowfade.js"/>
-    <g:javascript library="pagehistory"/>
-    <g:javascript library="prototype/effects"/>
+    <asset:javascript src="pagehistory.js"/>
+    <asset:javascript src="prototype/effects"/>
     <asset:javascript src="menu/jobs.js"/>
     <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
         <asset:javascript src="menu/joboptionsTest.js"/>
@@ -37,7 +37,7 @@
     <g:embedJSON data="${nextScheduled ?: []}" id="nextScheduled"/>
     <g:embedJSON id="pageParams" data="${[project: params.project?:request.project,]}"/>
     <g:jsMessages code="Node,Node.plural,job.starting.execution,job.scheduling.execution,option.value.required,options.remote.dependency.missing.required,,option.default.button.title,option.default.button.text,option.select.choose.text"/>
-    <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
+    <!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
     <script type="text/javascript">
         /** knockout binding for activity */
         var pageActivity;

@@ -23,6 +23,11 @@
 
 <body>
 
+<g:if test="${!exception && request.getAttribute('javax.servlet.error.exception')}">
+    <%
+        exception=request.getAttribute('javax.servlet.error.exception').cause
+    %>
+</g:if>
 
 <div class="container">
 <div class="row">
@@ -57,29 +62,15 @@ value="${(grailsApplication.config?.rundeck?.gui?.errorpage?.hidestacktrace in [
         <div class="container">
         <div class="row">
         <div class="col-sm-12">
-            <div><b>Request:</b> <g:enc>${null != controllerName && null != actionName ? createLink(controller: controllerName, action: actionName, params: params) : request.getRequestURL()}</g:enc>
-            </div>
-            <strong>Message:</strong> <g:enc>${exception.message}</g:enc> <br/>
-                <strong>Caused by:</strong> <g:enc>${exception.cause?.message}</g:enc> <br/>
-                <strong>Class:</strong> <g:enc>${exception.className}</g:enc> <br/>
-                <strong>At Line:</strong> [<g:enc>${exception.lineNumber}</g:enc>] <br/>
-                <strong>Code Snippet:</strong><br/>
-
-                <div class="snippet">
-                    <g:each var="cs" in="${exception.codeSnippet}">
-                        <g:enc>${cs}</g:enc><br/>
-                    </g:each>
-                </div>
+            <g:renderException exception="${exception}" />
         </div>
-        <h3>Stack Trace</h3>
-        <pre><g:enc>${exception.stackTraceText}</g:enc></pre>
-    </div>
-    </div>
-    </div>
-    </div>
-    </div>
-    </div>
-    </div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
 </g:if>
 </div>
 </div>

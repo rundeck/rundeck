@@ -81,19 +81,7 @@ fi
 
 # Server Bootstrap
 %dir /var/lib/rundeck/bootstrap
-/var/lib/rundeck/bootstrap/javax.servlet-3.0.0.v201112011016.jar
-/var/lib/rundeck/bootstrap/jetty-all-9.0.7.v20131107.jar
-/var/lib/rundeck/bootstrap/jetty-security-9.0.7.v20131107.jar
-/var/lib/rundeck/bootstrap/jetty-server-9.0.7.v20131107.jar
-/var/lib/rundeck/bootstrap/jetty-util-9.0.7.v20131107.jar
-/var/lib/rundeck/bootstrap/jetty-io-9.0.7.v20131107.jar
-/var/lib/rundeck/bootstrap/jetty-http-9.0.7.v20131107.jar
-/var/lib/rundeck/bootstrap/jetty-jaas-9.0.7.v20131107.jar
-/var/lib/rundeck/bootstrap/log4j-1.2.16.jar
-/var/lib/rundeck/bootstrap/jna-3.2.2.jar
-/var/lib/rundeck/bootstrap/libpam4j-1.5.jar
-/var/lib/rundeck/bootstrap/rundeck-jetty-server-%{_vname}.jar
-/var/lib/rundeck/bootstrap/not-yet-commons-ssl-0.3.17.jar
+/var/lib/rundeck/bootstrap/rundeck-%{_vname}.war
 
 # CLI Lib Support
 %dir /var/lib/rundeck/cli
@@ -102,7 +90,7 @@ fi
 /var/lib/rundeck/cli/ant-launcher-1.8.3.jar
 /var/lib/rundeck/cli/commons-beanutils-1.9.3.jar
 /var/lib/rundeck/cli/commons-cli-1.0.jar
-/var/lib/rundeck/cli/commons-codec-1.5.jar
+/var/lib/rundeck/cli/commons-codec-1.10.jar
 /var/lib/rundeck/cli/commons-collections-3.2.2.jar
 /var/lib/rundeck/cli/commons-httpclient-3.0.1.jar
 /var/lib/rundeck/cli/commons-lang-2.6.jar
@@ -125,8 +113,8 @@ fi
 /var/lib/rundeck/cli/rundeck-storage-api-%{_vname}.jar
 /var/lib/rundeck/cli/rundeck-storage-conf-%{_vname}.jar
 /var/lib/rundeck/cli/rundeck-storage-data-%{_vname}.jar
-/var/lib/rundeck/cli/snakeyaml-1.9.jar
-/var/lib/rundeck/cli/jackson-annotations-2.8.11.jar
+/var/lib/rundeck/cli/snakeyaml-1.14.jar
+/var/lib/rundeck/cli/jackson-annotations-2.8.0.jar
 /var/lib/rundeck/cli/jackson-core-2.8.11.jar
 /var/lib/rundeck/cli/jackson-databind-2.8.11.1.jar
 /var/lib/rundeck/cli/converter-jackson-2.2.0.jar

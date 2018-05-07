@@ -108,7 +108,7 @@
     </div>
 </div>
 
-<!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
+<!--[if (gt IE 8)|!(IE)]><!--> <asset:javascript src="ace-bundle.js"/><!--<![endif]-->
 <g:javascript>
     fireWhenReady('definition', function (z) {
         jQuery('.apply_ace').each(function () {

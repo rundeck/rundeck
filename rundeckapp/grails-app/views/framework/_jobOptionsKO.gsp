@@ -14,7 +14,7 @@
   - limitations under the License.
   --}%
 
-<%@ page import="java.util.regex.Pattern; grails.converters.deep.JSON; grails.util.Environment" %>
+<%@ page import="java.util.regex.Pattern; grails.converters.JSON; grails.util.Environment" %>
 <%--
 used by _editOptions.gsp template
 --%>

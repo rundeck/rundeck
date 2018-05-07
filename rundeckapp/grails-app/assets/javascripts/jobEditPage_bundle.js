@@ -23,6 +23,8 @@
 //= require nodeFiltersKO
 //= require optionEditKO
 //= require storageBrowseKO
+//= require prototype-bundle
+//= require ace-bundle
 
 /*
  Manifest: include jobedit.js, workflowStepEditorKO, nodeFiltersKO, optionEditKO

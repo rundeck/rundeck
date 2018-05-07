@@ -38,13 +38,14 @@ import com.dtolabs.rundeck.plugins.logs.ContentConverterPlugin
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import com.dtolabs.rundeck.server.plugins.DescribedPlugin
 import grails.converters.JSON
-import org.codehaus.groovy.grails.web.mapping.LinkGenerator
+import grails.web.JSONBuilder
+import grails.web.mapping.LinkGenerator
 import org.quartz.JobExecutionContext
 import org.springframework.dao.DataAccessResourceFailureException
 import rundeck.CommandExec
 import rundeck.Execution
 import rundeck.ScheduledExecution
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.ApiService
 import rundeck.services.ConfigurationService
 import rundeck.services.ExecutionService
@@ -96,7 +97,10 @@ class ExecutionController extends ControllerBase{
     }
 
     def follow() {
-        return render(view:'show',model:show())
+        def m = show()
+        if(response.status != 302) {
+            render(view:'show',model:m)
+        }
     }
 
     def followFragment() {
@@ -157,28 +161,27 @@ class ExecutionController extends ControllerBase{
             }
         }
 
-        render(contentType: 'application/json'){
-            executions=array{
-                execs.each{Execution exec->
-                    if(exec.workflow.commands.size()==1 && exec.workflow.commands[0].adhocRemoteString) {
-                        def href=createLink(
-                                controller: 'framework',
-                                action: 'adhoc',
-                                params: [project: project, fromExecId: exec.id]
-                        )
+        def elementList = execs.collect{Execution exec->
+            if(exec.workflow.commands.size()==1 && exec.workflow.commands[0].adhocRemoteString) {
+                def href=createLink(
+                        controller: 'framework',
+                        action: 'adhoc',
+                        params: [project: project, fromExecId: exec.id]
+                )
 
-                        def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
-                        element(
-                                status: exec.getExecutionState(),
-                                succeeded: exec.statusSucceeded(),
-                                href: href,
-                                execid: exec.id,
-                                title: exec.workflow.commands[0].adhocRemoteString,
-                                filter: appliedFilter
-                        )
-                    }
-                }
+                def appliedFilter = exec.doNodedispatch ? exec.filter : notDispatchedFilter
+                return [
+                        status: exec.getExecutionState(),
+                        succeeded: exec.statusSucceeded(),
+                        href: href,
+                        execid: exec.id,
+                        title: exec.workflow.commands[0].adhocRemoteString,
+                        filter: appliedFilter
+                ]
             }
+        }
+        render(contentType: 'application/json'){
+            executions elementList
         }
     }
 
@@ -224,8 +227,8 @@ class ExecutionController extends ControllerBase{
             return
         }
         if(!params.project || params.project!=e.project) {
-            return redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project], fragment: params?.outdetails)
-
+            redirect(controller: 'execution', action: 'show', params: [id: params.id, project: e.project], fragment: params?.outdetails)
+            return
         }
         params.project=e.project
         request.project=e.project
@@ -361,7 +364,7 @@ class ExecutionController extends ControllerBase{
         }
 
         def jobcomplete = e.dateCompleted != null
-        def execState = executionService.getExecutionState(e)
+        def execState = e.executionState
         def execDuration = (e.dateCompleted ? e.dateCompleted.getTime() : System.currentTimeMillis()) - e.dateStarted.getTime()
         def jobAverage=-1L
         if (e.scheduledExecution && e.scheduledExecution.totalTime >= 0 && e.scheduledExecution.execCount > 0) {
@@ -387,7 +390,7 @@ class ExecutionController extends ControllerBase{
             data['retryExecutionId']=e.retryExecution.id
             data['retryExecutionUrl']=createLink(controller: 'execution',action: 'show',id: e.retryExecution.id,
                     params:[project:e.project])
-            data['retryExecutionState']=ExecutionService.getExecutionState(e.retryExecution).toUpperCase()
+            data['retryExecutionState']=e.retryExecution.executionState.toUpperCase()
             data['retryExecutionAttempt']= e.retryExecution.retryAttempt
         }
         def selectedNodes=[]
@@ -439,9 +442,9 @@ class ExecutionController extends ControllerBase{
         }
         def limit=grailsApplication.config.rundeck?.ajax?.executionState?.compression?.nodeThreshold?:500
         if (selectedNodes || data.state?.allNodes?.size() > limit) {
-            return renderCompressed(request, response, 'application/json', data.encodeAsJSON())
+            renderCompressed(request, response, 'application/json', data as JSON)
         }else{
-            return render(contentType: 'application/json', text: data.encodeAsJSON())
+            render data as JSON
         }
     }
     def ajaxExecNodeState(){
@@ -499,7 +502,7 @@ class ExecutionController extends ControllerBase{
         if (file.exists()) {
             filesize = file.length()
         }
-        final state = ExecutionService.getExecutionState(e)
+        final state = e.executionState
         if(e.scheduledExecution){
             def ScheduledExecution se = e.scheduledExecution //ScheduledExecution.get(e.scheduledExecutionId)
             return render(
@@ -892,16 +895,16 @@ class ExecutionController extends ControllerBase{
      * API: /api/execution/{id}/output, version 5
      */
     def apiExecutionOutput() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V5)) {
             return
         }
         params.stateOutput=false
 
-        if (request.api_version < ApiRequestFilters.V9) {
+        if (request.api_version < ApiVersions.V9) {
             params.nodename = null
             params.stepctx = null
         }
-        if (request.api_version < ApiRequestFilters.V21) {
+        if (request.api_version < ApiVersions.V21) {
             params.remove('compacted')
         }
         return tailExecutionOutput()
@@ -909,8 +912,9 @@ class ExecutionController extends ControllerBase{
     static final String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
             "\\uE000-\\uFFFD" + "\\u10000-\\u10FFFF" + "]+";
 
+
     /**
-     * Use a builder delegate to render tailExecutionOutput result in XML or JSON
+     * Use a builder delegate to render tailExecutionOutput result in XML
      */
     private def renderOutputFormat(String outf, Map data, List outputData, apiVersion, delegate, stateoutput = false) {
         def keys = [
@@ -921,7 +925,7 @@ class ExecutionController extends ControllerBase{
         ]
         def setProp={k,v->
             if(outf=='json'){
-                delegate[k]=v
+                delegate."${k}"(v)
             }else{
                 delegate."${k}"(v)
             }
@@ -950,6 +954,7 @@ class ExecutionController extends ControllerBase{
             compactedAttr = 'log'
         }
         def prev = [:]
+        List jsonDatamapList = []
         def dataClos= {
             outputData.each {
                 def datamap = stateoutput?(it + [
@@ -983,11 +988,7 @@ class ExecutionController extends ControllerBase{
                     }
                 }
                 if (outf == 'json') {
-                    if (datamap instanceof Map) {
-                        delegate.'entries'(datamap)
-                    } else {
-                        delegate.element(datamap)
-                    }
+                        jsonDatamapList.add(datamap) //Changes to correct ExecutionControllerSpec."api execution output compacted json" test
                 } else {
                     if (datamap instanceof Map) {
                         if (compacted && removed) {
@@ -998,7 +999,7 @@ class ExecutionController extends ControllerBase{
                             datamap.log = datamap.log?.replaceAll(invalidXmlPattern, '')
                         }
                         //xml
-                        if (apiVersion <= ApiRequestFilters.V5) {
+                        if (apiVersion <= ApiVersions.V5) {
                             def text = datamap.remove('log')
                             delegate.'entry'(datamap, text)
                         } else {
@@ -1009,20 +1010,97 @@ class ExecutionController extends ControllerBase{
             }
         }
         if(outf=='json'){
-            delegate.'entries' = delegate.array(dataClos)
+            //Changes to correct ExecutionControllerSpec."api execution output compacted json" test
+            dataClos()
+            delegate.entries(jsonDatamapList)
         }else{
             delegate.entries(dataClos)
         }
+    }
+    //Create a map that will be converted to JSON by the grails converter at the render phase
+    private def renderOutputFormatJson(Map data, List outputData, stateoutput = false) {
+        def keys = [
+                'id', 'offset', 'completed', 'empty', 'unmodified', 'error', 'message', 'pending', 'execCompleted',
+                'hasFailedNodes', 'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize',
+                'lastLinesSupported', 'retryBackoff', 'clusterExec', 'serverNodeUUID',
+                'compacted',
+        ]
+        def jsonoutput = [:]
+
+        keys.each{
+            if(null!=data[it]){
+                jsonoutput[it] = data[it]
+            }
+        }
+        def filterparms = [:]
+        ['nodename', 'stepctx'].each {
+            if (data[it]) {
+                filterparms[it] = data[it]
+            }
+        }
+        if (filterparms) {
+            jsonoutput.filter(filterparms)
+        }
+
+
+        def timeFmt = new SimpleDateFormat("HH:mm:ss")
+        def compacted = data.compacted
+        def compactedAttr = null
+        if (compacted) {
+            jsonoutput.compactedAttr = 'log'
+            compactedAttr = 'log'
+        }
+        def prev = [:]
+        List jsonDatamapList = []
+
+        outputData.each {
+            def datamap = stateoutput?(it + [
+                    time: timeFmt.format(it.time),
+                    absolute_time: g.w3cDateValue([date: it.time]),
+                    log: it.mesg?.replaceAll(/\r?\n$/, ''),
+            ]):([
+                        time: timeFmt.format(it.time),
+                        absolute_time: g.w3cDateValue([date: it.time]),
+                        log: it.mesg?.replaceAll(/\r?\n$/, ''),
+                ]+it.subMap(['level','user','command','stepctx','node']))
+            datamap.remove('mesg')
+            if (it.loghtml) {
+                datamap.loghtml = it.loghtml
+            }
+            def removed = []
+            if (compacted) {
+                def origmap = new HashMap(datamap)
+                prev.each { k, v ->
+                    if (datamap[k] == prev[k]) {
+                        datamap.remove(k)
+                    } else if (null == datamap[k] && null != prev[k]) {
+                        datamap[k] = null
+                        removed << k
+                    }
+                }
+                prev = origmap
+                if (compactedAttr && datamap.size() == 1 && datamap[compactedAttr] != null) {
+                    //compact the single attribute into just the string
+                    datamap = datamap[compactedAttr]
+                }
+            }
+
+            jsonDatamapList.add(datamap)
+
+        }
+
+        jsonoutput.entries = jsonDatamapList
+        return jsonoutput
     }
     /**
      * API: /api/execution/{id}/output/state, version ?
      */
     def apiExecutionStateOutput() {
-        if (!apiService.requireVersion(request,response,ApiRequestFilters.V10)) {
+        if (!apiService.requireVersion(request,response,ApiVersions.V10)) {
             return
         }
         params.stateOutput = true
-        if (request.api_version < ApiRequestFilters.V21) {
+        if (request.api_version < ApiVersions.V21) {
             params.remove('compacted')
         }
         return tailExecutionOutput()
@@ -1037,7 +1115,7 @@ class ExecutionController extends ControllerBase{
         if(!apiService.requireExists(response,e,['Execution',params.id])){
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e?.project)
         def reqError=false
 
         def apiError = { String code, List args, int status = 0 ->
@@ -1050,14 +1128,13 @@ class ExecutionController extends ControllerBase{
                     if (status > 0) {
                         response.setStatus(status)
                     }
-                    render(contentType: "application/json") {
-                        renderOutputFormat('json', [
-                                error: message,
-                                id: params.id.toString(),
-                                offset: "0",
-                                completed: false
-                        ], [], request.api_version, delegate)
-                    }
+                    def err = [
+                            error: message,
+                            id: params.id.toString(),
+                            offset: "0",
+                            completed: false
+                            ]
+                    render err as JSON
                 }
                 text {
                     if (status > 0) {
@@ -1129,9 +1206,7 @@ class ExecutionController extends ControllerBase{
                     }
                 }
                 json {
-                    render(contentType: "application/json") {
-                        renderOutputFormat('json', dataMap, [], request.api_version, delegate)
-                    }
+                    render renderOutputFormatJson(dataMap,[]) as JSON
                 }
                 text {
                     response.addHeader('X-Rundeck-ExecOutput-Offset', "0")
@@ -1177,9 +1252,7 @@ class ExecutionController extends ControllerBase{
                     }
                 }
                 json {
-                    render(contentType: "application/json") {
-                        renderOutputFormat('json', dataMap, [], request.api_version, delegate)
-                    }
+                    render renderOutputFormatJson(dataMap,[]) as JSON
                 }
                 text {
                     response.addHeader('X-Rundeck-ExecOutput-Message', dataMap.message.toString())
@@ -1267,9 +1340,7 @@ class ExecutionController extends ControllerBase{
                         }
                     }
                     json {
-                        render(contentType: "application/json") {
-                            renderOutputFormat('json', dataMap, [], request.api_version, delegate)
-                        }
+                        render renderOutputFormatJson(dataMap,[]) as JSON
                     }
                     text {
                         response.addHeader('X-Rundeck-ExecOutput-Message', dataMap.message.toString())
@@ -1455,9 +1526,7 @@ class ExecutionController extends ControllerBase{
                 }
             }
             json {
-                render(contentType: "application/json") {
-                    renderOutputFormat('json', resultData, entry, request.api_version, delegate, stateoutput)
-                }
+                render renderOutputFormatJson(resultData,entry,stateoutput) as JSON
             }
             text{
                 response.addHeader('X-Rundeck-ExecOutput-Offset', storeoffset.toString())
@@ -1607,20 +1676,6 @@ class ExecutionController extends ControllerBase{
     public String createServerUrl() {
         return g.createLink(controller: 'menu', action: 'index', absolute: true)
     }
-    /**
-     * Render execution list xml given a List of executions, and a builder delegate
-     */
-    private def renderApiExecutions(LinkGenerator grailsLinkGenerator, List execlist, paging, delegate) {
-        apiService.renderExecutionsXml(execlist.collect{ Execution e->
-            [
-                execution:e,
-                href: grailsLinkGenerator.link(controller: 'execution', action: 'follow', id: e.id, absolute: true,
-                        params: [project: e.project]),
-                status: executionService.getExecutionState(e),
-                summary: executionService.summarizeJob(e.scheduledExecution, e)
-            ]
-        },paging,delegate)
-    }
 
     /**
      * API: /api/execution/{id} , version 1
@@ -1641,7 +1696,7 @@ class ExecutionController extends ControllerBase{
             return
         }
 
-        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',
@@ -1661,7 +1716,7 @@ class ExecutionController extends ControllerBase{
      * API: /api/execution/{id}/state , version 10
      */
     def apiExecutionState(){
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V10)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V10)) {
             return
         }
         def Execution e = Execution.get(params.id)
@@ -1765,7 +1820,7 @@ class ExecutionController extends ControllerBase{
             }
             xml{
                 return render(contentType: "text/xml", encoding: "UTF-8") {
-                    result(success: "true", apiversion: ApiRequestFilters.API_CURRENT_VERSION) {
+                    result(success: "true", apiversion: ApiVersions.API_CURRENT_VERSION) {
                         executionState(id:params.id){
                             new BuilderUtil().mapToDom(convertXml(state), delegate)
                         }
@@ -1782,8 +1837,9 @@ class ExecutionController extends ControllerBase{
         if (!apiService.requireApi(request, response)) {
             return
         }
-        ExecutionService.AbortResult abortresult
+//        ExecutionService.AbortResult abortresult
         def Execution e
+        ExecutionService.AbortResult abortresult
         try {
             e = Execution.get(params.id)
             if (!apiService.requireExists(response, e, ['Execution ID', params.id])) {
@@ -1798,14 +1854,14 @@ class ExecutionController extends ControllerBase{
                 return
             }
 
-            def ScheduledExecution se = e.scheduledExecution
-            def user = session.user
-            def killas = null
-            if (params.asUser && apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
-                //authorized within service call
-                killas = params.asUser
-            }
-            abortresult = executionService.abortExecution(
+        def ScheduledExecution se = e.scheduledExecution
+        def user=session.user
+        def killas=null
+        if (params.asUser && apiService.requireVersion(request,response,ApiVersions.V5)) {
+            //authorized within service call
+            killas= params.asUser
+        }
+        abortresult = executionService.abortExecution(
                 se,
                 e,
                 user,
@@ -1837,7 +1893,7 @@ class ExecutionController extends ControllerBase{
             reportstate.reason= abortresult.reason
         }
 
-        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorXml(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',
@@ -1877,7 +1933,7 @@ class ExecutionController extends ControllerBase{
      * @return
      */
     def apiExecutionDelete (){
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V12)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V12)) {
             return
         }
         def Execution e = Execution.get(params.id)
@@ -1916,7 +1972,7 @@ class ExecutionController extends ControllerBase{
      * @return
      */
     def apiExecutionDeleteBulk() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V12)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V12)) {
             return
         }
         return executionDeleteBulk()
@@ -1980,7 +2036,7 @@ class ExecutionController extends ControllerBase{
      * API: /api/14/project/NAME/executions
      */
     def apiExecutionsQueryv14(ExecutionQuery query){
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V14)){
+        if(!apiService.requireVersion(request,response,ApiVersions.V14)){
             return
         }
         return apiExecutionsQuery(query)
@@ -1990,7 +2046,7 @@ class ExecutionController extends ControllerBase{
      * API: /api/5/executions query interface, deprecated since v14
      */
     def apiExecutionsQuery(ExecutionQuery query){
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V5)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V5)) {
             return
         }
         if(query?.hasErrors()){
@@ -2011,7 +2067,7 @@ class ExecutionController extends ControllerBase{
         }
         AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,params.project)
 
-        if (request.api_version < ApiRequestFilters.V14 && !(response.format in ['all','xml'])) {
+        if (request.api_version < ApiVersions.V14 && !(response.format in ['all','xml'])) {
             return apiService.renderErrorFormat(response,[
                     status:HttpServletResponse.SC_UNSUPPORTED_MEDIA_TYPE,
                     code: 'api.error.item.unsupported-format',
@@ -2070,7 +2126,7 @@ class ExecutionController extends ControllerBase{
             }
         }
 
-        if (request.api_version < ApiRequestFilters.V20 && query.executionTypeFilter) {
+        if (request.api_version < ApiVersions.V20 && query.executionTypeFilter) {
             //ignore
             query.executionTypeFilter = null
         }
@@ -2116,7 +2172,7 @@ class ExecutionController extends ControllerBase{
      * @return
      */
     private def apiExecutionMode(boolean active) {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V14)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V14)) {
             return
         }
         AuthContext authContext = frameworkService.getAuthContextForSubject(session.subject)
@@ -2141,7 +2197,7 @@ class ExecutionController extends ControllerBase{
         withFormat{
             json {
                 render(contentType: "application/json") {
-                    delegate.executionMode=active?'active':'passive'
+                    executionMode (active?'active':'passive')
                 }
             }
             xml {
@@ -2156,7 +2212,7 @@ class ExecutionController extends ControllerBase{
      * List input files for an execution
      */
     def apiExecutionInputFiles() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V19)) {
+        if (!apiService.requireVersion(request, response, ApiVersions.V19)) {
             return
         }
         if (!apiService.requireParameters(params, response, ['id'])) {

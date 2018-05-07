@@ -31,7 +31,7 @@
     <link rel="apple-touch-icon-precomposed" href="${g.resource(dir: 'images', file: 'favicon-152.png')}"/>
     <asset:stylesheet href="rundeck.css"/>
     <!--[if lt IE 9]>
-    <g:javascript library="respond.min"/>
+    <asset:javascript src="respond.min.js"/>
     <![endif]-->
     <asset:javascript src="jquery.js"/>
     <asset:javascript src="prototype.min.js"/>
@@ -92,6 +92,12 @@
             <div class="form-group">
                 <button type="submit" class="btn btn-primary"><g:message code="user.login.login.button"/></button>
             </div>
+
+            <g:if test="${grailsApplication.config.rundeck.sso.loginButton.enabled?.asBoolean()}">
+                <div class='form-group'>
+                    <a class='btn btn-default' href='${grailsApplication.config.rundeck.sso.loginButton.url}'>${grailsApplication.config.rundeck.sso.loginButton.title}</a>
+                </div>
+            </g:if>
 
             <g:set var="footermessagehtml" value="${grailsApplication.config.rundeck?.gui?.login?.footerMessageHtml ?: ''}"/>
             <g:if test="${footermessagehtml}">

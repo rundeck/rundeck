@@ -16,12 +16,12 @@
 
 package rundeck.services
 
+import grails.gorm.transactions.Transactional
 import rundeck.User
 
+@Transactional
 class UserService {
 
-    boolean transactional = true
-    
     FrameworkService frameworkService
 
     def findOrCreateUser(String login) {

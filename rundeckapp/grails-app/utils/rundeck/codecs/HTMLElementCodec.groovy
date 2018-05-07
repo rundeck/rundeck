@@ -22,7 +22,7 @@ package rundeck.codecs
  * @since 2014-05-15
  */
 class HTMLElementCodec {
-    def encode={str->
+    static def encode={str->
         str.replaceAll('<',"&lt;").replaceAll('>',"&gt;")
     }
 }

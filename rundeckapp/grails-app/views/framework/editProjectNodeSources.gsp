@@ -31,7 +31,7 @@
     <meta name="projtabtitle" content="${message(code:'project.node.sources.title')}"/>
     <title>Project Nodes</title>
 
-    <g:javascript library="prototype/effects"/>
+    <asset:javascript src="prototype/effects"/>
     <asset:javascript src="resourceModelConfig.js"/>
     <asset:javascript src="leavePageConfirm.js"/>
     <asset:javascript src="storageBrowseKO.js"/>

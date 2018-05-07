@@ -40,6 +40,7 @@ project(':rundeck-storage:rundeck-storage-conf') {
     dependencies {
         compile project(':rundeck-storage:rundeck-storage-data')
     }
+
 }
 project(':rundeck-storage:rundeck-storage-filesys') {
     dependencies {

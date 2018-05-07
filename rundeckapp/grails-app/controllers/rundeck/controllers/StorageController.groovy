@@ -23,11 +23,12 @@ import com.dtolabs.rundeck.core.storage.ResourceMeta
 import com.dtolabs.rundeck.core.storage.StorageAuthorizationException
 import com.dtolabs.rundeck.core.storage.StorageUtil
 import com.dtolabs.rundeck.server.plugins.storage.KeyStorageLayer
+import grails.converters.JSON
 import org.rundeck.storage.api.PathUtil
 import org.rundeck.storage.api.Resource
 import org.rundeck.storage.api.StorageException
 import org.springframework.web.multipart.MultipartHttpServletRequest
-import rundeck.filters.ApiRequestFilters
+import com.dtolabs.rundeck.app.api.ApiVersions
 import rundeck.services.ApiService
 import rundeck.services.FrameworkService
 import rundeck.services.StorageService
@@ -64,48 +65,51 @@ class StorageController extends ControllerBase{
     ]
 
     private def pathUrl(path){
-        def uriString = "/api/${ApiRequestFilters.API_CURRENT_VERSION}/incubator/storage/$path"
+        def uriString = "/api/${ApiVersions.API_CURRENT_VERSION}/incubator/storage/$path"
         if ("${path}".startsWith('keys/') || path.toString() == 'keys') {
-            uriString = "/api/${ApiRequestFilters.API_CURRENT_VERSION}/storage/$path"
+            uriString = "/api/${ApiVersions.API_CURRENT_VERSION}/storage/$path"
         }
         return createLink(absolute: true, uri: uriString)
     }
-    private def jsonRenderResource(builder, Resource res, dirlist=[]){
-        builder.with{
-            path = res.path.toString()
-            type = res.directory ? 'directory' : 'file'
-            if(!res.directory){
-                name = res.path.name
-            }
-            url = pathUrl(res.path)
-            if (!res.directory) {
-                def meta1 = res.contents.meta
-                if (meta1) {
-                    def masked = resourceContentsMasked(res)
-                    def bd = delegate
-                    def meta = [:]
-                    RES_META_RUNDECK_OUTPUT.each { k ->
-                        if ((!masked || !(k in StorageController.RES_META_MASKED)) && meta1[k]) {
-                            meta[k] = meta1[k]
-                        }
-                    }
-                    if (meta) {
-                        bd.meta = meta
-                    }
 
-                }
-            }
-            if(dirlist){
-                delegate.'resources' = array {
-                    def builder2 = delegate
-                    dirlist.each { diritem ->
-                        builder2.element {
-                            jsonRenderResource(delegate, diritem,[])
-                        }
+    private Map getMeta(Resource res){
+        def meta_ = [:]
+        if (!res.directory) {
+            def meta1 = res.contents.meta
+            if (meta1) {
+                def masked = resourceContentsMasked(res)
+                RES_META_RUNDECK_OUTPUT.each { k ->
+                    if ((!masked || !(k in StorageController.RES_META_MASKED)) && meta1[k]) {
+                        meta_[k] = meta1[k]
                     }
                 }
             }
         }
+
+        return meta_
+    }
+
+    private def jsonRenderResource(Resource res, dirlist=[]){
+        def json = [
+            path: res.path.toString(),
+            type: (res.directory ? 'directory' : 'file'),
+            name: !res.directory ? res.path.name : null,
+            url: pathUrl(res.path),
+            meta: this.getMeta(res) ]
+
+        if(dirlist){
+            json.resources = dirlist.collect { diritem ->
+
+                [
+                        path: diritem.path.toString(),
+                        type: (diritem.directory ? 'directory' : 'file'),
+                        name: !diritem.directory ? diritem.path.name : null,
+                        url: pathUrl(diritem.path),
+                        meta: this.getMeta(diritem)
+                ]
+            }
+        }
+        return json
     }
     private def xmlRenderResource(builder,Resource res,dirlist=[]){
         def map=[path: res.path.toString(),
@@ -141,13 +145,11 @@ class StorageController extends ControllerBase{
                                 Set<Resource<ResourceMeta>> dirlist) {
         withFormat {
             json {
-                render(contentType: 'application/json') {
-                    jsonRenderResource(delegate, resource,dirlist)
-                }
+                render jsonRenderResource(resource,dirlist) as JSON
             }
             xml {
                 render {
-                    xmlRenderResource(delegate, resource, dirlist)
+                    this.xmlRenderResource(delegate, resource, dirlist)
                 }
             }
         }
@@ -205,16 +207,14 @@ class StorageController extends ControllerBase{
             case 'json':
                 ///fallthrough json response by default
             default:
-                render(contentType: 'application/json') {
-                    jsonRenderResource(delegate, resource)
-                }
+                render jsonRenderResource(resource) as JSON
         }
     }
 
     private Object renderError(String message) {
         def jsonResponseclosure= {
             render(contentType: "application/json") {
-                delegate.'error' = message
+                delegate error: message
             }
         }
         if(!(response.format in ['json','xml'])){
@@ -452,7 +452,7 @@ class StorageController extends ControllerBase{
      * @return
      */
     def apiKeys(StorageParams storageParams) {
-        if(!apiService.requireVersion(request,response,ApiRequestFilters.V11)){
+        if(!apiService.requireVersion(request,response,ApiVersions.V11)){
             return
         }
         storageParams.resourcePath = "/keys/${storageParams.resourcePath?:''}"

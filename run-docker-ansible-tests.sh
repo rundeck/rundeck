@@ -26,11 +26,11 @@ copy_jar(){
 	local FARGS=("$@")
 	local DIR=${FARGS[0]}
 	local -a VERS=( $( rd_get_version ) )
-	local JAR=rundeck-launcher-${VERS[0]}-${VERS[2]}.jar
-	local buildJar=$PWD/rundeck-launcher/launcher/build/libs/$JAR
+	local JAR=rundeck-${VERS[0]}-${VERS[2]}.war
+    local buildJar=$PWD/rundeckapp/build/libs/$JAR
 	test -f $buildJar || die "Jar file not found $buildJar"
 	mkdir -p $DIR
-	cp $buildJar $DIR/rundeck-launcher.jar
+	cp $buildJar $DIR/rundeck-launcher.war
 	echo $DIR/$JAR
 }
 run_tests(){
