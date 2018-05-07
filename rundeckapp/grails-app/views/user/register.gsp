@@ -40,8 +40,8 @@
 
                 <div class="panel-footer">
 
-                    <g:actionSubmit id="editFormCancelButton" value="Cancel" class="btn btn-default"/>
-                    <g:submitButton name="Create" class="btn btn-primary"/>
+                    <g:actionSubmit id="editFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
+                    <g:submitButton name="${g.message(code:'button.action.Create',default:'Create')}" class="btn btn-primary"/>
 
                 </div>
             </div>
