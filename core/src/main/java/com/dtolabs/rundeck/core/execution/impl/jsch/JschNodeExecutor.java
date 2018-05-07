@@ -450,7 +450,14 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
             final ExtractFailure extractJschFailure = extractFailure(e, node, commandtimeout, contimeout, framework);
             errormsg = extractJschFailure.getErrormsg();
             failureReason = extractJschFailure.getReason();
-            context.getExecutionListener().log(0, errormsg);
+            context.getExecutionListener().log(
+                3,
+                String.format(
+                    "SSH command execution error: %s: %s",
+                    failureReason,
+                    errormsg
+                )
+            );
         }
         if (null != responderCleanup) {
             responderCleanup.run();
@@ -538,6 +545,9 @@ public class JschNodeExecutor implements NodeExecutor, Describable {
         } else if (e.getMessage().contains("Remote command failed with exit status")) {
             errormsg = e.getMessage();
             failureReason = NodeStepFailureReason.NonZeroResultCode;
+        } else if (null != e.getCause() && e.getCause() instanceof InterruptedException) {
+            failureReason = StepFailureReason.Interrupted;
+            errormsg = "Connection was interrupted";
         } else {
             failureReason = StepFailureReason.Unknown;
             errormsg = e.getMessage();

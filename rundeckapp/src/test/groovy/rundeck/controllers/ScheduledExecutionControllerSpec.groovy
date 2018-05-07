@@ -40,7 +40,7 @@ import javax.security.auth.Subject
  * Created by greg on 7/14/15.
  */
 @TestFor(ScheduledExecutionController)
-@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec])
+@Mock([ScheduledExecution, Option, Workflow, CommandExec, Execution, JobExec, ReferencedExecution])
 class ScheduledExecutionControllerSpec extends Specification {
     def setup() {
         mockCodec(URIComponentCodec)
@@ -60,6 +60,31 @@ class ScheduledExecutionControllerSpec extends Specification {
                 serverNodeUUID: null,
                 scheduled: true
         ]+overrides
+    }
+
+    def "workflow json"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(createJobParams())
+        controller.frameworkService = Mock(FrameworkService)
+        controller.scheduledExecutionService = Mock(ScheduledExecutionService)
+
+        when:
+        params.id = job.extid
+        def result = controller.workflowJson()
+
+        then:
+        1 * controller.frameworkService.authorizeProjectJobAny(_, job, ['read', 'view'], 'AProject') >> true
+        1 * controller.frameworkService.authorizeProjectJobAny(_, job, ['read'], 'AProject') >> readauth
+        1 * controller.scheduledExecutionService.getByIDorUUID(_) >> job
+        1 * controller.scheduledExecutionService.getWorkflowDescriptionTree('AProject', _, readauth, 3) >>
+        [test: 'data']
+        response.json == [workflow: [test: 'data']]
+
+        where:
+        readauth | _
+        true     | _
+        false    | _
+
     }
 
     def "expandUrl with project globals"() {
@@ -1380,6 +1405,23 @@ class ScheduledExecutionControllerSpec extends Specification {
                         ]
                 )
         ).save()
+        def seb = new ScheduledExecution(
+                jobName: 'test2',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                refExecCount: refTotal,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
         def exec = new Execution(
                 user: "testuser",
                 project: "project1",
@@ -1390,10 +1432,12 @@ class ScheduledExecutionControllerSpec extends Specification {
                 succeededNodeList:'fwnode',
                 failedNodeList: 'nodec xyz,nodea',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
-                scheduledExecution: se
+                scheduledExecution: seb
         ).save()
 
-        def jobref = new JobExec(uuid: refuuid).save()
+        if(expected){
+            def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+        }
 
 
 
@@ -1408,12 +1452,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.frameworkService=Mock(FrameworkService){
             authorizeProjectJobAny(_,_,_,_)>>true
             filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
-            filterNodeSet({ NodesSelector selector->
-                selector.acceptNode(new NodeEntryImpl("nodea")) &&
-                        selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
-                        !selector.acceptNode(new NodeEntryImpl("nodeb"))
-
-            },_)>>testNodeSetB
+            filterNodeSet(_,_)>>testNodeSetB
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
             }
@@ -1434,9 +1473,9 @@ class ScheduledExecutionControllerSpec extends Specification {
         model.isReferenced==expected
 
         where:
-        jobuuid | refuuid   | expected
-        'a'     | 'b'       | false
-        'a'     | 'a'       | true
+        jobuuid     | expected
+        '000000'    | false
+        '111111'    | true
 
     }
 
@@ -1461,6 +1500,23 @@ class ScheduledExecutionControllerSpec extends Specification {
                         ]
                 )
         ).save()
+        def seb = new ScheduledExecution(
+                jobName: 'test2',
+                project: 'project1',
+                groupPath: 'testgroup',
+                doNodedispatch: true,
+                filter:'name: ${option.nodes}',
+                refExecCount: refTotal,
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec([
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                ])
+                        ]
+                )
+        ).save()
         def exec = new Execution(
                 user: "testuser",
                 project: "project1",
@@ -1471,10 +1527,12 @@ class ScheduledExecutionControllerSpec extends Specification {
                 succeededNodeList:'fwnode',
                 failedNodeList: 'nodec xyz,nodea',
                 workflow: new Workflow(commands: [new CommandExec(adhocExecution: true, adhocRemoteString: 'a remote string')]).save(),
-                scheduledExecution: se
+                scheduledExecution: seb
         ).save()
 
-        def jobref = new JobExec(jobName: refname).save()
+        if(expected){
+            def re = new ReferencedExecution(scheduledExecution: se,execution: exec).save()
+        }
 
 
 
@@ -1489,12 +1547,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         controller.frameworkService=Mock(FrameworkService){
             authorizeProjectJobAny(_,_,_,_)>>true
             filterAuthorizedNodes(_,_,_,_)>>{args-> args[2]}
-            filterNodeSet({ NodesSelector selector->
-                selector.acceptNode(new NodeEntryImpl("nodea")) &&
-                        selector.acceptNode(new NodeEntryImpl("nodec xyz")) &&
-                        !selector.acceptNode(new NodeEntryImpl("nodeb"))
-
-            },_)>>testNodeSetB
+            filterNodeSet(_,_)>>testNodeSetB
             getRundeckFramework()>>Mock(Framework){
                 getFrameworkNodeName()>>'fwnode'
             }
@@ -1515,9 +1568,9 @@ class ScheduledExecutionControllerSpec extends Specification {
         model.isReferenced==expected
 
         where:
-        jobname | refname   | expected
-        'a'     | 'b'       | false
-        'a'     | 'a'       | true
+        jobname | expected
+        'a'     | false
+        'b'     | true
 
     }
 }

@@ -1,3 +1,7 @@
+% Version 2.11.1
+% greg
+% 05/04/2018
+
 Release 2.11.1
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: OrangeRed"><span class="glyphicon glyphicon-paperclip"
 
 ## Upgrading from Earlier versions
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 

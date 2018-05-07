@@ -112,4 +112,62 @@ class FileTreeSpecification extends Specification {
         expectedDataFile.delete()
         expectedMetaFile.delete()
     }
+
+    def "Get resource does not exist"() {
+        def dir = new File(testDir, "root1")
+        def contentdir = new File(dir, "content")
+        def metadir = new File(dir, "meta")
+        def ft = FileTreeUtil.forRoot(dir, DataUtil.contentFactory())
+        def expectedDataFile = new File(contentdir, "test/a/bc/mydata.txt")
+        def expectedMetaFile = new File(metadir, "test/a/bc/mydata.txt")
+        expectedDataFile.deleteOnExit()
+        expectedMetaFile.deleteOnExit()
+        def resource = ft.createResource(
+            "test/a/bc/mydata.txt",
+            DataUtil.withText(
+                "sample text",
+                [monkey: 'blister', 'Content-Type': 'text/plain'],
+                DataUtil.contentFactory()
+            )
+        )
+        when:
+        def result = ft.getResource(path)
+        then:
+        StorageException e = thrown()
+        e.message.contains("Path does not exist: ${path}")
+        expectedDataFile.delete()
+        expectedMetaFile.delete()
+
+        where:
+        path                      | _
+        'test/a/bc/wrongfile.txt' | _
+    }
+
+    def "Get resource is a dir"() {
+        def dir = new File(testDir, "root1")
+        def contentdir = new File(dir, "content")
+        def metadir = new File(dir, "meta")
+        def ft = FileTreeUtil.forRoot(dir, DataUtil.contentFactory())
+        def expectedDataFile = new File(contentdir, "test/a/bc/mydata.txt")
+        def expectedMetaFile = new File(metadir, "test/a/bc/mydata.txt")
+        expectedDataFile.deleteOnExit()
+        expectedMetaFile.deleteOnExit()
+        def resource = ft.createResource(
+            "test/a/bc/mydata.txt",
+            DataUtil.withText(
+                "sample text",
+                [monkey: 'blister', 'Content-Type': 'text/plain'],
+                DataUtil.contentFactory()
+            )
+        )
+        when:
+        def result = ft.getResource(path)
+        then:
+        StorageException e = thrown()
+        e.message.contains("Failed to read resource at path: ${path}: is a directory")
+
+        where:
+        path        | _
+        'test/a/bc' | _
+    }
 }

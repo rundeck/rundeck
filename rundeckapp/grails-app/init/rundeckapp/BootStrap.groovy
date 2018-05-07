@@ -449,6 +449,7 @@ class BootStrap {
      }
 
      def destroy = {
+         log.info("Rundeck Shutdown detected")
      }
 } 
 

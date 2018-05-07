@@ -62,6 +62,7 @@ import rundeck.quartzjobs.ExecutionJob
 import rundeck.services.events.ExecutionPrepareEvent
 import rundeck.services.framework.RundeckProjectConfigurable
 
+import javax.annotation.PreDestroy
 import javax.servlet.http.HttpSession
 import java.text.MessageFormat
 import java.text.SimpleDateFormat
@@ -899,6 +900,12 @@ class ScheduledExecutionService implements ApplicationContextAware, Initializing
                 errmsg = 'Cannot delete {{Job ' + scheduledExecution.extid + '}} "' + scheduledExecution.jobName  +
                         '" it is currently being executed: {{Execution ' + found.id + '}}'
                 return [success:false,error:errmsg]
+            }
+            def refExec = ReferencedExecution.findAllByScheduledExecution(scheduledExecution)
+            if(refExec){
+                refExec.each { re ->
+                    re.delete()
+                }
             }
             //unlink any Execution records
             def result = Execution.findAllByScheduledExecution(scheduledExecution)
