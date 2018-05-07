@@ -540,6 +540,14 @@ class ExecutionUtilServiceTests {
         jrc.project=='jobProject'
     }
 
+    void testItemForWFCmdItem_jobref_unmodified_original() {
+        def testService = service
+        JobExec ce = new JobExec(jobName: 'abc', jobGroup: 'xyz', jobProject: null)
+        def res = testService.itemForWFCmdItem(ce, null, 'jobProject')
+        assertNotNull(res)
+        assertNull(ce.jobProject)
+    }
+
     void testcreateExecutionItemForWorkflow() {
         def testService = service
         def project = 'test'
