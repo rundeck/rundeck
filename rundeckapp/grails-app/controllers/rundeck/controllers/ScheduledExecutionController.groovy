@@ -451,8 +451,8 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
 
-       def isReferenced= JobExec.hasAnyReference(scheduledExecution)
-        def parentList = JobExec.parentList(scheduledExecution,10)
+        def parentList = ReferencedExecution.parentList(scheduledExecution,10)
+        def isReferenced = parentList?.size()>0
 
         def dataMap= [
                 scheduledExecution: scheduledExecution,
@@ -618,7 +618,12 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         def maxDepth=3
 
-        def readAuth=frameworkService.authorizeProjectExecutionAny(authContext, e, [AuthConstants.ACTION_READ])
+        def readAuth = frameworkService.authorizeProjectJobAny(
+            authContext,
+            scheduledExecution,
+            [AuthConstants.ACTION_READ],
+            scheduledExecution.project
+        )
         def wfdata=scheduledExecutionService.getWorkflowDescriptionTree(scheduledExecution.project,scheduledExecution.workflow,readAuth,maxDepth)
         withFormat {
             json {
@@ -1405,7 +1410,7 @@ class ScheduledExecutionController  extends ControllerBase{
             return
         }
         if(request.method=='POST') {
-            def isReferenced = JobExec.hasAnyReference(scheduledExecution)
+            def isReferenced = ReferencedExecution.parentList(scheduledExecution,1)?.size()>0
             withForm {
                 def result = scheduledExecutionService.deleteScheduledExecutionById(
                         jobid,
