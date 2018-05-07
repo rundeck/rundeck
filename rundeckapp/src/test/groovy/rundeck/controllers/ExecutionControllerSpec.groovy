@@ -75,6 +75,35 @@ class ExecutionControllerSpec extends Specification {
 
     }
 
+    def "api execution no existing execution"() {
+        given:
+        messageSource.addMessage("api.error.item.doesnotexist",Locale.ENGLISH,"{0} does not exist: {1}")
+        controller.loggingService = Mock(LoggingService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.frameworkService = Mock(FrameworkService) {
+            authorizeProjectExecutionAny(*_) >> true
+            1 * getAuthContextForSubjectAndProject(*_)
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            requireVersion(*_) >> true
+            requireExists(*_) >> true
+            0 * _(*_)
+        }
+        when:
+        params.id = "-999"
+        request.api_version = 21
+        response.format = 'json'
+        controller.apiExecutionOutput()
+        def json = response.json
+        then:
+        json.error == 'execution does not exist: -999'
+        json.id == "-999"
+        json.offset == "0"
+        json.completed == false
+
+    }
+
     def "api execution query, unsupported media type < v14"() {
         setup:
         def query = new ExecutionQuery()
@@ -546,6 +575,96 @@ class ExecutionControllerSpec extends Specification {
         xml.entries.entry[4]."@node".size() == 0
         xml.entries.entry[4]."@stepctx".size() == 0
         xml.entries.entry[4]."@removed".text() == 'stepctx'
+
+    }
+
+    def "api execution log reader not found"() {
+        given:
+        messageSource.addMessage("execution.log.storage.state.NOT_FOUND",Locale.ENGLISH,"The Execution Log could not be found.")
+        Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                status: 'running'
+
+        )
+        e1.save() != null
+        def reader = new ExecutionLogReader(state: ExecutionLogState.NOT_FOUND)
+        controller.loggingService = Mock(LoggingService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.frameworkService = Mock(FrameworkService) {
+            authorizeProjectExecutionAny(*_) >> true
+            1 * getAuthContextForSubjectAndProject(*_)
+            1 * isClusterModeEnabled()
+            _ * getServerUUID()
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            requireVersion(*_) >> true
+            requireExists(*_) >> true
+            0 * _(*_)
+        }
+        when:
+        params.id = e1.id.toString()
+        request.api_version = 21
+        response.format = 'json'
+        controller.apiExecutionOutput()
+        def json = response.json
+        then:
+        1 * controller.loggingService.getLogReader(e1) >> reader
+        json.empty == true
+        json.id == e1.id.toString()
+        json.offset == "0"
+        json.completed == false
+        json.execCompleted == false
+        json.hasFailedNodes == false
+        json.execState == "running"
+        json.message == "The Execution Log could not be found."
+
+    }
+
+    def "api execution log reader pending state"() {
+        given:
+        messageSource.addMessage("execution.log.storage.state.PENDING_REMOTE",Locale.ENGLISH,"Waiting for log output to become available...")
+        Execution e1 = new Execution(
+                project: 'test1',
+                user: 'bob',
+                dateStarted: new Date(),
+                status: 'running'
+
+        )
+        e1.save() != null
+        def reader = new ExecutionLogReader(state: ExecutionLogState.PENDING_REMOTE)
+        controller.loggingService = Mock(LoggingService)
+        controller.configurationService = Mock(ConfigurationService)
+        controller.frameworkService = Mock(FrameworkService) {
+            authorizeProjectExecutionAny(*_) >> true
+            1 * getAuthContextForSubjectAndProject(*_)
+            1 * isClusterModeEnabled()
+            _ * getServerUUID()
+            0 * _(*_)
+        }
+        controller.apiService = Mock(ApiService) {
+            requireVersion(*_) >> true
+            requireExists(*_) >> true
+            0 * _(*_)
+        }
+        when:
+        params.id = e1.id.toString()
+        request.api_version = 21
+        response.format = 'json'
+        controller.apiExecutionOutput()
+        def json = response.json
+        then:
+        1 * controller.loggingService.getLogReader(e1) >> reader
+        json.id == e1.id.toString()
+        json.offset == "0"
+        json.completed == false
+        json.execCompleted == false
+        json.hasFailedNodes == false
+        json.execState == "running"
+        json.message == "Pending"
+        json.pending == "Waiting for log output to become available..."
 
     }
 }

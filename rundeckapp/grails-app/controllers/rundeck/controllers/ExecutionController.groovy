@@ -912,8 +912,9 @@ class ExecutionController extends ControllerBase{
     static final String invalidXmlPattern = "[^" + "\\u0009\\u000A\\u000D" + "\\u0020-\\uD7FF" +
             "\\uE000-\\uFFFD" + "\\u10000-\\u10FFFF" + "]+";
 
+
     /**
-     * Use a builder delegate to render tailExecutionOutput result in XML or JSON
+     * Use a builder delegate to render tailExecutionOutput result in XML
      */
     private def renderOutputFormat(String outf, Map data, List outputData, apiVersion, delegate, stateoutput = false) {
         def keys = [
@@ -1016,6 +1017,81 @@ class ExecutionController extends ControllerBase{
             delegate.entries(dataClos)
         }
     }
+    //Create a map that will be converted to JSON by the grails converter at the render phase
+    private def renderOutputFormatJson(Map data, List outputData, stateoutput = false) {
+        def keys = [
+                'id', 'offset', 'completed', 'empty', 'unmodified', 'error', 'message', 'pending', 'execCompleted',
+                'hasFailedNodes', 'execState', 'lastModified', 'execDuration', 'percentLoaded', 'totalSize',
+                'lastLinesSupported', 'retryBackoff', 'clusterExec', 'serverNodeUUID',
+                'compacted',
+        ]
+        def jsonoutput = [:]
+
+        keys.each{
+            if(null!=data[it]){
+                jsonoutput[it] = data[it]
+            }
+        }
+        def filterparms = [:]
+        ['nodename', 'stepctx'].each {
+            if (data[it]) {
+                filterparms[it] = data[it]
+            }
+        }
+        if (filterparms) {
+            jsonoutput.filter(filterparms)
+        }
+
+
+        def timeFmt = new SimpleDateFormat("HH:mm:ss")
+        def compacted = data.compacted
+        def compactedAttr = null
+        if (compacted) {
+            jsonoutput.compactedAttr = 'log'
+            compactedAttr = 'log'
+        }
+        def prev = [:]
+        List jsonDatamapList = []
+
+        outputData.each {
+            def datamap = stateoutput?(it + [
+                    time: timeFmt.format(it.time),
+                    absolute_time: g.w3cDateValue([date: it.time]),
+                    log: it.mesg?.replaceAll(/\r?\n$/, ''),
+            ]):([
+                        time: timeFmt.format(it.time),
+                        absolute_time: g.w3cDateValue([date: it.time]),
+                        log: it.mesg?.replaceAll(/\r?\n$/, ''),
+                ]+it.subMap(['level','user','command','stepctx','node']))
+            datamap.remove('mesg')
+            if (it.loghtml) {
+                datamap.loghtml = it.loghtml
+            }
+            def removed = []
+            if (compacted) {
+                def origmap = new HashMap(datamap)
+                prev.each { k, v ->
+                    if (datamap[k] == prev[k]) {
+                        datamap.remove(k)
+                    } else if (null == datamap[k] && null != prev[k]) {
+                        datamap[k] = null
+                        removed << k
+                    }
+                }
+                prev = origmap
+                if (compactedAttr && datamap.size() == 1 && datamap[compactedAttr] != null) {
+                    //compact the single attribute into just the string
+                    datamap = datamap[compactedAttr]
+                }
+            }
+
+            jsonDatamapList.add(datamap)
+
+        }
+
+        jsonoutput.entries = jsonDatamapList
+        return jsonoutput
+    }
     /**
      * API: /api/execution/{id}/output/state, version ?
      */
@@ -1039,7 +1115,7 @@ class ExecutionController extends ControllerBase{
         if(!apiService.requireExists(response,e,['Execution',params.id])){
             return
         }
-        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e.project)
+        AuthContext authContext = frameworkService.getAuthContextForSubjectAndProject(session.subject,e?.project)
         def reqError=false
 
         def apiError = { String code, List args, int status = 0 ->
@@ -1052,14 +1128,13 @@ class ExecutionController extends ControllerBase{
                     if (status > 0) {
                         response.setStatus(status)
                     }
-                    render(contentType: "application/json") {
-                        renderOutputFormat('json', [
-                                error: message,
-                                id: params.id.toString(),
-                                offset: "0",
-                                completed: false
-                        ], [], request.api_version, delegate)
-                    }
+                    def err = [
+                            error: message,
+                            id: params.id.toString(),
+                            offset: "0",
+                            completed: false
+                            ]
+                    render err as JSON
                 }
                 text {
                     if (status > 0) {
@@ -1131,9 +1206,7 @@ class ExecutionController extends ControllerBase{
                     }
                 }
                 json {
-                    render(contentType: "application/json") {
-                        renderOutputFormat('json', dataMap, [], request.api_version, delegate)
-                    }
+                    render renderOutputFormatJson(dataMap,[]) as JSON
                 }
                 text {
                     response.addHeader('X-Rundeck-ExecOutput-Offset', "0")
@@ -1179,9 +1252,7 @@ class ExecutionController extends ControllerBase{
                     }
                 }
                 json {
-                    render(contentType: "application/json") {
-                        renderOutputFormat('json', dataMap, [], request.api_version, delegate)
-                    }
+                    render renderOutputFormatJson(dataMap,[]) as JSON
                 }
                 text {
                     response.addHeader('X-Rundeck-ExecOutput-Message', dataMap.message.toString())
@@ -1269,9 +1340,7 @@ class ExecutionController extends ControllerBase{
                         }
                     }
                     json {
-                        render(contentType: "application/json") {
-                            renderOutputFormat('json', dataMap, [], request.api_version, delegate)
-                        }
+                        render renderOutputFormatJson(dataMap,[]) as JSON
                     }
                     text {
                         response.addHeader('X-Rundeck-ExecOutput-Message', dataMap.message.toString())
@@ -1457,9 +1526,7 @@ class ExecutionController extends ControllerBase{
                 }
             }
             json {
-                render(contentType: "application/json") {
-                    this.renderOutputFormat('json', resultData, entry, request.api_version, delegate, stateoutput)
-                }
+                render renderOutputFormatJson(resultData,entry,stateoutput) as JSON
             }
             text{
                 response.addHeader('X-Rundeck-ExecOutput-Offset', storeoffset.toString())
