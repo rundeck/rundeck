@@ -576,9 +576,9 @@ class ExecutionController extends ControllerBase{
             request.error = g.message(code: 'request.error.invalidtoken.message')
             return withFormat {
                 json {
-                    render(contentType: "text/json") {
-                        delegate.cancelled = false
-                        delegate.error= request.error
+                    render(contentType: "application/json") {
+                        delegate.cancelled false
+                        delegate.error request.error
                     }
                 }
                 xml {
@@ -595,9 +595,9 @@ class ExecutionController extends ControllerBase{
                 log.error("Execution not found for id: " + params.id)
                 return withFormat {
                     json {
-                        render(contentType: "text/json") {
-                            delegate.cancelled = false
-                            delegate.error = "Execution not found for id: " + params.id
+                        render(contentType: "application/json") {
+                            delegate.cancelled false
+                            delegate.error "Execution not found for id: " + params.id
                         }
                     }
                     xml {
@@ -641,12 +641,12 @@ class ExecutionController extends ControllerBase{
 
         withFormat{
             json{
-                render(contentType:"text/json"){
-                    delegate.cancelled=didcancel
-                    delegate.status=(abortresult.status?:(didcancel?'killed':'failed'))
-                    delegate.abortstate = abortresult.abortstate
+                render(contentType:"application/json"){
+                    delegate.cancelled didcancel
+                    delegate.status(abortresult.status?:(didcancel?'killed':'failed'))
+                    delegate.abortstate abortresult.abortstate
                     if(reasonstr){
-                        delegate.'reason'=reasonstr
+                        delegate.'reason' reasonstr
                     }
                 }
             }
@@ -678,9 +678,9 @@ class ExecutionController extends ControllerBase{
             request.error = g.message(code: 'request.error.invalidtoken.message')
             return withFormat {
                 json {
-                    render(contentType: "text/json") {
-                        delegate.cancelled = false
-                        delegate.error= request.error
+                    render(contentType: "application/json") {
+                        delegate.cancelled  false
+                        delegate.error request.error
                     }
                 }
                 xml {
@@ -695,9 +695,9 @@ class ExecutionController extends ControllerBase{
             log.error("Execution not found for id: " + params.id)
             return withFormat {
                 json {
-                    render(contentType: "text/json") {
-                        delegate.cancelled = false
-                        delegate.error = "Execution not found for id: " + params.id
+                    render(contentType: "application/json") {
+                        delegate.cancelled  false
+                        delegate.error  "Execution not found for id: " + params.id
                     }
                 }
                 xml {
@@ -718,10 +718,10 @@ class ExecutionController extends ControllerBase{
         def didcancel=abortresult.abortstate in [ExecutionService.ABORT_ABORTED, ExecutionService.ABORT_PENDING]
         withFormat{
             json{
-                render(contentType:"text/json"){
-                    delegate.cancelled=didcancel
-                    delegate.status=(abortresult.status?:(didcancel?'killed':'failed'))
-                    delegate.abortstate = abortresult.abortstate
+                render(contentType: "application/json") {
+                    delegate.cancelled didcancel
+                    delegate.status(abortresult.status ?: (didcancel ? 'killed' : 'failed'))
+                    delegate.abortstate abortresult.abortstate
                 }
             }
         }
@@ -2197,7 +2197,7 @@ class ExecutionController extends ControllerBase{
         withFormat{
             json {
                 render(contentType: "application/json") {
-                    executionMode (active?'active':'passive')
+                    delegate.executionMode (active?'active':'passive')
                 }
             }
             xml {

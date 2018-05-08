@@ -214,7 +214,7 @@ class StorageController extends ControllerBase{
     private Object renderError(String message) {
         def jsonResponseclosure= {
             render(contentType: "application/json") {
-                delegate error: message
+                delegate.error message
             }
         }
         if(!(response.format in ['json','xml'])){
