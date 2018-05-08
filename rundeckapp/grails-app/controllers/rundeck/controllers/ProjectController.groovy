@@ -233,8 +233,8 @@ class ProjectController extends ControllerBase{
                 }
                 json {
                     render(contentType: 'application/json') {
-                        delegate.'token' = token
-                        delegate.'errorMessage' = 'token is required'
+                        delegate.'token' token
+                        delegate.'errorMessage' 'token is required'
                     }
                 }
             }
@@ -251,8 +251,8 @@ class ProjectController extends ControllerBase{
 
                 json{
                     render(contentType:'application/json'){
-                        delegate.'token'=token
-                        delegate.'notFound'=true
+                        delegate.'token' token
+                        delegate.'notFound' true
                     }
                 }
             }
@@ -267,8 +267,8 @@ class ProjectController extends ControllerBase{
                 }
                 json{
                     render(contentType:'application/json'){
-                        delegate.'token'=token
-                        delegate.'errorMessage'=errorMessage
+                        delegate.'token' token
+                        delegate.'errorMessage' errorMessage
                     }
                 }
             }
@@ -288,8 +288,8 @@ class ProjectController extends ControllerBase{
                     }
                     json{
                         render(contentType:'application/json'){
-                            delegate.'token'=token
-                            delegate.'errors'=errorList
+                            delegate.'token' token
+                            delegate.'errors' errorList
                         }
                     }
                 }
@@ -322,9 +322,9 @@ class ProjectController extends ControllerBase{
                 }
                 json {
                     render(contentType: 'application/json') {
-                        delegate.'token' = token
-                        delegate.ready = null != outfile
-                        delegate.'percentage' = percentage
+                        delegate.'token' token
+                        delegate.ready null != outfile
+                        delegate.'percentage' percentage
                     }
                 }
             }

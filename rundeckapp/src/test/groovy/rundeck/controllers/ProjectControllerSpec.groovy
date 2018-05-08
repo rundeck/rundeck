@@ -28,6 +28,7 @@ import rundeck.services.ApiService
 import rundeck.services.ArchiveOptions
 import rundeck.services.AuthorizationService
 import rundeck.services.FrameworkService
+import rundeck.services.ImportResponse
 import rundeck.services.ProgressSummary
 import rundeck.services.ProjectService
 import rundeck.services.authorization.PoliciesValidation
@@ -289,6 +290,113 @@ class ProjectControllerSpec extends Specification{
         all  | jobs  | execs | configs | readmes | acls
         true | false | false | false   | false   | false
         true | false | false | false   | false   | null
+    }
+
+    def "export wait response format json"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        when:
+        params.token = 'abc'
+        response.format = 'json'
+        controller.exportWait()
+        then:
+        1 * controller.projectService.hasPromise(_, 'abc') >> true
+        1 * controller.projectService.promiseError(_, 'abc') >> null
+        1 * controller.projectService.promiseReady(_, 'abc')
+        1 * controller.projectService.promiseSummary(_, 'abc') >> Mock(ProgressSummary) {
+            percent() >> 50
+        }
+
+        response.status == 200
+        response.json == [token: 'abc', ready: false, percentage: 50]
+    }
+
+    def "export wait no token param format json"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        when:
+        params.token = ptoken
+        response.format = 'json'
+        controller.exportWait()
+        then:
+
+
+        response.status == 200
+        response.json == [token: ptoken, errorMessage: 'token is required']
+
+        where:
+        ptoken | _
+        null   | _
+
+    }
+
+    def "export wait missing token format json"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        when:
+        params.token = ptoken
+        response.format = 'json'
+        controller.exportWait()
+        then:
+
+        controller.projectService.hasPromise(_, ptoken) >> false
+
+        response.status == 200
+        response.json == [token: ptoken, notFound: true]
+
+        where:
+        ptoken | _
+        'xyz'  | _
+
+    }
+
+    def "export wait error message format json"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        when:
+        params.token = ptoken
+        response.format = 'json'
+        controller.exportWait()
+        then:
+
+        controller.projectService.hasPromise(_, ptoken) >> true
+        controller.projectService.promiseError(_, ptoken) >> new Exception("expected exception")
+
+        response.status == 200
+        response.json == [token: ptoken, errorMessage: 'Project export request failed: expected exception']
+
+        where:
+        ptoken | _
+        'xyz'  | _
+
+    }
+
+    def "export wait remote error message format json"() {
+        given:
+        controller.projectService = Mock(ProjectService)
+        when:
+        params.token = ptoken
+        params.instance = 'true'
+        response.format = 'json'
+        controller.exportWait()
+        then:
+
+        controller.projectService.hasPromise(_, ptoken) >> true
+        controller.projectService.promiseError(_, ptoken) >> null
+        controller.projectService.promiseResult(_, ptoken) >> new ImportResponse(
+            ok: false,
+            errors: ['a', 'b'],
+            executionErrors: ['c', 'd'],
+            aclErrors: ['e', 'f']
+        )
+
+        response.status == 200
+        response.json == [token: ptoken, errors: ['a', 'b', 'c', 'd', 'e', 'f']]
+
+        where:
+        ptoken | _
+        'xyz'  | _
+
     }
 
     def "api export execution ids async"() {
