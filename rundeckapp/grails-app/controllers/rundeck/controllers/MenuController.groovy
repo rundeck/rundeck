@@ -922,10 +922,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             withFormat{
                 ajax{
                     render(contentType: 'application/json'){
-                        status='ok'
-                        delegate.message=message
+                        status 'ok'
+                        delegate.message message
                         if(req){
-                            contents = exportRequestMap(req, true, false, null)
+                            contents exportRequestMap(req, true, false, null)
                         }
                     }
                 }
@@ -1023,8 +1023,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             withFormat{
                 ajax{
                     render(contentType: 'application/json'){
-                        status='ok'
-                        delegate.message=message
+                        status 'ok'
+                        delegate.message message
                     }
                 }
             }
