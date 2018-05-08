@@ -129,7 +129,7 @@ exportedProjects.each {
                 // do nothing
             }
         }
-        def archiveName=project.name.startsWith('rundeck-')?project.name: "rundeck-${project.name}"
+        def archiveName=project.name.startsWith('rundeck')?project.name: "rundeck-${project.name}"
         //build a pom we reuse for both maven builds and release to sonatype
         ext.publishPom = pom {
             project {
