@@ -641,7 +641,7 @@ class ScheduledExecutionController  extends ControllerBase{
     def sanitizeHtml(){
         if(request.JSON.content){
             return render(contentType: 'application/json'){
-                content= request.JSON.content.toString().encodeAsSanitizedHTML()
+                content request.JSON.content.toString().encodeAsSanitizedHTML()
             }
         }
         apiService.renderErrorFormat(response, [
@@ -2398,7 +2398,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }.invalidToken{
             results.error=g.message(code:'request.error.invalidtoken.message')
         }
-        return render(contentType:'text/json'){
+        return render(contentType:'application/json'){
             if(results.error){
                 'error' results.error
             }else{
@@ -2890,13 +2890,15 @@ class ScheduledExecutionController  extends ControllerBase{
      */
     public def runJobInline(RunJobCommand runParams, ExtraCommand extra) {
         def results=[:]
-        withForm{
-            if ([runParams, extra].any { it.hasErrors() }) {
-                request.errors = [runParams, extra].find { it.hasErrors() }.errors
-                return render(contentType: 'application/json') {
-                    delegate error:'invalid', message: "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
-                }
+        if ([runParams, extra].any { it.hasErrors() }) {
+            request.errors = [runParams, extra].find { it.hasErrors() }.errors
+            return render(contentType: 'application/json') {
+                delegate.error 'invalid'
+                delegate.message  "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
             }
+        }
+        withForm{
+
             results = scheduleJob(null)
 
             if(results.error=='invalid'){
@@ -2933,14 +2935,14 @@ class ScheduledExecutionController  extends ControllerBase{
      */
     public def scheduleJobInline(RunJobCommand runParams, ExtraCommand extra) {
         def results = [:]
-        withForm {
-            if ([runParams, extra].any { it.hasErrors() }) {
-                request.errors = [runParams, extra].find { it.hasErrors() }.errors
-                return render(contentType: 'application/json') {
-                    delegate.error='invalid'
-                    delegate.message = "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
-                }
+        if ([runParams, extra].any { it.hasErrors() }) {
+            request.errors = [runParams, extra].find { it.hasErrors() }.errors
+            return render(contentType: 'application/json') {
+                delegate.error 'invalid'
+                delegate.message  "Invalid parameters: " + request.errors.allErrors.collect { g.message(error: it) }.join(", ")
             }
+        }
+        withForm {
             results = scheduleJob(params.runAtTime)
 
             if (results.error == 'invalid') {

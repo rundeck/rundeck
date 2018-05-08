@@ -1678,10 +1678,10 @@ class ScmController extends ControllerBase {
         def job = ScheduledExecution.getByIdOrUUID(jobId)
         def diff = scmService.exportDiff(project, job)
         render(contentType: 'application/json') {
-            modified = diff?.modified ?: false
-            newNotFound = diff?.newNotFound ?: false
-            oldNotFound = diff?.oldNotFound ?: false
-            content = diff?.content ?: ''
+            modified  diff?.modified ?: false
+            newNotFound  diff?.newNotFound ?: false
+            oldNotFound  diff?.oldNotFound ?: false
+            content  diff?.content ?: ''
         }
     }
 

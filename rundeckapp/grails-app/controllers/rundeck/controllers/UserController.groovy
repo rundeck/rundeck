@@ -696,9 +696,9 @@ class UserController extends ControllerBase{
         u.dashboardPref=params.dpref
         u.save()
 
-        render(contentType:"text/json"){
-            delegate.result="success"
-            delegate.dashboard=u.dashboardPref
+        render(contentType:"application/json"){
+            delegate.result "success"
+            delegate.dashboard u.dashboardPref
         }
     }
 
@@ -713,16 +713,16 @@ class UserController extends ControllerBase{
             //include new request tokens as headers in response
             g.refreshFormTokensHeader()
 
-            render(contentType:"text/json"){
-                delegate.result="success"
-                delegate.filterpref=storedpref
+            render(contentType:"application/json"){
+                delegate.result "success"
+                delegate.filterpref storedpref
             }
 
         }.invalidToken{
             response.status= HttpServletResponse.SC_BAD_REQUEST
-            render(contentType: "text/json") {
-                delegate.result = "error"
-                delegate.message=g.message(code:'request.error.invalidtoken.message')
+            render(contentType: "application/json") {
+                delegate.result  "error"
+                delegate.message g.message(code:'request.error.invalidtoken.message')
             }
         }
     }

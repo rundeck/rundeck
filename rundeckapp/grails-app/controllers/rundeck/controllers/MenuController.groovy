@@ -922,10 +922,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             withFormat{
                 ajax{
                     render(contentType: 'application/json'){
-                        status='ok'
-                        delegate.message=message
+                        status 'ok'
+                        delegate.message message
                         if(req){
-                            contents = exportRequestMap(req, true, false, null)
+                            contents exportRequestMap(req, true, false, null)
                         }
                     }
                 }
@@ -1023,8 +1023,8 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             withFormat{
                 ajax{
                     render(contentType: 'application/json'){
-                        status='ok'
-                        delegate.message=message
+                        status 'ok'
+                        delegate.message message
                     }
                 }
             }
@@ -1064,10 +1064,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             json{
                 render(contentType: "application/json") {
                     incompleteRequests {
-                        delegate.'total' = total
-                        max = params.max ?: 20
-                        offset = params.offset ?: 0
-                        contents = list.collect { LogFileStorageRequest req ->
+                        delegate.'total'  total
+                        max  params.max ?: 20
+                        offset  params.offset ?: 0
+                        contents  list.collect { LogFileStorageRequest req ->
                             exportRequestMap(
                                     req,
                                     retryIds.contains(req.id) || queuedIds.contains(req.id) || queuedIncompleteIds.contains(req.id),
@@ -1121,10 +1121,10 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
             json{
                 render(contentType: "application/json") {
                     missingRequests {
-                        total = totalc
-                        max = params.max ?: 20
-                        offset = params.offset ?: 0
-                        contents = list.collect { Execution req ->
+                        total  totalc
+                        max  params.max ?: 20
+                        offset  params.offset ?: 0
+                        contents  list.collect { Execution req ->
                             [
                                     id     : req.id,
                                     project: req.project,

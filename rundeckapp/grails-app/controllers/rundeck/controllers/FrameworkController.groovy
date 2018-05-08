@@ -705,7 +705,7 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
                 ffilter.delete(flush:true)
             }
             render(contentType: 'application/json'){
-                success=true
+                success true
             }
         }.invalidToken{
             return apiService.renderErrorFormat(response, [
