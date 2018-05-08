@@ -474,7 +474,7 @@
 <div class="col-sm-3">
     <div id="formbuttons">
         <g:if test="${!hideCancel}">
-            <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
+            <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
         </g:if>
         <div class="pull-right">
             <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
@@ -554,7 +554,7 @@
     <div class="row" >
         <div class="col-sm-12 form-inline" id="formbuttons">
             <g:if test="${!hideCancel}">
-                <g:actionSubmit id="execFormCancelButton" value="Cancel" class="btn btn-default"/>
+                <g:actionSubmit id="execFormCancelButton" value="${g.message(code:'button.action.Cancel',default:'Cancel')}" class="btn btn-default"/>
             </g:if>
             <div title="${scheduledExecution.hasExecutionEnabled() ? '':g.message(code: 'disabled.job.run')}"
                   class="form-group has_tooltip"

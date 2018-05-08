@@ -53,7 +53,7 @@
                 <g:render template="recentDateFiltersPlain" model="${[query:query]}"/>
                 <g:render template="advDateFiltersPlain" model="${[params:params,query:query]}"/>
 
-                <g:submitButton value="Filter" name="filterAll" class="btn btn-default btn-sm"/>
+                <g:submitButton value="${g.message(code:'button.action.Filter',default:'Filter')}" name="filterAll" class="btn btn-default btn-sm"/>
                     <a class="btn btn-xs pull-right btn-success collapse ${filterName?'':'in'} obs_filter_is_deselected"
                             style="${wdgt.styleVisible(unless: params.saveFilter)}"
                             data-toggle="modal"

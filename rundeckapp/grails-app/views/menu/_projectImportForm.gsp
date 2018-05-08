@@ -170,7 +170,9 @@
                                             value="${g.message(code:'button.action.Cancel',default:'Cancel')}"
                                             class="btn btn-default"
                             />
-                            <g:actionSubmit action="importArchive" value="Import" id="uploadFormUpload"
+                            <g:actionSubmit action="importArchive"
+                                            value="${g.message(code:'button.action.Import',default:'Import')}"
+                                            id="uploadFormUpload"
                                             onclick="['uploadFormButtons','importUploadSpinner'].each(Element.toggle)"
                                             class="btn btn-primary"/>
                         </div>

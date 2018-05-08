@@ -241,9 +241,9 @@ class ExecutionUtilService {
             } else {
                 args = new String[0];
             }
-
+            def tmpProj = jobcmditem.jobProject
             if(!jobcmditem.jobProject && parentProject){
-                jobcmditem.jobProject = parentProject
+                tmpProj = parentProject
             }
             return ExecutionItemFactory.createJobRef(
                     jobcmditem.getJobIdentifier(),
@@ -258,7 +258,7 @@ class ExecutionUtilService {
                     jobcmditem.nodeRankOrderAscending,
                     step.description,
                     jobcmditem.nodeIntersect,
-                    jobcmditem.jobProject,
+                    tmpProj,
                     jobcmditem.failOnDisable,
                     jobcmditem.importOptions,
                     jobcmditem.uuid

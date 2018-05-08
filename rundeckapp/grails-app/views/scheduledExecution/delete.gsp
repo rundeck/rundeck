@@ -68,7 +68,7 @@
 
     <div class="panel-footer">
         <g:hiddenField name="id" value="${scheduledExecution.extid}"/>
-        <g:actionSubmit value="Cancel" action="cancel" class="btn btn-default btn-sm "/>
+        <g:actionSubmit value="${g.message(code:'button.action.Cancel',default:'Cancel')}" action="cancel" class="btn btn-default btn-sm "/>
         <input type="submit" value="${g.message(code: 'Delete')}"
                class="btn btn-danger btn-sm"/>
     </div>

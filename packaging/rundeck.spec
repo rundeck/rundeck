@@ -96,7 +96,7 @@ fi
 /var/lib/rundeck/cli/commons-lang-2.6.jar
 /var/lib/rundeck/cli/commons-logging-1.2.jar
 /var/lib/rundeck/cli/dom4j-2.1.0.jar
-/var/lib/rundeck/cli/guava-24.1-jre.jar
+/var/lib/rundeck/cli/guava-24.1.1-jre.jar
 /var/lib/rundeck/cli/jaxen-1.1.6.jar
 /var/lib/rundeck/cli/jna-4.1.0.jar
 /var/lib/rundeck/cli/jna-platform-4.1.0.jar
