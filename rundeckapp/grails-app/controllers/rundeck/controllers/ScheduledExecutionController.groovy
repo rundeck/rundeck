@@ -529,7 +529,6 @@ class ScheduledExecutionController  extends ControllerBase{
                 render(text:writer.toString(),contentType:"text/xml",encoding:"UTF-8")
             }
         }
-        dataMap
     }
     private static String getFname(name){
         final Pattern s = Pattern.compile("[\\r\\n \"\\\\]")
