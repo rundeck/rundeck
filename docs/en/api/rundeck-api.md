@@ -55,6 +55,11 @@ View the [Index](#index) listing API paths.
 
 Changes introduced by API Version number:
 
+**Version 24**:
+
+* New Endpoints.
+    - [`POST /api/24/job/[ID]/retry/[EXECID]`][POST /api/24/job/[ID]/retry/[EXECID]] - Retry a Job based on execution
+
 **Version 23**:
 
 * New Endpoints. (replacing removed `POST /api/2/project/[PROJECT]/resources` endpoint)
@@ -2309,7 +2314,7 @@ This is the same functionality as the `Retry Failed Nodes ...` button on the exe
 
 **Request:**
 
-    POST /api/23/job/[ID]/retry/[EXECID]
+    POST /api/24/job/[ID]/retry/[EXECID]
 
 Optional parameters. 
 All of this parameters are going to be populated with the execution values unless they are included in the call:
