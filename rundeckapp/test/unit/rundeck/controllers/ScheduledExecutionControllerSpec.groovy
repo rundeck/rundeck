@@ -1614,7 +1614,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
 
         when:
-        request.api_version=23
+        request.api_version=24
         request.method='POST'
         params.executionId = exec.id.toString()
         params.id = se.extid.toString()
@@ -1623,7 +1623,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         then:
 
-        1 * controller.apiService.requireVersion(_,_,23)>>true
+        1 * controller.apiService.requireVersion(_,_,24)>>true
         1 * controller.apiService.requireApi(_,_)>>true
         1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString())>>[:]
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_,_)
@@ -1681,7 +1681,7 @@ class ScheduledExecutionControllerSpec extends Specification {
         ).save()
 
         when:
-        request.api_version = 23
+        request.api_version = 24
         request.method = 'POST'
         params.executionId = exec.id.toString()
         params.id = se.extid.toString()
@@ -1692,7 +1692,7 @@ class ScheduledExecutionControllerSpec extends Specification {
 
         then:
 
-        1 * controller.apiService.requireVersion(_,_,23)>>true
+        1 * controller.apiService.requireVersion(_,_,24)>>true
         1 * controller.apiService.requireApi(_, _) >> true
         1 * controller.scheduledExecutionService.getByIDorUUID(se.extid.toString()) >> [:]
         1 * controller.frameworkService.getAuthContextForSubjectAndProject(_, _)

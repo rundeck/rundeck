@@ -2302,9 +2302,9 @@ and this format is expected in the content:
 
 See [Listing Running Executions](#listing-running-executions).
 
-### Retry a Job on Failed Nodes
+### Retry a Job based on execution
 
-Retry a failed execution only on failed nodes.
+Retry a failed execution on failed nodes only or on the same as the execution.
 This is the same functionality as the `Retry Failed Nodes ...` button on the execution page.
 
 **Request:**
@@ -2319,6 +2319,7 @@ All of this parameters are going to be populated with the execution values unles
 * `asUser` : specifies a username identifying the user who ran the job. Requires `runAs` permission.
 * `option.OPTNAME`: Option value for option named `OPTNAME`. If any `option.OPTNAME` parameters are specified,
     the `argString` value is ignored.
+* `failedNodes` : `false` to run on the same nodes as the original execution, `true`or empty to run only on failed nodes.
 
 
 

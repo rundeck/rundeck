@@ -3631,11 +3631,12 @@ class ScheduledExecutionController  extends ControllerBase{
     }
 
     def apiJobRetry() {
-        if (!apiService.requireVersion(request, response, ApiRequestFilters.V23)) {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V24)) {
             return
         }
         String jobId = params.id
         String execId = params.executionId
+        String failedOnly = params.failedNodes?:'true'
 
         Execution e = Execution.get(execId)
         if(e?.scheduledExecution?.extid != jobId){
@@ -3675,7 +3676,9 @@ class ScheduledExecutionController  extends ControllerBase{
                 params.argString = params.argString?:e.argString
             }
         }
-        params.name=e.failedNodeList
+        if(failedOnly == 'true'){
+            params.name=e.failedNodeList
+        }
 
         apiJobRun()
     }
