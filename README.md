@@ -3,7 +3,8 @@ Rundeck
 
 | Travis | Deb | RPM | War | Jar |
 |--------|-----|-----|-----|-----|
-|[![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-deb/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-deb/rundeck/_latestVersion)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-rpm/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-rpm/rundeck/_latestVersion)| [![Download](https://api.bintray.com/packages/rundeck/rundeck-maven/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-maven/rundeck/_latestVersion)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-maven/rundeck-launcher/images/download.svg) ](https://bintray.com/rundeck/rundeck-maven/rundeck-launcher/_latestVersion)
+|[![Travis CI](https://travis-ci.org/rundeck/rundeck.svg?branch=master)](https://travis-ci.org/rundeck/rundeck/builds#)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-deb/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-deb/rundeck/_latestVersion)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-rpm/rundeck/images/download.svg) ](https://bintray.com/rundeck/rundeck-rpm/rundeck/_latestVersion)| [![Download](https://api.bintray.com/packages/rundeck/rundeck-maven/rundeck/images/download.svg) [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Frundeck%2Frundeck.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2Frundeck%2Frundeck?ref=badge_shield)
+](https://bintray.com/rundeck/rundeck-maven/rundeck/_latestVersion)|[![Download](https://api.bintray.com/packages/rundeck/rundeck-maven/rundeck-launcher/images/download.svg) ](https://bintray.com/rundeck/rundeck-maven/rundeck-launcher/_latestVersion)
 
 Rundeck is an open source automation service with a web console, 
 command line tools and a WebAPI.
@@ -128,3 +129,6 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+
+[![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2Frundeck%2Frundeck.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2Frundeck%2Frundeck?ref=badge_large)
