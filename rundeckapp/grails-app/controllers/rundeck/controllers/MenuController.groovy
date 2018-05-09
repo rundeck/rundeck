@@ -301,6 +301,9 @@ class MenuController extends ControllerBase implements ApplicationContextAware{
         }
         results.projectNames = authProjectsToCreate
         results.clusterModeEnabled = frameworkService.isClusterModeEnabled()
+        results.nextSchedListIds = results.nextScheduled?.collect {ScheduledExecution job->
+            job.extid
+        }
         withFormat{
             html {
                 results
