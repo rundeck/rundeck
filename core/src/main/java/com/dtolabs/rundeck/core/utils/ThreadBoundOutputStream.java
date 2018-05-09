@@ -165,6 +165,15 @@ public class ThreadBoundOutputStream extends FilterOutputStream {
     }
 
     /**
+     * Get the original System.out PrintStream if the input is the bound version
+     * @param out pass in the current value of System.out
+     * @return the original System.out after binding, or the out parameter
+     */
+    public static PrintStream getOrigSystemOut(PrintStream out) {
+        return out == boundOutPrint ? origSystemOut : out;
+    }
+
+    /**
      * Resets the System.out printstream to the original PrintStream prior to the last call to {@link #bindSystemOut()}.
      * WARNING: you should only call unbindSystemOut if you know that no other threads are depending on the System.out
      * to be bound.Use the {@link #removeThreadStream()} method to remove any OutputStream bound to a particular thread
@@ -195,6 +204,15 @@ public class ThreadBoundOutputStream extends FilterOutputStream {
         } else {
             return boundErrPrint.getThreadBoundOutputStream();
         }
+    }
+
+    /**
+     * Get the original System.err PrintStream if the input is the bound version
+     * @param out pass in the current value of System.err
+     * @return the original System.err after binding, or the out parameter
+     */
+    public static PrintStream getOrigSystemErr(PrintStream out) {
+        return out == boundErrPrint ? origSystemErr : out;
     }
 
     /**
