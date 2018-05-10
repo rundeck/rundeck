@@ -19,10 +19,12 @@ package com.dtolabs.rundeck;
 import java.io.*;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
 import java.net.*;
 import java.nio.channels.FileChannel;
 import java.nio.file.StandardOpenOption;
 import java.security.ProtectionDomain;
+import java.security.SecureRandom;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -78,7 +80,9 @@ public class ExpandRunServer {
         "default.user.password",
         PROP_LOGINMODULE_NAME,
         "loginmodule.conf.name",
-        "rundeck.config.name"
+        "rundeck.config.name",
+        "default.encryption.algorithm",
+        "default.encryption.password"
     };
     /**
      * line separator
@@ -598,6 +602,8 @@ public class ExpandRunServer {
         properties.put("rundeck.log.dir", forwardSlashPath(serverdir.getAbsolutePath()) + "/logs");
         properties.put("rundeck.launcher.jar.location", forwardSlashPath(thisJar.getAbsolutePath()));
         properties.put(RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(this.configDir.getAbsolutePath()));
+        properties.put("default.encryption.password",randomString(15));
+
         for (final String configProperty : configProperties) {
             if (null != System.getProperty(configProperty)) {
                 properties.put(configProperty, forwardSlashPath(System.getProperty(configProperty)));
@@ -853,5 +859,17 @@ public class ExpandRunServer {
         }
         matcher.appendTail(sb);
         return sb.toString();
+    }
+
+    /**
+     * Generate random password for encrypt
+     *
+     * @param length
+     */
+    public static String randomString(final int length) {
+
+        SecureRandom random = new SecureRandom();
+        return String.format("%"+length+"s", new BigInteger(length*5, random)
+                .toString(32)).replace('\u0020', '0');
     }
 }
