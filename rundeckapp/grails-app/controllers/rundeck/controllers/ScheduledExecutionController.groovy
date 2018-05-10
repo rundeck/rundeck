@@ -174,7 +174,8 @@ class ScheduledExecutionController  extends ControllerBase{
             apiRunCommandv14             : ['POST', 'GET'],
             apiJobDeleteBulk             : ['DELETE', 'POST'],
             apiJobClusterTakeoverSchedule: 'PUT',
-            apiJobUpdateSingle           : 'PUT'
+            apiJobUpdateSingle           : 'PUT',
+            apiJobRetry                  : 'POST'
     ]
 
     def cancel (){
@@ -3627,6 +3628,61 @@ class ScheduledExecutionController  extends ControllerBase{
                 return executionService.respondExecutionsJson(request,response,[e],[single:true])
             }
         }
+    }
+
+    def apiJobRetry() {
+        if (!apiService.requireVersion(request, response, ApiRequestFilters.V24)) {
+            return
+        }
+        String jobId = params.id
+        String execId = params.executionId
+        String failedOnly = 'true'
+
+        Execution e = Execution.get(execId)
+        if(e?.scheduledExecution?.extid != jobId){
+            e = null
+        }
+        if (!apiService.requireExists(response, e, ['Execution ID', execId])) {
+            return
+        }
+        if (!apiService.requireExists(response, e.failedNodeList, ['Failed node List for execution ID', execId])) {
+            return
+        }
+
+        if (request.format == 'json') {
+            failedOnly = request.JSON.failedNodes?:'true'
+            request.JSON.asUser = request.JSON.asUser?:e.user
+            request.JSON.loglevel = request.JSON.loglevel?:e.loglevel
+            if(request.JSON.options){
+                def map = FrameworkService.parseOptsFromString(e.argString)
+                map.each{k,v ->
+                    if(!request.JSON.options.containsKey(k)){
+                        request.JSON.options.put(k,v)
+                    }
+                }
+            }else if(!request.JSON.argString){
+                request.JSON.argString = request.JSON.argString?:e.argString
+            }
+        }else{
+            failedOnly = params.failedNodes?:'true'
+            params.asUser=params.asUser?:e.user
+            params.loglevel=params.loglevel?:e.loglevel
+            if(params.option){
+                def map = FrameworkService.parseOptsFromString(e.argString)
+                map.each{k,v ->
+                    if(!params.option.containsKey(k)){
+                        params.option.put(k,v)
+                    }
+                }
+            }else if(!params.argString){
+                params.argString = params.argString?:e.argString
+            }
+        }
+        if(failedOnly == 'true'){
+            params.name=e.failedNodeList
+        }
+
+        apiJobRun()
     }
 
     /**

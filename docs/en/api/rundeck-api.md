@@ -55,6 +55,11 @@ View the [Index](#index) listing API paths.
 
 Changes introduced by API Version number:
 
+**Version 24**:
+
+* New Endpoints.
+    - [`POST /api/24/job/[ID]/retry/[EXECID]`][POST /api/24/job/[ID]/retry/[EXECID]] - Retry a Job based on execution
+
 **Version 23**:
 
 * New Endpoints. (replacing removed `POST /api/2/project/[PROJECT]/resources` endpoint)
@@ -2296,6 +2301,50 @@ and this format is expected in the content:
 ~~~~~
 
 (**API v18** or later): The `options` entry can contain a map of option name -> value, in which case the `argString` is ignored.
+
+
+**Response**:
+
+See [Listing Running Executions](#listing-running-executions).
+
+### Retry a Job based on execution
+
+Retry a failed execution on failed nodes only or on the same as the execution.
+This is the same functionality as the `Retry Failed Nodes ...` button on the execution page.
+
+**Request:**
+
+    POST /api/24/job/[ID]/retry/[EXECID]
+
+Optional parameters. 
+All of this parameters are going to be populated with the execution values unless they are included in the call:
+
+* `argString`: argument string to pass to the job, of the form: `-opt value -opt2 value ...`.
+* `loglevel`: argument specifying the loglevel to use, one of: 'DEBUG','VERBOSE','INFO','WARN','ERROR'
+* `asUser` : specifies a username identifying the user who ran the job. Requires `runAs` permission.
+* `option.OPTNAME`: Option value for option named `OPTNAME`. If any `option.OPTNAME` parameters are specified,
+    the `argString` value is ignored.
+* `failedNodes` : `false` to run on the same nodes as the original execution, `true`or empty to run only on failed nodes.
+
+
+
+
+If the request has `Content-Type: application/json`, then the parameters will be ignored,
+and this format is expected in the content:
+
+~~~~~ {.json}
+{
+    "argString":"...",
+    "loglevel":"...",
+    "asUser":"...",
+    "options": {
+        "myopt1":"value",
+        ...
+    }
+}
+~~~~~
+
+The `options` entry can contain a map of option name -> value, in which case the `argString` is ignored.
 
 
 **Response**:
