@@ -3,6 +3,7 @@
 #test listing project sources
 
 DIR=$(cd `dirname $0` && pwd)
+export API_CURRENT_VERSION=${API_VERSION}
 export API_VERSION=23 #/api/23/project/NAME/sources
 source $DIR/include.sh
 
@@ -25,7 +26,7 @@ assert_xml_value '1' 'count(/sources/source)'  ${file}
 assert_xml_value 'file'  '/sources/source/@type' ${file}
 assert_xml_value '1'  '/sources/source/@index' ${file}
 assert_xml_value 'false'  '/sources/source/resources/@writeable' ${file}
-assert_xml_value "${APIURL}/project/${proj}/source/1/resources" '/sources/source/resources/@href' ${file}
+assert_xml_value "${RDURL}/api/${API_CURRENT_VERSION}/project/${proj}/source/1/resources" '/sources/source/resources/@href' ${file}
 
 test_succeed
 
