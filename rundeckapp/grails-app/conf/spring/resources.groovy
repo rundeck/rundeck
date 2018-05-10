@@ -103,18 +103,16 @@ beans={
         return
     }
 
-    if (Environment.PRODUCTION == Environment.current) {
-        def cfgRundeckLogDir = application.config.rundeck?.log?.dir
-        if(cfgRundeckLogDir) { System.setProperty("rundeck.log.dir", cfgRundeckLogDir )}
-        String log4jPropFile = application.config.rundeck.log4j.config.file ?: "classpath:log4j.properties"
-        log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
-            targetClass = "org.springframework.util.Log4jConfigurer"
-            targetMethod = "initLogging"
-            arguments = [log4jPropFile]
-        }
+
+    def cfgRundeckLogDir = application.config.rundeck?.log?.dir
+    if(cfgRundeckLogDir) { System.setProperty("rundeck.log.dir", cfgRundeckLogDir )}
+    String log4jPropFile = application.config.rundeck.log4j.config.file ?: "classpath:log4j.properties"
+    log4jConfigurer(org.springframework.beans.factory.config.MethodInvokingFactoryBean) {
+        targetClass = "org.springframework.util.Log4jConfigurer"
+        targetMethod = "initLogging"
+        arguments = [log4jPropFile]
     }
-
-
+    
     def serverLibextDir = application.config.rundeck?.server?.plugins?.dir?:"${rdeckBase}/libext"
     File pluginDir = new File(serverLibextDir)
     def serverLibextCacheDir = application.config.rundeck?.server?.plugins?.cacheDir?:"${serverLibextDir}/cache"
