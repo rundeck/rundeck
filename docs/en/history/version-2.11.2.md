@@ -1,3 +1,7 @@
+% Version 2.11.2
+% greg
+% 05/10/2018
+
 Release 2.11.2
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: Purple"><span class="glyphicon glyphicon-phone"></span
 
 ## Upgrading from Earlier versions
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 
