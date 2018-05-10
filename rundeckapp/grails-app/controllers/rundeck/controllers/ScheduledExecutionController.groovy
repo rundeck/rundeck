@@ -3636,7 +3636,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
         String jobId = params.id
         String execId = params.executionId
-        String failedOnly = params.failedNodes?:'true'
+        String failedOnly = 'true'
 
         Execution e = Execution.get(execId)
         if(e?.scheduledExecution?.extid != jobId){
@@ -3650,6 +3650,7 @@ class ScheduledExecutionController  extends ControllerBase{
         }
 
         if (request.format == 'json') {
+            failedOnly = request.JSON.failedNodes?:'true'
             request.JSON.asUser = request.JSON.asUser?:e.user
             request.JSON.loglevel = request.JSON.loglevel?:e.loglevel
             if(request.JSON.options){
@@ -3663,6 +3664,7 @@ class ScheduledExecutionController  extends ControllerBase{
                 request.JSON.argString = request.JSON.argString?:e.argString
             }
         }else{
+            failedOnly = params.failedNodes?:'true'
             params.asUser=params.asUser?:e.user
             params.loglevel=params.loglevel?:e.loglevel
             if(params.option){
