@@ -58,7 +58,7 @@ Changes introduced by API Version number:
 **Version 24**:
 
 * New Endpoints.
-    - [`POST /api/24/job/[ID]/retry/[EXECID]`][POST /api/24/job/[ID]/retry/[EXECID]] - Retry a Job based on execution
+    - [`POST /api/V/job/[ID]/retry/[EXECID]`][POST /api/V/job/[ID]/retry/[EXECID]] - Retry a Job based on execution
 
 **Version 23**:
 
@@ -6439,6 +6439,9 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 * `GET` [List Files Uploaded for a Job](#list-files-uploaded-for-a-job)
 
+[/api/V/job/[ID]/retry/[EXECID]][]
+
+* `POST` [Retry a Job Based on Execution](#retry-a-job-based-on-execution)
 
 [/api/V/execution/[ID]/input/files][]
 
@@ -6781,6 +6784,9 @@ Same response as [Setup SCM Plugin for a Project](#setup-scm-plugin-for-a-projec
 
 [POST /api/V/job/[ID]/executions]:#running-a-job
 [DELETE /api/V/job/[ID]/executions]:#delete-all-executions-for-a-job
+
+[/api/V/job/[ID]/retry/[EXECID]]:#retry-a-job-based-on-execution
+[POST /api/V/job/[ID]/retry/[EXECID]]:#retry-a-job-based-on-execution
 
 [/api/V/job/[ID]/info]:#get-job-metadata
 [GET /api/V/job/[ID]/info]:#get-job-metadata
