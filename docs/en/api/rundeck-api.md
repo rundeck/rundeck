@@ -2190,7 +2190,7 @@ Note: If neither `groupPath` nor `groupPathExact` are specified, then the defaul
     <project>Project Name</project>
     <description>...</description>
 </job>
-~~~~~~~~~~~~
+~~~~~~~~~~
 
 `Content-Type: application/json`
 
@@ -2209,7 +2209,7 @@ Note: If neither `groupPath` nor `groupPathExact` are specified, then the defaul
     "enabled": true/false
   }
 ]
-~~~~~~~~~~~~
+~~~~~~~~~~
 
 **Since v17**:
 
@@ -2235,7 +2235,7 @@ In Cluster mode, additional information about what server UUID is the schedule o
     <project>Project Name</project>
     <description>...</description>
 </job>
-~~~~~~~~~~~~
+~~~~~~~~~~
 
 `Content-Type: application/json`
 
@@ -2256,7 +2256,7 @@ In Cluster mode, additional information about what server UUID is the schedule o
     "serverOwner": true/false
   }
 ]
-~~~~~~~~~~~~
+~~~~~~~~~~
 
 
 ### Running a Job
@@ -2327,8 +2327,6 @@ All of this parameters are going to be populated with the execution values unles
 * `failedNodes` : `false` to run on the same nodes as the original execution, `true`or empty to run only on failed nodes.
 
 
-
-
 If the request has `Content-Type: application/json`, then the parameters will be ignored,
 and this format is expected in the content:
 
@@ -2345,7 +2343,6 @@ and this format is expected in the content:
 ~~~~~
 
 The `options` entry can contain a map of option name -> value, in which case the `argString` is ignored.
-
 
 **Response**:
 
@@ -5399,7 +5396,7 @@ The `events` element will also have `max`, `offset`, and `total` attributes, to 
 <events count="8" total="268" max="20" offset="260">
 ...
 </events>
-~~~~ {.xml}
+~~~~
 
 `total` is the total number of events matching the query parameters.
 `count` is the number of events included in the results.
