@@ -30,6 +30,7 @@ This plugin allows Source Code Management of the jobs, versioning, exporting or 
 Changing this value modifies the file definition and files need to be pushed again to the repository.
 
 **File Path Template** is the path template for storing a Job to a file within the base dir. It works using these patterns:
+
 * `${job.name}` - the job name
 * `${job.group}` - blank, or path/
 * `${job.project}` - project name
@@ -71,6 +72,7 @@ Changing this value modifies the file definition and files need to be pushed aga
 
 
 **File Path Template** is the path template for storing a Job to a file within the base dir. It works using these patterns:
+
 * `${job.name}` - the job name
 * `${job.group}` - blank, or path/
 * `${job.project}` - project name
