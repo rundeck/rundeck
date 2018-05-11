@@ -34,7 +34,7 @@ class SetUserInterceptor {
 
     boolean before() {
         if(InterceptorHelper.matchesStaticAssets(controllerName)) return true
-        if(request.servletPath == "/error") {
+        if(request.pathInfo == "/error") {
             response.status = 200
             return true
         }
