@@ -14,46 +14,43 @@
   limitations under the License.
   --}%
 
-<strong>Select nodes by name:</strong>
+<strong><g:message code="select.nodes.by.name" default="Select nodes by name"/>:</strong>
 <p>
-    <code>mynode1 mynode2</code>
+    <code><g:message code="mynode1.mynode2" default="mynode1 mynode2"/></code>
 </p>
 <p>
-    This will select both nodes.
+    <g:message code="this.will.select.both.nodes" default="This will select both nodes."/>
 </p>
 
-<strong>Filter nodes by attribute value:</strong>
+<strong><g:message code="filter.nodes.by.attribute.value" default="Filter nodes by attribute value"/>:</strong>
 <ul>
-    <li>Include: <code>attribute: value</code></li>
+    <li><g:message code="include" default="Include"/>: <code><g:message code="attribute" default="attribute"/>: <g:message code="value" default="value"/></code></li>
 
-    <li>Exclude: <code>!attribute: value</code></li>
+    <li><g:message code="exclude" default="Exclude"/>: <code>!<g:message code="attribute" default="attribute"/>: <g:message code="value" default="value"/></code></li>
 </ul>
 
 
-<strong>Use Regular Expressions:</strong>
+<strong><g:message code="use.regular.expressions" default="Use Regular Expressions:"/></strong>
 <p>
-    <code>hostname: dev(\d+).test.com</code>.
+    <code><g:message code="node.metadata.hostname" default="Hostname"/>: dev(\d+).test.com</code>.
 </p>
 
-<strong>Regex syntax checking:</strong>
+<strong><g:message code="regex.syntax.checking" default="Regex syntax checking"/>:</strong>
 <p>
-    <code>attribute: /regex/</code>
-</p>
-<p>
-    <code>attribute: /regex/</code>
+    <code><g:message code="attribute" default="attribute"/>: /regex/</code>
 </p>
 
-<strong>Examples:</strong>
+<strong><g:message code="examples" default="Examples"/>:</strong>
 <dl>
-    <dt>All nodes</dt>
+    <dt><g:message code="all.nodes" default="All Nodes"/></dt>
     <dd><g:link class="nodefilterlink" action="nodes" controller="framework" params="[filter:'.*',project:params.project?:request.project]"
         data-node-filter="name: .*"
     >name: .*</g:link> </dd>
-    <dt>Nodes tagged "production"</dt>
+    <dt><g:message code="nodes.tagged" default="Nodes tagged"/> "production"</dt>
     <dd><g:link class="nodefilterlink" action="nodes" controller="framework" params="[filter:'tags: production', project: params.project ?: request.project]"
         data-node-filter="tags: production"
     >tags: production</g:link> </dd>
-    <dt>Unix nodes</dt>
+    <dt><g:message code="unix.nodes" default="Unix nodes"/></dt>
     <dd><g:link class="nodefilterlink" action="nodes" controller="framework" params="[filter:'osFamily: unix', project: params.project ?: request.project]"
         data-node-filter="osFamily: unix"
     >osFamily: unix</g:link> </dd>
