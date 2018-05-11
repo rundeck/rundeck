@@ -1,7 +1,7 @@
-Release 2.11.2
+Release 2.11.3
 ===========
 
-Date: 2018-05-10
+Date: 2018-05-11
 
 Name: <span style="color: Purple"><span class="glyphicon glyphicon-phone"></span> "cappuccino purple phone"</span>
 
@@ -11,33 +11,27 @@ Name: <span style="color: Purple"><span class="glyphicon glyphicon-phone"></span
 
 ## Notes
 
-Bug fixes and one API addition (retry job from execution and failed nodes).
+Bug fixes
 
 ## Contributors
 
 * Greg Schueler (gschueler)
+* Martin (martinbydefault)
 * Jaime Tobar (jtobard)
-* Luis Toledo (ltamaster)
 * Romain LEON (PeekLeon)
+* Luis Toledo (ltamaster)
 
 ## Bug Reporters
 
-* PeekLeon
-* gschueler
+* martinbydefault
 * jtobard
+* PeekLeon
 * ltamaster
-* ouyangxudu
-* vinillum
 
 ## Issues
 
-[Milestone 2.11.2](https://github.com/rundeck/rundeck/milestone/75)
+[Milestone 2.11.3](https://github.com/rundeck/rundeck/milestone/77)
 
-* [API: Run job based on execution (retryExecId)](https://github.com/rundeck/rundeck/pull/3372)
-* [Updating py-winrm plugin to 1.0.4 on 2.11.x](https://github.com/rundeck/rundeck/pull/3370)
-* [i18n Forgotten Buttons](https://github.com/rundeck/rundeck/pull/3355)
-* [i18n Update French](https://github.com/rundeck/rundeck/pull/3354)
-* [Update guava version](https://github.com/rundeck/rundeck/pull/3352)
-* [Open a project with lots of jobs very slowly when upgrade to 2.11](https://github.com/rundeck/rundeck/issues/3345)
-* [API: Run execution with just failed nodes (retryExecId)](https://github.com/rundeck/rundeck/pull/3341)
-* [Project automatically added to jobs](https://github.com/rundeck/rundeck/issues/2976)
+* [Documentation: fixed list not being correctly rendered](https://github.com/rundeck/rundeck/pull/3386)
+* [i18n Fix: default messages and 'by.you'](https://github.com/rundeck/rundeck/pull/3385)
+* [i18n Update: node filter help](https://github.com/rundeck/rundeck/pull/3383)
