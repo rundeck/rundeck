@@ -1,1 +1,0 @@
-% Commands | Man(1)

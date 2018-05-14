@@ -1,1 +1,0 @@
-% Formats | Man(5)
