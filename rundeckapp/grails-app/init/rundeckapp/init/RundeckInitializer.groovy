@@ -23,6 +23,7 @@ import rundeckapp.cli.CommandLineSetup
 
 import java.nio.file.Path
 import java.security.ProtectionDomain
+import java.security.SecureRandom
 import java.util.jar.JarFile
 import java.util.regex.Matcher
 import java.util.regex.Pattern
@@ -76,7 +77,9 @@ class RundeckInitializer {
         "default.user.password",
         PROP_LOGINMODULE_NAME,
         "loginmodule.conf.name",
-        "rundeck.config.name"
+        "rundeck.config.name",
+        "default.encryption.algorithm",
+        "default.encryption.password"
     ]
 
     RundeckInitConfig config
@@ -397,6 +400,7 @@ class RundeckInitializer {
         properties.put(RundeckInitConfig.LOG_DIR, forwardSlashPath(config.serverBaseDir) + "/logs");
         properties.put(RundeckInitConfig.SYS_PROP_RUNDECK_SERVER_CONFIG_DIR, forwardSlashPath(config.configDir));
         properties.put(RundeckInitConfig.LAUNCHER_JAR_LOCATION, forwardSlashPath(thisJar.getAbsolutePath()));
+        properties.put("default.encryption.password", randomString(15));
         for (final String configProperty : configProperties) {
             if (null != System.getProperty(configProperty)) {
                 properties.put(configProperty, forwardSlashPath(System.getProperty(configProperty)));
@@ -413,6 +417,17 @@ class RundeckInitializer {
         } catch (UnknownHostException ignored) {
         }
         return name;
+    }
+    /**
+     * Generate random password for encrypt
+     *
+     * @param length
+     */
+    public static String randomString(final int length) {
+        SecureRandom random = new SecureRandom();
+        return String.format(
+            "%" + length + "s", new BigInteger(length * 5, random).toString(32)
+        ).replace('\u0020', '0');
     }
 
 
