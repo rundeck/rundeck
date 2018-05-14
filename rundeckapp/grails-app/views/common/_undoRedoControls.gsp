@@ -29,7 +29,7 @@
         </span>
     </g:if>
     <g:else>
-        <span class="btn btn-xs btn-default disabled "><i class="glyphicon glyphicon-step-backward"></i> Undo</span>
+        <span class="btn btn-xs btn-default disabled "><i class="glyphicon glyphicon-step-backward"></i> <g:message code="undo" /></span>
     </g:else>
     <g:if test="${redo}">
         <span class="btn btn-xs btn-default act_redo ${!highlightundo?'flash_undo':''}" data-undo-key="${enc(attr: key)}">

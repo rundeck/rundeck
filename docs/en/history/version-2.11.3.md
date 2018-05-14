@@ -1,3 +1,7 @@
+% Version 2.11.3
+% greg
+% 05/11/2018
+
 Release 2.11.3
 ===========
 
@@ -7,7 +11,7 @@ Name: <span style="color: RoyalBlue"><span class="glyphicon glyphicon-plane"></s
 
 ## Upgrading from Earlier versions
 
-* See the [Upgrading Guide](http://rundeck.org/docs/upgrading/index.html)
+* See the [Upgrading Guide](../upgrading/index.html)
 
 ## Notes
 

@@ -128,14 +128,14 @@
                     <g:if test="${it?.dateStarted?.getTime() < it?.dateCompleted?.getTime()}">
                         <span title="<g:relativeDate atDate='${it?.dateStarted}'/> to <g:relativeDate
                                 atDate='${it?.dateCompleted}'/> ">
-                            <g:message code="in.of", default="in"/> <g:relativeDate end="${it?.dateCompleted}" start="${it?.dateStarted}"/>
+                            <g:message code="in.of" default="in"/> <g:relativeDate end="${it?.dateCompleted}" start="${it?.dateStarted}"/>
                         </span>
                     </g:if>
                 </g:if>
             </td>
 
             <td class="  user autoclickable" style="white-space: nowrap;text-overflow: ellipsis; overflow: hidden" title="by ${it?.author==session.user?'you':it.author}">
-                <em><g:message code="by", default="by"/></em>
+                <em><g:message code="by" default="by"/></em>
                 <g:username user="${it?.author}"/>
             </td>
 

@@ -99,13 +99,13 @@
         %{--</g:unless>--}%
             <span title="<g:relativeDate atDate='${rpt?.dateStarted}'/> to <g:relativeDate
                     atDate='${rpt?.dateCompleted}'/> ">
-                <g:message code="in.of", default="in"/> <g:relativeDate end="${rpt?.dateCompleted}" start="${rpt?.dateStarted}"/>
+                <g:message code="in.of" default="in"/> <g:relativeDate end="${rpt?.dateCompleted}" start="${rpt?.dateStarted}"/>
             </span>
         </g:if>
     </span>
 
     <span style="white-space: nowrap">
-        <em><g:message code="by", default="by"/></em>
+        <em><g:message code="by" default="by"/></em>
         <g:username user="${rpt?.author}"/>
     </span>
 
