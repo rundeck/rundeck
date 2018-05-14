@@ -76,8 +76,10 @@ dependencies {
                 project(':plugins:git-plugin'),
                 project(':plugins:source-refresh-plugin'),
                 project(':plugins:upvar-plugin'),
-                "com.github.Batix:rundeck-ansible-plugin:2.0.2",
-                "com.github.rundeck-plugins:aws-s3-model-source:v1.0"
+                "com.github.Batix:rundeck-ansible-plugin:2.3.0",
+                "com.github.rundeck-plugins:aws-s3-model-source:v1.0",
+                "com.github.rundeck-plugins:py-winrm-plugin:1.0.4",
+                "com.github.rundeck-plugins:openssh-node-execution:1.0.3"
 
     // Rundeck project dependencies.
     compile project(':core')
