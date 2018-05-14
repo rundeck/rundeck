@@ -92,7 +92,7 @@ class AA_TimerInterceptor {
                        method: request.method,
                        secure: request.isSecure() ? 'https' : 'http',
                        contentType: response.isCommitted()?response.getContentType():null,
-                       project: request.parameterMap['project']?:request.getAttribute('project')?:'?'
+                       project: request.getParameterValues('project')?.join(',')?:request.getAttribute('project')?:'?'
             ]
             map.findAll {it.value!=null}.each{ MDC.put(it.key,it.value)}
             try{
