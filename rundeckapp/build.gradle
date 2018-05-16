@@ -260,3 +260,7 @@ war {
         into("templates")
     }
 }
+
+//spring boot 1.5.x bootRepackage is not a good gradle citizen
+// will be fixed in 2.0 https://github.com/spring-projects/spring-boot/issues/1666
+[install, buildArchives, uploadArchives].each { it.dependsOn assemble }
