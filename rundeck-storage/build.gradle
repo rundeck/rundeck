@@ -50,6 +50,3 @@ project(':rundeck-storage:rundeck-storage-filesys') {
     }
 }
 
-task wrapper(type: Wrapper) {
-    gradleVersion = '3.5'
-}

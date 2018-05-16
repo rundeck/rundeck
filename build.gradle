@@ -92,7 +92,7 @@ allprojects{
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.5'
+    gradleVersion = '4.7'
 }
 
 // prompt for PGP key passphrase if not set
