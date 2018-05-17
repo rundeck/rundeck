@@ -126,7 +126,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
 
     @Override
     boolean existsFrameworkProject(final String project) {
-        Project.withNewSession{
+        Project.withSession{
             Project.findByName(project) ? true : false
         }
     }
@@ -532,7 +532,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     {
         if(properties['project.description'] != null ) {
             def description = properties['project.description']
-            Project.withNewSession {
+            Project.withSession {
                 def dbproj = Project.findByName(project.name)
                 dbproj.description = description ? description : null
                 dbproj.save(flush: true)
@@ -600,7 +600,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
     Map setProjectProperties(final String projectName, final Properties properties) {
         def description = properties['project.description']
-        Project.withNewSession{
+        Project.withSession{
             def found = Project.findByName(projectName)
             if (!found) {
                 throw new IllegalArgumentException("project does not exist: " + projectName)
@@ -654,7 +654,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     boolean needsReloadAcl(ProjectFile key,CacheableYamlSource source) {
 
         boolean needsReload=true
-        Storage.withNewSession {
+        Storage.withSession {
             def exists=existsProjectFileResource(key.project,key.path)
             def resource=exists?getProjectFileResource(key.project,key.path):null
             needsReload = resource == null ||
@@ -696,7 +696,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         long start=System.currentTimeMillis()
         log.info("Loading project definition for ${project}...")
         def rdproject = new RundeckProject(loadProjectConfig(project), this)
-        def description = Project.withNewSession{
+        def description = Project.withSession{
             Project.findByName(project)?.description
         }
         //preload cached readme/motd
@@ -713,7 +713,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
     }
 
     boolean needsReload(IRundeckProject project) {
-        Project.withNewSession {
+        Project.withSession {
             Project rdproject = Project.findByName(project.name)
             boolean needsReload = rdproject == null ||
                     project.configLastModifiedTime == null ||
