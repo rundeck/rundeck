@@ -89,7 +89,12 @@ dependencies {
     // From BuildConfig.groovy.
     compile 'org.quartz-scheduler:quartz:2.3.0'
     compile 'org.grails.plugins:quartz:2.0.13'
-    compile 'org.grails.plugins:mail:2.0.0'
+    //
+    //TODO: update to official mail plugin 2.0.1 once released
+    //compile 'org.grails.plugins:mail:2.0.1'
+    // using patch via jitpack https://jitpack.io/#grails3-plugins/mail/9435b0ac77
+    // pr: https://github.com/grails3-plugins/mail/pull/32
+    compile 'com.github.grails3-plugins:mail:9435b0ac77'
 
     compile 'org.yaml:snakeyaml:1.14'
     compile 'com.codahale.metrics:metrics-core:3.0.2'
