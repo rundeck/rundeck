@@ -39,7 +39,7 @@ environments {
 	}
 	test {
 		dataSource {
-			dbCreate = "update"
+			dbCreate = "create-drop"
 			url = "jdbc:h2:file:./db/testDb"
 		}
 	}

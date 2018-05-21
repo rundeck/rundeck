@@ -15,7 +15,9 @@
  */
 
 import com.dtolabs.rundeck.app.support.ExecQuery
-import org.junit.Ignore
+import grails.gorm.transactions.Rollback
+import grails.testing.mixin.integration.Integration
+import org.junit.Test
 import rundeck.ExecReport
 import rundeck.BaseReport
 import rundeck.services.ReportService
@@ -27,10 +29,10 @@ import rundeck.services.ReportService
  * Created: 8/23/12 2:57 PM
  * 
  */
-//@Integration
-@Ignore
+@Integration
+@Rollback
 class ReportServiceTests extends GroovyTestCase {
-    def ReportService reportService
+    ReportService reportService
     def sessionFactory
 
     private BaseReport proto(props=[:]){
@@ -38,30 +40,31 @@ class ReportServiceTests extends GroovyTestCase {
         message:'message',title:'title']
         return new ExecReport(repprops+props)
     }
+    @Test
     void testGetExecReportsReportIdFilter(){
-        def r1,r2,r3
+        def r1, r2, r3
 
-            r1=proto(reportId:'blah', jcExecId: '123')
-            assert r1.validate()
-            assert null!=r1.save(flush: true)
-            assert 'blah'==r1.reportId
-            assertNotNull(r1.id)
-            r2 = proto(reportId: 'blah2', jcExecId: '124')
-            assert r2.validate()
-            assert null != r2.save(flush: true)
-            r3 = proto(reportId: 'blah3', jcExecId: '125')
-            assert r3.validate()
-            println r3.save(flush: true)
+        r1 = proto(reportId: 'blah', jcExecId: '123')
+        assert r1.validate()
+        assert null != r1.save(flush: true)
+        assert 'blah' == r1.reportId
+        assertNotNull(r1.id)
+        r2 = proto(reportId: 'blah2', jcExecId: '124')
+        assert r2.validate()
+        assert null != r2.save(flush: true)
+        r3 = proto(reportId: 'blah3', jcExecId: '125')
+        assert r3.validate()
+        println r3.save(flush: true)
 
-        r1=r1.refresh()
-        r2=r2.refresh()
-        r3=r3.refresh()
-        assertEquals(3,ExecReport.count())
+        r1 = r1.refresh()
+        r2 = r2.refresh()
+        r3 = r3.refresh()
+        assertEquals(3, ExecReport.count())
         def query = new ExecQuery(reportIdFilter: 'blah')
 
-        def result=reportService.getExecutionReports(query,true)
-        assert result.total==1
-        assert result.reports.size()==1
+        def result = reportService.getExecutionReports(query, true)
+        assert result.total == 1
+        assert result.reports.size() == 1
         assert result.reports.contains(r1)
 
         assertQueryResult([reportIdFilter: 'blah'], [r1])
@@ -69,10 +72,10 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([reportIdFilter: 'blah3'], [r3])
         assertQueryResult([reportIdFilter: 'blah4'], [])
     }
+    @Test
     void testGetExecNodeFilterReportIdFilter(){
         def r1,r2,r3, r4
 
-        ExecReport.withNewSession {
             r1=proto(reportId:'blah', jcExecId: '123', succeededNodeList:'test')
             assert r1.validate()
             assert null!=r1.save(flush: true)
@@ -89,7 +92,7 @@ class ReportServiceTests extends GroovyTestCase {
             println r4.save(flush: true)
 
             sessionFactory.currentSession.flush()
-        }
+
         r1=r1.refresh()
         r2=r2.refresh()
         r3=r3.refresh()
@@ -108,26 +111,27 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([execnodeFilter: 'tags: monkey'], [r3])
         assertQueryResult([execnodeFilter: 'tags: test'], [])
         assertQueryResult([execnodeFilter: '.*'], [r4])
+
     }
 
+    @Test
     void testGetExecReportsProjFilterIsExact(){
         def r1,r2,r3
 
-        ExecReport.withNewSession {
-            r1=proto(reportId:'blah', jcExecId: '123', ctxProject:'abc')
-            assert r1.validate()
-            assert null!=r1.save(flush: true)
-            assert 'blah'==r1.reportId
-            assertNotNull(r1.id)
-            r2 = proto(reportId: 'blah2', jcExecId: '124', ctxProject: 'abc')
-            assert r2.validate()
-            assert null != r2.save(flush: true)
-            r3 = proto(reportId: 'blah3', jcExecId: '125', ctxProject: 'abcdef')
-            assert r3.validate()
-            println r3.save(flush: true)
+        r1=proto(reportId:'blah', jcExecId: '123', ctxProject:'abc')
+        assert r1.validate()
+        assert null!=r1.save(flush: true)
+        assert 'blah'==r1.reportId
+        assertNotNull(r1.id)
+        r2 = proto(reportId: 'blah2', jcExecId: '124', ctxProject: 'abc')
+        assert r2.validate()
+        assert null != r2.save(flush: true)
+        r3 = proto(reportId: 'blah3', jcExecId: '125', ctxProject: 'abcdef')
+        assert r3.validate()
+        println r3.save(flush: true)
 
-            sessionFactory.currentSession.flush()
-        }
+        sessionFactory.currentSession.flush()
+
         r1=r1.refresh()
         r2=r2.refresh()
         r3=r3.refresh()
@@ -143,9 +147,10 @@ class ReportServiceTests extends GroovyTestCase {
         assertQueryResult([projFilter: 'abcd'], [])
         assertQueryResult([projFilter: 'abcdef'], [r3])
     }
+    @Test
     void testGetExecReportsJobListFilter(){
-        def r1=proto(reportId:'group/name',jcExecId:'1')
-        assert null!=r1.save(flush: true)
+        def r1 = proto(reportId: 'group/name', jcExecId: '1')
+        assert null != r1.save(flush: true)
         def r2 = proto(reportId: 'group/name2', jcExecId: '2')
         assert null != r2.save(flush: true)
         def r3 = proto(reportId: 'group/name3', jcExecId: '3')
@@ -153,103 +158,104 @@ class ReportServiceTests extends GroovyTestCase {
         def r4 = proto(reportId: 'group/monkey', jcExecId: '4')
         assert null != r4.save(flush: true)
 
-        assertQueryResult([jobListFilter: ['group/name']],[r1])
-        assertQueryResult([jobListFilter: ['group/name','group/name2']],[r1,r2])
-        assertQueryResult([jobListFilter: ['group/name','group/name3']],[r1,r3])
-        assertQueryResult([jobListFilter: ['group/name2','group/name3']],[r2,r3])
-        assertQueryResult([jobListFilter: ['group/name','group/name2','group/name3']],[r1,r2,r3])
+        assertQueryResult([jobListFilter: ['group/name']], [r1])
+        assertQueryResult([jobListFilter: ['group/name', 'group/name2']], [r1, r2])
+        assertQueryResult([jobListFilter: ['group/name', 'group/name3']], [r1, r3])
+        assertQueryResult([jobListFilter: ['group/name2', 'group/name3']], [r2, r3])
+        assertQueryResult([jobListFilter: ['group/name', 'group/name2', 'group/name3']], [r1, r2, r3])
     }
+    @Test
     void testGetExecReportsStatusStringVariations(){
-        def r1=proto(reportId:'group/name',jcExecId:'1',status:'failed',actionType: 'failed')
-        assert null!=r1.save(flush: true)
-        def r2=proto(reportId:'group/name2',jcExecId:'2',status:'fail',actionType: 'fail')
-        assert null!=r2.save(flush: true)
+        def r1 = proto(reportId: 'group/name', jcExecId: '1', status: 'failed', actionType: 'failed')
+        assert null != r1.save(flush: true)
+        def r2 = proto(reportId: 'group/name2', jcExecId: '2', status: 'fail', actionType: 'fail')
+        assert null != r2.save(flush: true)
 
-        def r3=proto(reportId:'group/name2',jcExecId:'3',status:'succeed',actionType: 'succeed')
-        assert null!=r3.save(flush: true)
-        def r4=proto(reportId:'group/name2',jcExecId:'4',status:'succeeded',actionType: 'succeeded')
-        assert null!=r4.save(flush: true)
+        def r3 = proto(reportId: 'group/name2', jcExecId: '3', status: 'succeed', actionType: 'succeed')
+        assert null != r3.save(flush: true)
+        def r4 = proto(reportId: 'group/name2', jcExecId: '4', status: 'succeeded', actionType: 'succeeded')
+        assert null != r4.save(flush: true)
 
-        assertQueryResult([statFilter: 'fail'],[r1,r2])
-        assertQueryResult([statFilter: 'succeed'],[r3,r4])
+        assertQueryResult([statFilter: 'fail'], [r1, r2])
+        assertQueryResult([statFilter: 'succeed'], [r3, r4])
 
     }
+    @Test
     void testGetCombinedReportsExcludeJobListFilter(){
-        def r1=proto(reportId:'group/name', jcExecId: '1')
-        assert null!=r1.save(flush: true)
+        def r1 = proto(reportId: 'group/name', jcExecId: '1')
+        assert null != r1.save(flush: true)
         def r2 = proto(reportId: 'group/name2', jcExecId: '2')
         assert null != r2.save(flush: true)
         def r3 = proto(reportId: 'group/name3', jcExecId: '3')
         assert null != r3.save(flush: true)
 
-        assertQueryResult([excludeJobListFilter: ['group/name']],[r2,r3])
-        assertQueryResult([excludeJobListFilter: ['group/name2']],[r1,r3])
-        assertQueryResult([excludeJobListFilter: ['group/name3']],[r1,r2])
-        assertQueryResult([excludeJobListFilter: ['group/name','group/name2']],[r3])
-        assertQueryResult([excludeJobListFilter: ['group/name','group/name3']],[r2])
-        assertQueryResult([excludeJobListFilter: ['group/name','group/name2','group/name3']],[])
+        assertQueryResult([excludeJobListFilter: ['group/name']], [r2, r3])
+        assertQueryResult([excludeJobListFilter: ['group/name2']], [r1, r3])
+        assertQueryResult([excludeJobListFilter: ['group/name3']], [r1, r2])
+        assertQueryResult([excludeJobListFilter: ['group/name', 'group/name2']], [r3])
+        assertQueryResult([excludeJobListFilter: ['group/name', 'group/name3']], [r2])
+        assertQueryResult([excludeJobListFilter: ['group/name', 'group/name2', 'group/name3']], [])
     }
 
     private assertQueryResult(Map props, Collection<BaseReport> results,Integer total=null) {
         def query = new ExecQuery(props)
-
-        def result = reportService.getExecutionReports(query,true)
+        def result = reportService.getExecutionReports(query, true)
         assert result.total == (null != total ? total : results.size())
         assert result.reports.size() == results.size()
         assert result.reports.containsAll(results)
     }
 
+    @Test
     void testGetExecReportsFailedStat(){
         def r1,r2,r3
 
-        ExecReport.withNewSession {
-            r1=proto(reportId:'blah', jcExecId: '123', status: 'fail')
-            assert r1.validate()
-            assert null!=r1.save(flush: true)
-            assert 'blah'==r1.reportId
-            assertNotNull(r1.id)
-            r2 = proto(reportId: 'blah2', jcExecId: '124',status: 'fail')
-            assert r2.validate()
-            assert null != r2.save(flush: true)
-            r3 = proto(reportId: 'blah3', jcExecId: '125',status: 'succes')
-            assert r3.validate()
-            println r3.save(flush: true)
+        r1 = proto(reportId: 'blah', jcExecId: '123', status: 'fail')
+        assert r1.validate()
+        assert null != r1.save(flush: true)
+        assert 'blah' == r1.reportId
+        assertNotNull(r1.id)
+        r2 = proto(reportId: 'blah2', jcExecId: '124', status: 'fail')
+        assert r2.validate()
+        assert null != r2.save(flush: true)
+        r3 = proto(reportId: 'blah3', jcExecId: '125', status: 'succes')
+        assert r3.validate()
+        println r3.save(flush: true)
 
-            sessionFactory.currentSession.flush()
-        }
-        r1=r1.refresh()
-        r2=r2.refresh()
-        r3=r3.refresh()
-        assertEquals(3,ExecReport.count())
+        sessionFactory.currentSession.flush()
+
+        r1 = r1.refresh()
+        r2 = r2.refresh()
+        r3 = r3.refresh()
+        assertEquals(3, ExecReport.count())
         def query = new ExecQuery(statFilter: 'fail')
 
-        def result=reportService.getExecutionReports(query,true)
-        assert result.total==2
-        assert result.reports.size()==2
+        def result = reportService.getExecutionReports(query, true)
+        assert result.total == 2
+        assert result.reports.size() == 2
         assert result.reports.contains(r1)
         assert result.reports.contains(r2)
         assert !result.reports.contains(r3)
 
     }
 
+    @Test
     void testGetExecReportsKilledStat(){
         def r1,r2,r3
 
-        ExecReport.withNewSession {
-            r1=proto(reportId:'blah', jcExecId: '123', status: 'fail', abortedByUser: 'admin')
-            assert r1.validate()
-            assert null!=r1.save(flush: true)
-            assert 'blah'==r1.reportId
-            assertNotNull(r1.id)
-            r2 = proto(reportId: 'blah2', jcExecId: '124',status: 'fail')
-            assert r2.validate()
-            assert null != r2.save(flush: true)
-            r3 = proto(reportId: 'blah3', jcExecId: '125',status: 'succes')
-            assert r3.validate()
-            println r3.save(flush: true)
+        r1=proto(reportId:'blah', jcExecId: '123', status: 'fail', abortedByUser: 'admin')
+        assert r1.validate()
+        assert null!=r1.save(flush: true)
+        assert 'blah'==r1.reportId
+        assertNotNull(r1.id)
+        r2 = proto(reportId: 'blah2', jcExecId: '124',status: 'fail')
+        assert r2.validate()
+        assert null != r2.save(flush: true)
+        r3 = proto(reportId: 'blah3', jcExecId: '125',status: 'succes')
+        assert r3.validate()
+        println r3.save(flush: true)
 
-            sessionFactory.currentSession.flush()
-        }
+        sessionFactory.currentSession.flush()
+
         r1=r1.refresh()
         r2=r2.refresh()
         r3=r3.refresh()
