@@ -21,6 +21,9 @@ import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.common.Framework
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.core.execution.WorkflowExecutionServiceThread
+import grails.gorm.transactions.Rollback
+import grails.gorm.transactions.Transactional
+
 //import grails.test.GrailsMock
 import grails.testing.mixin.integration.Integration
 import groovy.mock.interceptor.MockFor
@@ -46,9 +49,9 @@ import rundeck.services.FrameworkService
  */
 
 @Integration
-//@RunWith(JUnit4.class)
-@Ignore
+@Rollback
 class ExecutionJobTest extends GroovyTestCase{
+    @Test
     void testInitializeEmpty(){
         ExecutionJob job = new ExecutionJob()
         def contextMock = setupJobDataMap([:])
@@ -59,6 +62,7 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.assertTrue(e.message,e.message.contains("failed to lookup scheduledException object from job data map"))
         }
     }
+    @Test
     void testInitializeWithoutExecutionService(){
         ScheduledExecution se = setupJob()
         ExecutionJob job = new ExecutionJob()
@@ -70,13 +74,14 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.assertTrue(e.message,e.message.contains("ExecutionService could not be retrieved"))
         }
     }
+    @Test
     void testInitializeWithoutExecutionUtilService(){
         ScheduledExecution se = setupJob()
         ExecutionJob job = new ExecutionJob()
         def mockes=new MockFor(ExecutionService)
 
         ExecutionService es=mockes.proxyInstance()
-        def contextMock = setupJobDataMap([scheduledExecutionId:se.id,executionService:executionService])
+        def contextMock = setupJobDataMap([scheduledExecutionId:se.id,executionService:es])
         try {
             job.initialize(null, contextMock)
             Assert.fail("expected exception")
@@ -115,10 +120,13 @@ class ExecutionJobTest extends GroovyTestCase{
             'fakeFramework'
         }
         def mockAuth =new MockFor(UserAndRolesAuthContext)
+
         mockAuth.demand.getUsername(1..1){
             'test'
         }
+        mockAuth.demand.asBoolean(1..1) { true }
         def authcontext=mockAuth.proxyInstance()
+
         mockfs.demand.getAuthContextForUserAndRolesAndProject(1..1) { user, rolelist, project ->
             authcontext
         }
@@ -174,6 +182,7 @@ class ExecutionJobTest extends GroovyTestCase{
         mockAuth.demand.getUsername(1..1){
             'test'
         }
+        mockAuth.demand.asBoolean(1..1) { true }
         def authcontext=mockAuth.proxyInstance()
         mockfs.demand.getAuthContextForUserAndRolesAndProject(1..1) { user, rolelist, project ->
             authcontext
@@ -232,6 +241,7 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.assertEquals(execution,execution1)
             testExecmap
         }
+        mockes.ignore('$tt__isApplicationShutdown') { false }
         mockeus.demand.finishExecution(1..1){ Map datamap->
             Assert.assertTrue(datamap.testExecuteAsyncBegin)
         }
@@ -266,6 +276,7 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.assertEquals(execution,execution1)
             testExecmap
         }
+        mockes.ignore('$tt__isApplicationShutdown') { false }
         mockeus.demand.finishExecution(1..1){ Map datamap->
             Assert.assertTrue(datamap.testExecuteAsyncBegin)
         }
@@ -302,6 +313,7 @@ class ExecutionJobTest extends GroovyTestCase{
             stb.start()
             testExecmap
         }
+        mockes.ignore('$tt__isApplicationShutdown') { false }
         mockeus.demand.finishExecution(1..1){ Map datamap->
             Assert.assertTrue(datamap.testExecuteAsyncBegin)
         }
@@ -314,11 +326,24 @@ class ExecutionJobTest extends GroovyTestCase{
     }
 
     Execution setupExecution(ScheduledExecution se, Date startDate, Date finishDate) {
-        Execution e = new Execution(project: "AProject", user: 'bob',
-                dateStarted: startDate,
-                dateCompleted: finishDate,
-                scheduledExecution: se, workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]))
-        e.save()
+        Execution e
+        Execution.withNewTransaction {
+            e = new Execution(
+                    project: "AProject",
+                    user: 'bob',
+                    dateStarted: startDate,
+                    dateCompleted: finishDate,
+                    scheduledExecution: se,
+                    workflow: new Workflow(
+                            keepgoing: true,
+                            commands: [new CommandExec(
+                                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                            )]
+                    )
+            )
+            e.save()
+        }
+        return e
     }
 
 
@@ -349,6 +374,7 @@ class ExecutionJobTest extends GroovyTestCase{
             Assert.assertEquals(execution, execution1)
             testExecmap
         }
+        mockes.ignore('$tt__isApplicationShutdown') { false }
         mockeus.demand.finishExecution(1..1) { Map datamap ->
             Assert.assertTrue(datamap.testExecuteAsyncBegin)
         }
@@ -419,6 +445,7 @@ class ExecutionJobTest extends GroovyTestCase{
             testExecmap
         }
         def count=3
+        mockes.ignore('$tt__isApplicationShutdown') { false }
         mockeus.demand.finishExecution(4..4) { Map datamap ->
             if(count>0){
                 count--
@@ -635,6 +662,7 @@ class ExecutionJobTest extends GroovyTestCase{
         ]
 
         boolean saveStateCalled = false
+        mockes.ignore('$tt__isApplicationShutdown') { false }
         mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap, Map retryContext->
             saveStateCalled = true
             Assert.assertEquals(scheduledExecution.id,schedId)
@@ -687,6 +715,7 @@ class ExecutionJobTest extends GroovyTestCase{
         }
         def saveStatsComplete=false
         def fail3times = throwXTimes(3)
+        mockes.ignore('$tt__isApplicationShutdown') { false }
         mockes.demand.updateScheduledExecStatistics(2..2){ Long schedId, long eId, long time->
             Assert.assertEquals(scheduledExecution.id,schedId)
             Assert.assertEquals(execution.id,eId)
@@ -721,6 +750,7 @@ class ExecutionJobTest extends GroovyTestCase{
         ]
 
         boolean saveStateCalled = false
+        mockes.ignore('$tt__isApplicationShutdown') { false }
         mockes.demand.saveExecutionState(1..1){ schedId, exId, Map props, Map execmap, Map retryContext->
             saveStateCalled = true
             Assert.assertEquals(scheduledExecution.id,schedId)
@@ -764,6 +794,7 @@ class ExecutionJobTest extends GroovyTestCase{
         def fail3times=throwXTimes(3)
 
         boolean saveStateCalled = false
+        mockes.ignore('$tt__isApplicationShutdown') { false }
         mockes.demand.saveExecutionState(2..2){ schedId, exId, Map props, Map execmap, Map retryContext->
             saveStateCalled = true
             Assert.assertNull(schedId)
@@ -777,8 +808,8 @@ class ExecutionJobTest extends GroovyTestCase{
         def es = mockes.proxyInstance()
 
         job.finalizeRetryMax=2
-        def result=job.saveState(null,es,execution,true,false, false,true,null,-1,null,execMap)
-        Assert.assertEquals(false,result)
+        def result = job.saveState(null, es, execution, true, false, false, true, null, -1, null, execMap)
+        Assert.assertEquals(false, result)
     }
 
 
@@ -810,6 +841,7 @@ class ExecutionJobTest extends GroovyTestCase{
         stb.successful=true
         stb.result=wfeForSuccess(true)
         def testExecmap = [thread: stb, testExecuteAsyncBegin: true, scheduledExecution: se]
+        mockes.ignore('$tt__isApplicationShutdown') { false }
         mockes.demand.executeAsyncBegin(1..1) { Framework framework, AuthContext authContext, Execution execution1, ScheduledExecution scheduledExecution = null, Map extraParams = null, Map extraParamsExposed = null ->
             Assert.assertEquals(execution,execution1)
             stb.start()
@@ -833,21 +865,28 @@ class ExecutionJobTest extends GroovyTestCase{
     }
 
     private ScheduledExecution setupJob(Closure extra=null) {
-        ScheduledExecution se = new ScheduledExecution(
-                jobName: 'blue',
-                project: 'AProject',
-                groupPath: 'some/where',
-                description: 'a job',
-                argString: '-a b -c d',
-                workflow: new Workflow(keepgoing: true, commands: [new CommandExec([adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle'])]),
-        )
-        se.dateCreated=new Date()
-        se.lastUpdated=new Date()
-        if(extra!=null){
-            extra.call(se)
+        ScheduledExecution.withNewTransaction {
+            ScheduledExecution se = new ScheduledExecution(
+                    jobName: 'blue',
+                    project: 'AProject',
+                    groupPath: 'some/where',
+                    description: 'a job',
+                    argString: '-a b -c d',
+                    workflow: new Workflow(
+                            keepgoing: true,
+                            commands: [new CommandExec(
+                                    [adhocRemoteString: 'test buddy', argString: '-delay 12 -monkey cheese -particle']
+                            )]
+                    ),
+                    )
+            se.dateCreated = new Date()
+            se.lastUpdated = new Date()
+            if (extra != null) {
+                extra.call(se)
+            }
+            se.workflow.save()
+            se.save()
         }
-        se.workflow.save()
-        se.save()
     }
 
     private def setupJobDataMap(Map mockdata) {
@@ -857,6 +896,9 @@ class ExecutionJobTest extends GroovyTestCase{
         }
         data.getString=data.get
         data.getBoolean={String key->
+            return mockdata[key]?true:false
+        }
+        data.asBoolean={String key->
             return mockdata[key]?true:false
         }
         return data

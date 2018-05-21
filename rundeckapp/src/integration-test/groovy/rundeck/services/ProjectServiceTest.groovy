@@ -16,14 +16,18 @@
 
 package rundeck.services
 
+import grails.gorm.transactions.Rollback
+import grails.testing.mixin.integration.Integration
 import org.junit.Ignore
+import org.junit.Test
 import rundeck.Execution
 import spock.lang.Shared
 
 /**
  * Created by greg on 6/18/15.
  */
-@Ignore
+@Integration
+@Rollback
 class ProjectServiceTest extends GroovyTestCase {
     @Shared
     ProjectService projectService = new ProjectService()
@@ -140,6 +144,7 @@ class ProjectServiceTest extends GroovyTestCase {
     /**
      * import executions with orchestrator definition
      */
+    @Test
     public void  testImportExecutionsToProject_Workflow_noOutfile(){
         def temp = File.createTempFile("execxml",".tmp")
         temp.text=EXEC_XML_TEST4
@@ -156,6 +161,7 @@ class ProjectServiceTest extends GroovyTestCase {
     /**
      * import executions with retryExecution link
      */
+    @Test
     public void  testImportExecutionsToProject_retryId(){
         def id2 = 13L
         def id1 = 1L
@@ -190,16 +196,19 @@ class ProjectServiceTest extends GroovyTestCase {
         assertNotNull(result[(int)id1])
         assertNotNull(result[(int)id2])
 
-        assertNotNull(Execution.get(result[(int)id1]))
-        assertNotNull(Execution.get(result[(int)id2]))
-        def exec=Execution.get(result[(int)id1])
-        assertNotNull(exec.retryExecution)
-        def exec2=Execution.get(result[(int)id2])
-        assertEquals(exec2,exec.retryExecution)
+        Execution.withNewSession {
+            assertNotNull(Execution.get(result[(int) id1]))
+            assertNotNull(Execution.get(result[(int) id2]))
+            def exec = Execution.get(result[(int) id1])
+            assertNotNull(exec.retryExecution)
+            def exec2 = Execution.get(result[(int) id2])
+            assertEquals(exec2.id, exec.retryExecution.id)
+        }
     }
     /**
      * import executions with orchestrator definition
      */
+    @Test
     public void  testImportExecutionsToProject_Workflow_withOutfile(){
         def temp = File.createTempFile("execxml",".tmp")
         temp.text=EXEC_XML_TEST4
@@ -227,6 +236,7 @@ class ProjectServiceTest extends GroovyTestCase {
     /**
      * import executions with orchestrator definition
      */
+    @Test
     public void  testImportExecutionsToProject_Workflow_withStatefile(){
         def temp = File.createTempFile("execxml",".tmp")
         temp.text=EXEC_XML_TEST4
@@ -266,6 +276,7 @@ class ProjectServiceTest extends GroovyTestCase {
     /**
      * import executions with orchestrator definition
      */
+    @Test
     public void  testImportExecutionsToProject_Orchestrator(){
         def temp = File.createTempFile("execxml",".tmp")
         temp.text=EXEC_XML_TEST5
