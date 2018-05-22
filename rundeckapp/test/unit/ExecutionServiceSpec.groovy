@@ -3120,4 +3120,138 @@ class ExecutionServiceSpec extends Specification {
         true          | 2
         false         | 1
     }
+
+
+    def "loadSecureOptionStorageDefaults replace job vars"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec(
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                )
+                        ]
+                ),
+                options: [
+                        new Option(
+                                name: 'pass',
+                                secureInput: true,
+                                secureExposed: false,
+                                defaultStoragePath: 'keys/${job.username}/pass'
+                        )
+                ]
+        )
+        job.save()
+
+        Map secureOptsExposed = [:]
+        Map secureOpts = [:]
+        def authContext = Mock(AuthContext)
+        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        service.storageService = Mock(StorageService)
+
+        def jobcontext = [:]
+        jobcontext.id = job.extid
+        jobcontext.name = job.jobName
+        jobcontext.group = job.groupPath
+        jobcontext.project = job.project
+        jobcontext.username = username
+        jobcontext['user.name'] = jobcontext.username
+
+
+        when:
+        service.loadSecureOptionStorageDefaults(job, secureOptsExposed, secureOpts, authContext,false,
+                args,jobcontext)
+
+        then:
+        service.storageService.storageTreeWithContext(authContext) >> Mock(KeyStorageTree) {
+            readPassword('keys/admin/pass') >> {
+                return 'pass1'.bytes
+            }
+            readPassword('keys/dev/pass') >> {
+                return 'pass2'.bytes
+            }
+            readPassword('keys/op/pass') >> {
+                return 'pass3'.bytes
+            }
+            readPassword(_) >> {
+                return ''.bytes
+            }
+        }
+        expectedpass == secureOpts['pass']
+        where:
+        expectedpass    | username
+        'pass1'         | 'admin'
+        'pass2'         | 'dev'
+        'pass3'         | 'op'
+        ''              | 'user'
+
+    }
+
+
+    def "loadSecureOptionStorageDefaults node deferred variables"() {
+        given:
+        ScheduledExecution job = new ScheduledExecution(
+                jobName: 'blue',
+                project: 'AProject',
+                groupPath: 'some/where',
+                description: 'a job',
+                workflow: new Workflow(
+                        keepgoing: true,
+                        commands: [
+                                new CommandExec(
+                                        adhocRemoteString: 'test buddy',
+                                        argString: '-delay 12 -monkey cheese -particle'
+                                )
+                        ]
+                ),
+                options: [
+                        new Option(
+                                name: 'pass',
+                                secureInput: true,
+                                secureExposed: false,
+                                defaultStoragePath: securepath
+                        )
+                ]
+        )
+        job.save()
+
+        Map secureOptsExposed = [:]
+        Map secureOpts = [:]
+        def authContext = Mock(AuthContext)
+        Map<String, String> args = FrameworkService.parseOptsFromString(job.argString)
+        service.storageService = Mock(StorageService)
+
+        def jobcontext = [:]
+        jobcontext.id = job.extid
+        jobcontext.name = job.jobName
+        jobcontext.group = job.groupPath
+        jobcontext.project = job.project
+        jobcontext.username = 'admin'
+        jobcontext['user.name'] = jobcontext.username
+
+        def secureOptionNodeDeferred = [:]
+
+
+        when:
+        service.loadSecureOptionStorageDefaults(job, secureOptsExposed, secureOpts, authContext,false,
+                args,jobcontext,secureOptionNodeDeferred)
+
+        then:
+        secureOptionNodeDeferred
+        secureOptionNodeDeferred.size()==1
+        secureOptionNodeDeferred['pass']
+        secureOptionNodeDeferred['pass']==securepath
+
+        where:
+        securepath                         | _
+        'keys/${node.hostname}/pass'       | _
+        'keys/${node.username}/pass'       | _
+
+    }
 }
