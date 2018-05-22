@@ -216,12 +216,12 @@
                 <span data-bind="messageTemplate: searchedProjectsCount(), messageTemplatePluralize:true, css: { 'text-info': searchedProjectsCount()>0, 'text-warning': searchedProjectsCount()<1 }">
                     <g:message code="page.home.search.project.title" />|<g:message code="page.home.search.project.title.plural" />
                 </span>
-              </div>              
+              </div>
             </div>
           </div>
           <div data-bind="foreach: { data: searchedProjects(), as: 'project' } ">
           %{--Template for project details--}%
-            <div class=" project_list_item" data-bind="attr: { 'data-project': project }, ">
+            <div class="project_list_item" data-bind="attr: { 'data-project': project }, ">
               <div class="row">
                 <div class="col-sm-6 col-md-4">
                   <a href="${g.createLink(action:'index',controller:'menu',params:[project:'<$>'])}" data-bind="urlPathParam: project" class="h3">
@@ -234,11 +234,10 @@
                       <span data-bind="text: project"></span>
                     </span>
                   </a>
-                  <span data-bind="if: $root.projectForName(project)">
+                  <!-- <span data-bind="if: $root.projectForName(project)">
                     <span class="text-muted" data-bind="text: $root.projectForName(project).description"></span>
-                  </span>
+                  </span> -->
                 </div>
-                <div class="clearfix visible-sm"></div>
                   <div class="col-sm-6 col-md-4">
                     <span data-bind="if: $root.projectForName(project)">
                       <a class="h4" data-bind="css: { 'text-muted': $root.projectForName(project).execCount()<1 }, urlPathParam: project " href="${g.createLink(controller: "reports", action: "index", params: [project: '<$>'])}">
@@ -277,7 +276,6 @@
                         </div>
                       </span>
                     </div>
-                    <div class="clearfix visible-xs visible-sm"></div>
                     <div data-bind="if: $root.projectForName(project)">
                       <div class="col-sm-12 col-md-4" >
                         <div class="pull-right">

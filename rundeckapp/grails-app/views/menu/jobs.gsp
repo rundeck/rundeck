@@ -182,7 +182,7 @@
             $('busy').hide();
         }
 
-       
+
 
 
         //set box filterselections
@@ -873,62 +873,72 @@
     </style>
 </head>
 <body>
-
-
-<g:if test="${flash.bulkJobResult?.errors}">
-    <div class="alert alert-dismissable alert-warning">
-        <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-        <ul>
-            <g:if test="${flash.bulkJobResult.errors instanceof org.springframework.validation.Errors}">
-                <g:renderErrors bean="${flash.bulkJobResult.errors}" as="list"/>
-            </g:if>
-            <g:else>
-                <g:each in="${flash.bulkJobResult.errors*.message}" var="message">
-                    <li><g:autoLink>${message}</g:autoLink></li>
-                </g:each>
-            </g:else>
-        </ul>
+<div class="container-fluid">
+  <g:if test="${flash.bulkJobResult?.errors}">
+      <div class="alert alert-warning">
+          <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+          <ul>
+              <g:if test="${flash.bulkJobResult.errors instanceof org.springframework.validation.Errors}">
+                  <g:renderErrors bean="${flash.bulkJobResult.errors}" as="list"/>
+              </g:if>
+              <g:else>
+                  <g:each in="${flash.bulkJobResult.errors*.message}" var="message">
+                      <li><g:autoLink>${message}</g:autoLink></li>
+                  </g:each>
+              </g:else>
+          </ul>
+      </div>
+  </g:if>
+  <g:if test="${flash.bulkJobResult?.success}">
+      <div class="alert alert-info">
+          <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
+          <ul>
+          <g:each in="${flash.bulkJobResult.success*.message}" var="message">
+              <li><g:autoLink>${message}</g:autoLink></li>
+          </g:each>
+          </ul>
+      </div>
+  </g:if>
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="card">
+        <div class="card-header"></div>
+        <div class="card-content">
+          <div class="runbox primary jobs" id="indexMain">
+              <div id="error" class="alert alert-danger" style="display:none;"></div>
+              <g:render template="workflowsFull" model="${[jobExpandLevel:jobExpandLevel,jobgroups:jobgroups,wasfiltered:wasfiltered?true:false, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,rkey:rkey, clusterModeEnabled:clusterModeEnabled]}"/>
+          </div>
+        </div>
+      </div>
     </div>
-</g:if>
-<g:if test="${flash.bulkJobResult?.success}">
-    <div class="alert alert-dismissable alert-info">
-        <a class="close" data-dismiss="alert" href="#" aria-hidden="true">&times;</a>
-        <ul>
-        <g:each in="${flash.bulkJobResult.success*.message}" var="message">
-            <li><g:autoLink>${message}</g:autoLink></li>
-        </g:each>
-        </ul>
+  </div>
+  <div class="row">
+    <div class="col-xs-12">
+      <div class="card"  id="activity_section">
+        <div class="card-header">
+          <h3 class="card-title"><g:message code="page.section.Activity.for.jobs" /></h4>
+        </div>
+        <div class="card-content">
+          <g:render template="/reports/activityLinks" model="[filter: [projFilter: params.project ?: request.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
+        </div>
+      </div>
     </div>
-</g:if>
-<div class="runbox primary jobs" id="indexMain">
-    <div id="error" class="alert alert-danger" style="display:none;"></div>
-    <g:render template="workflowsFull" model="${[jobExpandLevel:jobExpandLevel,jobgroups:jobgroups,wasfiltered:wasfiltered?true:false, clusterMap: clusterMap,nextExecutions:nextExecutions,jobauthorizations:jobauthorizations,authMap:authMap,nowrunningtotal:nowrunningtotal,max:max,offset:offset,paginateParams:paginateParams,sortEnabled:true,rkey:rkey, clusterModeEnabled:clusterModeEnabled]}"/>
+  </div>
 </div>
+
 <div class="modal fade" id="execDiv" role="dialog" aria-labelledby="deleteFilterModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-                <h4 class="modal-title" id="deleteFilterModalLabel"><g:message code="job.execute.action.button" /></h4>
-            </div>
-
-            <div class="" id="execDivContent">
-
-
-            </div>
-</div>
-</div>
-</div>
-
-<g:render template="/menu/copyModal"
-          model="[projectNames: projectNames]"/>
-
-<div class="row row-space" id="activity_section">
-    <div class="col-sm-12 ">
-        <h4 class="text-muted "><g:message code="page.section.Activity.for.jobs" /></h4>
-        <g:render template="/reports/activityLinks"
-                  model="[filter: [projFilter: params.project ?: request.project, jobIdFilter: '!null',], knockoutBinding: true, showTitle:true]"/>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="deleteFilterModalLabel"><g:message code="job.execute.action.button" /></h4>
+      </div>
+      <div class="" id="execDivContent"></div>
     </div>
+  </div>
 </div>
+
+<g:render template="/menu/copyModal" model="[projectNames: projectNames]"/>
+
 </body>
 </html>

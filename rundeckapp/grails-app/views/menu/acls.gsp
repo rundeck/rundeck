@@ -177,8 +177,8 @@
 
                   <div class="card-content panel-content-embed" id="fsPolicies">
 
-                      <table class="table table-hover table-condensed table-embed">
-                          <tbody data-bind="foreach: policies">
+                      <div>
+                          <div data-bind="foreach: policies">
                               <g:render template="/menu/aclValidationRowKO"
                                         model="${[
                                                 hasEditAuth  : hasEditAuth,
@@ -190,10 +190,10 @@
                                                 uploadModalId: 'aclFSUpload',
                                         ]}"/>
 
-                          </tbody>
+                          </div>
 
 
-                      </table>
+                      </div>
                   </div>
 
                   <g:render template="/menu/aclManageKO" model="[
@@ -210,10 +210,10 @@
               </g:if>
 
               <div class="card-header clearfix">
-                  <span class="panel-title pull-left">
-                      <span class="text-info">${aclStoredList.size()}</span>
+                  <h3 class="card-title pull-left">
                       <g:message code="stored.acl.policy.files.title"/>
-                  </span>
+                      <span class="badge" style="font-size:1em">${aclStoredList.size()}</span>
+                  </h3>
                   <g:if test="${hasCreateAuth}">
                       <div class="btn-group pull-right">
                           <span class="btn btn-sm btn-default" data-toggle="modal" data-target="#aclStorageUpload">
@@ -231,9 +231,9 @@
                   </g:if>
               </div>
 
-              <div class="panel-body panel-content-embed" id="storedPolicies">
-                  <table class="table table-hover table-condensed table-embed">
-                      <tbody data-bind="foreach: policies">
+              <div class="card-content" id="storedPolicies">
+                  <div>
+                      <div data-bind="foreach: policies">
                           <g:render template="/menu/aclValidationRowKO"
                                     model="${[
                                             hasEditAuth  : hasEditAuth,
@@ -245,27 +245,23 @@
                                             uploadModalId: 'aclStorageUpload',
                                     ]}"/>
 
-                      </tbody>
-
-
-
-                  </table>
+                      </div>
+                  </div>
+                  <g:render template="/menu/aclManageKO" model="[
+                          deleteModalId: 'deleteStorageAclPolicy',
+                          deleteAction :
+                                  [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'storage']],
+                          uploadModalId: 'aclStorageUpload',
+                          uploadFormId: 'aclStorageUploadForm',
+                          uploadAction : hasCreateAuth || hasEditAuth ?
+                                  [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'storage', upload: true]] :
+                                  null
+                  ]"/>
               </div>
-              <g:render template="/menu/aclManageKO" model="[
-                      deleteModalId: 'deleteStorageAclPolicy',
-                      deleteAction :
-                              [controller: 'menu', action: 'deleteSystemAclFile', params: [fileType: 'storage']],
-                      uploadModalId: 'aclStorageUpload',
-                      uploadFormId: 'aclStorageUploadForm',
-                      uploadAction : hasCreateAuth || hasEditAuth ?
-                              [controller: 'menu', action: 'saveSystemAclFile', params: [fileType: 'storage', upload: true]] :
-                              null
-              ]"/>
-
           </div>
           <g:if test="${clusterMode}">
               <div id="clusterModeArea">
-                  <span class="btn btn-link btn-muted" data-bind="visible: !show(), click: toggleShow">
+                  <span class="btn btn-fill btn-primary" data-bind="visible: !show(), click: toggleShow">
                       ${aclFileList.size()}
                       <g:message
                               code="list.of.acl.policy.files.in.directory"/>
@@ -279,7 +275,7 @@
 
                   <div class="panel panel-default" data-bind="visible: show">
                       <div class="card-header clearfix">
-                          <span class="panel-title text-muted pull-left">
+                          <span class="panel-title text-primary pull-left">
                               <span class="text-info">${aclFileList.size()}</span>
                               <g:message code="list.of.acl.policy.files.in.directory"/>
                               <code>${fwkConfigDir.absolutePath}</code>

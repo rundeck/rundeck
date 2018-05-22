@@ -1,0 +1,131 @@
+// Framework grid generation
+//
+// Used only by Bootstrap to generate the correct number of grid classes given
+// any value of `$grid-columns`.
+
+// [converter] This is defined recursively in LESS, but Sass supports real loops
+@mixin make-grid-flex-columns($i: 1, $list: ".col-flex-xs-#{$i}, .col-flex-sm-#{$i}, .col-flex-md-#{$i}, .col-flex-lg-#{$i}") {
+  @for $i from (1 + 1) through $grid-columns {
+    $list: "#{$list}, .col-flex-xs-#{$i}, .col-flex-sm-#{$i}, .col-flex-md-#{$i}, .col-flex-lg-#{$i}";
+  }
+  #{$list} {
+    box-sizing: border-box;
+    flex: 0 0 auto;
+    min-height: 1px;
+    padding-left:  ceil(($grid-gutter-width / 2));
+    padding-right: floor(($grid-gutter-width / 2));
+    // Set default width to max column
+    width: percentage(($grid-columns / $grid-columns));;
+    flex-basis: percentage(($grid-columns / $grid-columns));
+    max-width: percentage(($grid-columns / $grid-columns));
+  }
+}
+
+@mixin calc-grid-flex-column($index, $class, $type) {
+  @if ($type == width) and ($index > 0) {
+    .col-flex-#{$class}-#{$index} {
+      width: percentage(($index / $grid-columns));
+      flex-basis: percentage(($index / $grid-columns));
+      max-width: percentage(($index / $grid-columns));
+    }
+  }
+  @if ($type == push) and ($index > 0) {
+    .col-flex-#{$class}-push-#{$index} {
+      left: percentage(($index / $grid-columns));
+    }
+  }
+  @if ($type == push) and ($index == 0) {
+    .col-flex-#{$class}-push-0 {
+      left: auto;
+    }
+  }
+  @if ($type == pull) and ($index > 0) {
+    .col-flex-#{$class}-pull-#{$index} {
+      right: percentage(($index / $grid-columns));
+    }
+  }
+  @if ($type == pull) and ($index == 0) {
+    .col-flex-#{$class}-pull-0 {
+      right: auto;
+    }
+  }
+  @if ($type == offset) {
+    .col-flex-#{$class}-offset-#{$index} {
+      margin-left: percentage(($index / $grid-columns));
+    }
+  }
+}
+
+// [converter] This is defined recursively in LESS, but Sass supports real loops
+@mixin loop-grid-flex-columns($columns, $class, $type) {
+  @for $i from 0 through $columns {
+    @include calc-grid-flex-column($i, $class, $type);
+  }
+}
+
+
+// Create grid for specific class
+@mixin make-grid-flex($class) {
+  @include loop-grid-flex-columns($grid-columns, $class, width);
+  @include loop-grid-flex-columns($grid-columns, $class, pull);
+  @include loop-grid-flex-columns($grid-columns, $class, push);
+  @include loop-grid-flex-columns($grid-columns, $class, offset);
+}
+
+
+// Create row
+@mixin make-row-flex($grid: $grid-gutter-width){
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: row;
+  flex-wrap: wrap;
+  margin-left: ceil(($grid / -2));
+  margin-right: floor(($grid / -2));
+  &.reverse{
+    flex-direction: row-reverse;
+  }
+}
+
+@mixin make-generate-aligment-other($aligment){
+  @if($aligment == center){
+     justify-content: $aligment;
+   } @else {
+     $value: flex-#{$aligment};
+     justify-content: $value;
+   }
+}
+
+@mixin make-generate-vertical-aligment-other($aligment){
+  @if($aligment == center){
+    align-items: $aligment;
+  } @else {
+    $value: flex-#{$aligment};
+     align-items: $value;
+  }
+}
+
+@mixin make-generate-aligment($class, $name){
+  .#{$name}-#{$class}{
+    @include make-generate-aligment-other($name);
+    &.text-#{$name}{
+      text-align: $name;
+    }
+  }
+}
+
+@mixin make-generate-vertical-aligment($class, $name, $aligment){
+  .#{$name}-#{$class}{
+    @include make-generate-vertical-aligment-other($aligment);
+  }
+}
+
+
+@mixin make-aligment($class){
+  @include make-generate-aligment($class,start);
+  @include make-generate-aligment($class,center);
+  @include make-generate-aligment($class,end);
+  @include make-generate-vertical-aligment($class,top,start);
+  @include make-generate-vertical-aligment($class,middle,center);
+  @include make-generate-vertical-aligment($class,bottom,end);
+}

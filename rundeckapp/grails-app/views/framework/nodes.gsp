@@ -40,16 +40,46 @@
 <g:if test="${session.user && User.findByLogin(session.user)?.nodefilters}">
     <g:set var="filterset" value="${User.findByLogin(session.user)?.nodefilters}"/>
 </g:if>
-<div id="nodesContent">
-    <g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
-    <g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:'job', action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
-    <g:render template="/common/messages"/>
 
-    <div class=" collapse" id="queryFilterHelp">
-        <div class="help-block">
-            <g:render template="/common/nodefilterStringHelp"/>
+<g:set var="run_authorized" value="${auth.adhocAllowedTest( action:AuthConstants.ACTION_RUN,project: params.project ?: request.project)}"/>
+<g:set var="job_create_authorized" value="${auth.resourceAllowedTest(kind:'job', action: AuthConstants.ACTION_CREATE,project: params.project ?: request.project)}"/>
+
+<div id="nodesContent">
+
+  <g:render template="/common/messages"/>
+
+  <div class=" collapse" id="queryFilterHelp">
+      <div class="help-block">
+          <g:render template="/common/nodefilterStringHelp"/>
+      </div>
+  </div>
+
+  <div class="content-fluid">
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="card">
+          <!-- <div class="card-header">
+            <h4 class="card-title">
+              <g:message code="browse" />
+            </h4>
+          </div> -->
+          <div class="card-content">
+            <div class="row">
+              <div class="col-xs-12">
+                <div class="input-group input-group-lg" style="margin-bottom:0;">
+                  <g:render template="nodeFilterInputGroup" model="[filterset: filterset, filtvalue:filtvalue,filterName:filterName]"/>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
+    <div class="row">
+      <div class="col-xs-12">
+        <div class="card">
+          <div class="card-content vue-tabs">
+<!-- NAV TABS -->
 
     %{--Form for saving/deleting node filters--}%
 
@@ -57,136 +87,122 @@
             <g:hiddenField name="project" value="${params.project}"/>
             <g:render template="nodeFiltersHidden"/>
             <g:render template="/common/queryFilterManagerModal"
-                      model="${[rkey: ukey, filterName: filterName, filterset: filterset,
-                                filterLinks: true,
-                                formId: "${ukey}filter",
-                                ko: true,
-                                deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
+                      model="${[rkey: ukey, filterName: filterName, filterset: filterset, filterLinks: true, formId: '${ukey}filter', ko: true, deleteActionSubmit: 'deleteNodeFilter', storeActionSubmit: 'storeNodeFilter']}"/>
         </g:form>
-
-        <ul class="nav nav-tabs">
-            <li class="active" id="tab_link_summary">
-                <a href="#summary" data-toggle="tab">
-                    <g:message code="browse" />
-                </a>
-            </li>
-
-            <li>
-                <span class="tabs-sibling tabs-sibling-compact form-inline">
-                    <div class="form-group ">
-                        <span class="input-group" >
-                            <g:render template="nodeFilterInputGroup" model="[filterset: filterset, filtvalue:filtvalue,filterName:filterName]"/>
-
-
+        <div class="nav-tabs-navigation">
+          <div class="nav-tabs-wrapper">
+            <ul class="nav nav-tabs">
+                <li class="active" id="tab_link_summary">
+                    <a href="#summary" data-toggle="tab">
+                        <g:message code="browse" />
+                    </a>
+                </li>
+                <li id="tab_link_result" data-bind="visible: filterIsSet()||allcount()>=0">
+                    <a href="#result" data-toggle="tab" data-bind="visible: filterIsSet() ">
+                        <g:message code="result" />
+                        <span data-bind="visible: allcount()>=0">
+                            <span data-bind="text: allcount" class="text-info">${total}</span>
+                            <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
                         </span>
+                        <span data-bind="visible: allcount()<0" class="text-muted">&hellip;</span>
 
-                    </div>
-                </span>
+                    </a>
+                    <a href="#" data-bind="visible: !filterIsSet() ">
+                        <g:message code="enter.a.filter" />
+                    </a>
+                </li>
+                <li data-bind="visible: filterIsSet()||allcount()>=0" class="pull-right">
+                    <span class="tabs-sibling tabs-sibling-compact ">
+                    <div class=" btn-group pull-right ">
+                        <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                            <g:message code="actions" /> <span class="caret"></span>
+                        </button>
+                        <ul class="dropdown-menu" role="menu">
 
-            </li>
-            <li id="tab_link_result" data-bind="visible: filterIsSet()||allcount()>=0">
-                <a href="#result" data-toggle="tab" data-bind="visible: filterIsSet() ">
-                    <g:message code="result" />
-                    <span data-bind="visible: allcount()>=0">
-                        <span data-bind="text: allcount" class="text-info">${total}</span>
-                        <span data-bind="text: nodesTitle()">Node${1 != total ? 's' : ''}</span>
-                    </span>
-                    <span data-bind="visible: allcount()<0" class="text-muted">&hellip;</span>
-
-                </a>
-                <a href="#" data-bind="visible: !filterIsSet() ">
-                    <g:message code="enter.a.filter" />
-                </a>
-            </li>
-            <li data-bind="visible: filterIsSet()||allcount()>=0" class="pull-right">
-                <span class="tabs-sibling tabs-sibling-compact ">
-                <div class=" btn-group pull-right ">
-                    <button class="btn btn-default dropdown-toggle" data-toggle="dropdown">
-                        <g:message code="actions" /> <span class="caret"></span>
-                    </button>
-                    <ul class="dropdown-menu" role="menu">
-
-                        <li class="dropdown-header" data-bind="visible: filterName()">
-                            <g:message code="filter" /><span data-bind="text: filterNameDisplay()"></span>
-                        </li>
-                        <li data-bind="visible: canSaveFilter">
-                            <a href="#"
-                               data-toggle="modal"
-                               data-target="#saveFilterModal">
-                                <i class="glyphicon glyphicon-plus"></i>
-                                <g:message code="save.filter.ellipsis" />
-                            </a>
-                        </li>
-                        <li data-bind="visible: canDeleteFilter">
-                            <a href="#"
-                               class="textbtn textbtn-danger"
-                               data-bind="click: deleteFilter">
-                                <i class="glyphicon glyphicon-remove"></i>
-                                <g:message code="delete.this.filter.ellipsis" />
-                            </a>
-                        </li>
-                        <li data-bind="visible: canSetDefaultFilter">
-                            <a href="#"
-                               class="textbtn textbtn-success"
-                               data-bind="click: setDefaultFilter">
-                                <i class="glyphicon glyphicon-filter"></i>
-                                <g:message code="set.as.default.filter" />
-                            </a>
-                        </li>
-                        <li data-bind="visible: canRemoveDefaultFilter">
-                            <a href="#"
-                               class="textbtn textbtn-default"
-                               data-bind="click: nodeSummary().removeDefault">
-                                <i class="glyphicon glyphicon-ban-circle"></i>
-                                <g:message code="remove.default.filter" />
-                            </a>
-                        </li>
-                        <li class="divider" ></li>
-                        <g:if test="${g.executionMode(is:'active',project:params.project)}">
-
-                            <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
-                                <a href="#" data-bind="${run_authorized?'click: runCommand':''}"
-                                   title="${run_authorized ? '' : message(code:"not.authorized")}"
-                                   class="${run_authorized ? '' : 'has_tooltip'}"
-                                   data-placement="left"
-                                >
-                                    <i class="glyphicon glyphicon-play"></i>
-                                    <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="run.a.command.on.count.nodes.ellipsis" /></span>
-                                </a>
+                            <li class="dropdown-header" data-bind="visible: filterName()">
+                                <g:message code="filter" /><span data-bind="text: filterNameDisplay()"></span>
                             </li>
-                        </g:if>
-                        <g:else>
-
-                            <li data-bind="visible: hasNodes()" class="disabled">
+                            <li data-bind="visible: canSaveFilter">
                                 <a href="#"
-                                   title="${g.message(code:'disabled.execution.run')}"
-                                   class="has_tooltip"
-                                   data-placement="left"
-                                >
-                                    <i class="glyphicon glyphicon-play"></i>
-                                    <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="run.a.command.on.count.nodes.ellipsis" /></span>
+                                   data-toggle="modal"
+                                   data-target="#saveFilterModal">
+                                    <i class="glyphicon glyphicon-plus"></i>
+                                    <g:message code="save.filter.ellipsis" />
                                 </a>
                             </li>
-                        </g:else>
+                            <li data-bind="visible: canDeleteFilter">
+                                <a href="#"
+                                   class="textbtn textbtn-danger"
+                                   data-bind="click: deleteFilter">
+                                    <i class="glyphicon glyphicon-remove"></i>
+                                    <g:message code="delete.this.filter.ellipsis" />
+                                </a>
+                            </li>
+                            <li data-bind="visible: canSetDefaultFilter">
+                                <a href="#"
+                                   class="textbtn textbtn-success"
+                                   data-bind="click: setDefaultFilter">
+                                    <i class="glyphicon glyphicon-filter"></i>
+                                    <g:message code="set.as.default.filter" />
+                                </a>
+                            </li>
+                            <li data-bind="visible: canRemoveDefaultFilter">
+                                <a href="#"
+                                   class="textbtn textbtn-default"
+                                   data-bind="click: nodeSummary().removeDefault">
+                                    <i class="glyphicon glyphicon-ban-circle"></i>
+                                    <g:message code="remove.default.filter" />
+                                </a>
+                            </li>
+                            <li class="divider" ></li>
+                            <g:if test="${g.executionMode(is:'active',project:params.project)}">
 
-                        <li class="${job_create_authorized?'':'disabled'}">
-                            <a href="#" data-bind="${job_create_authorized?'click: saveJob':''}"
-                               title="${job_create_authorized?'':message(code:"not.authorized")}"
-                               class="${job_create_authorized?'':'has_tooltip'}"
-                               data-placement="left"
-                            >
-                                <i class="glyphicon glyphicon-plus"></i>
-                                <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="create.a.job.for.count.nodes.ellipsis" /></span>
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                </span>
-            </li>
-        </ul>
+                                <li data-bind="visible: hasNodes()" class="${run_authorized?'':'disabled'}">
+                                    <a href="#" data-bind="${run_authorized?'click: runCommand':''}"
+                                       title="${run_authorized ? '' : message(code:"not.authorized")}"
+                                       class="${run_authorized ? '' : 'has_tooltip'}"
+                                       data-placement="left"
+                                    >
+                                        <i class="glyphicon glyphicon-play"></i>
+                                        <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="run.a.command.on.count.nodes.ellipsis" /></span>
+                                    </a>
+                                </li>
+                            </g:if>
+                            <g:else>
 
-        <div class="row row-space">
-        <div class="col-sm-12">
+                                <li data-bind="visible: hasNodes()" class="disabled">
+                                    <a href="#"
+                                       title="${g.message(code:'disabled.execution.run')}"
+                                       class="has_tooltip"
+                                       data-placement="left"
+                                    >
+                                        <i class="glyphicon glyphicon-play"></i>
+                                        <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="run.a.command.on.count.nodes.ellipsis" /></span>
+                                    </a>
+                                </li>
+                            </g:else>
+
+                            <li class="${job_create_authorized?'':'disabled'}">
+                                <a href="#" data-bind="${job_create_authorized?'click: saveJob':''}"
+                                   title="${job_create_authorized?'':message(code:"not.authorized")}"
+                                   class="${job_create_authorized?'':'has_tooltip'}"
+                                   data-placement="left"
+                                >
+                                    <i class="glyphicon glyphicon-plus"></i>
+                                    <span data-bind="messageTemplate: [total,nodesTitle]"><g:message code="create.a.job.for.count.nodes.ellipsis" /></span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    </span>
+                </li>
+            </ul>
+          </div>
+        </div>
+
+
+
+<!-- TABS -->
             <div class="tab-content">
                 <div class="tab-pane " id="result">
                     <div class="row row-space">
@@ -219,10 +235,10 @@
             </div>
             <div class="tab-pane active" id="summary">
 
-                <div class="row row-space">
+                <div class="row">
 
-                    <div class="col-sm-5 col-sm-offset-1">
-                        <span class="text-uppercase text-muted small"><i class="glyphicon glyphicon-tags  " ></i> <g:message code="resource.metadata.entity.tags" /></span>
+                    <div class="col-xs-6">
+                        <h4 class="column-title text-uppercase text-primary"><i class="glyphicon glyphicon-tags" ></i> <g:message code="resource.metadata.entity.tags" /></h4>
                         <ul data-bind="foreach: nodeSummary().tags" class="list-unstyled">
                             <li>
                                 <node-filter-link params="
@@ -240,7 +256,7 @@
                         </div>
                     </div>
 
-                    <div class="col-sm-5">
+                    <div class="col-xs-6">
 
                         <span class="text-uppercase text-muted small"><i class="glyphicon glyphicon-filter  " ></i> <g:message code="filters" /></span>
                         <ul class="list-unstyled">
@@ -340,9 +356,14 @@
                     </div>
                 </div>
             </div>
+            </div>
+
+          </div>
         </div>
+      </div>
     </div>
-    </div>
+  </div>
+
 
 
 

@@ -1,0 +1,19 @@
+.multiple-control-input-group {
+  .input-group-addon-title{
+    border-top: 1px solid #cfcfca;
+    border-bottom: 1px solid #cfcfca;
+    border-left: 1px solid #cfcfca;
+    cursor: default;
+    width: 100px;
+  }
+  .input-group-addon + .input-group-btn {
+    > .btn {
+      border-radius: 0;
+    }
+    + .input-group-addon {
+      border-right: 0;
+      border-left: 0;
+    }
+  }
+
+}

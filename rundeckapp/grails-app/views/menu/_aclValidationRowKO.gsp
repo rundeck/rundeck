@@ -21,14 +21,12 @@
 <tr data-bind="css: {'flash_info':wasSaved}">
     <td class=" hover-action-holder">
         <g:if test="${hasEditAuth}">
-            <a href="${editHref}" class=" btn btn-link textbtn-info " data-bind="urlPathParam: id" title="Edit">
-
-                <span data-bind="template: { name: 'acl-policy-ident', data:$data }"></span>
-
-                <span class=" text-info">
-                    <g:icon name="edit"/>
-                    <g:message code="edit"/>
-                </span>
+            <h3 data-bind="template: { name: 'acl-policy-ident', data:$data }"></h3>
+            <a href="${editHref}" class=" btn textbtn-info " data-bind="urlPathParam: id" title="Edit">
+              <span class=" text-info">
+                <g:icon name="edit"/>
+                <g:message code="edit"/>
+              </span>
             </a>
         </g:if>
         <g:else>
@@ -41,7 +39,7 @@
         </g:if>
         <g:if test="${hasDeleteAuth || hasEditAuth}">
             <span class="dropdown ">
-                <bs:dropdownToggle css="btn btn-link"/>
+                <bs:dropdownToggle css="btn"/>
                 <bs:dropdown>
                     <bs:menuitem
                             shown="${hasEditAuth}"
@@ -63,11 +61,11 @@
         </g:if>
         <ul data-bind="foreach:  { data: meta().policies, as: 'policy' }">
             <li>
-                <span class="text-muted" data-bind="text: policy.description()">
+                <span class="text-primary" data-bind="text: policy.description()">
                 </span>
                 <ul>
                     <li>
-                        <span class="text-muted" data-bind="text: policy.by()">
+                        <span class="text-primary" data-bind="text: policy.by()">
                         </span>
                     </li>
                 </ul>
@@ -83,7 +81,7 @@
         </span>
         <!-- /ko -->
         <span data-bind="if: !valid()">
-            <span class="text-warning btn btn-link" data-bind="click: toggleShowValidation">
+            <span class="text-warning btn" data-bind="click: toggleShowValidation">
                 <g:message code="validation.error"/>
                 <i class="glyphicon" data-bind="css: {'glyphicon-chevron-right':!showValidation(), 'glyphicon-chevron-down':showValidation()}"></i>
             </span>

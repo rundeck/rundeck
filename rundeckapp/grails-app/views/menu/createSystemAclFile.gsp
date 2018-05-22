@@ -51,39 +51,39 @@
 </head>
 
 <body>
-
-<div class="row">
-    <div class="col-sm-12">
-        <g:render template="/common/messages"/>
-    </div>
-</div>
-
-<div class="row">
-    <g:form action="saveSystemAclFile" method="post"
-            params="${[fileType: fileType]}"
-            useToken="true"
-            class="form-horizontal">
-        <div class="col-sm-10 col-sm-offset-1">
-            <g:render template="editAclFile" model="${[
-                    backHref                : g.createLink(
-                            controller: 'menu',
-                            action: 'acls',
-                            params: [:]
-                    ),
-                    title                   : g.message(code: 'create.system.acl.policy'),
-                    primaryLabel            : g.message(code: 'system.acl.location.prompt'),
-                    primaryValue            : g.message(code: 'system.acl.location.type.'+fileType+'.label'),
-                    fileText                : fileText,
-                    validationDocumentPrefix: file,
-                    createField             : 'name',
-                    createFieldLabel        : g.message(code: 'policy.name.label.prompt'),
-                    createFieldValue        : name,
-                    createFieldHelpCode     : 'policy.name.description',
-                    input                   : input
-            ]}"/>
+  <div class="container-fluid">
+    <div class="row">
+        <div class="col-sm-12">
+            <g:render template="/common/messages"/>
         </div>
-    </g:form>
-</div>
+    </div>
+    <div class="row">
+        <g:form action="saveSystemAclFile" method="post"
+                params="${[fileType: fileType]}"
+                useToken="true"
+                class="form-horizontal">
+            <div class="col-xs-12">
+                <g:render template="editAclFile" model="${[
+                        backHref                : g.createLink(
+                                controller: 'menu',
+                                action: 'acls',
+                                params: [:]
+                        ),
+                        title                   : g.message(code: 'create.system.acl.policy'),
+                        primaryLabel            : g.message(code: 'system.acl.location.prompt'),
+                        primaryValue            : g.message(code: 'system.acl.location.type.'+fileType+'.label'),
+                        fileText                : fileText,
+                        validationDocumentPrefix: file,
+                        createField             : 'name',
+                        createFieldLabel        : g.message(code: 'policy.name.label.prompt'),
+                        createFieldValue        : name,
+                        createFieldHelpCode     : 'policy.name.description',
+                        input                   : input
+                ]}"/>
+            </div>
+        </g:form>
+    </div>
+  </div>
 
 <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
 </body>

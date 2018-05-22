@@ -177,93 +177,82 @@
 </g:form>
     </g:if>
 <g:if test="${plugins}">
-    <div class="list-group">
-
-        <g:each in="${plugins.keySet().sort()}" var="pluginName">
-            <g:set var="isConfigured" value="${pluginConfig && pluginConfig.type == pluginName}"/>
-            <g:set var="isConfiguredButDisabled" value="${isConfigured && !enabled}"/>
-            <g:set var="isConfiguredAndEnabled" value="${isConfigured && enabled}"/>
-
-            <div class="list-group-item">
-
-                <h4 class="list-group-item-heading">
-                    <stepplugin:pluginIcon service="${serviceName}"
-                                           name="${pluginName}"
-                                           width="24px"
-                                           height="24px"
-                    />
-                    <stepplugin:message
-                            service="${serviceName}"
+  <div class="list-group">
+  <g:each in="${plugins.keySet().sort()}" var="pluginName">
+    <g:set var="isConfigured" value="${pluginConfig && pluginConfig.type == pluginName}"/>
+    <g:set var="isConfiguredButDisabled" value="${isConfigured && !enabled}"/>
+    <g:set var="isConfiguredAndEnabled" value="${isConfigured && enabled}"/>
+    <div class="list-group-item">
+      <h4 class="list-group-item-heading">
+        <stepplugin:pluginIcon service="${serviceName}"
+                               name="${pluginName}"
+                               width="24px"
+                               height="24px"
+        />
+        <stepplugin:message service="${serviceName}"
                             name="${pluginName}"
                             code="plugin.title"
-                            default="${plugins[pluginName].description.title?:pluginName}"/>
-                    <g:if test="${isConfiguredButDisabled}">
-                        <span class="badge"><g:message code="badge.Disabled.title"/></span>
-                    </g:if>
+                            default="${plugins[pluginName].description.title?:pluginName}"
+        />
+        <g:if test="${isConfiguredButDisabled}">
+          <span class="badge"><g:message code="badge.Disabled.title"/></span>
+        </g:if>
 
-                    <g:if test="${isConfiguredAndEnabled}">
-                        <span class="badge badge-success">
-                            <g:icon name="check"/>
-                            <g:message code="badge.Enabled.title"/>
-                        </span>
-                    </g:if>
-                </h4>
-
-                <div class="list-group-item-text">
-
-                    <g:render template="/framework/renderPluginConfig"
-                              model="${[
-                                      serviceName:serviceName,
-                                      values     : isConfigured ? pluginConfig.config : [:],
-                                      description: plugins[pluginName].description,
-                                      messagePrefix:'setup.',
-                                      hideTitle  : true
-                              ]}"/>
-
-                    <g:if test="${isConfiguredButDisabled}">
-
-                        <span
-                                class="btn  btn-success"
-                                data-toggle="modal"
-                                data-target="#enablePlugin${integration}">
-                            <g:message code="button.Enable.title"/>
-                        </span>
-                    </g:if>
-                    <g:elseif test="${isConfiguredAndEnabled}">
-                        <span
-                                class="btn  btn-warning"
-                                data-toggle="modal"
-                                data-target="#disablePlugin${integration}">
-                            <g:message code="button.Disable.title"/>
-                        </span>
-                    </g:elseif>
-                    <g:if test="${!isConfiguredAndEnabled}">
-                        <g:link action="setup"
-                                class="btn  ${isConfiguredButDisabled ? 'btn-default' : 'btn-success'}"
-                                params="[type: plugins[pluginName].name, project: params.project,integration:integration]">
-
-                            <g:icon name="cog"/>
-                            <g:if test="${isConfigured}">
-                                <g:message code="button.Configure.title"/>
-                            </g:if>
-                            <g:else>
-                                <g:message code="button.Setup.title"/>
-                            </g:else>
-
-                        </g:link>
-                    </g:if>
-            <g:if test="${isConfiguredButDisabled}">
-                    <span
-                            class="btn  btn-warning"
-                            data-toggle="modal"
-                            data-target="#cleanPlugin${integration}">
-                        <g:message code="button.Clean.title"/>
-                    </span>
+        <g:if test="${isConfiguredAndEnabled}">
+          <span class="badge badge-success">
+            <g:icon name="check"/>
+            <g:message code="badge.Enabled.title"/>
+          </span>
+        </g:if>
+      </h4>
+      <div class="list-group-item-text">
+        <g:render template="/framework/renderPluginConfig"
+                  model="${[
+                          serviceName:serviceName,
+                          values     : isConfigured ? pluginConfig.config : [:],
+                          description: plugins[pluginName].description,
+                          messagePrefix:'setup.',
+                          hideTitle  : true
+                  ]}"/>
+        <g:if test="${isConfiguredButDisabled}">
+          <span class="btn  btn-success"
+                data-toggle="modal"
+                data-target="#enablePlugin${integration}"
+                style="margin-top:1em;">
+            <g:message code="button.Enable.title"/>
+          </span>
+        </g:if>
+        <g:elseif test="${isConfiguredAndEnabled}">
+          <span class="btn  btn-warning"
+                data-toggle="modal"
+                data-target="#disablePlugin${integration}"
+                style="margin-top:1em;">
+            <g:message code="button.Disable.title"/>
+          </span>
+        </g:elseif>
+        <g:if test="${!isConfiguredAndEnabled}">
+          <g:link action="setup"
+                  class="btn  ${isConfiguredButDisabled ? 'btn-default' : 'btn-success'}"
+                  params="[type: plugins[pluginName].name, project: params.project,integration:integration]"
+                  style="margin-top:1em;">
+            <g:icon name="cog"/>
+            <g:if test="${isConfigured}">
+                <g:message code="button.Configure.title"/>
             </g:if>
-
-                </div>
-
-            </div>
-        </g:each>
+            <g:else>
+                <g:message code="button.Setup.title"/>
+            </g:else>
+          </g:link>
+        </g:if>
+        <g:if test="${isConfiguredButDisabled}">
+          <span class="btn  btn-warning"
+                data-toggle="modal"
+                data-target="#cleanPlugin${integration}">
+            <g:message code="button.Clean.title"/>
+          </span>
+        </g:if>
+      </div>
     </div>
+  </g:each>
+  </div>
 </g:if>

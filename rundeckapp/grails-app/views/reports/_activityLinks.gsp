@@ -23,172 +23,63 @@
     <g:set var="linkParams" value="${[jobIdFilter: scheduledExecution.id, includeJobRef: includeJobRef]+projParams}"/>
     <g:set var="runningParams" value="${[jobIdFilter: scheduledExecution.extid]+projParams}"/>
 </g:if>
-<ul class="nav nav-tabs activity_links">
-    <li data-bind="css: { disabled: !nowRunningEnabled() }">
-        <g:link controller="reports" action="index" class="running_link"
-                title="All activity for this job"
-                data-auto-refresh="5"
-                params="${runningParams + [runningFilter: 'running']}">
-            <i class="glyphicon glyphicon-play-circle"></i>
-            running
-        </g:link>
-    </li>
-    <li>
-        <g:link controller="reports" action="index" class="activity_link"
-                title="All activity for this job"
-                params="${linkParams}">
-            <i class="glyphicon glyphicon-time"></i>
-            recent
-        </g:link>
-    </li>
+<div class="vue-tabs">
+  <div class="nav-tabs-navigation">
+    <div class="nav-tabs-wrapper">
+      <ul class="nav nav-tabs activity_links">
+          <li data-bind="css: { disabled: !nowRunningEnabled() }" class="active">
+              <g:link controller="reports" action="index" class="running_link"
+                      title="All activity for this job"
+                      data-auto-refresh="5"
+                      params="${runningParams + [runningFilter: 'running']}">
+                  <i class="glyphicon glyphicon-play-circle"></i>
+                  running
+              </g:link>
+          </li>
+          <li>
+              <g:link controller="reports" action="index" class="activity_link"
+                      title="All activity for this job"
+                      params="${linkParams}">
+                  <i class="glyphicon glyphicon-time"></i>
+                  recent
+              </g:link>
+          </li>
 
-    <li>
-        <g:link controller="reports" action="index" class="activity_link"
-                title="Failed executions"
-                params="${linkParams+[ statFilter: 'fail']}">
-            <i class="glyphicon glyphicon-minus-sign"></i>
-            failed
-        </g:link>
-    </li>
+          <li>
+              <g:link controller="reports" action="index" class="activity_link"
+                      title="Failed executions"
+                      params="${linkParams+[ statFilter: 'fail']}">
+                  <i class="glyphicon glyphicon-minus-sign"></i>
+                  failed
+              </g:link>
+          </li>
 
-    <g:if test="${!execution || execution.user != session.user}">
-        <li>
-            <g:link controller="reports" action="index" class="activity_link"
-                    title="Executions by you"
-                    params="${linkParams+[ userFilter: session.user]}">
-                <i class="glyphicon glyphicon-user"></i>
-                by you
-            </g:link>
-        </li>
-    </g:if>
+          <g:if test="${!execution || execution.user != session.user}">
+              <li>
+                  <g:link controller="reports" action="index" class="activity_link"
+                          title="Executions by you"
+                          params="${linkParams+[ userFilter: session.user]}">
+                      <i class="glyphicon glyphicon-user"></i>
+                      by you
+                  </g:link>
+              </li>
+          </g:if>
 
-    <g:if test="${execution}">
-        <li>
-            <g:link controller="reports" action="index" class="activity_link"
-                    title="Executions by ${enc(attr:execution.user)}"
-                    params="${linkParams+[ userFilter: execution.user]}">
-                <i class="glyphicon glyphicon-user"></i>
-                by <g:username user="${execution.user}"/>
-            </g:link>
-        </li>
-    </g:if>
-
-</ul>
-<g:if test="${knockoutBinding}">
-
-<div data-bind="visible: selected()"  class="panel panel-default panel-tab-content" style="display: none;">
-    <table class=" table table-hover table-condensed events-table events-table-embed"
-           style="width:100%; display: none"
-           data-bind="visible: results().length > 0">
-        <tbody ></tbody>
-        <tbody data-bind=" foreach: results ">
-        <tr class="link activity_row autoclick"
-            data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'highlight': $root.highlightExecutionId()==executionId(), job: isJob(), adhoc: isAdhoc() } ">
-            <td class="eventicon" data-bind="visible: $root.bulkEditMode()">
-                <input type="checkbox" name="bulk_edit" data-bind="value: executionId(), checked: bulkEditSelected"
-                       class="_defaultInput"/>
-            </td>
-            <td class="eventicon autoclickable" data-bind="attr: { 'title': executionState() } ">
-                <i class="exec-status icon" data-bind="
-                attr: { 'data-execstate': executionState, 'data-statusstring': customStatusString }
-                "></i>
-            </td>
-            <td class="eventtitle autoclickable" data-bind="css: { job: isJob(), adhoc: isAdhoc() }">
-                <a href="#" data-bind="text: '#'+executionId(), attr: { href: executionHref() }" class="_defaultAction"></a>
-                <g:if test="${includeJobRef}">
-                    <span data-bind="text: textJobRef('${scheduledExecution.extid}')"></span>
-                </g:if>
-                <g:if test="${showTitle}">
-                    <span data-bind="if: !jobDeleted()">
-                        <span data-bind="text: isJob()?jobName():executionString()"></span>
-                    </span>
-                    <span data-bind="if: jobDeleted()" class="text-muted">
-                        (<g:message code="domain.ScheduledExecution.title"/>
-                        <span data-bind="text: jobName()"></span>
-                        has been deleted)
-                    </span>
-                </g:if>
-                <span data-bind="if: isCustomStatus">
-                    <span class="exec-status-text custom-status" data-bind="text: customStatusString"></span>
-                </span>
-            </td>
-            <td class="eventargs autoclickable" >
-                <div class="argstring-scrollable">
-                <span data-bind="if: execution().jobArguments">
-                    <span data-bind="foreachprop: execution().jobArguments">
-                        <span data-bind="text: key"></span>:
-                        <span data-bind="text: value" class="optvalue"></span>
-                    </span>
-                </span>
-                <!-- ko if: !execution().jobArguments -->
-                <span data-bind="text: execution().argString"></span>
-                <!-- /ko -->
-                </div>
-            </td>
-            <td class="right date autoclickable">
-                <span data-bind="if: dateCompleted()">
-                    <span class="timeabs" data-bind="text: endTimeFormat('${enc(attr:g.message(code:'jobslist.date.format.ko'))}')">
-
-                    </span>
-                    <span title="">
-                        <span class="text-muted">in</span>
-                        <span class="duration" data-bind="text: durationHumanize()"></span>
-                    </span>
-                </span>
-                <span data-bind="if: !dateCompleted() && status() == 'scheduled'">
-                    <g:render template="/common/progressBar" model="[indefinite: true,
-                            progressClass: 'rd-progress-exec progress-striped active indefinite progress-embed',
-                            progressBarClass: 'progress-bar-info',
-                            containerId: 'progressContainer2',
-                            showpercent: false,
-                            progressId: 'progressBar',
-                            innerContent: '',
-                            bind: 'timeNow()',
-                            bindText: '\'Scheduled; starting \' + timeToStart()',
-                    ]"/>
-                </span>
-                <span data-bind="if: !dateCompleted() && jobPercentageFixed() >= 0 && status() != 'scheduled'">
-                    <div data-bind="if: isAdhoc() || jobAverageDuration()==0">
-                    <g:render template="/common/progressBar" model="${[
-                            indefinite: true, title: 'Running', innerContent: 'Running', width: 120,
-                            progressClass: 'rd-progress-exec progress-striped active indefinite progress-embed',
-                            progressBarClass: 'progress-bar-info',
-                    ]}"/>
-                    </div>
-                    <div data-bind="if: isJob() && jobAverageDuration()>0">
-                        <g:set var="progressBind" value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/>
-                        <g:render template="/common/progressBar"
-                                  model="[completePercent: 0,
-                                          progressClass: 'rd-progress-exec progress-embed',
-                                          progressBarClass: '',
-                                          containerId: 'progressContainer2',
-                                          innerContent: '',
-                                          showpercent: true,
-                                          progressId: 'progressBar',
-                                          bind: 'jobPercentageFixed()',
-                                          bindText: '(jobPercentageFixed()  < 105 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + MomentUtil.formatDurationHumanize(jobAverageDuration())',
-                                          progressBind: progressBind,
-                                  ]"/>
-                    </div>
-                </span>
-            </td>
-
-            <td class="  user text-right autoclickable" style="white-space: nowrap;">
-                <em>by</em>
-                <span data-bind="text: user"></span>
-            </td>
-
-
-        </tr>
-        </tbody>
-    </table>
-
-
-    <div data-bind="visible: selected() && results().length < 1 " class="panel-body" style="display: none;">
-        <span class="text-muted" data-bind="if: !showReports()">No running executions found</span>
-        <span class="text-muted" data-bind="if: showReports()">No matching activity found</span>
+          <g:if test="${execution}">
+              <li>
+                  <g:link controller="reports" action="index" class="activity_link"
+                          title="Executions by ${enc(attr:execution.user)}"
+                          params="${linkParams+[ userFilter: execution.user]}">
+                      <i class="glyphicon glyphicon-user"></i>
+                      by <g:username user="${execution.user}"/>
+                  </g:link>
+              </li>
+          </g:if>
+      </ul>
     </div>
-
+  </div>
+  <g:if test="${knockoutBinding}">
+  <div data-bind="visible: selected()" class="tab-content" style="display: none;">
     <div data-bind="visible: selected()" class="panel-footer" style="display: none">
             <ul class="pagination pagination-sm pagination-embed" data-bind="foreach: pageCount() > 1 ? pages() : []">
                 <li data-bind="css: { active: $data.currentPage, disabled: $data.disabled } ">
@@ -348,8 +239,122 @@
                 </div>
             </div>
         </div>
-    </div>
+    </div>    
+      <table class=" table table-hover table-condensed events-table events-table-embed"
+             style="width:100%; display: none"
+             data-bind="visible: results().length > 0">
+          <tbody class="no-border-on-first-tr" data-bind=" foreach: results ">
+          <tr class="link activity_row autoclick"
+              data-bind="css: { 'succeed': status()=='succeed', 'fail': status()=='fail', 'highlight': $root.highlightExecutionId()==executionId(), job: isJob(), adhoc: isAdhoc() } ">
+              <td class="eventicon" data-bind="visible: $root.bulkEditMode()">
+                  <input type="checkbox" name="bulk_edit" data-bind="value: executionId(), checked: bulkEditSelected"
+                         class="_defaultInput"/>
+              </td>
+              <td class="eventicon autoclickable" data-bind="attr: { 'title': executionState() } ">
+                  <i class="exec-status icon" data-bind="
+                  attr: { 'data-execstate': executionState, 'data-statusstring': customStatusString }
+                  "></i>
+              </td>
+              <td class="eventtitle autoclickable" data-bind="css: { job: isJob(), adhoc: isAdhoc() }">
+                  <a href="#" data-bind="text: '#'+executionId(), attr: { href: executionHref() }" class="_defaultAction"></a>
+                  <g:if test="${includeJobRef}">
+                      <span data-bind="text: textJobRef('${scheduledExecution.extid}')"></span>
+                  </g:if>
+                  <g:if test="${showTitle}">
+                      <span data-bind="if: !jobDeleted()">
+                          <span data-bind="text: isJob()?jobName():executionString()"></span>
+                      </span>
+                      <span data-bind="if: jobDeleted()" class="text-muted">
+                          (<g:message code="domain.ScheduledExecution.title"/>
+                          <span data-bind="text: jobName()"></span>
+                          has been deleted)
+                      </span>
+                  </g:if>
+                  <span data-bind="if: isCustomStatus">
+                      <span class="exec-status-text custom-status" data-bind="text: customStatusString"></span>
+                  </span>
+              </td>
+              <td class="eventargs autoclickable" >
+                  <div class="argstring-scrollable">
+                  <span data-bind="if: execution().jobArguments">
+                      <span data-bind="foreachprop: execution().jobArguments">
+                          <span data-bind="text: key"></span>:
+                          <span data-bind="text: value" class="optvalue"></span>
+                      </span>
+                  </span>
+                  <!-- ko if: !execution().jobArguments -->
+                  <span data-bind="text: execution().argString"></span>
+                  <!-- /ko -->
+                  </div>
+              </td>
+              <td class="right date autoclickable">
+                  <span data-bind="if: dateCompleted()">
+                      <span class="timeabs" data-bind="text: endTimeFormat('${enc(attr:g.message(code:'jobslist.date.format.ko'))}')">
+
+                      </span>
+                      <span title="">
+                          <span class="text-muted">in</span>
+                          <span class="duration" data-bind="text: durationHumanize()"></span>
+                      </span>
+                  </span>
+                  <span data-bind="if: !dateCompleted() && status() == 'scheduled'">
+                      <g:render template="/common/progressBar" model="[indefinite: true,
+                              progressClass: 'rd-progress-exec progress-striped active indefinite progress-embed',
+                              progressBarClass: 'progress-bar-info',
+                              containerId: 'progressContainer2',
+                              showpercent: false,
+                              progressId: 'progressBar',
+                              innerContent: '',
+                              bind: 'timeNow()',
+                              bindText: '\'Scheduled; starting \' + timeToStart()',
+                      ]"/>
+                  </span>
+                  <span data-bind="if: !dateCompleted() && jobPercentageFixed() >= 0 && status() != 'scheduled'">
+                      <div data-bind="if: isAdhoc() || jobAverageDuration()==0">
+                      <g:render template="/common/progressBar" model="${[
+                              indefinite: true, title: 'Running', innerContent: 'Running', width: 120,
+                              progressClass: 'rd-progress-exec progress-striped active indefinite progress-embed',
+                              progressBarClass: 'progress-bar-info',
+                      ]}"/>
+                      </div>
+                      <div data-bind="if: isJob() && jobAverageDuration()>0">
+                          <g:set var="progressBind" value="${', css: { \'progress-bar-info\': jobPercentageFixed() < 105 ,  \'progress-bar-warning\': jobPercentageFixed() > 104  }'}"/>
+                          <g:render template="/common/progressBar"
+                                    model="[completePercent: 0,
+                                            progressClass: 'rd-progress-exec progress-embed',
+                                            progressBarClass: '',
+                                            containerId: 'progressContainer2',
+                                            innerContent: '',
+                                            showpercent: true,
+                                            progressId: 'progressBar',
+                                            bind: 'jobPercentageFixed()',
+                                            bindText: '(jobPercentageFixed()  < 105 ? jobPercentageFixed() + \'%\' : \'+\' + jobOverrunDuration()) + \' of average \' + MomentUtil.formatDurationHumanize(jobAverageDuration())',
+                                            progressBind: progressBind,
+                                    ]"/>
+                      </div>
+                  </span>
+              </td>
+
+              <td class="  user text-right autoclickable" style="white-space: nowrap;">
+                  <em>by</em>
+                  <span data-bind="text: user"></span>
+              </td>
+
+
+          </tr>
+          </tbody>
+      </table>
+
+
+      <div data-bind="visible: selected() && results().length < 1 " class="panel-body" style="display: none;">
+          <span class="text-muted" data-bind="if: !showReports()">No running executions found</span>
+          <span class="text-muted" data-bind="if: showReports()">No matching activity found</span>
+      </div>
+
+
+  </div>
+
+  </g:if>
 </div>
 
-</g:if>
 <g:jsonToken id="history_tokens" url="${request.forwardURI}"/>

@@ -56,7 +56,7 @@
               <g:each in="['export', 'import']" var="integration">
                 <div class="list-group-item">
                   <div class="list-group-item-heading">
-                    <h4>
+                    <h4 style="margin:5px 0 10px">
                       <g:message code="scm.${integration}.title"/>
                     </h4>
                   </div>

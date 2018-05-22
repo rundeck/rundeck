@@ -20,8 +20,11 @@
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
     <meta name="tabpage" content="events"/>
     <meta name="layout" content="base" />
-    <title><g:appTitle/> - <g:if test="${null==execution?.dateCompleted}"><g:message
-            code="now.running" /> - </g:if><g:if test="${scheduledExecution}"><g:enc>${scheduledExecution?.jobName}</g:enc> :  </g:if><g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/></title>
+    <title><g:appTitle/> -
+      <g:if test="${null==execution?.dateCompleted}"><g:message code="now.running" /> - </g:if>
+      <g:if test="${scheduledExecution}"><g:enc>${scheduledExecution?.jobName}</g:enc> :  </g:if>
+      <g:else><g:message code="execution.type.adhoc.title" /></g:else> <g:message code="execution.at.time.by.user" args="[g.relativeDateString(atDate:execution.dateStarted),execution.user]"/>
+    </title>
     <g:set var="followmode" value="${params.mode in ['browse','tail','node']?params.mode:'tail'}"/>
       <g:set var="authKeys" value="${[AuthConstants.ACTION_KILL,
               AuthConstants.ACTION_READ,AuthConstants.ACTION_CREATE,AuthConstants.ACTION_RUN]}"/>
@@ -56,213 +59,67 @@
       <g:embedJSON id="workflowDataJSON" data="${workflowTree}"/>
       <g:embedJSON id="nodeStepPluginsJSON" data="${stepPluginDescriptions.node.collectEntries { [(it.key): [title: it.value.title]] }}"/>
       <g:embedJSON id="wfStepPluginsJSON" data="${stepPluginDescriptions.workflow.collectEntries { [(it.key): [title: it.value.title]] }}"/>
-      <g:javascript>
-        var workflow=null;
-        var followControl=null;
-        var flowState=null;
-        var nodeflowvm=null;
-        function followOutput(){
-            followControl.beginFollowingOutput('${enc(js:execution?.id)}');
-        }
-        function followState(){
-            try{
-                flowState.beginFollowing();
-            }catch(e){
-                nodeflowvm.errorMessage('Could not load flow state: '+e);
-                nodeflowvm.stateLoaded(false);
-            }
-        }
-        function showTab(id){
-            jQuery('#'+id+' a').tab('show');
-        }
-
-        var activity;
-        function init() {
-            var execInfo=loadJsonData('execInfoJSON');
-            var workflowData=loadJsonData('workflowDataJSON');
-            RDWorkflow.nodeSteppluginDescriptions=loadJsonData('nodeStepPluginsJSON');
-            RDWorkflow.wfSteppluginDescriptions=loadJsonData('wfStepPluginsJSON');
-            workflow = new RDWorkflow(workflowData);
-
-          var multiworkflow=new MultiWorkflow(workflow,{
-                dynamicStepDescriptionDisabled:${enc(js:feature.isDisabled(name:'workflowDynamicStepSummaryGUI'))},
-                url:appLinks.scheduledExecutionWorkflowJson,
-                id:execInfo.jobId||execInfo.execId,//id of job or execution
-                workflow:workflowData
-            });
-          followControl = new FollowControl('${execution?.id}','outputappendform',{
-            parentElement:'commandPerform',
-            fileloadId:'fileload',
-            fileloadPctId:'fileloadpercent',
-            fileloadProgressId:'fileloadprogress',
-            viewoptionsCompleteId:'viewoptionscomplete',
-            cmdOutputErrorId:'cmdoutputerror',
-            outfileSizeId:'outfilesize',
-            workflow:workflow,
-            multiworkflow:multiworkflow,
-            appLinks:appLinks,
-
-            extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}&renderContent=${enc(js:enc(url: params.renderContent))}",
-            lastlines: '${enc(js:params.int('lastlines') ?: defaultLastLines)}',
-            maxLastLines:'${enc(js:params.int('maxlines') ?: maxLastLines)}',
-            collapseCtx: {value:${enc(js:null == execution?.dateCompleted)},changed:false},
-            showFinalLine: {value:false,changed:false},
-            tailmode: ${enc(js:followmode == 'tail')},
-            browsemode: ${enc(js:followmode == 'browse')},
-            nodemode: ${enc(js:followmode == 'node')},
-            execData: {},
-            groupOutput:{value:${enc(js:followmode == 'browse')}},
-            updatepagetitle:${enc(js:null == execution?.dateCompleted)},
-            killjobauth:${enc(js: authChecks[AuthConstants.ACTION_KILL] ? true : false)},
-          <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
-              killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
-          </g:if>
-          <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
-              killjobhtml: "",
-          </g:if>
-            totalDuration : '${enc(js:scheduledExecution?.totalTime ?: -1)}',
-            totalCount: '${enc(js:scheduledExecution?.execCount ?: -1)}'
-          });
-          nodeflowvm=new NodeFlowViewModel(
-            workflow,
-            "${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
-            "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecNodeState', id: execution.id))}",
-            multiworkflow,
-            {followControl:followControl,executionId:'${enc(js:execution.id)}'}
-          );
-          flowState = new FlowState('${enc(js:execution?.id)}','flowstate',{
-            workflow:workflow,
-            loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id))}",
-            outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
-            selectedOutputStatusId:'selectedoutputview',
-            reloadInterval:1500
-         });
-          nodeflowvm.followFlowState(flowState,true);
-
-            ko.mapping.fromJS({
-                completed:'${execution.dateCompleted!=null}',
-                startTime:'${enc(js:execution.dateStarted)}',
-                endTime:'${enc(js:execution.dateCompleted)}',
-                executionState:'${enc(js:execution.executionState)}',
-                executionStatusString:'${enc(js:execution.status)}'
-            },{},nodeflowvm);
-            ko.applyBindings(nodeflowvm,jQuery('#execution_main')[0]);
-            nodeflowvm.selectedNodes.subscribe(function (newValue) {
-                if (newValue) {
-                    flowState.loadUrlParams=jQuery.extend(flowState.loadUrlParamsBase,{nodes:newValue.join(",")});
-                }else{
-                    flowState.loadUrlParams=flowState.loadUrlParamsBase;
-                }
-            });
-            //link flow and output tabs to initialize following
-            //by default show state
-            followState();
-            jQuery('#tab_link_summary').on('show.bs.tab',function(e){
-                nodeflowvm.activeTab("summary");
-                followState();
-            });
-            jQuery('#tab_link_flow').on('show.bs.tab',function(e){
-                nodeflowvm.activeTab("flow");
-                followState();
-            });
-            jQuery('#tab_link_output').on('show.bs.tab',function(e){
-                nodeflowvm.activeTab("output");
-                followOutput();
-            });
-            if(document.getElementById('activity_section')){
-                activity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
-                activity.nowRunningEnabled(${null != execution?.dateCompleted});
-                //enable now running activity tab once execution completes
-                activity.highlightExecutionId("${execution.id}");
-                nodeflowvm.completed.subscribe(activity.nowRunningEnabled);
-                ko.applyBindings(activity, document.getElementById('activity_section'));
-                setupActivityLinks('activity_section', activity);
-           }
-            jQuery('.apply_ace').each(function () {
-                _applyAce(this);
-            });
-            followControl.bindActions('outputappendform');
-
-            PageActionHandlers.registerHandler('copy_other_project',function(el){
-                jQuery('#jobid').val(el.data('jobId'));
-                jQuery('#selectProject').modal();
-            });
-        }
-        jQuery(init);
-      </g:javascript>
-
       <g:if test="${grails.util.Environment.current==grails.util.Environment.DEVELOPMENT}">
           <asset:javascript src="workflow.test.js"/>
           <asset:javascript src="util/compactMapList.test.js"/>
       </g:if>
       <style type="text/css">
-
         #log{
             margin-bottom:20px;
         }
-
         .inline_only {
             display: none;
         }
-
         .execstate.isnode[data-execstate=RUNNING],.execstate.isnode[data-execstate=RUNNING_HANDLER] {
             background-image: url(${g.resource(dir: 'images',file: 'icon-tiny-disclosure-waiting.gif')});
             padding-right: 16px;
             background-repeat: no-repeat;
             background-position: right 2px;
         }
-
-
-
         .errmsg {
             color: gray;
         }
       </style>
   </head>
-
-<g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
+  <g:set var="isAdhoc" value="${!scheduledExecution && execution.workflow.commands.size() == 1}"/>
   <body id="executionShowPage">
-    <div id="execution_main">
-        <div class="executionshow_wrap" data-affix="wrap">
+    <div id="execution_main" >
+      <div class="executionshow_wrap" data-affix="wrap">
         <div class="executionshow" data-affix="top" data-affix-padding-top="21">
-            <div class="row">
-                    %{--job or adhoc title--}%
-                    <div class="col-sm-6">
-
-                                <g:if test="${scheduledExecution}">
-                                    <div class="row">
-                                        <g:render template="/scheduledExecution/showHead"
-                                              model="${[scheduledExecution: scheduledExecution, jobDescriptionMode:'hidden', jobActionButtons: true, hideJobDelete:true]}"/>
-                                    </div>
-                                </g:if>
-                                <g:if test="${execution.argString}">
-                                    <div class="row">
-                                        <div class="col-sm-12" >
-                                            <div class="argstring-scrollable">
-                                            <span class="text-muted"><g:message code="options.prompt"/></span>
-                                            <g:render template="/execution/execArgString" model="[argString:execution.argString,inputFilesMap:inputFilesMap]"/>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </g:if>
-                                <g:if test="${isAdhoc}">
-                                    <div class="row">
-                                        <div class="col-sm-12">
-                                            <g:render template="wfItemView" model="[
-                                                    item:execution.workflow.commands[0],
-                                                    icon:'icon-med',
-                                                    iwidth:'24px',
-                                                    iheight:'24px',
-                                            ]"/>
-                                        </div>
-                                    </div>
-                                </g:if>
-
-                            </div>
-
+          <div class="row">
+          %{--job or adhoc title--}%
+            <div class="col-sm-6">
+              <g:if test="${scheduledExecution}">
+                <div class="row">
+                  <g:render template="/scheduledExecution/showHead" model="${[scheduledExecution: scheduledExecution, jobDescriptionMode:'hidden', jobActionButtons: true, hideJobDelete:true]}"/>
+                </div>
+              </g:if>
+              <g:if test="${execution.argString}">
+                <div class="row">
+                  <div class="col-sm-12" >
+                    <div class="argstring-scrollable">
+                      <span class="text-muted"><g:message code="options.prompt"/></span>
+                      <g:render template="/execution/execArgString" model="[argString:execution.argString,inputFilesMap:inputFilesMap]"/>
+                    </div>
+                  </div>
+                </div>
+              </g:if>
+              <g:if test="${isAdhoc}">
+                <div class="row">
+                  <div class="col-sm-12">
+                    <g:render template="wfItemView" model="[
+                                  item:execution.workflow.commands[0],
+                                  icon:'icon-med',
+                                  iwidth:'24px',
+                                  iheight:'24px',
+                    ]"/>
+                  </div>
+                </div>
+              </g:if>
+            </div>
                 %{--permalink--}%
                 <div class="col-sm-6 ">
-                    <div class="container well inline well-sm">
+                    <div class="well inline well-sm">
                         <div class="row">
                             <div class="col-sm-4">
                                 <span class="jobInfo" id="jobInfo_${execution.id}">
@@ -627,92 +484,6 @@
                     </ul>
                 </div>
             </div>
-
-
-<script type="text/html" id="step-info-simple">
-    %{--Display the lowest level step info: [icon] identity --}%
-        <i class="rdicon icon-small" data-bind="css: stepinfo.type"></i>
-        <span data-bind="text: stepinfo.stepident"></span>
-</script>
-<script type="text/html" id="step-info">
-    %{--wrap step-info-simple in tooltip --}%
-    <span data-bind="attr: {title: stepinfo.stepctxPathFull}, bootstrapTooltip: stepinfo.stepctxPathFull" data-placement="top" data-container='body'>
-        <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
-    </span>
-</script>
-<script type="text/html" id="step-info-simple-link">
-    %{--wrap step-info-simple in tooltip --}%
-    <span data-bind="if: stepinfo.hasLink()">
-        <a data-bind="urlPathParam: stepinfo.linkJobId(), attr: {title: 'Click to view Job: '+stepinfo.linkTitle() }"
-           href="${createLink(
-                controller: 'scheduledExecution',
-                action: 'show',
-                params: [project: execution.project, id: '<$>']
-        )}">
-            <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
-        </a>
-    </span>
-    <span data-bind="if: !stepinfo.hasLink()">
-        <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
-    </span>
-</script>
-<script type="text/html" id="step-info-path">
-    %{-- Display the full step path with icon and identity --}%
-    <span data-bind="if: stepinfo.hasParent()">
-        <span data-bind="with: stepinfo.parentStepInfo()">
-            <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
-        </span>
-        <g:icon name="menu-right" css="text-muted"/>
-
-    </span>
-    <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
-</script>
-<script type="text/html" id="step-info-path-links">
-    %{-- Display the full step path with icon and identity --}%
-    <span data-bind="if: stepinfo.hasParent()">
-        <span data-bind="with: stepinfo.parentStepInfo()">
-            <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
-        </span>
-        <g:icon name="menu-right" css="text-muted"/>
-
-    </span>
-    <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
-</script>
-<script type="text/html" id="step-info-parent-path">
-    %{-- Display the full step path with icon and identity --}%
-
-    <span data-bind="if: stepinfo.hasParent()">
-        <span data-bind="with: stepinfo.parentStepInfo()">
-            <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
-        </span>
-        <g:icon name="menu-right" css="text-muted"/>
-    </span>
-</script>
-<script type="text/html" id="step-info-parent-path-links">
-    %{-- Display the full step path with icon and identity --}%
-
-    <span data-bind="if: stepinfo.hasParent()">
-        <span data-bind="with: stepinfo.parentStepInfo()">
-            <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
-        </span>
-        <g:icon name="menu-right" css="text-muted"/>
-    </span>
-</script>
-
-<script type="text/html" id="step-info-path-base">
-    %{-- Display the full step path with icon and identity --}%
-    <span data-bind="template: { name: 'step-info-parent-path', data:stepinfo, as: 'stepinfo' }"></span>
-
-    <span data-bind="template: { name: 'step-info', data:stepinfo, as: 'stepinfo' }"></span>
-</script>
-
-<script type="text/html" id="step-info-extended">
-%{--Display the lowest level extended info:  [icon] number. identity --}%
-    <span data-bind="attr: {title: stepinfo.stepctxPathFull}, bootstrapTooltip: stepinfo.stepctxPathFull" data-placement="top" data-container='body'>
-    <i class="rdicon icon-small" data-bind="css: stepinfo.type"></i>
-    <span data-bind="text: stepinfo.stepdesc"></span>
-    </span>
-</script>
     <div class="row">
         <div class="col-sm-12">
             <div class="tab-content">
@@ -737,7 +508,7 @@
             </div>
         </div>
     </div>
-    </div>
+  </div>
 
 
     <g:if test="${scheduledExecution}">
@@ -748,12 +519,228 @@
             </div>
         </div>
     </g:if>
-<g:render template="/menu/copyModal"
+  <g:render template="/menu/copyModal"
           model="[projectNames: projectNames]"/>
 
-  <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
+  <script type="text/html" id="step-info-simple">
+    %{--Display the lowest level step info: [icon] identity --}%
+        <i class="rdicon icon-small" data-bind="css: stepinfo.type"></i>
+        <span data-bind="text: stepinfo.stepident"></span>
+  </script>
+  <script type="text/html" id="step-info">
+    %{--wrap step-info-simple in tooltip --}%
+    <span data-bind="attr: {title: stepinfo.stepctxPathFull}, bootstrapTooltip: stepinfo.stepctxPathFull" data-placement="top" data-container='body'>
+        <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+    </span>
+  </script>
+  <script type="text/html" id="step-info-simple-link">
+    %{--wrap step-info-simple in tooltip --}%
+    <span data-bind="if: stepinfo.hasLink()">
+        <a data-bind="urlPathParam: stepinfo.linkJobId(), attr: {title: 'Click to view Job: '+stepinfo.linkTitle() }"
+           href="${createLink(
+                controller: 'scheduledExecution',
+                action: 'show',
+                params: [project: execution.project, id: '<$>']
+        )}">
+            <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+        </a>
+    </span>
+    <span data-bind="if: !stepinfo.hasLink()">
+        <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+    </span>
+  </script>
+  <script type="text/html" id="step-info-path">
+    %{-- Display the full step path with icon and identity --}%
+    <span data-bind="if: stepinfo.hasParent()">
+        <span data-bind="with: stepinfo.parentStepInfo()">
+            <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
+        </span>
+        <g:icon name="menu-right" css="text-muted"/>
 
+    </span>
+    <span data-bind="template: { name: 'step-info-simple', data:stepinfo, as: 'stepinfo' }"></span>
+  </script>
+  <script type="text/html" id="step-info-path-links">
+    %{-- Display the full step path with icon and identity --}%
+    <span data-bind="if: stepinfo.hasParent()">
+        <span data-bind="with: stepinfo.parentStepInfo()">
+            <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
+        </span>
+        <g:icon name="menu-right" css="text-muted"/>
+
+    </span>
+    <span data-bind="template: { name: 'step-info-simple-link', data:stepinfo, as: 'stepinfo' }"></span>
+  </script>
+  <script type="text/html" id="step-info-parent-path">
+    %{-- Display the full step path with icon and identity --}%
+
+    <span data-bind="if: stepinfo.hasParent()">
+        <span data-bind="with: stepinfo.parentStepInfo()">
+            <span data-bind="template: { name: 'step-info-path', data:$data, as: 'stepinfo' }"></span>
+        </span>
+        <g:icon name="menu-right" css="text-muted"/>
+    </span>
+  </script>
+  <script type="text/html" id="step-info-parent-path-links">
+    %{-- Display the full step path with icon and identity --}%
+
+    <span data-bind="if: stepinfo.hasParent()">
+        <span data-bind="with: stepinfo.parentStepInfo()">
+            <span data-bind="template: { name: 'step-info-path-links', data:$data, as: 'stepinfo' }"></span>
+        </span>
+        <g:icon name="menu-right" css="text-muted"/>
+    </span>
+  </script>
+
+  <script type="text/html" id="step-info-path-base">
+    %{-- Display the full step path with icon and identity --}%
+    <span data-bind="template: { name: 'step-info-parent-path', data:stepinfo, as: 'stepinfo' }"></span>
+
+    <span data-bind="template: { name: 'step-info', data:stepinfo, as: 'stepinfo' }"></span>
+  </script>
+
+  <script type="text/html" id="step-info-extended">
+  %{--Display the lowest level extended info:  [icon] number. identity --}%
+    <span data-bind="attr: {title: stepinfo.stepctxPathFull}, bootstrapTooltip: stepinfo.stepctxPathFull" data-placement="top" data-container='body'>
+    <i class="rdicon icon-small" data-bind="css: stepinfo.type"></i>
+    <span data-bind="text: stepinfo.stepdesc"></span>
+    </span>
+  </script>
+
+  <!--[if (gt IE 8)|!(IE)]><!--> <g:javascript library="ace/ace"/><!--<![endif]-->
+  <g:javascript>
+    var workflow=null;
+    var followControl=null;
+    var flowState=null;
+    var nodeflowvm=null;
+    function followOutput(){
+        followControl.beginFollowingOutput('${enc(js:execution?.id)}');
+    }
+    function followState(){
+        try{
+            flowState.beginFollowing();
+        }catch(e){
+            nodeflowvm.errorMessage('Could not load flow state: '+e);
+            nodeflowvm.stateLoaded(false);
+        }
+    }
+    function showTab(id){
+        jQuery('#'+id+' a').tab('show');
+    }
+
+    var activity;
+    function init() {
+        var execInfo=loadJsonData('execInfoJSON');
+        var workflowData=loadJsonData('workflowDataJSON');
+        RDWorkflow.nodeSteppluginDescriptions=loadJsonData('nodeStepPluginsJSON');
+        RDWorkflow.wfSteppluginDescriptions=loadJsonData('wfStepPluginsJSON');
+        workflow = new RDWorkflow(workflowData);
+
+      var multiworkflow=new MultiWorkflow(workflow,{
+            dynamicStepDescriptionDisabled:${enc(js:feature.isDisabled(name:'workflowDynamicStepSummaryGUI'))},
+            url:appLinks.scheduledExecutionWorkflowJson,
+            id:execInfo.jobId||execInfo.execId,//id of job or execution
+            workflow:workflowData
+        });
+      followControl = new FollowControl('${execution?.id}','outputappendform',{
+        parentElement:'commandPerform',
+        fileloadId:'fileload',
+        fileloadPctId:'fileloadpercent',
+        fileloadProgressId:'fileloadprogress',
+        viewoptionsCompleteId:'viewoptionscomplete',
+        cmdOutputErrorId:'cmdoutputerror',
+        outfileSizeId:'outfilesize',
+        workflow:workflow,
+        multiworkflow:multiworkflow,
+        appLinks:appLinks,
+
+        extraParams:"<%="true" == params.disableMarkdown ? '&disableMarkdown=true' : ''%>&markdown=${enc(js:enc(url: params.markdown))}&ansicolor=${enc(js:enc(url: params.ansicolor))}&renderContent=${enc(js:enc(url: params.renderContent))}",
+        lastlines: '${enc(js:params.int('lastlines') ?: defaultLastLines)}',
+        maxLastLines:'${enc(js:params.int('maxlines') ?: maxLastLines)}',
+        collapseCtx: {value:${enc(js:null == execution?.dateCompleted)},changed:false},
+        showFinalLine: {value:false,changed:false},
+        tailmode: ${enc(js:followmode == 'tail')},
+        browsemode: ${enc(js:followmode == 'browse')},
+        nodemode: ${enc(js:followmode == 'node')},
+        execData: {},
+        groupOutput:{value:${enc(js:followmode == 'browse')}},
+        updatepagetitle:${enc(js:null == execution?.dateCompleted)},
+        killjobauth:${enc(js: authChecks[AuthConstants.ACTION_KILL] ? true : false)},
+      <g:if test="${authChecks[AuthConstants.ACTION_KILL]}">
+          killjobhtml: '<span class="btn btn-danger btn-sm textbtn" onclick="followControl.docancel();">Kill <g:message code="domain.ScheduledExecution.title"/> <i class="glyphicon glyphicon-remove"></i></span>',
+      </g:if>
+      <g:if test="${!authChecks[AuthConstants.ACTION_KILL]}">
+          killjobhtml: "",
+      </g:if>
+        totalDuration : '${enc(js:scheduledExecution?.totalTime ?: -1)}',
+        totalCount: '${enc(js:scheduledExecution?.execCount ?: -1)}'
+      });
+      nodeflowvm=new NodeFlowViewModel(
+        workflow,
+        "${enc(js:g.createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
+        "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecNodeState', id: execution.id))}",
+        multiworkflow,
+        {followControl:followControl,executionId:'${enc(js:execution.id)}'}
+      );
+      flowState = new FlowState('${enc(js:execution?.id)}','flowstate',{
+        workflow:workflow,
+        loadUrl: "${enc(js:g.createLink(controller: 'execution', action: 'ajaxExecState', id: execution.id))}",
+        outputUrl:"${g.enc(js:createLink(controller: 'execution', action: 'tailExecutionOutput', id: execution.id,params:[format:'json']))}",
+        selectedOutputStatusId:'selectedoutputview',
+        reloadInterval:1500
+     });
+      nodeflowvm.followFlowState(flowState,true);
+
+        ko.mapping.fromJS({
+            completed:'${execution.dateCompleted!=null}',
+            startTime:'${enc(js:execution.dateStarted)}',
+            endTime:'${enc(js:execution.dateCompleted)}',
+            executionState:'${enc(js:execution.executionState)}',
+            executionStatusString:'${enc(js:execution.status)}'
+        },{},nodeflowvm);
+        ko.applyBindings(nodeflowvm,jQuery('#execution_main')[0]);
+        nodeflowvm.selectedNodes.subscribe(function (newValue) {
+            if (newValue) {
+                flowState.loadUrlParams=jQuery.extend(flowState.loadUrlParamsBase,{nodes:newValue.join(",")});
+            }else{
+                flowState.loadUrlParams=flowState.loadUrlParamsBase;
+            }
+        });
+        //link flow and output tabs to initialize following
+        //by default show state
+        followState();
+        jQuery('#tab_link_summary').on('show.bs.tab',function(e){
+            nodeflowvm.activeTab("summary");
+            followState();
+        });
+        jQuery('#tab_link_flow').on('show.bs.tab',function(e){
+            nodeflowvm.activeTab("flow");
+            followState();
+        });
+        jQuery('#tab_link_output').on('show.bs.tab',function(e){
+            nodeflowvm.activeTab("output");
+            followOutput();
+        });
+        if(document.getElementById('activity_section')){
+            activity = new History(appLinks.reportsEventsAjax, appLinks.menuNowrunningAjax);
+            activity.nowRunningEnabled(${null != execution?.dateCompleted});
+            //enable now running activity tab once execution completes
+            activity.highlightExecutionId("${execution.id}");
+            nodeflowvm.completed.subscribe(activity.nowRunningEnabled);
+            ko.applyBindings(activity, document.getElementById('activity_section'));
+            setupActivityLinks('activity_section', activity);
+       }
+        jQuery('.apply_ace').each(function () {
+            _applyAce(this);
+        });
+        followControl.bindActions('outputappendform');
+
+        PageActionHandlers.registerHandler('copy_other_project',function(el){
+            jQuery('#jobid').val(el.data('jobId'));
+            jQuery('#selectProject').modal();
+        });
+    }
+    jQuery(init);
+  </g:javascript>
   </body>
 </html>
-
-

@@ -1,0 +1,7 @@
+.no-border-on-first-tr{
+  tr:first-of-type{
+    td{
+      // border-top:none;
+    }
+  }
+}

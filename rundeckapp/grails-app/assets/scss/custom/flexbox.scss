@@ -1,0 +1,17 @@
+.flex-grid{
+  box-sizing: border-box;
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: row;
+  flex-wrap: wrap;
+  &.reverse {
+    flex-direction: row-reverse;
+  }
+  .col{
+    // flex:1;
+    flex: 0 0 auto;
+    &.reverse {
+      flex-direction: column-reverse;
+    }
+  }
+}

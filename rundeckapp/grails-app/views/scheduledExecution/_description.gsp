@@ -35,10 +35,18 @@
         </g:if>
         <g:if test="${mode=='collapsed' || mode=='expanded'}">
             <span class="expandComponentHolder">
-            <g:expander key="desc_${rkey}" open="${mode=='expanded'?'true':'false'}">${moreText?:'More'}</g:expander>
-            <span class="${enc(attr: markdownCss ?: '')}" style="${wdgt.styleVisible(if:mode=='expanded')}" id="desc_${enc(attr: rkey)}">
-                <g:markdown><g:autoLink jobLinkId="${jobLinkId}" tokens="${replTokens}">${remainingLine}</g:autoLink></g:markdown>
-            </span>
+              <g:expander key="desc_${rkey}" open="${mode=='expanded'?'true':'false'}" hideGlyphicon="true">
+                <span class="btn btn-default btn-xs more-indicator-verbiage">
+                  ${moreText?:'More'}
+                </span>
+                <span class="btn btn-default btn-xs less-indicator-verbiage">
+                  Less
+                </span>
+              </g:expander>
+              <span class="${enc(attr: markdownCss ?: '')}" style="${wdgt.styleVisible(if:mode=='expanded')}" id="desc_${enc(attr: rkey)}">
+                  <hr/>
+                  <g:markdown><g:autoLink jobLinkId="${jobLinkId}" tokens="${replTokens}">${remainingLine}</g:autoLink></g:markdown>
+              </span>
             </span>
         </g:if>
         <g:elseif test="${mode!='hidden'}">

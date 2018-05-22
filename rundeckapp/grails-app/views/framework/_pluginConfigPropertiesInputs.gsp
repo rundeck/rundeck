@@ -100,7 +100,7 @@
                 <g:collapser text="${group!='-'?group:defaultGroupName}"
                              key="propgroup_${gkey}"
                              open="${hasValue?'true':'false'}"
-                             classnames=" control-label input-lg"
+                             classnames=""
                 />
 
             </g:if>

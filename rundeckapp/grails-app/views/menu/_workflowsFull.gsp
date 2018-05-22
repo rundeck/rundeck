@@ -33,7 +33,7 @@
  --%>
 <%--
     workflowsFull.gsp
-    
+
     Author: Greg Schueler <a href="mailto:greg@dtosolutions.com">greg@dtosolutions.com</a>
     Created: Feb 9, 2010 11:14:07 AM
     $Id$
@@ -67,7 +67,7 @@
         </span>
     </g:if>
     <g:set var="filtersOpen" value="${params.createFilters||params.editFilters||params.saveFilter?true:false}"/>
-    <table cellspacing="0" cellpadding="0" width="100%">
+    <table cellspacing="0" cellpadding="0" width="100%" class="table">
         <tr>
 
             <td style="text-align:left;vertical-align:top;width:200px; ${wdgt.styleVisible(if:filtersOpen)}" id="${enc(attr:rkey)}filter" class="wffilter" >
@@ -77,7 +77,7 @@
                     <g:hiddenField name="compact" value="${params.compact}"/>
                 </g:if>
                 <g:hiddenField name="project" value="${params.project}"/>
-                <span class="textbtn textbtn-default obs_filtertoggle">
+                <span class="btn btn-default obs_filtertoggle">
                     <g:message code="filter.title" />
                     <b class="glyphicon glyphicon-chevron-down"></b>
                 </span>
@@ -323,7 +323,7 @@
                     </g:if>
                     </div>
 
-                            <span title="Click to modify filter" class="info textbtn textbtn-default query obs_filtertoggle"  id='${rkey}filter-toggle'>
+                            <span title="Click to modify filter" class="btn btn-default query obs_filtertoggle"  id='${rkey}filter-toggle'>
                                 <g:each in="${wasfiltered.sort()}" var="qparam">
                                     <span class="querykey"><g:message code="jobquery.title.${qparam}"/></span>:
 
@@ -350,7 +350,7 @@
                     </span>
                     </g:if>
 
-                    <span class="textbtn textbtn-default obs_filtertoggle"  id="${enc(attr:rkey)}filter-toggle">
+                    <span class="btn btn-default obs_filtertoggle"  id="${enc(attr:rkey)}filter-toggle">
                         <g:message code="filter.title" />
                         <b class="glyphicon glyphicon-chevron-${wasfiltered?'down':'right'}"></b>
                     </span>
@@ -362,10 +362,10 @@
                     </g:if>
                 </g:else>
                     <span id="group_controls">
-                    <span class="textbtn textbtn-default" data-bind="click: expandAllComponents">
+                    <span class="btn btn-default" data-bind="click: expandAllComponents">
                         <g:message code="expand.all" />
                     </span>
-                    <span class="textbtn textbtn-default" data-bind="click: collapseAllComponents">
+                    <span class="btn btn-default" data-bind="click: collapseAllComponents">
                         <g:message code="collapse.all" />
                     </span>
                     </span>

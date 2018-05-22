@@ -36,19 +36,16 @@
 </head>
 
 <body>
-
-<div class="row">
-    <div class="col-sm-12">
-        <g:render template="/common/messages"/>
+  <div class="container-fluid">
+    <div class="row">
+        <div class="col-xs-12">
+            <g:render template="/common/messages"/>
+        </div>
     </div>
-</div>
-
-
-<script id="project-home" type="text/html"><g:render template="projectHomeKO"/></script>
-
-<!-- ko if: project -->
-<div data-bind="template: {name:'project-home', data: {project: project(), projectName: project().name() }}"></div>
-<!-- /ko -->
-
+    <script id="project-home" type="text/html"><g:render template="projectHomeKO"/></script>
+    <!-- ko if: project -->
+    <div data-bind="template: {name:'project-home', data: {project: project(), projectName: project().name() }}"></div>
+    <!-- /ko -->        
+  </div>
 </body>
 </html>

@@ -19,6 +19,8 @@
 <g:set var="ukey" value="${g.rkey()}"/>
         <div class="jobslist ${small?'small':''}">
                 <g:if test="${jobslist.size()>0}">
+                <div class="">
+                </div>
                 <table cellpadding="0" cellspacing="0" class="jobsList list" >
                     <g:if test="${null==headers || headers}">
                 <tr>
