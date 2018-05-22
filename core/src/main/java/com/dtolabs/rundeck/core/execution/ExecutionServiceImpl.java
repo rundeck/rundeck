@@ -26,6 +26,8 @@ package com.dtolabs.rundeck.core.execution;
 import com.dtolabs.rundeck.core.CoreException;
 import com.dtolabs.rundeck.core.common.Framework;
 import com.dtolabs.rundeck.core.common.INodeEntry;
+import com.dtolabs.rundeck.core.data.SharedDataContextUtils;
+import com.dtolabs.rundeck.core.dispatcher.ContextView;
 import com.dtolabs.rundeck.core.dispatcher.DataContextUtils;
 import com.dtolabs.rundeck.core.execution.dispatch.Dispatchable;
 import com.dtolabs.rundeck.core.execution.dispatch.DispatcherException;
@@ -33,16 +35,22 @@ import com.dtolabs.rundeck.core.execution.dispatch.DispatcherResult;
 import com.dtolabs.rundeck.core.execution.dispatch.NodeDispatcher;
 import com.dtolabs.rundeck.core.execution.service.*;
 import com.dtolabs.rundeck.core.execution.workflow.StepExecutionContext;
+import com.dtolabs.rundeck.core.execution.workflow.WFSharedContext;
 import com.dtolabs.rundeck.core.execution.workflow.WorkflowExecutionListener;
 import com.dtolabs.rundeck.core.execution.workflow.steps.*;
 import com.dtolabs.rundeck.core.execution.workflow.steps.node.*;
 import com.dtolabs.rundeck.core.logging.PluginLoggingManager;
 import com.dtolabs.rundeck.plugins.ServiceNameConstants;
+import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * NewExecutionServiceImpl is ...
@@ -132,12 +140,53 @@ class ExecutionServiceImpl implements ExecutionService {
             getWorkflowListener(context).beginExecuteNodeStep(context, item, node);
         }
         //create node context for node and substitute data references in command
+        boolean secureOptionReplaced = false;
+        Map<String, String> nodeDeferredOptions = context.getDataContext().get("nodeDeferred");
+        Map<String, String> options = context.getDataContext().get("option");
+        if(nodeDeferredOptions != null) {
+            for (String key : nodeDeferredOptions.keySet()) {
+                String val = nodeDeferredOptions.get(key);
+                if (options != null && options.containsKey(key)) {
+                    String currentValue = options.get(key);
+                    if (currentValue.equals(val)) {
+                        //replace node references
+                        val = SharedDataContextUtils.replaceDataReferences(
+                                val,
+                                context.getSharedDataContext(),
+                                //add node name to qualifier to read node-data first
+                                ContextView.node(node.getNodename()),
+                                ContextView::nodeStep,
+                                DataContextUtils.replaceMissingOptionsWithBlank,
+                                false,
+                                false
+                        );
+                        try {
+                            InputStream defaultVal = context.getStorageTree().getResource(val).getContents().getInputStream();
+                            String pass = CharStreams.toString(new InputStreamReader(
+                                    defaultVal, Charsets.UTF_8));
+                            context.getDataContext().get("option").put(key, pass);
+                            secureOptionReplaced = true;
+                        } catch (IOException ex) {
+                            throw new NodeStepException(ex, StepFailureReason.Unknown, node.getNodename());
+                        }
+                    }
+                }
+            }
+        }
 
         NodeStepResult result = null;
         try {
-            final ExecutionContextImpl nodeContext = new ExecutionContextImpl.Builder(context)
-                    .singleNodeContext(node, true)
-                    .build();
+            final ExecutionContextImpl nodeContext;
+            if(secureOptionReplaced){
+                nodeContext = new ExecutionContextImpl.Builder(context)
+                        .singleNodeContext(node, true)
+                        .sharedDataContext(WFSharedContext.with(ContextView.global(), context.getDataContextObject()))
+                        .build();
+            }else{
+                nodeContext = new ExecutionContextImpl.Builder(context)
+                        .singleNodeContext(node, true)
+                        .build();
+            }
 
             PluginLoggingManager pluginLogging = null;
             if (null != context.getLoggingManager()) {
