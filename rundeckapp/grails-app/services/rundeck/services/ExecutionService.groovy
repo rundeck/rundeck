@@ -1049,6 +1049,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     ]
             )
 
+            def secureOptionNodeDeferred = [:]
             if(scheduledExecution) {
                 if(!extraParamsExposed){
                     extraParamsExposed=[:]
@@ -1057,7 +1058,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     extraParams=[:]
                 }
                 Map<String, String> args = FrameworkService.parseOptsFromString(execution.argString)
-                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true, args)
+                loadSecureOptionStorageDefaults(scheduledExecution, extraParamsExposed, extraParams, authContext, true,
+                        args, jobcontext, secureOptionNodeDeferred)
             }
             String inputCharset=frameworkService.getDefaultInputCharsetForProject(execution.project)
 
@@ -1074,7 +1076,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     extraParams,
                     extraParamsExposed,
                     inputCharset,
-                    workflowLogManager
+                    workflowLogManager,
+                    secureOptionNodeDeferred
             )
 
             fileUploadService.executionBeforeStart(
@@ -1186,7 +1189,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Map secureOpts,
             AuthContext authContext,
             boolean failIfMissingRequired=false,
-            Map<String, String> args = null
+            Map<String, String> args = null,
+            Map<String, String> job = null,
+            Map secureOptionNodeDeferred = null
     )
     {
         def found = scheduledExecution.options?.findAll {
@@ -1206,11 +1211,27 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                     if (args && defStoragePath?.contains('${option.')) {
                         defStoragePath = DataContextUtils.replaceDataReferencesInString(defStoragePath, DataContextUtils.addContext("option", args, null)).trim()
                     }
-                    def password = keystore.readPassword(defStoragePath)
+                    if (job && defStoragePath?.contains('${job.')) {
+                        defStoragePath = DataContextUtils.replaceDataReferencesInString(defStoragePath, DataContextUtils.addContext("job", job, null)).trim()
+                    }
+                    def password
+                    def nodeDeferred = false
+                    if (defStoragePath?.contains('${node.')) {
+                        nodeDeferred = secureOptionNodeDeferred != null ? true : false
+                        password = defStoragePath //to be resolved later
+                    }else {
+                        password = keystore.readPassword(defStoragePath)
+                    }
                     if (it.secureExposed) {
                         secureOptsExposed[it.name] = new String(password)
+                        if(nodeDeferred) {
+                            secureOptionNodeDeferred[it.name] = password
+                        }
                     } else {
                         secureOpts[it.name] = new String(password)
+                        if(nodeDeferred) {
+                            secureOptionNodeDeferred[it.name] = password
+                        }
                     }
                 } catch (StorageException e) {
                     if (it.required && failIfMissingRequired) {
@@ -1276,7 +1297,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                                               Map<String, String> jobcontext, String[] inputargs = null,
                                               Map extraParams = null, Map extraParamsExposed = null,
                                               String charsetEncoding = null,
-                                              LoggingManager manager = null
+                                              LoggingManager manager = null,
+                                              Map secureOptionNodeDeferred = null
     )
     {
         createContext(execMap,
@@ -1291,7 +1313,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                       extraParams,
                       extraParamsExposed,
                       charsetEncoding,
-                      manager
+                      manager,
+                      secureOptionNodeDeferred
         )
     }
     /**
@@ -1310,7 +1333,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             Map extraParams = null,
             Map extraParamsExposed = null,
             String charsetEncoding = null,
-            LoggingManager manager = null
+            LoggingManager manager = null,
+            Map secureOptionNodeDeferred = null
     )
     {
         if (!userName) {
@@ -1340,6 +1364,9 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         datacontext.put("option",optsmap)
         if(extraParamsExposed){
             datacontext.put("secureOption",extraParamsExposed.clone())
+        }
+        if(secureOptionNodeDeferred) {
+            datacontext.put("nodeDeferred", secureOptionNodeDeferred.clone())
         }
         datacontext.put("job",jobcontext?jobcontext:new HashMap<String,String>())
 
@@ -3139,7 +3166,18 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
             )
         }
 
-        loadSecureOptionStorageDefaults(se, evalSecOpts, evalSecAuthOpts, executionContext.authContext)
+        //construct job data context
+        def jobcontext = new HashMap<String, String>(executionContext.dataContext.job?:[:])
+        jobcontext.id = se.extid
+        jobcontext.loglevel = mappedLogLevels[executionContext.loglevel]
+        jobcontext.name = se.jobName
+        jobcontext.group = se.groupPath
+        jobcontext.project = se.project
+        jobcontext.username = executionContext.getUser()
+        jobcontext['user.name'] = jobcontext.username
+
+        def secureOptionNodeDeferred = [:]
+        loadSecureOptionStorageDefaults(se, evalSecOpts, evalSecAuthOpts, executionContext.authContext,false,null,jobcontext, secureOptionNodeDeferred)
 
         //validate the option values
         if(dovalidate){
@@ -3150,15 +3188,7 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
         def stringList = evalPlainOpts.collect { ["-" + it.key, it.value] }.flatten()
         newargs = stringList.toArray(new String[stringList.size()]);
 
-        //construct job data context
-        def jobcontext = new HashMap<String, String>(executionContext.dataContext.job?:[:])
-        jobcontext.id = se.extid
-        jobcontext.loglevel = mappedLogLevels[executionContext.loglevel]
-        jobcontext.name = se.jobName
-        jobcontext.group = se.groupPath
-        jobcontext.project = se.project
-        jobcontext.username = executionContext.getUser()
-        jobcontext['user.name'] = jobcontext.username
+
 
         def loggingFilters = se  ?
                 ExecutionUtilService.createLogFilterConfigs(
@@ -3177,7 +3207,8 @@ class ExecutionService implements ApplicationContextAware, StepExecutor, NodeSte
                 evalSecAuthOpts,
                 evalSecOpts,
                 null,
-                workflowLogManager
+                workflowLogManager,
+                secureOptionNodeDeferred
         )
 
         if (nodeFilter || nodeIntersect) {
