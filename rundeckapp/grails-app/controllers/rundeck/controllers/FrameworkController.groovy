@@ -338,7 +338,8 @@ class FrameworkController extends ControllerBase implements ApplicationContextAw
 //        allcount=nodes1.nodes.size()
         if(params.localNodeOnly){
             nodeset=new NodeSetImpl()
-            nodeset.putNode(nodes1.getNode(framework.getFrameworkNodeName()))
+            def localnode = nodes1.getNode(framework.getFrameworkNodeName())
+            if(localnode) nodeset.putNode(localnode)
         }
         else if (nset && !(nset.include.blank && nset.exclude.blank)){
             //match using nodeset unless all filters are blank
