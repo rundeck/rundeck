@@ -22,6 +22,7 @@ import com.dtolabs.rundeck.core.authorization.AuthContext
 import com.dtolabs.rundeck.core.authorization.UserAndRolesAuthContext
 import com.dtolabs.rundeck.core.authorization.Validation
 import com.dtolabs.rundeck.core.common.Framework
+import com.dtolabs.rundeck.core.common.FrameworkResource
 import com.dtolabs.rundeck.core.common.IRundeckProject
 import com.dtolabs.rundeck.server.authorization.AuthConstants
 import rundeck.Project
@@ -709,6 +710,14 @@ class ProjectController extends ControllerBase{
                             status: HttpServletResponse.SC_BAD_REQUEST,
                             code: "api.error.invalid.request",
                             args: ["Project 'name' is required"],
+                            format: respFormat
+                    ])
+        } else if (!(project =~ FrameworkResource.VALID_RESOURCE_NAME_REGEX)) {
+            return apiService.renderErrorFormat(response,
+                    [
+                            status: HttpServletResponse.SC_BAD_REQUEST,
+                            code: "project.name.can.only.contain.these.characters",
+                            args: [],
                             format: respFormat
                     ])
         }
