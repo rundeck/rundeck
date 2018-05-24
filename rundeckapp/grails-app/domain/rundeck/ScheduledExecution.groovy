@@ -88,6 +88,8 @@ class ScheduledExecution extends ExecutionContext {
 
     String defaultTab
 
+    String maxMultipleExecutions
+
     static transients = ['userRoles','adhocExecutionType','notifySuccessRecipients','notifyFailureRecipients',
                          'notifyStartRecipients', 'notifySuccessUrl', 'notifyFailureUrl', 'notifyStartUrl',
                          'crontabString','averageDuration','notifyAvgDurationRecipients','notifyAvgDurationUrl',
@@ -167,6 +169,7 @@ class ScheduledExecution extends ExecutionContext {
         nodeThreadcountDynamic(nullable: true)
         notifyAvgDurationThreshold(nullable: true)
         defaultTab(maxSize: 256, blank: true, nullable: true)
+        maxMultipleExecutions(maxSize: 256, blank: true, nullable: true)
     }
 
     static mapping = {
@@ -308,6 +311,9 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(multipleExecutions){
             map.multipleExecutions=true
+        }
+        if(maxMultipleExecutions){
+            map.maxMultipleExecutions = maxMultipleExecutions
         }
         if(doNodedispatch){
             map.nodesSelectedByDefault = hasNodesSelectedByDefault()
@@ -457,6 +463,9 @@ class ScheduledExecution extends ExecutionContext {
         }
         if(data.multipleExecutions){
             se.multipleExecutions=data.multipleExecutions?true:false
+        }
+        if(data.maxMultipleExecutions){
+            se.maxMultipleExecutions=data.maxMultipleExecutions
         }
         if(data.nodefilters){
             se.nodesSelectedByDefault = null!=data.nodesSelectedByDefault?(data.nodesSelectedByDefault?true:false):true
