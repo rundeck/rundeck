@@ -485,7 +485,7 @@ class ProjectManagerService implements ProjectManager, ApplicationContextAware, 
         def description = properties.get('project.description')
         if (!found) {
             def project = new Project(name: projectName, description: description)
-            project.save()
+            project.save(failOnError: true)
         }
         def res = storeProjectConfig(projectName, properties)
         def rdprojectconfig = new RundeckProjectConfig(projectName,
