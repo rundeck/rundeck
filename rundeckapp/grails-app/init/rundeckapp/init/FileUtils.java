@@ -10,7 +10,7 @@ import java.nio.file.StandardOpenOption;
  * @author exaTech Ingenieria SpA. (info@exatech.cl)
  */
 public class FileUtils {
-  public void appendFile(final File test, final File origName) throws IOException {
+  public static void appendFile(final File test, final File origName) throws IOException {
 
     try (
         FileChannel inc = FileChannel.open(test.toPath(), StandardOpenOption.READ);
