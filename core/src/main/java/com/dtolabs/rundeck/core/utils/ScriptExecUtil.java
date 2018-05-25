@@ -227,7 +227,10 @@ public class ScriptExecUtil {
 
         final Runtime runtime = Runtime.getRuntime();
         final Process exec = runtime.exec(command, envarr, workingdir);
-        exec.getOutputStream().close();
+    	final String osName = System.getProperty("os.name");
+    	if (osName.toLowerCase().indexOf("windows") == -1) {
+    		exec.getOutputStream().close();
+    	}
         final Streams.StreamCopyThread errthread = Streams.copyStreamThread(exec.getErrorStream(), errorStream);
         final Streams.StreamCopyThread outthread = Streams.copyStreamThread(exec.getInputStream(), outputStream);
         errthread.start();
@@ -238,6 +241,9 @@ public class ScriptExecUtil {
         errorStream.flush();
         errthread.join();
         outthread.join();
+    	if (osName.toLowerCase().indexOf("windows") > -1) {
+    		exec.getOutputStream().close();
+    	}
         exec.getInputStream().close();
         exec.getErrorStream().close();
         if (null != outthread.getException()) {
