@@ -1,9 +1,3 @@
----
-name: Enhancement or Bug fix
-about: Propose a change to Rundeck
-
----
-
 IMPORTANT: Before submitting your Pull Request, please review the following instructions:
 
 1. Please follow the [Developer Guidelines](https://github.com/rundeck/rundeck/wiki/Developer-Guidelines) document.
